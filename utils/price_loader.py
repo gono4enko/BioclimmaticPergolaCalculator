@@ -9,7 +9,7 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 # Путь к директории с файлами цен
-PRICE_TABLES_DIR = 'data/price_tables'
+PRICE_TABLES_DIR = 'attached_assets'
 
 # Соответствие типов пергол и файлов с ценами
 PERGOLA_PRICE_FILES = {

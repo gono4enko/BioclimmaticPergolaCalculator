@@ -10,6 +10,7 @@ from components.dimensions_form import render_dimensions_form
 from components.options_form import render_options_form
 from components.results import render_results
 from components.specification import render_specification
+from components.scroll_helper import scroll_to_results
 
 # Настраиваем логирование
 logger = setup_logger()
@@ -95,6 +96,9 @@ def main():
             
             with tab2:
                 render_specification(st.session_state.results, st.session_state.options)
+            
+            # Добавляем скрипт для автоматического скролла к результатам
+            scroll_to_results()
         else:
             st.info("Введите данные и нажмите 'Рассчитать стоимость' для получения результата")
     
