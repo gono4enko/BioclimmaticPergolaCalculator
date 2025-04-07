@@ -7,7 +7,8 @@ from utils.price_loader import get_base_price
 from config.price_data import (
     get_option_price, LIGHTING_PRICES, ADDITIONAL_OPTIONS_PRICES,
     ADDITIONAL_COLUMNS_PRICES, ADDITIONAL_COLUMNS_THRESHOLDS,
-    BANSBACH_PRICES, BANSBACH_TANDEM_CONDITIONS
+    BANSBACH_PRICES, BANSBACH_TANDEM_CONDITIONS,
+    SOMFY_PRICES, SOMFY_TANDEM_CONDITIONS
 )
 from utils.validation import validate_pergola_config
 from config.pergola_types import LAMELLA_TYPES, LIGHTING_TYPES
@@ -93,7 +94,7 @@ def calculate_additional_columns(pergola_type, lamella_type, length_m, width_m):
 
 def determine_bansbach_drive_type(pergola_type, width_m, length_m, modules_count):
     """
-    Определяет тип привода Bansbach для перголы в зависимости от ее размеров
+    Определяет тип привода Bansbach для перголы B500NEW в зависимости от ее размеров
     
     Args:
         pergola_type (str): Тип перголы (B500NEW, B700NEW, B600PIR)
@@ -110,8 +111,8 @@ def determine_bansbach_drive_type(pergola_type, width_m, length_m, modules_count
     drive_cost = BANSBACH_PRICES["T1"]
     message = "Для автоматизации предлагается стандартный привод Bansbach T1"
     
-    # Если перголы B500 или B700, проверяем условия для использования Tandem
-    if ("B500" in pergola_type or "B700" in pergola_type) and 1 <= modules_count <= 3:
+    # Если перголa B500, проверяем условия для использования Tandem
+    if "B500" in pergola_type and 1 <= modules_count <= 3:
         # Получаем список условий для данного количества модулей
         conditions = BANSBACH_TANDEM_CONDITIONS.get(modules_count, [])
         
@@ -126,6 +127,56 @@ def determine_bansbach_drive_type(pergola_type, width_m, length_m, modules_count
                     f"требуется усиленный привод Bansbach Tandem"
                 )
                 break
+    
+    return drive_type, drive_cost, message
+
+def determine_somfy_drive_type(pergola_type, width_m, length_m, modules_count):
+    """
+    Определяет тип привода Somfy для перголы B700NEW в зависимости от ее размеров
+    
+    Args:
+        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600PIR)
+        width_m (float): Ширина перголы в метрах
+        length_m (float): Длина (вынос) перголы в метрах
+        modules_count (int): Количество модулей перголы
+        
+    Returns:
+        tuple: (тип привода ('M1' или 'M2_TANDEM'), стоимость привода, сообщение)
+    """
+    # По умолчанию всегда используется стандартный привод Somfy M1
+    drive_type = "M1"
+    drive_cost = SOMFY_PRICES["M1"]
+    message = "Для автоматизации предлагается стандартный привод Somfy M1"
+    
+    # Для перголы B700NEW используем привод Somfy
+    if "B700" in pergola_type and 1 <= modules_count <= 3:
+        # Получаем список условий для данного количества модулей
+        conditions = SOMFY_TANDEM_CONDITIONS.get(modules_count, [])
+        
+        # Проверяем условия в зависимости от количества модулей
+        if modules_count == 1:
+            # Для 1 модуля: ширина <= threshold и вынос > threshold
+            for width_threshold, length_threshold in conditions:
+                if width_m <= width_threshold and length_m > length_threshold:
+                    drive_type = "M2_TANDEM"
+                    drive_cost = SOMFY_PRICES["M2_TANDEM"]
+                    message = (
+                        f"Для автоматизации перголы размером {width_m:.3f}x{length_m:.3f} м "
+                        f"({modules_count} модуль) требуется усиленный привод Somfy M2 TANDEM"
+                    )
+                    break
+        else:
+            # Для 2 и 3 модулей: ширина > threshold и вынос > threshold
+            for width_threshold, length_threshold in conditions:
+                if width_m > width_threshold and length_m > length_threshold:
+                    drive_type = "M2_TANDEM"
+                    drive_cost = SOMFY_PRICES["M2_TANDEM"]
+                    message = (
+                        f"Для автоматизации перголы размером {width_m:.3f}x{length_m:.3f} м "
+                        f"({modules_count} {'модуля' if modules_count == 2 else 'модулей'}) "
+                        f"требуется усиленный привод Somfy M2 TANDEM"
+                    )
+                    break
     
     return drive_type, drive_cost, message
 
@@ -375,37 +426,69 @@ def calculate_pergola_cost(dimensions, options):
             else:
                 detailed_costs['lighting'] = lighting_price
         
-        # Для B500NEW автоматизация Bansbach включена по умолчанию
+        # Для B500NEW и B700NEW автоматизация включена по умолчанию
         from config.pergola_types import PERGOLA_TYPES
         is_automation_included = PERGOLA_TYPES.get(pergola_type, {}).get("included_automation", False)
         
         # Если для перголы автоматизация включена по умолчанию, добавляем её в расчет
         if is_automation_included:
-            # Определяем тип привода Bansbach в зависимости от размеров перголы
-            drive_type, drive_cost, drive_message = determine_bansbach_drive_type(
-                pergola_type, width_m, length_m, modules_count if need_additional_columns else 1
-            )
+            drive_message = None
             
-            # Сохраняем стоимость и сообщение о выбранном приводе
-            detailed_costs['additional_options']["automation"] = drive_cost
-            detailed_costs['automation_type'] = drive_type
-            detailed_costs['automation_message'] = drive_message
+            if "B500" in pergola_type:
+                # Для B500NEW используем привод Bansbach
+                drive_type, drive_cost, drive_message = determine_bansbach_drive_type(
+                    pergola_type, width_m, length_m, modules_count if need_additional_columns else 1
+                )
+                
+                # Сохраняем стоимость и сообщение о выбранном приводе
+                detailed_costs['additional_options']["automation"] = drive_cost
+                detailed_costs['automation_type'] = drive_type
+                detailed_costs['automation_message'] = drive_message
+                detailed_costs['automation_manufacturer'] = "Bansbach"
+                
+            elif "B700" in pergola_type:
+                # Для B700NEW используем привод Somfy
+                drive_type, drive_cost, drive_message = determine_somfy_drive_type(
+                    pergola_type, width_m, length_m, modules_count if need_additional_columns else 1
+                )
+                
+                # Сохраняем стоимость и сообщение о выбранном приводе
+                detailed_costs['additional_options']["automation"] = drive_cost
+                detailed_costs['automation_type'] = drive_type
+                detailed_costs['automation_message'] = drive_message
+                detailed_costs['automation_manufacturer'] = "Somfy"
             
             # Добавляем информацию о выбранном приводе в сообщение о корректировке
-            if correction_message:
-                correction_message = f"{correction_message}. {drive_message}"
-            else:
-                correction_message = drive_message
-            
-            logger.info(drive_message)
+            if drive_message:
+                if correction_message:
+                    correction_message = f"{correction_message}. {drive_message}"
+                else:
+                    correction_message = drive_message
+                
+                logger.info(drive_message)
         
         # Добавляем стоимость дополнительных опций, выбранных пользователем
         for option in additional_options:
             if option == "automation" and not is_automation_included:
-                # Определяем тип привода Bansbach в зависимости от размеров перголы
-                drive_type, drive_cost, drive_message = determine_bansbach_drive_type(
-                    pergola_type, width_m, length_m, modules_count if need_additional_columns else 1
-                )
+                # Определяем тип привода в зависимости от типа перголы и размеров
+                if "B500" in pergola_type:
+                    # Для B500NEW/B500 используем привод Bansbach
+                    drive_type, drive_cost, drive_message = determine_bansbach_drive_type(
+                        pergola_type, width_m, length_m, modules_count if need_additional_columns else 1
+                    )
+                    detailed_costs['automation_manufacturer'] = "Bansbach"
+                elif "B700" in pergola_type:
+                    # Для B700NEW/B700 используем привод Somfy
+                    drive_type, drive_cost, drive_message = determine_somfy_drive_type(
+                        pergola_type, width_m, length_m, modules_count if need_additional_columns else 1
+                    )
+                    detailed_costs['automation_manufacturer'] = "Somfy"
+                else:
+                    # Для других типов пергол используем привод Bansbach по умолчанию
+                    drive_type, drive_cost, drive_message = determine_bansbach_drive_type(
+                        pergola_type, width_m, length_m, modules_count if need_additional_columns else 1
+                    )
+                    detailed_costs['automation_manufacturer'] = "Bansbach"
                 
                 # Сохраняем стоимость и сообщение о выбранном приводе
                 detailed_costs['additional_options'][option] = drive_cost

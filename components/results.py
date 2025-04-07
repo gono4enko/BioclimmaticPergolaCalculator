@@ -27,15 +27,23 @@ def render_results(results):
     if 'correction_message' in results and results['correction_message']:
         st.warning(results['correction_message'])
         
-    # Проверяем, является ли выбранная пергола моделью B500NEW с включенной автоматизацией
-    is_b500_with_automation = False
+    # Проверяем, является ли выбранная пергола моделью с включенной автоматизацией
+    is_automation_included = False
     detailed_costs = results.get('detailed_costs', {})
     if "automation_type" in detailed_costs and "automation" in detailed_costs.get('additional_options', {}):
         # Получаем информацию о перголе из сессии
-        if 'options' in st.session_state and st.session_state.options.get('pergola_type') == 'B500NEW':
-            is_b500_with_automation = True
-            st.info("Для пергол B500NEW автоматизация Bansbach включена в базовую комплектацию. " +
-                   f"Тип привода ({detailed_costs['automation_type']}) выбран автоматически в зависимости от размеров перголы.")
+        if 'options' in st.session_state:
+            pergola_type = st.session_state.options.get('pergola_type')
+            
+            if pergola_type == 'B500NEW':
+                is_automation_included = True
+                st.info("Для пергол B500NEW автоматизация Bansbach включена в базовую комплектацию. " +
+                       f"Тип привода ({detailed_costs['automation_type']}) выбран автоматически в зависимости от размеров перголы.")
+            
+            elif pergola_type == 'B700NEW':
+                is_automation_included = True
+                st.info("Для пергол B700NEW автоматизация Somfy включена в базовую комплектацию. " +
+                       f"Тип привода ({detailed_costs['automation_type']}) выбран автоматически в зависимости от размеров перголы.")
     
     # Создаем метрики для отображения основных показателей
     col1, col2, col3 = st.columns(3)
@@ -111,7 +119,8 @@ def render_results(results):
         for option, cost in additional_options.items():
             if option == "automation":
                 automation_type = detailed_costs.get('automation_type', 'T1')
-                option_name = f"Автоматизация Bansbach ({automation_type})"
+                automation_manufacturer = detailed_costs.get('automation_manufacturer', 'Bansbach')
+                option_name = f"Автоматизация {automation_manufacturer} ({automation_type})"
             elif option == "motor":
                 option_name = "Электропривод"
             elif option == "sound":
@@ -215,7 +224,8 @@ def generate_csv(results):
     for option, cost in additional_options.items():
         if option == "automation":
             automation_type = detailed_costs.get('automation_type', 'T1')
-            output.write(f"Автоматизация Bansbach ({automation_type}): {cost} €\n")
+            automation_manufacturer = detailed_costs.get('automation_manufacturer', 'Bansbach')
+            output.write(f"Автоматизация {automation_manufacturer} ({automation_type}): {cost} €\n")
             
             # Если есть сообщение о выбранном приводе, добавляем его
             automation_message = detailed_costs.get('automation_message', '')
