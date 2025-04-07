@@ -135,7 +135,47 @@ def calculate_pergola_cost(dimensions, options):
         length_m = length_mm / 1000
         
         # Получаем базовую цену перголы
+        # Сохраняем исходные размеры для проверки корректировки размеров из прайс-листа
+        original_width_m, original_length_m = width_m, length_m
+        
         base_price = get_base_price(pergola_type, lamella_type, width_m, length_m)
+        
+        # Получаем скорректированные размеры для проверки изменений
+        from utils.price_loader import find_nearest_dimensions, price_tables, PERGOLA_PRICE_FILES
+        
+        # Определяем файл с ценами
+        price_file = None
+        if lamella_type in PERGOLA_PRICE_FILES:
+            price_file = PERGOLA_PRICE_FILES[lamella_type]
+        elif pergola_type in PERGOLA_PRICE_FILES:
+            price_file = PERGOLA_PRICE_FILES[pergola_type]
+        
+        # Проверяем изменение размеров для соответствия прайс-листу
+        if price_file and price_file in price_tables:
+            price_dict = price_tables[price_file]
+            adjusted_width_m, adjusted_length_m = find_nearest_dimensions(price_dict, width_m, length_m)
+            
+            # Если размеры были скорректированы для соответствия прайс-листу
+            if (abs(adjusted_width_m - original_width_m) > 0.01 or 
+                abs(adjusted_length_m - original_length_m) > 0.01):
+                
+                # Добавляем информацию о корректировке размеров
+                price_correction_message = (
+                    f"Расчет произведен по размерам {adjusted_width_m:.1f}×{adjusted_length_m:.1f} м "
+                    f"в соответствии с прайс-листом (ближайшее большее значение)"
+                )
+                
+                # Обновляем или добавляем сообщение о корректировке
+                if correction_message:
+                    correction_message = f"{correction_message}. {price_correction_message}"
+                else:
+                    correction_message = price_correction_message
+                
+                logger.info(price_correction_message)
+                
+                # Обновляем размеры в соответствии с прайс-листом
+                width_m, length_m = adjusted_width_m, adjusted_length_m
+                width_mm, length_mm = width_m * 1000, length_m * 1000
         
         if base_price is None:
             logger.error(f"Не удалось найти базовую цену для {pergola_type}/{lamella_type} ({width_m}x{length_m})")

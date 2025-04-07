@@ -129,7 +129,7 @@ def get_base_price(pergola_type, lamella_type, width_m, length_m):
 
 def find_nearest_dimensions(price_dict, width_m, length_m):
     """
-    Находит ближайшие стандартные размеры в таблице цен
+    Находит ближайшие большие стандартные размеры в таблице цен
     
     Args:
         price_dict (dict): Словарь с ценами
@@ -137,7 +137,7 @@ def find_nearest_dimensions(price_dict, width_m, length_m):
         length_m (float): Заданная длина в метрах
         
     Returns:
-        tuple: (ближайшая ширина, ближайшая длина)
+        tuple: (ближайшая большая ширина, ближайшая большая длина)
     """
     if not price_dict:
         return width_m, length_m
@@ -146,11 +146,16 @@ def find_nearest_dimensions(price_dict, width_m, length_m):
     widths = sorted(set([dim[0] for dim in price_dict.keys()]))
     lengths = sorted(set([dim[1] for dim in price_dict.keys()]))
     
-    # Находим ближайшую ширину
-    nearest_width = min(widths, key=lambda x: abs(x - width_m))
+    # Находим ближайшую большую ширину
+    filtered_widths = [w for w in widths if w >= width_m]
+    nearest_width = min(filtered_widths) if filtered_widths else max(widths)
     
-    # Находим ближайшую длину
-    nearest_length = min(lengths, key=lambda x: abs(x - length_m))
+    # Находим ближайшую большую длину
+    filtered_lengths = [l for l in lengths if l >= length_m]
+    nearest_length = min(filtered_lengths) if filtered_lengths else max(lengths)
+    
+    # Логируем информацию о подборе размеров
+    logger.info(f"Подбор размеров: запрос {width_m}x{length_m}, выбрано {nearest_width}x{nearest_length}")
     
     return nearest_width, nearest_length
 
