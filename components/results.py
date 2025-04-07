@@ -73,7 +73,16 @@ def render_results(results):
         # Добавляем стоимость дополнительных опций
         additional_options = detailed_costs.get('additional_options', {})
         for option, cost in additional_options.items():
-            cost_items.append([f"Опция: {option}", cost, "€"])
+            if option == "automation":
+                automation_type = detailed_costs.get('automation_type', 'T1')
+                option_name = f"Автоматизация Bansbach ({automation_type})"
+            elif option == "motor":
+                option_name = "Электропривод"
+            elif option == "sound":
+                option_name = "Аудиосистема"
+            else:
+                option_name = f"Опция: {option}"
+            cost_items.append([option_name, cost, "€"])
         
         # Общая стоимость
         cost_items.append(["Итого", results['total_cost'], "€"])
@@ -142,7 +151,20 @@ def generate_csv(results):
     # Стоимость дополнительных опций
     additional_options = detailed_costs.get('additional_options', {})
     for option, cost in additional_options.items():
-        output.write(f"Опция {option}: {cost} €\n")
+        if option == "automation":
+            automation_type = detailed_costs.get('automation_type', 'T1')
+            output.write(f"Автоматизация Bansbach ({automation_type}): {cost} €\n")
+            
+            # Если есть сообщение о выбранном приводе, добавляем его
+            automation_message = detailed_costs.get('automation_message', '')
+            if automation_message:
+                output.write(f"Примечание: {automation_message}\n")
+        elif option == "motor":
+            output.write(f"Электропривод: {cost} €\n")
+        elif option == "sound":
+            output.write(f"Аудиосистема: {cost} €\n")
+        else:
+            output.write(f"Опция {option}: {cost} €\n")
     
     # Общая стоимость
     output.write(f"\nИтоговая стоимость: {results['total_cost']} €\n")

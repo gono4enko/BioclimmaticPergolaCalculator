@@ -12,7 +12,7 @@ PERGOLA_TYPES = {
         "default_lamella": "B500-20NEW",
         "available_lighting": ["none", "strip", "spot", "rgb"],
         "default_lighting": "none",
-        "additional_options": ["motor", "sound"]
+        "additional_options": ["automation", "motor", "sound"]
     },
     "B700NEW": {
         "name": "B700NEW - с поворотно-сдвижными ламелями",
@@ -21,7 +21,7 @@ PERGOLA_TYPES = {
         "default_lamella": "B700-20NEW",
         "available_lighting": ["none", "strip", "spot", "rgb"],
         "default_lighting": "none",
-        "additional_options": ["motor", "sound"]
+        "additional_options": ["automation", "motor", "sound"]
     },
     "B600": {
         "name": "B600 - со стационарной крышей из PIR панелей",
@@ -30,7 +30,7 @@ PERGOLA_TYPES = {
         "default_lamella": "B600",
         "available_lighting": ["none", "strip", "spot"],
         "default_lighting": "none",
-        "additional_options": ["sound"]
+        "additional_options": ["automation", "sound"]
     }
 }
 
@@ -123,6 +123,10 @@ LIGHTING_TYPES = {
 
 # Описания для дополнительных опций
 ADDITIONAL_OPTIONS = {
+    "automation": {
+        "name": "Автоматизация Bansbach",
+        "description": "Профессиональная система автоматизации от немецкого производителя Bansbach для плавного управления крышей перголы. Включает в себя линейный электропривод, блок управления и ДУ."
+    },
     "motor": {
         "name": "Электропривод",
         "description": "Мощный и тихий электропривод для плавного управления ламелями. Обеспечивает долгий срок службы механизма."

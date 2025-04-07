@@ -6,7 +6,8 @@ import math
 from utils.price_loader import get_base_price
 from config.price_data import (
     get_option_price, LIGHTING_PRICES, ADDITIONAL_OPTIONS_PRICES,
-    ADDITIONAL_COLUMNS_PRICES, ADDITIONAL_COLUMNS_THRESHOLDS
+    ADDITIONAL_COLUMNS_PRICES, ADDITIONAL_COLUMNS_THRESHOLDS,
+    BANSBACH_PRICES, BANSBACH_TANDEM_CONDITIONS
 )
 from utils.validation import validate_pergola_config
 from config.pergola_types import LAMELLA_TYPES
@@ -89,6 +90,44 @@ def calculate_additional_columns(pergola_type, lamella_type, length_m, width_m):
     columns_cost = ADDITIONAL_COLUMNS_PRICES.get(modules, 0)
     
     return True, columns_cost, modules
+
+def determine_bansbach_drive_type(pergola_type, width_m, length_m, modules_count):
+    """
+    Определяет тип привода Bansbach для перголы в зависимости от ее размеров
+    
+    Args:
+        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600PIR)
+        width_m (float): Ширина перголы в метрах
+        length_m (float): Длина (вынос) перголы в метрах
+        modules_count (int): Количество модулей перголы
+        
+    Returns:
+        tuple: (тип привода ('T1' или 'Tandem'), стоимость привода, сообщение)
+    """
+    # Проверяем, подходит ли размер перголы для использования Tandem привода
+    # По умолчанию всегда используется привод T1
+    drive_type = "T1"
+    drive_cost = BANSBACH_PRICES["T1"]
+    message = "Для автоматизации предлагается стандартный привод Bansbach T1"
+    
+    # Если перголы B500 или B700, проверяем условия для использования Tandem
+    if ("B500" in pergola_type or "B700" in pergola_type) and 1 <= modules_count <= 3:
+        # Получаем список условий для данного количества модулей
+        conditions = BANSBACH_TANDEM_CONDITIONS.get(modules_count, [])
+        
+        # Проверяем, выполняется ли хотя бы одно условие
+        for width_threshold, length_threshold in conditions:
+            if width_m > width_threshold and length_m > length_threshold:
+                drive_type = "Tandem"
+                drive_cost = BANSBACH_PRICES["Tandem"]
+                message = (
+                    f"Для автоматизации перголы размером {width_m:.3f}x{length_m:.3f} м "
+                    f"({modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}) "
+                    f"требуется усиленный привод Bansbach Tandem"
+                )
+                break
+    
+    return drive_type, drive_cost, message
 
 def adjust_length_to_lamella_count(length_m, lamella_type):
     """
@@ -288,7 +327,25 @@ def calculate_pergola_cost(dimensions, options):
         
         # Добавляем стоимость дополнительных опций
         for option in additional_options:
-            if option in ADDITIONAL_OPTIONS_PRICES:
+            if option == "automation":
+                # Определяем тип привода Bansbach в зависимости от размеров перголы
+                drive_type, drive_cost, drive_message = determine_bansbach_drive_type(
+                    pergola_type, width_m, length_m, modules_count if need_additional_columns else 1
+                )
+                
+                # Сохраняем стоимость и сообщение о выбранном приводе
+                detailed_costs['additional_options'][option] = drive_cost
+                detailed_costs['automation_type'] = drive_type
+                detailed_costs['automation_message'] = drive_message
+                
+                # Добавляем информацию о выбранном приводе в сообщение о корректировке
+                if correction_message:
+                    correction_message = f"{correction_message}. {drive_message}"
+                else:
+                    correction_message = drive_message
+                
+                logger.info(drive_message)
+            elif option in ADDITIONAL_OPTIONS_PRICES:
                 option_price = ADDITIONAL_OPTIONS_PRICES[option]
                 
                 # Рассчитываем стоимость опции в зависимости от размеров перголы
