@@ -12,7 +12,7 @@ PERGOLA_TYPES = {
         "default_lamella": "B500-20NEW",
         "available_lighting": ["none", "strip", "spot", "rgb"],
         "default_lighting": "none",
-        "additional_options": ["sensors", "remote", "motor", "heater"]
+        "additional_options": ["motor", "sound"]
     },
     "B700NEW": {
         "name": "B700NEW - с поворотно-сдвижными ламелями",
@@ -21,7 +21,7 @@ PERGOLA_TYPES = {
         "default_lamella": "B700-20NEW",
         "available_lighting": ["none", "strip", "spot", "rgb"],
         "default_lighting": "none",
-        "additional_options": ["sensors", "remote", "motor", "heater", "sound"]
+        "additional_options": ["motor", "sound"]
     },
     "B600": {
         "name": "B600 - со стационарной крышей из PIR панелей",
@@ -30,7 +30,7 @@ PERGOLA_TYPES = {
         "default_lamella": "B600",
         "available_lighting": ["none", "strip", "spot"],
         "default_lighting": "none",
-        "additional_options": ["sensors", "remote", "motor"]
+        "additional_options": ["sound"]
     }
 }
 

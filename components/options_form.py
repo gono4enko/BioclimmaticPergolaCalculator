@@ -26,7 +26,7 @@ def render_options_form():
     Returns:
         dict: Словарь с выбранными опциями
     """
-    st.subheader("Опции перголы")
+    st.subheader("Тип перголы")
     
     # Получаем сохраненные значения из состояния сессии, если они есть
     if 'options' not in st.session_state:
@@ -58,22 +58,35 @@ def render_options_form():
         lamella_options = get_lamella_options_for_pergola(pergola_type)
         
         # Выбор типа ламелей
-        lamella_type = st.selectbox(
-            "Тип ламелей:", 
-            options=lamella_options,
-            index=lamella_options.index(st.session_state.options['lamella_type']) if st.session_state.options['lamella_type'] in lamella_options else 0,
-            help="Выберите тип ламелей"
-        )
+        lamella_type = None
+        if pergola_type == "B600":
+            st.warning("Для перголы B600 используются стационарные PIR-панели вместо ламелей")
+            lamella_type = "B600"  # Для перголы B600 используем фиксированный тип ламелей
+        else:
+            from config.pergola_types import LAMELLA_TYPES
+            lamella_type = st.selectbox(
+                "Тип ламелей:", 
+                options=lamella_options,
+                index=lamella_options.index(st.session_state.options['lamella_type']) if st.session_state.options['lamella_type'] in lamella_options else 0,
+                format_func=lambda x: LAMELLA_TYPES[x]['name'] if x in LAMELLA_TYPES else x,
+                help="Выберите тип ламелей"
+            )
+            
+            # Отображаем описание выбранного типа ламелей
+            if lamella_type in LAMELLA_TYPES:
+                st.info(LAMELLA_TYPES[lamella_type]['description'])
         
-        # Шаг ламелей
-        lamella_step = st.slider(
-            "Шаг ламелей (мм):", 
-            min_value=150, 
-            max_value=300, 
-            value=st.session_state.options['lamella_step'],
-            step=10, 
-            help="Шаг между ламелями в миллиметрах"
-        )
+        # Шаг ламелей (только для пергол с поворотными ламелями)
+        lamella_step = 200  # значение по умолчанию
+        if pergola_type != "B600":
+            lamella_step = st.slider(
+                "Шаг ламелей (мм):", 
+                min_value=150, 
+                max_value=300, 
+                value=st.session_state.options['lamella_step'],
+                step=10, 
+                help="Расстояние между ламелями в миллиметрах"
+            )
         
         # Разделим форму на две колонки для более компактного отображения
         col1, col2 = st.columns(2)
