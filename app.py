@@ -9,6 +9,7 @@ from components.header import render_header
 from components.dimensions_form import render_dimensions_form
 from components.options_form import render_options_form
 from components.results import render_results
+from components.specification import render_specification
 
 # Настраиваем логирование
 logger = setup_logger()
@@ -70,8 +71,9 @@ def main():
                     # Выполняем расчет
                     results = perform_calculation(dimensions, options)
                     
-                    # Сохраняем результаты в состоянии сессии
+                    # Сохраняем результаты и опции в состоянии сессии
                     st.session_state.results = results
+                    st.session_state.options = options
                     
                     # Логируем действие пользователя
                     log_user_action("Выполнен расчет стоимости", {
@@ -84,8 +86,15 @@ def main():
     
     # В правой колонке отображаем результаты расчета
     with col2:
-        if 'results' in st.session_state:
-            render_results(st.session_state.results)
+        if 'results' in st.session_state and 'options' in st.session_state:
+            # Создаем вкладки для разных представлений результатов
+            tab1, tab2 = st.tabs(["Результаты расчета", "Спецификация перголы"])
+            
+            with tab1:
+                render_results(st.session_state.results)
+            
+            with tab2:
+                render_specification(st.session_state.results, st.session_state.options)
         else:
             st.info("Введите данные и нажмите 'Рассчитать стоимость' для получения результата")
     
