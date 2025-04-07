@@ -8,7 +8,8 @@ from config.price_data import (
     get_option_price, LIGHTING_PRICES, ADDITIONAL_OPTIONS_PRICES,
     ADDITIONAL_COLUMNS_PRICES, ADDITIONAL_COLUMNS_THRESHOLDS,
     BANSBACH_PRICES, BANSBACH_TANDEM_CONDITIONS,
-    SOMFY_PRICES, SOMFY_TANDEM_CONDITIONS
+    SOMFY_PRICES, SOMFY_TANDEM_CONDITIONS,
+    GUTTER_INSERT_THRESHOLD, GUTTER_INSERT_PRICE_PER_METER, GUTTER_COUNT_BY_MODULES
 )
 from utils.validation import validate_pergola_config
 from config.pergola_types import LAMELLA_TYPES, LIGHTING_TYPES
@@ -129,6 +130,43 @@ def determine_bansbach_drive_type(pergola_type, width_m, length_m, modules_count
                 break
     
     return drive_type, drive_cost, message
+
+def calculate_gutter_insert_cost(length_m, modules_count):
+    """
+    Рассчитывает стоимость вставки для усиления лотка для пергол с выносом более 6.5 метров
+    
+    Args:
+        length_m (float): Длина (вынос) перголы в метрах (скорректированная с учетом ламелей)
+        modules_count (int): Количество модулей перголы
+        
+    Returns:
+        tuple: (нужна ли вставка (bool), стоимость вставки (float), сообщение)
+    """
+    # Проверяем, нужна ли вставка для усиления лотка
+    if length_m <= GUTTER_INSERT_THRESHOLD:
+        return False, 0, None
+    
+    # Определяем количество лотков в зависимости от количества модулей
+    gutter_count = GUTTER_COUNT_BY_MODULES.get(modules_count, 2)
+    
+    # Вычисляем общую длину лотков
+    total_gutter_length = length_m * gutter_count
+    
+    # Вычисляем стоимость вставки
+    insert_cost = total_gutter_length * GUTTER_INSERT_PRICE_PER_METER
+    
+    # Округляем стоимость до 2 знаков после запятой
+    insert_cost = round(insert_cost, 2)
+    
+    # Формируем сообщение
+    message = (
+        f"Для перголы с выносом {length_m:.3f} м требуется вставка для усиления лотка. "
+        f"Общая длина лотков: {total_gutter_length:.2f} м "
+        f"({gutter_count} лотка × {length_m:.3f} м). "
+        f"Стоимость усиления: {insert_cost} €"
+    )
+    
+    return True, insert_cost, message
 
 def determine_somfy_drive_type(pergola_type, width_m, length_m, modules_count):
     """
@@ -336,6 +374,7 @@ def calculate_pergola_cost(dimensions, options):
             'base_price': base_price,
             'lighting': 0,
             'additional_columns': 0,
+            'gutter_insert': 0,
             'additional_options': {}
         }
         
@@ -362,6 +401,31 @@ def calculate_pergola_cost(dimensions, options):
                 correction_message = columns_message
                 
             logger.info(columns_message)
+        
+        # Если колонны не нужны, определяем количество модулей по ширине
+        if not need_additional_columns:
+            modules_count = 1
+            if width_m > 7:
+                modules_count = 3
+            elif width_m > 4:
+                modules_count = 2
+                
+        # Проверяем необходимость добавления вставки для усиления лотка
+        need_gutter_insert, insert_cost, insert_message = calculate_gutter_insert_cost(
+            length_m, modules_count
+        )
+        
+        # Если нужна вставка для усиления лотка, добавляем её стоимость
+        if need_gutter_insert:
+            detailed_costs['gutter_insert'] = insert_cost
+            
+            # Добавляем сообщение о вставке к общему сообщению о корректировке
+            if correction_message:
+                correction_message = f"{correction_message}. {insert_message}"
+            else:
+                correction_message = insert_message
+                
+            logger.info(insert_message)
         
         # Добавляем стоимость освещения
         if lighting_type != 'none' and lighting_type in LIGHTING_PRICES:
@@ -518,6 +582,7 @@ def calculate_pergola_cost(dimensions, options):
         total_cost = base_price
         total_cost += detailed_costs['lighting']
         total_cost += detailed_costs['additional_columns']
+        total_cost += detailed_costs['gutter_insert']
         total_cost += sum(detailed_costs['additional_options'].values())
         
         # Формируем результат

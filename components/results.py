@@ -82,6 +82,11 @@ def render_results(results):
         columns_cost = detailed_costs.get('additional_columns', 0)
         if columns_cost > 0:
             cost_items.append(["Дополнительные колонны", columns_cost, "€"])
+            
+        # Добавляем стоимость вставки для усиления лотка
+        gutter_insert_cost = detailed_costs.get('gutter_insert', 0)
+        if gutter_insert_cost > 0:
+            cost_items.append(["Вставка для усиления лотка", gutter_insert_cost, "€"])
         
         # Добавляем стоимость освещения и детали
         lighting_cost = detailed_costs.get('lighting', 0)
@@ -187,6 +192,11 @@ def generate_csv(results):
     columns_cost = detailed_costs.get('additional_columns', 0)
     if columns_cost > 0:
         output.write(f"Дополнительные колонны: {columns_cost} €\n")
+        
+    # Стоимость вставки для усиления лотка
+    gutter_insert_cost = detailed_costs.get('gutter_insert', 0)
+    if gutter_insert_cost > 0:
+        output.write(f"Вставка для усиления лотка: {gutter_insert_cost} €\n")
     
     # Стоимость освещения и детали
     lighting_cost = detailed_costs.get('lighting', 0)
