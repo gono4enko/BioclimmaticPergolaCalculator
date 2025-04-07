@@ -64,12 +64,16 @@ def load_price_tables():
                     for j, width in enumerate(width_values):
                         # Преобразование строки в число с плавающей точкой
                         try:
+                            # Конвертируем из строк в числа с плавающей точкой
                             length_float = float(length.replace(',', '.'))
                             width_float = float(width.replace(',', '.'))
                             price_value = float(price_values[i][j])
                             
                             # Сохраняем цену по ключу (ширина, длина)
                             price_dict[(width_float, length_float)] = price_value
+                            
+                            # Дополнительно логируем загруженные размеры для отладки
+                            logger.debug(f"Загружена цена {price_value} для размеров {width_float}x{length_float}")
                         except (ValueError, IndexError) as e:
                             logger.warning(f"Ошибка обработки цены в файле {file_name}: {width}x{length}, {e}")
                 
@@ -146,13 +150,37 @@ def find_nearest_dimensions(price_dict, width_m, length_m):
     widths = sorted(set([dim[0] for dim in price_dict.keys()]))
     lengths = sorted(set([dim[1] for dim in price_dict.keys()]))
     
-    # Находим ближайшую большую ширину
-    filtered_widths = [w for w in widths if w >= width_m]
-    nearest_width = min(filtered_widths) if filtered_widths else max(widths)
+    # Выводим доступные значения для отладки
+    logger.debug(f"Доступные значения ширины: {widths}")
+    logger.debug(f"Доступные значения длины: {lengths}")
     
-    # Находим ближайшую большую длину
-    filtered_lengths = [l for l in lengths if l >= length_m]
-    nearest_length = min(filtered_lengths) if filtered_lengths else max(lengths)
+    # Проверяем, есть ли точное совпадение по ширине
+    if width_m in widths:
+        nearest_width = width_m
+        logger.debug(f"Найдено точное совпадение по ширине: {width_m}")
+    else:
+        # Находим ближайшую большую ширину
+        filtered_widths = [w for w in widths if w >= width_m]
+        if filtered_widths:
+            nearest_width = min(filtered_widths)
+            logger.debug(f"Выбрана ближайшая большая ширина: {nearest_width}")
+        else:
+            nearest_width = max(widths)
+            logger.debug(f"Выбрана максимальная ширина: {nearest_width}")
+    
+    # Проверяем, есть ли точное совпадение по длине
+    if length_m in lengths:
+        nearest_length = length_m
+        logger.debug(f"Найдено точное совпадение по длине: {length_m}")
+    else:
+        # Находим ближайшую большую длину
+        filtered_lengths = [l for l in lengths if l >= length_m]
+        if filtered_lengths:
+            nearest_length = min(filtered_lengths)
+            logger.debug(f"Выбрана ближайшая большая длина: {nearest_length}")
+        else:
+            nearest_length = max(lengths)
+            logger.debug(f"Выбрана максимальная длина: {nearest_length}")
     
     # Логируем информацию о подборе размеров
     logger.info(f"Подбор размеров: запрос {width_m}x{length_m}, выбрано {nearest_width}x{nearest_length}")
