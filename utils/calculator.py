@@ -2,27 +2,17 @@
 Модуль для расчета стоимости пергол на основе введенных данных
 """
 import logging
-from config.pergola_types import (
-    PERGOLA_TYPES, 
-    LAMELLA_TYPES, 
-    INSTALLATION_TYPES,
-    LIGHTING_TYPES,
-    ADDITIONAL_SYSTEMS
-)
-from config.price_data import (
-    BASE_PRICE_PER_M2,
-    COMPONENT_PRICES,
-    AREA_DISCOUNTS,
-    COMPLEXITY_FACTORS,
-    AUTOMATION_PRICE,
-    DELIVERY_FACTORS
-)
+from utils.price_loader import get_base_price
+from config.price_data import get_option_price, LIGHTING_PRICES, ADDITIONAL_OPTIONS_PRICES
+from utils.validation import validate_pergola_config
 
 # Получаем логгер
 logger = logging.getLogger(__name__)
 
 def calculate_lamella_count(length, lamella_step):
     """Расчет количества ламелей на основе длины и шага"""
+    if lamella_step <= 0:
+        return 0
     return round(length / lamella_step)
 
 def calculate_pergola_cost(dimensions, options):
@@ -37,160 +27,104 @@ def calculate_pergola_cost(dimensions, options):
         dict: Словарь с результатами расчетов
     """
     try:
-        # Извлекаем данные из входных словарей
-        width = dimensions['width']  # ширина в мм
-        length = dimensions['length']  # длина в мм
-        height = dimensions['height']  # высота в мм
+        # Извлекаем данные из входных параметров
+        width_mm = dimensions.get('width', 0)
+        length_mm = dimensions.get('length', 0)
+        height_mm = dimensions.get('height', 0)
         
-        pergola_type = options['pergola_type']
-        lamella_type = options['lamella_type']
-        installation_type = options['installation_type']
-        lighting_type = options['lighting_type']
-        control_type = options['control_type']
-        color_type = options['color_type']
+        pergola_type = options.get('pergola_type', '')
+        lamella_type = options.get('lamella_type', '')
+        lamella_step = options.get('lamella_step', 200)  # По умолчанию шаг ламелей 200мм
+        lighting_type = options.get('lighting_type', 'none')
+        additional_options = options.get('additional_options', [])
         
-        selected_additional_systems = options.get('additional_systems', [])
+        # Валидация конфигурации перголы
+        validation_error = validate_pergola_config(pergola_type, lamella_type, width_mm, length_mm)
+        if validation_error:
+            logger.error(f"Ошибка валидации: {validation_error}")
+            return {
+                'error': validation_error,
+                'total_cost': 0,
+                'detailed_costs': {}
+            }
         
-        # Конвертируем размеры в метры для расчетов
-        width_m = width / 1000
-        length_m = length / 1000
-        height_m = height / 1000
+        # Конвертируем мм в метры для расчета цены
+        width_m = width_mm / 1000
+        length_m = length_mm / 1000
         
-        # Рассчитываем базовую площадь
-        area = width_m * length_m
-        perimeter = 2 * (width_m + length_m)
+        # Получаем базовую цену перголы
+        base_price = get_base_price(pergola_type, lamella_type, width_m, length_m)
         
-        # Получаем данные о типе перголы и ламелей
-        pergola_data = PERGOLA_TYPES[pergola_type]
-        lamella_data = LAMELLA_TYPES[lamella_type]
-        installation_data = INSTALLATION_TYPES[installation_type]
+        if base_price is None:
+            logger.error(f"Не удалось найти базовую цену для {pergola_type}/{lamella_type} ({width_m}x{length_m})")
+            return {
+                'error': f"Не удалось найти базовую цену для выбранной конфигурации перголы",
+                'total_cost': 0,
+                'detailed_costs': {}
+            }
         
-        # 1. Расчет базовой стоимости конструкции
-        base_price = area * BASE_PRICE_PER_M2 * pergola_data['base_price_factor']
+        # Рассчитываем детальные расходы
+        detailed_costs = {
+            'base_price': base_price,
+            'lighting': 0,
+            'additional_options': {}
+        }
         
-        # 2. Расчет стоимости ламелей
-        lamella_count = calculate_lamella_count(length, lamella_data['step'])
-        single_lamella_price = lamella_data['price_factor'] * width_m * lamella_data['mass'] * 40  # 40 евро за кг
-        lamellas_price = lamella_count * single_lamella_price
-        
-        # 3. Расчет стоимости колонн
-        column_count = 4 if installation_type == "standalone" else 2
-        columns_price = column_count * COMPONENT_PRICES['column'] * (height_m / 3)  # Цена колонны зависит от высоты
-        
-        # 4. Расчет стоимости управления
-        control_price = COMPONENT_PRICES[control_type]
-        
-        # 5. Расчет стоимости освещения
-        lighting_data = LIGHTING_TYPES[lighting_type]
-        lighting_price = lighting_data.get('price_per_meter', 0) * perimeter if lighting_type != 'none' else 0
-        
-        # 6. Расчет стоимости дополнительных систем
-        additional_systems_price = 0
-        additional_systems_details = []
-        
-        for system in selected_additional_systems:
-            if system in ADDITIONAL_SYSTEMS:
-                system_data = ADDITIONAL_SYSTEMS[system]
-                system_price = system_data['price_per_m2'] * area
-                additional_systems_price += system_price
+        # Добавляем стоимость освещения
+        if lighting_type != 'none' and lighting_type in LIGHTING_PRICES:
+            lighting_price = LIGHTING_PRICES[lighting_type]
+            
+            # Рассчитываем стоимость освещения в зависимости от размеров перголы
+            if callable(lighting_price):
+                lighting_cost = lighting_price(width_mm, length_mm)
+            else:
+                lighting_cost = lighting_price
                 
-                additional_systems_details.append({
-                    'name': system_data['name'],
-                    'area': round(area, 2),
-                    'price_per_m2': system_data['price_per_m2'],
-                    'total_price': round(system_price, 2)
-                })
+            detailed_costs['lighting'] = lighting_cost
         
-        # 7. Расчет стоимости окраски
-        color_price = COMPONENT_PRICES[color_type]
+        # Добавляем стоимость дополнительных опций
+        for option in additional_options:
+            if option in ADDITIONAL_OPTIONS_PRICES:
+                option_price = ADDITIONAL_OPTIONS_PRICES[option]
+                
+                # Рассчитываем стоимость опции в зависимости от размеров перголы
+                if callable(option_price):
+                    option_cost = option_price(width_mm, length_mm)
+                else:
+                    option_cost = option_price
+                    
+                detailed_costs['additional_options'][option] = option_cost
         
-        # 8. Применение коэффициента типа установки
-        installation_factor = installation_data['price_factor']
+        # Вычисляем общую стоимость
+        total_cost = base_price
+        total_cost += detailed_costs['lighting']
+        total_cost += sum(detailed_costs['additional_options'].values())
         
-        # 9. Применение скидки на площадь
-        area_discount = 0
-        for discount_tier in AREA_DISCOUNTS:
-            if discount_tier['min_area'] <= area <= discount_tier['max_area']:
-                area_discount = discount_tier['discount']
-                break
-        
-        # 10. Определение сложности конфигурации
-        complexity = "standard"
-        if len(selected_additional_systems) > 0 or lighting_type != 'none':
-            complexity = "complex"
-        if control_type == 'smart_control' or color_type == 'custom_color':
-            complexity = "custom"
-            
-        complexity_factor = COMPLEXITY_FACTORS[complexity]
-        
-        # 11. Расчет стоимости автоматизации
-        automation_category = "small"
-        if 20 <= area < 40:
-            automation_category = "medium"
-        elif 40 <= area < 80:
-            automation_category = "large"
-        elif area >= 80:
-            automation_category = "extra_large"
-            
-        automation_price = AUTOMATION_PRICE[automation_category] if control_type != 'manual_control' else 0
-        
-        # 12. Расчет итоговой стоимости
-        subtotal = (base_price + lamellas_price + columns_price + control_price + 
-                    lighting_price + additional_systems_price + color_price) * installation_factor * complexity_factor
-        
-        discount_amount = subtotal * area_discount
-        total_price_before_automation = subtotal - discount_amount
-        total_cost = total_price_before_automation + automation_price
+        # Рассчитываем количество ламелей
+        lamella_count = calculate_lamella_count(length_mm, lamella_step)
         
         # Формируем результат
         result = {
+            'total_cost': round(total_cost, 2),
+            'detailed_costs': detailed_costs,
             'dimensions': {
-                'width': width,
-                'length': length,
-                'height': height,
-                'area': round(area, 2),
-                'perimeter': round(perimeter, 2)
+                'width_mm': width_mm,
+                'width_m': width_m,
+                'length_mm': length_mm,
+                'length_m': length_m,
+                'height_mm': height_mm,
+                'height_m': height_mm / 1000
             },
-            'selected_options': {
-                'pergola_type': pergola_data['name'],
-                'lamella_type': lamella_data['name'],
-                'installation_type': installation_data['name'],
-                'lighting_type': LIGHTING_TYPES[lighting_type]['name'],
-                'control_type': control_type.replace('_', ' ').title(),
-                'color_type': color_type.replace('_', ' ').title(),
-                'additional_systems': selected_additional_systems
-            },
-            'cost_breakdown': {
-                'base_structure': round(base_price, 2),
-                'lamellas': {
-                    'count': lamella_count,
-                    'price_per_unit': round(single_lamella_price, 2),
-                    'total_price': round(lamellas_price, 2)
-                },
-                'columns': {
-                    'count': column_count,
-                    'price_per_unit': round(COMPONENT_PRICES['column'] * (height_m / 3), 2),
-                    'total_price': round(columns_price, 2)
-                },
-                'control': round(control_price, 2),
-                'lighting': round(lighting_price, 2),
-                'additional_systems': {
-                    'total_price': round(additional_systems_price, 2),
-                    'details': additional_systems_details
-                },
-                'color': round(color_price, 2),
-                'installation_factor': installation_factor,
-                'complexity_factor': complexity_factor,
-                'area_discount': area_discount,
-                'discount_amount': round(discount_amount, 2),
-                'automation': round(automation_price, 2)
-            },
-            'total_cost': round(total_cost, 2)
+            'lamella_count': lamella_count
         }
         
-        logger.info(f"Успешный расчет стоимости перголы: {result['total_cost']} евро")
+        logger.info(f"Расчет выполнен успешно: {result['total_cost']} евро")
         return result
-        
+    
     except Exception as e:
-        logger.error(f"Ошибка при расчете стоимости перголы: {str(e)}", exc_info=True)
-        raise
+        logger.error(f"Ошибка при расчете стоимости: {str(e)}", exc_info=True)
+        return {
+            'error': f"Произошла ошибка при расчете: {str(e)}",
+            'total_cost': 0,
+            'detailed_costs': {}
+        }

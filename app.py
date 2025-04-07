@@ -1,115 +1,108 @@
-import streamlit as st
-import logging
+"""
+Калькулятор стоимости пергол с поддержкой различных опций и материалов.
+"""
 import os
-from datetime import datetime
-
-from utils.logger import setup_logger
+import streamlit as st
+from utils.logger import setup_logger, log_user_action, log_calculation
 from utils.calculator import calculate_pergola_cost
-from utils.validation import validate_dimensions
-
 from components.header import render_header
 from components.dimensions_form import render_dimensions_form
 from components.options_form import render_options_form
 from components.results import render_results
 
-# Настройка логирования
-log_dir = "logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-log_file = f"{log_dir}/pergola_calculator_{datetime.now().strftime('%Y%m%d')}.log"
-logger = setup_logger(log_file)
-
-# Настройка страницы
-st.set_page_config(
-    page_title="Калькулятор пергол Decolife",
-    page_icon="🏠",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
-# Инициализация состояния сессии при первом запуске
-if 'calculation_done' not in st.session_state:
-    st.session_state.calculation_done = False
-    
-if 'calculation_results' not in st.session_state:
-    st.session_state.calculation_results = None
-    
-if 'error_message' not in st.session_state:
-    st.session_state.error_message = None
-
-if 'log_info' not in st.session_state:
-    st.session_state.log_info = []
+# Настраиваем логирование
+logger = setup_logger()
 
 def perform_calculation(dimensions, options):
     """Выполнить расчет стоимости перголы"""
     try:
-        logger.info(f"Начат расчет: Размеры {dimensions}, Опции {options}")
+        # Логируем входные данные
+        log_calculation(dimensions, options)
         
-        # Валидация данных
-        validation_error = validate_dimensions(dimensions)
-        if validation_error:
-            st.session_state.error_message = validation_error
-            st.session_state.calculation_done = False
-            logger.warning(f"Ошибка валидации: {validation_error}")
-            return
-        
-        # Расчет стоимости
+        # Выполняем расчет
         results = calculate_pergola_cost(dimensions, options)
         
-        # Сохранение результатов
-        st.session_state.calculation_results = results
-        st.session_state.calculation_done = True
-        st.session_state.error_message = None
+        # Логируем результаты
+        if 'error' in results:
+            log_calculation(dimensions, options, error=results['error'])
+        else:
+            log_calculation(dimensions, options, results)
         
-        # Логирование успешного расчета
-        log_entry = f"Расчет выполнен для {options['pergola_type']}, размеры: {dimensions['width']}x{dimensions['length']}x{dimensions['height']}, итоговая стоимость: {results['total_cost']} евро"
-        st.session_state.log_info.append(log_entry)
-        logger.info(log_entry)
-        
+        return results
+    
     except Exception as e:
         error_msg = f"Ошибка при расчете: {str(e)}"
-        st.session_state.error_message = error_msg
-        st.session_state.calculation_done = False
         logger.error(error_msg, exc_info=True)
+        return {"error": error_msg}
 
 def main():
     """Основная функция приложения"""
-    try:
-        # Отрисовка заголовка
-        render_header()
-        
-        # Форма размеров
+    # Настраиваем страницу
+    st.set_page_config(
+        page_title="Калькулятор пергол DecoLife",
+        page_icon="🏠",
+        layout="wide"
+    )
+    
+    # Отображаем заголовок
+    render_header()
+    
+    # Делим экран на две колонки
+    col1, col2 = st.columns([1, 1])
+    
+    # В левой колонке отображаем формы ввода данных
+    with col1:
+        # Форма для ввода размеров
         dimensions = render_dimensions_form()
         
-        # Форма опций
+        # Форма для выбора опций
         options = render_options_form()
         
-        # Кнопка расчета
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col2:
-            if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
-                perform_calculation(dimensions, options)
-        
-        # Отображение ошибки, если есть
-        if st.session_state.error_message:
-            st.error(st.session_state.error_message)
-        
-        # Отображение результатов, если расчет выполнен
-        if st.session_state.calculation_done and st.session_state.calculation_results:
-            render_results(st.session_state.calculation_results)
-        
-        # Логи действий пользователя (скрытый раздел для разработчиков)
-        with st.expander("Журнал действий", expanded=False):
-            for idx, log in enumerate(reversed(st.session_state.log_info)):
-                st.text(f"{idx+1}. {log}")
-            
-            if st.button("Очистить журнал"):
-                st.session_state.log_info = []
-                st.rerun()
-                
-    except Exception as e:
-        logger.critical(f"Критическая ошибка в приложении: {str(e)}", exc_info=True)
-        st.error(f"Произошла непредвиденная ошибка. Пожалуйста, обратитесь к разработчику.")
+        # Кнопка для расчета
+        if st.button("Рассчитать стоимость", type="primary"):
+            with st.spinner("Выполняется расчет..."):
+                # Проверяем, что у нас есть данные для расчета
+                if dimensions and options:
+                    # Сохраняем предыдущие результаты, если они есть
+                    if 'results' in st.session_state:
+                        st.session_state.prev_results = st.session_state.results
+                    
+                    # Выполняем расчет
+                    results = perform_calculation(dimensions, options)
+                    
+                    # Сохраняем результаты в состоянии сессии
+                    st.session_state.results = results
+                    
+                    # Логируем действие пользователя
+                    log_user_action("Выполнен расчет стоимости", {
+                        "dimensions": dimensions,
+                        "options": options
+                    })
+                    
+                    # Перезагружаем страницу для отображения результатов
+                    st.rerun()
+    
+    # В правой колонке отображаем результаты расчета
+    with col2:
+        if 'results' in st.session_state:
+            render_results(st.session_state.results)
+        else:
+            st.info("Введите данные и нажмите 'Рассчитать стоимость' для получения результата")
+    
+    # Добавляем информацию о версии внизу страницы
+    st.markdown("---")
+    st.caption("© 2025 DecoLife | Калькулятор пергол v1.0")
+    
+    # Логируем посещение страницы
+    if 'page_viewed' not in st.session_state:
+        log_user_action("Посещение страницы калькулятора")
+        st.session_state.page_viewed = True
 
 if __name__ == "__main__":
+    # Создаем директории, если они не существуют
+    os.makedirs("logs", exist_ok=True)
+    os.makedirs("data", exist_ok=True)
+    os.makedirs("data/price_tables", exist_ok=True)
+    
+    # Запускаем приложение
     main()

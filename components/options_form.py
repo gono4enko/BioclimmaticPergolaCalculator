@@ -2,15 +2,7 @@
 Компонент для выбора опций перголы
 """
 import streamlit as st
-from config.pergola_types import (
-    PERGOLA_TYPES,
-    LAMELLA_TYPES,
-    INSTALLATION_TYPES,
-    LIGHTING_TYPES,
-    ADDITIONAL_SYSTEMS,
-    PERGOLA_LAMELLA_COMPATIBILITY
-)
-from utils.validation import validate_pergola_config
+from config.pergola_types import PERGOLA_TYPES, LIGHTING_TYPES, ADDITIONAL_OPTIONS
 from utils.logger import log_user_action
 
 def get_lamella_options_for_pergola(pergola_type):
@@ -23,7 +15,9 @@ def get_lamella_options_for_pergola(pergola_type):
     Returns:
         list: Список доступных типов ламелей
     """
-    return PERGOLA_LAMELLA_COMPATIBILITY.get(pergola_type, [])
+    if pergola_type in PERGOLA_TYPES:
+        return PERGOLA_TYPES[pergola_type]["lamella_types"]
+    return []
 
 def render_options_form():
     """
@@ -32,162 +26,109 @@ def render_options_form():
     Returns:
         dict: Словарь с выбранными опциями
     """
-    st.subheader("Шаг 2: Выберите конфигурацию перголы")
+    st.subheader("Опции перголы")
     
-    col1, col2 = st.columns(2)
+    # Получаем сохраненные значения из состояния сессии, если они есть
+    if 'options' not in st.session_state:
+        st.session_state.options = {
+            'pergola_type': 'B500NEW',
+            'lamella_type': 'B500-20NEW',
+            'lamella_step': 200,
+            'lighting_type': 'none',
+            'additional_options': []
+        }
     
-    with col1:
+    # Создаем форму для выбора опций
+    with st.form(key="options_form"):
         # Выбор типа перголы
         pergola_options = list(PERGOLA_TYPES.keys())
-        pergola_names = [PERGOLA_TYPES[key]['name'] for key in pergola_options]
-        pergola_index = 0  # По умолчанию B500NEW
-        
-        if 'pergola_type' in st.session_state:
-            try:
-                pergola_index = pergola_options.index(st.session_state['pergola_type'])
-            except ValueError:
-                pergola_index = 0
-        
-        pergola_name = st.selectbox(
-            "Тип перголы:",
-            pergola_names,
-            index=pergola_index,
+        pergola_type = st.selectbox(
+            "Тип перголы:", 
+            options=pergola_options,
+            index=pergola_options.index(st.session_state.options['pergola_type']) if st.session_state.options['pergola_type'] in pergola_options else 0,
+            format_func=lambda x: PERGOLA_TYPES[x]['name'],
             help="Выберите тип перголы"
         )
         
-        # Определяем выбранный ключ типа перголы
-        pergola_type = pergola_options[pergola_names.index(pergola_name)]
+        # Отображаем описание выбранного типа перголы
+        if pergola_type in PERGOLA_TYPES:
+            st.info(PERGOLA_TYPES[pergola_type]['description'])
         
-        # Сохраняем выбранный тип перголы в состоянии сессии
-        if 'pergola_type' not in st.session_state or st.session_state['pergola_type'] != pergola_type:
-            st.session_state['pergola_type'] = pergola_type
-            if 'lamella_type' in st.session_state:
-                del st.session_state['lamella_type']
+        # Получаем доступные типы ламелей для выбранного типа перголы
+        lamella_options = get_lamella_options_for_pergola(pergola_type)
         
-        # Выбор типа ламелей (зависит от выбранного типа перголы)
-        available_lamellas = get_lamella_options_for_pergola(pergola_type)
-        lamella_names = [LAMELLA_TYPES[key]['name'] for key in available_lamellas]
-        
-        lamella_index = 0
-        if 'lamella_type' in st.session_state and st.session_state['lamella_type'] in available_lamellas:
-            try:
-                lamella_index = available_lamellas.index(st.session_state['lamella_type'])
-            except ValueError:
-                lamella_index = 0
-        
-        lamella_name = st.selectbox(
-            "Тип ламели:",
-            lamella_names,
-            index=lamella_index,
-            help="Выберите тип ламели для перголы"
+        # Выбор типа ламелей
+        lamella_type = st.selectbox(
+            "Тип ламелей:", 
+            options=lamella_options,
+            index=lamella_options.index(st.session_state.options['lamella_type']) if st.session_state.options['lamella_type'] in lamella_options else 0,
+            help="Выберите тип ламелей"
         )
         
-        # Определяем выбранный ключ типа ламели
-        lamella_type = available_lamellas[lamella_names.index(lamella_name)]
-        
-        # Сохраняем выбранный тип ламели в состоянии сессии
-        if 'lamella_type' not in st.session_state or st.session_state['lamella_type'] != lamella_type:
-            st.session_state['lamella_type'] = lamella_type
-        
-        # Выбор типа монтажа
-        installation_options = list(INSTALLATION_TYPES.keys())
-        installation_names = [INSTALLATION_TYPES[key]['name'] for key in installation_options]
-        
-        installation_name = st.selectbox(
-            "Тип монтажа:",
-            installation_names,
-            index=0,
-            help="Выберите тип монтажа перголы"
+        # Шаг ламелей
+        lamella_step = st.slider(
+            "Шаг ламелей (мм):", 
+            min_value=150, 
+            max_value=300, 
+            value=st.session_state.options['lamella_step'],
+            step=10, 
+            help="Шаг между ламелями в миллиметрах"
         )
         
-        # Определяем выбранный ключ типа монтажа
-        installation_type = installation_options[installation_names.index(installation_name)]
+        # Разделим форму на две колонки для более компактного отображения
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Выбор типа освещения
+            lighting_options = PERGOLA_TYPES[pergola_type]["available_lighting"] if pergola_type in PERGOLA_TYPES else ["none"]
+            lighting_type = st.selectbox(
+                "Освещение:", 
+                options=lighting_options,
+                index=lighting_options.index(st.session_state.options['lighting_type']) if st.session_state.options['lighting_type'] in lighting_options else 0,
+                format_func=lambda x: LIGHTING_TYPES[x]['name'] if x in LIGHTING_TYPES else x,
+                help="Выберите тип освещения"
+            )
+            
+            # Отображаем описание выбранного типа освещения
+            if lighting_type in LIGHTING_TYPES:
+                st.info(LIGHTING_TYPES[lighting_type]['description'])
+        
+        with col2:
+            # Выбор дополнительных опций
+            available_options = PERGOLA_TYPES[pergola_type]["additional_options"] if pergola_type in PERGOLA_TYPES else []
+            
+            selected_options = []
+            for option in available_options:
+                if option in ADDITIONAL_OPTIONS:
+                    is_selected = st.checkbox(
+                        ADDITIONAL_OPTIONS[option]['name'], 
+                        value=option in st.session_state.options['additional_options'],
+                        help=ADDITIONAL_OPTIONS[option]['description']
+                    )
+                    if is_selected:
+                        selected_options.append(option)
+        
+        # Кнопка отправки формы
+        submit_button = st.form_submit_button(label="Применить опции")
+        
+        # Если кнопка нажата, обновляем опции
+        if submit_button:
+            options = {
+                'pergola_type': pergola_type,
+                'lamella_type': lamella_type,
+                'lamella_step': lamella_step,
+                'lighting_type': lighting_type,
+                'additional_options': selected_options
+            }
+            
+            # Обновляем состояние сессии
+            st.session_state.options = options
+            
+            # Логируем действие пользователя
+            log_user_action("Обновлены опции перголы", options)
+            
+            # Возвращаем выбранные опции
+            return options
     
-    with col2:
-        # Выбор типа освещения
-        lighting_options = list(LIGHTING_TYPES.keys())
-        lighting_names = [LIGHTING_TYPES[key]['name'] for key in lighting_options]
-        
-        lighting_name = st.selectbox(
-            "Освещение:",
-            lighting_names,
-            index=0,
-            help="Выберите тип освещения для перголы"
-        )
-        
-        # Определяем выбранный ключ типа освещения
-        lighting_type = lighting_options[lighting_names.index(lighting_name)]
-        
-        # Выбор типа управления
-        control_options = ["manual_control", "motor_control", "smart_control"]
-        control_names = {
-            "manual_control": "Ручное управление",
-            "motor_control": "Моторизованное управление",
-            "smart_control": "Умное управление (пульт, датчики)"
-        }
-        
-        control_name = st.selectbox(
-            "Тип управления:",
-            list(control_names.values()),
-            index=1,
-            help="Выберите тип управления ламелями"
-        )
-        
-        # Определяем выбранный ключ типа управления
-        control_type = [k for k, v in control_names.items() if v == control_name][0]
-        
-        # Выбор типа окраски
-        color_options = ["standard_color", "custom_color"]
-        color_names = {
-            "standard_color": "Стандартный цвет",
-            "custom_color": "Нестандартный цвет (RAL)"
-        }
-        
-        color_name = st.selectbox(
-            "Цвет конструкции:",
-            list(color_names.values()),
-            index=0,
-            help="Выберите цвет для конструкции перголы"
-        )
-        
-        # Определяем выбранный ключ типа окраски
-        color_type = [k for k, v in color_names.items() if v == color_name][0]
-
-    # Выбор дополнительных систем
-    st.subheader("Дополнительные системы")
-    
-    additional_systems_options = {}
-    for key, data in ADDITIONAL_SYSTEMS.items():
-        additional_systems_options[key] = data['name']
-    
-    selected_additional_systems = st.multiselect(
-        "Выберите дополнительные системы:",
-        options=list(additional_systems_options.keys()),
-        format_func=lambda x: additional_systems_options[x],
-        help="Выберите дополнительные системы для установки на перголу"
-    )
-    
-    # Проверяем валидность конфигурации
-    if 'width' in st.session_state and 'length' in st.session_state:
-        width = st.session_state.get('width', 3000)
-        length = st.session_state.get('length', 4000)
-        validation_error = validate_pergola_config(pergola_type, lamella_type, width, length)
-        
-        if validation_error:
-            st.warning(validation_error)
-    
-    # Собираем все выбранные опции в словарь
-    options = {
-        "pergola_type": pergola_type,
-        "lamella_type": lamella_type,
-        "installation_type": installation_type,
-        "lighting_type": lighting_type,
-        "control_type": control_type,
-        "color_type": color_type,
-        "additional_systems": selected_additional_systems
-    }
-    
-    # Логируем действие пользователя
-    log_user_action("Выбор опций перголы", options)
-    
-    return options
+    # Если форма не была отправлена, возвращаем текущие значения
+    return st.session_state.options

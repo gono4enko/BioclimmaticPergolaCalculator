@@ -3,147 +3,139 @@
 извлеченные из каталога.
 """
 
-# Типы пергол
+# Список доступных типов пергол и их характеристики
 PERGOLA_TYPES = {
     "B500NEW": {
-        "name": "B500 NEW с поворотными ламелями",
-        "description": "Пергола с нижней осью вращения ламелей",
-        "min_width": 2000,
-        "max_width": 7000,
-        "min_length": 2000,
-        "max_length": 8000,
-        "min_height": 2000,
-        "max_height": 7000,
-        "base_price_factor": 1.0,  # Базовый коэффициент стоимости
+        "name": "B500NEW",
+        "description": "Современная пергола B500NEW с алюминиевыми ламелями",
+        "lamella_types": ["B500-20NEW", "B500-25NEW"],
+        "default_lamella": "B500-20NEW",
+        "available_lighting": ["none", "strip", "spot", "rgb"],
+        "default_lighting": "none",
+        "additional_options": ["sensors", "remote", "motor", "heater"]
     },
     "B700NEW": {
-        "name": "B700 NEW со сдвижными ламелями",
-        "description": "Пергола со сдвижными ламелями",
-        "min_width": 2000,
-        "max_width": 7000,
-        "min_length": 2000,
-        "max_length": 8000,
-        "min_height": 2000,
-        "max_height": 7000,
-        "base_price_factor": 1.2,  # На 20% дороже базовой модели
+        "name": "B700NEW",
+        "description": "Премиальная пергола B700NEW с увеличенной нагрузочной способностью",
+        "lamella_types": ["B700-20NEW", "B700-25NEW"],
+        "default_lamella": "B700-20NEW",
+        "available_lighting": ["none", "strip", "spot", "rgb"],
+        "default_lighting": "none",
+        "additional_options": ["sensors", "remote", "motor", "heater", "sound"]
     },
-    "B400": {
-        "name": "B400 с поворотными ламелями",
-        "description": "Пергола с центральной осью вращения ламелей",
-        "min_width": 2000,
-        "max_width": 6000,
-        "min_length": 2000,
-        "max_length": 7000,
-        "min_height": 2000,
-        "max_height": 6000,
-        "base_price_factor": 0.9,  # На 10% дешевле базовой модели
-    },
+    "B600": {
+        "name": "B600",
+        "description": "Пергола B600 с ламелями из PIR-панелей",
+        "lamella_types": ["B600"],
+        "default_lamella": "B600",
+        "available_lighting": ["none", "strip", "spot"],
+        "default_lighting": "none",
+        "additional_options": ["sensors", "remote", "motor"]
+    }
 }
 
-# Типы ламелей
+# Ограничения по размерам для разных типов пергол
+PERGOLA_LIMITS = {
+    "B500NEW": {
+        "min_width": 1500,
+        "max_width": 4500,
+        "min_length": 1500,
+        "max_length": 6000,
+        "min_height": 2200,
+        "max_height": 3000
+    },
+    "B700NEW": {
+        "min_width": 1500,
+        "max_width": 6000,
+        "min_length": 1500,
+        "max_length": 7000,
+        "min_height": 2200,
+        "max_height": 3000
+    },
+    "B600": {
+        "min_width": 1500,
+        "max_width": 4000,
+        "min_length": 1500,
+        "max_length": 5000,
+        "min_height": 2200,
+        "max_height": 3000
+    }
+}
+
+# Описания для доступных типов ламелей
 LAMELLA_TYPES = {
-    "B500-25NEW": {
-        "name": "Ламель B500-25 NEW (250х53 мм)",
-        "width": 250,
-        "height": 53,
-        "mass": 4.684,  # кг/м
-        "step": 250,    # шаг ламелей в мм
-        "price_factor": 1.05,
-        "max_width": 5000,  # максимальная ширина ламели
-    },
     "B500-20NEW": {
-        "name": "Ламель B500-20 NEW (200х56 мм)",
+        "name": "B500-20NEW",
+        "description": "Алюминиевые ламели 200 мм для перголы B500NEW",
         "width": 200,
-        "height": 56,
-        "mass": 4.375,  # кг/м
-        "step": 200,    # шаг ламелей в мм
-        "price_factor": 1.0,
-        "max_width": 5000,  # максимальная ширина ламели
+        "material": "Алюминий"
     },
-    "B700-25NEW": {
-        "name": "Ламель B700-25 NEW (250х53 мм)",
+    "B500-25NEW": {
+        "name": "B500-25NEW",
+        "description": "Алюминиевые ламели 250 мм для перголы B500NEW",
         "width": 250,
-        "height": 53,
-        "mass": 4.684,  # кг/м
-        "step": 250,    # шаг ламелей в мм
-        "price_factor": 1.1,
-        "max_width": 5000,  # максимальная ширина ламели
+        "material": "Алюминий"
     },
     "B700-20NEW": {
-        "name": "Ламель B700-20 NEW (200х56 мм)",
+        "name": "B700-20NEW",
+        "description": "Алюминиевые ламели 200 мм для перголы B700NEW",
         "width": 200,
-        "height": 56,
-        "mass": 4.375,  # кг/м
-        "step": 200,    # шаг ламелей в мм
-        "price_factor": 1.05,
-        "max_width": 5000,  # максимальная ширина ламели
+        "material": "Алюминий"
     },
-    "B400-25": {
-        "name": "Ламель B400-25 (250х50 мм)",
+    "B700-25NEW": {
+        "name": "B700-25NEW",
+        "description": "Алюминиевые ламели 250 мм для перголы B700NEW",
         "width": 250,
-        "height": 50,
-        "mass": 4.0,    # кг/м (примерно)
-        "step": 250,    # шаг ламелей в мм
-        "price_factor": 0.95,
-        "max_width": 4500,  # максимальная ширина ламели
+        "material": "Алюминий"
     },
+    "B600": {
+        "name": "B600",
+        "description": "Ламели из PIR-панелей для перголы B600",
+        "width": 200,
+        "material": "PIR-панель"
+    }
 }
 
-# Типы монтажа
-INSTALLATION_TYPES = {
-    "standalone": {
-        "name": "Отдельностоящая",
-        "price_factor": 1.0,
-    },
-    "wall": {
-        "name": "Пристенная",
-        "price_factor": 0.85,  # На 15% дешевле отдельностоящей
-    },
-    "suspended": {
-        "name": "Подвесная",
-        "price_factor": 0.9,   # На 10% дешевле отдельностоящей
-    },
-    "integrated": {
-        "name": "Интегрированная",
-        "price_factor": 0.95,  # На 5% дешевле отдельностоящей
-    },
-}
-
-# Типы освещения
+# Описания для типов освещения
 LIGHTING_TYPES = {
     "none": {
         "name": "Без освещения",
-        "price": 0,
+        "description": "Пергола без дополнительного освещения"
     },
-    "led": {
-        "name": "LED подсветка",
-        "price_per_meter": 50,  # евро за метр периметра
+    "strip": {
+        "name": "Линейное освещение",
+        "description": "Светодиодные ленты по периметру"
+    },
+    "spot": {
+        "name": "Точечное освещение",
+        "description": "Встроенные точечные светильники"
     },
     "rgb": {
-        "name": "RGB подсветка с диммером",
-        "price_per_meter": 85,  # евро за метр периметра
-    },
+        "name": "RGB освещение",
+        "description": "Светодиодные RGB-ленты с возможностью смены цвета"
+    }
 }
 
-# Дополнительные системы
-ADDITIONAL_SYSTEMS = {
-    "glazing_guillotine": {
-        "name": "Гильотинное остекление (W-серия)",
-        "price_per_m2": 450,  # евро за кв.м
+# Описания для дополнительных опций
+ADDITIONAL_OPTIONS = {
+    "sensors": {
+        "name": "Датчики",
+        "description": "Датчики ветра, дождя и снега"
     },
-    "glazing_sliding": {
-        "name": "Раздвижное остекление (S-серия)",
-        "price_per_m2": 380,  # евро за кв.м
+    "remote": {
+        "name": "ДУ",
+        "description": "Пульт дистанционного управления"
     },
-    "zip_screen": {
-        "name": "Подъемный ZIP экран",
-        "price_per_m2": 280,  # евро за кв.м
+    "motor": {
+        "name": "Мотор",
+        "description": "Электропривод для управления ламелями"
     },
-}
-
-# Соответствие типов пергол и доступных ламелей
-PERGOLA_LAMELLA_COMPATIBILITY = {
-    "B500NEW": ["B500-25NEW", "B500-20NEW"],
-    "B700NEW": ["B700-25NEW", "B700-20NEW"],
-    "B400": ["B400-25"],
+    "heater": {
+        "name": "Обогреватель",
+        "description": "Встроенные инфракрасные обогреватели"
+    },
+    "sound": {
+        "name": "Аудиосистема",
+        "description": "Встроенная аудиосистема с Bluetooth"
+    }
 }

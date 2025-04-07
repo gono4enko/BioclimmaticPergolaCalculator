@@ -2,7 +2,7 @@
 Модуль для валидации входных данных калькулятора пергол
 """
 import logging
-from config.pergola_types import PERGOLA_TYPES, LAMELLA_TYPES, PERGOLA_LAMELLA_COMPATIBILITY
+from config.pergola_types import PERGOLA_TYPES, PERGOLA_LIMITS
 
 # Получаем логгер
 logger = logging.getLogger(__name__)
@@ -18,41 +18,36 @@ def validate_dimensions(dimensions):
         str or None: Сообщение об ошибке или None, если данные валидны
     """
     try:
-        # Проверка на наличие всех необходимых размеров
-        required_dims = ['width', 'length', 'height']
-        for dim in required_dims:
-            if dim not in dimensions:
-                return f"Отсутствует обязательный размер: {dim}"
+        width = dimensions.get('width', 0)
+        length = dimensions.get('length', 0)
+        height = dimensions.get('height', 0)
+        
+        # Проверка наличия всех необходимых размеров
+        if not width or not length:
+            return "Необходимо указать ширину и длину перголы"
         
         # Проверка типов данных
-        for dim, value in dimensions.items():
-            if not isinstance(value, (int, float)) or value <= 0:
-                return f"Неверное значение для {dim}: {value}. Должно быть положительное число."
+        if not isinstance(width, (int, float)) or not isinstance(length, (int, float)):
+            return "Ширина и длина должны быть числами"
         
-        # Проверка минимальных и максимальных значений (общие ограничения)
-        min_width, max_width = 2000, 7000
-        min_length, max_length = 2000, 8000
-        min_height, max_height = 2000, 7000
+        if height and not isinstance(height, (int, float)):
+            return "Высота должна быть числом"
         
-        width = dimensions['width']
-        length = dimensions['length']
-        height = dimensions['height']
+        # Проверка ограничений по минимальным и максимальным размерам
+        if width < 1000 or width > 7000:
+            return "Ширина должна быть от 1000 до 7000 мм"
         
-        if not (min_width <= width <= max_width):
-            return f"Ширина должна быть в диапазоне от {min_width} до {max_width} мм"
+        if length < 1000 or length > 7000:
+            return "Длина должна быть от 1000 до 7000 мм"
         
-        if not (min_length <= length <= max_length):
-            return f"Длина должна быть в диапазоне от {min_length} до {max_length} мм"
+        if height and (height < 2000 or height > 3000):
+            return "Высота должна быть от 2000 до 3000 мм"
         
-        if not (min_height <= height <= max_height):
-            return f"Высота должна быть в диапазоне от {min_height} до {max_height} мм"
-        
-        logger.info(f"Размеры валидны: {dimensions}")
         return None
-        
+    
     except Exception as e:
         logger.error(f"Ошибка при валидации размеров: {str(e)}", exc_info=True)
-        return f"Ошибка при валидации размеров: {str(e)}"
+        return f"Произошла ошибка при проверке размеров: {str(e)}"
 
 def validate_pergola_config(pergola_type, lamella_type, width, length):
     """
@@ -69,35 +64,33 @@ def validate_pergola_config(pergola_type, lamella_type, width, length):
         str or None: Сообщение об ошибке или None, если конфигурация валидна
     """
     try:
-        # Проверка наличия типа перголы в списке допустимых
+        # Проверка наличия типа перголы в списке доступных
         if pergola_type not in PERGOLA_TYPES:
-            return f"Неизвестный тип перголы: {pergola_type}"
+            return f"Тип перголы '{pergola_type}' не поддерживается"
         
-        # Проверка наличия типа ламелей в списке допустимых
-        if lamella_type not in LAMELLA_TYPES:
-            return f"Неизвестный тип ламелей: {lamella_type}"
+        # Проверка наличия типа ламелей в списке доступных для выбранного типа перголы
+        pergola_info = PERGOLA_TYPES.get(pergola_type, {})
+        available_lamellas = pergola_info.get('lamella_types', [])
         
-        # Проверка совместимости типа перголы и ламелей
-        if lamella_type not in PERGOLA_LAMELLA_COMPATIBILITY.get(pergola_type, []):
-            return f"Ламель типа {lamella_type} не совместима с перголой {pergola_type}"
+        if lamella_type not in available_lamellas:
+            return f"Тип ламелей '{lamella_type}' не доступен для перголы типа '{pergola_type}'"
         
-        # Проверка размеров на соответствие ограничениям модели
-        pergola_data = PERGOLA_TYPES[pergola_type]
-        lamella_data = LAMELLA_TYPES[lamella_type]
+        # Проверка соответствия размеров ограничениям для выбранного типа перголы
+        limits = PERGOLA_LIMITS.get(pergola_type, {})
         
-        if width < pergola_data['min_width'] or width > pergola_data['max_width']:
-            return f"Для модели {pergola_type} ширина должна быть в диапазоне от {pergola_data['min_width']} до {pergola_data['max_width']} мм"
+        min_width = limits.get('min_width', 1000)
+        max_width = limits.get('max_width', 7000)
+        min_length = limits.get('min_length', 1000)
+        max_length = limits.get('max_length', 7000)
         
-        if length < pergola_data['min_length'] or length > pergola_data['max_length']:
-            return f"Для модели {pergola_type} длина должна быть в диапазоне от {pergola_data['min_length']} до {pergola_data['max_length']} мм"
+        if width < min_width or width > max_width:
+            return f"Ширина перголы должна быть от {min_width} до {max_width} мм для типа '{pergola_type}'"
         
-        # Проверка ограничений по ширине ламелей
-        if width > lamella_data['max_width']:
-            return f"Для ламелей {lamella_type} максимально допустимая ширина перголы: {lamella_data['max_width']} мм"
+        if length < min_length or length > max_length:
+            return f"Длина перголы должна быть от {min_length} до {max_length} мм для типа '{pergola_type}'"
         
-        logger.info(f"Конфигурация валидна: тип {pergola_type}, ламели {lamella_type}, размеры {width}x{length}")
         return None
-        
+    
     except Exception as e:
-        logger.error(f"Ошибка при валидации конфигурации: {str(e)}", exc_info=True)
-        return f"Ошибка при валидации конфигурации: {str(e)}"
+        logger.error(f"Ошибка при валидации конфигурации перголы: {str(e)}", exc_info=True)
+        return f"Произошла ошибка при проверке конфигурации: {str(e)}"

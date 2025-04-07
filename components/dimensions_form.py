@@ -12,85 +12,78 @@ def render_dimensions_form():
     Returns:
         dict: Словарь с введенными размерами
     """
-    st.subheader("Шаг 1: Укажите размеры перголы")
+    st.subheader("Размеры перголы")
     
-    col1, col2 = st.columns(2)
+    # Получаем сохраненные значения из состояния сессии, если они есть
+    if 'dimensions' not in st.session_state:
+        st.session_state.dimensions = {
+            'width': 3000,
+            'length': 4000,
+            'height': 2500
+        }
     
-    with col1:
-        width = st.number_input(
-            "Ширина (мм):",
-            min_value=2000,
-            max_value=7000,
-            value=3000,
-            step=100,
-            help="Минимально: 2000 мм, максимально: 7000 мм"
-        )
+    # Создаем форму для ввода размеров
+    with st.form(key="dimensions_form"):
+        col1, col2 = st.columns(2)
         
-        length = st.number_input(
-            "Длина (мм):",
-            min_value=2000,
-            max_value=8000,
-            value=4000,
-            step=100,
-            help="Минимально: 2000 мм, максимально: 8000 мм"
-        )
+        with col1:
+            width = st.number_input(
+                "Ширина (мм):", 
+                min_value=1000, 
+                max_value=7000, 
+                value=st.session_state.dimensions['width'],
+                step=100, 
+                help="Ширина перголы в миллиметрах (от 1000 до 7000 мм)"
+            )
+            
+            height = st.number_input(
+                "Высота (мм):", 
+                min_value=2000, 
+                max_value=3000, 
+                value=st.session_state.dimensions['height'],
+                step=100, 
+                help="Высота перголы в миллиметрах (от 2000 до 3000 мм)"
+            )
         
-        height = st.number_input(
-            "Высота колонн (мм):",
-            min_value=2000,
-            max_value=7000,
-            value=2400,
-            step=100,
-            help="Минимально: 2000 мм, максимально: 7000 мм"
-        )
-    
-    with col2:
-        # Отображаем информацию о текущей площади
-        area = (width / 1000) * (length / 1000)
-        perimeter = 2 * ((width / 1000) + (length / 1000))
+        with col2:
+            length = st.number_input(
+                "Длина (мм):", 
+                min_value=1000, 
+                max_value=7000, 
+                value=st.session_state.dimensions['length'],
+                step=100, 
+                help="Длина перголы в миллиметрах (от 1000 до 7000 мм)"
+            )
+            
+            # Добавим пустое место для выравнивания с левой колонкой
+            st.text("")
         
-        st.info(f"""
-        **Параметры конструкции:**
-        - Площадь: **{area:.2f} м²**
-        - Периметр: **{perimeter:.2f} м**
+        # Кнопка отправки формы
+        submit_button = st.form_submit_button(label="Применить размеры")
         
-        **Рекомендации:**
-        - Максимальный пролет между колоннами: до 7 м
-        - Максимальный вынос: до 8 м
-        - Максимальная высота колонн: до 7 м
-        """)
-        
-        # Визуализация перголы (простая схема)
-        st.markdown("""
-        **Схема перголы:**
-        ```
-        ┌───────────────┐
-        │               │
-        │               │ 
-        │      ↑        │
-        │      │        │
-        │    Длина      │
-        │      │        │
-        │      ↓        │
-        │               │
-        │               │
-        └───────────────┘
-          ←  Ширина  →
-        ```
-        """)
+        # Если кнопка нажата, обновляем размеры
+        if submit_button:
+            dimensions = {
+                'width': width,
+                'length': length,
+                'height': height
+            }
+            
+            # Валидация размеров
+            error = validate_dimensions(dimensions)
+            if error:
+                st.error(error)
+                log_user_action("Ошибка валидации размеров", dimensions)
+                return None
+            
+            # Обновляем состояние сессии
+            st.session_state.dimensions = dimensions
+            
+            # Логируем действие пользователя
+            log_user_action("Обновлены размеры перголы", dimensions)
+            
+            # Возвращаем введенные размеры
+            return dimensions
     
-    dimensions = {
-        "width": width,
-        "length": length,
-        "height": height
-    }
-    
-    # Валидируем размеры и выводим предупреждение при необходимости
-    validation_error = validate_dimensions(dimensions)
-    if validation_error:
-        st.warning(validation_error)
-    
-    # Логируем действие пользователя
-    log_user_action("Ввод размеров перголы", dimensions)
-    
-    return dimensions
+    # Если форма не была отправлена, возвращаем текущие значения
+    return st.session_state.dimensions
