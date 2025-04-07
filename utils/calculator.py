@@ -325,9 +325,33 @@ def calculate_pergola_cost(dimensions, options):
                 
             detailed_costs['lighting'] = lighting_cost
         
-        # Добавляем стоимость дополнительных опций
+        # Для B500NEW автоматизация Bansbach включена по умолчанию
+        from config.pergola_types import PERGOLA_TYPES
+        is_automation_included = PERGOLA_TYPES.get(pergola_type, {}).get("included_automation", False)
+        
+        # Если для перголы автоматизация включена по умолчанию, добавляем её в расчет
+        if is_automation_included:
+            # Определяем тип привода Bansbach в зависимости от размеров перголы
+            drive_type, drive_cost, drive_message = determine_bansbach_drive_type(
+                pergola_type, width_m, length_m, modules_count if need_additional_columns else 1
+            )
+            
+            # Сохраняем стоимость и сообщение о выбранном приводе
+            detailed_costs['additional_options']["automation"] = drive_cost
+            detailed_costs['automation_type'] = drive_type
+            detailed_costs['automation_message'] = drive_message
+            
+            # Добавляем информацию о выбранном приводе в сообщение о корректировке
+            if correction_message:
+                correction_message = f"{correction_message}. {drive_message}"
+            else:
+                correction_message = drive_message
+            
+            logger.info(drive_message)
+        
+        # Добавляем стоимость дополнительных опций, выбранных пользователем
         for option in additional_options:
-            if option == "automation":
+            if option == "automation" and not is_automation_included:
                 # Определяем тип привода Bansbach в зависимости от размеров перголы
                 drive_type, drive_cost, drive_message = determine_bansbach_drive_type(
                     pergola_type, width_m, length_m, modules_count if need_additional_columns else 1

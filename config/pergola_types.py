@@ -7,12 +7,13 @@
 PERGOLA_TYPES = {
     "B500NEW": {
         "name": "B500NEW - с поворотными ламелями",
-        "description": "Современная пергола B500NEW с поворотными алюминиевыми ламелями. Возможность регулировать угол наклона ламелей для контроля освещения.",
+        "description": "Современная пергола B500NEW с поворотными алюминиевыми ламелями. Включает автоматизацию Bansbach с автоматическим подбором типа привода.",
         "lamella_types": ["B500-20NEW", "B500-25NEW"],
         "default_lamella": "B500-20NEW",
         "available_lighting": ["none", "strip", "spot", "rgb"],
         "default_lighting": "none",
-        "additional_options": ["automation", "motor", "sound"]
+        "additional_options": ["motor", "sound"],
+        "included_automation": True
     },
     "B700NEW": {
         "name": "B700NEW - с поворотно-сдвижными ламелями",

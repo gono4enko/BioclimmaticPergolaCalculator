@@ -23,9 +23,19 @@ def render_results(results):
         st.error(error_message)
         return
     
-    # Отображаем сообщение о корректировке длины, если оно есть
+    # Отображаем сообщение о корректировке длины и другие важные сообщения
     if 'correction_message' in results and results['correction_message']:
         st.warning(results['correction_message'])
+        
+    # Проверяем, является ли выбранная пергола моделью B500NEW с включенной автоматизацией
+    is_b500_with_automation = False
+    detailed_costs = results.get('detailed_costs', {})
+    if "automation_type" in detailed_costs and "automation" in detailed_costs.get('additional_options', {}):
+        # Получаем информацию о перголе из сессии
+        if 'options' in st.session_state and st.session_state.options.get('pergola_type') == 'B500NEW':
+            is_b500_with_automation = True
+            st.info("Для пергол B500NEW автоматизация Bansbach включена в базовую комплектацию. " +
+                   f"Тип привода ({detailed_costs['automation_type']}) выбран автоматически в зависимости от размеров перголы.")
     
     # Создаем метрики для отображения основных показателей
     col1, col2, col3 = st.columns(3)
