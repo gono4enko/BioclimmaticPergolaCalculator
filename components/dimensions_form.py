@@ -19,8 +19,12 @@ def render_dimensions_form():
         st.session_state.dimensions = {
             'width': 3000,
             'length': 4000,
-            'height': 2500
+            'height': 3000  # Стандартная высота 3000 мм
         }
+    
+    # Фиксированная высота 3000 мм
+    if st.session_state.dimensions['height'] != 3000:
+        st.session_state.dimensions['height'] = 3000
     
     # Создаем форму для ввода размеров
     with st.form(key="dimensions_form"):
@@ -36,14 +40,10 @@ def render_dimensions_form():
                 help="Ширина перголы в миллиметрах (от 1000 до 7000 мм)"
             )
             
-            height = st.number_input(
-                "Высота (мм):", 
-                min_value=2000, 
-                max_value=3000, 
-                value=st.session_state.dimensions['height'],
-                step=100, 
-                help="Высота перголы в миллиметрах (от 2000 до 3000 мм)"
-            )
+            # Отображаем информацию о фиксированной высоте
+            st.info("Высота: 3000 мм (стандартная)")
+            # Сохраняем фиксированную высоту
+            height = 3000
         
         with col2:
             length = st.number_input(
