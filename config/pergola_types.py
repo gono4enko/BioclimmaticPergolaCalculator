@@ -12,7 +12,7 @@ PERGOLA_TYPES = {
         "default_lamella": "B500-20NEW",
         "available_lighting": ["none", "led", "rgb", "led_rgb"],
         "default_lighting": "none",
-        "additional_options": ["motor", "sound"],
+        "additional_options": [],
         "included_automation": True
     },
     "B700NEW": {
@@ -22,7 +22,7 @@ PERGOLA_TYPES = {
         "default_lamella": "B700-20NEW",
         "available_lighting": ["none", "led", "rgb", "led_rgb"],
         "default_lighting": "none",
-        "additional_options": ["motor", "sound"],
+        "additional_options": [],
         "included_automation": True
     },
     "B600": {
@@ -32,7 +32,7 @@ PERGOLA_TYPES = {
         "default_lamella": "B600",
         "available_lighting": ["none", "led", "rgb", "led_rgb"],
         "default_lighting": "none",
-        "additional_options": ["automation", "sound"]
+        "additional_options": ["automation"]
     }
 }
 
