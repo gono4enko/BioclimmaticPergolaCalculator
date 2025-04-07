@@ -42,7 +42,7 @@ def render_results(results):
         length_m = dimensions.get('length_m', 0)
         st.metric(
             label="Размеры (Ш×Д)", 
-            value=f"{width_m:.1f}×{length_m:.1f} м"
+            value=f"{width_m:.3f}×{length_m:.3f} м"
         )
     
     with col3:
@@ -108,9 +108,9 @@ def generate_csv(results):
     # Записываем размеры
     dimensions = results.get('dimensions', {})
     output.write("Размеры перголы:\n")
-    output.write(f"Ширина: {dimensions.get('width_mm', 0)} мм ({dimensions.get('width_m', 0):.1f} м)\n")
-    output.write(f"Длина: {dimensions.get('length_mm', 0)} мм ({dimensions.get('length_m', 0):.1f} м)\n")
-    output.write(f"Высота: {dimensions.get('height_mm', 0)} мм ({dimensions.get('height_m', 0):.1f} м)\n")
+    output.write(f"Ширина: {dimensions.get('width_m', 0):.3f} м\n")
+    output.write(f"Длина: {dimensions.get('length_m', 0):.3f} м\n")
+    output.write(f"Высота: {dimensions.get('height_m', 0):.3f} м\n")
     
     # Записываем сообщение о корректировке длины, если оно есть
     if 'correction_message' in results and results['correction_message']:

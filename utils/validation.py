@@ -12,7 +12,7 @@ def validate_dimensions(dimensions):
     Проверяет валидность введенных размеров перголы
     
     Args:
-        dimensions (dict): Словарь с размерами перголы
+        dimensions (dict): Словарь с размерами перголы в метрах
         
     Returns:
         str or None: Сообщение об ошибке или None, если данные валидны
@@ -34,14 +34,14 @@ def validate_dimensions(dimensions):
             return "Высота должна быть числом"
         
         # Проверка ограничений по минимальным и максимальным размерам
-        if width < 1000 or width > 7000:
-            return "Ширина должна быть от 1000 до 7000 мм"
+        if width < 1.0 or width > 7.0:
+            return "Ширина должна быть от 1.0 до 7.0 м"
         
-        if length < 1000 or length > 7000:
-            return "Длина должна быть от 1000 до 7000 мм"
+        if length < 1.0 or length > 7.0:
+            return "Длина должна быть от 1.0 до 7.0 м"
         
-        if height and (height < 2000 or height > 3000):
-            return "Высота должна быть от 2000 до 3000 мм"
+        if height and (height < 2.0 or height > 3.0):
+            return "Высота должна быть от 2.0 до 3.0 м"
         
         return None
     
@@ -49,7 +49,7 @@ def validate_dimensions(dimensions):
         logger.error(f"Ошибка при валидации размеров: {str(e)}", exc_info=True)
         return f"Произошла ошибка при проверке размеров: {str(e)}"
 
-def validate_pergola_config(pergola_type, lamella_type, width, length):
+def validate_pergola_config(pergola_type, lamella_type, width_m, length_m):
     """
     Проверяет совместимость выбранных типов перголы и ламелей,
     а также соответствие размеров перголы ограничениям модели
@@ -57,8 +57,8 @@ def validate_pergola_config(pergola_type, lamella_type, width, length):
     Args:
         pergola_type (str): Тип перголы
         lamella_type (str): Тип ламелей
-        width (int): Ширина перголы в мм
-        length (int): Длина перголы в мм
+        width_m (float): Ширина перголы в метрах
+        length_m (float): Длина перголы в метрах
         
     Returns:
         str or None: Сообщение об ошибке или None, если конфигурация валидна
@@ -78,16 +78,17 @@ def validate_pergola_config(pergola_type, lamella_type, width, length):
         # Проверка соответствия размеров ограничениям для выбранного типа перголы
         limits = PERGOLA_LIMITS.get(pergola_type, {})
         
-        min_width = limits.get('min_width', 1000)
-        max_width = limits.get('max_width', 7000)
-        min_length = limits.get('min_length', 1000)
-        max_length = limits.get('max_length', 7000)
+        # Конвертируем ограничения из мм в метры
+        min_width_m = limits.get('min_width', 1000) / 1000
+        max_width_m = limits.get('max_width', 7000) / 1000
+        min_length_m = limits.get('min_length', 1000) / 1000
+        max_length_m = limits.get('max_length', 7000) / 1000
         
-        if width < min_width or width > max_width:
-            return f"Ширина перголы должна быть от {min_width} до {max_width} мм для типа '{pergola_type}'"
+        if width_m < min_width_m or width_m > max_width_m:
+            return f"Ширина перголы должна быть от {min_width_m:.1f} до {max_width_m:.1f} м для типа '{pergola_type}'"
         
-        if length < min_length or length > max_length:
-            return f"Длина перголы должна быть от {min_length} до {max_length} мм для типа '{pergola_type}'"
+        if length_m < min_length_m or length_m > max_length_m:
+            return f"Длина перголы должна быть от {min_length_m:.1f} до {max_length_m:.1f} м для типа '{pergola_type}'"
         
         return None
     

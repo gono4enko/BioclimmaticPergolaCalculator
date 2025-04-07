@@ -17,14 +17,14 @@ def render_dimensions_form():
     # Получаем сохраненные значения из состояния сессии, если они есть
     if 'dimensions' not in st.session_state:
         st.session_state.dimensions = {
-            'width': 3000,
-            'length': 4000,
-            'height': 3000  # Стандартная высота 3000 мм
+            'width': 3.0,    # 3 метра
+            'length': 4.0,   # 4 метра
+            'height': 3.0    # Стандартная высота 3 метра
         }
     
-    # Фиксированная высота 3000 мм
-    if st.session_state.dimensions['height'] != 3000:
-        st.session_state.dimensions['height'] = 3000
+    # Фиксированная высота 3 метра
+    if st.session_state.dimensions['height'] != 3.0:
+        st.session_state.dimensions['height'] = 3.0
     
     # Создаем форму для ввода размеров
     with st.form(key="dimensions_form"):
@@ -32,27 +32,29 @@ def render_dimensions_form():
         
         with col1:
             width = st.number_input(
-                "Ширина (мм):", 
-                min_value=1000, 
-                max_value=7000, 
+                "Ширина (м):", 
+                min_value=1.0, 
+                max_value=7.0, 
                 value=st.session_state.dimensions['width'],
-                step=100, 
-                help="Ширина перголы в миллиметрах (от 1000 до 7000 мм)"
+                step=0.1, 
+                format="%.3f",
+                help="Ширина перголы в метрах (от 1.0 до 7.0 м)"
             )
             
             # Отображаем информацию о фиксированной высоте
-            st.info("Высота: 3000 мм (стандартная)")
+            st.info("Высота: 3.0 м (стандартная)")
             # Сохраняем фиксированную высоту
-            height = 3000
+            height = 3.0
         
         with col2:
             length = st.number_input(
-                "Длина (мм):", 
-                min_value=1000, 
-                max_value=7000, 
+                "Длина (м):", 
+                min_value=1.0, 
+                max_value=7.0, 
                 value=st.session_state.dimensions['length'],
-                step=100, 
-                help="Длина перголы в миллиметрах (от 1000 до 7000 мм)"
+                step=0.1, 
+                format="%.3f",
+                help="Длина перголы в метрах (от 1.0 до 7.0 м)"
             )
             
             # Добавим пустое место для выравнивания с левой колонкой

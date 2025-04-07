@@ -11,12 +11,12 @@ from config.pergola_types import LAMELLA_TYPES
 # Получаем логгер
 logger = logging.getLogger(__name__)
 
-def calculate_lamella_count(length, lamella_type):
+def calculate_lamella_count(length_m, lamella_type):
     """
     Расчет количества ламелей на основе длины и типа ламели
     
     Args:
-        length (float): Длина перголы в мм
+        length_m (float): Длина перголы в метрах
         lamella_type (str): Тип ламели (ключ из LAMELLA_TYPES)
         
     Returns:
@@ -26,15 +26,14 @@ def calculate_lamella_count(length, lamella_type):
     if lamella_type == "B600":
         return 0
     
-    # Получаем ширину ламели в мм
-    lamella_width = LAMELLA_TYPES.get(lamella_type, {}).get("width", 0)
+    # Получаем ширину ламели в мм и конвертируем в метры
+    lamella_width_mm = LAMELLA_TYPES.get(lamella_type, {}).get("width", 0)
     
-    if lamella_width <= 0:
+    if lamella_width_mm <= 0:
         return 0
     
-    # Конвертируем мм в метры
-    lamella_width_m = lamella_width / 1000
-    length_m = length / 1000
+    # Конвертируем ширину ламели в метры
+    lamella_width_m = lamella_width_mm / 1000
     
     # Рассчитываем количество ламелей
     count = length_m / lamella_width_m
@@ -42,30 +41,29 @@ def calculate_lamella_count(length, lamella_type):
     # Округляем до ближайшего целого числа в большую сторону
     return math.ceil(count)
 
-def adjust_length_to_lamella_count(length_mm, lamella_type):
+def adjust_length_to_lamella_count(length_m, lamella_type):
     """
     Корректирует длину (вынос) перголы для соответствия целому числу ламелей
     
     Args:
-        length_mm (float): Оригинальная длина перголы в мм
+        length_m (float): Оригинальная длина перголы в метрах
         lamella_type (str): Тип ламели
         
     Returns:
-        tuple: (скорректированная длина в мм, количество ламелей, сообщение о корректировке)
+        tuple: (скорректированная длина в метрах, количество ламелей, сообщение о корректировке)
     """
     # Для перголы B600 корректировка не нужна
     if lamella_type == "B600":
-        return length_mm, 0, None
+        return length_m, 0, None
     
-    # Получаем ширину ламели в мм
-    lamella_width = LAMELLA_TYPES.get(lamella_type, {}).get("width", 0)
+    # Получаем ширину ламели в мм и конвертируем в метры
+    lamella_width_mm = LAMELLA_TYPES.get(lamella_type, {}).get("width", 0)
     
-    if lamella_width <= 0:
-        return length_mm, 0, None
+    if lamella_width_mm <= 0:
+        return length_m, 0, None
     
-    # Конвертируем в метры
-    length_m = length_mm / 1000
-    lamella_width_m = lamella_width / 1000
+    # Конвертируем ширину ламели в метры
+    lamella_width_m = lamella_width_mm / 1000
     
     # Рассчитываем количество ламелей
     lamella_count_exact = length_m / lamella_width_m
@@ -74,43 +72,54 @@ def adjust_length_to_lamella_count(length_mm, lamella_type):
     # Если количество ламелей не целое число, корректируем длину
     if lamella_count != lamella_count_exact:
         adjusted_length_m = lamella_count * lamella_width_m
-        adjusted_length_mm = adjusted_length_m * 1000
+        
+        # Округляем до 3 знаков после запятой
+        adjusted_length_m = round(adjusted_length_m, 3)
         
         correction_message = (
-            f"Длина перголы была скорректирована с {length_mm} мм до {int(adjusted_length_mm)} мм "
+            f"Длина перголы была скорректирована с {length_m:.3f} м до {adjusted_length_m:.3f} м "
             f"для соответствия целому числу ламелей ({lamella_count} шт.)"
         )
         
-        return adjusted_length_mm, lamella_count, correction_message
+        return adjusted_length_m, lamella_count, correction_message
     
     # Если корректировка не требуется
-    return length_mm, lamella_count, None
+    return length_m, lamella_count, None
 
 def calculate_pergola_cost(dimensions, options):
     """
     Рассчитывает стоимость перголы на основе заданных размеров и опций.
     
     Args:
-        dimensions (dict): Словарь с размерами перголы (ширина, длина, высота)
+        dimensions (dict): Словарь с размерами перголы (ширина, длина, высота) в метрах
         options (dict): Словарь с выбранными опциями
         
     Returns:
         dict: Словарь с результатами расчетов
     """
     try:
-        # Извлекаем данные из входных параметров
-        width_mm = dimensions.get('width', 0)
-        length_mm = dimensions.get('length', 0)
-        height_mm = dimensions.get('height', 0)
+        # Извлекаем данные из входных параметров (уже в метрах)
+        width_m = dimensions.get('width', 0)
+        length_m = dimensions.get('length', 0)
+        height_m = dimensions.get('height', 0)
+        
+        # Округляем до 3 знаков после запятой для точности расчетов
+        width_m = round(width_m, 3)
+        length_m = round(length_m, 3)
+        height_m = round(height_m, 3)
+        
+        # Конвертируем в миллиметры для некоторых расчетов
+        width_mm = width_m * 1000
+        length_mm = length_m * 1000
+        height_mm = height_m * 1000
         
         pergola_type = options.get('pergola_type', '')
         lamella_type = options.get('lamella_type', '')
-        lamella_step = options.get('lamella_step', 200)  # По умолчанию шаг ламелей 200мм
         lighting_type = options.get('lighting_type', 'none')
         additional_options = options.get('additional_options', [])
         
         # Валидация конфигурации перголы
-        validation_error = validate_pergola_config(pergola_type, lamella_type, width_mm, length_mm)
+        validation_error = validate_pergola_config(pergola_type, lamella_type, width_m, length_m)
         if validation_error:
             logger.error(f"Ошибка валидации: {validation_error}")
             return {
@@ -123,16 +132,14 @@ def calculate_pergola_cost(dimensions, options):
         # для пергол B500NEW и B700NEW
         correction_message = None
         if pergola_type in ["B500NEW", "B700NEW"]:
-            length_mm, lamella_count, correction_message = adjust_length_to_lamella_count(length_mm, lamella_type)
+            length_m, lamella_count, correction_message = adjust_length_to_lamella_count(length_m, lamella_type)
             if correction_message:
                 logger.info(correction_message)
+                # Обновляем длину в мм после корректировки
+                length_mm = length_m * 1000
         else:
             # Если коррекция не применяется, просто рассчитываем количество ламелей
-            lamella_count = calculate_lamella_count(length_mm, lamella_type)
-        
-        # Конвертируем мм в метры для расчета цены
-        width_m = width_mm / 1000
-        length_m = length_mm / 1000
+            lamella_count = calculate_lamella_count(length_m, lamella_type)
         
         # Получаем базовую цену перголы
         # Сохраняем исходные размеры для проверки корректировки размеров из прайс-листа
@@ -230,11 +237,11 @@ def calculate_pergola_cost(dimensions, options):
             'detailed_costs': detailed_costs,
             'dimensions': {
                 'width_mm': width_mm,
-                'width_m': width_m,
+                'width_m': round(width_m, 3),
                 'length_mm': length_mm,
-                'length_m': length_m,
+                'length_m': round(length_m, 3),
                 'height_mm': height_mm,
-                'height_m': height_mm / 1000
+                'height_m': round(height_m, 3)
             },
             'lamella_count': lamella_count,
             'correction_message': correction_message
