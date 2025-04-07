@@ -60,6 +60,11 @@ def render_results(results):
             ["Базовая стоимость перголы", detailed_costs.get('base_price', 0), "€"]
         ]
         
+        # Добавляем стоимость дополнительных колонн
+        columns_cost = detailed_costs.get('additional_columns', 0)
+        if columns_cost > 0:
+            cost_items.append(["Дополнительные колонны", columns_cost, "€"])
+        
         # Добавляем стоимость освещения
         lighting_cost = detailed_costs.get('lighting', 0)
         if lighting_cost > 0:
@@ -123,6 +128,11 @@ def generate_csv(results):
     detailed_costs = results.get('detailed_costs', {})
     output.write("Детальная информация о стоимости:\n")
     output.write(f"Базовая стоимость перголы: {detailed_costs.get('base_price', 0)} €\n")
+    
+    # Стоимость дополнительных колонн
+    columns_cost = detailed_costs.get('additional_columns', 0)
+    if columns_cost > 0:
+        output.write(f"Дополнительные колонны: {columns_cost} €\n")
     
     # Стоимость освещения
     lighting_cost = detailed_costs.get('lighting', 0)

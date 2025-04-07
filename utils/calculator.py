@@ -4,7 +4,10 @@
 import logging
 import math
 from utils.price_loader import get_base_price
-from config.price_data import get_option_price, LIGHTING_PRICES, ADDITIONAL_OPTIONS_PRICES
+from config.price_data import (
+    get_option_price, LIGHTING_PRICES, ADDITIONAL_OPTIONS_PRICES,
+    ADDITIONAL_COLUMNS_PRICES, ADDITIONAL_COLUMNS_THRESHOLDS
+)
 from utils.validation import validate_pergola_config
 from config.pergola_types import LAMELLA_TYPES
 
@@ -40,6 +43,52 @@ def calculate_lamella_count(length_m, lamella_type):
     
     # Округляем до ближайшего целого числа в большую сторону
     return math.ceil(count)
+
+def calculate_additional_columns(pergola_type, lamella_type, length_m, width_m):
+    """
+    Определяет, требуются ли дополнительные колонны для перголы и рассчитывает их стоимость
+    
+    Args:
+        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600PIR)
+        lamella_type (str): Тип ламели
+        length_m (float): Длина (вынос) перголы в метрах
+        width_m (float): Ширина перголы в метрах
+        
+    Returns:
+        tuple: (требуются ли дополнительные колонны (bool), стоимость дополнительных колонн (float), количество модулей)
+    """
+    # Определяем ключ для проверки порога длины
+    if pergola_type == "B600NEW" or pergola_type == "B600":
+        threshold_key = "B600PIR"
+    else:
+        # Определяем размер ламели (200 или 250 мм)
+        lamella_size = "200" if "200" in lamella_type else "250"
+        threshold_key = f"{pergola_type.replace('NEW', '')}-{lamella_size}"
+    
+    # Получаем пороговое значение для данного типа перголы и ламели
+    threshold = ADDITIONAL_COLUMNS_THRESHOLDS.get(threshold_key, 0)
+    
+    # Если пороговое значение не указано, дополнительные колонны не требуются
+    if threshold == 0:
+        return False, 0, 0
+    
+    # Проверяем, превышает ли длина пороговое значение
+    if length_m <= threshold:
+        return False, 0, 0
+    
+    # Определяем количество модулей на основе ширины перголы
+    # Модуль - это секция перголы определенной ширины
+    # Примерные размеры: 1 модуль - до 4м, 2 модуля - до 7м, 3 модуля - до 10м
+    modules = 1
+    if width_m > 7:
+        modules = 3
+    elif width_m > 4:
+        modules = 2
+    
+    # Рассчитываем стоимость дополнительных колонн
+    columns_cost = ADDITIONAL_COLUMNS_PRICES.get(modules, 0)
+    
+    return True, columns_cost, modules
 
 def adjust_length_to_lamella_count(length_m, lamella_type):
     """
@@ -196,8 +245,33 @@ def calculate_pergola_cost(dimensions, options):
         detailed_costs = {
             'base_price': base_price,
             'lighting': 0,
+            'additional_columns': 0,
             'additional_options': {}
         }
+        
+        # Проверяем необходимость добавления дополнительных колонн
+        need_additional_columns, columns_cost, modules_count = calculate_additional_columns(
+            pergola_type, lamella_type, length_m, width_m
+        )
+        
+        # Если нужны дополнительные колонны, добавляем их стоимость
+        if need_additional_columns:
+            detailed_costs['additional_columns'] = columns_cost
+            
+            # Добавляем информацию о дополнительных колоннах в сообщение
+            columns_message = (
+                f"Для перголы с выносом {length_m:.3f} м необходимы дополнительные колонны "
+                f"({modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}, "
+                f"стоимость: {columns_cost} €)"
+            )
+            
+            # Добавляем сообщение о колоннах к общему сообщению о корректировке
+            if correction_message:
+                correction_message = f"{correction_message}. {columns_message}"
+            else:
+                correction_message = columns_message
+                
+            logger.info(columns_message)
         
         # Добавляем стоимость освещения
         if lighting_type != 'none' and lighting_type in LIGHTING_PRICES:
@@ -229,6 +303,7 @@ def calculate_pergola_cost(dimensions, options):
         # Вычисляем общую стоимость
         total_cost = base_price
         total_cost += detailed_costs['lighting']
+        total_cost += detailed_costs['additional_columns']
         total_cost += sum(detailed_costs['additional_options'].values())
         
         # Формируем результат
