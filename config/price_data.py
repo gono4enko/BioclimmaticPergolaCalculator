@@ -29,10 +29,32 @@ def get_option_price(option_name, width_mm=0, length_mm=0):
 # Цены на различные типы освещения
 LIGHTING_PRICES = {
     "none": 0,
-    "strip": lambda w, l: 350 + (w + l) * 0.1 / 1000,  # Базовая цена + цена за метр периметра
-    "spot": lambda w, l: 550 + (w * l) * 0.05 / 1000000,  # Базовая цена + цена за квадратный метр
-    "rgb": lambda w, l: 750 + (w + l) * 0.15 / 1000,  # Базовая цена + цена за метр периметра
+    "led": lambda w, l, modules=1: 20 * calculate_lighting_perimeter(w, l, modules) + 300 * modules,  # 20€ за метр + 300€ за блок управления на модуль
+    "rgb": lambda w, l, modules=1: 20 * calculate_lighting_perimeter(w, l, modules) + 300 * modules,  # 20€ за метр + 300€ за блок управления на модуль
+    "led_rgb": lambda w, l, modules=1: 40 * calculate_lighting_perimeter(w, l, modules) + 300 * modules,  # 40€ за метр (2х20€) + 300€ за блок управления на модуль
 }
+
+# Функция для расчета периметра освещения в зависимости от количества модулей
+def calculate_lighting_perimeter(width_m, length_m, modules=1):
+    """
+    Расчет общего периметра освещения для перголы
+    
+    Args:
+        width_m (float): Ширина перголы в метрах
+        length_m (float): Длина (вынос) перголы в метрах
+        modules (int): Количество модулей перголы
+        
+    Returns:
+        float: Общий периметр для установки световой ленты в метрах
+    """
+    if modules <= 1:
+        # Для одного модуля - просто периметр
+        return 2 * (width_m + length_m)
+    else:
+        # Для нескольких модулей - расчет периметра каждого модуля
+        module_width = width_m / modules
+        module_perimeter = 2 * (module_width + length_m)
+        return module_perimeter * modules
 
 # Цены на дополнительные опции
 ADDITIONAL_OPTIONS_PRICES = {

@@ -10,7 +10,7 @@ PERGOLA_TYPES = {
         "description": "Современная пергола B500NEW с поворотными алюминиевыми ламелями. Включает автоматизацию Bansbach с автоматическим подбором типа привода.",
         "lamella_types": ["B500-20NEW", "B500-25NEW"],
         "default_lamella": "B500-20NEW",
-        "available_lighting": ["none", "strip", "spot", "rgb"],
+        "available_lighting": ["none", "led", "rgb", "led_rgb"],
         "default_lighting": "none",
         "additional_options": ["motor", "sound"],
         "included_automation": True
@@ -20,7 +20,7 @@ PERGOLA_TYPES = {
         "description": "Премиальная пергола B700NEW с поворотно-сдвижными ламелями. Комбинированная система позволяет как поворачивать, так и сдвигать ламели для максимального контроля.",
         "lamella_types": ["B700-20NEW", "B700-25NEW"],
         "default_lamella": "B700-20NEW",
-        "available_lighting": ["none", "strip", "spot", "rgb"],
+        "available_lighting": ["none", "led", "rgb", "led_rgb"],
         "default_lighting": "none",
         "additional_options": ["automation", "motor", "sound"]
     },
@@ -29,7 +29,7 @@ PERGOLA_TYPES = {
         "description": "Пергола B600 со стационарной крышей из PIR-панелей. Надежная защита от осадков и отличная теплоизоляция благодаря специальным панелям.",
         "lamella_types": ["B600"],
         "default_lamella": "B600",
-        "available_lighting": ["none", "strip", "spot"],
+        "available_lighting": ["none", "led", "rgb", "led_rgb"],
         "default_lighting": "none",
         "additional_options": ["automation", "sound"]
     }
@@ -108,17 +108,17 @@ LIGHTING_TYPES = {
         "name": "Без освещения",
         "description": "Стандартная пергола без дополнительного освещения. Возможность установки освещения в будущем сохраняется."
     },
-    "strip": {
-        "name": "Линейное освещение",
-        "description": "Элегантные светодиодные ленты по периметру перголы. Создают равномерное мягкое освещение и подчеркивают архитектуру конструкции."
-    },
-    "spot": {
-        "name": "Точечное освещение",
-        "description": "Встроенные точечные светильники, размещенные в стратегических местах конструкции. Идеально для акцентного освещения отдельных зон."
+    "led": {
+        "name": "Сверхъяркая LED лента",
+        "description": "Сверхъяркая LED лента по периметру перголы. Создает равномерное мягкое белое освещение. Включает блок управления Somfy RTS Dimmer для каждого модуля перголы."
     },
     "rgb": {
-        "name": "RGB освещение",
-        "description": "Светодиодные RGB-ленты с возможностью смены цвета и яркости. Управление через приложение для создания нужной атмосферы в любое время суток."
+        "name": "Сверхъяркая RGB лента",
+        "description": "Светодиодная RGB-лента с возможностью смены цвета и яркости. Включает блок управления Somfy RTS Dimmer для каждого модуля перголы."
+    },
+    "led_rgb": {
+        "name": "Комбинированное LED + RGB освещение",
+        "description": "Комбинация сверхъяркой LED ленты и RGB-ленты. Позволяет выбирать между классическим белым и цветным освещением. Включает блок управления Somfy RTS Dimmer для каждого модуля перголы."
     }
 }
 

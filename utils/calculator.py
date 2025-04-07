@@ -10,7 +10,7 @@ from config.price_data import (
     BANSBACH_PRICES, BANSBACH_TANDEM_CONDITIONS
 )
 from utils.validation import validate_pergola_config
-from config.pergola_types import LAMELLA_TYPES
+from config.pergola_types import LAMELLA_TYPES, LIGHTING_TYPES
 
 # Получаем логгер
 logger = logging.getLogger(__name__)
@@ -316,14 +316,64 @@ def calculate_pergola_cost(dimensions, options):
         if lighting_type != 'none' and lighting_type in LIGHTING_PRICES:
             lighting_price = LIGHTING_PRICES[lighting_type]
             
-            # Рассчитываем стоимость освещения в зависимости от размеров перголы
+            # Рассчитываем стоимость освещения в зависимости от размеров перголы и количества модулей
             # Используем скорректированную длину!
             if callable(lighting_price):
-                lighting_cost = lighting_price(width_mm, length_mm)
-            else:
-                lighting_cost = lighting_price
+                # Преобразуем мм в метры для расчета освещения
+                width_m = width_mm / 1000
+                length_m = length_mm / 1000
                 
-            detailed_costs['lighting'] = lighting_cost
+                # Определяем количество модулей для расчета освещения
+                modules_for_lighting = modules_count if need_additional_columns else 1
+                
+                # Вызываем функцию с параметрами в метрах и количеством модулей
+                lighting_cost = lighting_price(width_m, length_m, modules_for_lighting)
+                
+                # Добавляем информацию о длине ленты и блоках управления в детализацию
+                from config.price_data import calculate_lighting_perimeter
+                
+                led_length = calculate_lighting_perimeter(width_m, length_m, modules_for_lighting)
+                controllers_count = modules_for_lighting
+                
+                # Рассчитываем стоимость компонентов в зависимости от типа освещения
+                if lighting_type == "led" or lighting_type == "rgb":
+                    led_meter_price = 20
+                    led_cost = led_meter_price * led_length
+                    controllers_cost = 300 * controllers_count
+                elif lighting_type == "led_rgb":
+                    led_meter_price = 40  # 20€ LED + 20€ RGB
+                    led_cost = led_meter_price * led_length
+                    controllers_cost = 300 * controllers_count
+                else:
+                    led_cost = 0
+                    controllers_cost = 0
+                
+                # Сохраняем детализацию освещения
+                detailed_costs['lighting'] = lighting_cost
+                detailed_costs['lighting_details'] = {
+                    'type': lighting_type,
+                    'led_length': round(led_length, 2),
+                    'led_cost': round(led_cost, 2),
+                    'controllers_count': controllers_count,
+                    'controllers_cost': round(controllers_cost, 2)
+                }
+                
+                # Добавляем информацию об освещении в сообщение
+                lighting_message = (
+                    f"Установлено освещение типа '{LIGHTING_TYPES[lighting_type]['name']}'. "
+                    f"Общая длина ленты: {led_length:.2f} м. "
+                    f"Блоков управления Somfy RTS Dimmer: {controllers_count} шт."
+                )
+                
+                # Добавляем сообщение об освещении к общему сообщению
+                if correction_message:
+                    correction_message = f"{correction_message}. {lighting_message}"
+                else:
+                    correction_message = lighting_message
+                
+                logger.info(lighting_message)
+            else:
+                detailed_costs['lighting'] = lighting_price
         
         # Для B500NEW автоматизация Bansbach включена по умолчанию
         from config.pergola_types import PERGOLA_TYPES

@@ -75,10 +75,36 @@ def render_results(results):
         if columns_cost > 0:
             cost_items.append(["Дополнительные колонны", columns_cost, "€"])
         
-        # Добавляем стоимость освещения
+        # Добавляем стоимость освещения и детали
         lighting_cost = detailed_costs.get('lighting', 0)
         if lighting_cost > 0:
-            cost_items.append(["Освещение", lighting_cost, "€"])
+            # Получаем детали освещения, если они есть
+            lighting_details = detailed_costs.get('lighting_details', {})
+            lighting_type = lighting_details.get('type', 'none')
+            
+            # Импортируем названия типов освещения
+            from config.pergola_types import LIGHTING_TYPES
+            
+            # Формируем название освещения на основе типа
+            if lighting_type in LIGHTING_TYPES:
+                lighting_name = LIGHTING_TYPES[lighting_type]['name']
+            else:
+                lighting_name = "Освещение"
+                
+            cost_items.append([lighting_name, lighting_cost, "€"])
+            
+            # Если есть детальная информация о компонентах освещения, отображаем её
+            if lighting_details:
+                led_length = lighting_details.get('led_length', 0)
+                led_cost = lighting_details.get('led_cost', 0)
+                controllers_count = lighting_details.get('controllers_count', 0)
+                controllers_cost = lighting_details.get('controllers_cost', 0)
+                
+                if led_length > 0:
+                    cost_items.append([f"-- Светодиодная лента ({led_length:.2f} м)", led_cost, "€"])
+                
+                if controllers_count > 0:
+                    cost_items.append([f"-- Блоки управления Somfy RTS Dimmer ({controllers_count} шт.)", controllers_cost, "€"])
         
         # Добавляем стоимость дополнительных опций
         additional_options = detailed_costs.get('additional_options', {})
@@ -153,10 +179,36 @@ def generate_csv(results):
     if columns_cost > 0:
         output.write(f"Дополнительные колонны: {columns_cost} €\n")
     
-    # Стоимость освещения
+    # Стоимость освещения и детали
     lighting_cost = detailed_costs.get('lighting', 0)
     if lighting_cost > 0:
-        output.write(f"Освещение: {lighting_cost} €\n")
+        # Получаем детали освещения, если они есть
+        lighting_details = detailed_costs.get('lighting_details', {})
+        lighting_type = lighting_details.get('type', 'none')
+        
+        # Импортируем названия типов освещения
+        from config.pergola_types import LIGHTING_TYPES
+        
+        # Формируем название освещения на основе типа
+        if lighting_type in LIGHTING_TYPES:
+            lighting_name = LIGHTING_TYPES[lighting_type]['name']
+        else:
+            lighting_name = "Освещение"
+            
+        output.write(f"{lighting_name}: {lighting_cost} €\n")
+        
+        # Если есть детальная информация о компонентах освещения, отображаем её
+        if lighting_details:
+            led_length = lighting_details.get('led_length', 0)
+            led_cost = lighting_details.get('led_cost', 0)
+            controllers_count = lighting_details.get('controllers_count', 0)
+            controllers_cost = lighting_details.get('controllers_cost', 0)
+            
+            if led_length > 0:
+                output.write(f"-- Светодиодная лента ({led_length:.2f} м): {led_cost} €\n")
+            
+            if controllers_count > 0:
+                output.write(f"-- Блоки управления Somfy RTS Dimmer ({controllers_count} шт.): {controllers_cost} €\n")
     
     # Стоимость дополнительных опций
     additional_options = detailed_costs.get('additional_options', {})
