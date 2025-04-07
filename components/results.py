@@ -23,6 +23,10 @@ def render_results(results):
         st.error(error_message)
         return
     
+    # Отображаем сообщение о корректировке длины, если оно есть
+    if 'correction_message' in results and results['correction_message']:
+        st.warning(results['correction_message'])
+    
     # Создаем метрики для отображения основных показателей
     col1, col2, col3 = st.columns(3)
     
@@ -106,7 +110,11 @@ def generate_csv(results):
     output.write("Размеры перголы:\n")
     output.write(f"Ширина: {dimensions.get('width_mm', 0)} мм ({dimensions.get('width_m', 0):.1f} м)\n")
     output.write(f"Длина: {dimensions.get('length_mm', 0)} мм ({dimensions.get('length_m', 0):.1f} м)\n")
-    output.write(f"Высота: {dimensions.get('height_mm', 0)} мм ({dimensions.get('height_m', 0):.1f} м)\n\n")
+    output.write(f"Высота: {dimensions.get('height_mm', 0)} мм ({dimensions.get('height_m', 0):.1f} м)\n")
+    
+    # Записываем сообщение о корректировке длины, если оно есть
+    if 'correction_message' in results and results['correction_message']:
+        output.write(f"\nПримечание: {results['correction_message']}\n")
     
     # Записываем количество ламелей
     output.write(f"Количество ламелей: {results.get('lamella_count', 0)} шт.\n\n")

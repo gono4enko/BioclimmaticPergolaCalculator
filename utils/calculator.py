@@ -2,18 +2,89 @@
 Модуль для расчета стоимости пергол на основе введенных данных
 """
 import logging
+import math
 from utils.price_loader import get_base_price
 from config.price_data import get_option_price, LIGHTING_PRICES, ADDITIONAL_OPTIONS_PRICES
 from utils.validation import validate_pergola_config
+from config.pergola_types import LAMELLA_TYPES
 
 # Получаем логгер
 logger = logging.getLogger(__name__)
 
-def calculate_lamella_count(length, lamella_step):
-    """Расчет количества ламелей на основе длины и шага"""
-    if lamella_step <= 0:
+def calculate_lamella_count(length, lamella_type):
+    """
+    Расчет количества ламелей на основе длины и типа ламели
+    
+    Args:
+        length (float): Длина перголы в мм
+        lamella_type (str): Тип ламели (ключ из LAMELLA_TYPES)
+        
+    Returns:
+        int: Количество ламелей
+    """
+    # Для B600 не используются ламели
+    if lamella_type == "B600":
         return 0
-    return round(length / lamella_step)
+    
+    # Получаем ширину ламели в мм
+    lamella_width = LAMELLA_TYPES.get(lamella_type, {}).get("width", 0)
+    
+    if lamella_width <= 0:
+        return 0
+    
+    # Конвертируем мм в метры
+    lamella_width_m = lamella_width / 1000
+    length_m = length / 1000
+    
+    # Рассчитываем количество ламелей
+    count = length_m / lamella_width_m
+    
+    # Округляем до ближайшего целого числа в большую сторону
+    return math.ceil(count)
+
+def adjust_length_to_lamella_count(length_mm, lamella_type):
+    """
+    Корректирует длину (вынос) перголы для соответствия целому числу ламелей
+    
+    Args:
+        length_mm (float): Оригинальная длина перголы в мм
+        lamella_type (str): Тип ламели
+        
+    Returns:
+        tuple: (скорректированная длина в мм, количество ламелей, сообщение о корректировке)
+    """
+    # Для перголы B600 корректировка не нужна
+    if lamella_type == "B600":
+        return length_mm, 0, None
+    
+    # Получаем ширину ламели в мм
+    lamella_width = LAMELLA_TYPES.get(lamella_type, {}).get("width", 0)
+    
+    if lamella_width <= 0:
+        return length_mm, 0, None
+    
+    # Конвертируем в метры
+    length_m = length_mm / 1000
+    lamella_width_m = lamella_width / 1000
+    
+    # Рассчитываем количество ламелей
+    lamella_count_exact = length_m / lamella_width_m
+    lamella_count = math.ceil(lamella_count_exact)
+    
+    # Если количество ламелей не целое число, корректируем длину
+    if lamella_count != lamella_count_exact:
+        adjusted_length_m = lamella_count * lamella_width_m
+        adjusted_length_mm = adjusted_length_m * 1000
+        
+        correction_message = (
+            f"Длина перголы была скорректирована с {length_mm} мм до {int(adjusted_length_mm)} мм "
+            f"для соответствия целому числу ламелей ({lamella_count} шт.)"
+        )
+        
+        return adjusted_length_mm, lamella_count, correction_message
+    
+    # Если корректировка не требуется
+    return length_mm, lamella_count, None
 
 def calculate_pergola_cost(dimensions, options):
     """
@@ -48,6 +119,17 @@ def calculate_pergola_cost(dimensions, options):
                 'detailed_costs': {}
             }
         
+        # Применяем корректировку длины (выноса) перголы в соответствии с размером ламелей
+        # для пергол B500NEW и B700NEW
+        correction_message = None
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            length_mm, lamella_count, correction_message = adjust_length_to_lamella_count(length_mm, lamella_type)
+            if correction_message:
+                logger.info(correction_message)
+        else:
+            # Если коррекция не применяется, просто рассчитываем количество ламелей
+            lamella_count = calculate_lamella_count(length_mm, lamella_type)
+        
         # Конвертируем мм в метры для расчета цены
         width_m = width_mm / 1000
         length_m = length_mm / 1000
@@ -75,6 +157,7 @@ def calculate_pergola_cost(dimensions, options):
             lighting_price = LIGHTING_PRICES[lighting_type]
             
             # Рассчитываем стоимость освещения в зависимости от размеров перголы
+            # Используем скорректированную длину!
             if callable(lighting_price):
                 lighting_cost = lighting_price(width_mm, length_mm)
             else:
@@ -88,6 +171,7 @@ def calculate_pergola_cost(dimensions, options):
                 option_price = ADDITIONAL_OPTIONS_PRICES[option]
                 
                 # Рассчитываем стоимость опции в зависимости от размеров перголы
+                # Используем скорректированную длину!
                 if callable(option_price):
                     option_cost = option_price(width_mm, length_mm)
                 else:
@@ -99,9 +183,6 @@ def calculate_pergola_cost(dimensions, options):
         total_cost = base_price
         total_cost += detailed_costs['lighting']
         total_cost += sum(detailed_costs['additional_options'].values())
-        
-        # Рассчитываем количество ламелей
-        lamella_count = calculate_lamella_count(length_mm, lamella_step)
         
         # Формируем результат
         result = {
@@ -115,7 +196,8 @@ def calculate_pergola_cost(dimensions, options):
                 'height_mm': height_mm,
                 'height_m': height_mm / 1000
             },
-            'lamella_count': lamella_count
+            'lamella_count': lamella_count,
+            'correction_message': correction_message
         }
         
         logger.info(f"Расчет выполнен успешно: {result['total_cost']} евро")
