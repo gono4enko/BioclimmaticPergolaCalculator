@@ -51,25 +51,25 @@ def render_options_form():
         }
     }
     
-    /* Универсальные стили */
+    /* Универсальные стили (более компактные) */
     .pergola-option-container {
         background-color: #f8f9fa;
         border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
+        padding: 0.6rem;
+        margin-bottom: 0.6rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
     .option-title {
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         font-weight: bold;
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
         color: #333;
     }
     .option-tile {
         background-color: #f0f2f6;
         border: 2px solid #e0e4e8;
         border-radius: 8px;
-        padding: 1rem;
+        padding: 0.6rem;
         text-align: center;
         cursor: pointer;
         transition: all 0.3s ease;
@@ -229,37 +229,37 @@ def render_options_form():
     
     # Блок выбора типа ламелей и отображения типа крыши для всех типов пергол
     if pergola_type == "B600":
-        # Для B600 нет выбора ламелей - используются PIR-панели
+        # Для B600 нет выбора ламелей - используются PIR-панели (делаем компактнее)
         st.markdown("""
-        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.3rem; margin-top: 0.3rem;'>
-            <b>Тип крыши:</b> Стационарные PIR-панели (сэндвич-панели с утеплителем)
+        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.2rem; margin-top: 0.2rem; font-size: 0.85rem;'>
+            <b>Тип крыши:</b> Стационарные PIR-панели
         </div>
         """, unsafe_allow_html=True)
         lamella_type = "B600"  # Для перголы B600 используем фиксированный тип ламелей
         selected_lamella_type = lamella_type
     elif "B500" in pergola_type:
-        # Для B500 - отображаем информацию о поворотных ламелях
+        # Для B500 - отображаем информацию о поворотных ламелях (компактнее)
         st.markdown("""
-        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.3rem; margin-top: 0.3rem;'>
-            <b>Тип крыши:</b> Поворотные ламели с возможностью регулировки угла наклона
+        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.2rem; margin-top: 0.2rem; font-size: 0.85rem;'>
+            <b>Тип крыши:</b> Поворотные ламели
         </div>
         """, unsafe_allow_html=True)
-        # Для выбора ламелей - заголовок
-        st.markdown("<div class='option-title' style='margin-top: 0.7rem; margin-bottom:0.3rem;'>Тип ламелей:</div>", unsafe_allow_html=True)
+        # Для выбора ламелей - заголовок (компактнее)
+        st.markdown("<div class='option-title' style='margin-top: 0.4rem; margin-bottom:0.2rem;'>Тип ламелей:</div>", unsafe_allow_html=True)
         
         # Создаем плитки для выбора типа ламелей
         lamella_cols = st.columns(len(lamella_options))
         selected_lamella_type = st.session_state.options['lamella_type']
         lamella_type = selected_lamella_type
     else:  # B700
-        # Для B700 - отображаем информацию о сдвижных ламелях
+        # Для B700 - отображаем информацию о сдвижных ламелях (компактнее)
         st.markdown("""
-        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.3rem; margin-top: 0.3rem;'>
-            <b>Тип крыши:</b> Сдвижные ламели с горизонтальным перемещением
+        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.2rem; margin-top: 0.2rem; font-size: 0.85rem;'>
+            <b>Тип крыши:</b> Сдвижные ламели
         </div>
         """, unsafe_allow_html=True)
-        # Для выбора ламелей - заголовок
-        st.markdown("<div class='option-title' style='margin-top: 0.7rem; margin-bottom:0.3rem;'>Тип ламелей:</div>", unsafe_allow_html=True)
+        # Для выбора ламелей - заголовок (компактнее)
+        st.markdown("<div class='option-title' style='margin-top: 0.4rem; margin-bottom:0.2rem;'>Тип ламелей:</div>", unsafe_allow_html=True)
         
         # Создаем плитки для выбора типа ламелей
         lamella_cols = st.columns(len(lamella_options))
@@ -295,13 +295,13 @@ def render_options_form():
                     else:
                         size_display = "250мм"
                     
-                    # Переиспользуем стиль кнопок для ламелей
+                    # Переиспользуем стиль кнопок для ламелей (компактнее)
                     if is_selected:
                         st.markdown(f"""
                         <div style="background-color: #e6f3ff; border: 2px solid #0066cc; color: #0066cc; 
-                             font-weight: bold; text-align: center; border-radius: 8px; padding: 8px; margin-bottom: 5px;">
-                            <div style="font-size: 15px;">{size_display} ✓</div>
-                            <div style="font-size: 11px; margin-top: 3px;">{lamella_short_desc.split(',')[-1].strip()}</div>
+                             font-weight: bold; text-align: center; border-radius: 8px; padding: 6px; margin-bottom: 3px;">
+                            <div style="font-size: 14px;">{size_display} ✓</div>
+                            <div style="font-size: 10px; margin-top: 2px;">{lamella_short_desc.split(',')[-1].strip()}</div>
                         </div>
                         """, unsafe_allow_html=True)
                         
