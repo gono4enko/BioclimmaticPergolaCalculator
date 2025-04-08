@@ -446,7 +446,7 @@ def render_options_form():
             
             # Если опция выбрана, показываем карточку белого цвета с галочкой
             if is_selected:
-                # Используем максимально компактный div вместо стандартного элемента Streamlit
+                # Используем максимально компактный div вместо стандартного элемента Streamlit - БЕЗ синего индикатора
                 st.markdown(f"""
                 <div style="border:1px solid #0066cc; background-color:white; 
                      border-radius:5px; padding:5px; margin:0; text-align:center;">

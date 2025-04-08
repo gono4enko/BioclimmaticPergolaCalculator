@@ -252,26 +252,14 @@ def main():
         box-shadow: 0 2px 5px rgba(0, 0, 102, 0.1);
     }
     
-    /* Выбранная плитка с МАЛЕНЬКИМ синим индикатором */
+    /* Выбранная плитка БЕЗ синего индикатора */
     .tile-button.selected {
         background-color: #FFFFFF !important; /* Белый фон */
-        border-color: #0066cc !important; /* Синяя рамка */
+        border-color: #0066cc !important; /* Только синяя рамка */
         box-shadow: 0 2px 5px rgba(0, 0, 102, 0.1);
-        position: relative; /* Для позиционирования индикатора */
     }
     
-    /* Добавляем маленький синий индикатор выбора внизу плитки */
-    .tile-button.selected::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 4px; /* В 5 раз меньше по высоте */
-        background-color: #0066cc !important;
-        border-bottom-left-radius: 8px;
-        border-bottom-right-radius: 8px;
-    }
+    /* УБРАН синий индикатор внизу плитки */
     
     .tile-title {
         font-weight: 600;
