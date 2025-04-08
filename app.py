@@ -46,33 +46,71 @@ def main():
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
     
-    # Задаем стили для ультра-компактного основного контейнера
+    # Задаем стили для максимально компактного основного контейнера, ориентируясь на мобильный интерфейс
     st.markdown("""
     <style>
     .block-container {
-        max-width: 850px;
-        padding-top: 0.5rem;
-        padding-bottom: 1rem;
+        max-width: 450px;
+        padding-top: 0.2rem;
+        padding-bottom: 0.2rem;
         margin: 0 auto;
     }
-    /* Уменьшаем отступы между элементами */
+    /* Радикально уменьшаем отступы между элементами */
     div.row-widget.stButton {
-        margin-bottom: 0.3rem;
+        margin-bottom: 0 !important;
     }
     /* Уменьшаем размер шрифта для всего интерфейса */
     .stApp, .stApp p, .stApp div {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
     }
-    /* Делаем основной контейнер более плотным */
+    /* Делаем основной контейнер максимально плотным */
     div[data-testid="stVerticalBlock"] > div {
-        margin-bottom: 0.5rem !important;
+        margin-bottom: 0 !important;
         padding-bottom: 0 !important;
         padding-top: 0 !important;
     }
     /* Убираем лишние отступы для формы */
     div[data-testid="stForm"] {
-        padding-top: 0.3rem !important;
-        padding-bottom: 0.3rem !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    /* Уменьшаем отступы у всех элементов ввода */
+    div.row-widget.stNumberInput, div.row-widget.stTextInput, div.row-widget.stTextArea,
+    div.row-widget.stRadio, div.row-widget.stCheckbox {
+        margin-top: 0 !important;
+        margin-bottom: 0.1rem !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    /* Уменьшаем отступы между заголовками и контентом */
+    h1, h2, h3, p, .stMarkdown {
+        margin-top: 0 !important;
+        margin-bottom: 0.2rem !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        line-height: 1.1 !important;
+    }
+    /* Удаляем лишние границы и отступы */
+    .element-container {
+        margin-top: 0.1rem !important;
+        margin-bottom: 0.1rem !important;
+    }
+    /* Убираем лишние отступы у кнопок +/- в числовых полях */
+    button.step-down, button.step-up {
+        padding: 0 !important;
+        min-height: 0 !important;
+        line-height: 1 !important;
+    }
+    /* Убираем лишние белые пространства в форме */
+    section[data-testid="stSidebar"] > div {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    /* Делаем number input более компактным */
+    input[type="number"] {
+        padding-top: 0.1rem !important;
+        padding-bottom: 0.1rem !important;
+        min-height: 0 !important;
     }
     </style>
     """, unsafe_allow_html=True)
