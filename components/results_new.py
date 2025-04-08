@@ -114,6 +114,10 @@ def render_results(results):
     # Получаем стоимость в евро (без конвертации)
     base_price_eur = detailed_costs.get('base_price', 0)
     automation_cost_eur = detailed_costs.get('additional_options', {}).get('automation', 0)
+    remote_control_cost_eur = detailed_costs.get('remote_control_cost', 0)
+    
+    # Добавляем стоимость пульта к стоимости автоматики
+    automation_with_remote_cost_eur = automation_cost_eur + remote_control_cost_eur
     
     # Рассчитываем стоимость изготовления (10%)
     manufacturing_cost_eur = round(base_price_eur * 0.1)
@@ -301,7 +305,7 @@ def render_results(results):
             </tr>
             <tr style="background-color: #f0f0f0;">
                 <td style="padding: 6px 10px; font-weight: bold;">Стоимость автоматики:</td>
-                <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{automation_cost_eur:,} €</td>
+                <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{automation_with_remote_cost_eur:,} €</td>
             </tr>
             <tr style="background-color: #f9f9f9;">
                 <td style="padding: 6px 10px; font-weight: bold;">Изготовление и подготовка (10%):</td>
@@ -310,10 +314,18 @@ def render_results(results):
         </table>
         """, unsafe_allow_html=True)
         
-        # Кнопка "Изменить параметры"
+        # Кнопка "Изменить параметры" с улучшенным скроллом и обработкой ошибок
         st.markdown(f"""
         <div style="margin-top: 20px;">
-            <button onclick="window.scrollTo(0, 0);" style="width: 100%; padding: 12px; background: white; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;">
+            <button 
+                onclick="try {{ 
+                    window.scrollTo({{ top: 0, behavior: 'smooth' }}); 
+                    console.log('Scrolled to top smoothly'); 
+                }} catch (e) {{ 
+                    window.scrollTo(0, 0); 
+                    console.log('Used fallback scroll method: ' + e); 
+                }}"
+                style="width: 100%; padding: 12px; background: white; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;">
                 Изменить параметры
             </button>
         </div>

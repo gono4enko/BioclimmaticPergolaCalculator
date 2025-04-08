@@ -508,16 +508,20 @@ def calculate_pergola_cost(dimensions, options):
                 if lighting_type != 'none':
                     devices_count += modules_count  # Добавляем по 1 устройству управления освещением на модуль
                 
-                # Выбираем подходящий пульт в зависимости от количества устройств
+                # Выбираем подходящий пульт в зависимости от количества устройств и модулей
                 if modules_count == 1 and lighting_type == 'none':
+                    # Для одного модуля без освещения используем одноканальный пульт
                     detailed_costs['remote_control'] = "Simu 1K"
                     detailed_costs['remote_control_cost'] = 25
+                    logger.info("Для одномодульной перголы без освещения выбран пульт Simu 1K (1-канальный)")
                 elif devices_count <= 5:
                     detailed_costs['remote_control'] = "Simu 5K"
                     detailed_costs['remote_control_cost'] = 40
+                    logger.info(f"Для управления {devices_count} устройствами выбран пульт Simu 5K (5-канальный)")
                 else:
                     detailed_costs['remote_control'] = "Simu 15K"
                     detailed_costs['remote_control_cost'] = 90
+                    logger.info(f"Для управления {devices_count} устройствами выбран пульт Simu 15K (15-канальный)")
                 
             elif "B700" in pergola_type:
                 # Для B700NEW используем привод Somfy
@@ -538,16 +542,20 @@ def calculate_pergola_cost(dimensions, options):
                 if lighting_type != 'none':
                     devices_count += modules_count  # Добавляем по 1 устройству управления освещением на модуль
                 
-                # Выбираем подходящий пульт в зависимости от количества устройств
+                # Выбираем подходящий пульт в зависимости от количества устройств и модулей
                 if modules_count == 1 and lighting_type == 'none':
+                    # Для одного модуля без освещения используем одноканальный пульт
                     detailed_costs['remote_control'] = "Simu 1K"
                     detailed_costs['remote_control_cost'] = 25
+                    logger.info("Для одномодульной перголы без освещения выбран пульт Simu 1K (1-канальный)")
                 elif devices_count <= 5:
                     detailed_costs['remote_control'] = "Simu 5K"
                     detailed_costs['remote_control_cost'] = 40
+                    logger.info(f"Для управления {devices_count} устройствами выбран пульт Simu 5K (5-канальный)")
                 else:
                     detailed_costs['remote_control'] = "Simu 15K"
                     detailed_costs['remote_control_cost'] = 90
+                    logger.info(f"Для управления {devices_count} устройствами выбран пульт Simu 15K (15-канальный)")
             
             # Добавляем информацию о выбранном приводе в сообщение о корректировке
             if drive_message:
