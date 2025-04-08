@@ -221,13 +221,7 @@ def render_options_form():
                     st.session_state.options['pergola_type'] = pergola_type
                     st.rerun()
     
-    # Отображаем описание выбранного типа перголы
-    if selected_pergola_type in PERGOLA_TYPES:
-        st.markdown(f"""
-        <div style='background-color: #e6f3ff; border-radius: 5px; padding: 0.7rem; margin-top: 0.5rem;'>
-            {PERGOLA_TYPES[selected_pergola_type]['description']}
-        </div>
-        """, unsafe_allow_html=True)
+    # Удаляем информационную строку о перголе
     
     # Устанавливаем значения для текущего типа перголы
     pergola_type = selected_pergola_type
@@ -299,13 +293,7 @@ def render_options_form():
                             st.session_state.options['lamella_type'] = lam_type
                             st.rerun()
         
-        # Отображаем описание выбранного типа ламелей
-        if selected_lamella_type in LAMELLA_TYPES:
-            st.markdown(f"""
-            <div style='background-color: #e6f3ff; border-radius: 5px; padding: 0.7rem; margin-top: 0.5rem;'>
-                {LAMELLA_TYPES[selected_lamella_type]['description']}
-            </div>
-            """, unsafe_allow_html=True)
+        # Удаляем информационную строку о ламелях
         
         # Устанавливаем выбранный тип ламелей
         lamella_type = selected_lamella_type
@@ -337,13 +325,7 @@ def render_options_form():
             label_visibility="collapsed"
         )
         
-        # Отображаем описание выбранного типа освещения
-        if lighting_type in LIGHTING_TYPES:
-            st.markdown(f"""
-            <div style='background-color: #e6f3ff; border-radius: 5px; padding: 0.7rem; margin-top: 0.5rem;'>
-                {LIGHTING_TYPES[lighting_type]['description']}
-            </div>
-            """, unsafe_allow_html=True)
+        # Удаляем информационную строку об освещении
     
     # Блок выбора дополнительных опций
     with col2:
