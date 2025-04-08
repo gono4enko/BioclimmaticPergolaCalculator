@@ -293,7 +293,8 @@ def main():
     /* Уменьшаем отступы у карточек результатов */
     .result-card {
         margin-bottom: 0 !important;
-        padding: 5px 10px !important;
+        margin-top: 0 !important;
+        padding: 3px 10px !important;
     }
     
     /* Устанавливаем минимальный отступ между блоками формы */
@@ -368,8 +369,20 @@ def main():
             color: #FFFFFF !important;
         }
         
-        /* Заголовки секций в темном режиме */
-        body.dark-mode .section-header {
+        /* Заголовки секций - общие стили */
+        .section-header {
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        /* Заголовки секций в темном режиме - с более высоким приоритетом */
+        body.dark-mode .section-header,
+        .dark-mode .section-header,
+        [data-testid="stAppViewContainer"] .dark-mode .section-header,
+        [data-testid="stAppViewContainer"] .section-header {
             color: white !important;
             border-bottom-color: #444444 !important;
         }

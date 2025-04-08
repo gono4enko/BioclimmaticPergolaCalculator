@@ -126,10 +126,10 @@ def render_options_form():
         }
     
     # Контейнер для опций перголы в новом стиле с минимальными отступами
-    st.markdown('<div class="result-card" style="margin-bottom: 0px; padding-top: 3px; padding-bottom: 3px;">', unsafe_allow_html=True)
+    st.markdown('<div class="result-card" style="margin-bottom: 0px; margin-top: 0px; padding-top: 2px; padding-bottom: 2px;">', unsafe_allow_html=True)
     
     # Заголовок блока - более четкий и читаемый
-    st.markdown('<div class="section-header" style="color: #FFFFFF !important;">Тип перголы</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Тип перголы</div>', unsafe_allow_html=True)
     
     # Создаем плитки для выбора типа перголы
     pergola_options = list(PERGOLA_TYPES.keys())
@@ -245,8 +245,8 @@ def render_options_form():
         # Для B600 создаем информационный блок без выбора (стационарные PIR сэндвич-панели)
         st.markdown('</div>', unsafe_allow_html=True)  # Закрываем предыдущий блок
         
-        st.markdown('<div class="result-card" style="margin-bottom: 0px; padding-top: 3px; padding-bottom: 3px;">', unsafe_allow_html=True)
-        st.markdown('<div class="section-header" style="color: #FFFFFF !important;">Тип кровли</div>', unsafe_allow_html=True)
+        st.markdown('<div class="result-card" style="margin-bottom: 0px; margin-top: 0px; padding-top: 2px; padding-bottom: 2px;">', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Тип кровли</div>', unsafe_allow_html=True)
         st.markdown('<div style="padding: 15px; text-align: center; font-size: 1rem;">Для перголы В600 PIR используются стационарные PIR сэндвич-панели</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
@@ -257,8 +257,8 @@ def render_options_form():
         # Закрываем блок с типом перголы и открываем новый блок для ламелей
         st.markdown('</div>', unsafe_allow_html=True)  # Закрываем предыдущий блок
         
-        st.markdown('<div class="result-card" style="margin-bottom: 0px; padding-top: 3px; padding-bottom: 3px;">', unsafe_allow_html=True)
-        st.markdown('<div class="section-header" style="color: #FFFFFF !important;">Тип ламелей</div>', unsafe_allow_html=True)
+        st.markdown('<div class="result-card" style="margin-bottom: 0px; margin-top: 0px; padding-top: 2px; padding-bottom: 2px;">', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Тип ламелей</div>', unsafe_allow_html=True)
         
         # Создаем плитки для выбора типа ламелей
         lamella_cols = st.columns(len(lamella_options))
@@ -319,9 +319,9 @@ def render_options_form():
     else:
         lamella_step = 250  # Для ламелей B500-25NEW и B700-25NEW
     
-    # Создаем новый блок для выбора освещения в соответствии с макетом
-    st.markdown('<div class="result-card" style="margin-bottom: 0px; padding-top: 3px; padding-bottom: 3px;">', unsafe_allow_html=True)
-    st.markdown('<div class="section-header" style="color: #FFFFFF !important;">Подсветка (LED по периметру)</div>', unsafe_allow_html=True)
+    # Создаем новый блок для выбора освещения в соответствии с макетом со сниженными отступами
+    st.markdown('<div class="result-card" style="margin-bottom: 0px; margin-top: 0px; padding-top: 2px; padding-bottom: 2px;">', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Подсветка (LED по периметру)</div>', unsafe_allow_html=True)
     
     # Доступные типы освещения для выбранного типа перголы - убираем 'none'
     lighting_options = [opt for opt in PERGOLA_TYPES[pergola_type]["available_lighting"] if opt != "none"] if pergola_type in PERGOLA_TYPES else []
@@ -406,9 +406,9 @@ def render_options_form():
     # Закрываем контейнер для подсветки
     st.markdown("</div>", unsafe_allow_html=True)
     
-    # Блок выбора установки
-    st.markdown('<div class="result-card" style="margin-bottom: 0px; padding-top: 3px; padding-bottom: 3px;">', unsafe_allow_html=True)
-    st.markdown('<div class="section-header" style="color: #FFFFFF !important;">Установка</div>', unsafe_allow_html=True)
+    # Блок выбора установки с уменьшенными отступами
+    st.markdown('<div class="result-card" style="margin-bottom: 0px; margin-top: 0px; padding-top: 2px; padding-bottom: 2px;">', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Установка</div>', unsafe_allow_html=True)
     
     # Создаем колонки для опций установки
     install_cols = st.columns([1, 1])
