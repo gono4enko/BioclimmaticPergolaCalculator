@@ -210,7 +210,7 @@ def render_results(results):
     components_cost_rub = int(components_cost * eur_to_rub)
     
     # Создаем стилизованную таблицу результатов
-    st.markdown("""
+    style_html = """
     <style>
     .results-container {
         background-color: white;
@@ -282,6 +282,11 @@ def render_results(results):
         color: black;
     }
     </style>
+    """
+    
+    st.markdown(style_html, unsafe_allow_html=True)
+    
+    results_html = f"""
     <div class="results-container">
         <div class="results-title">РЕЗУЛЬТАТЫ РАСЧЕТА</div>
         
@@ -289,38 +294,38 @@ def render_results(results):
         <table class="spec-table">
             <tr>
                 <td>Тип перголы</td>
-                <td>{}</td>
+                <td>{pergola_type}</td>
                 <td></td>
             </tr>
             <tr>
                 <td>Тип ламелей</td>
-                <td>{}</td>
+                <td>{lamella_type}</td>
                 <td></td>
             </tr>
             <tr>
                 <td>Размеры</td>
-                <td>{} × {} м</td>
+                <td>{width_m} × {length_m} м</td>
                 <td></td>
             </tr>
             <tr>
                 <td>Площадь</td>
-                <td>{} м²</td>
+                <td>{area} м²</td>
                 <td></td>
             </tr>
             <tr>
                 <td>Освещение</td>
-                <td>{}</td>
+                <td>{lighting_type}</td>
                 <td></td>
             </tr>
             <tr>
                 <td>Автоматика</td>
-                <td>{}</td>
+                <td>{automation_info}</td>
                 <td></td>
             </tr>
             <tr>
                 <td>Компоненты<br>и монтаж</td>
-                <td>{}</td>
-                <td>{:,} ₽</td>
+                <td>{components_info}</td>
+                <td>{components_cost_rub:,} ₽</td>
             </tr>
             <tr>
                 <td>Изготовка<br>и доставка</td>
@@ -331,29 +336,19 @@ def render_results(results):
         
         <div class="total-row">
             <div class="total-label">Итого</div>
-            <div class="total-value">{:,} ₽</div>
+            <div class="total-value">{total_cost_rub:,} ₽</div>
         </div>
         
         <a href="#" class="change-params-btn" onclick="window.scrollTo(0, 0);">Изменить параметры</a>
     </div>
-    """.format(
-        pergola_type, 
-        lamella_type, 
-        width_m, 
-        length_m, 
-        area,
-        lighting_type,
-        automation_info,
-        components_info,
-        components_cost_rub,
-        total_cost_rub
-    ).replace(',', ' '), unsafe_allow_html=True)
+    """
     
-    # Закрываем контейнер
-    st.markdown("""
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Заменяем запятые на пробелы в больших числах
+    results_html = results_html.replace(',', ' ')
+    
+    st.markdown(results_html, unsafe_allow_html=True)
+    
+    # Удаляем закрытие контейнера, так как это уже сделано в нашем HTML блоке результатов
     
     # Проверяем, является ли выбранная пергола моделью с включенной автоматизацией
     detailed_costs = results.get('detailed_costs', {})
