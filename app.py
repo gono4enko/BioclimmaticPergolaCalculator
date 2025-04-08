@@ -72,9 +72,30 @@ def main():
     st.markdown("<h3 style='text-align: center; margin-top: 30px; margin-bottom: 10px;'>Шаг 2: Конфигурация перголы</h3>", unsafe_allow_html=True)
     options = render_options_form()
     
-    # Кнопка для расчета по центру
+    # Кнопка для расчета по центру с большим размером и улучшенной визуализацией
+    st.markdown("<h3 style='text-align: center; margin-top: 30px; margin-bottom: 15px;'>Шаг 3: Расчёт стоимости</h3>", unsafe_allow_html=True)
     _, center_col, _ = st.columns([1, 2, 1])
     with center_col:
+        st.markdown("""
+        <style>
+        div[data-testid="stButton"] > button[kind="primary"] {
+            background-color: #0066cc;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 10px;
+            padding: 15px 0;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+        div[data-testid="stButton"] > button[kind="primary"]:hover {
+            background-color: #004c99;
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+        </style>
+        """, unsafe_allow_html=True)
         if st.button("РАССЧИТАТЬ СТОИМОСТЬ", type="primary", use_container_width=True):
             with st.spinner("Выполняется расчет..."):
                 # Проверяем, что у нас есть данные для расчета

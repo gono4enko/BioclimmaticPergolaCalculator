@@ -131,59 +131,72 @@ def render_options_form():
                 elif "B600" in pergola_type:
                     pergola_short_desc = "стационарная"
                 
-            # Создаем плитку с коротким названием и изображением перголы
-            html = f"""
-            <div class="option-tile {selected_class}" id="pergola-{pergola_type}">
-                <div class="option-name">{pergola_name.split()[-1]}</div>
-                <div class="option-desc">{pergola_short_desc}</div>
-            </div>
-            """
-            st.markdown(html, unsafe_allow_html=True)
-            
-            # Используем почти невидимую кнопку для обработки кликов по плитке
-            btn_style = """
+            # Создаем кнопки с более заметным выделением при выборе
+            button_style = """ 
             <style>
             div[data-testid*="stButton"] > button {
-                background-color: transparent;
-                border: none;
-                color: transparent;
-                height: 40px;
-                padding: 0;
+                background-color: #f0f0f0;
+                border: 2px solid #ddd;
+                color: #333;
+                font-weight: bold;
+                text-align: center;
+                border-radius: 8px;
+                height: auto;
+                padding: 12px;
+                margin-bottom: 10px;
+                transition: all 0.3s;
             }
             div[data-testid*="stButton"] > button:hover {
-                background-color: rgba(0, 0, 0, 0.05);
-                color: transparent;
+                background-color: #e6f3ff;
+                border-color: #0066cc;
+                color: #0066cc;
             }
             </style>
             """
-            st.markdown(btn_style, unsafe_allow_html=True)
-            if st.button(" ", key=f"btn_pergola_{pergola_type}", use_container_width=True):
-                selected_pergola_type = pergola_type
+            st.markdown(button_style, unsafe_allow_html=True)
+            
+            # Отображаем состояние выбора визуально
+            if is_selected:
+                st.markdown(f"""
+                <div style="background-color: #e6f3ff; border: 2px solid #0066cc; color: #0066cc; 
+                     font-weight: bold; text-align: center; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
+                    <div style="font-size: 16px;">{pergola_name.split()[-1]} ✓</div>
+                    <div style="font-size: 12px; margin-top: 5px;">{pergola_short_desc}</div>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                # Обновляем тип ламелей при смене типа перголы
-                lamella_options = get_lamella_options_for_pergola(pergola_type)
-                if lamella_options and st.session_state.options['lamella_type'] not in lamella_options:
-                    st.session_state.options['lamella_type'] = lamella_options[0]
+                # Пустая кнопка для сохранения структуры (скрытая)
+                if st.button("", key=f"no_action_{pergola_type}", use_container_width=True, disabled=True):
+                    pass
+            else:
+                # Видимая кнопка для выбора перголы
+                if st.button(f"{pergola_name.split()[-1]}\n{pergola_short_desc}", key=f"btn_pergola_{pergola_type}", use_container_width=True):
+                    selected_pergola_type = pergola_type
                 
-                # При выборе B600 устанавливаем фиксированный тип ламелей
-                if pergola_type == "B600":
-                    st.session_state.options['lamella_type'] = "B600"
-                
-                # Обновляем тип освещения при смене типа перголы
-                lighting_options = PERGOLA_TYPES[pergola_type]["available_lighting"]
-                if st.session_state.options['lighting_type'] not in lighting_options:
-                    st.session_state.options['lighting_type'] = lighting_options[0]
-                
-                # Обновляем дополнительные опции при смене типа перголы
-                available_options = PERGOLA_TYPES[pergola_type]["additional_options"]
-                st.session_state.options['additional_options'] = [
-                    opt for opt in st.session_state.options['additional_options']
-                    if opt in available_options
-                ]
-                
-                # Обновляем тип перголы в состоянии сессии
-                st.session_state.options['pergola_type'] = pergola_type
-                st.experimental_rerun()
+                    # Обновляем тип ламелей при смене типа перголы
+                    lamella_options = get_lamella_options_for_pergola(pergola_type)
+                    if lamella_options and st.session_state.options['lamella_type'] not in lamella_options:
+                        st.session_state.options['lamella_type'] = lamella_options[0]
+                    
+                    # При выборе B600 устанавливаем фиксированный тип ламелей
+                    if pergola_type == "B600":
+                        st.session_state.options['lamella_type'] = "B600"
+                    
+                    # Обновляем тип освещения при смене типа перголы
+                    lighting_options = PERGOLA_TYPES[pergola_type]["available_lighting"]
+                    if st.session_state.options['lighting_type'] not in lighting_options:
+                        st.session_state.options['lighting_type'] = lighting_options[0]
+                    
+                    # Обновляем дополнительные опции при смене типа перголы
+                    available_options = PERGOLA_TYPES[pergola_type]["additional_options"]
+                    st.session_state.options['additional_options'] = [
+                        opt for opt in st.session_state.options['additional_options']
+                        if opt in available_options
+                    ]
+                    
+                    # Обновляем тип перголы в состоянии сессии
+                    st.session_state.options['pergola_type'] = pergola_type
+                    st.experimental_rerun()
     
     # Отображаем описание выбранного типа перголы
     if selected_pergola_type in PERGOLA_TYPES:
@@ -244,20 +257,24 @@ def render_options_form():
                     else:
                         size_display = "250мм"
                     
-                    # Создаем плитку для выбора типа ламелей
-                    html = f"""
-                    <div class="option-tile {selected_class}" id="lamella-{lam_type}">
-                        <div class="option-name">{size_display}</div>
-                        <div class="option-desc">{lamella_short_desc.split(',')[-1].strip()}</div>
-                    </div>
-                    """
-                    st.markdown(html, unsafe_allow_html=True)
-                    
-                    # Используем почти невидимую кнопку для обработки кликов по плитке
-                    # Переиспользуем уже определенный стиль кнопки
-                    if st.button(" ", key=f"btn_lamella_{lam_type}", use_container_width=True):
-                        st.session_state.options['lamella_type'] = lam_type
-                        st.experimental_rerun()
+                    # Переиспользуем стиль кнопок для ламелей
+                    if is_selected:
+                        st.markdown(f"""
+                        <div style="background-color: #e6f3ff; border: 2px solid #0066cc; color: #0066cc; 
+                             font-weight: bold; text-align: center; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
+                            <div style="font-size: 16px;">{size_display} ✓</div>
+                            <div style="font-size: 12px; margin-top: 5px;">{lamella_short_desc.split(',')[-1].strip()}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Пустая кнопка для сохранения структуры (скрытая)
+                        if st.button("", key=f"no_action_{lam_type}", use_container_width=True, disabled=True):
+                            pass
+                    else:
+                        # Видимая кнопка для выбора ламели
+                        if st.button(f"{size_display}\n{lamella_short_desc.split(',')[-1].strip()}", key=f"btn_lamella_{lam_type}", use_container_width=True):
+                            st.session_state.options['lamella_type'] = lam_type
+                            st.experimental_rerun()
         
         # Отображаем описание выбранного типа ламелей
         if selected_lamella_type in LAMELLA_TYPES:
