@@ -362,9 +362,29 @@ def main():
         margin: 0 !important;
     }
     
+    /* Уменьшаем высоту строк в кнопках, исключая основную кнопку расчета */
+    [data-testid="stButton"]:not(:has(> button[data-testid="baseButton-primary"])) > button {
+        line-height: 1.1 !important;
+        padding-top: 3px !important;
+        padding-bottom: 3px !important;
+        font-size: 0.9rem !important;
+        margin-bottom: 0 !important;
+    }
+    
     /* Устанавливаем минимальный отступ между блоками формы */
     .stMarkdown {
         margin-bottom: 0 !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Уменьшаем отступы между блоками формы */
+    .result-card {
+        margin-top: 0 !important;
+        margin-bottom: 2px !important;
+        padding-top: 1px !important;
+        padding-bottom: 1px !important;
     }
     </style>
     """, unsafe_allow_html=True)

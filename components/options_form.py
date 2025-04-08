@@ -358,8 +358,8 @@ def render_options_form():
         lamella_step = 250  # Для ламелей B500-25NEW и B700-25NEW
     
     # Создаем новый блок для выбора освещения с минимальными отступами
-    st.markdown('<div class="result-card" style="margin: 0; padding: 0 0 0 0;">', unsafe_allow_html=True)
-    st.markdown('<div class="section-header" style="margin-bottom: 0; padding-bottom: 0; color: #FFFFFF !important;">Подсветка (LED по периметру)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="result-card" style="margin: 0; padding: 2px 0 0 0;">', unsafe_allow_html=True)
+    st.markdown('<div class="section-header" style="margin-bottom: 0; padding-bottom: 2px; color: #FFFFFF !important;">Подсветка (LED по периметру)</div>', unsafe_allow_html=True)
     
     # Доступные типы освещения для выбранного типа перголы - убираем 'none'
     lighting_options = [opt for opt in PERGOLA_TYPES[pergola_type]["available_lighting"] if opt != "none"] if pergola_type in PERGOLA_TYPES else []
@@ -415,9 +415,9 @@ def render_options_form():
             if is_selected:
                 st.markdown(f"""
                 <div style="background-color: var(--highlight-bg, #e6f3ff); border: 1px solid var(--highlight-color, #0066cc); color: var(--highlight-color, #0066cc); 
-                     font-weight: bold; text-align: center; border-radius: 8px; padding: 8px 5px; margin-bottom: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                    <div style="font-size: 1.1rem; text-align: center;">{light_name} ✓</div>
-                    <div style="font-size: 0.9rem; margin-top: 2px; text-align: center;">{light_desc}</div>
+                     font-weight: bold; text-align: center; border-radius: 8px; padding: 5px 3px; margin-bottom: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <div style="font-size: 1.1rem; text-align: center; line-height: 1.1;">{light_name} ✓</div>
+                    <div style="font-size: 0.8rem; margin-top: 2px; text-align: center; line-height: 1.1;">{light_desc}</div>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -425,17 +425,24 @@ def render_options_form():
                 if st.button("", key=f"no_action_{light_type}", use_container_width=True, disabled=True):
                     pass
             else:
-                # Видимая кнопка для выбора освещения с центрированным текстом
+                # Видимая кнопка для выбора освещения с центрированным текстом и минимальными отступами
                 custom_css = f"""
                 <style>
                 div[data-testid*="stButton"] button[kind="secondary"] {{
                     text-align: center !important;
+                    padding: 5px 3px !important;
+                    margin-bottom: 0 !important;
+                    height: auto !important;
+                    min-height: 0 !important;
+                    line-height: 1.1 !important;
                 }}
                 </style>
                 """
                 st.markdown(custom_css, unsafe_allow_html=True)
                 
-                if st.button(f"{light_name}\n{light_desc}", key=f"btn_lighting_{light_type}", use_container_width=True):
+                # Используем короткие строки для более компактного отображения
+                short_desc = light_desc.split(" по ")[0] if " по " in light_desc else light_desc
+                if st.button(f"{light_name}\n{short_desc}", key=f"btn_lighting_{light_type}", use_container_width=True):
                     # Устанавливаем выбранный тип освещения и перезагружаем страницу
                     lighting_type = light_type  # Сохраняем выбор для текущей сессии
                     st.session_state.options['lighting_type'] = light_type
