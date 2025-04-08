@@ -364,11 +364,41 @@ def main():
     
     /* Уменьшаем высоту строк в кнопках, исключая основную кнопку расчета */
     [data-testid="stButton"]:not(:has(> button[data-testid="baseButton-primary"])) > button {
-        line-height: 1.1 !important;
-        padding-top: 3px !important;
-        padding-bottom: 3px !important;
-        font-size: 0.9rem !important;
+        line-height: 1 !important;
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
+        font-size: 0.8rem !important;
         margin-bottom: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Принудительно устанавливаем минимальные отступы для блока подсветки */
+    [data-testid="stVerticalBlock"] > div:has(> [data-testid="stVerticalBlock"] > div > div > [data-testid="column"]) {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Максимально уменьшаем отступы между вариантами освещения (7px) */
+    [data-testid="column"] > div {
+        margin-top: 0 !important;
+        margin-bottom: 7px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* ВАЖНО: Решение проблемы с серым текстом в ночном режиме - все тексты принудительно белые */
+    .stApp.dark div, .stApp.dark p, .stApp.dark span, 
+    .stApp.dark h1, .stApp.dark h2, .stApp.dark h3, 
+    .stApp.dark h4, .stApp.dark h5, .stApp.dark h6 {
+        color: #FFFFFF !important;
+    }
+    
+    /* Фиксируем видимость текста в заголовках блоков в темном режиме */
+    .stApp.dark .section-header {
+        color: #FFFFFF !important;
+        border-bottom-color: #444444 !important;
     }
     
     /* Устанавливаем минимальный отступ между блоками формы */
@@ -442,37 +472,34 @@ def main():
             color: var(--label-color) !important;
         }
         
-        /* Принудительное переопределение цвета текста для ВСЕХ элементов интерфейса в темном режиме */
-        html:has(.dark) body [data-testid="element-container"] * {
-            color: white !important;
-        }
-        
-        /* Исправляем серый шрифт на темном фоне - сделаем его ярко-белым */
-        body.dark-mode div, body.dark-mode p, body.dark-mode span, 
-        body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, 
-        body.dark-mode h4, body.dark-mode h5, body.dark-mode h6,
-        body.dark-mode .section-header, body.dark-mode .stMarkdown,
-        body.dark-mode [data-testid="stVerticalBlock"] div,
-        body.dark-mode label, body.dark-mode .stTextInput label,
-        body.dark-mode .stNumberInput label, body.dark-mode .stSelectbox label,
-        body.dark-mode .stRadio label, body.dark-mode .stCheckbox label,
-        body.dark-mode .stExpander label, body.dark-mode .stSlider label {
+        /* КРИТИЧНО: Принудительная установка цветов для текстовых элементов */
+        /* В ТЕМНОМ РЕЖИМЕ - ВСЕ БЕЛЫМ ЦВЕТОМ */
+        .stApp.dark *, .dark-mode * {
             color: #FFFFFF !important;
         }
         
-        /* Принудительно задаем белый цвет для всех элементов текста в приложении в темном режиме */
-        .stApp.dark [data-testid="stAppViewContainer"] div,
-        .stApp.dark [data-testid="stHeader"] div,
-        .stApp.dark [data-testid="stToolbar"] div,
-        .stApp.dark [data-testid="stSidebar"] div,
-        .stApp.dark [data-testid="stMarkdown"] div,
-        .stApp.dark .section-header,
-        .stApp.dark [data-testid="stMarkdown"] p,
-        .stApp.dark [data-testid="stMarkdown"] span,
-        .stApp.dark [data-testid="stText"] p,
-        .stApp.dark [data-testid="stText"] div,
-        .stApp.dark [data-testid="stWidgetLabel"] {
+        /* В СВЕТЛОМ РЕЖИМЕ - ВСЕ ЧЕРНЫМ ЦВЕТОМ (кроме специальных элементов) */
+        .stApp:not(.dark) *:not(button):not(.stButton *) {
+            color: #000000 !important;
+        }
+        
+        /* Особенно для всех блоков ввода, меток, заголовков */
+        .stApp.dark label, .stApp.dark .stTextInput label, 
+        .stApp.dark p, .stApp.dark span, .stApp.dark div:not([class*="stButton"]),
+        .stApp.dark h1, .stApp.dark h2, .stApp.dark h3, .stApp.dark h4, .stApp.dark h5, .stApp.dark h6,
+        .stApp.dark .section-header, .stApp.dark [data-testid="stMarkdown"] p {
             color: #FFFFFF !important;
+        }
+        
+        /* Принудительно для текста в кнопках подсветки */
+        .stApp.dark [data-testid="stButton"] button:not([data-testid="baseButton-primary"]) {
+            color: black !important;
+        }
+        
+        /* Принудительно для плиток с выбранной опцией */
+        .stApp.dark div[style*="highlight-bg"] div,
+        .stApp.dark div[style*="highlight-color"] {
+            color: var(--highlight-color, #0066cc) !important;
         }
         
         /* Заголовки секций - общие стили */

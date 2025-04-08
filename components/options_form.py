@@ -415,9 +415,9 @@ def render_options_form():
             if is_selected:
                 st.markdown(f"""
                 <div style="background-color: var(--highlight-bg, #e6f3ff); border: 1px solid var(--highlight-color, #0066cc); color: var(--highlight-color, #0066cc); 
-                     font-weight: bold; text-align: center; border-radius: 8px; padding: 5px 3px; margin-bottom: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                    <div style="font-size: 1.1rem; text-align: center; line-height: 1.1;">{light_name} ✓</div>
-                    <div style="font-size: 0.8rem; margin-top: 2px; text-align: center; line-height: 1.1;">{light_desc}</div>
+                     font-weight: bold; text-align: center; border-radius: 8px; padding: 3px 2px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <div style="font-size: 1rem; text-align: center; line-height: 1;">{light_name} ✓</div>
+                    <div style="font-size: 0.7rem; margin-top: 1px; text-align: center; line-height: 1;">{light_desc}</div>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -425,16 +425,21 @@ def render_options_form():
                 if st.button("", key=f"no_action_{light_type}", use_container_width=True, disabled=True):
                     pass
             else:
-                # Видимая кнопка для выбора освещения с центрированным текстом и минимальными отступами
+                # Видимая кнопка для выбора освещения с центрированным текстом и минимальными отступами (7px)
                 custom_css = f"""
                 <style>
                 div[data-testid*="stButton"] button[kind="secondary"] {{
                     text-align: center !important;
-                    padding: 5px 3px !important;
+                    padding: 2px 1px !important;
                     margin-bottom: 0 !important;
+                    margin-top: 0 !important;
                     height: auto !important;
                     min-height: 0 !important;
-                    line-height: 1.1 !important;
+                    line-height: 1 !important;
+                }}
+                div[data-testid="column"] {{
+                    padding: 0 !important;
+                    margin-bottom: 7px !important;
                 }}
                 </style>
                 """
