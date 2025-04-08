@@ -352,10 +352,11 @@ def get_base_price(pergola_type, lamella_type, width_m, length_m):
             logger.warning(f"Подходящие конфигурации не найдены для {pergola_type}/{lamella_type} ({width_m}x{length_m})")
             return None, 1, None
         
-        # Сортируем конфигурации по общей стоимости (от меньшей к большей)
-        suitable_configs.sort(key=lambda x: x['total_cost'])
+        # Сортируем конфигурации сначала по ширине и длине, чтобы выбрать наиболее близкую
+        # А потом при равных размерах - по общей стоимости
+        suitable_configs.sort(key=lambda x: (abs(x['width'] - width_m) + abs(x['length'] - length_m), x['total_cost']))
         
-        # Выбираем оптимальную (наиболее дешевую) конфигурацию
+        # Выбираем оптимальную (наиболее близкую по размерам) конфигурацию
         optimal_config = suitable_configs[0]
         
         # Выводим сравнение для отладки
