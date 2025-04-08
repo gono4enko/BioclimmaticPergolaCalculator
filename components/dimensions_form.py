@@ -153,13 +153,13 @@ def render_dimensions_form():
         st.session_state.dimensions['height'] = 3.0
     
     # Создаем компактный блок для размеров
-    st.markdown("<div style='background-color: #f8f9fa; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);'>", unsafe_allow_html=True)
+    st.markdown("<div style='background-color: #f8f9fa; border-radius: 8px; padding: 0.6rem; margin-bottom: 0.6rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);'>", unsafe_allow_html=True)
     
-    # Заголовок блока (более компактный)
-    st.markdown("<h3 style='margin-top: 0; margin-bottom: 0.7rem; color: #333; font-size: 1.2rem;'>Размеры перголы</h3>", unsafe_allow_html=True)
+    # Заголовок блока (ещё более компактный)
+    st.markdown("<h3 style='margin-top: 0; margin-bottom: 0.3rem; color: #333; font-size: 1.1rem;'>Размеры перголы</h3>", unsafe_allow_html=True)
     
-    # Используем компактный дизайн формы ввода размеров
-    st.markdown('<div class="dimension-form">', unsafe_allow_html=True)
+    # Используем более компактный дизайн формы ввода размеров
+    st.markdown('<div class="dimension-form" style="padding: 0.4rem;">', unsafe_allow_html=True)
     
     # Создаем два ряда по два элемента для более компактного отображения
     row1_cols = st.columns(2)

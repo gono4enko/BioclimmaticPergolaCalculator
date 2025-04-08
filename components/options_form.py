@@ -121,14 +121,14 @@ def render_options_form():
             'additional_options': []
         }
     
-    # Контейнер для опций перголы
-    st.markdown("<div class='pergola-option-container'>", unsafe_allow_html=True)
+    # Контейнер для опций перголы (более компактный)
+    st.markdown("<div class='pergola-option-container' style='margin-bottom: 0.5rem;'>", unsafe_allow_html=True)
     
-    # Заголовок блока
-    st.markdown("<h3 style='margin-top: 0; margin-bottom: 0.5rem; color: #333;'>Конфигурация перголы</h3>", unsafe_allow_html=True)
+    # Заголовок блока (более компактный)
+    st.markdown("<h3 style='margin-top: 0; margin-bottom: 0.3rem; color: #333; font-size: 1.1rem;'>Конфигурация перголы</h3>", unsafe_allow_html=True)
     
-    # Блок выбора типа перголы
-    st.markdown("<div class='option-title' style='margin-bottom:0.3rem;'>Тип перголы:</div>", unsafe_allow_html=True)
+    # Блок выбора типа перголы (компактнее)
+    st.markdown("<div class='option-title' style='margin-bottom:0.2rem;'>Тип перголы:</div>", unsafe_allow_html=True)
     # Создаем плитки для выбора типа перголы
     pergola_options = list(PERGOLA_TYPES.keys())
     pergola_cols = st.columns(len(pergola_options))
@@ -163,9 +163,10 @@ def render_options_form():
                 text-align: center;
                 border-radius: 8px;
                 height: auto;
-                padding: 12px;
-                margin-bottom: 10px;
+                padding: 8px;
+                margin-bottom: 5px;
                 transition: all 0.3s;
+                font-size: 0.85rem;
             }
             div[data-testid*="stButton"] > button:hover {
                 background-color: #e6f3ff;
@@ -180,9 +181,9 @@ def render_options_form():
             if is_selected:
                 st.markdown(f"""
                 <div style="background-color: #e6f3ff; border: 2px solid #0066cc; color: #0066cc; 
-                     font-weight: bold; text-align: center; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
-                    <div style="font-size: 16px;">{pergola_name.split()[-1]} ✓</div>
-                    <div style="font-size: 12px; margin-top: 5px;">{pergola_short_desc}</div>
+                     font-weight: bold; text-align: center; border-radius: 8px; padding: 8px; margin-bottom: 5px;">
+                    <div style="font-size: 15px;">{pergola_name.split()[-1]} ✓</div>
+                    <div style="font-size: 11px; margin-top: 3px;">{pergola_short_desc}</div>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -230,7 +231,7 @@ def render_options_form():
     if pergola_type == "B600":
         # Для B600 нет выбора ламелей - используются PIR-панели
         st.markdown("""
-        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.5rem; margin-top: 0.5rem;'>
+        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.3rem; margin-top: 0.3rem;'>
             <b>Тип крыши:</b> Стационарные PIR-панели (сэндвич-панели с утеплителем)
         </div>
         """, unsafe_allow_html=True)
@@ -239,7 +240,7 @@ def render_options_form():
     elif "B500" in pergola_type:
         # Для B500 - отображаем информацию о поворотных ламелях
         st.markdown("""
-        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.5rem; margin-top: 0.5rem;'>
+        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.3rem; margin-top: 0.3rem;'>
             <b>Тип крыши:</b> Поворотные ламели с возможностью регулировки угла наклона
         </div>
         """, unsafe_allow_html=True)
@@ -253,7 +254,7 @@ def render_options_form():
     else:  # B700
         # Для B700 - отображаем информацию о сдвижных ламелях
         st.markdown("""
-        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.5rem; margin-top: 0.5rem;'>
+        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.3rem; margin-top: 0.3rem;'>
             <b>Тип крыши:</b> Сдвижные ламели с горизонтальным перемещением
         </div>
         """, unsafe_allow_html=True)
@@ -298,9 +299,9 @@ def render_options_form():
                     if is_selected:
                         st.markdown(f"""
                         <div style="background-color: #e6f3ff; border: 2px solid #0066cc; color: #0066cc; 
-                             font-weight: bold; text-align: center; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
-                            <div style="font-size: 16px;">{size_display} ✓</div>
-                            <div style="font-size: 12px; margin-top: 5px;">{lamella_short_desc.split(',')[-1].strip()}</div>
+                             font-weight: bold; text-align: center; border-radius: 8px; padding: 8px; margin-bottom: 5px;">
+                            <div style="font-size: 15px;">{size_display} ✓</div>
+                            <div style="font-size: 11px; margin-top: 3px;">{lamella_short_desc.split(',')[-1].strip()}</div>
                         </div>
                         """, unsafe_allow_html=True)
                         
@@ -319,8 +320,8 @@ def render_options_form():
     else:
         lamella_step = 250  # Для ламелей B500-25NEW и B700-25NEW
     
-    # Блок выбора освещения на полную ширину (без колонок с доп. опциями)
-    st.markdown("<div class='option-title' style='margin-top: 0.7rem; margin-bottom:0.3rem;'>Освещение:</div>", unsafe_allow_html=True)
+    # Блок выбора освещения на полную ширину (без колонок с доп. опциями, компактнее)
+    st.markdown("<div class='option-title' style='margin-top: 0.3rem; margin-bottom:0.2rem;'>Освещение:</div>", unsafe_allow_html=True)
     
     # Доступные типы освещения для выбранного типа перголы
     lighting_options = PERGOLA_TYPES[pergola_type]["available_lighting"] if pergola_type in PERGOLA_TYPES else ["none"]
