@@ -197,32 +197,17 @@ def render_dimensions_form():
         st.markdown(f'<div class="dimension-unit">м</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Второй ряд: Высота и Конфигурация
-    row2_cols = st.columns([1, 3])
-    
-    with row2_cols[0]:
-        st.markdown('<div class="dimension-label">Высота</div>', unsafe_allow_html=True)
-        st.markdown('<div class="dimension-input-container">', unsafe_allow_html=True)
-        st.text_input(
-            "Высота перголы",
-            value="3,0 м",
-            disabled=True,
-            key="height_input",
-            label_visibility="collapsed"
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with row2_cols[1]:
-        st.markdown('<div class="dimension-label">Конфигурация</div>', unsafe_allow_html=True)
-        
-        # Используем колонки для ровного расположения кнопок
-        conf_cols = st.columns(3)
-        with conf_cols[0]:
-            st.button("Поворотные\nламели", key="btn_config_b500", use_container_width=True)
-        with conf_cols[1]:
-            st.button("Сдвижные\nламели", key="btn_config_b700", use_container_width=True)
-        with conf_cols[2]:
-            st.button("Стационарные\nпанели", key="btn_config_b600", use_container_width=True)
+    # Только высота, убираем дублирующуюся конфигурацию
+    st.markdown('<div class="dimension-label">Высота</div>', unsafe_allow_html=True)
+    st.markdown('<div class="dimension-input-container">', unsafe_allow_html=True)
+    st.text_input(
+        "Высота перголы",
+        value="3,0 м",
+        disabled=True,
+        key="height_input",
+        label_visibility="collapsed"
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
     
