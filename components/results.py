@@ -91,9 +91,7 @@ def render_results(results):
     # Создаем HTML-блок для отображения результатов
     st.markdown('<div class="result-header">Результаты расчета</div>', unsafe_allow_html=True)
     
-    # Отображаем сообщение о корректировке длины и другие важные сообщения
-    if 'correction_message' in results and results['correction_message']:
-        st.warning(results['correction_message'])
+    # Убираем отображение сообщения о корректировке, так как оно дублируется в спецификации
     
     # Начинаем контейнер для метрик
     st.markdown('<div class="result-container">', unsafe_allow_html=True)
