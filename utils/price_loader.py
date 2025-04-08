@@ -25,7 +25,7 @@ def load_price_data(file_path):
         file_path (str): Путь к файлу с ценами
         
     Returns:
-        dict: Словарь с ценами в формате {(ширина, длина): цена}
+        dict: Словарь с ценами в формате {(ширина, длина): (цена, модули)}
     """
     try:
         # Проверяем, существует ли файл
@@ -98,15 +98,24 @@ def load_price_data(file_path):
                         length_float = float(length.replace(',', '.'))
                         width_float = float(width.replace(',', '.'))
                         
+                        # Получаем количество модулей для данной ширины
+                        modules_count = modules_count_dict.get(width_float, 1)
+                        
                         # Проверяем, что у нас есть значение цены для этой позиции
                         if i < len(price_values) and j < len(price_values[i]):
                             price_value = float(price_values[i][j])
                             
-                            # Сохраняем цену по ключу (ширина, длина)
-                            price_dict[(width_float, length_float)] = price_value
-                            
-                            # Дополнительно логируем загруженные размеры для отладки
-                            logger.debug(f"Загружена цена {price_value} для размеров {width_float}x{length_float}")
+                            # Сохраняем цену и количество модулей по ключу (ширина, длина)
+                            # Если для данного размера уже есть цена, проверяем количество модулей
+                            if (width_float, length_float) in price_dict:
+                                existing_price, existing_modules = price_dict[(width_float, length_float)]
+                                # Если новый вариант имеет меньше модулей, обновляем запись
+                                if modules_count < existing_modules:
+                                    price_dict[(width_float, length_float)] = (price_value, modules_count)
+                                    logger.debug(f"Обновлена цена для {width_float}x{length_float}: {price_value}€, {modules_count} модулей (было {existing_modules} модулей)")
+                            else:
+                                price_dict[(width_float, length_float)] = (price_value, modules_count)
+                                logger.debug(f"Загружена цена {price_value}€ для размеров {width_float}x{length_float}, {modules_count} модулей")
                     except (ValueError, IndexError, TypeError) as e:
                         logger.warning(f"Ошибка обработки цены в файле {file_path} (новый формат): {width}x{length}, {e}")
         
@@ -136,15 +145,18 @@ def load_price_data(file_path):
                         length_float = float(length.replace(',', '.'))
                         width_float = float(width.replace(',', '.'))
                         
+                        # Определяем предполагаемое количество модулей по ширине
+                        modules_count = get_modules_count_from_size(width_float)
+                        
                         # Проверяем, что у нас есть значение цены для этой позиции
                         if i < len(price_values) and j < len(price_values[i]):
                             price_value = float(price_values[i][j])
                             
-                            # Сохраняем цену по ключу (ширина, длина)
-                            price_dict[(width_float, length_float)] = price_value
+                            # Сохраняем цену и количество модулей по ключу (ширина, длина)
+                            price_dict[(width_float, length_float)] = (price_value, modules_count)
                             
                             # Дополнительно логируем загруженные размеры для отладки
-                            logger.debug(f"Загружена цена {price_value} для размеров {width_float}x{length_float}")
+                            logger.debug(f"Загружена цена {price_value}€ для размеров {width_float}x{length_float}, {modules_count} модулей")
                     except (ValueError, IndexError, TypeError) as e:
                         logger.warning(f"Ошибка обработки цены в файле {file_path} (старый формат): {width}x{length}, {e}")
         
@@ -185,126 +197,14 @@ def load_price_tables():
                 logger.warning(f"Пропускаем пустой файл: {file_path}")
                 continue
             
-            try:
-                # Обработка потенциальных проблем с кодировкой
-                try:
-                    df = pd.read_csv(file_path, delimiter=';', decimal=',', encoding='utf-8')
-                except UnicodeDecodeError:
-                    # Пробуем альтернативную кодировку
-                    df = pd.read_csv(file_path, delimiter=';', decimal=',', encoding='cp1251')
-                
-                # Проверка на пустоту DataFrame
-                if df.empty:
-                    logger.warning(f"Пустой DataFrame в файле: {file_path}")
-                    continue
-                
-                # Проверка на минимальное количество строк и столбцов
-                if df.shape[0] < 2 or df.shape[1] < 2:
-                    logger.warning(f"Недостаточно данных в файле: {file_path}, shape: {df.shape}")
-                    continue
-                
-                # Создаем словарь для быстрого доступа к ценам по размерам
-                price_dict = {}
-                
-                # Проверяем формат данных
-                # Если есть строка "Количество модулей", значит это новый формат
-                if "Количество модулей" in str(df.iloc[0, 0]):
-                    # Новый формат данных
-                    # Первая строка - информация о модулях
-                    # Вторая строка - заголовки с размерами ширины
-                    # Первый столбец - значения вылета (длины)
-                    
-                    # Получаем информацию о модулях
-                    modules_info = df.iloc[0, 1:].values.astype(str)
-                    
-                    # Получаем размеры ширины
-                    width_values = df.iloc[1, 1:].values.astype(str)
-                    
-                    # Получаем значения вылета (длины)
-                    length_values = df.iloc[2:, 0].values.astype(str)
-                    
-                    # Получаем цены
-                    price_values = df.iloc[2:, 1:].values
-                    
-                    # Создаем словарь для соответствия ширины и количества модулей
-                    modules_count_dict = {}
-                    for i, module_info in enumerate(modules_info):
-                        if i < len(width_values):
-                            width_float = float(width_values[i].replace(',', '.'))
-                            # Извлекаем количество модулей из строки (например, "1 модуль" -> 1)
-                            modules_count = int(module_info.split()[0])
-                            modules_count_dict[width_float] = modules_count
-                    
-                    for i, length in enumerate(length_values):
-                        for j, width in enumerate(width_values):
-                            try:
-                                # Проверяем, что значения не пустые
-                                if not length or not width:
-                                    continue
-                                    
-                                # Конвертируем из строк в числа с плавающей точкой
-                                length_float = float(length.replace(',', '.'))
-                                width_float = float(width.replace(',', '.'))
-                                
-                                # Проверяем, что у нас есть значение цены для этой позиции
-                                if i < len(price_values) and j < len(price_values[i]):
-                                    price_value = float(price_values[i][j])
-                                    
-                                    # Сохраняем цену по ключу (ширина, длина)
-                                    price_dict[(width_float, length_float)] = price_value
-                                    
-                                    # Дополнительно логируем загруженные размеры для отладки
-                                    logger.debug(f"Загружена цена {price_value} для размеров {width_float}x{length_float}")
-                            except (ValueError, IndexError, TypeError) as e:
-                                logger.warning(f"Ошибка обработки цены в файле {file_name} (новый формат): {width}x{length}, {e}")
-                
-                else:
-                    # Старый формат данных
-                    # Первая строка - ширина, вторая - заголовки
-                    # Первый столбец - вылет, остальные столбцы - ширина
-                    
-                    # Получаем названия столбцов (ширина в метрах)
-                    width_values = df.iloc[0].values[1:].astype(str)
-                    
-                    # Получаем значения вылета (длины в метрах)
-                    length_values = df.iloc[1:, 0].values.astype(str)
-                    
-                    # Получаем цены
-                    price_values = df.iloc[1:, 1:].values
-                    
-                    for i, length in enumerate(length_values):
-                        for j, width in enumerate(width_values):
-                            # Преобразование строки в число с плавающей точкой
-                            try:
-                                # Проверяем, что значения не пустые
-                                if not length or not width:
-                                    continue
-                                    
-                                # Конвертируем из строк в числа с плавающей точкой
-                                length_float = float(length.replace(',', '.'))
-                                width_float = float(width.replace(',', '.'))
-                                
-                                # Проверяем, что у нас есть значение цены для этой позиции
-                                if i < len(price_values) and j < len(price_values[i]):
-                                    price_value = float(price_values[i][j])
-                                    
-                                    # Сохраняем цену по ключу (ширина, длина)
-                                    price_dict[(width_float, length_float)] = price_value
-                                    
-                                    # Дополнительно логируем загруженные размеры для отладки
-                                    logger.debug(f"Загружена цена {price_value} для размеров {width_float}x{length_float}")
-                            except (ValueError, IndexError, TypeError) as e:
-                                logger.warning(f"Ошибка обработки цены в файле {file_name} (старый формат): {width}x{length}, {e}")
-                
-                if price_dict:
-                    price_tables[file_name] = price_dict
-                    logger.info(f"Загружена таблица цен из файла {file_name}, {len(price_dict)} записей")
-                else:
-                    logger.warning(f"Не удалось загрузить данные из файла {file_name}")
-                    
-            except Exception as e:
-                logger.error(f"Ошибка обработки файла {file_name}: {str(e)}")
-                continue
+            # Загружаем данные через функцию load_price_data
+            price_dict = load_price_data(file_path)
+            
+            if price_dict:
+                price_tables[file_name] = price_dict
+                logger.info(f"Загружена таблица цен из файла {file_name}, {len(price_dict)} записей")
+            else:
+                logger.warning(f"Не удалось загрузить данные из файла {file_name}")
                 
         return True
     except Exception as e:
@@ -404,13 +304,18 @@ def get_base_price(pergola_type, lamella_type, width_m, length_m):
         
         # Сначала проверяем, есть ли точное соответствие размеров в прайс-листе
         if (width_m, length_m) in price_dict:
-            exact_price = price_dict[(width_m, length_m)]
-            # Определяем количество модулей для точного размера
-            exact_modules = get_modules_count_from_size(width_m)
+            # Получаем цену и количество модулей
+            if isinstance(price_dict[(width_m, length_m)], tuple):
+                exact_price, exact_modules = price_dict[(width_m, length_m)]
+            else:
+                # Для обратной совместимости
+                exact_price = price_dict[(width_m, length_m)]
+                exact_modules = get_modules_count_from_size(width_m)
+                
             # Рассчитываем общую стоимость с учетом автоматики
             exact_total_cost = calculate_total_cost_with_automation(exact_price, exact_modules, pergola_type)
             
-            logger.info(f"Найдена точная цена {exact_price} для {pergola_type}/{lamella_type} ({width_m}x{length_m}, {exact_modules} модулей)")
+            logger.info(f"Найдена точная цена {exact_price}€ для {pergola_type}/{lamella_type} ({width_m}x{length_m}, {exact_modules} модулей)")
             return exact_price, exact_modules, None
         
         # Если точного соответствия нет, находим все возможные конфигурации
@@ -419,21 +324,26 @@ def get_base_price(pergola_type, lamella_type, width_m, length_m):
         # Находим все размеры, которые могли бы подойти (ближайшие большие)
         suitable_configs = []
         
-        for size, price in price_dict.items():
+        for size, price_data in price_dict.items():
             conf_width, conf_length = size
             
             # Проверяем, что размеры не меньше запрошенных
             if conf_width >= width_m and conf_length >= length_m:
-                # Определяем количество модулей для этой конфигурации
-                modules_count = get_modules_count_from_size(conf_width)
+                # Получаем цену и количество модулей
+                if isinstance(price_data, tuple):
+                    price_value, modules_count = price_data
+                else:
+                    # Для обратной совместимости
+                    price_value = price_data
+                    modules_count = get_modules_count_from_size(conf_width)
                 
                 # Рассчитываем общую стоимость с учетом автоматики
-                total_cost = calculate_total_cost_with_automation(price, modules_count, pergola_type)
+                total_cost = calculate_total_cost_with_automation(price_value, modules_count, pergola_type)
                 
                 suitable_configs.append({
                     'width': conf_width,
                     'length': conf_length, 
-                    'price': price,
+                    'price': price_value,
                     'modules': modules_count,
                     'total_cost': total_cost
                 })
@@ -448,17 +358,11 @@ def get_base_price(pergola_type, lamella_type, width_m, length_m):
         # Выбираем оптимальную (наиболее дешевую) конфигурацию
         optimal_config = suitable_configs[0]
         
-        # Проверка на особый случай - очень широкие перголы
-        # В этом случае в price_dict width - это ширина одного модуля, а не общая ширина перголы
-        # Поэтому для очень широких пергол нужно подобрать оптимальную ширину модуля и умножить на количество модулей
-        if width_m > 9.0:  # Для очень широких пергол (более 9 метров)
-            # Находим подходящие конфигурации для перголы с учетом модулей
-            modules_count = get_modules_count_from_size(width_m)
-            logger.debug(f"Подбор для широкой перголы {width_m}x{length_m}м с {modules_count} модулями")
-            
-            # Модифицируем optimal_config, чтобы отражать фактическую ширину перголы
-            optimal_config['modules'] = modules_count
-            optimal_config['width'] = width_m  # Используем фактическую ширину перголы
+        # Выводим сравнение для отладки
+        if len(suitable_configs) > 1:
+            logger.info(f"Найдено {len(suitable_configs)} подходящих конфигураций для {pergola_type}/{lamella_type} ({width_m}x{length_m}):")
+            for i, config in enumerate(suitable_configs[:3]):  # Выводим только первые 3 конфигурации
+                logger.info(f"  {i+1}. {config['width']}x{config['length']} ({config['modules']} модулей): базовая цена {config['price']}€, с автоматикой {config['total_cost']}€")
         
         # Запишем информацию в лог, но не будем показывать пользователю
         log_message = (
