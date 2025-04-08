@@ -301,66 +301,71 @@ def render_results(results):
         additional_columns_cost = detailed_costs.get('additional_columns', 0)
         gutter_insert_cost = detailed_costs.get('gutter_insert', 0)
         
-        # Создаем таблицу напрямую, без использования сложных f-строк
-        # Создаем базовую таблицу
-        st.markdown("""
+        # Создаем полную таблицу с правильным выравниванием
+        table_rows = []
+        
+        # Базовая стоимость конструкции (всегда первая строка)
+        table_rows.append({
+            "bg_color": "#f9f9f9",
+            "label": "Базовая стоимость конструкции:",
+            "value": f"{base_price_eur:,.0f} €"
+        })
+        
+        # Дополнительные колонны (если есть)
+        if additional_columns_cost > 0:
+            table_rows.append({
+                "bg_color": "#f0f0f0",
+                "label": "Стоимость дополнительных колонн:",
+                "value": f"{additional_columns_cost:,.0f} €"
+            })
+        
+        # Усилитель лотка (если есть)
+        if gutter_insert_cost > 0:
+            # Определяем цвет фона (чередуем)
+            bg_color = "#f0f0f0" if len(table_rows) % 2 == 0 else "#f9f9f9"
+            table_rows.append({
+                "bg_color": bg_color,
+                "label": "Стоимость усилителя лотка:",
+                "value": f"{gutter_insert_cost:,.0f} €"
+            })
+        
+        # Стоимость автоматики
+        bg_color = "#f0f0f0" if len(table_rows) % 2 == 0 else "#f9f9f9"
+        table_rows.append({
+            "bg_color": bg_color,
+            "label": "Стоимость автоматики:",
+            "value": f"{automation_with_remote_cost_eur:,.0f} €"
+        })
+        
+        # Изготовление и подготовка
+        bg_color = "#f0f0f0" if (len(table_rows) + 1) % 2 == 0 else "#f9f9f9"
+        table_rows.append({
+            "bg_color": bg_color,
+            "label": "Изготовление и подготовка (10%):",
+            "value": f"{manufacturing_cost_eur:,.0f} €"
+        })
+        
+        # Формируем HTML-код таблицы
+        table_html = """
         <table style="width: 100%; border-collapse: collapse;">
-        """, unsafe_allow_html=True)
+        """
         
-        # Базовая стоимость конструкции
-        st.markdown(f"""
-            <tr style="background-color: #f9f9f9;">
-                <td style="padding: 6px 10px; font-weight: bold; width: 70%;">Базовая стоимость конструкции:</td>
-                <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{base_price_eur:,} €</td>
+        # Добавляем строки
+        for row in table_rows:
+            table_html += f"""
+            <tr style="background-color: {row['bg_color']};">
+                <td style="padding: 8px 10px; font-weight: bold; width: 70%;">{row['label']}</td>
+                <td style="padding: 8px 10px; text-align: right; font-weight: bold;">{row['value']}</td>
             </tr>
-        """, unsafe_allow_html=True)
+            """
         
-        # Добавляем стоимость дополнительных колонн, если они есть
-        if additional_columns_cost > 0:
-            st.markdown(f"""
-            <tr style="background-color: #f0f0f0;">
-                <td style="padding: 6px 10px; font-weight: bold;">Стоимость дополнительных колонн:</td>
-                <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{additional_columns_cost:,} €</td>
-            </tr>
-            """, unsafe_allow_html=True)
-        
-        # Добавляем стоимость усилителя лотка, если он есть
-        if gutter_insert_cost > 0:
-            bg_color = "#f0f0f0" if additional_columns_cost == 0 else "#f9f9f9"
-            st.markdown(f"""
-            <tr style="background-color: {bg_color};">
-                <td style="padding: 6px 10px; font-weight: bold;">Стоимость усилителя лотка:</td>
-                <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{gutter_insert_cost:,} €</td>
-            </tr>
-            """, unsafe_allow_html=True)
-        
-        # Определяем цвет фона для строки с автоматикой
-        row_count = 1  # Базовая строка всегда есть
-        if additional_columns_cost > 0:
-            row_count += 1
-        if gutter_insert_cost > 0:
-            row_count += 1
-        
-        # Определяем правильный цвет фона (чередуем)
-        automation_bg_color = "#f9f9f9" if row_count % 2 == 0 else "#f0f0f0"
-        manufacturing_bg_color = "#f0f0f0" if row_count % 2 == 0 else "#f9f9f9"
-        
-        # Добавляем стоимость автоматики
-        st.markdown(f"""
-            <tr style="background-color: {automation_bg_color};">
-                <td style="padding: 6px 10px; font-weight: bold;">Стоимость автоматики:</td>
-                <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{automation_with_remote_cost_eur:,} €</td>
-            </tr>
-        """, unsafe_allow_html=True)
-        
-        # Добавляем строку с производственными затратами
-        st.markdown(f"""
-            <tr style="background-color: {manufacturing_bg_color};">
-                <td style="padding: 6px 10px; font-weight: bold;">Изготовление и подготовка (10%):</td>
-                <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{manufacturing_cost_eur:,} €</td>
-            </tr>
+        # Закрываем таблицу
+        table_html += """
         </table>
-        """, unsafe_allow_html=True)
+        """
+        
+        # Выводим таблицу
+        st.markdown(table_html, unsafe_allow_html=True)
         
         # Кнопка "Изменить параметры" с улучшенным скроллом и обработкой ошибок
         st.markdown(f"""
@@ -382,7 +387,7 @@ def render_results(results):
     # Итоговая стоимость (на всю ширину)
     st.markdown(f"""
     <div style="margin-top: 20px; text-align: right; font-size: 24px; font-weight: bold;">
-        Итого: <span style="color: #1b6b1b;">{total_cost_eur:,} €</span>
+        Итого: <span style="color: #1b6b1b;">{total_cost_eur:,.0f} €</span>
     </div>
     """, unsafe_allow_html=True)
     
