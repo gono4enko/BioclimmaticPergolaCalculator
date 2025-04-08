@@ -194,17 +194,40 @@ def render_specification(results, options):
             automation_name = "Базовая автоматика"
             rows.append(("Автоматика:", automation_name))
             
-            # Формируем компоненты автоматики без указания цен
+            # Формируем компоненты автоматики с указанием типа привода и количества
             if automation_components:
-                # Модифицируем компоненты, убирая информацию о ценах
+                # Модифицируем компоненты
                 modified_components = []
                 for component in automation_components:
-                    # Убираем ценовую информацию из строки компонента
-                    component_without_price = component.split("(")[0].strip()
-                    # Добавляем информацию о количестве приводов, равном количеству модулей
-                    if "Bansbach" in component_without_price or "Somfy" in component_without_price:
-                        component_without_price += f" ({modules_count} {'шт.' if modules_count == 1 else 'шт.'})"
-                    modified_components.append(component_without_price)
+                    # Получаем тип привода (без цены)
+                    drive_type = component.split("(")[0].strip()
+                    
+                    # Формируем точное описание привода с указанием типа и количества
+                    if "Bansbach" in drive_type:
+                        if "T1" in drive_type:
+                            # Привод Bansbach T1
+                            drive_info = f"Привод Bansbach T1 ({modules_count} {'привод' if modules_count == 1 else 'привода' if 2 <= modules_count <= 4 else 'приводов'})"
+                        elif "Tandem" in drive_type:
+                            # Привод Bansbach Tandem
+                            drive_info = f"Привод Bansbach Tandem ({modules_count} {'комплект' if modules_count == 1 else 'комплекта' if 2 <= modules_count <= 4 else 'комплектов'})"
+                        else:
+                            # Общий случай для Bansbach
+                            drive_info = f"Привод {drive_type} ({modules_count} {'шт.' if modules_count == 1 else 'шт.'})"
+                    elif "Somfy" in drive_type:
+                        if "M1" in drive_type:
+                            # Привод Somfy M1
+                            drive_info = f"Привод Somfy M1 ({modules_count} {'привод' if modules_count == 1 else 'привода' if 2 <= modules_count <= 4 else 'приводов'})"
+                        elif "TANDEM" in drive_type or "Tandem" in drive_type:
+                            # Привод Somfy M2 TANDEM
+                            drive_info = f"Привод Somfy M2 TANDEM ({modules_count} {'комплект' if modules_count == 1 else 'комплекта' if 2 <= modules_count <= 4 else 'комплектов'})"
+                        else:
+                            # Общий случай для Somfy
+                            drive_info = f"Привод {drive_type} ({modules_count} {'шт.' if modules_count == 1 else 'шт.'})"
+                    else:
+                        # Общий случай для других типов
+                        drive_info = f"{drive_type} ({modules_count} {'шт.' if modules_count == 1 else 'шт.'})"
+                    
+                    modified_components.append(drive_info)
                 
                 # Добавляем пульт управления
                 if 'remote_control' in detailed_costs:
