@@ -214,17 +214,27 @@ def determine_somfy_drive_type(pergola_type, width_m, length_m, modules_count):
         # Получаем список условий для данного количества модулей
         conditions = SOMFY_TANDEM_CONDITIONS.get(modules_count, [])
         
-        # Проверяем условия для всех модулей одинаково:
-        # Если ШИРИНА > порогового значения И ДЛИНА > порогового значения,
-        # то нужен более мощный привод Somfy Tandem
+        # Для 1 модуля используем противоположные правила (ширина <= threshold)
+        # Для остальных модулей используем стандартные правила (ширина > threshold)
         for width_threshold, length_threshold in conditions:
-            if width_m > width_threshold and length_m > length_threshold:
-                drive_type = "M2_TANDEM"
-                drive_cost_per_module = SOMFY_PRICES["M2_TANDEM"]
-                # Добавляем лог для отладки
-                logger.info(f"Выбран привод Somfy M2 TANDEM для перголы размером {width_m}x{length_m} м, "
-                           f"т.к. ширина > {width_threshold} и длина > {length_threshold}")
-                break
+            if modules_count == 1:
+                # Для 1 модуля: если ШИРИНА <= порогового значения И ДЛИНА > порогового значения 
+                if width_m <= width_threshold and length_m > length_threshold:
+                    drive_type = "M2_TANDEM"
+                    drive_cost_per_module = SOMFY_PRICES["M2_TANDEM"]
+                    # Добавляем лог для отладки
+                    logger.info(f"Выбран привод Somfy M2 TANDEM для перголы размером {width_m}x{length_m} м, "
+                               f"т.к. ширина <= {width_threshold} и длина > {length_threshold}")
+                    break
+            else:
+                # Для 2+ модулей: если ШИРИНА > порогового значения И ДЛИНА > порогового значения 
+                if width_m > width_threshold and length_m > length_threshold:
+                    drive_type = "M2_TANDEM"
+                    drive_cost_per_module = SOMFY_PRICES["M2_TANDEM"]
+                    # Добавляем лог для отладки
+                    logger.info(f"Выбран привод Somfy M2 TANDEM для перголы размером {width_m}x{length_m} м, "
+                               f"т.к. ширина > {width_threshold} и длина > {length_threshold}")
+                    break
                 
         # Если TANDEM не выбран, записываем в лог причину
         if drive_type == "M1":
