@@ -153,19 +153,23 @@ def main():
     }
     /* Устраняем пустые промежутки между компонентами */
     div[data-testid="stVerticalBlock"] > div {
-        margin-bottom: 2px !important;
+        margin-bottom: 0 !important;
         padding-bottom: 0 !important;
         padding-top: 0 !important;
     }
     /* Убираем лишние границы для компактности */
     .element-container {
         margin-top: 0;
-        margin-bottom: 0.1rem;
+        margin-bottom: 0;
     }
     /* Уменьшаем отступы у карточек результатов */
     .result-card {
-        margin-bottom: 5px !important;
-        padding: 10px !important;
+        margin-bottom: 0 !important;
+        padding: 5px 10px !important;
+    }
+    /* Устанавливаем минимальный отступ между блоками формы */
+    .stMarkdown {
+        margin-bottom: 0 !important;
     }
     </style>
     """, unsafe_allow_html=True)

@@ -153,7 +153,7 @@ def render_dimensions_form():
         st.session_state.dimensions['height'] = 3.0
     
     # Создаем блок для размеров в новом дизайне с минимальными отступами
-    st.markdown('<div class="result-card" style="margin-bottom: 3px;">', unsafe_allow_html=True)
+    st.markdown('<div class="result-card" style="margin-bottom: 0px;">', unsafe_allow_html=True)
     
     # Заголовок блока (четкий и читаемый)
     st.markdown('<div class="section-header">Размеры перголы</div>', unsafe_allow_html=True)
