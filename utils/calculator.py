@@ -503,11 +503,18 @@ def calculate_pergola_cost(dimensions, options):
                 detailed_costs['automation_message'] = drive_message
                 detailed_costs['automation_manufacturer'] = "Bansbach"
                 
-                # Выбираем подходящий пульт в зависимости от количества модулей
-                if modules_count <= 1:
+                # Считаем количество устройств для пульта ДУ
+                # Каждый модуль требует 1 привод
+                # Если есть освещение, каждый модуль требует дополнительно 1 блок управления освещением
+                devices_count = modules_count  # По 1 приводу на модуль
+                if lighting_type != 'none':
+                    devices_count += modules_count  # Добавляем по 1 устройству управления освещением на модуль
+                
+                # Выбираем подходящий пульт в зависимости от количества устройств
+                if devices_count <= 1:
                     detailed_costs['remote_control'] = "Simu 1K"
                     detailed_costs['remote_control_cost'] = 25
-                elif modules_count <= 4:
+                elif devices_count <= 5:
                     detailed_costs['remote_control'] = "Simu 5K"
                     detailed_costs['remote_control_cost'] = 40
                 else:
@@ -526,11 +533,18 @@ def calculate_pergola_cost(dimensions, options):
                 detailed_costs['automation_message'] = drive_message
                 detailed_costs['automation_manufacturer'] = "Somfy"
                 
-                # Выбираем подходящий пульт в зависимости от количества модулей
-                if modules_count <= 1:
+                # Считаем количество устройств для пульта ДУ
+                # Каждый модуль требует 1 привод
+                # Если есть освещение, каждый модуль требует дополнительно 1 блок управления освещением
+                devices_count = modules_count  # По 1 приводу на модуль
+                if lighting_type != 'none':
+                    devices_count += modules_count  # Добавляем по 1 устройству управления освещением на модуль
+                
+                # Выбираем подходящий пульт в зависимости от количества устройств
+                if devices_count <= 1:
                     detailed_costs['remote_control'] = "Simu 1K"
                     detailed_costs['remote_control_cost'] = 25
-                elif modules_count <= 4:
+                elif devices_count <= 5:
                     detailed_costs['remote_control'] = "Simu 5K"
                     detailed_costs['remote_control_cost'] = 40
                 else:
