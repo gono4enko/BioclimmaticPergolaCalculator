@@ -377,136 +377,95 @@ def render_options_form():
     else:
         lamella_step = 250  # Для ламелей B500-25NEW и B700-25NEW
     
-    # Создаем новый блок для выбора освещения с радикально уменьшенными отступами
-    st.markdown('<div class="result-card" style="margin: 0; padding: 0;">', unsafe_allow_html=True)
-    st.markdown('<div class="section-header" style="margin-bottom: 0; padding-bottom: 2px; color: #FFFFFF !important;">Подсветка (LED по периметру)</div>', unsafe_allow_html=True)
+    # Использовать ТОЛЬКО СТАНДАРТНЫЕ функции Streamlit для заголовка - никакого HTML, CSS или JS
+    st.subheader("Подсветка (LED по периметру)")
     
     # Доступные типы освещения для выбранного типа перголы - убираем 'none'
     lighting_options = [opt for opt in PERGOLA_TYPES[pergola_type]["available_lighting"] if opt != "none"] if pergola_type in PERGOLA_TYPES else []
-    selected_lighting = st.session_state.options['lighting_type'] 
-    lighting_type = selected_lighting  # Инициализируем переменную для использования позже
+    selected_lighting = st.session_state.options['lighting_type']
+    lighting_type = selected_lighting
     
-    # РАДИКАЛЬНО НОВЫЙ ПОДХОД: Вместо использования st.columns, используем HTML-таблицу
-    # Это позволит полностью контролировать вертикальные отступы между блоками
-    
-    # Начало HTML-таблицы
-    html_rows = '<table style="width:100%; border-collapse: collapse; border-spacing: 0; margin:0; padding:0;"><tr style="margin:0; padding:0;">'
-    
-    # Создаем ячейки таблицы с вариантами освещения
-    for light_type in lighting_options:
-        # Получаем информацию о типе освещения с обновленными названиями
-        if light_type == "led":
-            light_name = "Сверхъяркая LED подсветка"
-            light_desc = "Яркая LED лента"
-        elif light_type == "rgb":
-            light_name = "Светодиодная RGB подсветка"
-            light_desc = "Яркая RGB лента"
-        elif light_type == "led_rgb":
-            light_name = "Комбинированное LED + RGB"
-            light_desc = "Белое и цветное освещение"
-        else:
-            light_name = LIGHTING_TYPES[light_type]['name'] if light_type in LIGHTING_TYPES else light_type
-            light_desc = LIGHTING_TYPES[light_type]['description'] if light_type in LIGHTING_TYPES else ""
-            # Укорачиваем описание для компактности
-            light_desc = light_desc.split(" по ")[0] if " по " in light_desc else light_desc
-        
-        # Определяем, выбрана ли текущая опция
-        is_selected = light_type == selected_lighting
-        
-        # Добавляем ячейку таблицы
-        bg_color = "#FFFFFF" if is_selected else "#FFFFFF"
-        text_color = "#000000" if is_selected else "#000000"
-        border = "1px solid #0066cc" if is_selected else "1px solid #ddd"
-        checkmark = " ✓" if is_selected else ""
-        
-        html_rows += f'''
-        <td style="padding:0 2px; margin:0; vertical-align:top;">
-            <div onclick="parent.postMessage({{type: 'streamlit:setComponentValue', value: '{light_type}', dataType: 'string', componentIndex: 'lighting_click_{light_type}'}},'*')" 
-                 style="background-color: {bg_color}; border: {border}; color: {text_color}; font-weight: bold; text-align: center; 
-                 border-radius: 8px; padding: 8px 4px; margin: 2px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                <div style="font-size: 0.9rem; text-align: center; line-height: 1.1;">{light_name}{checkmark}</div>
-                <div style="font-size: 0.7rem; margin-top: 3px; text-align: center; line-height: 1.1;">{light_desc}</div>
-            </div>
-        </td>
-        '''
-    
-    # Закрываем HTML-таблицу
-    html_rows += '</tr></table>'
-    
-    # Отображаем таблицу с минимальными отступами
-    st.markdown(html_rows, unsafe_allow_html=True)
-    
-    # Добавляем невидимый элемент с минимальной высотой для уменьшения отступа
-    st.markdown("<div style='height:1px;margin:0;padding:0;'></div>", unsafe_allow_html=True)
-    
-    # Добавляем JavaScript для обработки кликов и радикально уменьшаем отступы
+    # Добавляем очень агрессивный CSS для принудительного уменьшения отступов и изменения дизайна
     st.markdown("""
-    <script>
-    // Функция для отправки сообщений в Streamlit
-    window.addEventListener('message', function(event) {
-        // Проверяем, что сообщение от нашего компонента
-        if (event.data.type === 'streamlit:componentReady') {
-            // Добавляем обработчики событий после загрузки страницы
-            setTimeout(function() {
-                // Радикально уменьшаем отступы для блоков подсветки
-                var lightingBlocks = document.querySelectorAll('[data-testid="stVerticalBlock"] div:has(> div.section-header:contains("Подсветка"))');
-                for (var i = 0; i < lightingBlocks.length; i++) {
-                    lightingBlocks[i].style.marginTop = '0';
-                    lightingBlocks[i].style.marginBottom = '0';
-                    lightingBlocks[i].style.paddingTop = '0';
-                    lightingBlocks[i].style.paddingBottom = '0';
-                }
-                
-                // Уменьшаем отступы для всех дочерних элементов
-                var allElements = document.querySelectorAll('.stApp [data-testid="stVerticalBlock"] div');
-                for (var i = 0; i < allElements.length; i++) {
-                    allElements[i].style.marginTop = '0';
-                    allElements[i].style.marginBottom = '0';
-                    allElements[i].style.paddingTop = '0';
-                    allElements[i].style.paddingBottom = '0';
-                }
-            }, 100);
-        }
-    });
-    </script>
-    
     <style>
-    /* Радикально уменьшаем все отступы для всего приложения */
-    [data-testid="stVerticalBlock"] > div {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
+    /* Максимальная компактность карточек подсветки */
+    div.stButton > button {
+        margin: 0px !important;
+        padding: 2px !important;
+        height: auto !important;
+        line-height: 1 !important;
+        background-color: white !important;
+        color: black !important;
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
     }
     
-    /* Особенно для блока с подсветкой */
-    div:has(> div.section-header:contains("Подсветка")) {
-        margin: 0 !important;
-        padding: 0 !important;
+    /* Делаем кнопки подсветки максимально компактными */
+    div.stButton > button > div {
+        padding: 0px !important;
+        margin: 0px !important;
     }
     
-    /* Для всех дочерних элементов */
-    div:has(> div.section-header:contains("Подсветка")) * {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
+    /* Принудительно убираем все цвета и стили Streamlit */
+    div.stButton > button:hover {
+        background-color: white !important;
+        color: black !important;
+        border: 1px solid #0066cc !important;
+        box-shadow: none !important;
+    }
+    
+    /* Уменьшаем расстояние между колонками */
+    div.row-widget.stHorizontal {
+        gap: 0px !important;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Невидимые компоненты для обработки кликов через JavaScript
-    for light_type in lighting_options:
-        if st.text_input(f"Выбор освещения {light_type}", "", key=f"lighting_click_{light_type}", label_visibility="collapsed") == light_type:
-            st.session_state.options['lighting_type'] = light_type
-            st.rerun()
+    # Создаем одну строку, где все элементы будут плотно друг к другу
+    cols = st.columns(len(lighting_options), gap="small")
     
-    # Закрываем контейнер для подсветки
-    st.markdown("</div>", unsafe_allow_html=True)
+    # Для каждого варианта подсветки создаем кнопку с минимальными размерами
+    for i, light_type in enumerate(lighting_options):
+        with cols[i]:
+            # Получаем информацию о типе освещения с короткими названиями
+            if light_type == "led":
+                light_name = "Сверхъяркая LED"
+                light_desc = "белый свет"
+            elif light_type == "rgb":
+                light_name = "RGB подсветка"
+                light_desc = "цветная"
+            elif light_type == "led_rgb":
+                light_name = "LED + RGB"
+                light_desc = "2в1"
+            else:
+                light_name = LIGHTING_TYPES[light_type]['name'] if light_type in LIGHTING_TYPES else light_type
+                light_desc = ""
+            
+            # Определяем, выбрана ли текущая опция
+            is_selected = light_type == selected_lighting
+            
+            # Если опция выбрана, показываем карточку белого цвета с галочкой
+            if is_selected:
+                # Используем максимально компактный div вместо стандартного элемента Streamlit
+                st.markdown(f"""
+                <div style="border:1px solid #0066cc; background-color:white; 
+                     border-radius:5px; padding:5px; margin:0; text-align:center;">
+                    <p style="margin:0; padding:0; font-size:0.9rem; font-weight:bold; color:#000000;">{light_name} ✓</p>
+                    <p style="margin:0; padding:0; font-size:0.7rem; color:#000000;">{light_desc}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                # Компактная кнопка для выбора
+                # Используем самую компактную кнопку, какую только можно создать
+                if st.button(f"{light_name}\n{light_desc}", key=f"lighting_{light_type}", 
+                           use_container_width=True, help=f"Выбрать {light_name}"):
+                    st.session_state.options['lighting_type'] = light_type
+                    st.rerun()
     
-    # Блок выбора установки с уменьшенными отступами
-    st.markdown('<div class="result-card" style="margin-bottom: 0px; margin-top: 0px; padding-top: 2px; padding-bottom: 2px;">', unsafe_allow_html=True)
-    st.markdown('<div class="section-header" style="color: #FFFFFF !important;">Установка</div>', unsafe_allow_html=True)
+    # Нет необходимости закрывать контейнер, так как мы используем встроенные компоненты Streamlit
+    
+    # Используем стандартный компонент подзаголовка Streamlit для установки
+    st.subheader("Установка")
     
     # Создаем колонки для опций установки
     install_cols = st.columns([1, 1])
@@ -530,8 +489,7 @@ def render_options_form():
         </div>
         """, unsafe_allow_html=True)
     
-    # Закрываем блок установки
-    st.markdown("</div>", unsafe_allow_html=True)
+    # Нет необходимости закрывать блок, так как мы используем встроенные компоненты Streamlit
     
     # Инициализируем пустой список выбранных опций
     # Дополнительные опции (автоматика) подбираются автоматически

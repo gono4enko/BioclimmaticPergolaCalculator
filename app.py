@@ -73,31 +73,56 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Принудительно устанавливаем светлую тему независимо от предпочтений пользователя
+    # Принудительно устанавливаем светлую тему, белый фон и черный текст
     st.markdown("""
+    <style>
+    /* МАКСИМАЛЬНО АГРЕССИВНОЕ ПРИНУДИТЕЛЬНОЕ ПРИМЕНЕНИЕ СВЕТЛОЙ ТЕМЫ */
+    /* Применяем белый фон и черный текст для ВСЕХ элементов */
+    html, body, .stApp, .main, [data-testid="stAppViewContainer"],
+    .stApp.dark, [data-theme="dark"], .dark-mode {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+    }
+    
+    /* Форсируем черный цвет для всех текстовых элементов */
+    h1, h2, h3, h4, h5, h6, p, span, div, label, button {
+        color: #000000 !important;
+    }
+    
+    /* Принудительно меняем все синие элементы на белые с черной границей */
+    div.row-widget.stRadio > div[role="radiogroup"] > label,
+    .st-cl, .st-bq, .st-bn, .st-bo, .st-bp, .st-dj, .st-dk, .st-bc, 
+    .css-1xarl3l, .css-1offfwp, .css-16idsys, .css-vfskoc {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        border-color: #DDDDDD !important;
+    }
+    
+    /* Переопределение стилей кнопок (кроме основной кнопки расчета) */
+    .stButton:not(:has(button[data-testid="baseButton-primary"])) > button {
+        background-color: white !important;
+        color: black !important;
+        border: 1px solid #DDDDDD !important;
+    }
+    
+    /* Максимально уменьшаем все отступы в приложении */
+    .element-container, .stVerticalBlock, .css-ocqkz7 {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    </style>
     <script>
     // Принудительно устанавливаем светлую тему при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
         // Устанавливаем светлую тему в localStorage
         localStorage.setItem('userPrefersDark', false);
         
-        // Принудительно добавляем класс light-mode для тела документа
+        // Заменяем темный класс на светлый
         document.body.classList.add('light-mode');
         document.body.classList.remove('dark-mode');
-        document.documentElement.classList.remove('dark');
         document.documentElement.setAttribute('data-theme', 'light');
-        
-        // Принудительно устанавливаем черный цвет для текста заголовков
-        document.querySelectorAll('.section-header').forEach(function(el) {
-            el.style.color = '#000000';
-            el.style.backgroundColor = '#FFFFFF';
-        });
-        
-        // Отключаем слушатель события для изменений темы - всегда светлая тема
-        if (window.matchMedia) {
-            var darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            darkModeMediaQuery.removeEventListener('change', function() {});
-        }
     });
     </script>
     """, unsafe_allow_html=True)
@@ -428,9 +453,57 @@ def main():
     /* Уменьшаем отступы между блоками формы */
     .result-card {
         margin-top: 0 !important;
-        margin-bottom: 2px !important;
-        padding-top: 1px !important;
-        padding-bottom: 1px !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Радикально уменьшаем отступы для ВСЕХ элементов страницы */
+    div[data-testid="stVerticalBlock"] h3,
+    div[data-testid="stVerticalBlock"] h2,
+    div[data-testid="stVerticalBlock"] p,
+    div[data-testid="stVerticalBlock"] div,
+    div[data-testid="stVerticalBlock"] > div,
+    div[data-testid="stVerticalBlock"] div > div {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Принудительно уменьшаем все отступы в приложении */
+    .element-container, 
+    .stSelectbox, 
+    .stNumberInput,
+    .stButton,
+    .stMarkdown,
+    .stRadio,
+    .stCheckbox,
+    .row-widget {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Минимальные отступы для подзаголовков */
+    div[data-testid="stVerticalBlock"] h3 {
+        font-size: 1.0rem !important;
+        line-height: 1.0 !important;
+        margin-top: 3px !important;
+        margin-bottom: 3px !important;
+    }
+    
+    /* Убираем любые отступы для стандартных кнопок */
+    .stButton {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .stButton > button {
+        margin: 0 !important;
+        padding: 5px !important;
+        min-height: 0 !important;
+        height: auto !important;
     }
     </style>
     """, unsafe_allow_html=True)
