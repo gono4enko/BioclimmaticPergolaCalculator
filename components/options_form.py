@@ -15,17 +15,30 @@ body.dark-mode .section-header,
     color: white !important;
 }
 
-/* Уменьшение вертикальных интервалов между элементами подсветки */
+/* Максимальное уменьшение отступов между элементами подсветки */
 div[data-testid*="column"] > div {
-    padding-top: 0.1rem !important;
-    padding-bottom: 0.1rem !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
 }
 
-/* Уменьшение отступов у кнопок в блоке подсветки */
+/* Минимальные отступы у кнопок в блоке подсветки */
 div[data-testid*="stButton"] > button {
-    padding: 8px 5px !important;
-    margin-bottom: 1px !important;
-    line-height: 1.2 !important;
+    padding: 5px 3px !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+}
+
+/* Дополнительное уменьшение вертикальных отступов в блоке подсветки */
+[data-testid="stVerticalBlock"] > div:has(div.section-header:contains("Подсветка")) > div {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Уменьшаем размер текста в кнопках подсветки */
+div[data-testid*="stButton"] > button[kind="secondary"] {
+    font-size: 0.9rem !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -344,9 +357,9 @@ def render_options_form():
     else:
         lamella_step = 250  # Для ламелей B500-25NEW и B700-25NEW
     
-    # Создаем новый блок для выбора освещения в соответствии с макетом со сниженными отступами
-    st.markdown('<div class="result-card" style="margin-bottom: 0px; margin-top: 0px; padding-top: 2px; padding-bottom: 2px;">', unsafe_allow_html=True)
-    st.markdown('<div class="section-header">Подсветка (LED по периметру)</div>', unsafe_allow_html=True)
+    # Создаем новый блок для выбора освещения с минимальными отступами
+    st.markdown('<div class="result-card" style="margin: 0; padding: 0 0 0 0;">', unsafe_allow_html=True)
+    st.markdown('<div class="section-header" style="margin-bottom: 0; padding-bottom: 0;">Подсветка (LED по периметру)</div>', unsafe_allow_html=True)
     
     # Доступные типы освещения для выбранного типа перголы - убираем 'none'
     lighting_options = [opt for opt in PERGOLA_TYPES[pergola_type]["available_lighting"] if opt != "none"] if pergola_type in PERGOLA_TYPES else []

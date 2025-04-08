@@ -350,6 +350,18 @@ def main():
         padding: 3px 10px !important;
     }
     
+    /* Минимальные отступы для блока подсветки */
+    div:has(> div.section-header:contains("Подсветка")) {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Уменьшение интервалов между кнопками подсветки */
+    [data-testid="column"]:has([data-testid="stButton"] > button) {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
     /* Устанавливаем минимальный отступ между блоками формы */
     .stMarkdown {
         margin-bottom: 0 !important;
