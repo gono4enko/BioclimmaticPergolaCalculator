@@ -96,146 +96,83 @@ def render_specification(results, options):
     else:
         pergola_name = PERGOLA_TYPES.get(pergola_type, {}).get('name', '')
     
-    # Создаем CSS стили для таблицы спецификации
-    st.markdown("""
-    <style>
-    .specification-container {
-        margin-top: 2rem;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    .specification-header {
-        background-color: #4a69bd;
-        color: white;
-        padding: 1rem;
-        font-size: 1.2rem;
-        font-weight: bold;
-    }
-    .specification-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .specification-table tr:nth-child(even) {
-        background-color: #f8f9fa;
-    }
-    .specification-table tr:nth-child(odd) {
-        background-color: #ffffff;
-    }
-    .specification-table td {
-        padding: 0.8rem 1rem;
-        border-bottom: 1px solid #e9ecef;
-    }
-    .specification-table td:first-child {
-        width: 40%;
-        font-weight: 500;
-    }
-    .automation-components {
-        list-style-type: disc;
-        margin: 0.5rem 0 0.5rem 1.5rem;
-        padding: 0;
-    }
-    .automation-components li {
-        margin-bottom: 0.3rem;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Создаем HTML для спецификации
-    specification_html = f"""
-    <div class="specification-container">
-        <div class="specification-header">
-            Спецификация перголы
-        </div>
-        <table class="specification-table">
-            <tr>
-                <td>Тип перголы:</td>
-                <td>{pergola_name}</td>
-            </tr>
-            <tr>
-                <td>Тип ламелей:</td>
-                <td>{lamella_info}</td>
-            </tr>
-            <tr>
-                <td>Ширина:</td>
-                <td>{width_m} м</td>
-            </tr>
-            <tr>
-                <td>Вынос:</td>
-                <td>{length_m} м</td>
-            </tr>
-            <tr>
-                <td>Площадь:</td>
-                <td>{area} м²</td>
-            </tr>
-            <tr>
-                <td>Количество модулей:</td>
-                <td>{modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}</td>
-            </tr>
-            <tr>
-                <td>Фактический размер:</td>
-                <td>{width_m} × {length_m} м</td>
-            </tr>
-    """
-    
-    # Добавляем информацию об автоматике
-    if automation_manufacturer:
-        automation_name = f"Базовая автоматика ({automation_cost}€)"
+    # Создаем блок для спецификации перголы
+    with st.container():
+        st.subheader("Спецификация перголы")
         
-        specification_html += f"""
-            <tr>
-                <td>Автоматика:</td>
-                <td>{automation_name}</td>
-            </tr>
-        """
+        # Создаем таблицу данных для спецификации
+        data = []
         
-        # Добавляем компоненты автоматики
-        if automation_components:
-            components_list = ""
-            for component in automation_components:
-                components_list += f"<li>{component}</li>"
+        # Добавляем основные параметры перголы
+        data.append(["Тип перголы:", pergola_name])
+        data.append(["Тип ламелей:", lamella_info])
+        data.append(["Ширина:", f"{width_m} м"])
+        data.append(["Вынос:", f"{length_m} м"])
+        data.append(["Площадь:", f"{area} м²"])
+        data.append(["Количество модулей:", f"{modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}"])
+        data.append(["Фактический размер:", f"{width_m} × {length_m} м"])
+        
+        # Добавляем информацию об автоматике
+        if automation_manufacturer:
+            automation_name = f"Базовая автоматика ({automation_cost}€)"
+            data.append(["Автоматика:", automation_name])
+            
+            # Формируем список компонентов автоматики
+            if automation_components:
+                components_text = ""
+                for i, component in enumerate(automation_components):
+                    components_text += f"• {component}"
+                    if i < len(automation_components) - 1:
+                        components_text += "\n"
                 
-            specification_html += f"""
-            <tr>
-                <td>Компоненты автоматики:</td>
-                <td>
-                    <ul class="automation-components">
-                        {components_list}
-                    </ul>
-                </td>
-            </tr>
-            """
-    
-    # Добавляем информацию об освещении
-    specification_html += f"""
-            <tr>
-                <td>Подсветка:</td>
-                <td>{lighting_info}</td>
-            </tr>
-    """
-    
-    # Если есть вставка для усиления лотка, добавляем её
-    gutter_insert_cost = detailed_costs.get('gutter_insert', 0)
-    if gutter_insert_cost > 0:
-        specification_html += f"""
-            <tr>
-                <td>Усиление лотка:</td>
-                <td>Вставка для усиления лотка ({gutter_insert_cost}€)</td>
-            </tr>
-        """
-    
-    # Добавляем итоговую стоимость
-    specification_html += f"""
-            <tr>
-                <td><strong>Итоговая стоимость:</strong></td>
-                <td><strong>{results.get('total_cost', 0)}€</strong></td>
-            </tr>
-        </table>
-    </div>
-    """
-    
-    # Отображаем спецификацию
-    st.markdown(specification_html, unsafe_allow_html=True)
+                data.append(["Компоненты автоматики:", components_text])
+        
+        # Добавляем информацию об освещении
+        data.append(["Подсветка:", lighting_info])
+        
+        # Если есть вставка для усиления лотка, добавляем её
+        gutter_insert_cost = detailed_costs.get('gutter_insert', 0)
+        if gutter_insert_cost > 0:
+            data.append(["Усиление лотка:", f"Вставка для усиления лотка ({gutter_insert_cost}€)"])
+        
+        # Добавляем итоговую стоимость
+        data.append(["Итоговая стоимость:", f"{results.get('total_cost', 0)}€"])
+        
+        # Создаем DataFrame для таблицы
+        import pandas as pd
+        df = pd.DataFrame(data, columns=["Характеристика", "Значение"])
+        
+        # Применяем custom CSS для таблицы
+        st.markdown("""
+        <style>
+        .dataframe {
+            width: 100%;
+            border-collapse: collapse !important;
+            margin-bottom: 1rem;
+        }
+        .dataframe th, .dataframe td {
+            padding: 0.8rem !important;
+            border: 1px solid #e9ecef !important;
+        }
+        .dataframe th {
+            background-color: #4a69bd !important;
+            color: white !important;
+            font-weight: bold !important;
+        }
+        .dataframe tr:nth-child(even) {
+            background-color: #f8f9fa !important;
+        }
+        .dataframe tr:nth-child(odd) {
+            background-color: #ffffff !important;
+        }
+        .dataframe tr:last-child {
+            font-weight: bold !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # Отображаем таблицу
+        st.table(df)
     
     # Добавляем изображение выбранной модели перголы
     col1, col2 = st.columns([1, 3])

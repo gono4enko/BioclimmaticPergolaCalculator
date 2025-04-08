@@ -123,7 +123,7 @@ def determine_bansbach_drive_type(pergola_type, width_m, length_m, modules_count
                 drive_type = "Tandem"
                 drive_cost = BANSBACH_PRICES["Tandem"]
                 message = (
-                    f"Для автоматизации перголы размером {width_m:.3f}x{length_m:.3f} м "
+                    f"Для автоматизации перголы размером {width_m:.2f}x{length_m:.2f} м "
                     f"({modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}) "
                     f"требуется усиленный привод Bansbach Tandem"
                 )
@@ -160,9 +160,9 @@ def calculate_gutter_insert_cost(length_m, modules_count):
     
     # Формируем сообщение
     message = (
-        f"Для перголы с выносом {length_m:.3f} м требуется вставка для усиления лотка. "
+        f"Для перголы с выносом {length_m:.2f} м требуется вставка для усиления лотка. "
         f"Общая длина лотков: {total_gutter_length:.2f} м "
-        f"({gutter_count} лотка × {length_m:.3f} м). "
+        f"({gutter_count} лотка × {length_m:.2f} м). "
         f"Стоимость усиления: {insert_cost} €"
     )
     
@@ -199,7 +199,7 @@ def determine_somfy_drive_type(pergola_type, width_m, length_m, modules_count):
                     drive_type = "M2_TANDEM"
                     drive_cost = SOMFY_PRICES["M2_TANDEM"]
                     message = (
-                        f"Для автоматизации перголы размером {width_m:.3f}x{length_m:.3f} м "
+                        f"Для автоматизации перголы размером {width_m:.2f}x{length_m:.2f} м "
                         f"({modules_count} модуль) требуется усиленный привод Somfy M2 TANDEM"
                     )
                     break
@@ -210,7 +210,7 @@ def determine_somfy_drive_type(pergola_type, width_m, length_m, modules_count):
                     drive_type = "M2_TANDEM"
                     drive_cost = SOMFY_PRICES["M2_TANDEM"]
                     message = (
-                        f"Для автоматизации перголы размером {width_m:.3f}x{length_m:.3f} м "
+                        f"Для автоматизации перголы размером {width_m:.2f}x{length_m:.2f} м "
                         f"({modules_count} {'модуля' if modules_count == 2 else 'модулей'}) "
                         f"требуется усиленный привод Somfy M2 TANDEM"
                     )
@@ -254,7 +254,7 @@ def adjust_length_to_lamella_count(length_m, lamella_type):
         adjusted_length_m = round(adjusted_length_m, 3)
         
         correction_message = (
-            f"Длина перголы была скорректирована с {length_m:.3f} м до {adjusted_length_m:.3f} м "
+            f"Длина перголы была скорректирована с {length_m:.2f} м до {adjusted_length_m:.2f} м "
             f"для соответствия целому числу ламелей ({lamella_count} шт.)"
         )
         
@@ -389,7 +389,7 @@ def calculate_pergola_cost(dimensions, options):
             
             # Добавляем информацию о дополнительных колоннах в сообщение
             columns_message = (
-                f"Для перголы с выносом {length_m:.3f} м необходимы дополнительные колонны "
+                f"Для перголы с выносом {length_m:.2f} м необходимы дополнительные колонны "
                 f"({modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}, "
                 f"стоимость: {columns_cost} €)"
             )
@@ -591,11 +591,11 @@ def calculate_pergola_cost(dimensions, options):
             'detailed_costs': detailed_costs,
             'dimensions': {
                 'width_mm': width_mm,
-                'width_m': round(width_m, 3),
+                'width_m': round(width_mm / 1000, 3),
                 'length_mm': length_mm,
-                'length_m': round(length_m, 3),
+                'length_m': round(length_mm / 1000, 3),
                 'height_mm': height_mm,
-                'height_m': round(height_m, 3)
+                'height_m': round(height_mm / 1000, 3)
             },
             'lamella_count': lamella_count,
             'correction_message': correction_message
