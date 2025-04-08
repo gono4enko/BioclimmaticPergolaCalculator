@@ -142,6 +142,7 @@ def render_results(results):
         font-size: 20px;
         font-weight: bold;
         margin: 20px 0 15px 0;
+        text-align: center;
         font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
@@ -223,8 +224,8 @@ def render_results(results):
     </style>
     """, unsafe_allow_html=True)
     
-    # Отображаем заголовок результатов
-    st.markdown('<h3 class="result-heading">Результаты расчета</h3>', unsafe_allow_html=True)
+    # Отображаем заголовок результатов по центру
+    st.markdown('<div style="text-align: center;"><h3 class="result-heading">Результаты расчета</h3></div>', unsafe_allow_html=True)
     
     # Создаем две колонки для таблиц
     col1, col2 = st.columns(2)
@@ -384,9 +385,9 @@ def render_results(results):
         
         # Убрана кнопка "Изменить параметры"
     
-    # Вывод общей стоимости ниже таблиц
+    # Вывод общей стоимости ниже таблиц (по центру)
     st.markdown(f"""
-    <div class="total-row">
+    <div class="total-row" style="text-align: center;">
         <span>Общая стоимость:</span> <span class="total-amount">{int(total_cost_eur)} €</span>
     </div>
     """, unsafe_allow_html=True)
