@@ -125,6 +125,21 @@ def render_results(results):
     gutter_insert_cost = detailed_costs.get('gutter_insert', 0)
     lighting_cost = detailed_costs.get('lighting', 0)
     
+    # Формируем подробную информацию о подсветке для отображения в спецификации
+    lighting_details_html = ""
+    if lighting_type != "Без подсветки" and 'lighting_details' in detailed_costs:
+        light_details = detailed_costs.get('lighting_details', {})
+        led_length = light_details.get('led_length', 0)
+        controllers_count = light_details.get('controllers_count', 0)
+        
+        # Формируем HTML списка для подсветки
+        lighting_details_html = f"""
+        <ul style="margin: 0; padding-left: 20px; margin-top: 5px;">
+            <li>Светодиодная лента, {led_length:.2f} м</li>
+            <li>Блок управления Somfy RTS Dimmer, {controllers_count} {'шт' if controllers_count == 1 else 'шт'}</li>
+        </ul>
+        """
+    
     # Считаем сумму всех элементов перголы без установки
     total_pergola_elements = base_price_eur + automation_with_remote_cost_eur + additional_columns_cost + gutter_insert_cost + lighting_cost
     
@@ -293,7 +308,10 @@ def render_results(results):
             </tr>
             <tr style="background-color: #f0f0f0;">
                 <td style="padding: 6px 10px; font-weight: bold;">Подсветка:</td>
-                <td style="padding: 6px 10px;">{lighting_type}</td>
+                <td style="padding: 6px 10px;">
+                    {lighting_type}
+                    {lighting_details_html}
+                </td>
             </tr>
         </table>
         """, unsafe_allow_html=True)
