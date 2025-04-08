@@ -26,12 +26,12 @@ def get_option_price(option_name, width_mm=0, length_mm=0):
     
     return 0
 
-# Цены на различные типы освещения
+# Цены на различные типы освещения (актуализированы из спецификации)
 LIGHTING_PRICES = {
     "none": 0,
-    "led": lambda w, l, modules=1: 20 * calculate_lighting_perimeter(w, l, modules) + 300 * modules,  # 20€ за метр + 300€ за блок управления на модуль
-    "rgb": lambda w, l, modules=1: 20 * calculate_lighting_perimeter(w, l, modules) + 300 * modules,  # 20€ за метр + 300€ за блок управления на модуль
-    "led_rgb": lambda w, l, modules=1: 40 * calculate_lighting_perimeter(w, l, modules) + 300 * modules,  # 40€ за метр (2х20€) + 300€ за блок управления на модуль
+    "led": lambda w, l, modules=1: 20 * calculate_lighting_perimeter(w, l, modules) + 300 * modules,  # 20€ за метр LED ленты + 300€ за блок управления на модуль
+    "rgb": lambda w, l, modules=1: 20 * calculate_lighting_perimeter(w, l, modules) + 300 * modules,  # 20€ за метр RGB ленты + 300€ за блок управления на модуль
+    "led_rgb": lambda w, l, modules=1: 40 * calculate_lighting_perimeter(w, l, modules) + 300 * modules,  # 40€ за метр (LED + RGB) + 300€ за блок управления на модуль
 }
 
 # Функция для расчета периметра освещения в зависимости от количества модулей
@@ -64,6 +64,13 @@ ADDITIONAL_OPTIONS_PRICES = {
     "motor": 450,        # Фиксированная цена
     "heater": lambda w, l: 650 + (w * l) * 0.08 / 1000000,  # Базовая цена + цена за квадратный метр
     "sound": 380,        # Фиксированная цена
+}
+
+# Цены на пульты дистанционного управления (обновлены из спецификации)
+REMOTE_CONTROL_PRICES = {
+    "Simu 1K": 25,      # Одноканальный пульт Simu 1K - 25 евро
+    "Simu 5K": 40,      # Пятиканальный пульт Simu 5K - 40 евро
+    "Simu 15K": 90      # 15-канальный пульт Simu 15K - 90 евро
 }
 
 # Коэффициенты наценки для срочного заказа
@@ -101,9 +108,12 @@ ADDITIONAL_COLUMNS_THRESHOLDS = {
 }
 
 # Цены на системы электропривода Bansbach для B500NEW
+# Обновлено на основе данных из attached_assets/Pasted--500-Bansbach--1744061705019.txt
 BANSBACH_PRICES = {
     "T1": 700,        # Стандартный привод Bansbach T1 (easyE-lift-50) - 700 евро
+                      # (400€ двигатель + 200€ блок управления + 100€ приемник)
     "Tandem": 1250    # Усиленный привод Bansbach Tandem (easyE-lift-50 Tandem) - 1250 евро
+                      # (800€ два двигателя + 350€ блок управления + 100€ приемник)
 }
 
 # Правила выбора привода Bansbach Tandem в зависимости от размеров перголы
@@ -141,9 +151,12 @@ BANSBACH_TANDEM_CONDITIONS = {
 }
 
 # Цены на системы электропривода Somfy для B700NEW
+# Актуальные цены из спецификации
 SOMFY_PRICES = {
     "M1": 300,        # Стандартный привод Somfy M1 - 300 евро
+                      # (состоит из двигателя, блока управления и приемника)
     "M2_TANDEM": 1000 # Усиленный привод Somfy M2 TANDEM - 1000 евро
+                      # (включает 2 двигателя, блок управления для 2-х двигателей и приемник)
 }
 
 # Порог для автоматического добавления вставки для усиления лотка (в метрах)

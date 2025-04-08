@@ -9,7 +9,8 @@ from config.price_data import (
     ADDITIONAL_COLUMNS_PRICES, ADDITIONAL_COLUMNS_THRESHOLDS,
     BANSBACH_PRICES, BANSBACH_TANDEM_CONDITIONS,
     SOMFY_PRICES, SOMFY_TANDEM_CONDITIONS,
-    GUTTER_INSERT_THRESHOLD, GUTTER_INSERT_PRICE_PER_METER, GUTTER_COUNT_BY_MODULES
+    GUTTER_INSERT_THRESHOLD, GUTTER_INSERT_PRICE_PER_METER, GUTTER_COUNT_BY_MODULES,
+    REMOTE_CONTROL_PRICES  # Импортируем цены на пульты
 )
 from utils.validation import validate_pergola_config
 from config.pergola_types import LAMELLA_TYPES, LIGHTING_TYPES
@@ -86,10 +87,9 @@ def calculate_additional_columns(pergola_type, lamella_type, length_m, width_m):
     # Используем логику из ценообразования для определения фактического количества модулей
     modules = get_modules_count_from_size(width_m)
     
-    # Корректировка для ширины 8.0м: всегда должно быть 2 модуля
-    if width_m == 8.0:
-        modules = 2
-        logger.info(f"Коррекция количества модулей: для ширины {width_m} м установлено 2 модуля")
+    # Специальные корректировки количества модулей на основе данных из прайс-листов
+    # Сейчас эти корректировки не нужны, так как логика определения модулей 
+    # обновлена в функции get_modules_count_from_size
     
     # Рассчитываем стоимость дополнительных колонн
     columns_cost = ADDITIONAL_COLUMNS_PRICES.get(modules, 0)
@@ -399,10 +399,8 @@ def calculate_pergola_cost(dimensions, options):
         from utils.price_loader import get_modules_count_from_size
         modules_count = get_modules_count_from_size(width_m)
         
-        # Корректировка для ширины 8.0м: всегда должно быть 2 модуля
-        if width_m == 8.0:
-            modules_count = 2
-            logger.info(f"Коррекция количества модулей в основном расчете: для ширины {width_m} м установлено 2 модуля")
+        # Специальные корректировки количества модулей больше не нужны,
+        # так как логика определения модулей обновлена в функции get_modules_count_from_size
         
         # Не переопределяем количество модулей из оптимальной конфигурации
         # optimal_modules_count используется только для определения базовой цены
