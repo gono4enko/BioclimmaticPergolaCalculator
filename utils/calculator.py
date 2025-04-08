@@ -372,8 +372,13 @@ def calculate_pergola_cost(dimensions, options):
             'additional_options': {}
         }
         
-        # Используем количество модулей, определенное при выборе оптимальной конфигурации
-        modules_count = optimal_modules_count
+        # Определяем количество модулей на основе фактической ширины перголы
+        # Это важно для правильного выбора пультов ДУ и других компонентов
+        from utils.price_loader import get_modules_count_from_size
+        modules_count = get_modules_count_from_size(width_m)
+        
+        # Не переопределяем количество модулей из оптимальной конфигурации
+        # optimal_modules_count используется только для определения базовой цены
         
         # Проверяем необходимость добавления дополнительных колонн
         need_additional_columns, columns_cost, calculated_modules_count = calculate_additional_columns(
