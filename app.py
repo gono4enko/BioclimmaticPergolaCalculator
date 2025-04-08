@@ -10,7 +10,7 @@ from components.dimensions_form import render_dimensions_form
 from components.options_form import render_options_form
 from components.results_new import render_results
 # Удалено: from components.specification import render_specification
-from components.scroll_helper import scroll_to_results
+from components.scroll_helper import scroll_to_results, add_button_animation
 
 # Настраиваем логирование
 logger = setup_logger()
@@ -241,6 +241,9 @@ def main():
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
     st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 DecoLife | Калькулятор пергол v1.0</div>", unsafe_allow_html=True)
+    
+    # Добавляем анимацию нажатия кнопки
+    add_button_animation()
     
     # Логируем посещение страницы
     if 'page_viewed' not in st.session_state:
