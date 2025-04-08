@@ -7,10 +7,18 @@ from utils.logger import setup_logger, log_user_action, log_calculation
 from utils.calculator import calculate_pergola_cost
 from components.header import render_header
 from components.dimensions_form import render_dimensions_form
+from components.scroll_helper import scroll_to_results, add_button_animation
 from components.options_form import render_options_form
 from components.results_new import render_results
-# Удалено: from components.specification import render_specification
-from components.scroll_helper import scroll_to_results, add_button_animation
+
+# Обновляем освещение напрямую в конфигурации
+from config.pergola_types import LIGHTING_TYPES
+LIGHTING_TYPES["led"]["name"] = "Сверхъяркая LED подсветка"
+LIGHTING_TYPES["led"]["description"] = "Яркая LED лента по периметру перголы"
+LIGHTING_TYPES["rgb"]["name"] = "Светодиодная RGB подсветка"
+LIGHTING_TYPES["rgb"]["description"] = "Яркая RGB лента со сменой цвета по периметру перголы"
+LIGHTING_TYPES["led_rgb"]["name"] = "Комбинированное LED + RGB освещение"
+LIGHTING_TYPES["led_rgb"]["description"] = "Позволяет выбрать между белым и цветным освещением"
 
 # Настраиваем логирование
 logger = setup_logger()
