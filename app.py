@@ -298,22 +298,23 @@ def main():
     options = render_options_form()
     
     # Кнопка для расчета с улучшенным стилем
-    _, center_col, _ = st.columns([1, 2, 1])
+    _, center_col, _ = st.columns([1, 3, 1]) # Делаем кнопку шире, увеличивая относительный размер колонки
     with center_col:
         st.markdown("""
         <style>
         div[data-testid="stButton"] > button[kind="primary"] {
             background-color: var(--button-bg);
             color: var(--button-text);
-            font-size: 1.3rem;
-            font-weight: bold;
+            font-size: 1.8rem; /* Увеличиваем размер шрифта еще больше */
+            font-weight: 700; /* Делаем шрифт еще жирнее */
             border-radius: 8px;
-            padding: 15px 0;
+            padding: 20px 0; /* Увеличиваем вертикальные отступы */
             border: none;
             margin-top: 25px;
             margin-bottom: 25px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2);
             transition: all 0.2s;
+            height: auto !important; /* Убедимся, что высота определяется контентом */
         }
         div[data-testid="stButton"] > button[kind="primary"]:hover {
             background-color: var(--highlight-hover);

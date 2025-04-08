@@ -136,11 +136,11 @@ def render_results(results):
         led_length = light_details.get('led_length', 0)
         controllers_count = light_details.get('controllers_count', 0)
         
-        # Формируем HTML списка для подсветки без лишних отступов
-        lighting_details_html = f"""<ul style="margin: 0; padding-left: 20px; margin-top: 5px; color: #000000;">
-<li>Светодиодная лента, {led_length:.2f} м</li>
-<li>Блок управления Somfy RTS Dimmer, {controllers_count} шт</li>
-</ul>"""
+        # Формируем HTML списка для подсветки без лишних отступов 
+        # Используем экранированный HTML-код, чтобы избежать проблем с отображением
+        led_length_str = f"{led_length:.2f}"
+        controllers_str = str(controllers_count)
+        lighting_details_html = f'<ul style="margin: 0; padding-left: 20px; margin-top: 5px; color: #000000;"><li>Светодиодная лента, {led_length_str} м</li><li>Блок управления Somfy RTS Dimmer, {controllers_str} шт</li></ul>'
     
     # Считаем сумму всех элементов перголы без установки
     total_pergola_elements = base_price_eur + automation_with_remote_cost_eur + additional_columns_cost + gutter_insert_cost + lighting_cost
