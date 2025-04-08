@@ -119,8 +119,17 @@ def render_results(results):
     # Добавляем стоимость пульта к стоимости автоматики
     automation_with_remote_cost_eur = automation_cost_eur + remote_control_cost_eur
     
-    # Рассчитываем стоимость изготовления (10%)
-    manufacturing_cost_eur = round(base_price_eur * 0.1)
+    # Рассчитываем стоимость доставки (10% от суммы всех элементов перголы)
+    # Получаем данные о дополнительных колоннах и усилителе лотка
+    additional_columns_cost = detailed_costs.get('additional_columns', 0)
+    gutter_insert_cost = detailed_costs.get('gutter_insert', 0)
+    lighting_cost = detailed_costs.get('lighting', 0)
+    
+    # Считаем сумму всех элементов перголы без установки
+    total_pergola_elements = base_price_eur + automation_with_remote_cost_eur + additional_columns_cost + gutter_insert_cost + lighting_cost
+    
+    # 10% от суммы всех элементов
+    delivery_cost_eur = round(total_pergola_elements * 0.1)
     
     # Общая стоимость в евро
     total_cost_eur = results['total_cost']
@@ -344,13 +353,13 @@ def render_results(results):
         </tr>
         """
         
-        # Добавляем строку с производственными затратами
+        # Добавляем строку с доставкой
         row_count += 1
         bg_color = "#f9f9f9" if row_count % 2 == 1 else "#f0f0f0"
         price_table_html += """
         <tr style="background-color: """ + bg_color + """;">
-            <td style="padding: 6px 10px; font-weight: bold;">Изготовление и подготовка (10%):</td>
-            <td style="padding: 6px 10px; text-align: right;">""" + str(int(manufacturing_cost_eur)) + """ €</td>
+            <td style="padding: 6px 10px; font-weight: bold;">Доставка (10%):</td>
+            <td style="padding: 6px 10px; text-align: right;">""" + str(int(delivery_cost_eur)) + """ €</td>
         </tr>
         """
         
@@ -466,7 +475,7 @@ def generate_csv(results):
             'Автоматика',
             'Пульт ДУ',
             'Подсветка',
-            'Производственные расходы',
+            'Доставка',
             'Итоговая стоимость'
         ],
         'Значение': [
@@ -482,7 +491,7 @@ def generate_csv(results):
             f"{detailed_costs.get('additional_options', {}).get('automation', 0)} €",
             f"{detailed_costs.get('remote_control_cost', 0)} €",
             f"{detailed_costs.get('lighting', 0)} €",
-            f"{round(detailed_costs.get('base_price', 0) * 0.1)} €",
+            f"{int(delivery_cost_eur)} €",
             f"{results.get('total_cost', 0)} €"
         ]
     }
