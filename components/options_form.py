@@ -364,9 +364,29 @@ def render_options_form():
     # Доступные типы освещения для выбранного типа перголы - убираем 'none'
     lighting_options = [opt for opt in PERGOLA_TYPES[pergola_type]["available_lighting"] if opt != "none"] if pergola_type in PERGOLA_TYPES else []
     
+    # ВАЖНО: Принудительно уменьшаем отступы между вариантами освещения
+    st.markdown("""
+    <style>
+    /* Принудительно сбрасываем отступы для строки с освещением */
+    .row-widget.stHorizontalBlock {
+        gap: 0px !important;
+        margin-bottom: 0px !important;
+        padding-bottom: 0px !important;
+    }
+    
+    /* Устанавливаем точно 7px для дочерних элементов */
+    .row-widget.stHorizontalBlock > div {
+        margin-bottom: 7px !important;
+        padding-bottom: 0px !important;
+        padding-top: 0px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Создаем плитки для типов подсветки
     if lighting_options:
-        lighting_cols = st.columns(len(lighting_options))
+        # Изменяем стиль для минимальных отступов
+        lighting_cols = st.columns(len(lighting_options), gap="small")
         selected_lighting = st.session_state.options['lighting_type']
         lighting_type = selected_lighting  # Инициализируем переменную для использования позже
         
@@ -425,21 +445,25 @@ def render_options_form():
                 if st.button("", key=f"no_action_{light_type}", use_container_width=True, disabled=True):
                     pass
             else:
-                # Видимая кнопка для выбора освещения с центрированным текстом и минимальными отступами (7px)
+                # Минимальная кнопка для выбора освещения - вертикальный отступ строго 7px
                 custom_css = f"""
                 <style>
                 div[data-testid*="stButton"] button[kind="secondary"] {{
                     text-align: center !important;
-                    padding: 2px 1px !important;
-                    margin-bottom: 0 !important;
-                    margin-top: 0 !important;
+                    padding: 1px 0px !important;
+                    margin: 0 !important;
                     height: auto !important;
                     min-height: 0 !important;
                     line-height: 1 !important;
+                    font-size: 0.8rem !important;
+                }}
+                div.element-container {{
+                    margin: 0 !important;
+                    padding: 0 !important;
                 }}
                 div[data-testid="column"] {{
                     padding: 0 !important;
-                    margin-bottom: 7px !important;
+                    margin: 0 0 7px 0 !important;
                 }}
                 </style>
                 """
