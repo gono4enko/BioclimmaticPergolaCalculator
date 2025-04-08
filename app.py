@@ -3,6 +3,15 @@
 """
 import os
 import streamlit as st
+
+# Настраиваем страницу перед выполнением любых других команд Streamlit
+st.set_page_config(
+    page_title="Калькулятор пергол DecoLife",
+    page_icon="🏠",
+    layout="centered",  # Центрированный макет для более узкого интерфейса
+    initial_sidebar_state="collapsed" # Скрываем сайдбар по умолчанию
+)
+
 from utils.logger import setup_logger, log_user_action, log_calculation
 from utils.calculator import calculate_pergola_cost
 from components.header import render_header
@@ -46,15 +55,10 @@ def perform_calculation(dimensions, options):
         logger.error(error_msg, exc_info=True)
         return {"error": error_msg}
 
+# Второй вызов set_page_config удаляем, т.к. он уже вызван выше
+
 def main():
     """Основная функция приложения"""
-    # Настраиваем страницу
-    st.set_page_config(
-        page_title="Калькулятор пергол DecoLife",
-        page_icon="🏠",
-        layout="centered",  # Изменено с "wide" на "centered" для более узкого интерфейса
-        initial_sidebar_state="collapsed" # Скрываем сайдбар по умолчанию
-    )
     
     # Добавляем CSS для увеличения кнопки сразу после загрузки страницы
     st.markdown("""
@@ -97,6 +101,13 @@ def main():
         // Применяем соответствующие стили для темного режима
         if (isDarkMode) {
             document.body.classList.add('dark-mode');
+            document.documentElement.classList.add('dark');
+            document.documentElement.setAttribute('data-theme', 'dark');
+            
+            // Принудительно устанавливаем белый цвет для текста в темном режиме
+            document.querySelectorAll('.section-header').forEach(function(el) {
+                el.style.color = '#FFFFFF';
+            });
         } else {
             document.body.classList.add('light-mode');
         }
@@ -369,6 +380,21 @@ def main():
             color: #FFFFFF !important;
         }
         
+        /* Принудительно задаем белый цвет для всех элементов текста в приложении в темном режиме */
+        .stApp.dark [data-testid="stAppViewContainer"] div,
+        .stApp.dark [data-testid="stHeader"] div,
+        .stApp.dark [data-testid="stToolbar"] div,
+        .stApp.dark [data-testid="stSidebar"] div,
+        .stApp.dark [data-testid="stMarkdown"] div,
+        .stApp.dark .section-header,
+        .stApp.dark [data-testid="stMarkdown"] p,
+        .stApp.dark [data-testid="stMarkdown"] span,
+        .stApp.dark [data-testid="stText"] p,
+        .stApp.dark [data-testid="stText"] div,
+        .stApp.dark [data-testid="stWidgetLabel"] {
+            color: #FFFFFF !important;
+        }
+        
         /* Заголовки секций - общие стили */
         .section-header {
             font-weight: bold;
@@ -376,13 +402,12 @@ def main():
             padding-bottom: 5px;
             margin-bottom: 10px;
             font-size: 1.1rem;
+            color: white !important;
         }
         
         /* Заголовки секций в темном режиме - с более высоким приоритетом */
-        body.dark-mode .section-header,
         .dark-mode .section-header,
-        [data-testid="stAppViewContainer"] .dark-mode .section-header,
-        [data-testid="stAppViewContainer"] .section-header {
+        body.dark-mode .section-header {
             color: white !important;
             border-bottom-color: #444444 !important;
         }

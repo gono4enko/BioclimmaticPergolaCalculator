@@ -5,6 +5,18 @@ import streamlit as st
 from config.pergola_types import PERGOLA_TYPES, LIGHTING_TYPES, ADDITIONAL_OPTIONS, LAMELLA_TYPES
 from utils.logger import log_user_action
 
+# Добавляем CSS для правильного отображения цвета в темном режиме
+st.markdown("""
+<style>
+/* Форсированный белый цвет для всех заголовков секций в темном режиме */
+body.dark-mode .section-header, 
+.dark-mode .section-header,
+.stApp.dark .section-header {
+    color: white !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 def get_lamella_options_for_pergola(pergola_type):
     """
     Возвращает список доступных типов ламелей для выбранного типа перголы
