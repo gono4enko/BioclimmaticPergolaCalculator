@@ -110,6 +110,7 @@ def main():
     :root {
         --background-color: #ffffff;
         --text-color: #333333;
+        --label-color: #333333;
         --border-color: #dddddd;
         --highlight-color: #0066cc;
         --highlight-bg: #e6f2ff;
@@ -128,6 +129,7 @@ def main():
     body.dark-mode {
         --background-color: #121212;
         --text-color: #e0e0e0;
+        --label-color: #ffffff;
         --border-color: #444444;
         --highlight-color: #4d94ff;
         --highlight-bg: #1a3d66;
@@ -288,8 +290,8 @@ def main():
     """, unsafe_allow_html=True)
     
     # Заголовок калькулятора - крупный и четкий
-    st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 1.8rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в евро (€)</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 1.8rem; font-weight: 600; color: var(--header-color);'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem; color: var(--text-color);'>Введите размеры и параметры перголы для расчета стоимости в евро (€)</p>", unsafe_allow_html=True)
     dimensions = render_dimensions_form()
     
     # Убираем заголовок конфигурации для более чистого интерфейса
@@ -301,8 +303,8 @@ def main():
         st.markdown("""
         <style>
         div[data-testid="stButton"] > button[kind="primary"] {
-            background-color: #0066cc;
-            color: white;
+            background-color: var(--button-bg);
+            color: var(--button-text);
             font-size: 1.1rem;
             font-weight: bold;
             border-radius: 6px;
@@ -314,9 +316,14 @@ def main():
             transition: all 0.2s;
         }
         div[data-testid="stButton"] > button[kind="primary"]:hover {
-            background-color: #0055aa;
+            background-color: var(--highlight-hover);
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
             transform: translateY(-1px);
+        }
+        
+        /* Стили для полей ввода и меток */
+        .stTextInput label, .stNumberInput label, .stSelectbox label {
+            color: var(--label-color) !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -345,7 +352,7 @@ def main():
                     st.rerun()
     
     # Добавляем разделитель (компактный)
-    st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; border-top: 1px solid var(--border-color);'>", unsafe_allow_html=True)
     
     # Отображаем результаты расчета под формами ввода
     if 'results' in st.session_state and 'options' in st.session_state:
@@ -356,8 +363,8 @@ def main():
         scroll_to_results()
     
     # Добавляем информацию о версии внизу страницы (компактно)
-    st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 DecoLife | Калькулятор пергол v1.0</div>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid var(--border-color);'>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: var(--text-color);'>© 2025 DecoLife | Калькулятор пергол v1.0</div>", unsafe_allow_html=True)
     
     # Добавляем анимацию нажатия кнопки
     add_button_animation()

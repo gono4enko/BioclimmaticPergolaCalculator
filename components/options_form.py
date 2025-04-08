@@ -53,7 +53,7 @@ def render_options_form():
     
     /* Универсальные стили (более компактные) */
     .pergola-option-container {
-        background-color: #f8f9fa;
+        background-color: var(--card-bg, #f8f9fa);
         border-radius: 8px;
         padding: 0.4rem;
         margin-bottom: 0.1rem;
@@ -63,7 +63,7 @@ def render_options_form():
         font-size: 0.95rem;
         font-weight: bold;
         margin-bottom: 0.5rem;
-        color: #333;
+        color: var(--text-color, #333);
     }
     .option-tile {
         background-color: #f0f2f6;
@@ -356,11 +356,11 @@ def render_options_form():
             button_style = """ 
             <style>
             div[data-testid*="stButton"] > button {
-                background-color: white;
-                border: 1px solid #ddd;
-                color: #333;
+                background-color: var(--tile-bg, white);
+                border: 1px solid var(--tile-border, #ddd);
+                color: var(--text-color, #333);
                 font-weight: 500;
-                text-align: left;
+                text-align: center;
                 border-radius: 8px;
                 height: auto;
                 padding: 12px 8px;
@@ -376,7 +376,7 @@ def render_options_form():
             
             if is_selected:
                 st.markdown(f"""
-                <div style="background-color: #e6f3ff; border: 1px solid #0066cc; color: #0066cc; 
+                <div style="background-color: var(--highlight-bg, #e6f3ff); border: 1px solid var(--highlight-color, #0066cc); color: var(--highlight-color, #0066cc); 
                      font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                     <div style="font-size: 1.1rem; text-align: center;">{light_name} ✓</div>
                     <div style="font-size: 0.9rem; margin-top: 5px; text-align: center;">{light_desc}</div>
@@ -415,7 +415,7 @@ def render_options_form():
     
     with install_cols[0]:
         st.markdown(f"""
-        <div style="background-color: #e6f3ff; border: 1px solid #0066cc; color: #0066cc; 
+        <div style="background-color: var(--highlight-bg, #e6f3ff); border: 1px solid var(--highlight-color, #0066cc); color: var(--highlight-color, #0066cc); 
              font-weight: bold; text-align: left; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
             <div style="font-size: 1.1rem;">Без установки ✓</div>
             <div style="font-size: 0.9rem; margin-top: 5px;"></div>
@@ -424,7 +424,7 @@ def render_options_form():
     
     with install_cols[1]:
         st.markdown(f"""
-        <div style="background-color: white; border: 1px solid #ddd; color: #333; 
+        <div style="background-color: var(--tile-bg, white); border: 1px solid var(--tile-border, #ddd); color: var(--text-color, #333); 
              text-align: left; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px;">
             <div style="font-size: 1.1rem;">С установкой</div>
             <div style="font-size: 0.9rem; margin-top: 5px;"></div>
