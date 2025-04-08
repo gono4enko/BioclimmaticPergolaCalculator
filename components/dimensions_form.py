@@ -63,38 +63,42 @@ def render_dimensions_form():
     st.markdown("<h3 style='margin-top: 0; margin-bottom: 1rem; color: #333;'>Размеры перголы</h3>", unsafe_allow_html=True)
     
     # Основные размеры - без использования формы для мгновенного обновления
-    col1, col2 = st.columns(2)
+    # Используем более узкий контейнер с центрированием
+    _, center_container, _ = st.columns([1, 6, 1])
+    with center_container:
+        col1, col2 = st.columns(2)
     
-    with col1:
-        width = st.number_input(
-            "Ширина (м):", 
-            min_value=1.5, 
-            max_value=13.5, 
-            value=st.session_state.dimensions['width'],
-            step=0.1, 
-            format="%.1f",
-            key="width_input",
-            help="Ширина перголы в метрах (от 1.5 до 13.5 м)"
-        )
-    
-    with col2:
-        length = st.number_input(
-            "Вынос (м):", 
-            min_value=1.0, 
-            max_value=8.0, 
-            value=st.session_state.dimensions['length'],
-            step=0.1, 
-            format="%.1f",
-            key="length_input",
-            help="Вынос перголы в метрах (от 1.0 до 8.0 м)"
-        )
-    
-    # Фиксированная высота
-    st.markdown("<div style='background-color: #e6f3ff; border-radius: 5px; padding: 0.7rem; margin-top: 0.5rem;'><b>Высота:</b> 3.0 м (стандартная)</div>", unsafe_allow_html=True)
-    
-    # Площадь перголы (информационно)
-    area = round(width * length, 2)
-    st.markdown(f"<div style='background-color: #f0f0f0; border-radius: 5px; padding: 0.7rem; margin-top: 0.5rem;'><b>Площадь перголы:</b> {area} м²</div>", unsafe_allow_html=True)
+    with center_container:
+        with col1:
+            width = st.number_input(
+                "Ширина (м):", 
+                min_value=1.5, 
+                max_value=13.5, 
+                value=st.session_state.dimensions['width'],
+                step=0.1, 
+                format="%.1f",
+                key="width_input",
+                help="Ширина перголы в метрах (от 1.5 до 13.5 м)"
+            )
+        
+        with col2:
+            length = st.number_input(
+                "Вынос (м):", 
+                min_value=1.0, 
+                max_value=8.0, 
+                value=st.session_state.dimensions['length'],
+                step=0.1, 
+                format="%.1f",
+                key="length_input",
+                help="Вынос перголы в метрах (от 1.0 до 8.0 м)"
+            )
+        
+        # Фиксированная высота
+        st.markdown("<div style='background-color: #e6f3ff; border-radius: 5px; padding: 0.7rem; margin-top: 0.5rem;'><b>Высота:</b> 3.0 м (стандартная)</div>", unsafe_allow_html=True)
+        
+        # Площадь перголы (информационно)
+        area = round(width * length, 2)
+        st.markdown(f"<div style='background-color: #f0f0f0; border-radius: 5px; padding: 0.7rem; margin-top: 0.5rem;'><b>Площадь перголы:</b> {area} м²</div>", unsafe_allow_html=True)
     
     # Закрываем блок размеров
     st.markdown("</div>", unsafe_allow_html=True)

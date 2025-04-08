@@ -190,90 +190,91 @@ def render_results(results):
             elif pergola_type == 'B700NEW':
                 st.info(f"Для пергол B700NEW автоматизация Somfy включена в базовую комплектацию. Тип привода ({detailed_costs['automation_type']}) выбран автоматически в зависимости от размеров перголы.")
     
-    # Отображаем детальную информацию в раскрывающейся панели
-    with st.expander("Детальная информация о стоимости", expanded=False):
-        # Создаем DataFrame для более наглядного отображения
-        cost_items = [
-            ["Базовая стоимость перголы", detailed_costs.get('base_price', 0), "€"]
-        ]
+    # Отображаем детальную информацию о стоимости (без раскрывающейся панели)
+    st.markdown("<h4 style='margin-top: 1.5rem; margin-bottom: 1rem;'>Детальная информация о стоимости</h4>", unsafe_allow_html=True)
+    
+    # Создаем DataFrame для более наглядного отображения
+    cost_items = [
+        ["Базовая стоимость перголы", detailed_costs.get('base_price', 0), "€"]
+    ]
         
-        # Добавляем стоимость дополнительных колонн
-        columns_cost = detailed_costs.get('additional_columns', 0)
-        if columns_cost > 0:
-            cost_items.append(["Дополнительные колонны", columns_cost, "€"])
+    # Добавляем стоимость дополнительных колонн
+    columns_cost = detailed_costs.get('additional_columns', 0)
+    if columns_cost > 0:
+        cost_items.append(["Дополнительные колонны", columns_cost, "€"])
+        
+    # Добавляем стоимость вставки для усиления лотка
+    gutter_insert_cost = detailed_costs.get('gutter_insert', 0)
+    if gutter_insert_cost > 0:
+        cost_items.append(["Вставка для усиления лотка", gutter_insert_cost, "€"])
+        
+    # Добавляем стоимость освещения и детали
+    lighting_cost = detailed_costs.get('lighting', 0)
+    if lighting_cost > 0:
+        # Получаем детали освещения, если они есть
+        lighting_details = detailed_costs.get('lighting_details', {})
+        lighting_type = lighting_details.get('type', 'none')
+        
+        # Импортируем названия типов освещения
+        from config.pergola_types import LIGHTING_TYPES
+        
+        # Формируем название освещения на основе типа
+        if lighting_type in LIGHTING_TYPES:
+            lighting_name = LIGHTING_TYPES[lighting_type]['name']
+        else:
+            lighting_name = "Освещение"
             
-        # Добавляем стоимость вставки для усиления лотка
-        gutter_insert_cost = detailed_costs.get('gutter_insert', 0)
-        if gutter_insert_cost > 0:
-            cost_items.append(["Вставка для усиления лотка", gutter_insert_cost, "€"])
+        cost_items.append([lighting_name, lighting_cost, "€"])
         
-        # Добавляем стоимость освещения и детали
-        lighting_cost = detailed_costs.get('lighting', 0)
-        if lighting_cost > 0:
-            # Получаем детали освещения, если они есть
-            lighting_details = detailed_costs.get('lighting_details', {})
-            lighting_type = lighting_details.get('type', 'none')
+        # Если есть детальная информация о компонентах освещения, отображаем её
+        if lighting_details:
+            led_length = lighting_details.get('led_length', 0)
+            led_cost = lighting_details.get('led_cost', 0)
+            controllers_count = lighting_details.get('controllers_count', 0)
+            controllers_cost = lighting_details.get('controllers_cost', 0)
             
-            # Импортируем названия типов освещения
-            from config.pergola_types import LIGHTING_TYPES
+            if led_length > 0:
+                cost_items.append([f"-- Светодиодная лента ({led_length:.2f} м)", led_cost, "€"])
             
-            # Формируем название освещения на основе типа
-            if lighting_type in LIGHTING_TYPES:
-                lighting_name = LIGHTING_TYPES[lighting_type]['name']
-            else:
-                lighting_name = "Освещение"
-                
-            cost_items.append([lighting_name, lighting_cost, "€"])
+            if controllers_count > 0:
+                cost_items.append([f"-- Блоки управления Somfy RTS Dimmer ({controllers_count} шт.)", controllers_cost, "€"])
+        
+    # Добавляем стоимость дополнительных опций
+    additional_options = detailed_costs.get('additional_options', {})
+    for option, cost in additional_options.items():
+        if option == "automation":
+            automation_type = detailed_costs.get('automation_type', 'T1')
+            automation_manufacturer = detailed_costs.get('automation_manufacturer', 'Bansbach')
+            option_name = f"Автоматизация {automation_manufacturer} ({automation_type})"
             
-            # Если есть детальная информация о компонентах освещения, отображаем её
-            if lighting_details:
-                led_length = lighting_details.get('led_length', 0)
-                led_cost = lighting_details.get('led_cost', 0)
-                controllers_count = lighting_details.get('controllers_count', 0)
-                controllers_cost = lighting_details.get('controllers_cost', 0)
-                
-                if led_length > 0:
-                    cost_items.append([f"-- Светодиодная лента ({led_length:.2f} м)", led_cost, "€"])
-                
-                if controllers_count > 0:
-                    cost_items.append([f"-- Блоки управления Somfy RTS Dimmer ({controllers_count} шт.)", controllers_cost, "€"])
+            # Добавляем информацию о пульте управления
+            if 'remote_control' in detailed_costs and 'remote_control_cost' in detailed_costs:
+                cost_items.append([f"Пульт ДУ {detailed_costs['remote_control']}", detailed_costs['remote_control_cost'], "€"])
+        elif option == "motor":
+            option_name = "Электропривод"
+        elif option == "sound":
+            option_name = "Аудиосистема"
+        else:
+            option_name = f"Опция: {option}"
+        cost_items.append([option_name, cost, "€"])
         
-        # Добавляем стоимость дополнительных опций
-        additional_options = detailed_costs.get('additional_options', {})
-        for option, cost in additional_options.items():
-            if option == "automation":
-                automation_type = detailed_costs.get('automation_type', 'T1')
-                automation_manufacturer = detailed_costs.get('automation_manufacturer', 'Bansbach')
-                option_name = f"Автоматизация {automation_manufacturer} ({automation_type})"
-                
-                # Добавляем информацию о пульте управления
-                if 'remote_control' in detailed_costs and 'remote_control_cost' in detailed_costs:
-                    cost_items.append([f"Пульт ДУ {detailed_costs['remote_control']}", detailed_costs['remote_control_cost'], "€"])
-            elif option == "motor":
-                option_name = "Электропривод"
-            elif option == "sound":
-                option_name = "Аудиосистема"
-            else:
-                option_name = f"Опция: {option}"
-            cost_items.append([option_name, cost, "€"])
-        
-        # Общая стоимость
-        cost_items.append(["Итого", results['total_cost'], "€"])
-        
-        # Создаем DataFrame и отображаем его в развернутом виде
-        df = pd.DataFrame(cost_items, columns=["Наименование", "Стоимость", "Валюта"])
-        
-        # Применяем стиль для выделения итоговой строки
-        st.markdown("""
-        <style>
-        .dataframe tr:last-child {
-            font-weight: bold !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        # Отображаем таблицу без свернутого вида (с развернутыми строками)
-        st.table(df)
+    # Общая стоимость
+    cost_items.append(["Итого", results['total_cost'], "€"])
+    
+    # Создаем DataFrame и отображаем его в развернутом виде
+    df = pd.DataFrame(cost_items, columns=["Наименование", "Стоимость", "Валюта"])
+    
+    # Применяем стиль для выделения итоговой строки
+    st.markdown("""
+    <style>
+    .dataframe tr:last-child {
+        font-weight: bold !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Отображаем таблицу без свернутого вида (с развернутыми строками)
+    st.table(df)
     
     # Добавляем кнопку для скачивания результатов в CSV
     csv = generate_csv(results)

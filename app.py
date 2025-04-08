@@ -43,27 +43,34 @@ def main():
     st.set_page_config(
         page_title="Калькулятор пергол DecoLife",
         page_icon="🏠",
-        layout="wide"
+        layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
+    
+    # Задаем стили для основного контейнера, чтобы сделать его уже
+    st.markdown("""
+    <style>
+    .block-container {
+        max-width: 900px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        margin: 0 auto;
+    }
+    </style>
+    """, unsafe_allow_html=True)
     
     # Отображаем заголовок
     render_header()
     
-    # Создаем контейнер для форм ввода
+    # Создаем контейнер для форм ввода с поэтапным расположением
     st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Параметры перголы</h2>", unsafe_allow_html=True)
     
-    # Делим экран на две колонки для ввода данных
-    col1, col2 = st.columns([1, 1])
+    # 1. Блок размеров - первый этап
+    st.markdown("<h3 style='text-align: center; margin-top: 20px; margin-bottom: 10px;'>Шаг 1: Размеры перголы</h3>", unsafe_allow_html=True)
+    dimensions = render_dimensions_form()
     
-    # В левой колонке - форма размеров
-    with col1:
-        # Форма для ввода размеров
-        dimensions = render_dimensions_form()
-    
-    # В правой колонке - форма опций
-    with col2:
-        # Форма для выбора опций
-        options = render_options_form()
+    # 2. Блок выбора типа перголы и ламелей - второй этап
+    st.markdown("<h3 style='text-align: center; margin-top: 30px; margin-bottom: 10px;'>Шаг 2: Конфигурация перголы</h3>", unsafe_allow_html=True)
+    options = render_options_form()
     
     # Кнопка для расчета по центру
     _, center_col, _ = st.columns([1, 2, 1])
@@ -97,11 +104,14 @@ def main():
     
     # Отображаем результаты расчета под формами ввода
     if 'results' in st.session_state and 'options' in st.session_state:
-        # Показываем спецификацию перголы
-        render_specification(st.session_state.results, st.session_state.options)
+        # Заголовок для секции результатов
+        st.markdown("<h3 style='text-align: center; margin-top: 20px; margin-bottom: 20px;'>Результаты расчета</h3>", unsafe_allow_html=True)
         
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
+        
+        # Показываем объединенную спецификацию перголы
+        render_specification(st.session_state.results, st.session_state.options)
         
         # Добавляем скрипт для автоматического скролла к результатам
         scroll_to_results()

@@ -140,8 +140,24 @@ def render_options_form():
             """
             st.markdown(html, unsafe_allow_html=True)
             
-            # Используем пустую кнопку для обработки кликов по плитке
-            if st.button(f"Выбрать {pergola_name}", key=f"btn_pergola_{pergola_type}", use_container_width=True):
+            # Используем почти невидимую кнопку для обработки кликов по плитке
+            btn_style = """
+            <style>
+            div[data-testid*="stButton"] > button {
+                background-color: transparent;
+                border: none;
+                color: transparent;
+                height: 40px;
+                padding: 0;
+            }
+            div[data-testid*="stButton"] > button:hover {
+                background-color: rgba(0, 0, 0, 0.05);
+                color: transparent;
+            }
+            </style>
+            """
+            st.markdown(btn_style, unsafe_allow_html=True)
+            if st.button(" ", key=f"btn_pergola_{pergola_type}", use_container_width=True):
                 selected_pergola_type = pergola_type
                 
                 # Обновляем тип ламелей при смене типа перголы
@@ -237,8 +253,9 @@ def render_options_form():
                     """
                     st.markdown(html, unsafe_allow_html=True)
                     
-                    # Используем пустую кнопку для обработки кликов по плитке
-                    if st.button(f"Выбрать {size_display}", key=f"btn_lamella_{lam_type}", use_container_width=True):
+                    # Используем почти невидимую кнопку для обработки кликов по плитке
+                    # Переиспользуем уже определенный стиль кнопки
+                    if st.button(" ", key=f"btn_lamella_{lam_type}", use_container_width=True):
                         st.session_state.options['lamella_type'] = lam_type
                         st.experimental_rerun()
         
