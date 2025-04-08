@@ -226,24 +226,47 @@ def render_options_form():
     # Получаем доступные типы ламелей для выбранного типа перголы
     lamella_options = get_lamella_options_for_pergola(pergola_type)
     
-    # Блок выбора типа ламелей
+    # Блок выбора типа ламелей и отображения типа крыши для всех типов пергол
     if pergola_type == "B600":
         # Для B600 нет выбора ламелей - используются PIR-панели
         st.markdown("""
         <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.5rem; margin-top: 0.5rem;'>
-            <b>Тип крыши:</b> Стационарные PIR-панели (сэндвич-панели)
+            <b>Тип крыши:</b> Стационарные PIR-панели (сэндвич-панели с утеплителем)
         </div>
         """, unsafe_allow_html=True)
         lamella_type = "B600"  # Для перголы B600 используем фиксированный тип ламелей
-    else:
-        # Для других типов пергол - выбор ламелей
+        selected_lamella_type = lamella_type
+    elif "B500" in pergola_type:
+        # Для B500 - отображаем информацию о поворотных ламелях
+        st.markdown("""
+        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.5rem; margin-top: 0.5rem;'>
+            <b>Тип крыши:</b> Поворотные ламели с возможностью регулировки угла наклона
+        </div>
+        """, unsafe_allow_html=True)
+        # Для выбора ламелей - заголовок
         st.markdown("<div class='option-title' style='margin-top: 0.7rem; margin-bottom:0.3rem;'>Тип ламелей:</div>", unsafe_allow_html=True)
         
         # Создаем плитки для выбора типа ламелей
         lamella_cols = st.columns(len(lamella_options))
-        
         selected_lamella_type = st.session_state.options['lamella_type']
+        lamella_type = selected_lamella_type
+    else:  # B700
+        # Для B700 - отображаем информацию о сдвижных ламелях
+        st.markdown("""
+        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.5rem; margin-top: 0.5rem;'>
+            <b>Тип крыши:</b> Сдвижные ламели с горизонтальным перемещением
+        </div>
+        """, unsafe_allow_html=True)
+        # Для выбора ламелей - заголовок
+        st.markdown("<div class='option-title' style='margin-top: 0.7rem; margin-bottom:0.3rem;'>Тип ламелей:</div>", unsafe_allow_html=True)
         
+        # Создаем плитки для выбора типа ламелей
+        lamella_cols = st.columns(len(lamella_options))
+        selected_lamella_type = st.session_state.options['lamella_type']
+        lamella_type = selected_lamella_type
+        
+        # Только для B500 и B700 показываем плитки для выбора типа ламелей
+    if 'B500' in pergola_type or 'B700' in pergola_type:
         # Отображаем плитки с типами ламелей
         for i, lam_type in enumerate(lamella_options):
             with lamella_cols[i]:
@@ -289,11 +312,6 @@ def render_options_form():
                         if st.button(f"{size_display}\n{lamella_short_desc.split(',')[-1].strip()}", key=f"btn_lamella_{lam_type}", use_container_width=True):
                             st.session_state.options['lamella_type'] = lam_type
                             st.rerun()
-        
-        # Удаляем информационную строку о ламелях
-        
-        # Устанавливаем выбранный тип ламелей
-        lamella_type = selected_lamella_type
     
     # Устанавливаем значение шага ламелей по умолчанию без отображения в интерфейсе
     if "20" in lamella_type:
@@ -301,66 +319,33 @@ def render_options_form():
     else:
         lamella_step = 250  # Для ламелей B500-25NEW и B700-25NEW
     
-    # Разделяем блоки освещения и дополнительных опций
-    col1, col2 = st.columns(2)
-    # Блок выбора освещения
-    with col1:
-        st.markdown("<div class='option-title' style='margin-top: 0.7rem; margin-bottom:0.3rem;'>Освещение:</div>", unsafe_allow_html=True)
-        
-        # Доступные типы освещения для выбранного типа перголы
-        lighting_options = PERGOLA_TYPES[pergola_type]["available_lighting"] if pergola_type in PERGOLA_TYPES else ["none"]
-        
-        # Радиокнопки для выбора освещения
-        lighting_type = st.radio(
-            "Тип освещения:",
-            options=lighting_options,
-            format_func=lambda x: LIGHTING_TYPES[x]['name'] if x in LIGHTING_TYPES else x,
-            index=lighting_options.index(st.session_state.options['lighting_type']) if st.session_state.options['lighting_type'] in lighting_options else 0,
-            key="lighting_radio",
-            horizontal=True,
-            label_visibility="collapsed"
-        )
-        
-        # Удаляем информационную строку об освещении
+    # Блок выбора освещения на полную ширину (без колонок с доп. опциями)
+    st.markdown("<div class='option-title' style='margin-top: 0.7rem; margin-bottom:0.3rem;'>Освещение:</div>", unsafe_allow_html=True)
     
-    # Блок выбора дополнительных опций
-    with col2:
-        st.markdown("<div class='option-title' style='margin-top: 0.7rem; margin-bottom:0.3rem;'>Дополнительные опции:</div>", unsafe_allow_html=True)
-        
-        # Доступные дополнительные опции для выбранного типа перголы
-        available_options = PERGOLA_TYPES[pergola_type]["additional_options"] if pergola_type in PERGOLA_TYPES else []
-        
-        if available_options:
-            # Создаем контейнер для дополнительных опций
-            st.markdown("<div class='additional-options-container'>", unsafe_allow_html=True)
-            
-            # Выбор дополнительных опций с чекбоксами
-            selected_options = []
-            for option in available_options:
-                if option in ADDITIONAL_OPTIONS:
-                    is_selected = st.checkbox(
-                        ADDITIONAL_OPTIONS[option]['name'],
-                        value=option in st.session_state.options['additional_options'],
-                        key=f"checkbox_{option}",
-                        help=ADDITIONAL_OPTIONS[option]['description']
-                    )
-                    if is_selected:
-                        selected_options.append(option)
-            
-            st.markdown("</div>", unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div style='background-color: #f0f0f0; border-radius: 5px; padding: 0.7rem;'>
-                Для выбранного типа перголы нет доступных дополнительных опций.
-            </div>
-            """, unsafe_allow_html=True)
+    # Доступные типы освещения для выбранного типа перголы
+    lighting_options = PERGOLA_TYPES[pergola_type]["available_lighting"] if pergola_type in PERGOLA_TYPES else ["none"]
+    
+    # Радиокнопки для выбора освещения
+    lighting_type = st.radio(
+        "Тип освещения:",
+        options=lighting_options,
+        format_func=lambda x: LIGHTING_TYPES[x]['name'] if x in LIGHTING_TYPES else x,
+        index=lighting_options.index(st.session_state.options['lighting_type']) if st.session_state.options['lighting_type'] in lighting_options else 0,
+        key="lighting_radio",
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    
+    # Удаляем информационную строку об освещении
+    
+    # Инициализируем пустой список выбранных опций
+    # Дополнительные опции (автоматика) подбираются автоматически
+    selected_options = []
     
     # Закрываем контейнер для опций перголы
     st.markdown("</div>", unsafe_allow_html=True)
     
     # Применяем все опции и обновляем состояние
-    if 'selected_options' not in locals():
-        selected_options = []
         
     options = {
         'pergola_type': pergola_type,
