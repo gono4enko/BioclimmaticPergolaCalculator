@@ -247,13 +247,19 @@ def render_results(results):
         # Общая стоимость
         cost_items.append(["Итого", results['total_cost'], "€"])
         
-        # Создаем DataFrame и отображаем его
+        # Создаем DataFrame и отображаем его в развернутом виде
         df = pd.DataFrame(cost_items, columns=["Наименование", "Стоимость", "Валюта"])
         
-        # Используем индексы как порядковые номера
-        df = df.reset_index(drop=False)
-        df = df.rename(columns={"index": "№"})
+        # Применяем стиль для выделения итоговой строки
+        st.markdown("""
+        <style>
+        .dataframe tr:last-child {
+            font-weight: bold !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         
+        # Отображаем таблицу без свернутого вида (с развернутыми строками)
         st.table(df)
     
     # Добавляем кнопку для скачивания результатов в CSV
