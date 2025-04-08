@@ -176,13 +176,18 @@ def render_specification(results, options):
         
         # Создаем DataFrame для таблицы
         import pandas as pd
-        df = pd.DataFrame(data, columns=["Наименование", "Значение"])
         
-        # Убираем индексы строк
-        df.index = [""] * len(df)
+        # Добавляем порядковые номера строк
+        numbered_data = []
+        for i, row in enumerate(data):
+            numbered_data.append([row[0], row[1]])
+            
+        # Создаем DataFrame с правильными столбцами
+        df = pd.DataFrame(numbered_data, columns=["Наименование", "Значение"])
         
-        # Отключаем отображение индексов строк при создании таблицы
-        df = df.reset_index(drop=True)
+        # Используем индексы как порядковые номера
+        df = df.reset_index(drop=False)
+        df = df.rename(columns={"index": "№"})
         
         # Применяем custom CSS для таблицы
         st.markdown("""
@@ -210,16 +215,11 @@ def render_specification(results, options):
         .dataframe tr:last-child {
             font-weight: bold !important;
         }
-        /* Скрываем индексы строк */
-        .row_heading.level0 {
-            display: none !important;
-        }
-        .blank.level0 {
-            display: none !important;
-        }
-        /* Скрываем полосу, где находятся индексы */
-        .index_name {
-            display: none !important;
+        /* Настраиваем отображение номеров строк */
+        .col_heading.level0.col0, .data.row0.col0, .data.row1.col0, .data.row2.col0, .data.row3.col0, .data.row4.col0, 
+        .data.row5.col0, .data.row6.col0, .data.row7.col0, .data.row8.col0, .data.row9.col0, .data.row10.col0, .data.row11.col0 {
+            text-align: center !important;
+            width: 40px !important;
         }
         </style>
         """, unsafe_allow_html=True)

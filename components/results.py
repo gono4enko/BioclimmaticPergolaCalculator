@@ -77,16 +77,11 @@ def render_results(results):
     .download-link:hover {
         background-color: #2E4A9A;
     }
-    /* Скрываем индексы строк */
-    .row_heading.level0 {
-        display: none !important;
-    }
-    .blank.level0 {
-        display: none !important;
-    }
-    /* Скрываем полосу, где находятся индексы */
-    .index_name {
-        display: none !important;
+    /* Настраиваем отображение номеров строк */
+    .col_heading.level0.col0, .data.row0.col0, .data.row1.col0, .data.row2.col0, .data.row3.col0, .data.row4.col0, 
+    .data.row5.col0, .data.row6.col0, .data.row7.col0, .data.row8.col0, .data.row9.col0, .data.row10.col0, .data.row11.col0 {
+        text-align: center !important;
+        width: 40px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -255,11 +250,9 @@ def render_results(results):
         # Создаем DataFrame и отображаем его
         df = pd.DataFrame(cost_items, columns=["Наименование", "Стоимость", "Валюта"])
         
-        # Убираем индексы строк (номера строк)
-        df.index = [""] * len(df)
-        
-        # Отключаем отображение индексов строк при создании таблицы
-        df = df.reset_index(drop=True)
+        # Используем индексы как порядковые номера
+        df = df.reset_index(drop=False)
+        df = df.rename(columns={"index": "№"})
         
         st.table(df)
     
