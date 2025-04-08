@@ -196,6 +196,17 @@ def render_specification(results, options):
         .dataframe tr:last-child {
             font-weight: bold !important;
         }
+        /* Скрываем индексы строк */
+        .row_heading.level0 {
+            display: none !important;
+        }
+        .blank.level0 {
+            display: none !important;
+        }
+        /* Скрываем полосу, где находятся индексы */
+        .index_name {
+            display: none !important;
+        }
         </style>
         """, unsafe_allow_html=True)
         

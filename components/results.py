@@ -74,6 +74,17 @@ def render_results(results):
     .download-link:hover {
         background-color: #2E4A9A;
     }
+    /* Скрываем индексы строк */
+    .row_heading.level0 {
+        display: none !important;
+    }
+    .blank.level0 {
+        display: none !important;
+    }
+    /* Скрываем полосу, где находятся индексы */
+    .index_name {
+        display: none !important;
+    }
     </style>
     """, unsafe_allow_html=True)
     
