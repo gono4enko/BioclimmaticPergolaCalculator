@@ -15,20 +15,113 @@ def render_results(results):
     Args:
         results (dict): Словарь с результатами расчета
     """
-    st.subheader("Результаты расчета")
-    
     # Проверяем наличие результатов
     if not results or 'error' in results:
         error_message = results.get('error', 'Произошла ошибка при расчете стоимости перголы')
         st.error(error_message)
         return
     
+    # Добавляем стили для блока результатов
+    st.markdown("""
+    <style>
+    .result-header {
+        text-align: center;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #1E3A8A;
+    }
+    .result-container {
+        background-color: #F3F4F6;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+    .metric-card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        height: 100%;
+    }
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #1E3A8A;
+        margin: 0.5rem 0;
+    }
+    .metric-label {
+        font-size: 0.9rem;
+        color: #6B7280;
+        margin-bottom: 0.5rem;
+    }
+    .download-button {
+        text-align: center;
+        margin-top: 1rem;
+    }
+    .download-link {
+        display: inline-block;
+        background-color: #1E3A8A;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    .download-link:hover {
+        background-color: #2E4A9A;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Создаем HTML-блок для отображения результатов
+    st.markdown('<div class="result-header">Результаты расчета</div>', unsafe_allow_html=True)
+    
     # Отображаем сообщение о корректировке длины и другие важные сообщения
     if 'correction_message' in results and results['correction_message']:
         st.warning(results['correction_message'])
-        
+    
+    # Начинаем контейнер для метрик
+    st.markdown('<div class="result-container">', unsafe_allow_html=True)
+    
+    # Создаем метрики для отображения основных показателей
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-label">Итоговая стоимость</div>
+            <div class="metric-value">{results['total_cost']} €</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        dimensions = results.get('dimensions', {})
+        width_m = dimensions.get('width_m', 0)
+        length_m = dimensions.get('length_m', 0)
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-label">Размеры (Ш×Д)</div>
+            <div class="metric-value">{width_m:.2f}×{length_m:.2f} м</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        area = width_m * length_m
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-label">Площадь перголы</div>
+            <div class="metric-value">{area:.2f} м²</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Завершаем контейнер для метрик
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     # Проверяем, является ли выбранная пергола моделью с включенной автоматизацией
-    is_automation_included = False
     detailed_costs = results.get('detailed_costs', {})
     if "automation_type" in detailed_costs and "automation" in detailed_costs.get('additional_options', {}):
         # Получаем информацию о перголе из сессии
@@ -36,43 +129,13 @@ def render_results(results):
             pergola_type = st.session_state.options.get('pergola_type')
             
             if pergola_type == 'B500NEW':
-                is_automation_included = True
-                st.info("Для пергол B500NEW автоматизация Bansbach включена в базовую комплектацию. " +
-                       f"Тип привода ({detailed_costs['automation_type']}) выбран автоматически в зависимости от размеров перголы.")
+                st.info(f"Для пергол B500NEW автоматизация Bansbach включена в базовую комплектацию. Тип привода ({detailed_costs['automation_type']}) выбран автоматически в зависимости от размеров перголы.")
             
             elif pergola_type == 'B700NEW':
-                is_automation_included = True
-                st.info("Для пергол B700NEW автоматизация Somfy включена в базовую комплектацию. " +
-                       f"Тип привода ({detailed_costs['automation_type']}) выбран автоматически в зависимости от размеров перголы.")
+                st.info(f"Для пергол B700NEW автоматизация Somfy включена в базовую комплектацию. Тип привода ({detailed_costs['automation_type']}) выбран автоматически в зависимости от размеров перголы.")
     
-    # Создаем метрики для отображения основных показателей
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric(
-            label="Итоговая стоимость", 
-            value=f"{results['total_cost']} €"
-        )
-    
-    with col2:
-        dimensions = results.get('dimensions', {})
-        width_m = dimensions.get('width_m', 0)
-        length_m = dimensions.get('length_m', 0)
-        st.metric(
-            label="Размеры (Ш×Д)", 
-            value=f"{width_m:.3f}×{length_m:.3f} м"
-        )
-    
-    with col3:
-        st.metric(
-            label="Количество ламелей", 
-            value=f"{results.get('lamella_count', 0)} шт."
-        )
-    
-    # Отображаем детальную информацию
+    # Отображаем детальную информацию в раскрывающейся панели
     with st.expander("Детальная информация о стоимости"):
-        detailed_costs = results.get('detailed_costs', {})
-        
         # Создаем DataFrame для более наглядного отображения
         cost_items = [
             ["Базовая стоимость перголы", detailed_costs.get('base_price', 0), "€"]
@@ -147,8 +210,13 @@ def render_results(results):
     current_date = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"pergola_calculation_{current_date}.csv"
     
-    href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Скачать результаты в CSV</a>'
-    st.markdown(href, unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="download-button">
+        <a href="data:file/csv;base64,{b64}" download="{filename}" class="download-link">
+            <i class="fas fa-download"></i> Скачать результаты в CSV
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Логируем действие пользователя
     log_user_action("Просмотр результатов расчета", {"total_cost": results['total_cost']})

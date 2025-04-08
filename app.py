@@ -49,19 +49,26 @@ def main():
     # Отображаем заголовок
     render_header()
     
-    # Делим экран на две колонки
+    # Создаем контейнер для форм ввода
+    st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Параметры перголы</h2>", unsafe_allow_html=True)
+    
+    # Делим экран на две колонки для ввода данных
     col1, col2 = st.columns([1, 1])
     
-    # В левой колонке отображаем формы ввода данных
+    # В левой колонке - форма размеров
     with col1:
         # Форма для ввода размеров
         dimensions = render_dimensions_form()
-        
+    
+    # В правой колонке - форма опций
+    with col2:
         # Форма для выбора опций
         options = render_options_form()
-        
-        # Кнопка для расчета
-        if st.button("Рассчитать стоимость", type="primary"):
+    
+    # Кнопка для расчета по центру
+    _, center_col, _ = st.columns([1, 2, 1])
+    with center_col:
+        if st.button("РАССЧИТАТЬ СТОИМОСТЬ", type="primary", use_container_width=True):
             with st.spinner("Выполняется расчет..."):
                 # Проверяем, что у нас есть данные для расчета
                 if dimensions and options:
@@ -85,22 +92,19 @@ def main():
                     # Перезагружаем страницу для отображения результатов
                     st.rerun()
     
-    # В правой колонке отображаем результаты расчета
-    with col2:
-        if 'results' in st.session_state and 'options' in st.session_state:
-            # Создаем вкладки для разных представлений результатов
-            tab1, tab2 = st.tabs(["Результаты расчета", "Спецификация перголы"])
-            
-            with tab1:
-                render_results(st.session_state.results)
-            
-            with tab2:
-                render_specification(st.session_state.results, st.session_state.options)
-            
-            # Добавляем скрипт для автоматического скролла к результатам
-            scroll_to_results()
-        else:
-            st.info("Введите данные и нажмите 'Рассчитать стоимость' для получения результата")
+    # Добавляем разделитель
+    st.markdown("<hr style='margin-top: 2rem; margin-bottom: 2rem;'>", unsafe_allow_html=True)
+    
+    # Отображаем результаты расчета под формами ввода
+    if 'results' in st.session_state and 'options' in st.session_state:
+        # Показываем общий результат
+        render_results(st.session_state.results)
+        
+        # Показываем спецификацию перголы
+        render_specification(st.session_state.results, st.session_state.options)
+        
+        # Добавляем скрипт для автоматического скролла к результатам
+        scroll_to_results()
     
     # Добавляем информацию о версии внизу страницы
     st.markdown("---")
