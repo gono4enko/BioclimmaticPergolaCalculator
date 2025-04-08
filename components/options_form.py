@@ -323,33 +323,31 @@ def render_options_form():
     st.markdown('<div class="result-card" style="margin-bottom: 0px; padding-top: 3px; padding-bottom: 3px;">', unsafe_allow_html=True)
     st.markdown('<div class="section-header">Подсветка (LED по периметру)</div>', unsafe_allow_html=True)
     
-    # Доступные типы освещения для выбранного типа перголы
-    lighting_options = PERGOLA_TYPES[pergola_type]["available_lighting"] if pergola_type in PERGOLA_TYPES else ["none"]
+    # Доступные типы освещения для выбранного типа перголы - убираем 'none'
+    lighting_options = [opt for opt in PERGOLA_TYPES[pergola_type]["available_lighting"] if opt != "none"] if pergola_type in PERGOLA_TYPES else []
     
     # Создаем плитки для типов подсветки
-    lighting_cols = st.columns(len(lighting_options))
-    selected_lighting = st.session_state.options['lighting_type']
-    lighting_type = selected_lighting  # Инициализируем переменную для использования позже
-    
-    # Отображаем плитки для выбора типа освещения
-    for i, light_type in enumerate(lighting_options):
-        with lighting_cols[i]:
-            # Получаем информацию о типе освещения с обновленными названиями
-            if light_type == "none":
-                light_name = "Без освещения"
-                light_desc = ""  # Убираем описание для опции "Без освещения"
-            elif light_type == "led":
-                light_name = "Сверхъяркая LED подсветка"
-                light_desc = "Яркая LED лента по периметру перголы"
-            elif light_type == "rgb":
-                light_name = "Светодиодная RGB подсветка"
-                light_desc = "Яркая RGB лента со сменой цвета по периметру перголы"
-            elif light_type == "led_rgb":
-                light_name = "Комбинированное LED + RGB освещение"
-                light_desc = "Позволяет выбрать между белым и цветным освещением"
-            else:
-                light_name = LIGHTING_TYPES[light_type]['name'] if light_type in LIGHTING_TYPES else light_type
-                light_desc = LIGHTING_TYPES[light_type]['description'] if light_type in LIGHTING_TYPES else ""
+    if lighting_options:
+        lighting_cols = st.columns(len(lighting_options))
+        selected_lighting = st.session_state.options['lighting_type']
+        lighting_type = selected_lighting  # Инициализируем переменную для использования позже
+        
+        # Отображаем плитки для выбора типа освещения
+        for i, light_type in enumerate(lighting_options):
+            with lighting_cols[i]:
+                # Получаем информацию о типе освещения с обновленными названиями
+                if light_type == "led":
+                    light_name = "Сверхъяркая LED подсветка"
+                    light_desc = "Яркая LED лента по периметру перголы"
+                elif light_type == "rgb":
+                    light_name = "Светодиодная RGB подсветка"
+                    light_desc = "Яркая RGB лента со сменой цвета по периметру перголы"
+                elif light_type == "led_rgb":
+                    light_name = "Комбинированное LED + RGB освещение"
+                    light_desc = "Позволяет выбрать между белым и цветным освещением"
+                else:
+                    light_name = LIGHTING_TYPES[light_type]['name'] if light_type in LIGHTING_TYPES else light_type
+                    light_desc = LIGHTING_TYPES[light_type]['description'] if light_type in LIGHTING_TYPES else ""
             
             # Определяем, выбрана ли текущая опция
             is_selected = light_type == selected_lighting
