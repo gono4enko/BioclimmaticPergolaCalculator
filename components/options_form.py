@@ -5,7 +5,7 @@ import streamlit as st
 from config.pergola_types import PERGOLA_TYPES, LIGHTING_TYPES, ADDITIONAL_OPTIONS, LAMELLA_TYPES
 from utils.logger import log_user_action
 
-# Добавляем CSS для правильного отображения цвета в темном режиме
+# Добавляем CSS для правильного отображения цвета в темном режиме и уменьшения пространства между опциями
 st.markdown("""
 <style>
 /* Форсированный белый цвет для всех заголовков секций в темном режиме */
@@ -13,6 +13,19 @@ body.dark-mode .section-header,
 .dark-mode .section-header,
 .stApp.dark .section-header {
     color: white !important;
+}
+
+/* Уменьшение вертикальных интервалов между элементами подсветки */
+div[data-testid*="column"] > div {
+    padding-top: 0.1rem !important;
+    padding-bottom: 0.1rem !important;
+}
+
+/* Уменьшение отступов у кнопок в блоке подсветки */
+div[data-testid*="stButton"] > button {
+    padding: 8px 5px !important;
+    margin-bottom: 1px !important;
+    line-height: 1.2 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -389,9 +402,9 @@ def render_options_form():
             if is_selected:
                 st.markdown(f"""
                 <div style="background-color: var(--highlight-bg, #e6f3ff); border: 1px solid var(--highlight-color, #0066cc); color: var(--highlight-color, #0066cc); 
-                     font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                     font-weight: bold; text-align: center; border-radius: 8px; padding: 8px 5px; margin-bottom: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                     <div style="font-size: 1.1rem; text-align: center;">{light_name} ✓</div>
-                    <div style="font-size: 0.9rem; margin-top: 5px; text-align: center;">{light_desc}</div>
+                    <div style="font-size: 0.9rem; margin-top: 2px; text-align: center;">{light_desc}</div>
                 </div>
                 """, unsafe_allow_html=True)
                 
