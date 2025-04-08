@@ -230,30 +230,37 @@ def render_specification(results, options):
                     # Получаем тип привода (без цены)
                     drive_type = component.split("(")[0].strip()
                     
+                    # Получаем информацию из сообщения об автоматике
+                    # Например: "Для автоматизации перголы размером 13.00x8.00 м (3 модуля) используется привод Bansbach Tandem (3 комплекта)"
+                    automation_message = detailed_costs.get('automation_message', '')
+                    
+                    # Определяем количество приводов из сообщения или используем количество модулей по умолчанию
+                    drives_count = modules_count
+                    
                     # Формируем точное описание привода с указанием типа и количества
                     if "Bansbach" in drive_type:
                         if "T1" in drive_type:
                             # Привод Bansbach T1
-                            drive_info = f"Привод Bansbach T1 ({modules_count} {'привод' if modules_count == 1 else 'привода' if 2 <= modules_count <= 4 else 'приводов'})"
+                            drive_info = f"Привод Bansbach T1 ({drives_count} {'привод' if drives_count == 1 else 'привода' if 2 <= drives_count <= 4 else 'приводов'})"
                         elif "Tandem" in drive_type:
                             # Привод Bansbach Tandem
-                            drive_info = f"Привод Bansbach Tandem ({modules_count} {'комплект' if modules_count == 1 else 'комплекта' if 2 <= modules_count <= 4 else 'комплектов'})"
+                            drive_info = f"Привод Bansbach Tandem ({drives_count} {'комплект' if drives_count == 1 else 'комплекта' if 2 <= drives_count <= 4 else 'комплектов'})"
                         else:
                             # Общий случай для Bansbach
-                            drive_info = f"Привод {drive_type} ({modules_count} {'шт.' if modules_count == 1 else 'шт.'})"
+                            drive_info = f"Привод {drive_type} ({drives_count} {'шт.' if drives_count == 1 else 'шт.'})"
                     elif "Somfy" in drive_type:
                         if "M1" in drive_type:
                             # Привод Somfy M1
-                            drive_info = f"Привод Somfy M1 ({modules_count} {'привод' if modules_count == 1 else 'привода' if 2 <= modules_count <= 4 else 'приводов'})"
+                            drive_info = f"Привод Somfy M1 ({drives_count} {'привод' if drives_count == 1 else 'привода' if 2 <= drives_count <= 4 else 'приводов'})"
                         elif "TANDEM" in drive_type or "Tandem" in drive_type:
                             # Привод Somfy M2 TANDEM
-                            drive_info = f"Привод Somfy M2 TANDEM ({modules_count} {'комплект' if modules_count == 1 else 'комплекта' if 2 <= modules_count <= 4 else 'комплектов'})"
+                            drive_info = f"Привод Somfy M2 TANDEM ({drives_count} {'комплект' if drives_count == 1 else 'комплекта' if 2 <= drives_count <= 4 else 'комплектов'})"
                         else:
                             # Общий случай для Somfy
-                            drive_info = f"Привод {drive_type} ({modules_count} {'шт.' if modules_count == 1 else 'шт.'})"
+                            drive_info = f"Привод {drive_type} ({drives_count} {'шт.' if drives_count == 1 else 'шт.'})"
                     else:
                         # Общий случай для других типов
-                        drive_info = f"{drive_type} ({modules_count} {'шт.' if modules_count == 1 else 'шт.'})"
+                        drive_info = f"{drive_type} ({drives_count} {'шт.' if drives_count == 1 else 'шт.'})"
                     
                     modified_components.append(drive_info)
                 
