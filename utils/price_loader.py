@@ -13,13 +13,13 @@ PRICE_TABLES_DIR = 'attached_assets'
 
 # Соответствие типов пергол и файлов с ценами
 PERGOLA_PRICE_FILES = {
-    "B500NEW": "Прайс_В500-20.csv",  # По умолчанию используем прайс для B500-20
-    "B500-20NEW": "Прайс_В500-20.csv",
-    "B500-25NEW": "Прайс_В500-25.csv",
-    "B700NEW": "Прайс_B700-20.csv",  # По умолчанию используем прайс для B700-20
-    "B700-20NEW": "Прайс_B700-20.csv",
-    "B700-25NEW": "Прайс_B700-25.csv",
-    "B600": "Прайс_В600_PIR.csv",
+    "B500NEW": "Price_B500-20.csv",  # По умолчанию используем прайс для B500-20
+    "B500-20NEW": "Price_B500-20.csv",
+    "B500-25NEW": "Price_B500-25.csv",
+    "B700NEW": "Price_B700-20.csv",  # По умолчанию используем прайс для B700-20
+    "B700-20NEW": "Price_B700-20.csv",
+    "B700-25NEW": "Price_B700-25.csv",
+    "B600": "Price_B600_PIR.csv",
 }
 
 # Словарь для хранения загруженных таблиц цен
@@ -33,16 +33,41 @@ def load_price_tables():
     price_tables = {}
     
     try:
+        # Сначала проверяем, существуют ли нужные файлы прайс-листов из PERGOLA_PRICE_FILES
+        for pergola_type, file_name in PERGOLA_PRICE_FILES.items():
+            file_path = os.path.join(PRICE_TABLES_DIR, file_name)
+            if not os.path.exists(file_path):
+                logger.warning(f"Файл прайс-листа не найден: {file_path} для типа {pergola_type}")
+        
+        # Загружаем все CSV-файлы из директории
         for file_name in os.listdir(PRICE_TABLES_DIR):
-            if file_name.endswith('.csv'):
-                file_path = os.path.join(PRICE_TABLES_DIR, file_name)
+            if not file_name.endswith('.csv'):
+                continue
                 
+            file_path = os.path.join(PRICE_TABLES_DIR, file_name)
+            
+            # Пропускаем пустые файлы
+            if os.path.getsize(file_path) == 0:
+                logger.warning(f"Пропускаем пустой файл: {file_path}")
+                continue
+            
+            try:
                 # Обработка потенциальных проблем с кодировкой
                 try:
                     df = pd.read_csv(file_path, delimiter=';', decimal=',', encoding='utf-8')
                 except UnicodeDecodeError:
                     # Пробуем альтернативную кодировку
                     df = pd.read_csv(file_path, delimiter=';', decimal=',', encoding='cp1251')
+                
+                # Проверка на пустоту DataFrame
+                if df.empty:
+                    logger.warning(f"Пустой DataFrame в файле: {file_path}")
+                    continue
+                
+                # Проверка на минимальное количество строк и столбцов
+                if df.shape[0] < 2 or df.shape[1] < 2:
+                    logger.warning(f"Недостаточно данных в файле: {file_path}, shape: {df.shape}")
+                    continue
                 
                 # Обработка данных
                 # Первая строка - количество модулей, вторая - заголовки
@@ -64,21 +89,35 @@ def load_price_tables():
                     for j, width in enumerate(width_values):
                         # Преобразование строки в число с плавающей точкой
                         try:
+                            # Проверяем, что значения не пустые
+                            if not length or not width:
+                                continue
+                                
                             # Конвертируем из строк в числа с плавающей точкой
                             length_float = float(length.replace(',', '.'))
                             width_float = float(width.replace(',', '.'))
-                            price_value = float(price_values[i][j])
                             
-                            # Сохраняем цену по ключу (ширина, длина)
-                            price_dict[(width_float, length_float)] = price_value
-                            
-                            # Дополнительно логируем загруженные размеры для отладки
-                            logger.debug(f"Загружена цена {price_value} для размеров {width_float}x{length_float}")
-                        except (ValueError, IndexError) as e:
+                            # Проверяем, что у нас есть значение цены для этой позиции
+                            if i < len(price_values) and j < len(price_values[i]):
+                                price_value = float(price_values[i][j])
+                                
+                                # Сохраняем цену по ключу (ширина, длина)
+                                price_dict[(width_float, length_float)] = price_value
+                                
+                                # Дополнительно логируем загруженные размеры для отладки
+                                logger.debug(f"Загружена цена {price_value} для размеров {width_float}x{length_float}")
+                        except (ValueError, IndexError, TypeError) as e:
                             logger.warning(f"Ошибка обработки цены в файле {file_name}: {width}x{length}, {e}")
                 
-                price_tables[file_name] = price_dict
-                logger.info(f"Загружена таблица цен из файла {file_name}, {len(price_dict)} записей")
+                if price_dict:
+                    price_tables[file_name] = price_dict
+                    logger.info(f"Загружена таблица цен из файла {file_name}, {len(price_dict)} записей")
+                else:
+                    logger.warning(f"Не удалось загрузить данные из файла {file_name}")
+                    
+            except Exception as e:
+                logger.error(f"Ошибка обработки файла {file_name}: {str(e)}")
+                continue
                 
         return True
     except Exception as e:
