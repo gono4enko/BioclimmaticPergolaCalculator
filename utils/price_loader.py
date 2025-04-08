@@ -61,45 +61,98 @@ def load_price_tables():
                     logger.warning(f"Недостаточно данных в файле: {file_path}, shape: {df.shape}")
                     continue
                 
-                # Обработка данных
-                # Первая строка - количество модулей, вторая - заголовки
-                # Первый столбец - вылет, остальные столбцы - ширина
-                
-                # Получаем названия столбцов (ширина в метрах)
-                width_values = df.iloc[0].values[1:].astype(str)
-                
-                # Получаем значения вылета (длины в метрах)
-                length_values = df.iloc[1:, 0].values.astype(str)
-                
-                # Получаем цены
-                price_values = df.iloc[1:, 1:].values
-                
                 # Создаем словарь для быстрого доступа к ценам по размерам
                 price_dict = {}
                 
-                for i, length in enumerate(length_values):
-                    for j, width in enumerate(width_values):
-                        # Преобразование строки в число с плавающей точкой
-                        try:
-                            # Проверяем, что значения не пустые
-                            if not length or not width:
-                                continue
+                # Проверяем формат данных
+                # Если есть строка "Количество модулей", значит это новый формат
+                if "Количество модулей" in str(df.iloc[0, 0]):
+                    # Новый формат данных
+                    # Первая строка - информация о модулях
+                    # Вторая строка - заголовки с размерами ширины
+                    # Первый столбец - значения вылета (длины)
+                    
+                    # Получаем информацию о модулях
+                    modules_info = df.iloc[0, 1:].values.astype(str)
+                    
+                    # Получаем размеры ширины
+                    width_values = df.iloc[1, 1:].values.astype(str)
+                    
+                    # Получаем значения вылета (длины)
+                    length_values = df.iloc[2:, 0].values.astype(str)
+                    
+                    # Получаем цены
+                    price_values = df.iloc[2:, 1:].values
+                    
+                    # Создаем словарь для соответствия ширины и количества модулей
+                    modules_count_dict = {}
+                    for i, module_info in enumerate(modules_info):
+                        if i < len(width_values):
+                            width_float = float(width_values[i].replace(',', '.'))
+                            # Извлекаем количество модулей из строки (например, "1 модуль" -> 1)
+                            modules_count = int(module_info.split()[0])
+                            modules_count_dict[width_float] = modules_count
+                    
+                    for i, length in enumerate(length_values):
+                        for j, width in enumerate(width_values):
+                            try:
+                                # Проверяем, что значения не пустые
+                                if not length or not width:
+                                    continue
+                                    
+                                # Конвертируем из строк в числа с плавающей точкой
+                                length_float = float(length.replace(',', '.'))
+                                width_float = float(width.replace(',', '.'))
                                 
-                            # Конвертируем из строк в числа с плавающей точкой
-                            length_float = float(length.replace(',', '.'))
-                            width_float = float(width.replace(',', '.'))
-                            
-                            # Проверяем, что у нас есть значение цены для этой позиции
-                            if i < len(price_values) and j < len(price_values[i]):
-                                price_value = float(price_values[i][j])
+                                # Проверяем, что у нас есть значение цены для этой позиции
+                                if i < len(price_values) and j < len(price_values[i]):
+                                    price_value = float(price_values[i][j])
+                                    
+                                    # Сохраняем цену по ключу (ширина, длина)
+                                    price_dict[(width_float, length_float)] = price_value
+                                    
+                                    # Дополнительно логируем загруженные размеры для отладки
+                                    logger.debug(f"Загружена цена {price_value} для размеров {width_float}x{length_float}")
+                            except (ValueError, IndexError, TypeError) as e:
+                                logger.warning(f"Ошибка обработки цены в файле {file_name} (новый формат): {width}x{length}, {e}")
+                
+                else:
+                    # Старый формат данных
+                    # Первая строка - ширина, вторая - заголовки
+                    # Первый столбец - вылет, остальные столбцы - ширина
+                    
+                    # Получаем названия столбцов (ширина в метрах)
+                    width_values = df.iloc[0].values[1:].astype(str)
+                    
+                    # Получаем значения вылета (длины в метрах)
+                    length_values = df.iloc[1:, 0].values.astype(str)
+                    
+                    # Получаем цены
+                    price_values = df.iloc[1:, 1:].values
+                    
+                    for i, length in enumerate(length_values):
+                        for j, width in enumerate(width_values):
+                            # Преобразование строки в число с плавающей точкой
+                            try:
+                                # Проверяем, что значения не пустые
+                                if not length or not width:
+                                    continue
+                                    
+                                # Конвертируем из строк в числа с плавающей точкой
+                                length_float = float(length.replace(',', '.'))
+                                width_float = float(width.replace(',', '.'))
                                 
-                                # Сохраняем цену по ключу (ширина, длина)
-                                price_dict[(width_float, length_float)] = price_value
-                                
-                                # Дополнительно логируем загруженные размеры для отладки
-                                logger.debug(f"Загружена цена {price_value} для размеров {width_float}x{length_float}")
-                        except (ValueError, IndexError, TypeError) as e:
-                            logger.warning(f"Ошибка обработки цены в файле {file_name}: {width}x{length}, {e}")
+                                # Проверяем, что у нас есть значение цены для этой позиции
+                                if i < len(price_values) and j < len(price_values[i]):
+                                    price_value = float(price_values[i][j])
+                                    
+                                    # Сохраняем цену по ключу (ширина, длина)
+                                    price_dict[(width_float, length_float)] = price_value
+                                    
+                                    # Дополнительно логируем загруженные размеры для отладки
+                                    logger.debug(f"Загружена цена {price_value} для размеров {width_float}x{length_float}")
+                            except (ValueError, IndexError, TypeError) as e:
+                                logger.warning(f"Ошибка обработки цены в файле {file_name} (старый формат): {width}x{length}, {e}")
                 
                 if price_dict:
                     price_tables[file_name] = price_dict
