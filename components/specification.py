@@ -170,6 +170,9 @@ def render_specification(results, options):
         import pandas as pd
         df = pd.DataFrame(data, columns=["Характеристика", "Значение"])
         
+        # Убираем индексы строк
+        df.index = [""] * len(df)
+        
         # Применяем custom CSS для таблицы
         st.markdown("""
         <style>

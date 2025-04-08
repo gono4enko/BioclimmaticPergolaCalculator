@@ -247,6 +247,9 @@ def render_results(results):
         
         # Создаем DataFrame и отображаем его
         df = pd.DataFrame(cost_items, columns=["Наименование", "Стоимость", "Валюта"])
+        
+        # Убираем индексы строк (номера строк)
+        df.index = [""] * len(df)
         st.table(df)
     
     # Добавляем кнопку для скачивания результатов в CSV
