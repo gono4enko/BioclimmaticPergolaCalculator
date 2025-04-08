@@ -459,19 +459,40 @@ def main():
         padding-bottom: 0 !important;
     }
     
-    /* Принудительно уменьшаем все отступы в приложении */
+    /* РАДИКАЛЬНЫЕ изменения: полное удаление отступов во всем приложении */
+    /* Принудительное удаление всех отступов для любых элементов */
+    * {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Принудительное удаление отступов для конкретных элементов Streamlit */
     .element-container, 
+    div[data-testid="stVerticalBlock"],
+    div[data-testid="stHorizontalBlock"],
+    [data-testid="column"],
     .stSelectbox, 
     .stNumberInput,
     .stButton,
     .stMarkdown,
     .stRadio,
     .stCheckbox,
-    .row-widget {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
+    .stTextInput,
+    .row-widget,
+    div[role="button"] {
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 0 !important;
+    }
+    
+    /* Принудительное удаление всех отступов и цветов для карточек */
+    [data-testid="stDecoration"], 
+    [data-testid="baseButton-secondary"] {
+        background-color: white !important;
+        box-shadow: none !important;
+        border-color: #dddddd !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     /* Минимальные отступы для подзаголовков */
