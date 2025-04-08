@@ -89,11 +89,39 @@ def render_specification(results, options):
             # Пульт управления добавляется в расчете на основе количества устройств
             # Мы не добавляем его здесь, так как он будет добавлен из detailed_costs ниже
     
-    # Тип освещения (без стоимости)
+    # Тип освещения с детальной информацией
     lighting_info = "Без подсветки"
     if lighting_type != 'none':
         lighting_name = LIGHTING_TYPES.get(lighting_type, {}).get('name', 'Освещение')
-        lighting_info = f"{lighting_name}"
+        
+        # Получаем детальную информацию о подсветке, если она есть
+        lighting_details = detailed_costs.get('lighting_details', {})
+        
+        # Создаем HTML для компонентов подсветки
+        lighting_components = []
+        
+        # Добавляем информацию о светодиодной ленте
+        if 'led_length' in lighting_details:
+            led_length = lighting_details.get('led_length', 0)
+            if led_length > 0:
+                lighting_components.append(f"Светодиодная лента {lighting_name} ({led_length:.1f} м)")
+        
+        # Добавляем информацию о блоках управления
+        if 'controllers_count' in lighting_details:
+            controllers_count = lighting_details.get('controllers_count', 0)
+            if controllers_count > 0:
+                controller_text = f"Блок управления Somfy RTS Dimmer ({controllers_count} {'шт.' if controllers_count == 1 else 'шт.'})"
+                lighting_components.append(controller_text)
+        
+        # Если есть компоненты освещения, формируем HTML
+        if lighting_components:
+            components_html = "<div class='spec-components'>"
+            for component in lighting_components:
+                components_html += f"<div class='spec-component-item'>• {component}</div>"
+            components_html += "</div>"
+            lighting_info = components_html
+        else:
+            lighting_info = f"{lighting_name}"
     
     # Получаем информацию о типе ламелей
     lamella_info = ""
