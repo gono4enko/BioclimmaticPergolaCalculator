@@ -81,9 +81,11 @@ def calculate_additional_columns(pergola_type, lamella_type, length_m, width_m):
     
     # Определяем количество модулей на основе ширины перголы
     # Модуль - это секция перголы определенной ширины
-    # Примерные размеры: 1 модуль - до 4м, 2 модуля - до 7м, 3 модуля - до 10м
+    # Размеры: 1 модуль - до 4м, 2 модуля - до 7м, 3 модуля - до 10.5м, 4 модуля - до 13.5м
     modules = 1
-    if width_m > 7:
+    if width_m > 10.5:
+        modules = 4
+    elif width_m > 7:
         modules = 3
     elif width_m > 4:
         modules = 2
@@ -112,7 +114,7 @@ def determine_bansbach_drive_type(pergola_type, width_m, length_m, modules_count
     drive_cost_per_module = BANSBACH_PRICES["T1"]
     
     # Если перголa B500, проверяем условия для использования Tandem
-    if "B500" in pergola_type and 1 <= modules_count <= 3:
+    if "B500" in pergola_type and 1 <= modules_count <= 4:
         # Получаем список условий для данного количества модулей
         conditions = BANSBACH_TANDEM_CONDITIONS.get(modules_count, [])
         
@@ -198,7 +200,7 @@ def determine_somfy_drive_type(pergola_type, width_m, length_m, modules_count):
     drive_cost_per_module = SOMFY_PRICES["M1"]
     
     # Для перголы B700NEW используем привод Somfy
-    if "B700" in pergola_type and 1 <= modules_count <= 3:
+    if "B700" in pergola_type and 1 <= modules_count <= 4:
         # Получаем список условий для данного количества модулей
         conditions = SOMFY_TANDEM_CONDITIONS.get(modules_count, [])
         
@@ -211,7 +213,7 @@ def determine_somfy_drive_type(pergola_type, width_m, length_m, modules_count):
                     drive_cost_per_module = SOMFY_PRICES["M2_TANDEM"]
                     break
         else:
-            # Для 2 и 3 модулей: ширина > threshold и вынос > threshold
+            # Для 2, 3 и 4 модулей: ширина > threshold и вынос > threshold
             for width_threshold, length_threshold in conditions:
                 if width_m > width_threshold and length_m > length_threshold:
                     drive_type = "M2_TANDEM"

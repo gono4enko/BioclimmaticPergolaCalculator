@@ -99,8 +99,12 @@ def get_modules_count_from_size(width_m):
         return 1
     elif width_m <= 7.0:
         return 2
-    else:
+    elif width_m <= 10.5:
         return 3
+    elif width_m <= 13.5:
+        return 4
+    else:
+        return 4  # Максимальное количество модулей
 
 def calculate_total_cost_with_automation(base_price, modules_count, pergola_type):
     """

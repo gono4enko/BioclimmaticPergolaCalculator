@@ -34,11 +34,11 @@ def validate_dimensions(dimensions):
             return "Высота должна быть числом"
         
         # Проверка ограничений по минимальным и максимальным размерам
-        if width < 1.0 or width > 7.0:
-            return "Ширина должна быть от 1.0 до 7.0 м"
+        if width < 2.0 or width > 13.5:
+            return "Ширина должна быть от 2.0 до 13.5 м"
         
-        if length < 1.0 or length > 7.0:
-            return "Длина должна быть от 1.0 до 7.0 м"
+        if length < 1.5 or length > 8.0:
+            return "Длина должна быть от 1.5 до 8.0 м"
         
         if height and (height < 2.0 or height > 3.0):
             return "Высота должна быть от 2.0 до 3.0 м"
