@@ -11,16 +11,8 @@ logger = logging.getLogger(__name__)
 # Путь к директории с файлами цен
 PRICE_TABLES_DIR = 'attached_assets'
 
-# Соответствие типов пергол и файлов с ценами
-PERGOLA_PRICE_FILES = {
-    "B500NEW": "Price_B500-20.csv",  # По умолчанию используем прайс для B500-20
-    "B500-20NEW": "Price_B500-20.csv",
-    "B500-25NEW": "Price_B500-25.csv",
-    "B700NEW": "Price_B700-20.csv",  # По умолчанию используем прайс для B700-20
-    "B700-20NEW": "Price_B700-20.csv",
-    "B700-25NEW": "Price_B700-25.csv",
-    "B600": "Price_B600_PIR.csv",
-}
+# Импортируем соответствие типов пергол и файлов с ценами из config
+from config.price_data import PERGOLA_PRICE_FILES
 
 # Словарь для хранения загруженных таблиц цен
 price_tables = {}
@@ -136,22 +128,22 @@ def get_modules_count_from_size(width_m):
         int: Количество модулей
     """
     # На основе анализа данных в CSV-файлах:
-    # В первой строке (индекс 0) заголовок с количеством модулей
-    # Ширина до 4.0м - 1 модуль (столбцы 1-7 в CSV)
-    # Ширина 4.0-8.0м - 2 модуля (примерно ширина разделена между 2 модулями)
-    # Ширина 8.0-12.0м - 3 модуля
-    # Ширина 12.0-13.5м - 4 модуля
+    # В первой строке каждого CSV файла указано количество модулей
+    # Согласно загруженным прайсам:
+    # B500-20: До 4.5м - 1 модуль, 6-10м - 2 модуля, 9-15м - 3 модуля
+    # B500-25: До 4.5м - 1 модуль, 5-9м - 2 модуля, 7.5-13.5м - 3 модуля
+    # B600_PIR: До 4.5м - 1 модуль, 6-9м - 2 модуля, 10.5-13.5м - 3 модуля
+    # B700-20: До 4.5м - 1 модуль, 6-10м - 2 модуля, 9-15м - 3 модуля
+    # B700-25: До 4.5м - 1 модуль, 5-9м - 2 модуля, 7.5-13.5м - 3 модуля
     
-    if width_m <= 4.0:
+    if width_m <= 4.5:
         return 1
-    elif width_m <= 8.0:  # Обновленный порог для 2 модулей до 8м
+    elif width_m <= 9.0:
         return 2
-    elif width_m <= 12.0:  # Для ширины до 12.0м включительно требуется 3 модуля
-        return 3
     elif width_m <= 13.5:
-        return 4
+        return 3
     else:
-        return 4  # Максимальное количество модулей
+        return 3  # Максимальное количество модулей
 
 def calculate_total_cost_with_automation(base_price, modules_count, pergola_type):
     """
@@ -168,12 +160,13 @@ def calculate_total_cost_with_automation(base_price, modules_count, pergola_type
     total_cost = base_price
     
     # Стоимость автоматики в зависимости от типа перголы и количества модулей
+    from config.price_data import BANSBACH_PRICES, SOMFY_PRICES
     if "B500" in pergola_type:
         # Стандартный привод Bansbach T1 (700€ за модуль)
-        automation_cost = 700 * modules_count
+        automation_cost = BANSBACH_PRICES["T1"] * modules_count
     elif "B700" in pergola_type:
         # Стандартный привод Somfy M1 (300€ за модуль)
-        automation_cost = 300 * modules_count
+        automation_cost = SOMFY_PRICES["M1"] * modules_count
     else:
         automation_cost = 0
     
