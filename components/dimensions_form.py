@@ -13,30 +13,58 @@ def render_dimensions_form():
         dict: Словарь с введенными размерами
     """
     # Добавляем CSS для стилизации формы размеров в соответствии с предоставленным дизайном
+    # Адаптивная и компактная версия
     st.markdown("""
     <style>
+    @media (max-width: 768px) {
+        /* Мобильные устройства */
+        .dimension-form {
+            padding: 0.8rem;
+        }
+        .dimension-input-container {
+            margin-bottom: 0.8rem;
+        }
+        .dimension-label {
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+        input[type="number"] {
+            padding: 0.4rem !important;
+            font-size: 0.9rem !important;
+        }
+        button {
+            padding: 0.4rem !important;
+            font-size: 0.8rem !important;
+        }
+        .stButton button {
+            min-height: auto !important;
+            line-height: 1.2 !important;
+        }
+    }
+    
+    /* Универсальные стили */
     .dimension-form {
         background-color: #f8f9fa;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
     }
     .dimension-label {
-        font-weight: bold;
-        font-size: 1.1rem;
+        font-weight: 600;
+        font-size: 0.95rem;
         color: #333;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.3rem;
     }
     .dimension-input-container {
         position: relative;
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.8rem;
     }
     .dimension-input {
         width: 100%;
         border: 1px solid #ddd;
         border-radius: 5px;
-        padding: 0.75rem;
-        font-size: 1.2rem;
+        padding: 0.5rem;
+        font-size: 1rem;
         background-color: white;
     }
     .dimension-unit {
@@ -51,8 +79,8 @@ def render_dimensions_form():
         background-color: #f8f9fa;
         border: 1px solid #ddd;
         border-radius: 5px;
-        padding: 1rem;
-        font-size: 0.9rem;
+        padding: 0.6rem;
+        font-size: 0.85rem;
         text-align: center;
         cursor: pointer;
         transition: all 0.3s;
@@ -72,12 +100,12 @@ def render_dimensions_form():
         background-color: #0066cc;
         color: white;
         font-weight: bold;
-        font-size: 1.1rem;
+        font-size: 1rem;
         border-radius: 5px;
-        padding: 0.75rem;
+        padding: 0.6rem;
         border: none;
         width: 100%;
-        margin-top: 1rem;
+        margin-top: 0.8rem;
         cursor: pointer;
         transition: all 0.3s;
     }
@@ -86,22 +114,28 @@ def render_dimensions_form():
     }
     .result-block {
         background-color: #f8f9fa;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-top: 1.5rem;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
     .result-label {
         font-weight: bold;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         color: #333;
     }
     .result-value {
         font-weight: bold;
-        font-size: 1.5rem;
+        font-size: 1.3rem;
         color: #0066cc;
+    }
+    .stButton button {
+        min-height: 0 !important;
+        line-height: 1.2 !important;
+        padding: 8px 4px !important;
+        white-space: pre-wrap !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -118,70 +152,77 @@ def render_dimensions_form():
     if st.session_state.dimensions['height'] != 3.0:
         st.session_state.dimensions['height'] = 3.0
     
-    # Создаем блок для размеров
-    st.markdown("<div style='background-color: #f8f9fa; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);'>", unsafe_allow_html=True)
+    # Создаем компактный блок для размеров
+    st.markdown("<div style='background-color: #f8f9fa; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);'>", unsafe_allow_html=True)
     
-    # Заголовок блока
-    st.markdown("<h3 style='margin-top: 0; margin-bottom: 1rem; color: #333;'>Размеры перголы</h3>", unsafe_allow_html=True)
+    # Заголовок блока (более компактный)
+    st.markdown("<h3 style='margin-top: 0; margin-bottom: 0.7rem; color: #333; font-size: 1.2rem;'>Размеры перголы</h3>", unsafe_allow_html=True)
     
-    # Используем новый дизайн формы ввода размеров
+    # Используем компактный дизайн формы ввода размеров
     st.markdown('<div class="dimension-form">', unsafe_allow_html=True)
     
-    # Ширина
-    st.markdown('<div class="dimension-label">Ширина</div>', unsafe_allow_html=True)
-    st.markdown('<div class="dimension-input-container">', unsafe_allow_html=True)
-    width = st.number_input(
-        "Ширина перголы", 
-        min_value=1.5, 
-        max_value=13.5, 
-        value=st.session_state.dimensions['width'],
-        step=0.1, 
-        format="%.1f",
-        key="width_input",
-        label_visibility="collapsed"
-    )
-    st.markdown(f'<div class="dimension-unit">м</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Создаем два ряда по два элемента для более компактного отображения
+    row1_cols = st.columns(2)
     
-    # Вынос
-    st.markdown('<div class="dimension-label">Вынос</div>', unsafe_allow_html=True)
-    st.markdown('<div class="dimension-input-container">', unsafe_allow_html=True)
-    length = st.number_input(
-        "Вынос перголы", 
-        min_value=1.0, 
-        max_value=8.0, 
-        value=st.session_state.dimensions['length'],
-        step=0.1, 
-        format="%.1f",
-        key="length_input",
-        label_visibility="collapsed"
-    )
-    st.markdown(f'<div class="dimension-unit">м</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Первый ряд: Ширина и Вынос
+    with row1_cols[0]:
+        st.markdown('<div class="dimension-label">Ширина</div>', unsafe_allow_html=True)
+        st.markdown('<div class="dimension-input-container">', unsafe_allow_html=True)
+        width = st.number_input(
+            "Ширина перголы", 
+            min_value=1.5, 
+            max_value=13.5, 
+            value=st.session_state.dimensions['width'],
+            step=0.1, 
+            format="%.1f",
+            key="width_input",
+            label_visibility="collapsed"
+        )
+        st.markdown(f'<div class="dimension-unit">м</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    # Высота
-    st.markdown('<div class="dimension-label">Высота</div>', unsafe_allow_html=True)
-    st.markdown('<div class="dimension-input-container">', unsafe_allow_html=True)
-    st.text_input(
-        "Высота перголы",
-        value="3,0 м (по умолчанию)",
-        disabled=True,
-        key="height_input",
-        label_visibility="collapsed"
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
+    with row1_cols[1]:
+        st.markdown('<div class="dimension-label">Вынос</div>', unsafe_allow_html=True)
+        st.markdown('<div class="dimension-input-container">', unsafe_allow_html=True)
+        length = st.number_input(
+            "Вынос перголы", 
+            min_value=1.0, 
+            max_value=8.0, 
+            value=st.session_state.dimensions['length'],
+            step=0.1, 
+            format="%.1f",
+            key="length_input",
+            label_visibility="collapsed"
+        )
+        st.markdown(f'<div class="dimension-unit">м</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    # Конфигурация - добавляем кнопки выбора типа перголы
-    st.markdown('<div class="dimension-label">Конфигурация</div>', unsafe_allow_html=True)
+    # Второй ряд: Высота и Конфигурация
+    row2_cols = st.columns([1, 3])
     
-    # Используем колонки для ровного расположения кнопок
-    conf_cols = st.columns(3)
-    with conf_cols[0]:
-        st.button("Поворотные\nламели", key="btn_config_b500", use_container_width=True)
-    with conf_cols[1]:
-        st.button("Сдвижные\nламели", key="btn_config_b700", use_container_width=True)
-    with conf_cols[2]:
-        st.button("Стационарные\nпанели", key="btn_config_b600", use_container_width=True)
+    with row2_cols[0]:
+        st.markdown('<div class="dimension-label">Высота</div>', unsafe_allow_html=True)
+        st.markdown('<div class="dimension-input-container">', unsafe_allow_html=True)
+        st.text_input(
+            "Высота перголы",
+            value="3,0 м",
+            disabled=True,
+            key="height_input",
+            label_visibility="collapsed"
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with row2_cols[1]:
+        st.markdown('<div class="dimension-label">Конфигурация</div>', unsafe_allow_html=True)
+        
+        # Используем колонки для ровного расположения кнопок
+        conf_cols = st.columns(3)
+        with conf_cols[0]:
+            st.button("Поворотные\nламели", key="btn_config_b500", use_container_width=True)
+        with conf_cols[1]:
+            st.button("Сдвижные\nламели", key="btn_config_b700", use_container_width=True)
+        with conf_cols[2]:
+            st.button("Стационарные\nпанели", key="btn_config_b600", use_container_width=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
     

@@ -26,18 +26,41 @@ def render_options_form():
     Returns:
         dict: Словарь с выбранными опциями
     """
-    # Добавляем CSS для стилизации плиток опций
+    # Добавляем CSS для стилизации плиток опций с адаптивностью
     st.markdown("""
     <style>
+    /* Адаптивные стили для мобильных устройств */
+    @media (max-width: 768px) {
+        .pergola-option-container {
+            padding: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+        .option-title {
+            font-size: 1.1rem;
+            margin-bottom: 0.7rem;
+        }
+        .option-tile {
+            padding: 0.7rem;
+        }
+        .option-name {
+            font-size: 0.85rem;
+            margin-bottom: 0.2rem;
+        }
+        .option-description {
+            font-size: 0.75rem;
+        }
+    }
+    
+    /* Универсальные стили */
     .pergola-option-container {
         background-color: #f8f9fa;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
     .option-title {
-        font-size: 1.3rem;
+        font-size: 1.1rem;
         font-weight: bold;
         margin-bottom: 1rem;
         color: #333;
