@@ -21,48 +21,69 @@ def render_results(results):
         st.error(error_message)
         return
     
-    # Добавляем стили для блока результатов
+    # Добавляем стили для современного блока результатов
     st.markdown("""
     <style>
-    .result-header {
-        text-align: center;
-        margin-bottom: 1rem;
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: #1E3A8A;
-    }
-    .result-container {
-        background-color: #F3F4F6;
+    .results-card {
+        background-color: white;
         border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+    .results-header {
+        background-color: #4a69bd;
+        color: white;
+        padding: 1rem;
+        font-size: 1.3rem;
+        font-weight: bold;
+        text-align: center;
+    }
+    .results-content {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 1rem;
     }
     .metric-card {
-        background-color: white;
+        flex: 1 1 calc(33.333% - 1rem);
+        background-color: #f8f9fa;
         border-radius: 8px;
-        padding: 1rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 1.2rem;
+        margin: 0.5rem;
         text-align: center;
-        height: 100%;
+        transition: all 0.3s ease;
+    }
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
     .metric-value {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
         font-weight: bold;
-        color: #1E3A8A;
-        margin: 0.5rem 0;
+        color: #333;
+        margin-bottom: 0.5rem;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-    .metric-label {
-        font-size: 0.9rem;
-        color: #6B7280;
+    .metric-price {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #4a69bd;
         margin-bottom: 0.5rem;
+    }
+    .metric-label {
+        font-size: 0.95rem;
+        color: #666;
     }
     .download-button {
         text-align: center;
-        margin-top: 1rem;
+        margin-top: 1.5rem;
+    }
+    @media (max-width: 768px) {
+        .metric-card {
+            flex: 1 1 100%;
+        }
     }
     .download-link {
         display: inline-block;
@@ -86,83 +107,75 @@ def render_results(results):
     </style>
     """, unsafe_allow_html=True)
     
-    # Создаем HTML-блок для отображения результатов
-    st.markdown('<div class="result-header">Результаты расчета</div>', unsafe_allow_html=True)
+    # Создаем современную карточку для отображения результатов
+    st.markdown("""
+    <div class="results-card">
+        <div class="results-header">Результаты расчета</div>
+        <div class="results-content">
+    """, unsafe_allow_html=True)
     
-    # Убираем отображение сообщения о корректировке, так как оно дублируется в спецификации
+    # Получаем основные данные для отображения
+    dimensions = results.get('dimensions', {})
+    width_m = dimensions.get('width_m', 0)
+    length_m = dimensions.get('length_m', 0)
+    area = round(width_m * length_m, 2)
     
-    # Начинаем контейнер для метрик
-    st.markdown('<div class="result-container">', unsafe_allow_html=True)
+    # Определяем количество модулей
+    detailed_costs = results.get('detailed_costs', {})
+    additional_columns_cost = detailed_costs.get('additional_columns', 0)
     
-    # Создаем метрики для отображения основных показателей
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-label">Итоговая стоимость</div>
-            <div class="metric-value">{results['total_cost']} €</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        dimensions = results.get('dimensions', {})
-        width_m = dimensions.get('width_m', 0)
-        length_m = dimensions.get('length_m', 0)
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-label">Размеры (Ш×В)</div>
-            <div class="metric-value">{width_m:.2f}×{length_m:.2f} м</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        area = width_m * length_m
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-label">Площадь перголы</div>
-            <div class="metric-value">{area:.2f} м²</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
-        # Определяем количество модулей
-        detailed_costs = results.get('detailed_costs', {})
-        additional_columns_cost = detailed_costs.get('additional_columns', 0)
-        
-        # Определяем количество модулей по ширине
-        modules_count = 1
-        if additional_columns_cost > 0:
-            # Стоимость дополнительных колонн зависит от количества модулей
-            # 1 модуль - 653€, 2 модуля - 980€, 3 модуля - 1306€
-            if abs(additional_columns_cost - 653) < 1:
-                modules_count = 1
-            elif abs(additional_columns_cost - 980) < 1:
-                modules_count = 2
-            elif abs(additional_columns_cost - 1306) < 1:
-                modules_count = 3
-            else:
-                # По умолчанию определяем количество модулей по ширине
-                if width_m > 7:
-                    modules_count = 3
-                elif width_m > 4:
-                    modules_count = 2
+    # Определяем количество модулей по ширине
+    modules_count = 1
+    if additional_columns_cost > 0:
+        # Стоимость дополнительных колонн зависит от количества модулей
+        # 1 модуль - 653€, 2 модуля - 980€, 3 модуля - 1306€
+        if abs(additional_columns_cost - 653) < 1:
+            modules_count = 1
+        elif abs(additional_columns_cost - 980) < 1:
+            modules_count = 2
+        elif abs(additional_columns_cost - 1306) < 1:
+            modules_count = 3
         else:
             # По умолчанию определяем количество модулей по ширине
             if width_m > 7:
                 modules_count = 3
             elif width_m > 4:
                 modules_count = 2
-                
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-label">Количество модулей</div>
-            <div class="metric-value">{modules_count}</div>
-        </div>
-        """, unsafe_allow_html=True)
+    else:
+        # По умолчанию определяем количество модулей по ширине
+        if width_m > 7:
+            modules_count = 3
+        elif width_m > 4:
+            modules_count = 2
     
-    # Завершаем контейнер для метрик
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Отображаем основные метрики
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="metric-price">{results['total_cost']} €</div>
+        <div class="metric-label">Итоговая стоимость</div>
+    </div>
+    
+    <div class="metric-card">
+        <div class="metric-value">{width_m:.1f}×{length_m:.1f} м</div>
+        <div class="metric-label">Размеры (Ш×В)</div>
+    </div>
+    
+    <div class="metric-card">
+        <div class="metric-value">{area:.1f} м²</div>
+        <div class="metric-label">Площадь перголы</div>
+    </div>
+    
+    <div class="metric-card">
+        <div class="metric-value">{modules_count}</div>
+        <div class="metric-label">Количество модулей</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Закрываем контейнер
+    st.markdown("""
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Проверяем, является ли выбранная пергола моделью с включенной автоматизацией
     detailed_costs = results.get('detailed_costs', {})

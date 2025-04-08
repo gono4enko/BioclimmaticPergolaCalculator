@@ -116,28 +116,85 @@ def render_specification(results, options):
     else:
         pergola_name = PERGOLA_TYPES.get(pergola_type, {}).get('name', '')
     
-    # Создаем блок для спецификации перголы
+    # Создаем современную карточку для спецификации перголы
     with st.container():
-        st.subheader("Спецификация перголы")
+        # Стили для современной карточки спецификации
+        st.markdown("""
+        <style>
+        .spec-card {
+            background-color: white;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        .spec-header {
+            background-color: #4a69bd;
+            color: white;
+            padding: 1rem;
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: center;
+        }
+        .spec-content {
+            padding: 0;
+        }
+        .spec-row {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            padding: 0.8rem 1.2rem;
+        }
+        .spec-row:last-child {
+            border-bottom: none;
+        }
+        .spec-row:nth-child(odd) {
+            background-color: #f8f9fa;
+        }
+        .spec-label {
+            flex: 0 0 40%;
+            font-weight: 600;
+            color: #444;
+        }
+        .spec-value {
+            flex: 0 0 60%;
+            color: #333;
+        }
+        .spec-components {
+            margin-top: 0.5rem;
+        }
+        .spec-component-item {
+            margin-bottom: 0.3rem;
+            font-size: 0.95rem;
+        }
+        .spec-total {
+            background-color: #e6f2ff;
+            font-weight: bold;
+        }
+        </style>
         
-        # Создаем таблицу данных для спецификации
-        data = []
+        <div class="spec-card">
+            <div class="spec-header">Спецификация перголы</div>
+            <div class="spec-content">
+        """, unsafe_allow_html=True)
+        
+        # Подготовка данных для спецификации
+        rows = []
         
         # Добавляем основные параметры перголы
-        data.append(["Тип перголы:", pergola_name])
-        data.append(["Тип ламелей:", lamella_info])
-        data.append(["Ширина:", f"{width_m:.2f} м"])
-        data.append(["Вынос:", f"{length_m:.2f} м"])
-        data.append(["Площадь:", f"{area:.2f} м²"])
-        data.append(["Количество модулей:", f"{modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}"])
-        data.append(["Фактический размер:", f"{width_m:.2f} × {length_m:.2f} м"])
+        rows.append(("Тип перголы:", pergola_name))
+        rows.append(("Тип ламелей:", lamella_info))
+        rows.append(("Ширина:", f"{width_m:.2f} м"))
+        rows.append(("Вынос:", f"{length_m:.2f} м"))
+        rows.append(("Площадь:", f"{area:.2f} м²"))
+        rows.append(("Количество модулей:", f"{modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}"))
+        rows.append(("Фактический размер:", f"{width_m:.2f} × {length_m:.2f} м"))
         
-        # Добавляем информацию об автоматике (без стоимости)
+        # Добавляем информацию об автоматике
         if automation_manufacturer:
             automation_name = "Базовая автоматика"
-            data.append(["Автоматика:", automation_name])
+            rows.append(("Автоматика:", automation_name))
             
-            # Формируем список компонентов автоматики без указания цен
+            # Формируем компоненты автоматики без указания цен
             if automation_components:
                 # Модифицируем компоненты, убирая информацию о ценах
                 modified_components = []
@@ -147,97 +204,47 @@ def render_specification(results, options):
                     # Добавляем информацию о количестве приводов, равном количеству модулей
                     if "Bansbach" in component_without_price or "Somfy" in component_without_price:
                         component_without_price += f" ({modules_count} {'шт.' if modules_count == 1 else 'шт.'})"
-                    # Добавляем пульт управления
-                    if 'remote_control' in detailed_costs and component_without_price.startswith("Bansbach"):
-                        modified_components.append(component_without_price)
-                        modified_components.append(f"Пульт ДУ {detailed_costs['remote_control']}")
-                    elif 'remote_control' in detailed_costs and component_without_price.startswith("Somfy"):
-                        modified_components.append(component_without_price)
-                        modified_components.append(f"Пульт ДУ {detailed_costs['remote_control']}")
-                    else:
-                        modified_components.append(component_without_price)
+                    modified_components.append(component_without_price)
                 
-                components_text = ""
-                for i, component in enumerate(modified_components):
-                    components_text += f"• {component}"
-                    if i < len(modified_components) - 1:
-                        components_text += "\n"
+                # Добавляем пульт управления
+                if 'remote_control' in detailed_costs:
+                    remote_control = detailed_costs['remote_control']
+                    modified_components.append(f"Пульт ДУ {remote_control}")
                 
-                data.append(["Компоненты автоматики:", components_text])
+                # Формируем HTML для компонентов
+                components_html = "<div class='spec-components'>"
+                for component in modified_components:
+                    components_html += f"<div class='spec-component-item'>• {component}</div>"
+                components_html += "</div>"
+                
+                rows.append(("Компоненты автоматики:", components_html))
         
         # Добавляем информацию об освещении
-        data.append(["Подсветка:", lighting_info])
+        rows.append(("Подсветка:", lighting_info))
         
         # Если есть вставка для усиления лотка, добавляем её (без стоимости)
         gutter_insert_cost = detailed_costs.get('gutter_insert', 0)
         if gutter_insert_cost > 0:
-            data.append(["Усиление лотка:", "Вставка для усиления лотка"])
+            rows.append(("Усиление лотка:", "Вставка для усиления лотка"))
         
         # Добавляем итоговую стоимость
-        data.append(["Итоговая стоимость:", f"{results.get('total_cost', 0)}€"])
+        rows.append(("Итоговая стоимость:", f"{results.get('total_cost', 0)}€"))
         
-        # Создаем DataFrame для таблицы
-        import pandas as pd
+        # Выводим строки спецификации
+        for i, (label, value) in enumerate(rows):
+            extra_class = " spec-total" if label == "Итоговая стоимость:" else ""
+            st.markdown(f"""
+            <div class="spec-row{extra_class}">
+                <div class="spec-label">{label}</div>
+                <div class="spec-value">{value}</div>
+            </div>
+            """, unsafe_allow_html=True)
         
-        # Добавляем порядковые номера к данным
-        numbered_data = []
-        for i, (name, value) in enumerate(data, 1):
-            numbered_data.append([i, name, value])
-        
-        # Создаем DataFrame с номерами, наименованием и значением
-        df = pd.DataFrame(numbered_data, columns=["#", "Наименование", "Значение"])
-        
-        # Применяем custom CSS для таблицы с адаптивной шириной столбцов
+        # Закрываем контейнер спецификации
         st.markdown("""
-        <style>
-        .dataframe {
-            width: 100%;
-            border-collapse: collapse !important;
-            margin-bottom: 1rem;
-            table-layout: auto !important;
-        }
-        .dataframe th, .dataframe td {
-            padding: 0.8rem !important;
-            border: 1px solid #e9ecef !important;
-            white-space: normal !important;
-            word-wrap: break-word !important;
-        }
-        .dataframe th {
-            background-color: #4a69bd !important;
-            color: white !important;
-            font-weight: bold !important;
-        }
-        .dataframe tr:nth-child(even) {
-            background-color: #f8f9fa !important;
-        }
-        .dataframe tr:nth-child(odd) {
-            background-color: #ffffff !important;
-        }
-        .dataframe tr:last-child {
-            font-weight: bold !important;
-        }
-        /* Настраиваем отображение номеров в первом столбце */
-        .dataframe th:first-child, .dataframe td:first-child {
-            text-align: center !important;
-            width: 40px !important;
-            min-width: 40px !important;
-            max-width: 50px !important;
-        }
-        /* Настраиваем адаптивную ширину для столбца Наименование */
-        .dataframe th:nth-child(2), .dataframe td:nth-child(2) {
-            text-align: left !important;
-            min-width: 250px !important;
-        }
-        /* Настраиваем адаптивную ширину для столбца Значение */
-        .dataframe th:nth-child(3), .dataframe td:nth-child(3) {
-            text-align: left !important;
-            min-width: 100px !important;
-        }
-        </style>
+            </div>
+        </div>
         """, unsafe_allow_html=True)
-        
-        # Отображаем таблицу
-        st.table(df)
     
     # Добавляем изображение выбранной модели перголы
     col1, col2 = st.columns([1, 3])
