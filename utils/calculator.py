@@ -118,12 +118,22 @@ def determine_bansbach_drive_type(pergola_type, width_m, length_m, modules_count
         # Получаем список условий для данного количества модулей
         conditions = BANSBACH_TANDEM_CONDITIONS.get(modules_count, [])
         
-        # Проверяем, выполняется ли хотя бы одно условие
+        # Проверяем условия для всех модулей одинаково:
+        # Если ШИРИНА > порогового значения И ДЛИНА > порогового значения,
+        # то нужен более мощный привод Tandem
         for width_threshold, length_threshold in conditions:
             if width_m > width_threshold and length_m > length_threshold:
                 drive_type = "Tandem"
                 drive_cost_per_module = BANSBACH_PRICES["Tandem"]
+                # Добавляем лог для отладки
+                logger.info(f"Выбран привод Tandem для перголы размером {width_m}x{length_m} м, "
+                           f"т.к. ширина > {width_threshold} и длина > {length_threshold}")
                 break
+                
+        # Если TANDEM не выбран, записываем в лог причину
+        if drive_type == "T1":
+            logger.info(f"Выбран стандартный привод T1 для перголы размером {width_m}x{length_m} м, "
+                      f"т.к. не выполнены условия для Tandem при {modules_count} модулях")
     
     # Общая стоимость приводов зависит от количества модулей
     drive_cost = drive_cost_per_module * modules_count
@@ -204,21 +214,22 @@ def determine_somfy_drive_type(pergola_type, width_m, length_m, modules_count):
         # Получаем список условий для данного количества модулей
         conditions = SOMFY_TANDEM_CONDITIONS.get(modules_count, [])
         
-        # Проверяем условия в зависимости от количества модулей
-        if modules_count == 1:
-            # Для 1 модуля: ширина <= threshold и вынос > threshold
-            for width_threshold, length_threshold in conditions:
-                if width_m <= width_threshold and length_m > length_threshold:
-                    drive_type = "M2_TANDEM"
-                    drive_cost_per_module = SOMFY_PRICES["M2_TANDEM"]
-                    break
-        else:
-            # Для 2, 3 и 4 модулей: ширина > threshold и вынос > threshold
-            for width_threshold, length_threshold in conditions:
-                if width_m > width_threshold and length_m > length_threshold:
-                    drive_type = "M2_TANDEM"
-                    drive_cost_per_module = SOMFY_PRICES["M2_TANDEM"]
-                    break
+        # Проверяем условия для всех модулей одинаково:
+        # Если ШИРИНА > порогового значения И ДЛИНА > порогового значения,
+        # то нужен более мощный привод Somfy Tandem
+        for width_threshold, length_threshold in conditions:
+            if width_m > width_threshold and length_m > length_threshold:
+                drive_type = "M2_TANDEM"
+                drive_cost_per_module = SOMFY_PRICES["M2_TANDEM"]
+                # Добавляем лог для отладки
+                logger.info(f"Выбран привод Somfy M2 TANDEM для перголы размером {width_m}x{length_m} м, "
+                           f"т.к. ширина > {width_threshold} и длина > {length_threshold}")
+                break
+                
+        # Если TANDEM не выбран, записываем в лог причину
+        if drive_type == "M1":
+            logger.info(f"Выбран стандартный привод Somfy M1 для перголы размером {width_m}x{length_m} м, "
+                      f"т.к. не выполнены условия для M2 TANDEM при {modules_count} модулях")
     
     # Общая стоимость приводов зависит от количества модулей
     drive_cost = drive_cost_per_module * modules_count

@@ -297,22 +297,52 @@ def render_results(results):
         """, unsafe_allow_html=True)
         
         # Содержимое таблицы
-        st.markdown(f"""
+        # Получаем данные о дополнительных колоннах и усилителе лотка
+        additional_columns_cost = detailed_costs.get('additional_columns', 0)
+        gutter_insert_cost = detailed_costs.get('gutter_insert', 0)
+        
+        # Формируем таблицу с учетом всех компонентов
+        table_html = f"""
         <table style="width: 100%; border-collapse: collapse;">
             <tr style="background-color: #f9f9f9;">
                 <td style="padding: 6px 10px; font-weight: bold; width: 70%;">Базовая стоимость конструкции:</td>
                 <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{base_price_eur:,} €</td>
             </tr>
+        """
+        
+        # Добавляем стоимость дополнительных колонн, если они есть
+        if additional_columns_cost > 0:
+            table_html += f"""
             <tr style="background-color: #f0f0f0;">
+                <td style="padding: 6px 10px; font-weight: bold;">Стоимость дополнительных колонн:</td>
+                <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{additional_columns_cost:,} €</td>
+            </tr>
+            """
+        
+        # Добавляем стоимость усилителя лотка, если он есть
+        if gutter_insert_cost > 0:
+            table_html += f"""
+            <tr style="background-color: #f9f9f9;">
+                <td style="padding: 6px 10px; font-weight: bold;">Стоимость усилителя лотка:</td>
+                <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{gutter_insert_cost:,} €</td>
+            </tr>
+            """
+        
+        # Добавляем стоимость автоматики
+        bg_color = "#f9f9f9" if (additional_columns_cost == 0 and gutter_insert_cost == 0) or (additional_columns_cost > 0 and gutter_insert_cost > 0) else "#f0f0f0"
+        table_html += f"""
+            <tr style="background-color: {bg_color};">
                 <td style="padding: 6px 10px; font-weight: bold;">Стоимость автоматики:</td>
                 <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{automation_with_remote_cost_eur:,} €</td>
             </tr>
-            <tr style="background-color: #f9f9f9;">
+            <tr style="background-color: {"#f0f0f0" if bg_color == "#f9f9f9" else "#f9f9f9"};">
                 <td style="padding: 6px 10px; font-weight: bold;">Изготовление и подготовка (10%):</td>
                 <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{manufacturing_cost_eur:,} €</td>
             </tr>
         </table>
-        """, unsafe_allow_html=True)
+        """
+        
+        st.markdown(table_html, unsafe_allow_html=True)
         
         # Кнопка "Изменить параметры" с улучшенным скроллом и обработкой ошибок
         st.markdown(f"""
@@ -418,6 +448,11 @@ def generate_csv(results):
     additional_columns = detailed_costs.get('additional_columns', 0)
     if additional_columns > 0:
         csv_data.append(["Стоимость дополнительных колонн", additional_columns, "€"])
+    
+    # Добавляем стоимость усилителя лотка, если есть
+    gutter_insert = detailed_costs.get('gutter_insert', 0)
+    if gutter_insert > 0:
+        csv_data.append(["Стоимость усилителя лотка", gutter_insert, "€"])
     
     # Добавляем стоимость освещения, если есть
     lighting_cost = detailed_costs.get('lighting', 0)

@@ -222,6 +222,11 @@ def render_specification(results, options):
         # Добавляем информацию об освещении
         rows.append(("Подсветка:", lighting_info))
         
+        # Если есть дополнительные колонны, добавляем их (без стоимости)
+        additional_columns_cost = detailed_costs.get('additional_columns', 0)
+        if additional_columns_cost > 0:
+            rows.append(("Дополнительные колонны:", "Требуются дополнительные колонны для усиления конструкции"))
+        
         # Если есть вставка для усиления лотка, добавляем её (без стоимости)
         gutter_insert_cost = detailed_costs.get('gutter_insert', 0)
         if gutter_insert_cost > 0:
