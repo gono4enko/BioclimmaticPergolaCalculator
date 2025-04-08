@@ -455,21 +455,9 @@ def render_options_form():
                 </div>
                 """, unsafe_allow_html=True)
             else:
-                # НЕ используем элемент st.button, а вместо этого используем собственную разметку HTML
-                st.markdown(f"""
-                <div style="border:1px solid #dddddd; background-color:white; 
-                     border-radius:5px; padding:5px; margin:0; text-align:center; cursor:pointer;"
-                     onclick="parent.postMessage({{type: 'streamlit:setComponentValue', value: '{light_type}', dataType: 'string', componentIndex: '_lighting_{light_type}'}},'*')">
-                    <p style="margin:0; padding:0; font-size:0.9rem; font-weight:bold; color:#000000;">{light_name}</p>
-                    <p style="margin:0; padding:0; font-size:0.7rem; color:#000000;">{light_desc}</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Скрытое поле ввода для приема выбора через JavaScript
-                hidden_input = st.text_input(f"Скрытый выбор освещения {light_type}", "", 
-                                          key=f"_lighting_{light_type}", 
-                                          label_visibility="collapsed")
-                if hidden_input == light_type:
+                # Используем стандартную кнопку Streamlit с минимальным дизайном для выбора подсветки
+                if st.button(f"{light_name}\n{light_desc}", key=f"lighting_{light_type}", 
+                          help=f"Выбрать {light_name}"):
                     st.session_state.options['lighting_type'] = light_type
                     st.rerun()
     
