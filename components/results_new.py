@@ -369,6 +369,17 @@ def render_results(results):
         </tr>
         """
         
+        # Добавляем строку со стоимостью подсветки, если она установлена
+        if lighting_cost > 0:
+            row_count += 1
+            bg_color = "#f9f9f9" if row_count % 2 == 1 else "#f0f0f0"
+            price_table_html += """
+            <tr style="background-color: """ + bg_color + """;">
+                <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Стоимость подсветки:</td>
+                <td style="padding: 6px 10px; text-align: right; color: #000000;">""" + str(int(lighting_cost)) + """ €</td>
+            </tr>
+            """
+        
         # Добавляем строку с доставкой
         row_count += 1
         bg_color = "#f9f9f9" if row_count % 2 == 1 else "#f0f0f0"
