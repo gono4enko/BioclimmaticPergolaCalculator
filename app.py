@@ -185,17 +185,44 @@ def main():
     }
     
     /* Принудительно делаем весь текст белым в темном режиме - глобально */
-    [data-testid="stAppViewContainer"][data-theme="dark"] div,
-    [data-testid="stAppViewContainer"][data-theme="dark"] p,
-    [data-testid="stAppViewContainer"][data-theme="dark"] span,
-    [data-testid="stAppViewContainer"][data-theme="dark"] label,
-    [data-testid="stAppViewContainer"][data-theme="dark"] .section-header,
-    [data-testid="stAppViewContainer"][data-theme="dark"] h1,
-    [data-testid="stAppViewContainer"][data-theme="dark"] h2,
-    [data-testid="stAppViewContainer"][data-theme="dark"] h3,
-    [data-testid="stAppViewContainer"][data-theme="dark"] h4,
-    [data-testid="stAppViewContainer"][data-theme="dark"] h5,
-    [data-testid="stAppViewContainer"][data-theme="dark"] h6 {
+    .stApp.dark div, 
+    .stApp.dark p, 
+    .stApp.dark span, 
+    .stApp.dark label, 
+    .stApp.dark .section-header, 
+    .stApp.dark .streamlit-expanderHeader,
+    .stApp.dark [data-testid="stMarkdown"] p,
+    .stApp.dark [data-testid="stText"] p,
+    .stApp.dark [data-testid="stHeader"] h1,
+    .stApp.dark [data-testid="stHeader"] h2,
+    .stApp.dark [data-testid="stHeader"] h3,
+    .stApp.dark [data-testid="stSubheader"] h1, 
+    .stApp.dark [data-testid="stSubheader"] h2, 
+    .stApp.dark [data-testid="stSubheader"] h3, 
+    .stApp.dark [data-testid="stExpander"] .streamlit-expanderHeader,
+    .stApp.dark [data-testid="stVerticalBlock"] div,
+    .stApp.dark [data-testid="stForm"] div,
+    .stApp.dark [data-testid="stFormSubmitButton"] button,
+    .stApp.dark .stHeadingContainer h1,
+    .stApp.dark .stHeadingContainer h2,
+    .stApp.dark .stHeadingContainer h3,
+    .stApp.dark .stMarkdown p,
+    .stApp.dark .stButton button,
+    .stApp.dark .stNumberInput div,
+    .stApp.dark .stTextInput div,
+    .stApp.dark .stTextArea div,
+    .dark-mode div,
+    .dark-mode p,
+    .dark-mode h1,
+    .dark-mode h2,
+    .dark-mode h3 {
+        color: #FFFFFF !important;
+    }
+    
+    /* Дополнительный селектор для любых типов заголовков с высоким приоритетом */
+    [data-theme="dark"] [data-testid*="stVerticalBlock"] div.section-header,
+    [data-theme="dark"] div.section-header,
+    .dark div.section-header {
         color: #FFFFFF !important;
     }
     
