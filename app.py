@@ -184,6 +184,21 @@ def main():
         color: var(--text-color);
     }
     
+    /* Принудительно делаем весь текст белым в темном режиме - глобально */
+    [data-testid="stAppViewContainer"][data-theme="dark"] div,
+    [data-testid="stAppViewContainer"][data-theme="dark"] p,
+    [data-testid="stAppViewContainer"][data-theme="dark"] span,
+    [data-testid="stAppViewContainer"][data-theme="dark"] label,
+    [data-testid="stAppViewContainer"][data-theme="dark"] .section-header,
+    [data-testid="stAppViewContainer"][data-theme="dark"] h1,
+    [data-testid="stAppViewContainer"][data-theme="dark"] h2,
+    [data-testid="stAppViewContainer"][data-theme="dark"] h3,
+    [data-testid="stAppViewContainer"][data-theme="dark"] h4,
+    [data-testid="stAppViewContainer"][data-theme="dark"] h5,
+    [data-testid="stAppViewContainer"][data-theme="dark"] h6 {
+        color: #FFFFFF !important;
+    }
+    
     /* Заголовки секций */
     .section-header {
         font-size: 1.2rem;
@@ -362,9 +377,15 @@ def main():
             transform: translateY(-2px) !important;
         }
         
-        /* Стили для полей ввода и меток */
-        .stTextInput label, .stNumberInput label, .stSelectbox label {
+        /* Стили для полей ввода и меток - абсолютный белый цвет в темном режиме */
+        .stTextInput label, .stNumberInput label, .stSelectbox label,
+        .stCheckbox label, .stRadio label, .stSlider label {
             color: var(--label-color) !important;
+        }
+        
+        /* Принудительное переопределение цвета текста для ВСЕХ элементов интерфейса в темном режиме */
+        html:has(.dark) body [data-testid="element-container"] * {
+            color: white !important;
         }
         
         /* Исправляем серый шрифт на темном фоне - сделаем его ярко-белым */
