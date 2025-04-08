@@ -349,7 +349,7 @@ def render_options_form():
                 border: 1px solid #ddd;
                 color: #333;
                 font-weight: 500;
-                text-align: center;
+                text-align: left;
                 border-radius: 8px;
                 height: auto;
                 padding: 12px 8px;
@@ -366,7 +366,7 @@ def render_options_form():
             if is_selected:
                 st.markdown(f"""
                 <div style="background-color: #e6f3ff; border: 1px solid #0066cc; color: #0066cc; 
-                     font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                     font-weight: bold; text-align: left; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                     <div style="font-size: 1.1rem;">{light_name} ✓</div>
                     <div style="font-size: 0.9rem; margin-top: 5px;">{light_desc}</div>
                 </div>
@@ -396,7 +396,7 @@ def render_options_form():
     with install_cols[0]:
         st.markdown(f"""
         <div style="background-color: #e6f3ff; border: 1px solid #0066cc; color: #0066cc; 
-             font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+             font-weight: bold; text-align: left; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
             <div style="font-size: 1.1rem;">Без установки ✓</div>
             <div style="font-size: 0.9rem; margin-top: 5px;"></div>
         </div>
@@ -405,7 +405,7 @@ def render_options_form():
     with install_cols[1]:
         st.markdown(f"""
         <div style="background-color: white; border: 1px solid #ddd; color: #333; 
-             text-align: center; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px;">
+             text-align: left; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px;">
             <div style="font-size: 1.1rem;">С установкой</div>
             <div style="font-size: 0.9rem; margin-top: 5px;"></div>
         </div>
