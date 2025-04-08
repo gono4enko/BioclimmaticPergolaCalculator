@@ -11,17 +11,28 @@ def scroll_to_results():
     <script>
     // Функция для скролла к определенному элементу на странице
     function scrollToResults() {
-        // Ищем вкладки с результатами по классу
-        const tabElements = document.querySelectorAll('.stTabs');
-        if (tabElements.length > 0) {
-            // Берем последний элемент вкладок (обычно это результаты)
-            const resultsTab = tabElements[tabElements.length - 1];
-            resultsTab.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Ищем элемент заголовка "Результаты расчета"
+        const headers = Array.from(document.querySelectorAll('h2, h3'));
+        const resultHeader = headers.find(h => h.innerText.includes('Результаты расчета') || h.innerText.includes('Спецификация перголы'));
+        
+        if (resultHeader) {
+            // Если нашли заголовок "Результаты расчета" или "Спецификация перголы", скроллим к нему
+            resultHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            console.log('Scrolled to results section');
+        } else {
+            // Альтернативный вариант - ищем контейнеры с возможными результатами
+            const containers = document.querySelectorAll('.stContainer');
+            if (containers.length > 1) {
+                // Берем второй (или последний) контейнер, который обычно содержит результаты
+                const resultContainer = containers[containers.length > 1 ? 1 : 0];
+                resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                console.log('Scrolled to result container');
+            }
         }
     }
     
-    // Запускаем функцию с небольшой задержкой для уверенности, что DOM загружен
-    setTimeout(scrollToResults, 500);
+    // Запускаем функцию с задержкой для уверенности, что DOM загружен
+    setTimeout(scrollToResults, 800);
     </script>
     """
     

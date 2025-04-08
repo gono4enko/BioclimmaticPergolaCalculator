@@ -116,7 +116,13 @@ def get_base_price(pergola_type, lamella_type, width_m, length_m):
         # Получаем таблицу цен
         price_dict = price_tables[price_file]
         
-        # Округляем размеры до ближайших стандартных
+        # Сначала проверяем, есть ли точное соответствие размеров в прайс-листе
+        if (width_m, length_m) in price_dict:
+            price = price_dict[(width_m, length_m)]
+            logger.info(f"Найдена точная цена {price} для {pergola_type}/{lamella_type} ({width_m}x{length_m})")
+            return price
+        
+        # Если точного соответствия нет, округляем размеры до ближайших стандартных
         width_m_rounded, length_m_rounded = find_nearest_dimensions(price_dict, width_m, length_m)
         
         if (width_m_rounded, length_m_rounded) in price_dict:

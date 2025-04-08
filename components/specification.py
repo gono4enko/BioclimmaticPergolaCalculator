@@ -105,11 +105,11 @@ def render_specification(results, options):
         # Добавляем основные параметры перголы
         data.append(["Тип перголы:", pergola_name])
         data.append(["Тип ламелей:", lamella_info])
-        data.append(["Ширина:", f"{width_m} м"])
-        data.append(["Вынос:", f"{length_m} м"])
-        data.append(["Площадь:", f"{area} м²"])
+        data.append(["Ширина:", f"{width_m:.2f} м"])
+        data.append(["Вынос:", f"{length_m:.2f} м"])
+        data.append(["Площадь:", f"{area:.2f} м²"])
         data.append(["Количество модулей:", f"{modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}"])
-        data.append(["Фактический размер:", f"{width_m} × {length_m} м"])
+        data.append(["Фактический размер:", f"{width_m:.2f} × {length_m:.2f} м"])
         
         # Добавляем информацию об автоматике (без стоимости)
         if automation_manufacturer:

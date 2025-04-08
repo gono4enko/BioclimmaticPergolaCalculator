@@ -585,17 +585,17 @@ def calculate_pergola_cost(dimensions, options):
         total_cost += detailed_costs['gutter_insert']
         total_cost += sum(detailed_costs['additional_options'].values())
         
-        # Формируем результат
+        # Формируем результат - используем исходные размеры пользователя, а не округленные
         result = {
             'total_cost': round(total_cost, 2),
             'detailed_costs': detailed_costs,
             'dimensions': {
-                'width_mm': width_mm,
-                'width_m': round(width_m, 2),
-                'length_mm': length_mm,
-                'length_m': round(length_m, 2),
-                'height_mm': height_mm,
-                'height_m': round(height_m, 2)
+                'width_mm': dimensions.get('width', 0) * 1000,  # Конвертируем м в мм из исходных размеров
+                'width_m': round(dimensions.get('width', 0), 2),  # Используем исходную ширину
+                'length_mm': dimensions.get('length', 0) * 1000,  # Конвертируем м в мм из исходных размеров
+                'length_m': round(dimensions.get('length', 0), 2),  # Используем исходную длину
+                'height_mm': dimensions.get('height', 0) * 1000,  # Конвертируем м в мм из исходных размеров
+                'height_m': round(dimensions.get('height', 0), 2)  # Используем исходную высоту
             },
             'lamella_count': lamella_count,
             'correction_message': correction_message
