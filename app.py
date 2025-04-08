@@ -73,56 +73,30 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Добавляем JavaScript для определения темы пользователя
+    # Принудительно устанавливаем светлую тему независимо от предпочтений пользователя
     st.markdown("""
     <script>
-    function detectUserTheme() {
-        // Проверяем, поддерживает ли браузер определение темы
-        if (window.matchMedia) {
-            // Проверяем предпочтительную тему пользователя
-            var darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
-            // Устанавливаем переменную с информацией о теме
-            localStorage.setItem('userPrefersDark', darkMode);
-            
-            // Возвращаем выбранную тему для дальнейшего использования
-            return darkMode;
-        } else {
-            // Если браузер не поддерживает определение темы, устанавливаем светлую по умолчанию
-            localStorage.setItem('userPrefersDark', false);
-            return false;
-        }
-    }
-    
-    // Вызываем функцию определения темы при загрузке страницы
+    // Принудительно устанавливаем светлую тему при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
-        var isDarkMode = detectUserTheme();
+        // Устанавливаем светлую тему в localStorage
+        localStorage.setItem('userPrefersDark', false);
         
-        // Применяем соответствующие стили для темного режима
-        if (isDarkMode) {
-            document.body.classList.add('dark-mode');
-            document.documentElement.classList.add('dark');
-            document.documentElement.setAttribute('data-theme', 'dark');
-            
-            // Принудительно устанавливаем белый цвет для текста в темном режиме
-            document.querySelectorAll('.section-header').forEach(function(el) {
-                el.style.color = '#FFFFFF';
-            });
-        } else {
-            document.body.classList.add('light-mode');
-        }
+        // Принудительно добавляем класс light-mode для тела документа
+        document.body.classList.add('light-mode');
+        document.body.classList.remove('dark-mode');
+        document.documentElement.classList.remove('dark');
+        document.documentElement.setAttribute('data-theme', 'light');
         
-        // Добавляем слушатель события для отслеживания изменений темы
+        // Принудительно устанавливаем черный цвет для текста заголовков
+        document.querySelectorAll('.section-header').forEach(function(el) {
+            el.style.color = '#000000';
+            el.style.backgroundColor = '#FFFFFF';
+        });
+        
+        // Отключаем слушатель события для изменений темы - всегда светлая тема
         if (window.matchMedia) {
             var darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            darkModeMediaQuery.addEventListener('change', function(e) {
-                var isDarkMode = e.matches;
-                localStorage.setItem('userPrefersDark', isDarkMode);
-                
-                // Обновляем классы
-                document.body.classList.remove('light-mode', 'dark-mode');
-                document.body.classList.add(isDarkMode ? 'dark-mode' : 'light-mode');
-            });
+            darkModeMediaQuery.removeEventListener('change', function() {});
         }
     });
     </script>
@@ -388,17 +362,27 @@ def main():
         padding-bottom: 0 !important;
     }
     
-    /* ВАЖНО: Решение проблемы с серым текстом в ночном режиме - все тексты принудительно белые */
+    /* ВАЖНО: ВСЕ ТЕКСТЫ ВСЕГДА ЧЕРНЫЕ - ОТКЛЮЧЕН НОЧНОЙ РЕЖИМ */
+    div, p, span, h1, h2, h3, h4, h5, h6,
+    .stApp div, .stApp p, .stApp span, 
+    .stApp h1, .stApp h2, .stApp h3, 
+    .stApp h4, .stApp h5, .stApp h6,
     .stApp.dark div, .stApp.dark p, .stApp.dark span, 
     .stApp.dark h1, .stApp.dark h2, .stApp.dark h3, 
     .stApp.dark h4, .stApp.dark h5, .stApp.dark h6 {
-        color: #FFFFFF !important;
+        color: #000000 !important;
     }
     
-    /* Фиксируем видимость текста в заголовках блоков в темном режиме */
-    .stApp.dark .section-header {
-        color: #FFFFFF !important;
-        border-bottom-color: #444444 !important;
+    /* Фиксируем светлый фон */
+    body, .stApp, .stApp.dark {
+        background-color: #FFFFFF !important;
+    }
+    
+    /* Заголовки всегда на светлом фоне с черным текстом */
+    .section-header, .stApp .section-header, .stApp.dark .section-header {
+        color: #000000 !important;
+        border-bottom-color: #dddddd !important;
+        background-color: #FFFFFF !important;
     }
     
     /* Устанавливаем минимальный отступ между блоками формы */
@@ -472,51 +456,56 @@ def main():
             color: var(--label-color) !important;
         }
         
-        /* КРИТИЧНО: Принудительная установка цветов для текстовых элементов */
-        /* В ТЕМНОМ РЕЖИМЕ - ВСЕ БЕЛЫМ ЦВЕТОМ */
-        .stApp.dark *, .dark-mode * {
-            color: #FFFFFF !important;
-        }
-        
-        /* В СВЕТЛОМ РЕЖИМЕ - ВСЕ ЧЕРНЫМ ЦВЕТОМ (кроме специальных элементов) */
-        .stApp:not(.dark) *:not(button):not(.stButton *) {
+        /* КРИТИЧНО: ОТКЛЮЧЕН ТЕМНЫЙ РЕЖИМ - ВСЕГДА БЕЛЫЙ ФОН И ЧЕРНЫЙ ТЕКСТ */
+        /* ВСЕ ВСЕГДА ЧЕРНЫМ ЦВЕТОМ (кроме специальных элементов с белым текстом, например кнопок) */
+        .stApp *, .stApp.dark *, .dark-mode * {
             color: #000000 !important;
         }
         
-        /* Особенно для всех блоков ввода, меток, заголовков */
-        .stApp.dark label, .stApp.dark .stTextInput label, 
-        .stApp.dark p, .stApp.dark span, .stApp.dark div:not([class*="stButton"]),
-        .stApp.dark h1, .stApp.dark h2, .stApp.dark h3, .stApp.dark h4, .stApp.dark h5, .stApp.dark h6,
-        .stApp.dark .section-header, .stApp.dark [data-testid="stMarkdown"] p {
+        /* Принудительно светлый фон для всего приложения */
+        body, .stApp, .stApp.dark, [data-theme="dark"], .dark-mode {
+            background-color: #FFFFFF !important;
+        }
+        
+        /* Принудительно черный текст для всех элементов интерфейса */
+        label, .stTextInput label, p, span, div:not(.stButton *),
+        h1, h2, h3, h4, h5, h6, .section-header, [data-testid="stMarkdown"] p,
+        .stApp label, .stApp .stTextInput label, .stApp p, .stApp span, .stApp div:not(.stButton *),
+        .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp .section-header,
+        .stApp [data-testid="stMarkdown"] p,
+        .stApp.dark label, .stApp.dark .stTextInput label, .stApp.dark p, .stApp.dark span,
+        .stApp.dark div:not(.stButton *), .stApp.dark h1, .stApp.dark h2, .stApp.dark h3,
+        .stApp.dark h4, .stApp.dark h5, .stApp.dark h6, .stApp.dark .section-header,
+        .stApp.dark [data-testid="stMarkdown"] p {
+            color: #000000 !important;
+        }
+        
+        /* Белый текст только для кнопок */
+        [data-testid="stButton"] button[data-testid="baseButton-primary"] {
             color: #FFFFFF !important;
         }
         
-        /* Принудительно для текста в кнопках подсветки */
-        .stApp.dark [data-testid="stButton"] button:not([data-testid="baseButton-primary"]) {
-            color: black !important;
-        }
-        
-        /* Принудительно для плиток с выбранной опцией */
-        .stApp.dark div[style*="highlight-bg"] div,
-        .stApp.dark div[style*="highlight-color"] {
-            color: var(--highlight-color, #0066cc) !important;
-        }
-        
-        /* Заголовки секций - общие стили */
+        /* Заголовки секций - общие стили - ТЕПЕРЬ ВСЕГДА ЧЕРНЫЙ ТЕКСТ */
         .section-header {
             font-weight: bold;
             border-bottom: 1px solid #ddd;
             padding-bottom: 5px;
             margin-bottom: 10px;
             font-size: 1.1rem;
-            color: white !important;
+            color: #000000 !important;
+            background-color: #FFFFFF !important;
         }
         
-        /* Заголовки секций в темном режиме - с более высоким приоритетом */
+        /* Заголовки секций с высшим приоритетом - всегда черный текст */
+        .section-header,
+        .stApp .section-header,
+        .stApp.dark .section-header,
         .dark-mode .section-header,
-        body.dark-mode .section-header {
-            color: white !important;
-            border-bottom-color: #444444 !important;
+        body.dark-mode .section-header,
+        [data-theme="dark"] .section-header {
+            color: #000000 !important;
+            border-bottom-color: #dddddd !important;
+            background-color: #FFFFFF !important;
         }
         
         /* Делаем текст в таблицах всегда черным, независимо от режима */
