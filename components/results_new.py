@@ -91,11 +91,25 @@ def render_results(results):
         if automation_manufacturer == "Bansbach":
             automation_info = f"Базовая автоматика ({automation_manufacturer} {automation_type})"
             if remote_control:
-                remote_control_info = f"Пульт управления: {remote_control} (1-канальный, 25€)"
+                if remote_control == "Simu 1K":
+                    remote_control_info = f"Пульт управления: {remote_control} (1-канальный, 25€)"
+                elif remote_control == "Simu 5K":
+                    remote_control_info = f"Пульт управления: {remote_control} (5-канальный, 40€)"
+                elif remote_control == "Simu 15K":
+                    remote_control_info = f"Пульт управления: {remote_control} (15-канальный, 90€)"
+                else:
+                    remote_control_info = f"Пульт управления: {remote_control}"
         elif automation_manufacturer == "Somfy":
             automation_info = f"Базовая автоматика ({automation_manufacturer} {automation_type})"
             if remote_control:
-                remote_control_info = f"Пульт управления: {remote_control}"
+                if remote_control == "Simu 1K":
+                    remote_control_info = f"Пульт управления: {remote_control} (1-канальный, 25€)"
+                elif remote_control == "Simu 5K":
+                    remote_control_info = f"Пульт управления: {remote_control} (5-канальный, 40€)"
+                elif remote_control == "Simu 15K":
+                    remote_control_info = f"Пульт управления: {remote_control} (15-канальный, 90€)"
+                else:
+                    remote_control_info = f"Пульт управления: {remote_control}"
     
     # Получаем стоимость в евро (без конвертации)
     base_price_eur = detailed_costs.get('base_price', 0)
