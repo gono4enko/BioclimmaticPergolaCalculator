@@ -97,11 +97,11 @@ def main():
     
     # Отображаем результаты расчета под формами ввода
     if 'results' in st.session_state and 'options' in st.session_state:
-        # Показываем общий результат
-        render_results(st.session_state.results)
-        
         # Показываем спецификацию перголы
         render_specification(st.session_state.results, st.session_state.options)
+        
+        # Показываем общий результат и детальную информацию
+        render_results(st.session_state.results)
         
         # Добавляем скрипт для автоматического скролла к результатам
         scroll_to_results()

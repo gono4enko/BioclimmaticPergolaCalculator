@@ -177,12 +177,13 @@ def render_specification(results, options):
         # Создаем DataFrame для таблицы
         import pandas as pd
         
-        # Создаем DataFrame с правильными столбцами
-        df = pd.DataFrame(data, columns=["Наименование", "Значение"])
+        # Добавляем порядковые номера к данным
+        numbered_data = []
+        for i, (name, value) in enumerate(data):
+            numbered_data.append([i, name, value])
         
-        # Используем индексы как порядковые номера и удаляем старые индексы
-        df = df.reset_index()
-        df = df.rename(columns={"index": "№"})
+        # Создаем DataFrame с правильными столбцами
+        df = pd.DataFrame(numbered_data, columns=["№", "Наименование", "Значение"])
         
         # Применяем custom CSS для таблицы
         st.markdown("""

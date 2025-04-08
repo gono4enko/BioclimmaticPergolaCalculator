@@ -235,7 +235,7 @@ def render_results(results):
                 
                 # Добавляем информацию о пульте управления
                 if 'remote_control' in detailed_costs and 'remote_control_cost' in detailed_costs:
-                    cost_items.append([f"-- Пульт ДУ {detailed_costs['remote_control']}", detailed_costs['remote_control_cost'], "€"])
+                    cost_items.append([f"Пульт ДУ {detailed_costs['remote_control']}", detailed_costs['remote_control_cost'], "€"])
             elif option == "motor":
                 option_name = "Электропривод"
             elif option == "sound":
