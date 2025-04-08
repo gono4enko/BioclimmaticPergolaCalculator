@@ -104,7 +104,7 @@ def render_results(results):
         length_m = dimensions.get('length_m', 0)
         st.markdown(f"""
         <div class="metric-card">
-            <div class="metric-label">Размеры (Ш×Д)</div>
+            <div class="metric-label">Размеры (Ш×В)</div>
             <div class="metric-value">{width_m:.2f}×{length_m:.2f} м</div>
         </div>
         """, unsafe_allow_html=True)
@@ -279,7 +279,7 @@ def generate_csv(results):
     length_m = dimensions.get('length_m', 0)
     output.write("Размеры перголы:\n")
     output.write(f"Ширина: {width_m:.2f} м\n")
-    output.write(f"Длина: {length_m:.2f} м\n")
+    output.write(f"Вынос: {length_m:.2f} м\n")
     output.write(f"Высота: {dimensions.get('height_m', 0):.2f} м\n")
     
     # Определяем количество модулей

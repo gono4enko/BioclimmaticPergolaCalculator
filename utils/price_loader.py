@@ -213,14 +213,17 @@ def get_base_price(pergola_type, lamella_type, width_m, length_m):
         # Выбираем оптимальную (наиболее дешевую) конфигурацию
         optimal_config = suitable_configs[0]
         
-        # Формируем сообщение о выбранной конфигурации
-        config_message = (
+        # Запишем информацию в лог, но не будем показывать пользователю
+        log_message = (
             f"Выбрана оптимальная конфигурация перголы: {optimal_config['width']}x{optimal_config['length']} м "
             f"({optimal_config['modules']} {'модуль' if optimal_config['modules'] == 1 else 'модуля' if optimal_config['modules'] < 5 else 'модулей'}), "
             f"базовая стоимость: {optimal_config['price']} €"
         )
         
-        logger.info(config_message)
+        # Для пользователя не формируем сообщение
+        config_message = None
+        
+        logger.info(log_message)
         return optimal_config['price'], optimal_config['modules'], config_message
             
     except Exception as e:

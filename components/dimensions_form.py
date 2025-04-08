@@ -33,12 +33,12 @@ def render_dimensions_form():
         with col1:
             width = st.number_input(
                 "Ширина (м):", 
-                min_value=1.0, 
-                max_value=7.0, 
+                min_value=1.5, 
+                max_value=13.5, 
                 value=st.session_state.dimensions['width'],
                 step=0.1, 
                 format="%.3f",
-                help="Ширина перголы в метрах (от 1.0 до 7.0 м)"
+                help="Ширина перголы в метрах (от 1.5 до 13.5 м)"
             )
             
             # Отображаем информацию о фиксированной высоте
@@ -48,13 +48,13 @@ def render_dimensions_form():
         
         with col2:
             length = st.number_input(
-                "Длина (м):", 
+                "Вынос (м):", 
                 min_value=1.0, 
-                max_value=7.0, 
+                max_value=8.0, 
                 value=st.session_state.dimensions['length'],
                 step=0.1, 
                 format="%.3f",
-                help="Длина перголы в метрах (от 1.0 до 7.0 м)"
+                help="Вынос перголы в метрах (от 1.0 до 8.0 м)"
             )
             
             # Добавим пустое место для выравнивания с левой колонкой
