@@ -33,6 +33,10 @@ def render_specification(results, options):
     detailed_costs = results.get('detailed_costs', {})
     additional_columns_cost = detailed_costs.get('additional_columns', 0)
     
+    # Получаем сообщение об автоматике для отладки
+    automation_message = detailed_costs.get('automation_message', '')
+    print(f"DEBUG - automation_message: {automation_message}")
+    
     # Определяем количество модулей по ширине
     # Если есть дополнительные колонны, значит уже рассчитано нужное количество модулей
     if additional_columns_cost > 0:
@@ -58,6 +62,8 @@ def render_specification(results, options):
             modules_count = 3
         elif width_m > 4:
             modules_count = 2
+            
+    print(f"DEBUG - modules_count: {modules_count}")
     
     # Определяем тип и стоимость автоматики
     automation_cost = 0
