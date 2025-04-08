@@ -210,10 +210,10 @@ def main():
         border-bottom: 1px solid var(--section-border);
     }
     
-    /* Стили для плиточных кнопок */
+    /* Стили для плиточных кнопок - БЕЛЫЙ ФОН для невыбранных */
     .tile-button {
-        background-color: var(--tile-bg);
-        border: 1px solid var(--tile-border);
+        background-color: #FFFFFF !important; /* Всегда белый фон */
+        border: 1px solid #dddddd !important; /* Светлая рамка */
         border-radius: 8px;
         padding: 15px;
         text-align: center;
@@ -223,26 +223,41 @@ def main():
     }
     
     .tile-button:hover {
-        border-color: var(--highlight-color);
+        border-color: #0066cc !important; /* Синяя рамка при наведении */
         box-shadow: 0 2px 5px rgba(0, 0, 102, 0.1);
     }
     
+    /* Выбранная плитка с МАЛЕНЬКИМ синим индикатором */
     .tile-button.selected {
-        background-color: var(--highlight-bg);
-        border-color: var(--highlight-color);
+        background-color: #FFFFFF !important; /* Белый фон */
+        border-color: #0066cc !important; /* Синяя рамка */
         box-shadow: 0 2px 5px rgba(0, 0, 102, 0.1);
+        position: relative; /* Для позиционирования индикатора */
+    }
+    
+    /* Добавляем маленький синий индикатор выбора внизу плитки */
+    .tile-button.selected::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 4px; /* В 5 раз меньше по высоте */
+        background-color: #0066cc !important;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
     }
     
     .tile-title {
         font-weight: 600;
         font-size: 1.1rem;
-        color: var(--highlight-color);
+        color: #0066cc !important; /* Всегда синий цвет */
         margin-bottom: 5px;
     }
     
     .tile-desc {
         font-size: 0.9rem;
-        color: var(--text-color);
+        color: #000000 !important; /* Всегда черный текст */
     }
     
     /* Компактные, но читаемые поля формы */

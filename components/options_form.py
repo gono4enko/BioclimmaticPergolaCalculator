@@ -104,8 +104,8 @@ def render_options_form():
         color: var(--text-color, #333);
     }
     .option-tile {
-        background-color: #f0f2f6;
-        border: 1px solid #e0e4e8;
+        background-color: #FFFFFF !important; /* Всегда белый фон */
+        border: 1px solid #dddddd !important;
         border-radius: 6px;
         padding: 0.3rem;
         text-align: center;
@@ -113,16 +113,30 @@ def render_options_form():
         transition: all 0.2s ease;
         height: 100%;
         margin: 0;
+        position: relative; /* Для индикатора */
     }
     .option-tile:hover {
-        border-color: #4a69bd;
+        border-color: #0066cc !important;
         transform: translateY(-2px);
         box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
     }
     .option-tile.selected {
-        background-color: #e6f2ff;
-        border-color: #4a69bd;
+        background-color: #FFFFFF !important; /* Белый фон */
+        border-color: #0066cc !important;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+    /* Маленький синий индикатор внизу выбранной плитки */
+    .option-tile.selected::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 3px; /* Тонкая линия */
+        background-color: #0066cc !important;
+        border-bottom-left-radius: 6px;
+        border-bottom-right-radius: 6px;
     }
     .option-name {
         font-weight: bold;
