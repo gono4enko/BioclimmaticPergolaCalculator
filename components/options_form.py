@@ -377,154 +377,130 @@ def render_options_form():
     else:
         lamella_step = 250  # Для ламелей B500-25NEW и B700-25NEW
     
-    # Создаем новый блок для выбора освещения с минимальными отступами
-    st.markdown('<div class="result-card" style="margin: 0; padding: 2px 0 0 0;">', unsafe_allow_html=True)
+    # Создаем новый блок для выбора освещения с радикально уменьшенными отступами
+    st.markdown('<div class="result-card" style="margin: 0; padding: 0;">', unsafe_allow_html=True)
     st.markdown('<div class="section-header" style="margin-bottom: 0; padding-bottom: 2px; color: #FFFFFF !important;">Подсветка (LED по периметру)</div>', unsafe_allow_html=True)
     
     # Доступные типы освещения для выбранного типа перголы - убираем 'none'
     lighting_options = [opt for opt in PERGOLA_TYPES[pergola_type]["available_lighting"] if opt != "none"] if pergola_type in PERGOLA_TYPES else []
+    selected_lighting = st.session_state.options['lighting_type'] 
+    lighting_type = selected_lighting  # Инициализируем переменную для использования позже
     
-    # ВАЖНО: Принудительно уменьшаем отступы между вариантами освещения В 5 РАЗ
+    # РАДИКАЛЬНО НОВЫЙ ПОДХОД: Вместо использования st.columns, используем HTML-таблицу
+    # Это позволит полностью контролировать вертикальные отступы между блоками
+    
+    # Начало HTML-таблицы
+    html_rows = '<table style="width:100%; border-collapse: collapse; border-spacing: 0; margin:0; padding:0;"><tr style="margin:0; padding:0;">'
+    
+    # Создаем ячейки таблицы с вариантами освещения
+    for light_type in lighting_options:
+        # Получаем информацию о типе освещения с обновленными названиями
+        if light_type == "led":
+            light_name = "Сверхъяркая LED подсветка"
+            light_desc = "Яркая LED лента"
+        elif light_type == "rgb":
+            light_name = "Светодиодная RGB подсветка"
+            light_desc = "Яркая RGB лента"
+        elif light_type == "led_rgb":
+            light_name = "Комбинированное LED + RGB"
+            light_desc = "Белое и цветное освещение"
+        else:
+            light_name = LIGHTING_TYPES[light_type]['name'] if light_type in LIGHTING_TYPES else light_type
+            light_desc = LIGHTING_TYPES[light_type]['description'] if light_type in LIGHTING_TYPES else ""
+            # Укорачиваем описание для компактности
+            light_desc = light_desc.split(" по ")[0] if " по " in light_desc else light_desc
+        
+        # Определяем, выбрана ли текущая опция
+        is_selected = light_type == selected_lighting
+        
+        # Добавляем ячейку таблицы
+        bg_color = "#FFFFFF" if is_selected else "#FFFFFF"
+        text_color = "#000000" if is_selected else "#000000"
+        border = "1px solid #0066cc" if is_selected else "1px solid #ddd"
+        checkmark = " ✓" if is_selected else ""
+        
+        html_rows += f'''
+        <td style="padding:0 2px; margin:0; vertical-align:top;">
+            <div onclick="parent.postMessage({{type: 'streamlit:setComponentValue', value: '{light_type}', dataType: 'string', componentIndex: 'lighting_click_{light_type}'}},'*')" 
+                 style="background-color: {bg_color}; border: {border}; color: {text_color}; font-weight: bold; text-align: center; 
+                 border-radius: 8px; padding: 8px 4px; margin: 2px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <div style="font-size: 0.9rem; text-align: center; line-height: 1.1;">{light_name}{checkmark}</div>
+                <div style="font-size: 0.7rem; margin-top: 3px; text-align: center; line-height: 1.1;">{light_desc}</div>
+            </div>
+        </td>
+        '''
+    
+    # Закрываем HTML-таблицу
+    html_rows += '</tr></table>'
+    
+    # Отображаем таблицу с минимальными отступами
+    st.markdown(html_rows, unsafe_allow_html=True)
+    
+    # Добавляем невидимый элемент с минимальной высотой для уменьшения отступа
+    st.markdown("<div style='height:1px;margin:0;padding:0;'></div>", unsafe_allow_html=True)
+    
+    # Добавляем JavaScript для обработки кликов и радикально уменьшаем отступы
     st.markdown("""
+    <script>
+    // Функция для отправки сообщений в Streamlit
+    window.addEventListener('message', function(event) {
+        // Проверяем, что сообщение от нашего компонента
+        if (event.data.type === 'streamlit:componentReady') {
+            // Добавляем обработчики событий после загрузки страницы
+            setTimeout(function() {
+                // Радикально уменьшаем отступы для блоков подсветки
+                var lightingBlocks = document.querySelectorAll('[data-testid="stVerticalBlock"] div:has(> div.section-header:contains("Подсветка"))');
+                for (var i = 0; i < lightingBlocks.length; i++) {
+                    lightingBlocks[i].style.marginTop = '0';
+                    lightingBlocks[i].style.marginBottom = '0';
+                    lightingBlocks[i].style.paddingTop = '0';
+                    lightingBlocks[i].style.paddingBottom = '0';
+                }
+                
+                // Уменьшаем отступы для всех дочерних элементов
+                var allElements = document.querySelectorAll('.stApp [data-testid="stVerticalBlock"] div');
+                for (var i = 0; i < allElements.length; i++) {
+                    allElements[i].style.marginTop = '0';
+                    allElements[i].style.marginBottom = '0';
+                    allElements[i].style.paddingTop = '0';
+                    allElements[i].style.paddingBottom = '0';
+                }
+            }, 100);
+        }
+    });
+    </script>
+    
     <style>
-    /* Принудительно сбрасываем отступы для строки с освещением */
-    .row-widget.stHorizontalBlock {
-        gap: 0px !important;
-        margin-bottom: 0px !important;
-        padding-bottom: 0px !important;
+    /* Радикально уменьшаем все отступы для всего приложения */
+    [data-testid="stVerticalBlock"] > div {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
     }
     
-    /* Устанавливаем минимальный отступ 1-2px для дочерних элементов (в 5 раз меньше) */
-    .row-widget.stHorizontalBlock > div {
-        margin-bottom: 1px !important;
-        padding-bottom: 0px !important;
-        padding-top: 0px !important;
-        margin-top: 0px !important;
+    /* Особенно для блока с подсветкой */
+    div:has(> div.section-header:contains("Подсветка")) {
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
-    /* Дополнительные стили для блоков подсветки - убираем вертикальные отступы */
-    .block-container [data-testid="stVerticalBlock"] div.element-container {
-        margin-top: 0px !important;
-        margin-bottom: 0px !important;
-        padding-top: 0px !important;
-        padding-bottom: 0px !important;
-    }
-    
-    /* Ещё больше уменьшаем отступы для кнопок подсветки */
-    .stButton {
-        margin-top: 0px !important;
-        margin-bottom: 0px !important;
-        padding-top: 0px !important;
-        padding-bottom: 0px !important;
-    }
-    
-    /* Максимально компактный вид секции освещения */
-    div:has(> div.section-header:contains("Подсветка")) + div {
-        margin-top: 0px !important;
-        margin-bottom: 0px !important;
-        padding-top: 0px !important;
-        padding-bottom: 0px !important;
+    /* Для всех дочерних элементов */
+    div:has(> div.section-header:contains("Подсветка")) * {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Создаем плитки для типов подсветки
-    if lighting_options:
-        # Изменяем стиль для минимальных отступов
-        lighting_cols = st.columns(len(lighting_options), gap="small")
-        selected_lighting = st.session_state.options['lighting_type']
-        lighting_type = selected_lighting  # Инициализируем переменную для использования позже
-        
-        # Отображаем плитки для выбора типа освещения
-        for i, light_type in enumerate(lighting_options):
-            with lighting_cols[i]:
-                # Получаем информацию о типе освещения с обновленными названиями
-                if light_type == "led":
-                    light_name = "Сверхъяркая LED подсветка"
-                    light_desc = "Яркая LED лента по периметру перголы"
-                elif light_type == "rgb":
-                    light_name = "Светодиодная RGB подсветка"
-                    light_desc = "Яркая RGB лента со сменой цвета по периметру перголы"
-                elif light_type == "led_rgb":
-                    light_name = "Комбинированное LED + RGB освещение"
-                    light_desc = "Позволяет выбрать между белым и цветным освещением"
-                else:
-                    light_name = LIGHTING_TYPES[light_type]['name'] if light_type in LIGHTING_TYPES else light_type
-                    light_desc = LIGHTING_TYPES[light_type]['description'] if light_type in LIGHTING_TYPES else ""
-            
-            # Определяем, выбрана ли текущая опция
-            is_selected = light_type == selected_lighting
-            
-            # Используем улучшенный стиль кнопок как для ламелей
-            button_style = """ 
-            <style>
-            div[data-testid*="stButton"] > button {
-                background-color: var(--tile-bg, white);
-                border: 1px solid var(--tile-border, #ddd);
-                color: var(--text-color, #333);
-                font-weight: 500;
-                text-align: center;
-                border-radius: 8px;
-                height: auto;
-                padding: 12px 8px;
-                margin-bottom: 5px;
-                transition: all 0.2s;
-                font-size: 1rem;
-                line-height: 1.3;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            }
-            </style>
-            """
-            st.markdown(button_style, unsafe_allow_html=True)
-            
-            if is_selected:
-                st.markdown(f"""
-                <div style="background-color: #FFFFFF; border: 1px solid #0066cc; color: #000000; 
-                     font-weight: bold; text-align: center; border-radius: 8px; padding: 3px 2px; margin: 0; 
-                     box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative;">
-                    <div style="font-size: 1rem; text-align: center; line-height: 1;">{light_name} ✓</div>
-                    <div style="font-size: 0.7rem; margin-top: 1px; text-align: center; line-height: 1;">{light_desc}</div>
-                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background-color: #0066cc;
-                         border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"></div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Пустая кнопка для сохранения структуры (скрытая)
-                if st.button("", key=f"no_action_{light_type}", use_container_width=True, disabled=True):
-                    pass
-            else:
-                # Минимальная кнопка для выбора освещения - вертикальный отступ строго 7px
-                custom_css = f"""
-                <style>
-                div[data-testid*="stButton"] button[kind="secondary"] {{
-                    text-align: center !important;
-                    padding: 1px 0px !important;
-                    margin: 0 !important;
-                    height: auto !important;
-                    min-height: 0 !important;
-                    line-height: 1 !important;
-                    font-size: 0.8rem !important;
-                }}
-                div.element-container {{
-                    margin: 0 !important;
-                    padding: 0 !important;
-                }}
-                div[data-testid="column"] {{
-                    padding: 0 !important;
-                    margin: 0 0 1px 0 !important;
-                }}
-                </style>
-                """
-                st.markdown(custom_css, unsafe_allow_html=True)
-                
-                # Используем короткие строки для более компактного отображения
-                short_desc = light_desc.split(" по ")[0] if " по " in light_desc else light_desc
-                if st.button(f"{light_name}\n{short_desc}", key=f"btn_lighting_{light_type}", use_container_width=True):
-                    # Устанавливаем выбранный тип освещения и перезагружаем страницу
-                    lighting_type = light_type  # Сохраняем выбор для текущей сессии
-                    st.session_state.options['lighting_type'] = light_type
-                    st.rerun()
-                    
+    # Невидимые компоненты для обработки кликов через JavaScript
+    for light_type in lighting_options:
+        if st.text_input(f"Выбор освещения {light_type}", "", key=f"lighting_click_{light_type}", label_visibility="collapsed") == light_type:
+            st.session_state.options['lighting_type'] = light_type
+            st.rerun()
+    
     # Закрываем контейнер для подсветки
     st.markdown("</div>", unsafe_allow_html=True)
     
@@ -539,11 +515,9 @@ def render_options_form():
         st.markdown(f"""
         <div style="background-color: #FFFFFF; border: 1px solid #0066cc; color: #000000; 
              font-weight: bold; text-align: left; border-radius: 8px; padding: 12px 8px; 
-             margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative;">
+             margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
             <div style="font-size: 1.1rem;">Без установки ✓</div>
             <div style="font-size: 0.9rem; margin-top: 5px;"></div>
-            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background-color: #0066cc;
-                 border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"></div>
         </div>
         """, unsafe_allow_html=True)
     
