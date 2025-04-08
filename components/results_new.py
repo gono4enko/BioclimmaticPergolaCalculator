@@ -276,7 +276,7 @@ def render_results(results):
                 <td style="padding: 6px 10px; font-weight: bold;">Компоненты автоматики:</td>
                 <td style="padding: 6px 10px;">
                     <ul style="margin: 0; padding-left: 20px;">
-                        <li>Модуль 1: {automation_manufacturer} {automation_type}, Germany ({automation_cost_eur//modules_count} €)</li>
+                        <li>Привод {automation_manufacturer} {automation_type} ({modules_count} {'комплект' if modules_count == 1 else 'комплекта' if 2 <= modules_count <= 4 else 'комплектов'})</li>
                         <li>{remote_control_info}</li>
                     </ul>
                 </td>
