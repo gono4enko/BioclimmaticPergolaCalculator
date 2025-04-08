@@ -148,11 +148,11 @@ def render_options_form():
             pergola_short_desc = PERGOLA_TYPES[pergola_type].get('short_description', '')
             if not pergola_short_desc:
                 if "B500" in pergola_type:
-                    pergola_short_desc = "поворотные ламели"
+                    pergola_short_desc = "С поворотными ламелями"
                 elif "B700" in pergola_type:
-                    pergola_short_desc = "сдвижные ламели"
+                    pergola_short_desc = "С поворотно-сдвижными ламелями"
                 elif "B600" in pergola_type:
-                    pergola_short_desc = "стационарная"
+                    pergola_short_desc = "Со стационарными сэндвич-панелями"
                 
             # Используем новый стиль кнопок с более читаемыми элементами
             button_style = """ 
@@ -242,12 +242,12 @@ def render_options_form():
     
     # Блок для ламелей - в новом стиле отдельным блоком
     if pergola_type == "B600":
-        # Для B600 создаем информационный блок без выбора (стационарные PIR панели)
+        # Для B600 создаем информационный блок без выбора (стационарные сэндвич-панели)
         st.markdown('</div>', unsafe_allow_html=True)  # Закрываем предыдущий блок
         
         st.markdown('<div class="result-card" style="margin-bottom: 0px; padding-top: 3px; padding-bottom: 3px;">', unsafe_allow_html=True)
         st.markdown('<div class="section-header">Тип кровли</div>', unsafe_allow_html=True)
-        st.markdown('<div style="padding: 15px; text-align: center; font-size: 1rem; color: #666;">Для перголы B600 используются стационарные PIR панели</div>', unsafe_allow_html=True)
+        st.markdown('<div style="padding: 15px; text-align: center; font-size: 1rem; color: #666;">Для перголы В600 PIR используются стационарные сэндвич-панели</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
         lamella_type = "B600"  # Для перголы B600 используем фиксированный тип ламелей
