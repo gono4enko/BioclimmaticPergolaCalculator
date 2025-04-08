@@ -13,6 +13,7 @@ from components.results_new import render_results
 
 # Обновляем освещение напрямую в конфигурации
 from config.pergola_types import LIGHTING_TYPES
+LIGHTING_TYPES["none"]["description"] = ""  # Убираем описание для опции "Без освещения"
 LIGHTING_TYPES["led"]["name"] = "Сверхъяркая LED подсветка"
 LIGHTING_TYPES["led"]["description"] = "Яркая LED лента по периметру перголы"
 LIGHTING_TYPES["rgb"]["name"] = "Светодиодная RGB подсветка"
