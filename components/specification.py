@@ -179,13 +179,8 @@ def render_specification(results, options):
         # Создаем DataFrame для таблицы
         import pandas as pd
         
-        # Добавляем порядковые номера к данным
-        numbered_data = []
-        for i, (name, value) in enumerate(data):
-            numbered_data.append([i, name, value])
-        
-        # Создаем DataFrame с правильными столбцами
-        df = pd.DataFrame(numbered_data, columns=["№", "Наименование", "Значение"])
+        # Создаем DataFrame без порядковых номеров
+        df = pd.DataFrame(data, columns=["Наименование", "Значение"])
         
         # Применяем custom CSS для таблицы
         st.markdown("""
