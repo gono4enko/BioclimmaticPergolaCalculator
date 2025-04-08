@@ -305,13 +305,13 @@ def main():
         div[data-testid="stButton"] > button[kind="primary"] {
             background-color: var(--button-bg);
             color: var(--button-text);
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             font-weight: bold;
-            border-radius: 6px;
-            padding: 12px 0;
+            border-radius: 8px;
+            padding: 15px 0;
             border: none;
-            margin-top: 20px;
-            margin-bottom: 20px;
+            margin-top: 25px;
+            margin-bottom: 25px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
             transition: all 0.2s;
         }
@@ -324,6 +324,16 @@ def main():
         /* Стили для полей ввода и меток */
         .stTextInput label, .stNumberInput label, .stSelectbox label {
             color: var(--label-color) !important;
+        }
+        
+        /* Исправляем серый шрифт на темном фоне */
+        body.dark-mode div, body.dark-mode p, body.dark-mode span {
+            color: var(--text-color, #e0e0e0) !important;
+        }
+        
+        /* Делаем текст в таблицах всегда черным, независимо от режима */
+        table td, table th {
+            color: #000000 !important;
         }
         </style>
         """, unsafe_allow_html=True)

@@ -59,7 +59,7 @@ def render_options_form():
         margin-bottom: 0.1rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
-    .option-title {
+    .option-title, .section-header {
         font-size: 0.95rem;
         font-weight: bold;
         margin-bottom: 0.5rem;
@@ -91,11 +91,11 @@ def render_options_form():
         font-size: 0.8rem;
         margin: 0;
         padding: 0;
-        color: #333;
+        color: var(--text-color, #333);
     }
     .option-desc {
         font-size: 0.7rem;
-        color: #666;
+        color: var(--desc-color, #666);
         line-height: 1.2;
         margin: 0;
         padding: 0;
@@ -107,7 +107,7 @@ def render_options_form():
         margin-bottom: 0.5rem;
     }
     .additional-options-container {
-        background-color: white;
+        background-color: var(--card-bg, white);
         border-radius: 8px;
         padding: 1rem;
         margin-top: 1rem;
@@ -129,7 +129,7 @@ def render_options_form():
     st.markdown('<div class="result-card" style="margin-bottom: 0px; padding-top: 3px; padding-bottom: 3px;">', unsafe_allow_html=True)
     
     # Заголовок блока - более четкий и читаемый
-    st.markdown('<div class="section-header">Тип перголы</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header" style="color: var(--text-color, #333);">Тип перголы</div>', unsafe_allow_html=True)
     
     # Создаем плитки для выбора типа перголы
     pergola_options = list(PERGOLA_TYPES.keys())
@@ -158,9 +158,9 @@ def render_options_form():
             button_style = """ 
             <style>
             div[data-testid*="stButton"] > button {
-                background-color: white;
-                border: 1px solid #ddd;
-                color: #333;
+                background-color: var(--tile-bg, white);
+                border: 1px solid var(--tile-border, #ddd);
+                color: var(--text-color, #333);
                 font-weight: 500;
                 text-align: center;
                 border-radius: 8px;
@@ -246,8 +246,8 @@ def render_options_form():
         st.markdown('</div>', unsafe_allow_html=True)  # Закрываем предыдущий блок
         
         st.markdown('<div class="result-card" style="margin-bottom: 0px; padding-top: 3px; padding-bottom: 3px;">', unsafe_allow_html=True)
-        st.markdown('<div class="section-header">Тип кровли</div>', unsafe_allow_html=True)
-        st.markdown('<div style="padding: 15px; text-align: center; font-size: 1rem; color: #666;">Для перголы В600 PIR используются стационарные PIR сэндвич-панели</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header" style="color: var(--text-color, #333);">Тип кровли</div>', unsafe_allow_html=True)
+        st.markdown('<div style="padding: 15px; text-align: center; font-size: 1rem; color: var(--desc-color, #666);">Для перголы В600 PIR используются стационарные PIR сэндвич-панели</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
         lamella_type = "B600"  # Для перголы B600 используем фиксированный тип ламелей
@@ -258,7 +258,7 @@ def render_options_form():
         st.markdown('</div>', unsafe_allow_html=True)  # Закрываем предыдущий блок
         
         st.markdown('<div class="result-card" style="margin-bottom: 0px; padding-top: 3px; padding-bottom: 3px;">', unsafe_allow_html=True)
-        st.markdown('<div class="section-header">Тип ламелей</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header" style="color: var(--text-color, #333);">Тип ламелей</div>', unsafe_allow_html=True)
         
         # Создаем плитки для выбора типа ламелей
         lamella_cols = st.columns(len(lamella_options))
@@ -321,7 +321,7 @@ def render_options_form():
     
     # Создаем новый блок для выбора освещения в соответствии с макетом
     st.markdown('<div class="result-card" style="margin-bottom: 0px; padding-top: 3px; padding-bottom: 3px;">', unsafe_allow_html=True)
-    st.markdown('<div class="section-header">Подсветка (LED по периметру)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header" style="color: var(--text-color, #333);">Подсветка (LED по периметру)</div>', unsafe_allow_html=True)
     
     # Доступные типы освещения для выбранного типа перголы - убираем 'none'
     lighting_options = [opt for opt in PERGOLA_TYPES[pergola_type]["available_lighting"] if opt != "none"] if pergola_type in PERGOLA_TYPES else []
@@ -408,7 +408,7 @@ def render_options_form():
     
     # Блок выбора установки
     st.markdown('<div class="result-card" style="margin-bottom: 0px; padding-top: 3px; padding-bottom: 3px;">', unsafe_allow_html=True)
-    st.markdown('<div class="section-header">Установка</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header" style="color: var(--text-color, #333);">Установка</div>', unsafe_allow_html=True)
     
     # Создаем колонки для опций установки
     install_cols = st.columns([1, 1])
