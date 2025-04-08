@@ -268,45 +268,45 @@ def render_results(results):
         st.markdown(f"""
         <table style="width: 100%; border-collapse: collapse;">
             <tr style="background-color: #f9f9f9;">
-                <td style="padding: 6px 10px; font-weight: bold; width: 30%;">Тип перголы:</td>
-                <td style="padding: 6px 10px;">{pergola_type}</td>
+                <td style="padding: 6px 10px; font-weight: bold; width: 30%; color: #000000;">Тип перголы:</td>
+                <td style="padding: 6px 10px; color: #000000;">{pergola_type}</td>
             </tr>
             <tr style="background-color: #f0f0f0;">
-                <td style="padding: 6px 10px; font-weight: bold;">Тип ламелей:</td>
-                <td style="padding: 6px 10px;">{lamella_type}</td>
+                <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Тип ламелей:</td>
+                <td style="padding: 6px 10px; color: #000000;">{lamella_type}</td>
             </tr>
             <tr style="background-color: #f9f9f9;">
-                <td style="padding: 6px 10px; font-weight: bold;">Ширина:</td>
-                <td style="padding: 6px 10px;">{width_m} м</td>
+                <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Ширина:</td>
+                <td style="padding: 6px 10px; color: #000000;">{width_m} м</td>
             </tr>
             <tr style="background-color: #f0f0f0;">
-                <td style="padding: 6px 10px; font-weight: bold;">Вынос:</td>
-                <td style="padding: 6px 10px;">{length_m} м</td>
+                <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Вынос:</td>
+                <td style="padding: 6px 10px; color: #000000;">{length_m} м</td>
             </tr>
             <tr style="background-color: #f9f9f9;">
-                <td style="padding: 6px 10px; font-weight: bold;">Количество ламелей:</td>
-                <td style="padding: 6px 10px;">{results.get('lamella_count', '-')} шт</td>
+                <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Количество ламелей:</td>
+                <td style="padding: 6px 10px; color: #000000;">{results.get('lamella_count', '-')} шт</td>
             </tr>
             <tr style="background-color: #f0f0f0;">
-                <td style="padding: 6px 10px; font-weight: bold;">Площадь:</td>
-                <td style="padding: 6px 10px;">{area} м²</td>
+                <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Площадь:</td>
+                <td style="padding: 6px 10px; color: #000000;">{area} м²</td>
             </tr>
             <tr style="background-color: #f9f9f9;">
-                <td style="padding: 6px 10px; font-weight: bold;">Количество модулей:</td>
-                <td style="padding: 6px 10px;">{modules_count} модуль</td>
+                <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Количество модулей:</td>
+                <td style="padding: 6px 10px; color: #000000;">{modules_count} модуль</td>
             </tr>
             <tr style="background-color: #f0f0f0;">
-                <td style="padding: 6px 10px; font-weight: bold;">Компоненты автоматики:</td>
-                <td style="padding: 6px 10px;">
-                    <ul style="margin: 0; padding-left: 20px;">
+                <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Компоненты автоматики:</td>
+                <td style="padding: 6px 10px; color: #000000;">
+                    <ul style="margin: 0; padding-left: 20px; color: #000000;">
                         <li>Привод {automation_manufacturer} {automation_type} ({modules_count} {'комплект' if modules_count == 1 else 'комплекта' if 2 <= modules_count <= 4 else 'комплектов'})</li>
                         <li>{remote_control_info}</li>
                     </ul>
                 </td>
             </tr>
             <tr style="background-color: #f9f9f9;">
-                <td style="padding: 6px 10px; font-weight: bold;">Подсветка:</td>
-                <td style="padding: 6px 10px;">
+                <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Подсветка:</td>
+                <td style="padding: 6px 10px; color: #000000;">
                     {lighting_type}
                     {lighting_details_html}
                 </td>
@@ -331,8 +331,8 @@ def render_results(results):
         price_table_html = """
         <table style="width: 100%; border-collapse: collapse;">
             <tr style="background-color: #f9f9f9;">
-                <td style="padding: 6px 10px; font-weight: bold; width: 70%;">Базовая стоимость конструкции:</td>
-                <td style="padding: 6px 10px; text-align: right;">""" + str(int(base_price_eur)) + """ €</td>
+                <td style="padding: 6px 10px; font-weight: bold; width: 70%; color: #000000;">Базовая стоимость конструкции:</td>
+                <td style="padding: 6px 10px; text-align: right; color: #000000;">""" + str(int(base_price_eur)) + """ €</td>
             </tr>
         """
         
@@ -343,8 +343,8 @@ def render_results(results):
             row_count += 1
             price_table_html += """
             <tr style="background-color: #f0f0f0;">
-                <td style="padding: 6px 10px; font-weight: bold;">Стоимость дополнительных колонн:</td>
-                <td style="padding: 6px 10px; text-align: right;">""" + str(int(additional_columns_cost)) + """ €</td>
+                <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Стоимость дополнительных колонн:</td>
+                <td style="padding: 6px 10px; text-align: right; color: #000000;">""" + str(int(additional_columns_cost)) + """ €</td>
             </tr>
             """
         
@@ -354,8 +354,8 @@ def render_results(results):
             bg_color = "#f9f9f9" if row_count % 2 == 1 else "#f0f0f0"
             price_table_html += """
             <tr style="background-color: """ + bg_color + """;">
-                <td style="padding: 6px 10px; font-weight: bold;">Стоимость усилителя лотка:</td>
-                <td style="padding: 6px 10px; text-align: right;">""" + str(int(gutter_insert_cost)) + """ €</td>
+                <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Стоимость усилителя лотка:</td>
+                <td style="padding: 6px 10px; text-align: right; color: #000000;">""" + str(int(gutter_insert_cost)) + """ €</td>
             </tr>
             """
         
@@ -364,8 +364,8 @@ def render_results(results):
         bg_color = "#f9f9f9" if row_count % 2 == 1 else "#f0f0f0"
         price_table_html += """
         <tr style="background-color: """ + bg_color + """;">
-            <td style="padding: 6px 10px; font-weight: bold;">Стоимость автоматики:</td>
-            <td style="padding: 6px 10px; text-align: right;">""" + str(int(automation_with_remote_cost_eur)) + """ €</td>
+            <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Стоимость автоматики:</td>
+            <td style="padding: 6px 10px; text-align: right; color: #000000;">""" + str(int(automation_with_remote_cost_eur)) + """ €</td>
         </tr>
         """
         
@@ -374,8 +374,8 @@ def render_results(results):
         bg_color = "#f9f9f9" if row_count % 2 == 1 else "#f0f0f0"
         price_table_html += """
         <tr style="background-color: """ + bg_color + """;">
-            <td style="padding: 6px 10px; font-weight: bold;">Доставка (10%):</td>
-            <td style="padding: 6px 10px; text-align: right;">""" + str(int(delivery_cost_eur)) + """ €</td>
+            <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Доставка (10%):</td>
+            <td style="padding: 6px 10px; text-align: right; color: #000000;">""" + str(int(delivery_cost_eur)) + """ €</td>
         </tr>
         """
         
@@ -384,7 +384,7 @@ def render_results(results):
         bg_color = "#f9f9f9" if row_count % 2 == 1 else "#f0f0f0"
         price_table_html += """
         <tr style="background-color: """ + bg_color + """;">
-            <td style="padding: 6px 10px; font-weight: bold; font-size: 18px;">ИТОГО:</td>
+            <td style="padding: 6px 10px; font-weight: bold; font-size: 18px; color: #000000;">ИТОГО:</td>
             <td style="padding: 6px 10px; text-align: right; font-weight: bold; font-size: 18px; color: #1b6b1b;">""" + str(int(total_cost_eur)) + """ €</td>
         </tr>
         </table>
