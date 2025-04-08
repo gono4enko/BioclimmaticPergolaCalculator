@@ -67,15 +67,32 @@ def add_button_animation():
     """
     css_and_js_code = """
     <style>
-    /* Стили для анимации кнопки */
+    /* Стили для анимации кнопки и увеличения размера */
     .stButton button {
         position: relative;
         overflow: hidden;
         transition: background-color 0.3s ease, transform 0.2s ease;
+        font-size: 2rem !important; /* Большой размер шрифта */
+        padding: 25px 25px !important; /* Большие отступы */
+        min-height: 80px !important; /* Минимальная высота */
+        width: 100% !important; /* Полная ширина */
+        font-weight: 700 !important; /* Жирный шрифт */
     }
     
     .stButton button:active {
         transform: scale(0.97);
+    }
+    
+    /* Дополнительные стили для более агрессивного изменения размера кнопки */
+    div[data-testid="stButton"] > button,
+    div[data-testid="stButton"] > button[kind="primary"],
+    button[data-testid="baseButton-primary"],
+    .element-container div[data-testid="stButton"] button {
+        font-size: 2rem !important; /* Большой размер шрифта */
+        padding: 25px 25px !important; /* Большие отступы */
+        min-height: 80px !important; /* Минимальная высота */
+        width: 100% !important; /* Полная ширина */
+        font-weight: 700 !important; /* Жирный шрифт */
     }
     
     /* Эффект пульсации при нажатии */
@@ -106,13 +123,21 @@ def add_button_animation():
     </style>
     
     <script>
-    // Функция для добавления анимации нажатия на кнопку
+    // Функция для добавления анимации нажатия на кнопку и применения стилей
     function addButtonAnimation() {
         // Находим кнопку "Рассчитать стоимость"
-        const buttons = Array.from(document.querySelectorAll('.stButton button'));
+        const buttons = Array.from(document.querySelectorAll('.stButton button, div[data-testid="stButton"] button, button[data-testid="baseButton-primary"]'));
         const calculateButton = buttons.find(btn => 
             btn.innerText.includes('Рассчитать стоимость')
         );
+        
+        // Примененяем стили напрямую через JavaScript
+        if (calculateButton) {
+            calculateButton.style.fontSize = '2rem';
+            calculateButton.style.padding = '25px';
+            calculateButton.style.minHeight = '80px';
+            calculateButton.style.fontWeight = '700';
+        }
         
         if (calculateButton) {
             calculateButton.addEventListener('click', function(e) {

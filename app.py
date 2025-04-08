@@ -52,8 +52,22 @@ def main():
     st.set_page_config(
         page_title="Калькулятор пергол DecoLife",
         page_icon="🏠",
-        layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
+        layout="centered",  # Изменено с "wide" на "centered" для более узкого интерфейса
+        initial_sidebar_state="collapsed" # Скрываем сайдбар по умолчанию
     )
+    
+    # Добавляем CSS для увеличения кнопки сразу после загрузки страницы
+    st.markdown("""
+    <style>
+    /* Глобальные стили для кнопки расчета - управление размером */
+    .stButton button {
+        font-size: 2rem !important;
+        padding: 25px 25px !important;
+        min-height: 80px !important;
+        font-weight: 700 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
     
     # Добавляем JavaScript для определения темы пользователя
     st.markdown("""
@@ -302,24 +316,38 @@ def main():
     with center_col:
         st.markdown("""
         <style>
-        div[data-testid="stButton"] > button[kind="primary"] {
-            background-color: var(--button-bg);
-            color: var(--button-text);
-            font-size: 1.8rem; /* Увеличиваем размер шрифта еще больше */
-            font-weight: 700; /* Делаем шрифт еще жирнее */
-            border-radius: 8px;
-            padding: 20px 0; /* Увеличиваем вертикальные отступы */
-            border: none;
-            margin-top: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2);
-            transition: all 0.2s;
+        /* Глобальные стили для кнопки расчета - применяются с наивысшим приоритетом */
+        div[data-testid="stButton"] > button,
+        div[data-testid="stButton"] > button[kind="primary"],
+        div[data-testid="column"] > div[data-testid="stButton"] > button,
+        button[data-testid="baseButton-primary"],
+        .element-container div[data-testid="stButton"] button,
+        .stButton > button {
+            background-color: var(--button-bg) !important;
+            color: var(--button-text) !important;
+            font-size: 2rem !important; /* Сделаем еще больше */
+            font-weight: 700 !important; /* Жирный шрифт */
+            border-radius: 8px !important;
+            padding: 25px 25px !important; /* Увеличиваем отступы со всех сторон */
+            border: none !important;
+            margin-top: 25px !important;
+            margin-bottom: 25px !important;
+            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2) !important;
+            transition: all 0.2s !important;
             height: auto !important; /* Убедимся, что высота определяется контентом */
+            min-height: 80px !important; /* Минимальная высота */
+            letter-spacing: 0.5px !important; /* Улучшаем читаемость */
+            width: 100% !important; /* Убеждаемся, что кнопка занимает всю ширину */
         }
-        div[data-testid="stButton"] > button[kind="primary"]:hover {
-            background-color: var(--highlight-hover);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-            transform: translateY(-1px);
+        /* Стиль для кнопки при наведении */
+        div[data-testid="stButton"] > button[kind="primary"]:hover,
+        div[data-testid="stButton"] > button:hover,
+        button[data-testid="baseButton-primary"]:hover,
+        .element-container div[data-testid="stButton"] button:hover,
+        .stButton > button:hover {
+            background-color: var(--highlight-hover) !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+            transform: translateY(-2px) !important;
         }
         
         /* Стили для полей ввода и меток */
@@ -348,7 +376,8 @@ def main():
         }
         </style>
         """, unsafe_allow_html=True)
-        if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
+        # Создаем кнопку с усиленным стилем через атрибут style
+        if st.button("Рассчитать стоимость", type="primary", use_container_width=True, help="Нажмите для расчета стоимости перголы"):
             with st.spinner("Выполняется расчет..."):
                 # Проверяем, что у нас есть данные для расчета
                 if dimensions and options:
