@@ -187,7 +187,7 @@ def render_options_form():
                 st.markdown(f"""
                 <div style="background-color: #e6f3ff; border: 1px solid #0066cc; color: #0066cc; 
                      font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                    <div style="font-size: 1.1rem;">{pergola_name.split()[-1]} ✓</div>
+                    <div style="font-size: 1.1rem;">{pergola_name} ✓</div>
                     <div style="font-size: 0.9rem; margin-top: 5px;">{pergola_short_desc}</div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -197,7 +197,7 @@ def render_options_form():
                     pass
             else:
                 # Видимая кнопка для выбора перголы в новом стиле
-                if st.button(f"{pergola_name.split()[-1]}\n{pergola_short_desc}", key=f"btn_pergola_{pergola_type}", use_container_width=True):
+                if st.button(f"{pergola_name}\n{pergola_short_desc}", key=f"btn_pergola_{pergola_type}", use_container_width=True):
                     selected_pergola_type = pergola_type
                 
                     # Обновляем тип ламелей при смене типа перголы
