@@ -312,15 +312,6 @@ def render_results(results):
     </div>
     """, unsafe_allow_html=True)
     
-    # Кнопка для пакетного расчета стоимости всех моделей
-    st.markdown(f"""
-    <div style="margin-top: 10px; text-align: center;">
-        <button style="width: 100%; padding: 12px; background: white; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; color: #0066cc;">
-            Пакетный расчет стоимости всех моделей
-        </button>
-    </div>
-    """, unsafe_allow_html=True)
-    
     # Записываем информацию о просмотре результатов в лог
     log_user_action("Просмотр результатов расчета", {"total_cost": results["total_cost"]})
 
