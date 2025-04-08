@@ -62,8 +62,6 @@ def render_specification(results, options):
             modules_count = 3
         elif width_m > 4:
             modules_count = 2
-            
-    print(f"DEBUG - modules_count: {modules_count}")
     
     # Определяем тип и стоимость автоматики
     automation_cost = 0
@@ -75,25 +73,28 @@ def render_specification(results, options):
     if "automation_type" in detailed_costs:
         automation_type = detailed_costs.get('automation_type', '')
         automation_manufacturer = detailed_costs.get('automation_manufacturer', '')
+        automation_message = detailed_costs.get('automation_message', '')
         
-        if "automation" in detailed_costs.get('additional_options', {}):
-            automation_cost = detailed_costs['additional_options']['automation']
-        
-        # Добавляем компоненты автоматики
+        # Создаем новый список компонентов автоматики только с приводами
+        # Используем количество модулей для определения количества приводов
         if automation_manufacturer == "Bansbach":
             if automation_type == "T1":
-                automation_components.append(f"Bansbach T1, Germany ({automation_cost}€)")
+                # Привод Bansbach T1
+                drive_info = f"Привод Bansbach T1 ({modules_count} {'привод' if modules_count == 1 else 'привода' if 2 <= modules_count <= 4 else 'приводов'})"
+                automation_components.append(drive_info)
             else:
-                automation_components.append(f"Bansbach Tandem, Germany ({automation_cost}€)")
-            # Пульт управления добавляется в расчете на основе количества устройств
-            # Мы не добавляем его здесь, так как он будет добавлен из detailed_costs ниже
+                # Привод Bansbach Tandem
+                drive_info = f"Привод Bansbach Tandem ({modules_count} {'комплект' if modules_count == 1 else 'комплекта' if 2 <= modules_count <= 4 else 'комплектов'})"
+                automation_components.append(drive_info)
         elif automation_manufacturer == "Somfy":
             if automation_type == "M1":
-                automation_components.append(f"Somfy M1, France ({automation_cost}€)")
+                # Привод Somfy M1
+                drive_info = f"Привод Somfy M1 ({modules_count} {'привод' if modules_count == 1 else 'привода' if 2 <= modules_count <= 4 else 'приводов'})"
+                automation_components.append(drive_info)
             else:
-                automation_components.append(f"Somfy M2 TANDEM, France ({automation_cost}€)")
-            # Пульт управления добавляется в расчете на основе количества устройств
-            # Мы не добавляем его здесь, так как он будет добавлен из detailed_costs ниже
+                # Привод Somfy M2 TANDEM
+                drive_info = f"Привод Somfy M2 TANDEM ({modules_count} {'комплект' if modules_count == 1 else 'комплекта' if 2 <= modules_count <= 4 else 'комплектов'})"
+                automation_components.append(drive_info)
     
     # Тип освещения с детальной информацией
     lighting_info = "Без подсветки"
@@ -228,47 +229,9 @@ def render_specification(results, options):
             automation_name = "Базовая автоматика"
             rows.append(("Автоматика:", automation_name))
             
-            # Формируем компоненты автоматики с указанием типа привода и количества
+            # Используем непосредственно automation_components, которые уже были сформированы
             if automation_components:
-                # Модифицируем компоненты
-                modified_components = []
-                for component in automation_components:
-                    # Получаем тип привода (без цены)
-                    drive_type = component.split("(")[0].strip()
-                    
-                    # Получаем информацию из сообщения об автоматике
-                    # Например: "Для автоматизации перголы размером 13.00x8.00 м (3 модуля) используется привод Bansbach Tandem (3 комплекта)"
-                    automation_message = detailed_costs.get('automation_message', '')
-                    
-                    # Определяем количество приводов из сообщения или используем количество модулей по умолчанию
-                    drives_count = modules_count
-                    
-                    # Формируем точное описание привода с указанием типа и количества
-                    if "Bansbach" in drive_type:
-                        if "T1" in drive_type:
-                            # Привод Bansbach T1
-                            drive_info = f"Привод Bansbach T1 ({drives_count} {'привод' if drives_count == 1 else 'привода' if 2 <= drives_count <= 4 else 'приводов'})"
-                        elif "Tandem" in drive_type:
-                            # Привод Bansbach Tandem
-                            drive_info = f"Привод Bansbach Tandem ({drives_count} {'комплект' if drives_count == 1 else 'комплекта' if 2 <= drives_count <= 4 else 'комплектов'})"
-                        else:
-                            # Общий случай для Bansbach
-                            drive_info = f"Привод {drive_type} ({drives_count} {'шт.' if drives_count == 1 else 'шт.'})"
-                    elif "Somfy" in drive_type:
-                        if "M1" in drive_type:
-                            # Привод Somfy M1
-                            drive_info = f"Привод Somfy M1 ({drives_count} {'привод' if drives_count == 1 else 'привода' if 2 <= drives_count <= 4 else 'приводов'})"
-                        elif "TANDEM" in drive_type or "Tandem" in drive_type:
-                            # Привод Somfy M2 TANDEM
-                            drive_info = f"Привод Somfy M2 TANDEM ({drives_count} {'комплект' if drives_count == 1 else 'комплекта' if 2 <= drives_count <= 4 else 'комплектов'})"
-                        else:
-                            # Общий случай для Somfy
-                            drive_info = f"Привод {drive_type} ({drives_count} {'шт.' if drives_count == 1 else 'шт.'})"
-                    else:
-                        # Общий случай для других типов
-                        drive_info = f"{drive_type} ({drives_count} {'шт.' if drives_count == 1 else 'шт.'})"
-                    
-                    modified_components.append(drive_info)
+                modified_components = list(automation_components)
                 
                 # Добавляем пульт управления
                 if 'remote_control' in detailed_costs:
