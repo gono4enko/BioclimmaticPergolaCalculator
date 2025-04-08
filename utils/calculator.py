@@ -445,8 +445,8 @@ def calculate_pergola_cost(dimensions, options):
                 width_m = width_mm / 1000
                 length_m = length_mm / 1000
                 
-                # Определяем количество модулей для расчета освещения
-                modules_for_lighting = modules_count if need_additional_columns else 1
+                # Используем актуальное количество модулей для расчета освещения
+                modules_for_lighting = modules_count
                 
                 # Вызываем функцию с параметрами в метрах и количеством модулей
                 lighting_cost = lighting_price(width_m, length_m, modules_for_lighting)
