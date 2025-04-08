@@ -591,11 +591,11 @@ def calculate_pergola_cost(dimensions, options):
             'detailed_costs': detailed_costs,
             'dimensions': {
                 'width_mm': width_mm,
-                'width_m': round(width_mm / 1000, 3),
+                'width_m': round(width_m, 2),
                 'length_mm': length_mm,
-                'length_m': round(length_mm / 1000, 3),
+                'length_m': round(length_m, 2),
                 'height_mm': height_mm,
-                'height_m': round(height_mm / 1000, 3)
+                'height_m': round(height_m, 2)
             },
             'lamella_count': lamella_count,
             'correction_message': correction_message
