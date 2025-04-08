@@ -81,14 +81,9 @@ def calculate_additional_columns(pergola_type, lamella_type, length_m, width_m):
     
     # Определяем количество модулей на основе ширины перголы
     # Модуль - это секция перголы определенной ширины
-    # Размеры: 1 модуль - до 4м, 2 модуля - до 7м, 3 модуля - до 10.5м, 4 модуля - до 13.5м
-    modules = 1
-    if width_m > 10.5:
-        modules = 4
-    elif width_m > 7:
-        modules = 3
-    elif width_m > 4:
-        modules = 2
+    # Используем функцию из price_loader для консистентности
+    from utils.price_loader import get_modules_count_from_size
+    modules = get_modules_count_from_size(width_m)
     
     # Рассчитываем стоимость дополнительных колонн
     columns_cost = ADDITIONAL_COLUMNS_PRICES.get(modules, 0)
