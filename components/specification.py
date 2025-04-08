@@ -68,12 +68,11 @@ def render_specification(results, options):
                 automation_components.append(f"Somfy M2 TANDEM, France ({automation_cost}€)")
             automation_components.append("Пульт управления: Somfy RTS (25€)")
     
-    # Тип освещения и его стоимость
+    # Тип освещения (без стоимости)
     lighting_info = "Без подсветки"
     if lighting_type != 'none':
-        lighting_cost = detailed_costs.get('lighting', 0)
         lighting_name = LIGHTING_TYPES.get(lighting_type, {}).get('name', 'Освещение')
-        lighting_info = f"{lighting_name} ({lighting_cost}€)"
+        lighting_info = f"{lighting_name}"
     
     # Получаем информацию о типе ламелей
     lamella_info = ""
@@ -112,17 +111,27 @@ def render_specification(results, options):
         data.append(["Количество модулей:", f"{modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}"])
         data.append(["Фактический размер:", f"{width_m} × {length_m} м"])
         
-        # Добавляем информацию об автоматике
+        # Добавляем информацию об автоматике (без стоимости)
         if automation_manufacturer:
-            automation_name = f"Базовая автоматика ({automation_cost}€)"
+            automation_name = "Базовая автоматика"
             data.append(["Автоматика:", automation_name])
             
-            # Формируем список компонентов автоматики
+            # Формируем список компонентов автоматики без указания цен
             if automation_components:
+                # Модифицируем компоненты, убирая информацию о ценах
+                modified_components = []
+                for component in automation_components:
+                    # Убираем ценовую информацию из строки компонента
+                    component_without_price = component.split("(")[0].strip()
+                    # Добавляем количество (1 шт.) для привода
+                    if "Bansbach" in component_without_price or "Somfy" in component_without_price:
+                        component_without_price += " (1 шт.)"
+                    modified_components.append(component_without_price)
+                
                 components_text = ""
-                for i, component in enumerate(automation_components):
+                for i, component in enumerate(modified_components):
                     components_text += f"• {component}"
-                    if i < len(automation_components) - 1:
+                    if i < len(modified_components) - 1:
                         components_text += "\n"
                 
                 data.append(["Компоненты автоматики:", components_text])
@@ -130,10 +139,10 @@ def render_specification(results, options):
         # Добавляем информацию об освещении
         data.append(["Подсветка:", lighting_info])
         
-        # Если есть вставка для усиления лотка, добавляем её
+        # Если есть вставка для усиления лотка, добавляем её (без стоимости)
         gutter_insert_cost = detailed_costs.get('gutter_insert', 0)
         if gutter_insert_cost > 0:
-            data.append(["Усиление лотка:", f"Вставка для усиления лотка ({gutter_insert_cost}€)"])
+            data.append(["Усиление лотка:", "Вставка для усиления лотка"])
         
         # Добавляем итоговую стоимость
         data.append(["Итоговая стоимость:", f"{results.get('total_cost', 0)}€"])
