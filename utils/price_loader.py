@@ -17,6 +17,148 @@ from config.price_data import PERGOLA_PRICE_FILES
 # Словарь для хранения загруженных таблиц цен
 price_tables = {}
 
+def load_price_data(file_path):
+    """
+    Загружает данные о ценах из CSV-файла
+    
+    Args:
+        file_path (str): Путь к файлу с ценами
+        
+    Returns:
+        dict: Словарь с ценами в формате {(ширина, длина): цена}
+    """
+    try:
+        # Проверяем, существует ли файл
+        if not os.path.exists(file_path):
+            logger.error(f"Файл не найден: {file_path}")
+            return {}
+        
+        # Проверяем, не пустой ли файл
+        if os.path.getsize(file_path) == 0:
+            logger.warning(f"Пропускаем пустой файл: {file_path}")
+            return {}
+        
+        # Обработка потенциальных проблем с кодировкой
+        try:
+            df = pd.read_csv(file_path, delimiter=';', decimal=',', encoding='utf-8')
+        except UnicodeDecodeError:
+            # Пробуем альтернативную кодировку
+            df = pd.read_csv(file_path, delimiter=';', decimal=',', encoding='cp1251')
+        
+        # Проверка на пустоту DataFrame
+        if df.empty:
+            logger.warning(f"Пустой DataFrame в файле: {file_path}")
+            return {}
+        
+        # Проверка на минимальное количество строк и столбцов
+        if df.shape[0] < 2 or df.shape[1] < 2:
+            logger.warning(f"Недостаточно данных в файле: {file_path}, shape: {df.shape}")
+            return {}
+        
+        # Создаем словарь для быстрого доступа к ценам по размерам
+        price_dict = {}
+        
+        # Проверяем формат данных
+        # Если есть строка "Количество модулей", значит это новый формат
+        if "Количество модулей" in str(df.iloc[0, 0]):
+            # Новый формат данных
+            # Первая строка - информация о модулях
+            # Вторая строка - заголовки с размерами ширины
+            # Первый столбец - значения вылета (длины)
+            
+            # Получаем информацию о модулях
+            modules_info = df.iloc[0, 1:].values.astype(str)
+            
+            # Получаем размеры ширины
+            width_values = df.iloc[1, 1:].values.astype(str)
+            
+            # Получаем значения вылета (длины)
+            length_values = df.iloc[2:, 0].values.astype(str)
+            
+            # Получаем цены
+            price_values = df.iloc[2:, 1:].values
+            
+            # Создаем словарь для соответствия ширины и количества модулей
+            modules_count_dict = {}
+            for i, module_info in enumerate(modules_info):
+                if i < len(width_values):
+                    width_float = float(width_values[i].replace(',', '.'))
+                    # Извлекаем количество модулей из строки (например, "1 модуль" -> 1)
+                    modules_count = int(module_info.split()[0])
+                    modules_count_dict[width_float] = modules_count
+            
+            for i, length in enumerate(length_values):
+                for j, width in enumerate(width_values):
+                    try:
+                        # Проверяем, что значения не пустые
+                        if not length or not width:
+                            continue
+                            
+                        # Конвертируем из строк в числа с плавающей точкой
+                        length_float = float(length.replace(',', '.'))
+                        width_float = float(width.replace(',', '.'))
+                        
+                        # Проверяем, что у нас есть значение цены для этой позиции
+                        if i < len(price_values) and j < len(price_values[i]):
+                            price_value = float(price_values[i][j])
+                            
+                            # Сохраняем цену по ключу (ширина, длина)
+                            price_dict[(width_float, length_float)] = price_value
+                            
+                            # Дополнительно логируем загруженные размеры для отладки
+                            logger.debug(f"Загружена цена {price_value} для размеров {width_float}x{length_float}")
+                    except (ValueError, IndexError, TypeError) as e:
+                        logger.warning(f"Ошибка обработки цены в файле {file_path} (новый формат): {width}x{length}, {e}")
+        
+        else:
+            # Старый формат данных
+            # Первая строка - ширина, вторая - заголовки
+            # Первый столбец - вылет, остальные столбцы - ширина
+            
+            # Получаем названия столбцов (ширина в метрах)
+            width_values = df.iloc[0].values[1:].astype(str)
+            
+            # Получаем значения вылета (длины в метрах)
+            length_values = df.iloc[1:, 0].values.astype(str)
+            
+            # Получаем цены
+            price_values = df.iloc[1:, 1:].values
+            
+            for i, length in enumerate(length_values):
+                for j, width in enumerate(width_values):
+                    # Преобразование строки в число с плавающей точкой
+                    try:
+                        # Проверяем, что значения не пустые
+                        if not length or not width:
+                            continue
+                            
+                        # Конвертируем из строк в числа с плавающей точкой
+                        length_float = float(length.replace(',', '.'))
+                        width_float = float(width.replace(',', '.'))
+                        
+                        # Проверяем, что у нас есть значение цены для этой позиции
+                        if i < len(price_values) and j < len(price_values[i]):
+                            price_value = float(price_values[i][j])
+                            
+                            # Сохраняем цену по ключу (ширина, длина)
+                            price_dict[(width_float, length_float)] = price_value
+                            
+                            # Дополнительно логируем загруженные размеры для отладки
+                            logger.debug(f"Загружена цена {price_value} для размеров {width_float}x{length_float}")
+                    except (ValueError, IndexError, TypeError) as e:
+                        logger.warning(f"Ошибка обработки цены в файле {file_path} (старый формат): {width}x{length}, {e}")
+        
+        if price_dict:
+            logger.info(f"Загружена таблица цен из файла {file_path}, {len(price_dict)} записей")
+            return price_dict
+        else:
+            logger.warning(f"Не удалось загрузить данные из файла {file_path}")
+            return {}
+                
+    except Exception as e:
+        logger.error(f"Ошибка обработки файла {file_path}: {str(e)}")
+        return {}
+
 def load_price_tables():
     """
     Загружает все таблицы цен из CSV-файлов
