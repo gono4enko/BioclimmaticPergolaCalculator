@@ -391,11 +391,9 @@ def calculate_pergola_cost(dimensions, options):
             # Добавляем информацию о дополнительных колоннах в сообщение
             columns_message = (
                 f"Для перголы с выносом {length_m:.2f} м необходимы дополнительные колонны "
-                f"({modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}, "
-                f"стоимость: {columns_cost} €)"
+                f"({modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'})"
             )
             
-            # Добавляем сообщение о колоннах к общему сообщению о корректировке
             if correction_message:
                 correction_message = f"{correction_message}. {columns_message}"
             else:
@@ -511,7 +509,7 @@ def calculate_pergola_cost(dimensions, options):
                     devices_count += modules_count  # Добавляем по 1 устройству управления освещением на модуль
                 
                 # Выбираем подходящий пульт в зависимости от количества устройств
-                if devices_count <= 1:
+                if modules_count == 1 and lighting_type == 'none':
                     detailed_costs['remote_control'] = "Simu 1K"
                     detailed_costs['remote_control_cost'] = 25
                 elif devices_count <= 5:
@@ -541,7 +539,7 @@ def calculate_pergola_cost(dimensions, options):
                     devices_count += modules_count  # Добавляем по 1 устройству управления освещением на модуль
                 
                 # Выбираем подходящий пульт в зависимости от количества устройств
-                if devices_count <= 1:
+                if modules_count == 1 and lighting_type == 'none':
                     detailed_costs['remote_control'] = "Simu 1K"
                     detailed_costs['remote_control_cost'] = 25
                 elif devices_count <= 5:

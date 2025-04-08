@@ -79,13 +79,15 @@ def render_specification(results, options):
                 automation_components.append(f"Bansbach T1, Germany ({automation_cost}€)")
             else:
                 automation_components.append(f"Bansbach Tandem, Germany ({automation_cost}€)")
-            automation_components.append("Пульт управления: Simu 1K (25€)")
+            # Пульт управления добавляется в расчете на основе количества устройств
+            # Мы не добавляем его здесь, так как он будет добавлен из detailed_costs ниже
         elif automation_manufacturer == "Somfy":
             if automation_type == "M1":
                 automation_components.append(f"Somfy M1, France ({automation_cost}€)")
             else:
                 automation_components.append(f"Somfy M2 TANDEM, France ({automation_cost}€)")
-            automation_components.append("Пульт управления: Somfy RTS (25€)")
+            # Пульт управления добавляется в расчете на основе количества устройств
+            # Мы не добавляем его здесь, так как он будет добавлен из detailed_costs ниже
     
     # Тип освещения (без стоимости)
     lighting_info = "Без подсветки"
