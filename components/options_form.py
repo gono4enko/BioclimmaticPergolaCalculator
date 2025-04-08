@@ -283,16 +283,16 @@ def render_options_form():
                     # Если нет короткого описания, создаем его из размеров
                     if not lamella_short_desc:
                         if "20" in lam_type:
-                            lamella_short_desc = "Ламель 200 х 56 мм NEW, Усиленная"
+                            lamella_short_desc = "Ламель 200 х 56 мм NEW, (Усиленная)"
                         else:
-                            lamella_short_desc = "Ламель 250 х 53 мм NEW, Стандартная"
+                            lamella_short_desc = "Ламель 250 х 53 мм NEW, (Стандартная)"
                     
                     # Определяем размер ламелей для отображения
                     size_display = ""
                     if "20" in lam_type:
-                        size_display = "200мм"
+                        size_display = "200*56 мм NEW"
                     else:
-                        size_display = "250мм"
+                        size_display = "250*53 мм NEW"
                     
                     # Используем улучшенный стиль кнопок для ламелей (как для типа перголы)
                     if is_selected:
