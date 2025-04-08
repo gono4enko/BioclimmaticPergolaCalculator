@@ -145,7 +145,15 @@ def render_specification(results, options):
                     # Добавляем информацию о количестве приводов, равном количеству модулей
                     if "Bansbach" in component_without_price or "Somfy" in component_without_price:
                         component_without_price += f" ({modules_count} {'шт.' if modules_count == 1 else 'шт.'})"
-                    modified_components.append(component_without_price)
+                    # Добавляем пульт управления
+                    if 'remote_control' in detailed_costs and component_without_price.startswith("Bansbach"):
+                        modified_components.append(component_without_price)
+                        modified_components.append(f"Пульт ДУ {detailed_costs['remote_control']}")
+                    elif 'remote_control' in detailed_costs and component_without_price.startswith("Somfy"):
+                        modified_components.append(component_without_price)
+                        modified_components.append(f"Пульт ДУ {detailed_costs['remote_control']}")
+                    else:
+                        modified_components.append(component_without_price)
                 
                 components_text = ""
                 for i, component in enumerate(modified_components):

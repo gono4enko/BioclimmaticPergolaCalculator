@@ -502,6 +502,8 @@ def calculate_pergola_cost(dimensions, options):
                 detailed_costs['automation_type'] = drive_type
                 detailed_costs['automation_message'] = drive_message
                 detailed_costs['automation_manufacturer'] = "Bansbach"
+                detailed_costs['remote_control'] = "Simple 1-канальный"
+                detailed_costs['remote_control_cost'] = 35
                 
             elif "B700" in pergola_type:
                 # Для B700NEW используем привод Somfy
@@ -514,6 +516,8 @@ def calculate_pergola_cost(dimensions, options):
                 detailed_costs['automation_type'] = drive_type
                 detailed_costs['automation_message'] = drive_message
                 detailed_costs['automation_manufacturer'] = "Somfy"
+                detailed_costs['remote_control'] = "Situo 1 IO Pure II"
+                detailed_costs['remote_control_cost'] = 60
             
             # Добавляем информацию о выбранном приводе в сообщение о корректировке
             if drive_message:

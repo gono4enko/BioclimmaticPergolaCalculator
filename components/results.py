@@ -35,7 +35,7 @@ def render_results(results):
         background-color: #F3F4F6;
         border-radius: 10px;
         padding: 1.5rem;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     }
     .metric-card {
@@ -47,10 +47,13 @@ def render_results(results):
         height: 100%;
     }
     .metric-value {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         font-weight: bold;
         color: #1E3A8A;
         margin: 0.5rem 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .metric-label {
         font-size: 0.9rem;
@@ -180,7 +183,7 @@ def render_results(results):
                 st.info(f"Для пергол B700NEW автоматизация Somfy включена в базовую комплектацию. Тип привода ({detailed_costs['automation_type']}) выбран автоматически в зависимости от размеров перголы.")
     
     # Отображаем детальную информацию в раскрывающейся панели
-    with st.expander("Детальная информация о стоимости"):
+    with st.expander("Детальная информация о стоимости", expanded=False):
         # Создаем DataFrame для более наглядного отображения
         cost_items = [
             ["Базовая стоимость перголы", detailed_costs.get('base_price', 0), "€"]
@@ -234,6 +237,10 @@ def render_results(results):
                 automation_type = detailed_costs.get('automation_type', 'T1')
                 automation_manufacturer = detailed_costs.get('automation_manufacturer', 'Bansbach')
                 option_name = f"Автоматизация {automation_manufacturer} ({automation_type})"
+                
+                # Добавляем информацию о пульте управления
+                if 'remote_control' in detailed_costs and 'remote_control_cost' in detailed_costs:
+                    cost_items.append([f"-- Пульт ДУ {detailed_costs['remote_control']}", detailed_costs['remote_control_cost'], "€"])
             elif option == "motor":
                 option_name = "Электропривод"
             elif option == "sound":
