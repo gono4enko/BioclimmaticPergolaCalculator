@@ -242,12 +242,12 @@ def render_options_form():
     
     # Блок для ламелей - в новом стиле отдельным блоком
     if pergola_type == "B600":
-        # Для B600 создаем информационный блок без выбора (стационарные сэндвич-панели)
+        # Для B600 создаем информационный блок без выбора (стационарные PIR сэндвич-панели)
         st.markdown('</div>', unsafe_allow_html=True)  # Закрываем предыдущий блок
         
         st.markdown('<div class="result-card" style="margin-bottom: 0px; padding-top: 3px; padding-bottom: 3px;">', unsafe_allow_html=True)
         st.markdown('<div class="section-header">Тип кровли</div>', unsafe_allow_html=True)
-        st.markdown('<div style="padding: 15px; text-align: center; font-size: 1rem; color: #666;">Для перголы В600 PIR используются стационарные сэндвич-панели</div>', unsafe_allow_html=True)
+        st.markdown('<div style="padding: 15px; text-align: center; font-size: 1rem; color: #666;">Для перголы В600 PIR используются стационарные PIR сэндвич-панели</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
         lamella_type = "B600"  # Для перголы B600 используем фиксированный тип ламелей
