@@ -111,11 +111,21 @@ def render_results(results):
     # Добавляем стили для нового дизайна таблиц
     st.markdown("""
     <style>
+    /* Подключение шрифта SF Pro Text */
+    @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Text:wght@400;500;600;700&display=swap');
+    
+    /* Применение шрифта ко всем элементам */
+    * {
+        font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-weight: 400;
+    }
+    
     /* Основные стили */
     .result-heading {
         font-size: 20px;
         font-weight: bold;
         margin: 20px 0 15px 0;
+        font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
     /* Стили для таблиц спецификации и стоимости */
@@ -126,6 +136,7 @@ def render_results(results):
         background-color: #f9f9f9;
         border-radius: 8px;
         overflow: hidden;
+        font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
     .spec-table th {
@@ -134,11 +145,13 @@ def render_results(results):
         color: white;
         text-align: left;
         font-weight: bold;
+        font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
     .spec-table td {
         padding: 10px 15px;
         border-bottom: 1px solid #eee;
+        font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
     .spec-table tr:nth-child(even) {
@@ -162,6 +175,7 @@ def render_results(results):
         color: #333;
         margin-top: 20px;
         margin-bottom: 30px;
+        font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
     .total-amount {
@@ -179,6 +193,15 @@ def render_results(results):
         border-radius: 5px;
         margin-bottom: 20px;
         text-decoration: none;
+        font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
+    
+    /* Переопределение стилей Streamlit для использования SF Pro Text */
+    .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj, .st-ak, .st-al, 
+    .st-am, .st-an, .st-ao, .st-ap, .st-aq, .st-ar, .st-as, .st-at, 
+    h1, h2, h3, h4, h5, h6, p, div, span, button, input, select, textarea {
+        font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-weight: 400;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -270,10 +293,6 @@ def render_results(results):
             <tr style="background-color: #f9f9f9;">
                 <td style="padding: 10px; font-weight: bold;">Изготовление и подготовка (10%):</td>
                 <td style="padding: 10px; text-align: right; font-weight: bold;">{manufacturing_cost_rub:,} ₽</td>
-            </tr>
-            <tr style="background-color: #f0f0f0;">
-                <td style="padding: 10px; font-weight: bold;">Курс евро:</td>
-                <td style="padding: 10px; text-align: right; font-weight: bold;">1€ = {eur_to_rub} ₽</td>
             </tr>
         </table>
         """, unsafe_allow_html=True)
