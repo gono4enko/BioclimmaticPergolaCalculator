@@ -334,9 +334,22 @@ def render_options_form():
     # Отображаем плитки для выбора типа освещения
     for i, light_type in enumerate(lighting_options):
         with lighting_cols[i]:
-            # Получаем информацию о типе освещения
-            light_name = LIGHTING_TYPES[light_type]['name'] if light_type in LIGHTING_TYPES else light_type
-            light_desc = LIGHTING_TYPES[light_type]['description'] if light_type in LIGHTING_TYPES else ""
+            # Получаем информацию о типе освещения с обновленными названиями
+            if light_type == "none":
+                light_name = "Без освещения"
+                light_desc = "Стандартная пергола без дополнительного освещения. Возможность установки освещения в будущем сохраняется."
+            elif light_type == "led":
+                light_name = "Сверхъяркая LED подсветка"
+                light_desc = "Яркая LED лента по периметру перголы"
+            elif light_type == "rgb":
+                light_name = "Светодиодная RGB подсветка"
+                light_desc = "Яркая RGB лента со сменой цвета по периметру перголы"
+            elif light_type == "led_rgb":
+                light_name = "Комбинированное LED + RGB освещение"
+                light_desc = "Позволяет выбрать между белым и цветным освещением"
+            else:
+                light_name = LIGHTING_TYPES[light_type]['name'] if light_type in LIGHTING_TYPES else light_type
+                light_desc = LIGHTING_TYPES[light_type]['description'] if light_type in LIGHTING_TYPES else ""
             
             # Определяем, выбрана ли текущая опция
             is_selected = light_type == selected_lighting
