@@ -88,7 +88,7 @@ def render_results(results):
     st.markdown('<div class="result-container">', unsafe_allow_html=True)
     
     # Создаем метрики для отображения основных показателей
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         st.markdown(f"""
@@ -115,6 +115,42 @@ def render_results(results):
         <div class="metric-card">
             <div class="metric-label">Площадь перголы</div>
             <div class="metric-value">{area:.2f} м²</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col4:
+        # Определяем количество модулей
+        detailed_costs = results.get('detailed_costs', {})
+        additional_columns_cost = detailed_costs.get('additional_columns', 0)
+        
+        # Определяем количество модулей по ширине
+        modules_count = 1
+        if additional_columns_cost > 0:
+            # Стоимость дополнительных колонн зависит от количества модулей
+            # 1 модуль - 653€, 2 модуля - 980€, 3 модуля - 1306€
+            if abs(additional_columns_cost - 653) < 1:
+                modules_count = 1
+            elif abs(additional_columns_cost - 980) < 1:
+                modules_count = 2
+            elif abs(additional_columns_cost - 1306) < 1:
+                modules_count = 3
+            else:
+                # По умолчанию определяем количество модулей по ширине
+                if width_m > 7:
+                    modules_count = 3
+                elif width_m > 4:
+                    modules_count = 2
+        else:
+            # По умолчанию определяем количество модулей по ширине
+            if width_m > 7:
+                modules_count = 3
+            elif width_m > 4:
+                modules_count = 2
+                
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-label">Количество модулей</div>
+            <div class="metric-value">{modules_count}</div>
         </div>
         """, unsafe_allow_html=True)
     
@@ -239,10 +275,43 @@ def generate_csv(results):
     
     # Записываем размеры
     dimensions = results.get('dimensions', {})
+    width_m = dimensions.get('width_m', 0)
+    length_m = dimensions.get('length_m', 0)
     output.write("Размеры перголы:\n")
-    output.write(f"Ширина: {dimensions.get('width_m', 0):.2f} м\n")
-    output.write(f"Длина: {dimensions.get('length_m', 0):.2f} м\n")
+    output.write(f"Ширина: {width_m:.2f} м\n")
+    output.write(f"Длина: {length_m:.2f} м\n")
     output.write(f"Высота: {dimensions.get('height_m', 0):.2f} м\n")
+    
+    # Определяем количество модулей
+    detailed_costs = results.get('detailed_costs', {})
+    additional_columns_cost = detailed_costs.get('additional_columns', 0)
+    
+    # Определяем количество модулей по ширине или стоимости дополнительных колонн
+    modules_count = 1
+    if additional_columns_cost > 0:
+        # Стоимость дополнительных колонн зависит от количества модулей
+        # 1 модуль - 653€, 2 модуля - 980€, 3 модуля - 1306€
+        if abs(additional_columns_cost - 653) < 1:
+            modules_count = 1
+        elif abs(additional_columns_cost - 980) < 1:
+            modules_count = 2
+        elif abs(additional_columns_cost - 1306) < 1:
+            modules_count = 3
+        else:
+            # По умолчанию определяем количество модулей по ширине
+            if width_m > 7:
+                modules_count = 3
+            elif width_m > 4:
+                modules_count = 2
+    else:
+        # По умолчанию определяем количество модулей по ширине
+        if width_m > 7:
+            modules_count = 3
+        elif width_m > 4:
+            modules_count = 2
+            
+    output.write(f"Количество модулей: {modules_count}\n")
+    output.write(f"Площадь перголы: {width_m * length_m:.2f} м²\n")
     
     # Записываем сообщение о корректировке длины, если оно есть
     if 'correction_message' in results and results['correction_message']:

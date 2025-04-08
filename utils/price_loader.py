@@ -85,9 +85,54 @@ def load_price_tables():
         logger.error(f"Ошибка загрузки таблиц цен: {str(e)}", exc_info=True)
         return False
 
+def get_modules_count_from_size(width_m):
+    """
+    Определяет предполагаемое количество модулей по ширине перголы
+    
+    Args:
+        width_m (float): Ширина перголы в метрах
+        
+    Returns:
+        int: Количество модулей
+    """
+    if width_m <= 4.0:
+        return 1
+    elif width_m <= 7.0:
+        return 2
+    else:
+        return 3
+
+def calculate_total_cost_with_automation(base_price, modules_count, pergola_type):
+    """
+    Рассчитывает общую стоимость перголы с учетом автоматики и освещения для разных конфигураций
+    
+    Args:
+        base_price (float): Базовая цена перголы
+        modules_count (int): Количество модулей
+        pergola_type (str): Тип перголы
+    
+    Returns:
+        float: Общая стоимость с учетом автоматики
+    """
+    total_cost = base_price
+    
+    # Стоимость автоматики в зависимости от типа перголы и количества модулей
+    if "B500" in pergola_type:
+        # Стандартный привод Bansbach T1 (700€ за модуль)
+        automation_cost = 700 * modules_count
+    elif "B700" in pergola_type:
+        # Стандартный привод Somfy M1 (300€ за модуль)
+        automation_cost = 300 * modules_count
+    else:
+        automation_cost = 0
+    
+    total_cost += automation_cost
+    return total_cost
+
 def get_base_price(pergola_type, lamella_type, width_m, length_m):
     """
-    Получает базовую цену перголы на основе типа и размеров
+    Получает базовую цену перголы на основе типа и размеров,
+    выбирая оптимальную конфигурацию с учетом количества модулей
     
     Args:
         pergola_type (str): Тип перголы
@@ -96,7 +141,9 @@ def get_base_price(pergola_type, lamella_type, width_m, length_m):
         length_m (float): Длина в метрах
         
     Returns:
-        float: Базовая цена перголы или None, если цена не найдена
+        tuple: (Базовая цена перголы или None, если цена не найдена,
+                Количество модулей для оптимальной конфигурации,
+                Сообщение о выбранной конфигурации)
     """
     try:
         # Определяем файл с ценами в зависимости от типа перголы и ламелей
@@ -111,31 +158,70 @@ def get_base_price(pergola_type, lamella_type, width_m, length_m):
         
         if not price_file or price_file not in price_tables:
             logger.warning(f"Файл с ценами не найден для {pergola_type}/{lamella_type}")
-            return None
+            return None, 1, None
         
         # Получаем таблицу цен
         price_dict = price_tables[price_file]
         
         # Сначала проверяем, есть ли точное соответствие размеров в прайс-листе
         if (width_m, length_m) in price_dict:
-            price = price_dict[(width_m, length_m)]
-            logger.info(f"Найдена точная цена {price} для {pergola_type}/{lamella_type} ({width_m}x{length_m})")
-            return price
+            exact_price = price_dict[(width_m, length_m)]
+            # Определяем количество модулей для точного размера
+            exact_modules = get_modules_count_from_size(width_m)
+            # Рассчитываем общую стоимость с учетом автоматики
+            exact_total_cost = calculate_total_cost_with_automation(exact_price, exact_modules, pergola_type)
+            
+            logger.info(f"Найдена точная цена {exact_price} для {pergola_type}/{lamella_type} ({width_m}x{length_m}, {exact_modules} модулей)")
+            return exact_price, exact_modules, None
         
-        # Если точного соответствия нет, округляем размеры до ближайших стандартных
-        width_m_rounded, length_m_rounded = find_nearest_dimensions(price_dict, width_m, length_m)
+        # Если точного соответствия нет, находим все возможные конфигурации
+        # и выбираем оптимальную с учетом стоимости модулей и автоматики
         
-        if (width_m_rounded, length_m_rounded) in price_dict:
-            price = price_dict[(width_m_rounded, length_m_rounded)]
-            logger.info(f"Найдена цена {price} для {pergola_type}/{lamella_type} ({width_m_rounded}x{length_m_rounded})")
-            return price
-        else:
-            logger.warning(f"Цена не найдена для {pergola_type}/{lamella_type} ({width_m}x{length_m})")
-            return None
+        # Находим все размеры, которые могли бы подойти (ближайшие большие)
+        suitable_configs = []
+        
+        for size, price in price_dict.items():
+            conf_width, conf_length = size
+            
+            # Проверяем, что размеры не меньше запрошенных
+            if conf_width >= width_m and conf_length >= length_m:
+                # Определяем количество модулей для этой конфигурации
+                modules_count = get_modules_count_from_size(conf_width)
+                
+                # Рассчитываем общую стоимость с учетом автоматики
+                total_cost = calculate_total_cost_with_automation(price, modules_count, pergola_type)
+                
+                suitable_configs.append({
+                    'width': conf_width,
+                    'length': conf_length, 
+                    'price': price,
+                    'modules': modules_count,
+                    'total_cost': total_cost
+                })
+        
+        if not suitable_configs:
+            logger.warning(f"Подходящие конфигурации не найдены для {pergola_type}/{lamella_type} ({width_m}x{length_m})")
+            return None, 1, None
+        
+        # Сортируем конфигурации по общей стоимости (от меньшей к большей)
+        suitable_configs.sort(key=lambda x: x['total_cost'])
+        
+        # Выбираем оптимальную (наиболее дешевую) конфигурацию
+        optimal_config = suitable_configs[0]
+        
+        # Формируем сообщение о выбранной конфигурации
+        config_message = (
+            f"Выбрана оптимальная конфигурация перголы: {optimal_config['width']}x{optimal_config['length']} м "
+            f"({optimal_config['modules']} {'модуль' if optimal_config['modules'] == 1 else 'модуля' if optimal_config['modules'] < 5 else 'модулей'}), "
+            f"базовая стоимость: {optimal_config['price']} €"
+        )
+        
+        logger.info(config_message)
+        return optimal_config['price'], optimal_config['modules'], config_message
             
     except Exception as e:
         logger.error(f"Ошибка при получении цены: {str(e)}", exc_info=True)
-        return None
+        return None, 1, None
 
 def find_nearest_dimensions(price_dict, width_m, length_m):
     """

@@ -34,11 +34,30 @@ def render_specification(results, options):
     additional_columns_cost = detailed_costs.get('additional_columns', 0)
     
     # Определяем количество модулей по ширине
-    modules_count = 1
-    if width_m > 7:
-        modules_count = 3
-    elif width_m > 4:
-        modules_count = 2
+    # Если есть дополнительные колонны, значит уже рассчитано нужное количество модулей
+    if additional_columns_cost > 0:
+        # Стоимость дополнительных колонн зависит от количества модулей
+        # 1 модуль - 653€, 2 модуля - 980€, 3 модуля - 1306€
+        if abs(additional_columns_cost - 653) < 1:
+            modules_count = 1
+        elif abs(additional_columns_cost - 980) < 1:
+            modules_count = 2
+        elif abs(additional_columns_cost - 1306) < 1:
+            modules_count = 3
+        else:
+            # По умолчанию определяем количество модулей по ширине
+            modules_count = 1
+            if width_m > 7:
+                modules_count = 3
+            elif width_m > 4:
+                modules_count = 2
+    else:
+        # По умолчанию определяем количество модулей по ширине
+        modules_count = 1
+        if width_m > 7:
+            modules_count = 3
+        elif width_m > 4:
+            modules_count = 2
     
     # Определяем тип и стоимость автоматики
     automation_cost = 0
@@ -123,9 +142,9 @@ def render_specification(results, options):
                 for component in automation_components:
                     # Убираем ценовую информацию из строки компонента
                     component_without_price = component.split("(")[0].strip()
-                    # Добавляем количество (1 шт.) для привода
+                    # Добавляем информацию о количестве приводов, равном количеству модулей
                     if "Bansbach" in component_without_price or "Somfy" in component_without_price:
-                        component_without_price += " (1 шт.)"
+                        component_without_price += f" ({modules_count} {'шт.' if modules_count == 1 else 'шт.'})"
                     modified_components.append(component_without_price)
                 
                 components_text = ""

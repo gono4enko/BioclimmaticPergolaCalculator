@@ -109,8 +109,7 @@ def determine_bansbach_drive_type(pergola_type, width_m, length_m, modules_count
     # Проверяем, подходит ли размер перголы для использования Tandem привода
     # По умолчанию всегда используется привод T1
     drive_type = "T1"
-    drive_cost = BANSBACH_PRICES["T1"]
-    message = "Для автоматизации предлагается стандартный привод Bansbach T1"
+    drive_cost_per_module = BANSBACH_PRICES["T1"]
     
     # Если перголa B500, проверяем условия для использования Tandem
     if "B500" in pergola_type and 1 <= modules_count <= 3:
@@ -121,13 +120,26 @@ def determine_bansbach_drive_type(pergola_type, width_m, length_m, modules_count
         for width_threshold, length_threshold in conditions:
             if width_m > width_threshold and length_m > length_threshold:
                 drive_type = "Tandem"
-                drive_cost = BANSBACH_PRICES["Tandem"]
-                message = (
-                    f"Для автоматизации перголы размером {width_m:.2f}x{length_m:.2f} м "
-                    f"({modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}) "
-                    f"требуется усиленный привод Bansbach Tandem"
-                )
+                drive_cost_per_module = BANSBACH_PRICES["Tandem"]
                 break
+    
+    # Общая стоимость приводов зависит от количества модулей
+    drive_cost = drive_cost_per_module * modules_count
+    
+    # Формируем сообщение в зависимости от типа привода и количества модулей
+    if drive_type == "Tandem":
+        message = (
+            f"Для автоматизации перголы размером {width_m:.2f}x{length_m:.2f} м "
+            f"({modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}) "
+            f"требуется {modules_count} {'привод' if modules_count == 1 else 'привода' if modules_count < 5 else 'приводов'} "
+            f"Bansbach Tandem"
+        )
+    else:
+        message = (
+            f"Для автоматизации перголы требуется {modules_count} "
+            f"{'стандартный привод' if modules_count == 1 else 'стандартных привода' if modules_count < 5 else 'стандартных приводов'} "
+            f"Bansbach T1"
+        )
     
     return drive_type, drive_cost, message
 
@@ -183,8 +195,7 @@ def determine_somfy_drive_type(pergola_type, width_m, length_m, modules_count):
     """
     # По умолчанию всегда используется стандартный привод Somfy M1
     drive_type = "M1"
-    drive_cost = SOMFY_PRICES["M1"]
-    message = "Для автоматизации предлагается стандартный привод Somfy M1"
+    drive_cost_per_module = SOMFY_PRICES["M1"]
     
     # Для перголы B700NEW используем привод Somfy
     if "B700" in pergola_type and 1 <= modules_count <= 3:
@@ -197,24 +208,33 @@ def determine_somfy_drive_type(pergola_type, width_m, length_m, modules_count):
             for width_threshold, length_threshold in conditions:
                 if width_m <= width_threshold and length_m > length_threshold:
                     drive_type = "M2_TANDEM"
-                    drive_cost = SOMFY_PRICES["M2_TANDEM"]
-                    message = (
-                        f"Для автоматизации перголы размером {width_m:.2f}x{length_m:.2f} м "
-                        f"({modules_count} модуль) требуется усиленный привод Somfy M2 TANDEM"
-                    )
+                    drive_cost_per_module = SOMFY_PRICES["M2_TANDEM"]
                     break
         else:
             # Для 2 и 3 модулей: ширина > threshold и вынос > threshold
             for width_threshold, length_threshold in conditions:
                 if width_m > width_threshold and length_m > length_threshold:
                     drive_type = "M2_TANDEM"
-                    drive_cost = SOMFY_PRICES["M2_TANDEM"]
-                    message = (
-                        f"Для автоматизации перголы размером {width_m:.2f}x{length_m:.2f} м "
-                        f"({modules_count} {'модуля' if modules_count == 2 else 'модулей'}) "
-                        f"требуется усиленный привод Somfy M2 TANDEM"
-                    )
+                    drive_cost_per_module = SOMFY_PRICES["M2_TANDEM"]
                     break
+    
+    # Общая стоимость приводов зависит от количества модулей
+    drive_cost = drive_cost_per_module * modules_count
+    
+    # Формируем сообщение в зависимости от типа привода и количества модулей
+    if drive_type == "M2_TANDEM":
+        message = (
+            f"Для автоматизации перголы размером {width_m:.2f}x{length_m:.2f} м "
+            f"({modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}) "
+            f"требуется {modules_count} {'привод' if modules_count == 1 else 'привода' if modules_count < 5 else 'приводов'} "
+            f"Somfy M2 TANDEM"
+        )
+    else:
+        message = (
+            f"Для автоматизации перголы требуется {modules_count} "
+            f"{'стандартный привод' if modules_count == 1 else 'стандартных привода' if modules_count < 5 else 'стандартных приводов'} "
+            f"Somfy M1"
+        )
     
     return drive_type, drive_cost, message
 
@@ -318,48 +338,20 @@ def calculate_pergola_cost(dimensions, options):
             # Если коррекция не применяется, просто рассчитываем количество ламелей
             lamella_count = calculate_lamella_count(length_m, lamella_type)
         
-        # Получаем базовую цену перголы
+        # Получаем базовую цену перголы и количество модулей для оптимальной конфигурации
         # Сохраняем исходные размеры для проверки корректировки размеров из прайс-листа
         original_width_m, original_length_m = width_m, length_m
         
-        base_price = get_base_price(pergola_type, lamella_type, width_m, length_m)
+        # Получаем базовую цену, количество модулей и сообщение от оптимизированной функции выбора цены
+        from utils.price_loader import get_base_price
+        base_price, optimal_modules_count, config_message = get_base_price(pergola_type, lamella_type, width_m, length_m)
         
-        # Получаем скорректированные размеры для проверки изменений
-        from utils.price_loader import find_nearest_dimensions, price_tables, PERGOLA_PRICE_FILES
-        
-        # Определяем файл с ценами
-        price_file = None
-        if lamella_type in PERGOLA_PRICE_FILES:
-            price_file = PERGOLA_PRICE_FILES[lamella_type]
-        elif pergola_type in PERGOLA_PRICE_FILES:
-            price_file = PERGOLA_PRICE_FILES[pergola_type]
-        
-        # Проверяем изменение размеров для соответствия прайс-листу
-        if price_file and price_file in price_tables:
-            price_dict = price_tables[price_file]
-            adjusted_width_m, adjusted_length_m = find_nearest_dimensions(price_dict, width_m, length_m)
-            
-            # Если размеры были скорректированы для соответствия прайс-листу
-            if (abs(adjusted_width_m - original_width_m) > 0.01 or 
-                abs(adjusted_length_m - original_length_m) > 0.01):
-                
-                # Добавляем информацию о корректировке размеров
-                price_correction_message = (
-                    f"Расчет произведен по размерам {adjusted_width_m:.1f}×{adjusted_length_m:.1f} м "
-                    f"в соответствии с прайс-листом (ближайшее большее значение)"
-                )
-                
-                # Обновляем или добавляем сообщение о корректировке
-                if correction_message:
-                    correction_message = f"{correction_message}. {price_correction_message}"
-                else:
-                    correction_message = price_correction_message
-                
-                logger.info(price_correction_message)
-                
-                # Обновляем размеры в соответствии с прайс-листом
-                width_m, length_m = adjusted_width_m, adjusted_length_m
-                width_mm, length_mm = width_m * 1000, length_m * 1000
+        # Добавляем информацию о выбранной конфигурации, если она есть
+        if config_message:
+            if correction_message:
+                correction_message = f"{correction_message}. {config_message}"
+            else:
+                correction_message = config_message
         
         if base_price is None:
             logger.error(f"Не удалось найти базовую цену для {pergola_type}/{lamella_type} ({width_m}x{length_m})")
@@ -378,14 +370,21 @@ def calculate_pergola_cost(dimensions, options):
             'additional_options': {}
         }
         
+        # Используем количество модулей, определенное при выборе оптимальной конфигурации
+        modules_count = optimal_modules_count
+        
         # Проверяем необходимость добавления дополнительных колонн
-        need_additional_columns, columns_cost, modules_count = calculate_additional_columns(
+        need_additional_columns, columns_cost, calculated_modules_count = calculate_additional_columns(
             pergola_type, lamella_type, length_m, width_m
         )
         
         # Если нужны дополнительные колонны, добавляем их стоимость
         if need_additional_columns:
             detailed_costs['additional_columns'] = columns_cost
+            
+            # Используем количество модулей из рассчитанной конфигурации, если оно больше
+            if calculated_modules_count > modules_count:
+                modules_count = calculated_modules_count
             
             # Добавляем информацию о дополнительных колоннах в сообщение
             columns_message = (
@@ -401,14 +400,6 @@ def calculate_pergola_cost(dimensions, options):
                 correction_message = columns_message
                 
             logger.info(columns_message)
-        
-        # Если колонны не нужны, определяем количество модулей по ширине
-        if not need_additional_columns:
-            modules_count = 1
-            if width_m > 7:
-                modules_count = 3
-            elif width_m > 4:
-                modules_count = 2
                 
         # Проверяем необходимость добавления вставки для усиления лотка
         need_gutter_insert, insert_cost, insert_message = calculate_gutter_insert_cost(
