@@ -382,22 +382,7 @@ def render_results(results):
                 </style>
             """, height=250)  # Задаем фиксированную высоту для компонента
         
-        # Кнопка "Изменить параметры" с улучшенным скроллом и обработкой ошибок
-        st.markdown(f"""
-        <div style="margin-top: 20px;">
-            <button 
-                onclick="try {{ 
-                    window.scrollTo({{ top: 0, behavior: 'smooth' }}); 
-                    console.log('Scrolled to top smoothly'); 
-                }} catch (e) {{ 
-                    window.scrollTo(0, 0); 
-                    console.log('Used fallback scroll method: ' + e); 
-                }}"
-                style="width: 100%; padding: 12px; background: white; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;">
-                Изменить параметры
-            </button>
-        </div>
-        """, unsafe_allow_html=True)
+        # Убрана кнопка "Изменить параметры"
     
     # Вывод общей стоимости ниже таблиц
     st.markdown(f"""
@@ -406,14 +391,7 @@ def render_results(results):
     </div>
     """, unsafe_allow_html=True)
     
-    # Отображаем кнопку "Скачать спецификацию" в полноширинном контейнере
-    st.markdown(f"""
-    <div style="text-align: center; margin: 20px 0;">
-        <a href="data:text/csv;base64,{generate_csv(results)}" download="specification_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv" class="calc-button">
-            Скачать спецификацию
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
+    # Убрана кнопка "Скачать спецификацию"
     
     # Добавляем скрытый элемент для скролла к результатам
     st.markdown("""
