@@ -83,7 +83,13 @@ def calculate_additional_columns(pergola_type, lamella_type, length_m, width_m):
     # Модуль - это секция перголы определенной ширины
     # Используем функцию из price_loader для консистентности
     from utils.price_loader import get_modules_count_from_size
+    # Используем логику из ценообразования для определения фактического количества модулей
     modules = get_modules_count_from_size(width_m)
+    
+    # Корректировка для ширины 8.0м: всегда должно быть 2 модуля
+    if width_m == 8.0:
+        modules = 2
+        logger.info(f"Коррекция количества модулей: для ширины {width_m} м установлено 2 модуля")
     
     # Рассчитываем стоимость дополнительных колонн
     columns_cost = ADDITIONAL_COLUMNS_PRICES.get(modules, 0)
@@ -392,6 +398,11 @@ def calculate_pergola_cost(dimensions, options):
         # Это важно для правильного выбора пультов ДУ и других компонентов
         from utils.price_loader import get_modules_count_from_size
         modules_count = get_modules_count_from_size(width_m)
+        
+        # Корректировка для ширины 8.0м: всегда должно быть 2 модуля
+        if width_m == 8.0:
+            modules_count = 2
+            logger.info(f"Коррекция количества модулей в основном расчете: для ширины {width_m} м установлено 2 модуля")
         
         # Не переопределяем количество модулей из оптимальной конфигурации
         # optimal_modules_count используется только для определения базовой цены

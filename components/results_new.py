@@ -354,8 +354,23 @@ def render_results(results):
         </table>
         """
         
-        # Отображаем созданную таблицу
-        st.markdown(price_table_html, unsafe_allow_html=True)
+        # Отображаем созданную таблицу с обертыванием в контейнер для безопасности
+        with st.container():
+            # Используем компонент с CSS классом для отображения HTML
+            st.components.v1.html(f"""
+                <div class="price-table-container">
+                    {price_table_html}
+                </div>
+                <style>
+                    .price-table-container table {{
+                        width: 100%;
+                        border-collapse: collapse;
+                    }}
+                    .price-table-container table tr td {{
+                        padding: 6px 10px;
+                    }}
+                </style>
+            """, height=250)  # Задаем фиксированную высоту для компонента
         
         # Кнопка "Изменить параметры" с улучшенным скроллом и обработкой ошибок
         st.markdown(f"""
