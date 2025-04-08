@@ -142,7 +142,7 @@ def main():
     /* Стили для темной темы */
     body.dark-mode {
         --background-color: #121212;
-        --text-color: #e0e0e0;
+        --text-color: #ffffff;  /* Изменено с #e0e0e0 на #ffffff для лучшей видимости */
         --label-color: #ffffff;
         --border-color: #444444;
         --highlight-color: #4d94ff;
@@ -355,13 +355,17 @@ def main():
             color: var(--label-color) !important;
         }
         
-        /* Исправляем серый шрифт на темном фоне */
+        /* Исправляем серый шрифт на темном фоне - сделаем его ярко-белым */
         body.dark-mode div, body.dark-mode p, body.dark-mode span, 
         body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, 
         body.dark-mode h4, body.dark-mode h5, body.dark-mode h6,
         body.dark-mode .section-header, body.dark-mode .stMarkdown,
-        body.dark-mode [data-testid="stVerticalBlock"] div {
-            color: var(--text-color, #e0e0e0) !important;
+        body.dark-mode [data-testid="stVerticalBlock"] div,
+        body.dark-mode label, body.dark-mode .stTextInput label,
+        body.dark-mode .stNumberInput label, body.dark-mode .stSelectbox label,
+        body.dark-mode .stRadio label, body.dark-mode .stCheckbox label,
+        body.dark-mode .stExpander label, body.dark-mode .stSlider label {
+            color: #FFFFFF !important;
         }
         
         /* Заголовки секций в темном режиме */
