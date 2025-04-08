@@ -156,14 +156,14 @@ def render_dimensions_form():
     st.markdown('<div class="result-card" style="margin-bottom: 0px; margin-top: 0px; padding-top: 2px; padding-bottom: 2px;">', unsafe_allow_html=True)
     
     # Заголовок блока (четкий и читаемый)
-    st.markdown('<div class="section-header">Размеры перголы</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header" style="color: #FFFFFF !important;">Размеры перголы</div>', unsafe_allow_html=True)
     
     # Используем форму ввода размеров с более крупными элементами
     row_cols = st.columns([1, 1, 1])
     
     # Ширина
     with row_cols[0]:
-        st.markdown('<div style="font-weight:500; margin-bottom:5px; font-size:1rem;">Ширина</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-weight:500; margin-bottom:5px; font-size:1rem; color: #FFFFFF !important;">Ширина</div>', unsafe_allow_html=True)
         col1, col2 = st.columns([4, 1])
         with col1:
             width = st.number_input(
@@ -181,7 +181,7 @@ def render_dimensions_form():
     
     # Вынос (длина)
     with row_cols[1]:
-        st.markdown('<div style="font-weight:500; margin-bottom:5px; font-size:1rem;">Вынос</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-weight:500; margin-bottom:5px; font-size:1rem; color: #FFFFFF !important;">Вынос</div>', unsafe_allow_html=True)
         col1, col2 = st.columns([4, 1])
         with col1:
             length = st.number_input(
@@ -199,7 +199,7 @@ def render_dimensions_form():
     
     # Высота (фиксированная)
     with row_cols[2]:
-        st.markdown('<div style="font-weight:500; margin-bottom:5px; font-size:1rem;">Высота (фикс.)</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-weight:500; margin-bottom:5px; font-size:1rem; color: #FFFFFF !important;">Высота (фикс.)</div>', unsafe_allow_html=True)
         col1, col2 = st.columns([4, 1])
         with col1:
             st.text_input(
