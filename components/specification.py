@@ -176,10 +176,13 @@ def render_specification(results, options):
         
         # Создаем DataFrame для таблицы
         import pandas as pd
-        df = pd.DataFrame(data, columns=["Характеристика", "Значение"])
+        df = pd.DataFrame(data, columns=["Наименование", "Значение"])
         
         # Убираем индексы строк
         df.index = [""] * len(df)
+        
+        # Отключаем отображение индексов строк при создании таблицы
+        df = df.reset_index(drop=True)
         
         # Применяем custom CSS для таблицы
         st.markdown("""
