@@ -280,14 +280,18 @@ def render_results(results):
                 <td style="padding: 6px 10px;">{length_m} м</td>
             </tr>
             <tr style="background-color: #f9f9f9;">
+                <td style="padding: 6px 10px; font-weight: bold;">Количество ламелей:</td>
+                <td style="padding: 6px 10px;">{results.get('lamella_count', '-')} шт</td>
+            </tr>
+            <tr style="background-color: #f0f0f0;">
                 <td style="padding: 6px 10px; font-weight: bold;">Площадь:</td>
                 <td style="padding: 6px 10px;">{area} м²</td>
             </tr>
-            <tr style="background-color: #f0f0f0;">
+            <tr style="background-color: #f9f9f9;">
                 <td style="padding: 6px 10px; font-weight: bold;">Количество модулей:</td>
                 <td style="padding: 6px 10px;">{modules_count} модуль</td>
             </tr>
-            <tr style="background-color: #f9f9f9;">
+            <tr style="background-color: #f0f0f0;">
                 <td style="padding: 6px 10px; font-weight: bold;">Компоненты автоматики:</td>
                 <td style="padding: 6px 10px;">
                     <ul style="margin: 0; padding-left: 20px;">
@@ -296,7 +300,7 @@ def render_results(results):
                     </ul>
                 </td>
             </tr>
-            <tr style="background-color: #f0f0f0;">
+            <tr style="background-color: #f9f9f9;">
                 <td style="padding: 6px 10px; font-weight: bold;">Подсветка:</td>
                 <td style="padding: 6px 10px;">
                     {lighting_type}
