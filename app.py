@@ -46,84 +46,132 @@ def main():
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
     
-    # Задаем стили для максимально компактного основного контейнера, ориентируясь на мобильный интерфейс
+    # Задаем стили для компактного и читаемого интерфейса по новому дизайну
     st.markdown("""
     <style>
     .block-container {
-        max-width: 450px;
-        padding-top: 0.2rem;
-        padding-bottom: 0.2rem;
+        max-width: 800px;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
         margin: 0 auto;
     }
-    /* Радикально уменьшаем отступы между элементами */
-    div.row-widget.stButton {
-        margin-bottom: 0 !important;
-    }
-    /* Уменьшаем размер шрифта для всего интерфейса */
+    /* Глобальные стили для улучшения читаемости */
     .stApp, .stApp p, .stApp div {
-        font-size: 0.8rem;
+        font-size: 1rem;
+        font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-    /* Делаем основной контейнер максимально плотным */
+    /* Заголовки секций */
+    .section-header {
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #eee;
+    }
+    /* Стили для плиточных кнопок */
+    .tile-button {
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        height: 100%;
+        transition: all 0.2s;
+    }
+    .tile-button:hover {
+        border-color: #0066cc;
+        box-shadow: 0 2px 5px rgba(0, 0, 102, 0.1);
+    }
+    .tile-button.selected {
+        background-color: #e6f2ff;
+        border-color: #0066cc;
+        box-shadow: 0 2px 5px rgba(0, 0, 102, 0.1);
+    }
+    .tile-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #0066cc;
+        margin-bottom: 5px;
+    }
+    .tile-desc {
+        font-size: 0.9rem;
+        color: #666;
+    }
+    /* Компактные, но читаемые поля формы */
+    div.row-widget.stNumberInput, div.row-widget.stTextInput {
+        margin-bottom: 0.8rem !important;
+    }
+    /* Стили для radio и checkbox групп */
+    div.row-widget.stRadio > div {
+        flex-direction: row !important;
+        gap: 10px;
+    }
+    /* Стили для основной кнопки расчета */
+    .main-button {
+        background-color: #0066cc;
+        color: white;
+        font-weight: bold;
+        border-radius: 6px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        border: none;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+    .main-button:hover {
+        background-color: #0055aa;
+    }
+    /* Адаптивность для мобильных устройств */
+    @media (max-width: 768px) {
+        .block-container {
+            max-width: 100%;
+            padding: 0.5rem;
+        }
+        .tile-title {
+            font-size: 0.9rem;
+        }
+        .tile-desc {
+            font-size: 0.8rem;
+        }
+    }
+    /* Стили для карточек с результатами */
+    .result-card {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .result-card-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #333;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #eee;
+    }
+    /* Устраняем пустые промежутки между компонентами */
     div[data-testid="stVerticalBlock"] > div {
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-        padding-top: 0 !important;
+        margin-bottom: 10px !important;
     }
-    /* Убираем лишние отступы для формы */
-    div[data-testid="stForm"] {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    /* Уменьшаем отступы у всех элементов ввода */
-    div.row-widget.stNumberInput, div.row-widget.stTextInput, div.row-widget.stTextArea,
-    div.row-widget.stRadio, div.row-widget.stCheckbox {
-        margin-top: 0 !important;
-        margin-bottom: 0.1rem !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    /* Уменьшаем отступы между заголовками и контентом */
-    h1, h2, h3, p, .stMarkdown {
-        margin-top: 0 !important;
-        margin-bottom: 0.2rem !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        line-height: 1.1 !important;
-    }
-    /* Удаляем лишние границы и отступы */
+    /* Убираем лишние границы для компактности */
     .element-container {
-        margin-top: 0.1rem !important;
-        margin-bottom: 0.1rem !important;
-    }
-    /* Убираем лишние отступы у кнопок +/- в числовых полях */
-    button.step-down, button.step-up {
-        padding: 0 !important;
-        min-height: 0 !important;
-        line-height: 1 !important;
-    }
-    /* Убираем лишние белые пространства в форме */
-    section[data-testid="stSidebar"] > div {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    /* Делаем number input более компактным */
-    input[type="number"] {
-        padding-top: 0.1rem !important;
-        padding-bottom: 0.1rem !important;
-        min-height: 0 !important;
+        margin-top: 0;
+        margin-bottom: 0.6rem;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Заголовок калькулятора в ультра-компактном стиле
-    st.markdown("<h1 style='text-align: center; margin-top: 10px; margin-bottom: 5px; font-size: 1.3rem;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 0.8rem;'>Введите размеры и параметры перголы для расчета стоимости в евро (€).</p>", unsafe_allow_html=True)
+    # Заголовок калькулятора - крупный и четкий
+    st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 1.8rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в евро (€)</p>", unsafe_allow_html=True)
     dimensions = render_dimensions_form()
     
     # Убираем заголовок конфигурации для более чистого интерфейса
     options = render_options_form()
     
-    # Кнопка для расчета в ультра-компактном стиле
+    # Кнопка для расчета с улучшенным стилем
     _, center_col, _ = st.columns([1, 2, 1])
     with center_col:
         st.markdown("""
@@ -131,21 +179,24 @@ def main():
         div[data-testid="stButton"] > button[kind="primary"] {
             background-color: #0066cc;
             color: white;
-            font-size: 14px;
+            font-size: 1.1rem;
             font-weight: bold;
-            border-radius: 4px;
-            padding: 8px 0;
+            border-radius: 6px;
+            padding: 12px 0;
             border: none;
-            margin-top: 10px;
-            margin-bottom: 10px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s;
         }
         div[data-testid="stButton"] > button[kind="primary"]:hover {
             background-color: #0055aa;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
         }
         </style>
         """, unsafe_allow_html=True)
-        if st.button("Рассчитать", type="primary", use_container_width=True):
+        if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
             with st.spinner("Выполняется расчет..."):
                 # Проверяем, что у нас есть данные для расчета
                 if dimensions and options:
