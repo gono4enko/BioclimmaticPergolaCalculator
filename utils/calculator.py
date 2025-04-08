@@ -136,16 +136,16 @@ def determine_bansbach_drive_type(pergola_type, width_m, length_m, modules_count
             logger.info(f"Выбран стандартный привод T1 для перголы размером {width_m}x{length_m} м, "
                       f"т.к. не выполнены условия для Tandem при {modules_count} модулях")
     
-    # Общая стоимость приводов зависит от количества модулей
+    # Общая стоимость привода Bansbach зависит от количества модулей для обоих типов приводов
     drive_cost = drive_cost_per_module * modules_count
+    logger.info(f"Стоимость привода Bansbach {drive_type}: {drive_cost_per_module} евро × {modules_count} модуля = {drive_cost} евро")
     
     # Формируем сообщение в зависимости от типа привода и количества модулей
     if drive_type == "Tandem":
         message = (
             f"Для автоматизации перголы размером {width_m:.2f}x{length_m:.2f} м "
             f"({modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}) "
-            f"требуется {modules_count} {'привод' if modules_count == 1 else 'привода' if modules_count < 5 else 'приводов'} "
-            f"Bansbach Tandem"
+            f"используется привод Bansbach Tandem ({modules_count} {'комплект' if modules_count == 1 else 'комплекта' if modules_count < 5 else 'комплектов'})"
         )
     else:
         message = (
@@ -242,16 +242,16 @@ def determine_somfy_drive_type(pergola_type, width_m, length_m, modules_count):
             logger.info(f"Выбран стандартный привод Somfy M1 для перголы размером {width_m}x{length_m} м, "
                       f"т.к. не выполнены условия для M2 TANDEM при {modules_count} модулях")
     
-    # Общая стоимость приводов зависит от количества модулей
+    # Общая стоимость привода Somfy зависит от количества модулей для обоих типов
     drive_cost = drive_cost_per_module * modules_count
+    logger.info(f"Стоимость привода Somfy {drive_type}: {drive_cost_per_module} евро × {modules_count} модуля = {drive_cost} евро")
     
     # Формируем сообщение в зависимости от типа привода и количества модулей
     if drive_type == "M2_TANDEM":
         message = (
             f"Для автоматизации перголы размером {width_m:.2f}x{length_m:.2f} м "
             f"({modules_count} {'модуль' if modules_count == 1 else 'модуля' if modules_count < 5 else 'модулей'}) "
-            f"требуется {modules_count} {'привод' if modules_count == 1 else 'привода' if modules_count < 5 else 'приводов'} "
-            f"Somfy M2 TANDEM"
+            f"используется привод Somfy M2 TANDEM ({modules_count} {'комплект' if modules_count == 1 else 'комплекта' if modules_count < 5 else 'комплектов'})"
         )
     else:
         message = (
