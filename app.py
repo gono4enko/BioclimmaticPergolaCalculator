@@ -8,8 +8,8 @@ from utils.calculator import calculate_pergola_cost
 from components.header import render_header
 from components.dimensions_form import render_dimensions_form
 from components.options_form import render_options_form
-from components.results import render_results
-from components.specification import render_specification
+from components.results_new import render_results
+# Удалено: from components.specification import render_specification
 from components.scroll_helper import scroll_to_results
 
 # Настраиваем логирование
@@ -122,9 +122,6 @@ def main():
         
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
-        
-        # Показываем объединенную спецификацию перголы
-        render_specification(st.session_state.results, st.session_state.options)
         
         # Добавляем скрипт для автоматического скролла к результатам
         scroll_to_results()
