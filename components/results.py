@@ -148,43 +148,206 @@ def render_results(results):
         elif width_m > 4:
             modules_count = 2
     
-    # Создаем стилизованный блок с результатами по новому дизайну
-    st.markdown(f"""
-    <div class="result-block">
-        <div class="result-label">Стоимость</div>
-        <div class="result-value">{int(results['total_cost']):,} €</div>
-    </div>
-    """.replace(',', ' '), unsafe_allow_html=True)
+    # Создаем таблицу спецификации в соответствии с новым дизайном
+    # Получаем информацию о перголе
+    pergola_type = ""
+    lamella_type = ""
+    lighting_type = "Без освещения"
     
-    # Детальная таблица стоимости
-    st.markdown(f"""
+    if 'options' in st.session_state:
+        pergola_options = st.session_state.options
+        # Тип перголы
+        pt = pergola_options.get('pergola_type', '')
+        if pt == 'B500NEW':
+            pergola_type = "Биоклиматическая с поворотными ламелями (B500)"
+        elif pt == 'B700NEW':
+            pergola_type = "Биоклиматическая со сдвижными ламелями (B700)"
+        elif pt == 'B600':
+            pergola_type = "Стационарная с PIR-панелями (B600)"
+            
+        # Тип ламелей
+        lt = pergola_options.get('lamella_type', '')
+        if '20' in lt:
+            lamella_type = "200 мм усиленные"
+        elif '25' in lt:
+            lamella_type = "250 мм стандартные"
+        elif 'B600' in lt:
+            lamella_type = "PIR панели"
+            
+        # Освещение
+        light = pergola_options.get('lighting_type', 'none')
+        if light == 'led':
+            lighting_type = "LED освещение"
+        elif light == 'led_rgb':
+            lighting_type = "LED + RGB освещение"
+        elif light == 'none':
+            lighting_type = "Без освещения"
+    
+    # Узнаем автоматику и компоненты
+    automation_info = "Базовая автоматика"
+    components_info = ""
+    components_cost = 0
+    
+    if "automation_type" in detailed_costs:
+        automation_type = detailed_costs.get('automation_type', '')
+        automation_manufacturer = detailed_costs.get('automation_manufacturer', '')
+        remote_control = detailed_costs.get('remote_control', '')
+        
+        if automation_manufacturer == "Bansbach":
+            components_info = f"Bansbach {automation_type}, {remote_control}"
+            components_cost = detailed_costs.get('additional_options', {}).get('automation', 0)
+            if "remote_control_cost" in detailed_costs:
+                components_cost += detailed_costs.get('remote_control_cost', 0)
+        elif automation_manufacturer == "Somfy":
+            components_info = f"Somfy {automation_type}, {remote_control}"
+            components_cost = detailed_costs.get('additional_options', {}).get('automation', 0)
+            if "remote_control_cost" in detailed_costs:
+                components_cost += detailed_costs.get('remote_control_cost', 0)
+    
+    # Конвертируем евро в рубли (условно: 1 евро = 100 рублей)
+    eur_to_rub = 100
+    total_cost_rub = int(results['total_cost'] * eur_to_rub)
+    components_cost_rub = int(components_cost * eur_to_rub)
+    
+    # Создаем стилизованную таблицу результатов
+    st.markdown("""
     <style>
-    .costs-table {{
+    .results-container {
+        background-color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    .results-title {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .spec-title {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        margin-top: 25px;
+    }
+    .spec-table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 15px;
-    }}
-    .costs-table tr td {{
-        padding: 8px 10px;
-        border-bottom: 1px solid #eee;
-    }}
-    .costs-table tr td:first-child {{
-        font-weight: normal;
-        color: #555;
-    }}
-    .costs-table tr td:last-child {{
+    }
+    .spec-table tr {
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .spec-table tr:last-child {
+        border-bottom: none;
+    }
+    .spec-table td {
+        padding: 12px 8px;
+        vertical-align: top;
+    }
+    .spec-table td:first-child {
+        font-weight: bold;
+        width: 35%;
+    }
+    .spec-table td:last-child {
         text-align: right;
         font-weight: bold;
-    }}
+    }
+    .total-row {
+        margin-top: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+    }
+    .total-label {
+        font-size: 24px;
+        font-weight: bold;
+    }
+    .total-value {
+        font-size: 24px;
+        font-weight: bold;
+    }
+    .change-params-btn {
+        display: block;
+        width: 100%;
+        background-color: white;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 12px;
+        text-align: center;
+        font-size: 16px;
+        margin-top: 20px;
+        cursor: pointer;
+        text-decoration: none;
+        color: black;
+    }
     </style>
-    <table class="costs-table">
-        <tr><td>Базовая стоимость</td><td>{int(detailed_costs.get('base_price', 0)):,} €</td></tr>
-        <tr><td>Автоматика</td><td>{int(detailed_costs.get('additional_options', {}).get('automation', 0)):,} €</td></tr>
-        <tr><td>Освещение</td><td>{int(detailed_costs.get('lighting', 0)):,} €</td></tr>
-        <tr><td>Размеры</td><td>{width_m:.1f}×{length_m:.1f} м ({area:.1f} м²)</td></tr>
-        <tr><td>Количество модулей</td><td>{modules_count}</td></tr>
-    </table>
-    """.replace(',', ' '), unsafe_allow_html=True)
+    <div class="results-container">
+        <div class="results-title">РЕЗУЛЬТАТЫ РАСЧЕТА</div>
+        
+        <div class="spec-title">СПЕЦИФИКАЦИЯ ПЕРГОЛЫ</div>
+        <table class="spec-table">
+            <tr>
+                <td>Тип перголы</td>
+                <td>{}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Тип ламелей</td>
+                <td>{}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Размеры</td>
+                <td>{} × {} м</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Площадь</td>
+                <td>{} м²</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Освещение</td>
+                <td>{}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Автоматика</td>
+                <td>{}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Компоненты<br>и монтаж</td>
+                <td>{}</td>
+                <td>{:,} ₽</td>
+            </tr>
+            <tr>
+                <td>Изготовка<br>и доставка</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </table>
+        
+        <div class="total-row">
+            <div class="total-label">Итого</div>
+            <div class="total-value">{:,} ₽</div>
+        </div>
+        
+        <a href="#" class="change-params-btn" onclick="window.scrollTo(0, 0);">Изменить параметры</a>
+    </div>
+    """.format(
+        pergola_type, 
+        lamella_type, 
+        width_m, 
+        length_m, 
+        area,
+        lighting_type,
+        automation_info,
+        components_info,
+        components_cost_rub,
+        total_cost_rub
+    ).replace(',', ' '), unsafe_allow_html=True)
     
     # Закрываем контейнер
     st.markdown("""
