@@ -196,7 +196,7 @@ def render_options_form():
                     
                     # Обновляем тип перголы в состоянии сессии
                     st.session_state.options['pergola_type'] = pergola_type
-                    st.experimental_rerun()
+                    st.rerun()
     
     # Отображаем описание выбранного типа перголы
     if selected_pergola_type in PERGOLA_TYPES:
@@ -274,7 +274,7 @@ def render_options_form():
                         # Видимая кнопка для выбора ламели
                         if st.button(f"{size_display}\n{lamella_short_desc.split(',')[-1].strip()}", key=f"btn_lamella_{lam_type}", use_container_width=True):
                             st.session_state.options['lamella_type'] = lam_type
-                            st.experimental_rerun()
+                            st.rerun()
         
         # Отображаем описание выбранного типа ламелей
         if selected_lamella_type in LAMELLA_TYPES:

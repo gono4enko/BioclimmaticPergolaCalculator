@@ -148,28 +148,43 @@ def render_results(results):
         elif width_m > 4:
             modules_count = 2
     
-    # Отображаем основные метрики
+    # Создаем стилизованный блок с результатами по новому дизайну
     st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-price">{results['total_cost']} €</div>
-        <div class="metric-label">Итоговая стоимость</div>
+    <div class="result-block">
+        <div class="result-label">Стоимость</div>
+        <div class="result-value">{int(results['total_cost']):,} €</div>
     </div>
+    """.replace(',', ' '), unsafe_allow_html=True)
     
-    <div class="metric-card">
-        <div class="metric-value">{width_m:.1f}×{length_m:.1f} м</div>
-        <div class="metric-label">Размеры (Ш×В)</div>
-    </div>
-    
-    <div class="metric-card">
-        <div class="metric-value">{area:.1f} м²</div>
-        <div class="metric-label">Площадь перголы</div>
-    </div>
-    
-    <div class="metric-card">
-        <div class="metric-value">{modules_count}</div>
-        <div class="metric-label">Количество модулей</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Детальная таблица стоимости
+    st.markdown(f"""
+    <style>
+    .costs-table {{
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }}
+    .costs-table tr td {{
+        padding: 8px 10px;
+        border-bottom: 1px solid #eee;
+    }}
+    .costs-table tr td:first-child {{
+        font-weight: normal;
+        color: #555;
+    }}
+    .costs-table tr td:last-child {{
+        text-align: right;
+        font-weight: bold;
+    }}
+    </style>
+    <table class="costs-table">
+        <tr><td>Базовая стоимость</td><td>{int(detailed_costs.get('base_price', 0)):,} €</td></tr>
+        <tr><td>Автоматика</td><td>{int(detailed_costs.get('additional_options', {}).get('automation', 0)):,} €</td></tr>
+        <tr><td>Освещение</td><td>{int(detailed_costs.get('lighting', 0)):,} €</td></tr>
+        <tr><td>Размеры</td><td>{width_m:.1f}×{length_m:.1f} м ({area:.1f} м²)</td></tr>
+        <tr><td>Количество модулей</td><td>{modules_count}</td></tr>
+    </table>
+    """.replace(',', ' '), unsafe_allow_html=True)
     
     # Закрываем контейнер
     st.markdown("""

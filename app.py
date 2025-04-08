@@ -58,22 +58,15 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Отображаем заголовок
-    render_header()
-    
-    # Создаем контейнер для форм ввода с поэтапным расположением
-    st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>Параметры перголы</h2>", unsafe_allow_html=True)
-    
-    # 1. Блок размеров - первый этап
-    st.markdown("<h3 style='text-align: center; margin-top: 20px; margin-bottom: 10px;'>Шаг 1: Размеры перголы</h3>", unsafe_allow_html=True)
+    # Заголовок калькулятора в новом стиле
+    st.markdown("<h1 style='text-align: center; margin-top: 30px; margin-bottom: 15px;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-bottom: 30px;'>Введите размеры и параметры перголы для расчета стоимости в евро (€).</p>", unsafe_allow_html=True)
     dimensions = render_dimensions_form()
     
-    # 2. Блок выбора типа перголы и ламелей - второй этап
-    st.markdown("<h3 style='text-align: center; margin-top: 30px; margin-bottom: 10px;'>Шаг 2: Конфигурация перголы</h3>", unsafe_allow_html=True)
+    # Убираем заголовок конфигурации для более чистого интерфейса
     options = render_options_form()
     
-    # Кнопка для расчета по центру с большим размером и улучшенной визуализацией
-    st.markdown("<h3 style='text-align: center; margin-top: 30px; margin-bottom: 15px;'>Шаг 3: Расчёт стоимости</h3>", unsafe_allow_html=True)
+    # Кнопка для расчета в стиле нового дизайна
     _, center_col, _ = st.columns([1, 2, 1])
     with center_col:
         st.markdown("""
@@ -81,22 +74,21 @@ def main():
         div[data-testid="stButton"] > button[kind="primary"] {
             background-color: #0066cc;
             color: white;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            border-radius: 10px;
-            padding: 15px 0;
+            border-radius: 5px;
+            padding: 12px 0;
             border: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         div[data-testid="stButton"] > button[kind="primary"]:hover {
-            background-color: #004c99;
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-            transform: translateY(-2px);
+            background-color: #0055aa;
         }
         </style>
         """, unsafe_allow_html=True)
-        if st.button("РАССЧИТАТЬ СТОИМОСТЬ", type="primary", use_container_width=True):
+        if st.button("Рассчитать", type="primary", use_container_width=True):
             with st.spinner("Выполняется расчет..."):
                 # Проверяем, что у нас есть данные для расчета
                 if dimensions and options:
