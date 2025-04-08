@@ -232,9 +232,6 @@ def main():
     
     # Отображаем результаты расчета под формами ввода
     if 'results' in st.session_state and 'options' in st.session_state:
-        # Заголовок для секции результатов (компактный)
-        st.markdown("<h3 style='text-align: center; margin-top: 10px; margin-bottom: 10px; font-size: 1.1rem;'>Результаты расчета</h3>", unsafe_allow_html=True)
-        
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
