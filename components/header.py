@@ -7,31 +7,31 @@ def render_header():
     """
     Отображает заголовок и описание калькулятора пергол
     """
-    # Добавляем CSS для стилизации заголовка
+    # Добавляем CSS для стилизации заголовка (ультра-компактная версия)
     st.markdown("""
     <style>
     .header-container {
         background-color: #4a69bd;
-        padding: 1.5rem;
-        border-radius: 8px;
-        margin-bottom: 2rem;
+        padding: 0.6rem;
+        border-radius: 6px;
+        margin-bottom: 0.7rem;
         color: white;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
     }
     .header-title {
-        font-size: 2.2rem;
+        font-size: 1.4rem;
         font-weight: bold;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.1rem;
         text-align: center;
     }
     .header-subtitle {
-        font-size: 1.2rem;
+        font-size: 0.8rem;
         opacity: 0.9;
-        margin-bottom: 0.8rem;
+        margin-bottom: 0.2rem;
         text-align: center;
     }
     .header-desc {
-        font-size: 0.95rem;
+        font-size: 0.7rem;
         opacity: 0.8;
         text-align: center;
         margin-bottom: 0;

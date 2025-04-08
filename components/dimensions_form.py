@@ -152,22 +152,22 @@ def render_dimensions_form():
     if st.session_state.dimensions['height'] != 3.0:
         st.session_state.dimensions['height'] = 3.0
     
-    # Создаем компактный блок для размеров
-    st.markdown("<div style='background-color: #f8f9fa; border-radius: 8px; padding: 0.6rem; margin-bottom: 0.6rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);'>", unsafe_allow_html=True)
+    # Создаем очень компактный блок для размеров
+    st.markdown("<div style='background-color: #f8f9fa; border-radius: 6px; padding: 0.4rem; margin-bottom: 0.4rem; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);'>", unsafe_allow_html=True)
     
-    # Заголовок блока (ещё более компактный)
-    st.markdown("<h3 style='margin-top: 0; margin-bottom: 0.3rem; color: #333; font-size: 1.1rem;'>Размеры перголы</h3>", unsafe_allow_html=True)
+    # Заголовок блока (ультра-компактный)
+    st.markdown("<h3 style='margin-top: 0; margin-bottom: 0.2rem; color: #333; font-size: 0.95rem;'>Размеры перголы</h3>", unsafe_allow_html=True)
     
-    # Используем более компактный дизайн формы ввода размеров
-    st.markdown('<div class="dimension-form" style="padding: 0.4rem;">', unsafe_allow_html=True)
+    # Используем еще более компактный дизайн формы ввода размеров
+    st.markdown('<div class="dimension-form" style="padding: 0.2rem;">', unsafe_allow_html=True)
     
-    # Создаем два ряда по два элемента для более компактного отображения
-    row1_cols = st.columns(2)
+    # Создаем три колонки для элементов на одном ряду
+    row_cols = st.columns([2, 2, 3])
     
-    # Первый ряд: Ширина и Вынос
-    with row1_cols[0]:
-        st.markdown('<div class="dimension-label">Ширина</div>', unsafe_allow_html=True)
-        st.markdown('<div class="dimension-input-container">', unsafe_allow_html=True)
+    # Ширина
+    with row_cols[0]:
+        st.markdown('<div class="dimension-label" style="font-size:0.8rem;">Ширина</div>', unsafe_allow_html=True)
+        st.markdown('<div class="dimension-input-container" style="margin-bottom:0.3rem;">', unsafe_allow_html=True)
         width = st.number_input(
             "Ширина перголы", 
             min_value=1.5, 
@@ -178,12 +178,13 @@ def render_dimensions_form():
             key="width_input",
             label_visibility="collapsed"
         )
-        st.markdown(f'<div class="dimension-unit">м</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="dimension-unit" style="font-size:0.8rem;">м</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
-    with row1_cols[1]:
-        st.markdown('<div class="dimension-label">Вынос</div>', unsafe_allow_html=True)
-        st.markdown('<div class="dimension-input-container">', unsafe_allow_html=True)
+    # Вынос
+    with row_cols[1]:
+        st.markdown('<div class="dimension-label" style="font-size:0.8rem;">Вынос</div>', unsafe_allow_html=True)
+        st.markdown('<div class="dimension-input-container" style="margin-bottom:0.3rem;">', unsafe_allow_html=True)
         length = st.number_input(
             "Вынос перголы", 
             min_value=1.0, 
@@ -194,20 +195,21 @@ def render_dimensions_form():
             key="length_input",
             label_visibility="collapsed"
         )
-        st.markdown(f'<div class="dimension-unit">м</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="dimension-unit" style="font-size:0.8rem;">м</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Только высота, убираем дублирующуюся конфигурацию
-    st.markdown('<div class="dimension-label">Высота</div>', unsafe_allow_html=True)
-    st.markdown('<div class="dimension-input-container">', unsafe_allow_html=True)
-    st.text_input(
-        "Высота перголы",
-        value="3,0 м",
-        disabled=True,
-        key="height_input",
-        label_visibility="collapsed"
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Высота (более компактно)
+    with row_cols[2]:
+        st.markdown('<div class="dimension-label" style="font-size:0.8rem;">Высота (фиксированная)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="dimension-input-container" style="margin-bottom:0.3rem;">', unsafe_allow_html=True)
+        st.text_input(
+            "Высота перголы",
+            value="3,0 м",
+            disabled=True,
+            key="height_input",
+            label_visibility="collapsed"
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
     

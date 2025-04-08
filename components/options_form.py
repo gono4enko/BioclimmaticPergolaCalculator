@@ -121,14 +121,14 @@ def render_options_form():
             'additional_options': []
         }
     
-    # Контейнер для опций перголы (более компактный)
-    st.markdown("<div class='pergola-option-container' style='margin-bottom: 0.5rem;'>", unsafe_allow_html=True)
+    # Контейнер для опций перголы (ультра-компактный)
+    st.markdown("<div class='pergola-option-container' style='margin-bottom: 0.3rem; padding: 0.3rem;'>", unsafe_allow_html=True)
     
-    # Заголовок блока (более компактный)
-    st.markdown("<h3 style='margin-top: 0; margin-bottom: 0.3rem; color: #333; font-size: 1.1rem;'>Конфигурация перголы</h3>", unsafe_allow_html=True)
+    # Заголовок блока (ультра-компактный)
+    st.markdown("<h3 style='margin-top: 0; margin-bottom: 0.2rem; color: #333; font-size: 0.95rem;'>Конфигурация перголы</h3>", unsafe_allow_html=True)
     
-    # Блок выбора типа перголы (компактнее)
-    st.markdown("<div class='option-title' style='margin-bottom:0.2rem;'>Тип перголы:</div>", unsafe_allow_html=True)
+    # Блок выбора типа перголы (ультра-компактный)
+    st.markdown("<div class='option-title' style='margin-bottom:0.1rem; font-size:0.8rem;'>Тип перголы:</div>", unsafe_allow_html=True)
     # Создаем плитки для выбора типа перголы
     pergola_options = list(PERGOLA_TYPES.keys())
     pergola_cols = st.columns(len(pergola_options))
@@ -152,21 +152,23 @@ def render_options_form():
                 elif "B600" in pergola_type:
                     pergola_short_desc = "стационарная"
                 
-            # Создаем кнопки с более заметным выделением при выборе
+            # Создаем кнопки с более заметным выделением при выборе (ультра-компактные)
             button_style = """ 
             <style>
             div[data-testid*="stButton"] > button {
                 background-color: #f0f0f0;
-                border: 2px solid #ddd;
+                border: 1px solid #ddd;
                 color: #333;
                 font-weight: bold;
                 text-align: center;
-                border-radius: 8px;
+                border-radius: 6px;
                 height: auto;
-                padding: 8px;
-                margin-bottom: 5px;
+                padding: 5px;
+                margin-bottom: 3px;
                 transition: all 0.3s;
-                font-size: 0.85rem;
+                font-size: 0.75rem;
+                min-height: 0;
+                line-height: 1.2;
             }
             div[data-testid*="stButton"] > button:hover {
                 background-color: #e6f3ff;
@@ -177,13 +179,13 @@ def render_options_form():
             """
             st.markdown(button_style, unsafe_allow_html=True)
             
-            # Отображаем состояние выбора визуально
+            # Отображаем состояние выбора визуально (ультра-компактно)
             if is_selected:
                 st.markdown(f"""
-                <div style="background-color: #e6f3ff; border: 2px solid #0066cc; color: #0066cc; 
-                     font-weight: bold; text-align: center; border-radius: 8px; padding: 8px; margin-bottom: 5px;">
-                    <div style="font-size: 15px;">{pergola_name.split()[-1]} ✓</div>
-                    <div style="font-size: 11px; margin-top: 3px;">{pergola_short_desc}</div>
+                <div style="background-color: #e6f3ff; border: 1px solid #0066cc; color: #0066cc; 
+                     font-weight: bold; text-align: center; border-radius: 6px; padding: 4px; margin-bottom: 3px;">
+                    <div style="font-size: 13px;">{pergola_name.split()[-1]} ✓</div>
+                    <div style="font-size: 9px; margin-top: 1px;">{pergola_short_desc}</div>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -191,7 +193,7 @@ def render_options_form():
                 if st.button("", key=f"no_action_{pergola_type}", use_container_width=True, disabled=True):
                     pass
             else:
-                # Видимая кнопка для выбора перголы
+                # Видимая кнопка для выбора перголы (ультра-компактная)
                 if st.button(f"{pergola_name.split()[-1]}\n{pergola_short_desc}", key=f"btn_pergola_{pergola_type}", use_container_width=True):
                     selected_pergola_type = pergola_type
                 
@@ -227,39 +229,39 @@ def render_options_form():
     # Получаем доступные типы ламелей для выбранного типа перголы
     lamella_options = get_lamella_options_for_pergola(pergola_type)
     
-    # Блок выбора типа ламелей и отображения типа крыши для всех типов пергол
+    # Блок выбора типа ламелей и отображения типа крыши для всех типов пергол (ультра-компактно)
     if pergola_type == "B600":
-        # Для B600 нет выбора ламелей - используются PIR-панели (делаем компактнее)
+        # Для B600 нет выбора ламелей - используются PIR-панели (ультра-компактно)
         st.markdown("""
-        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.2rem; margin-top: 0.2rem; font-size: 0.85rem;'>
+        <div style='background-color: #fff8e6; border-radius: 4px; padding: 0.1rem; margin-top: 0.1rem; font-size: 0.7rem;'>
             <b>Тип крыши:</b> Стационарные PIR-панели
         </div>
         """, unsafe_allow_html=True)
         lamella_type = "B600"  # Для перголы B600 используем фиксированный тип ламелей
         selected_lamella_type = lamella_type
     elif "B500" in pergola_type:
-        # Для B500 - отображаем информацию о поворотных ламелях (компактнее)
+        # Для B500 - отображаем информацию о поворотных ламелях (ультра-компактно)
         st.markdown("""
-        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.2rem; margin-top: 0.2rem; font-size: 0.85rem;'>
+        <div style='background-color: #fff8e6; border-radius: 4px; padding: 0.1rem; margin-top: 0.1rem; font-size: 0.7rem;'>
             <b>Тип крыши:</b> Поворотные ламели
         </div>
         """, unsafe_allow_html=True)
-        # Для выбора ламелей - заголовок (компактнее)
-        st.markdown("<div class='option-title' style='margin-top: 0.4rem; margin-bottom:0.2rem;'>Тип ламелей:</div>", unsafe_allow_html=True)
+        # Для выбора ламелей - заголовок (ультра-компактно)
+        st.markdown("<div class='option-title' style='margin-top: 0.2rem; margin-bottom:0.1rem; font-size:0.7rem;'>Тип ламелей:</div>", unsafe_allow_html=True)
         
         # Создаем плитки для выбора типа ламелей
         lamella_cols = st.columns(len(lamella_options))
         selected_lamella_type = st.session_state.options['lamella_type']
         lamella_type = selected_lamella_type
     else:  # B700
-        # Для B700 - отображаем информацию о сдвижных ламелях (компактнее)
+        # Для B700 - отображаем информацию о сдвижных ламелях (ультра-компактно)
         st.markdown("""
-        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.2rem; margin-top: 0.2rem; font-size: 0.85rem;'>
+        <div style='background-color: #fff8e6; border-radius: 4px; padding: 0.1rem; margin-top: 0.1rem; font-size: 0.7rem;'>
             <b>Тип крыши:</b> Сдвижные ламели
         </div>
         """, unsafe_allow_html=True)
-        # Для выбора ламелей - заголовок (компактнее)
-        st.markdown("<div class='option-title' style='margin-top: 0.4rem; margin-bottom:0.2rem;'>Тип ламелей:</div>", unsafe_allow_html=True)
+        # Для выбора ламелей - заголовок (ультра-компактно)
+        st.markdown("<div class='option-title' style='margin-top: 0.2rem; margin-bottom:0.1rem; font-size:0.7rem;'>Тип ламелей:</div>", unsafe_allow_html=True)
         
         # Создаем плитки для выбора типа ламелей
         lamella_cols = st.columns(len(lamella_options))
@@ -295,13 +297,13 @@ def render_options_form():
                     else:
                         size_display = "250мм"
                     
-                    # Переиспользуем стиль кнопок для ламелей (компактнее)
+                    # Переиспользуем стиль кнопок для ламелей (ультра-компактные)
                     if is_selected:
                         st.markdown(f"""
-                        <div style="background-color: #e6f3ff; border: 2px solid #0066cc; color: #0066cc; 
-                             font-weight: bold; text-align: center; border-radius: 8px; padding: 6px; margin-bottom: 3px;">
-                            <div style="font-size: 14px;">{size_display} ✓</div>
-                            <div style="font-size: 10px; margin-top: 2px;">{lamella_short_desc.split(',')[-1].strip()}</div>
+                        <div style="background-color: #e6f3ff; border: 1px solid #0066cc; color: #0066cc; 
+                             font-weight: bold; text-align: center; border-radius: 6px; padding: 3px; margin-bottom: 2px;">
+                            <div style="font-size: 12px;">{size_display} ✓</div>
+                            <div style="font-size: 9px; margin-top: 1px;">{lamella_short_desc.split(',')[-1].strip()}</div>
                         </div>
                         """, unsafe_allow_html=True)
                         
@@ -309,7 +311,7 @@ def render_options_form():
                         if st.button("", key=f"no_action_{lam_type}", use_container_width=True, disabled=True):
                             pass
                     else:
-                        # Видимая кнопка для выбора ламели
+                        # Видимая кнопка для выбора ламели (ультра-компактная)
                         if st.button(f"{size_display}\n{lamella_short_desc.split(',')[-1].strip()}", key=f"btn_lamella_{lam_type}", use_container_width=True):
                             st.session_state.options['lamella_type'] = lam_type
                             st.rerun()
@@ -320,13 +322,28 @@ def render_options_form():
     else:
         lamella_step = 250  # Для ламелей B500-25NEW и B700-25NEW
     
-    # Блок выбора освещения на полную ширину (без колонок с доп. опциями, компактнее)
-    st.markdown("<div class='option-title' style='margin-top: 0.3rem; margin-bottom:0.2rem;'>Освещение:</div>", unsafe_allow_html=True)
+    # Блок выбора освещения на полную ширину (ультра-компактно)
+    st.markdown("<div class='option-title' style='margin-top: 0.2rem; margin-bottom:0.1rem; font-size:0.7rem;'>Освещение:</div>", unsafe_allow_html=True)
     
     # Доступные типы освещения для выбранного типа перголы
     lighting_options = PERGOLA_TYPES[pergola_type]["available_lighting"] if pergola_type in PERGOLA_TYPES else ["none"]
     
-    # Радиокнопки для выбора освещения
+    # Стиль для уменьшения размера радиокнопок
+    st.markdown("""
+    <style>
+    div.row-widget.stRadio > div {
+        flex-direction: row;
+        align-items: center;
+    }
+    div.row-widget.stRadio > div label {
+        font-size: 0.7rem !important;
+        padding: 0.1rem 0.3rem;
+        margin: 0.1rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Радиокнопки для выбора освещения (компактные)
     lighting_type = st.radio(
         "Тип освещения:",
         options=lighting_options,

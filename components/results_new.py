@@ -97,16 +97,15 @@ def render_results(results):
             if remote_control:
                 remote_control_info = f"Пульт управления: {remote_control}"
     
-    # Конвертируем евро в рубли (курс 110 рублей)
-    eur_to_rub = 110
-    base_price_rub = int(detailed_costs.get('base_price', 0) * eur_to_rub)
-    automation_cost_rub = int(detailed_costs.get('additional_options', {}).get('automation', 0) * eur_to_rub)
+    # Получаем стоимость в евро (без конвертации)
+    base_price_eur = detailed_costs.get('base_price', 0)
+    automation_cost_eur = detailed_costs.get('additional_options', {}).get('automation', 0)
     
     # Рассчитываем стоимость изготовления (10%)
-    manufacturing_cost_rub = int(base_price_rub * 0.1)
+    manufacturing_cost_eur = round(base_price_eur * 0.1)
     
-    # Общая стоимость в рублях
-    total_cost_rub = int(results['total_cost'] * eur_to_rub)
+    # Общая стоимость в евро
+    total_cost_eur = results['total_cost']
     
     # Добавляем стили для нового дизайна таблиц
     st.markdown("""
@@ -259,7 +258,7 @@ def render_results(results):
                 <td style="padding: 10px; font-weight: bold;">Компоненты автоматики:</td>
                 <td style="padding: 10px;">
                     <ul style="margin: 0; padding-left: 20px;">
-                        <li>Модуль 1: {automation_manufacturer} {automation_type}, Germany ({automation_cost_rub//modules_count} ₽)</li>
+                        <li>Модуль 1: {automation_manufacturer} {automation_type}, Germany ({automation_cost_eur//modules_count} €)</li>
                         <li>{remote_control_info}</li>
                     </ul>
                 </td>
@@ -284,15 +283,15 @@ def render_results(results):
         <table style="width: 100%; border-collapse: collapse;">
             <tr style="background-color: #f9f9f9;">
                 <td style="padding: 10px; font-weight: bold; width: 70%;">Базовая стоимость конструкции:</td>
-                <td style="padding: 10px; text-align: right; font-weight: bold;">{base_price_rub:,} ₽</td>
+                <td style="padding: 10px; text-align: right; font-weight: bold;">{base_price_eur:,} €</td>
             </tr>
             <tr style="background-color: #f0f0f0;">
                 <td style="padding: 10px; font-weight: bold;">Стоимость автоматики:</td>
-                <td style="padding: 10px; text-align: right; font-weight: bold;">{automation_cost_rub:,} ₽</td>
+                <td style="padding: 10px; text-align: right; font-weight: bold;">{automation_cost_eur:,} €</td>
             </tr>
             <tr style="background-color: #f9f9f9;">
                 <td style="padding: 10px; font-weight: bold;">Изготовление и подготовка (10%):</td>
-                <td style="padding: 10px; text-align: right; font-weight: bold;">{manufacturing_cost_rub:,} ₽</td>
+                <td style="padding: 10px; text-align: right; font-weight: bold;">{manufacturing_cost_eur:,} €</td>
             </tr>
         </table>
         """, unsafe_allow_html=True)
@@ -309,7 +308,7 @@ def render_results(results):
     # Итоговая стоимость (на всю ширину)
     st.markdown(f"""
     <div style="margin-top: 20px; text-align: right; font-size: 24px; font-weight: bold;">
-        Итого: <span style="color: #1b6b1b;">{total_cost_rub:,} ₽</span>
+        Итого: <span style="color: #1b6b1b;">{total_cost_eur:,} €</span>
     </div>
     """, unsafe_allow_html=True)
     

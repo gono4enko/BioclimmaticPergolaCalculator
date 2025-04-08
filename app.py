@@ -46,27 +46,46 @@ def main():
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
     
-    # Задаем стили для основного контейнера, чтобы сделать его уже
+    # Задаем стили для ультра-компактного основного контейнера
     st.markdown("""
     <style>
     .block-container {
-        max-width: 900px;
-        padding-top: 2rem;
-        padding-bottom: 2rem;
+        max-width: 850px;
+        padding-top: 0.5rem;
+        padding-bottom: 1rem;
         margin: 0 auto;
+    }
+    /* Уменьшаем отступы между элементами */
+    div.row-widget.stButton {
+        margin-bottom: 0.3rem;
+    }
+    /* Уменьшаем размер шрифта для всего интерфейса */
+    .stApp, .stApp p, .stApp div {
+        font-size: 0.85rem;
+    }
+    /* Делаем основной контейнер более плотным */
+    div[data-testid="stVerticalBlock"] > div {
+        margin-bottom: 0.5rem !important;
+        padding-bottom: 0 !important;
+        padding-top: 0 !important;
+    }
+    /* Убираем лишние отступы для формы */
+    div[data-testid="stForm"] {
+        padding-top: 0.3rem !important;
+        padding-bottom: 0.3rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Заголовок калькулятора в новом стиле
-    st.markdown("<h1 style='text-align: center; margin-top: 30px; margin-bottom: 15px;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; margin-bottom: 30px;'>Введите размеры и параметры перголы для расчета стоимости в евро (€).</p>", unsafe_allow_html=True)
+    # Заголовок калькулятора в ультра-компактном стиле
+    st.markdown("<h1 style='text-align: center; margin-top: 10px; margin-bottom: 5px; font-size: 1.3rem;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 0.8rem;'>Введите размеры и параметры перголы для расчета стоимости в евро (€).</p>", unsafe_allow_html=True)
     dimensions = render_dimensions_form()
     
     # Убираем заголовок конфигурации для более чистого интерфейса
     options = render_options_form()
     
-    # Кнопка для расчета в стиле нового дизайна
+    # Кнопка для расчета в ультра-компактном стиле
     _, center_col, _ = st.columns([1, 2, 1])
     with center_col:
         st.markdown("""
@@ -74,14 +93,14 @@ def main():
         div[data-testid="stButton"] > button[kind="primary"] {
             background-color: #0066cc;
             color: white;
-            font-size: 18px;
+            font-size: 14px;
             font-weight: bold;
-            border-radius: 5px;
-            padding: 12px 0;
+            border-radius: 4px;
+            padding: 8px 0;
             border: none;
-            margin-top: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-top: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         div[data-testid="stButton"] > button[kind="primary"]:hover {
             background-color: #0055aa;
@@ -112,13 +131,13 @@ def main():
                     # Перезагружаем страницу для отображения результатов
                     st.rerun()
     
-    # Добавляем разделитель
-    st.markdown("<hr style='margin-top: 2rem; margin-bottom: 2rem;'>", unsafe_allow_html=True)
+    # Добавляем разделитель (компактный)
+    st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
     
     # Отображаем результаты расчета под формами ввода
     if 'results' in st.session_state and 'options' in st.session_state:
-        # Заголовок для секции результатов
-        st.markdown("<h3 style='text-align: center; margin-top: 20px; margin-bottom: 20px;'>Результаты расчета</h3>", unsafe_allow_html=True)
+        # Заголовок для секции результатов (компактный)
+        st.markdown("<h3 style='text-align: center; margin-top: 10px; margin-bottom: 10px; font-size: 1.1rem;'>Результаты расчета</h3>", unsafe_allow_html=True)
         
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
@@ -126,9 +145,9 @@ def main():
         # Добавляем скрипт для автоматического скролла к результатам
         scroll_to_results()
     
-    # Добавляем информацию о версии внизу страницы
-    st.markdown("---")
-    st.caption("© 2025 DecoLife | Калькулятор пергол v1.0")
+    # Добавляем информацию о версии внизу страницы (компактно)
+    st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 DecoLife | Калькулятор пергол v1.0</div>", unsafe_allow_html=True)
     
     # Логируем посещение страницы
     if 'page_viewed' not in st.session_state:
