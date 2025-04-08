@@ -328,8 +328,18 @@ def main():
         }
         
         /* Исправляем серый шрифт на темном фоне */
-        body.dark-mode div, body.dark-mode p, body.dark-mode span {
+        body.dark-mode div, body.dark-mode p, body.dark-mode span, 
+        body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, 
+        body.dark-mode h4, body.dark-mode h5, body.dark-mode h6,
+        body.dark-mode .section-header, body.dark-mode .stMarkdown,
+        body.dark-mode [data-testid="stVerticalBlock"] div {
             color: var(--text-color, #e0e0e0) !important;
+        }
+        
+        /* Заголовки секций в темном режиме */
+        body.dark-mode .section-header {
+            color: white !important;
+            border-bottom-color: #444444 !important;
         }
         
         /* Делаем текст в таблицах всегда черным, независимо от режима */
