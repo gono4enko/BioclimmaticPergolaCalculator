@@ -140,7 +140,7 @@ def render_results(results):
         # Используем экранированный HTML-код, чтобы избежать проблем с отображением
         led_length_str = f"{led_length:.2f}"
         controllers_str = str(controllers_count)
-        lighting_details_html = f'<ul style="margin: 0; padding-left: 20px; margin-top: 5px; color: #000000;"><li>Светодиодная лента, {led_length_str} м</li><li>Блок управления Somfy RTS Dimmer, {controllers_str} шт</li></ul>'
+        lighting_details_html = f'Светодиодная лента, {led_length_str} м. Блок управления Somfy RTS Dimmer, {controllers_str} шт.'
     
     # Считаем сумму всех элементов перголы без установки
     total_pergola_elements = base_price_eur + automation_with_remote_cost_eur + additional_columns_cost + gutter_insert_cost + lighting_cost
@@ -308,7 +308,7 @@ def render_results(results):
                 <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Подсветка:</td>
                 <td style="padding: 6px 10px; color: #000000;">
                     {lighting_type}
-                    {lighting_details_html}
+                    <p style="margin: 0; padding: 0; color: #000000;">{lighting_details_html.replace('<code>', '').replace('</code>', '')}</p>
                 </td>
             </tr>
         </table>
@@ -383,10 +383,11 @@ def render_results(results):
         # Добавляем строку с доставкой
         row_count += 1
         bg_color = "#f9f9f9" if row_count % 2 == 1 else "#f0f0f0"
+        delivery_cost = 0  # Установлено в ноль согласно требованию
         price_table_html += """
         <tr style="background-color: """ + bg_color + """;">
-            <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Доставка (10%):</td>
-            <td style="padding: 6px 10px; text-align: right; color: #000000;">""" + str(int(delivery_cost_eur)) + """ €</td>
+            <td style="padding: 6px 10px; font-weight: bold; color: #000000;">Доставка:</td>
+            <td style="padding: 6px 10px; text-align: right; color: #000000;">""" + str(int(delivery_cost)) + """ €</td>
         </tr>
         """
         
@@ -511,7 +512,7 @@ def generate_csv(results):
             f"{detailed_costs.get('additional_options', {}).get('automation', 0)} €",
             f"{detailed_costs.get('remote_control_cost', 0)} €",
             f"{detailed_costs.get('lighting', 0)} €",
-            f"{int(delivery_cost_eur)} €",
+            f"{0} €", # Доставка пока установлена на 0
             f"{results.get('total_cost', 0)} €"
         ]
     }
