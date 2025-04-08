@@ -148,7 +148,7 @@ def render_results(results):
     }
     
     .spec-table td {
-        padding: 10px 15px;
+        padding: 5px 15px;
         border-bottom: 1px solid #eee;
         font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
@@ -223,40 +223,40 @@ def render_results(results):
         st.markdown(f"""
         <table style="width: 100%; border-collapse: collapse;">
             <tr style="background-color: #f9f9f9;">
-                <td style="padding: 10px; font-weight: bold; width: 30%;">Тип перголы:</td>
-                <td style="padding: 10px;">{pergola_type}</td>
+                <td style="padding: 6px 10px; font-weight: bold; width: 30%;">Тип перголы:</td>
+                <td style="padding: 6px 10px;">{pergola_type}</td>
             </tr>
             <tr style="background-color: #f0f0f0;">
-                <td style="padding: 10px; font-weight: bold;">Тип ламелей:</td>
-                <td style="padding: 10px;">{lamella_type}</td>
+                <td style="padding: 6px 10px; font-weight: bold;">Тип ламелей:</td>
+                <td style="padding: 6px 10px;">{lamella_type}</td>
             </tr>
             <tr style="background-color: #f9f9f9;">
-                <td style="padding: 10px; font-weight: bold;">Ширина:</td>
-                <td style="padding: 10px;">{width_m} м</td>
+                <td style="padding: 6px 10px; font-weight: bold;">Ширина:</td>
+                <td style="padding: 6px 10px;">{width_m} м</td>
             </tr>
             <tr style="background-color: #f0f0f0;">
-                <td style="padding: 10px; font-weight: bold;">Вынос:</td>
-                <td style="padding: 10px;">{length_m} м</td>
+                <td style="padding: 6px 10px; font-weight: bold;">Вынос:</td>
+                <td style="padding: 6px 10px;">{length_m} м</td>
             </tr>
             <tr style="background-color: #f9f9f9;">
-                <td style="padding: 10px; font-weight: bold;">Площадь:</td>
-                <td style="padding: 10px;">{area} м²</td>
+                <td style="padding: 6px 10px; font-weight: bold;">Площадь:</td>
+                <td style="padding: 6px 10px;">{area} м²</td>
             </tr>
             <tr style="background-color: #f0f0f0;">
-                <td style="padding: 10px; font-weight: bold;">Количество модулей:</td>
-                <td style="padding: 10px;">{modules_count} модуль</td>
+                <td style="padding: 6px 10px; font-weight: bold;">Количество модулей:</td>
+                <td style="padding: 6px 10px;">{modules_count} модуль</td>
             </tr>
             <tr style="background-color: #f9f9f9;">
-                <td style="padding: 10px; font-weight: bold;">Фактический размер:</td>
-                <td style="padding: 10px;">{width_m} × {length_m} м</td>
+                <td style="padding: 6px 10px; font-weight: bold;">Фактический размер:</td>
+                <td style="padding: 6px 10px;">{width_m} × {length_m} м</td>
             </tr>
             <tr style="background-color: #f0f0f0;">
-                <td style="padding: 10px; font-weight: bold;">Автоматика:</td>
-                <td style="padding: 10px;">{automation_info}</td>
+                <td style="padding: 6px 10px; font-weight: bold;">Автоматика:</td>
+                <td style="padding: 6px 10px;">{automation_info}</td>
             </tr>
             <tr style="background-color: #f9f9f9;">
-                <td style="padding: 10px; font-weight: bold;">Компоненты автоматики:</td>
-                <td style="padding: 10px;">
+                <td style="padding: 6px 10px; font-weight: bold;">Компоненты автоматики:</td>
+                <td style="padding: 6px 10px;">
                     <ul style="margin: 0; padding-left: 20px;">
                         <li>Модуль 1: {automation_manufacturer} {automation_type}, Germany ({automation_cost_eur//modules_count} €)</li>
                         <li>{remote_control_info}</li>
@@ -264,8 +264,8 @@ def render_results(results):
                 </td>
             </tr>
             <tr style="background-color: #f0f0f0;">
-                <td style="padding: 10px; font-weight: bold;">Подсветка:</td>
-                <td style="padding: 10px;">{lighting_type}</td>
+                <td style="padding: 6px 10px; font-weight: bold;">Подсветка:</td>
+                <td style="padding: 6px 10px;">{lighting_type}</td>
             </tr>
         </table>
         """, unsafe_allow_html=True)
@@ -282,16 +282,16 @@ def render_results(results):
         st.markdown(f"""
         <table style="width: 100%; border-collapse: collapse;">
             <tr style="background-color: #f9f9f9;">
-                <td style="padding: 10px; font-weight: bold; width: 70%;">Базовая стоимость конструкции:</td>
-                <td style="padding: 10px; text-align: right; font-weight: bold;">{base_price_eur:,} €</td>
+                <td style="padding: 6px 10px; font-weight: bold; width: 70%;">Базовая стоимость конструкции:</td>
+                <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{base_price_eur:,} €</td>
             </tr>
             <tr style="background-color: #f0f0f0;">
-                <td style="padding: 10px; font-weight: bold;">Стоимость автоматики:</td>
-                <td style="padding: 10px; text-align: right; font-weight: bold;">{automation_cost_eur:,} €</td>
+                <td style="padding: 6px 10px; font-weight: bold;">Стоимость автоматики:</td>
+                <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{automation_cost_eur:,} €</td>
             </tr>
             <tr style="background-color: #f9f9f9;">
-                <td style="padding: 10px; font-weight: bold;">Изготовление и подготовка (10%):</td>
-                <td style="padding: 10px; text-align: right; font-weight: bold;">{manufacturing_cost_eur:,} €</td>
+                <td style="padding: 6px 10px; font-weight: bold;">Изготовление и подготовка (10%):</td>
+                <td style="padding: 6px 10px; text-align: right; font-weight: bold;">{manufacturing_cost_eur:,} €</td>
             </tr>
         </table>
         """, unsafe_allow_html=True)

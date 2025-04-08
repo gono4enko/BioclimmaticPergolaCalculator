@@ -152,8 +152,8 @@ def render_dimensions_form():
     if st.session_state.dimensions['height'] != 3.0:
         st.session_state.dimensions['height'] = 3.0
     
-    # Создаем блок для размеров в новом дизайне с улучшенной читаемостью
-    st.markdown('<div class="result-card">', unsafe_allow_html=True)
+    # Создаем блок для размеров в новом дизайне с минимальными отступами
+    st.markdown('<div class="result-card" style="margin-bottom: 3px;">', unsafe_allow_html=True)
     
     # Заголовок блока (четкий и читаемый)
     st.markdown('<div class="section-header">Размеры перголы</div>', unsafe_allow_html=True)
