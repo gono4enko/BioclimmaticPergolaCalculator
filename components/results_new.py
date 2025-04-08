@@ -137,7 +137,7 @@ def render_results(results):
         controllers_count = light_details.get('controllers_count', 0)
         
         # Формируем HTML списка для подсветки без лишних отступов
-        lighting_details_html = f"""<ul style="margin: 0; padding-left: 20px; margin-top: 5px;">
+        lighting_details_html = f"""<ul style="margin: 0; padding-left: 20px; margin-top: 5px; color: #000000;">
 <li>Светодиодная лента, {led_length:.2f} м</li>
 <li>Блок управления Somfy RTS Dimmer, {controllers_count} шт</li>
 </ul>"""
