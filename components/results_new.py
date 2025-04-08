@@ -410,14 +410,7 @@ def render_results(results):
         
         # Убрана кнопка "Изменить параметры"
     
-    # Вывод общей стоимости ниже таблиц (по центру)
-    st.markdown(f"""
-    <div class="total-row" style="text-align: center;">
-        <span>Общая стоимость:</span> <span class="total-amount">{int(total_cost_eur)} €</span>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Убрана кнопка "Скачать спецификацию"
+    # Убрана общая стоимость внизу страницы и кнопка "Скачать спецификацию"
     
     # Добавляем скрытый элемент для скролла к результатам
     st.markdown("""
