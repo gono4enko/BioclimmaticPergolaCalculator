@@ -125,15 +125,13 @@ def render_options_form():
     st.markdown("<div class='pergola-option-container'>", unsafe_allow_html=True)
     
     # Заголовок блока
-    st.markdown("<h3 style='margin-top: 0; margin-bottom: 1rem; color: #333;'>Конфигурация перголы</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='margin-top: 0; margin-bottom: 0.5rem; color: #333;'>Конфигурация перголы</h3>", unsafe_allow_html=True)
     
     # Блок выбора типа перголы
-    st.markdown("<div class='option-title'>Тип перголы:</div>", unsafe_allow_html=True)
-    
+    st.markdown("<div class='option-title' style='margin-bottom:0.3rem;'>Тип перголы:</div>", unsafe_allow_html=True)
     # Создаем плитки для выбора типа перголы
     pergola_options = list(PERGOLA_TYPES.keys())
     pergola_cols = st.columns(len(pergola_options))
-    
     selected_pergola_type = st.session_state.options['pergola_type']
     
     # Отображаем плитки с типами пергол
@@ -225,7 +223,6 @@ def render_options_form():
     
     # Устанавливаем значения для текущего типа перголы
     pergola_type = selected_pergola_type
-    
     # Получаем доступные типы ламелей для выбранного типа перголы
     lamella_options = get_lamella_options_for_pergola(pergola_type)
     
@@ -233,14 +230,14 @@ def render_options_form():
     if pergola_type == "B600":
         # Для B600 нет выбора ламелей - используются PIR-панели
         st.markdown("""
-        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.7rem; margin-top: 1rem;'>
-            <b>Тип крыши:</b> Стационарные PIR-панели (сэндвич-панели с утеплителем)
+        <div style='background-color: #fff8e6; border-radius: 5px; padding: 0.5rem; margin-top: 0.5rem;'>
+            <b>Тип крыши:</b> Стационарные PIR-панели (сэндвич-панели)
         </div>
         """, unsafe_allow_html=True)
         lamella_type = "B600"  # Для перголы B600 используем фиксированный тип ламелей
     else:
         # Для других типов пергол - выбор ламелей
-        st.markdown("<div class='option-title' style='margin-top: 1.5rem;'>Тип ламелей:</div>", unsafe_allow_html=True)
+        st.markdown("<div class='option-title' style='margin-top: 0.7rem; margin-bottom:0.3rem;'>Тип ламелей:</div>", unsafe_allow_html=True)
         
         # Создаем плитки для выбора типа ламелей
         lamella_cols = st.columns(len(lamella_options))
@@ -306,10 +303,9 @@ def render_options_form():
     
     # Разделяем блоки освещения и дополнительных опций
     col1, col2 = st.columns(2)
-    
     # Блок выбора освещения
     with col1:
-        st.markdown("<div class='option-title' style='margin-top: 1rem;'>Освещение:</div>", unsafe_allow_html=True)
+        st.markdown("<div class='option-title' style='margin-top: 0.7rem; margin-bottom:0.3rem;'>Освещение:</div>", unsafe_allow_html=True)
         
         # Доступные типы освещения для выбранного типа перголы
         lighting_options = PERGOLA_TYPES[pergola_type]["available_lighting"] if pergola_type in PERGOLA_TYPES else ["none"]
@@ -329,7 +325,7 @@ def render_options_form():
     
     # Блок выбора дополнительных опций
     with col2:
-        st.markdown("<div class='option-title' style='margin-top: 1rem;'>Дополнительные опции:</div>", unsafe_allow_html=True)
+        st.markdown("<div class='option-title' style='margin-top: 0.7rem; margin-bottom:0.3rem;'>Дополнительные опции:</div>", unsafe_allow_html=True)
         
         # Доступные дополнительные опции для выбранного типа перголы
         available_options = PERGOLA_TYPES[pergola_type]["additional_options"] if pergola_type in PERGOLA_TYPES else []
