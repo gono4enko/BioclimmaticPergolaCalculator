@@ -237,10 +237,13 @@ def render_options_form():
             # Отображаем состояние выбора визуально с улучшенной читаемостью
             if is_selected:
                 st.markdown(f"""
-                <div style="background-color: #e6f3ff; border: 1px solid #0066cc; color: #0066cc; 
-                     font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <div style="background-color: #FFFFFF; border: 1px solid #0066cc; color: #000000; 
+                     font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; 
+                     margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative;">
                     <div style="font-size: 1.1rem;">{pergola_name} ✓</div>
                     <div style="font-size: 0.9rem; margin-top: 5px;">{pergola_short_desc}</div>
+                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background-color: #0066cc;
+                         border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"></div>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -349,10 +352,13 @@ def render_options_form():
                     # Используем улучшенный стиль кнопок для ламелей (как для типа перголы)
                     if is_selected:
                         st.markdown(f"""
-                        <div style="background-color: #e6f3ff; border: 1px solid #0066cc; color: #0066cc; 
-                             font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <div style="background-color: #FFFFFF; border: 1px solid #0066cc; color: #000000; 
+                             font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; 
+                             margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative;">
                             <div style="font-size: 1.1rem;">{size_display} ✓</div>
                             <div style="font-size: 0.9rem; margin-top: 5px;">{lamella_short_desc.split(',')[-1].strip()}</div>
+                            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background-color: #0066cc;
+                                 border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"></div>
                         </div>
                         """, unsafe_allow_html=True)
                         
@@ -378,7 +384,7 @@ def render_options_form():
     # Доступные типы освещения для выбранного типа перголы - убираем 'none'
     lighting_options = [opt for opt in PERGOLA_TYPES[pergola_type]["available_lighting"] if opt != "none"] if pergola_type in PERGOLA_TYPES else []
     
-    # ВАЖНО: Принудительно уменьшаем отступы между вариантами освещения
+    # ВАЖНО: Принудительно уменьшаем отступы между вариантами освещения В 5 РАЗ
     st.markdown("""
     <style>
     /* Принудительно сбрасываем отступы для строки с освещением */
@@ -388,11 +394,36 @@ def render_options_form():
         padding-bottom: 0px !important;
     }
     
-    /* Устанавливаем точно 7px для дочерних элементов */
+    /* Устанавливаем минимальный отступ 1-2px для дочерних элементов (в 5 раз меньше) */
     .row-widget.stHorizontalBlock > div {
-        margin-bottom: 7px !important;
+        margin-bottom: 1px !important;
         padding-bottom: 0px !important;
         padding-top: 0px !important;
+        margin-top: 0px !important;
+    }
+    
+    /* Дополнительные стили для блоков подсветки - убираем вертикальные отступы */
+    .block-container [data-testid="stVerticalBlock"] div.element-container {
+        margin-top: 0px !important;
+        margin-bottom: 0px !important;
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+    }
+    
+    /* Ещё больше уменьшаем отступы для кнопок подсветки */
+    .stButton {
+        margin-top: 0px !important;
+        margin-bottom: 0px !important;
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+    }
+    
+    /* Максимально компактный вид секции освещения */
+    div:has(> div.section-header:contains("Подсветка")) + div {
+        margin-top: 0px !important;
+        margin-bottom: 0px !important;
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -448,10 +479,13 @@ def render_options_form():
             
             if is_selected:
                 st.markdown(f"""
-                <div style="background-color: var(--highlight-bg, #e6f3ff); border: 1px solid var(--highlight-color, #0066cc); color: var(--highlight-color, #0066cc); 
-                     font-weight: bold; text-align: center; border-radius: 8px; padding: 3px 2px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <div style="background-color: #FFFFFF; border: 1px solid #0066cc; color: #000000; 
+                     font-weight: bold; text-align: center; border-radius: 8px; padding: 3px 2px; margin: 0; 
+                     box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative;">
                     <div style="font-size: 1rem; text-align: center; line-height: 1;">{light_name} ✓</div>
                     <div style="font-size: 0.7rem; margin-top: 1px; text-align: center; line-height: 1;">{light_desc}</div>
+                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background-color: #0066cc;
+                         border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"></div>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -477,7 +511,7 @@ def render_options_form():
                 }}
                 div[data-testid="column"] {{
                     padding: 0 !important;
-                    margin: 0 0 7px 0 !important;
+                    margin: 0 0 1px 0 !important;
                 }}
                 </style>
                 """
@@ -503,10 +537,13 @@ def render_options_form():
     
     with install_cols[0]:
         st.markdown(f"""
-        <div style="background-color: var(--highlight-bg, #e6f3ff); border: 1px solid var(--highlight-color, #0066cc); color: var(--highlight-color, #0066cc); 
-             font-weight: bold; text-align: left; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <div style="background-color: #FFFFFF; border: 1px solid #0066cc; color: #000000; 
+             font-weight: bold; text-align: left; border-radius: 8px; padding: 12px 8px; 
+             margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative;">
             <div style="font-size: 1.1rem;">Без установки ✓</div>
             <div style="font-size: 0.9rem; margin-top: 5px;"></div>
+            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background-color: #0066cc;
+                 border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"></div>
         </div>
         """, unsafe_allow_html=True)
     

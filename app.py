@@ -369,10 +369,27 @@ def main():
         padding-bottom: 0 !important;
     }
     
-    /* Максимально уменьшаем отступы между вариантами освещения (7px) */
+    /* Максимально уменьшаем отступы между вариантами освещения (всего 1-2px) */
     [data-testid="column"] > div {
         margin-top: 0 !important;
-        margin-bottom: 7px !important;
+        margin-bottom: 1px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Уменьшаем вертикальное расстояние между блоками подсветки в 5 раз */
+    [data-testid="stHorizontalBlock"] div[data-testid="column"] {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Специфично для блоков подсветки - делаем минимальный отступ */
+    [data-testid="stVerticalBlock"] div:has(> .section-header:contains("Подсветка")),
+    [data-testid="stVerticalBlock"] div:has(> .section-header:contains("Подсветка")) + div {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
         padding-top: 0 !important;
         padding-bottom: 0 !important;
     }
