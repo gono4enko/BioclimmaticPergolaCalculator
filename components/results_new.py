@@ -42,8 +42,8 @@ def render_results(results):
     
     # Создаем таблицу спецификации в соответствии с новым дизайном
     # Получаем информацию о перголе
-    pergola_type = ""
-    lamella_type = ""
+    pergola_type = "Не задан"
+    lamella_type = "Не задан"
     lighting_type = "Без подсветки"
     
     if 'options' in st.session_state:
@@ -51,30 +51,34 @@ def render_results(results):
         # Тип перголы
         pt = pergola_options.get('pergola_type', '')
         if pt == 'B500NEW':
-            pergola_type = "Биоклиматическая пергола с поворотными ламелями (B500)"
+            pergola_type = "B500 с поворотными ламелями"
         elif pt == 'B700NEW':
-            pergola_type = "Биоклиматическая пергола со сдвижными ламелями (B700)"
+            pergola_type = "B700 с поворотно-сдвижными ламелями"
         elif pt == 'B600':
-            pergola_type = "Стационарная пергола с PIR-панелями (B600)"
-            
+            pergola_type = "B600 PIR со стационарными сэндвич-панелями"
+        
         # Тип ламелей
         lt = pergola_options.get('lamella_type', '')
-        if '20' in lt:
-            lamella_type = "200 × 56 мм"
-        elif '25' in lt and 'B500' in lt:
-            lamella_type = "250 × 53 мм"
-        elif '25' in lt and 'B700' in lt:
-            lamella_type = "250 × 53 мм" 
+        if 'B500-20NEW' in lt:
+            lamella_type = "200×56 мм NEW (Усиленная)"
+        elif 'B500-25NEW' in lt:
+            lamella_type = "250×53 мм NEW (Стандартная)"
+        elif 'B700-20NEW' in lt:
+            lamella_type = "200×56 мм NEW (Усиленная)"
+        elif 'B700-25NEW' in lt:
+            lamella_type = "250×53 мм NEW (Стандартная)"
         elif 'B600' in lt:
-            lamella_type = "PIR панели"
+            lamella_type = "PIR сэндвич-панели"
             
         # Освещение
         light = pergola_options.get('lighting_type', 'none')
         if light == 'led':
-            lighting_type = "LED-подсветка"
+            lighting_type = "Сверхъяркая LED подсветка"
         elif light == 'rgb':
-            lighting_type = "RGB-подсветка"
-        elif light == 'none':
+            lighting_type = "Светодиодная RGB подсветка"
+        elif light == 'led_rgb':
+            lighting_type = "Комбинированное LED + RGB освещение"
+        else:
             lighting_type = "Без подсветки"
     
     # Узнаем автоматику и компоненты
