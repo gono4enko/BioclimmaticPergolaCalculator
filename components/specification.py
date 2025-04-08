@@ -179,20 +179,28 @@ def render_specification(results, options):
         # Создаем DataFrame для таблицы
         import pandas as pd
         
-        # Создаем DataFrame без порядковых номеров
-        df = pd.DataFrame(data, columns=["Наименование", "Значение"])
+        # Добавляем порядковые номера к данным
+        numbered_data = []
+        for i, (name, value) in enumerate(data, 1):
+            numbered_data.append([i, name, value])
         
-        # Применяем custom CSS для таблицы
+        # Создаем DataFrame с номерами, наименованием и значением
+        df = pd.DataFrame(numbered_data, columns=["#", "Наименование", "Значение"])
+        
+        # Применяем custom CSS для таблицы с адаптивной шириной столбцов
         st.markdown("""
         <style>
         .dataframe {
             width: 100%;
             border-collapse: collapse !important;
             margin-bottom: 1rem;
+            table-layout: auto !important;
         }
         .dataframe th, .dataframe td {
             padding: 0.8rem !important;
             border: 1px solid #e9ecef !important;
+            white-space: normal !important;
+            word-wrap: break-word !important;
         }
         .dataframe th {
             background-color: #4a69bd !important;
@@ -208,11 +216,22 @@ def render_specification(results, options):
         .dataframe tr:last-child {
             font-weight: bold !important;
         }
-        /* Настраиваем отображение номеров строк */
-        .col_heading.level0.col0, .data.row0.col0, .data.row1.col0, .data.row2.col0, .data.row3.col0, .data.row4.col0, 
-        .data.row5.col0, .data.row6.col0, .data.row7.col0, .data.row8.col0, .data.row9.col0, .data.row10.col0, .data.row11.col0 {
+        /* Настраиваем отображение номеров в первом столбце */
+        .dataframe th:first-child, .dataframe td:first-child {
             text-align: center !important;
             width: 40px !important;
+            min-width: 40px !important;
+            max-width: 50px !important;
+        }
+        /* Настраиваем адаптивную ширину для столбца Наименование */
+        .dataframe th:nth-child(2), .dataframe td:nth-child(2) {
+            text-align: left !important;
+            min-width: 250px !important;
+        }
+        /* Настраиваем адаптивную ширину для столбца Значение */
+        .dataframe th:nth-child(3), .dataframe td:nth-child(3) {
+            text-align: left !important;
+            min-width: 100px !important;
         }
         </style>
         """, unsafe_allow_html=True)
