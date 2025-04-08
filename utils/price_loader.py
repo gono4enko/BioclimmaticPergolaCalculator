@@ -138,7 +138,7 @@ def get_modules_count_from_size(width_m):
         return 1
     elif width_m <= 9.0:  # Увеличиваем порог для 2 модулей до 9м
         return 2
-    elif width_m <= 11.5:  # Увеличиваем порог для 3 модулей до 11.5м
+    elif width_m <= 12.0:  # Исправлено: для ширины до 12.0м включительно требуется 3 модуля
         return 3
     elif width_m <= 13.5:
         return 4
