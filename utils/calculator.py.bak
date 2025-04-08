@@ -509,11 +509,11 @@ def calculate_pergola_cost(dimensions, options):
                     devices_count += modules_count  # Добавляем по 1 устройству управления освещением на модуль
                 
                 # Выбираем подходящий пульт в зависимости от количества устройств и модулей
-                if modules_count == 1:
-                    # Для одномодульной перголы (с освещением или без) используем одноканальный пульт
+                if modules_count == 1 and lighting_type == 'none':
+                    # Для одного модуля без освещения используем одноканальный пульт
                     detailed_costs['remote_control'] = "Simu 1K"
                     detailed_costs['remote_control_cost'] = 25
-                    logger.info("Для одномодульной перголы выбран пульт Simu 1K (1-канальный)")
+                    logger.info("Для одномодульной перголы без освещения выбран пульт Simu 1K (1-канальный)")
                 elif devices_count <= 5:
                     detailed_costs['remote_control'] = "Simu 5K"
                     detailed_costs['remote_control_cost'] = 40
@@ -543,11 +543,11 @@ def calculate_pergola_cost(dimensions, options):
                     devices_count += modules_count  # Добавляем по 1 устройству управления освещением на модуль
                 
                 # Выбираем подходящий пульт в зависимости от количества устройств и модулей
-                if modules_count == 1:
-                    # Для одномодульной перголы (с освещением или без) используем одноканальный пульт
+                if modules_count == 1 and lighting_type == 'none':
+                    # Для одного модуля без освещения используем одноканальный пульт
                     detailed_costs['remote_control'] = "Simu 1K"
                     detailed_costs['remote_control_cost'] = 25
-                    logger.info("Для одномодульной перголы выбран пульт Simu 1K (1-канальный)")
+                    logger.info("Для одномодульной перголы без освещения выбран пульт Simu 1K (1-канальный)")
                 elif devices_count <= 5:
                     detailed_costs['remote_control'] = "Simu 5K"
                     detailed_costs['remote_control_cost'] = 40
