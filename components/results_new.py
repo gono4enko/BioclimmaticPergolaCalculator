@@ -92,22 +92,22 @@ def render_results(results):
             automation_info = f"Базовая автоматика ({automation_manufacturer} {automation_type})"
             if remote_control:
                 if remote_control == "Simu 1K":
-                    remote_control_info = f"Пульт управления: {remote_control} (1-канальный, 25€)"
+                    remote_control_info = f"Пульт управления: {remote_control} (1-канальный)"
                 elif remote_control == "Simu 5K":
-                    remote_control_info = f"Пульт управления: {remote_control} (5-канальный, 40€)"
+                    remote_control_info = f"Пульт управления: {remote_control} (5-канальный)"
                 elif remote_control == "Simu 15K":
-                    remote_control_info = f"Пульт управления: {remote_control} (15-канальный, 90€)"
+                    remote_control_info = f"Пульт управления: {remote_control} (15-канальный)"
                 else:
                     remote_control_info = f"Пульт управления: {remote_control}"
         elif automation_manufacturer == "Somfy":
             automation_info = f"Базовая автоматика ({automation_manufacturer} {automation_type})"
             if remote_control:
                 if remote_control == "Simu 1K":
-                    remote_control_info = f"Пульт управления: {remote_control} (1-канальный, 25€)"
+                    remote_control_info = f"Пульт управления: {remote_control} (1-канальный)"
                 elif remote_control == "Simu 5K":
-                    remote_control_info = f"Пульт управления: {remote_control} (5-канальный, 40€)"
+                    remote_control_info = f"Пульт управления: {remote_control} (5-канальный)"
                 elif remote_control == "Simu 15K":
-                    remote_control_info = f"Пульт управления: {remote_control} (15-канальный, 90€)"
+                    remote_control_info = f"Пульт управления: {remote_control} (15-канальный)"
                 else:
                     remote_control_info = f"Пульт управления: {remote_control}"
     
@@ -351,6 +351,16 @@ def render_results(results):
             <td style="padding: 6px 10px; font-weight: bold;">Изготовление и подготовка (10%):</td>
             <td style="padding: 6px 10px; text-align: right;">""" + str(int(manufacturing_cost_eur)) + """ €</td>
         </tr>
+        """
+        
+        # Добавляем строку ИТОГО
+        row_count += 1
+        bg_color = "#f9f9f9" if row_count % 2 == 1 else "#f0f0f0"
+        price_table_html += """
+        <tr style="background-color: """ + bg_color + """;">
+            <td style="padding: 6px 10px; font-weight: bold; font-size: 18px;">ИТОГО:</td>
+            <td style="padding: 6px 10px; text-align: right; font-weight: bold; font-size: 18px; color: #1b6b1b;">""" + str(int(total_cost_eur)) + """ €</td>
+        </tr>
         </table>
         """
         
@@ -389,15 +399,30 @@ def render_results(results):
         </div>
         """, unsafe_allow_html=True)
     
-    # Итоговая стоимость (на всю ширину)
-    st.markdown("""
-    <div style="margin-top: 20px; text-align: right; font-size: 24px; font-weight: bold;">
-        Итого: <span style="color: #1b6b1b;">""" + str(int(total_cost_eur)) + """ €</span>
+    # Вывод общей стоимости ниже таблиц
+    st.markdown(f"""
+    <div class="total-row">
+        <span>Общая стоимость:</span> <span class="total-amount">{int(total_cost_eur)} €</span>
     </div>
     """, unsafe_allow_html=True)
     
-    # Записываем информацию о просмотре результатов в лог
-    log_user_action("Просмотр результатов расчета", {"total_cost": results["total_cost"]})
+    # Отображаем кнопку "Скачать спецификацию" в полноширинном контейнере
+    st.markdown(f"""
+    <div style="text-align: center; margin: 20px 0;">
+        <a href="data:text/csv;base64,{generate_csv(results)}" download="specification_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv" class="calc-button">
+            Скачать спецификацию
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Добавляем скрытый элемент для скролла к результатам
+    st.markdown("""
+    <div id="results-anchor" style="height: 1px; width: 1px; position: absolute;"></div>
+    """, unsafe_allow_html=True)
+    
+    # Логируем просмотр результатов
+    log_user_action("Просмотр результатов расчета", {"total_cost": results['total_cost']})
+
 
 def generate_csv(results):
     """
@@ -409,102 +434,84 @@ def generate_csv(results):
     Returns:
         str: Содержимое CSV-файла
     """
-    output = io.StringIO()
-    
-    # Получаем данные для CSV
     dimensions = results.get('dimensions', {})
     width_m = dimensions.get('width_m', 0)
     length_m = dimensions.get('length_m', 0)
+    height_m = dimensions.get('height_m', 0)
     area = round(width_m * length_m, 2)
     
-    # Получаем информацию о перголе
+    detailed_costs = results.get('detailed_costs', {})
+    correction_message = results.get('correction_message', '')
+    
+    # Определяем тип перголы и автоматики
     pergola_type = ""
     lamella_type = ""
-    lighting_type = "Без освещения"
+    modules_count = 1
+    if width_m > 4.5:
+        modules_count = 2
+    if width_m > 9:
+        modules_count = 3
     
     if 'options' in st.session_state:
         pergola_options = st.session_state.options
-        # Тип перголы
         pt = pergola_options.get('pergola_type', '')
         if pt == 'B500NEW':
-            pergola_type = "Биоклиматическая с поворотными ламелями (B500)"
+            pergola_type = "Пергола с поворотными ламелями (B500)"
         elif pt == 'B700NEW':
-            pergola_type = "Биоклиматическая со сдвижными ламелями (B700)"
+            pergola_type = "Пергола со сдвижными ламелями (B700)"
         elif pt == 'B600':
-            pergola_type = "Стационарная с PIR-панелями (B600)"
+            pergola_type = "Стационарная пергола с PIR-панелями (B600)"
             
-        # Тип ламелей
         lt = pergola_options.get('lamella_type', '')
         if '20' in lt:
-            lamella_type = "200 мм усиленные"
-        elif '25' in lt:
-            lamella_type = "250 мм стандартные"
+            lamella_type = "200 × 56 мм"
+        elif '25' in lt and 'B500' in lt:
+            lamella_type = "250 × 53 мм"
+        elif '25' in lt and 'B700' in lt:
+            lamella_type = "250 × 53 мм" 
         elif 'B600' in lt:
             lamella_type = "PIR панели"
-            
-        # Освещение
-        light = pergola_options.get('lighting_type', 'none')
-        if light == 'led':
-            lighting_type = "LED освещение"
-        elif light == 'rgb':
-            lighting_type = "RGB освещение"
-        elif light == 'none':
-            lighting_type = "Без освещения"
     
-    # Получаем детали расчета
-    detailed_costs = results.get('detailed_costs', {})
+    # Создаем DataFrame для CSV
+    data = {
+        'Параметр': [
+            'Тип перголы',
+            'Тип ламелей',
+            'Размеры (Ш × В × Д)',
+            'Площадь',
+            'Количество модулей',
+            'Дополнительная информация',
+            'Базовая стоимость',
+            'Дополнительные колонны',
+            'Усилитель лотка',
+            'Автоматика',
+            'Пульт ДУ',
+            'Подсветка',
+            'Производственные расходы',
+            'Итоговая стоимость'
+        ],
+        'Значение': [
+            pergola_type,
+            lamella_type,
+            f"{width_m} × {height_m} × {length_m} м",
+            f"{area} м²",
+            modules_count,
+            correction_message,
+            f"{detailed_costs.get('base_price', 0)} €",
+            f"{detailed_costs.get('additional_columns', 0)} €",
+            f"{detailed_costs.get('gutter_insert', 0)} €",
+            f"{detailed_costs.get('additional_options', {}).get('automation', 0)} €",
+            f"{detailed_costs.get('remote_control_cost', 0)} €",
+            f"{detailed_costs.get('lighting', 0)} €",
+            f"{round(detailed_costs.get('base_price', 0) * 0.1)} €",
+            f"{results.get('total_cost', 0)} €"
+        ]
+    }
     
-    # Создаем данные для CSV
-    csv_data = [
-        ["Калькулятор стоимости пергол", "", ""],
-        ["", "", ""],
-        ["Дата расчета", datetime.now().strftime("%d.%m.%Y %H:%M"), ""],
-        ["", "", ""],
-        ["СПЕЦИФИКАЦИЯ ПЕРГОЛЫ", "", ""],
-        ["Тип перголы", pergola_type, ""],
-        ["Тип ламелей", lamella_type, ""],
-        ["Ширина", f"{width_m} м", ""],
-        ["Длина (вынос)", f"{length_m} м", ""],
-        ["Площадь", f"{area} м²", ""],
-        ["Освещение", lighting_type, ""],
-        ["", "", ""],
-        ["РАСЧЕТ СТОИМОСТИ", "", ""],
-        ["Базовая стоимость", detailed_costs.get('base_price', 0), "€"],
-    ]
+    df = pd.DataFrame(data)
     
-    # Добавляем стоимость дополнительных колонн, если есть
-    additional_columns = detailed_costs.get('additional_columns', 0)
-    if additional_columns > 0:
-        csv_data.append(["Стоимость дополнительных колонн", additional_columns, "€"])
+    # Преобразуем в CSV и кодируем в base64
+    csv_string = df.to_csv(index=False, sep=';', encoding='utf-8-sig')
+    b64 = base64.b64encode(csv_string.encode('utf-8-sig')).decode()
     
-    # Добавляем стоимость усилителя лотка, если есть
-    gutter_insert = detailed_costs.get('gutter_insert', 0)
-    if gutter_insert > 0:
-        csv_data.append(["Стоимость усилителя лотка", gutter_insert, "€"])
-    
-    # Добавляем стоимость освещения, если есть
-    lighting_cost = detailed_costs.get('lighting', 0)
-    if lighting_cost > 0:
-        csv_data.append(["Стоимость освещения", lighting_cost, "€"])
-    
-    # Добавляем стоимость автоматизации, если есть
-    automation_cost = detailed_costs.get('additional_options', {}).get('automation', 0)
-    if automation_cost > 0:
-        automation_type = detailed_costs.get('automation_type', '')
-        automation_manufacturer = detailed_costs.get('automation_manufacturer', '')
-        csv_data.append([f"Автоматизация {automation_manufacturer} {automation_type}", automation_cost, "€"])
-    
-    # Добавляем стоимость пульта ДУ, если есть
-    remote_control_cost = detailed_costs.get('remote_control_cost', 0)
-    if remote_control_cost > 0:
-        remote_control = detailed_costs.get('remote_control', '')
-        csv_data.append([f"Пульт ДУ {remote_control}", remote_control_cost, "€"])
-    
-    # Добавляем общую стоимость
-    csv_data.append(["", "", ""])
-    csv_data.append(["ИТОГО", results.get('total_cost', 0), "€"])
-    
-    # Записываем данные в CSV
-    pd.DataFrame(csv_data).to_csv(output, index=False, header=False)
-    
-    return output.getvalue()
+    return b64
