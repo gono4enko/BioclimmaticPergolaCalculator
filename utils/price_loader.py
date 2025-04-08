@@ -253,6 +253,18 @@ def get_base_price(pergola_type, lamella_type, width_m, length_m):
         # Выбираем оптимальную (наиболее дешевую) конфигурацию
         optimal_config = suitable_configs[0]
         
+        # Проверка на особый случай - очень широкие перголы
+        # В этом случае в price_dict width - это ширина одного модуля, а не общая ширина перголы
+        # Поэтому для очень широких пергол нужно подобрать оптимальную ширину модуля и умножить на количество модулей
+        if width_m > 9.0:  # Для очень широких пергол (более 9 метров)
+            # Находим подходящие конфигурации для перголы с учетом модулей
+            modules_count = get_modules_count_from_size(width_m)
+            logger.debug(f"Подбор для широкой перголы {width_m}x{length_m}м с {modules_count} модулями")
+            
+            # Модифицируем optimal_config, чтобы отражать фактическую ширину перголы
+            optimal_config['modules'] = modules_count
+            optimal_config['width'] = width_m  # Используем фактическую ширину перголы
+        
         # Запишем информацию в лог, но не будем показывать пользователю
         log_message = (
             f"Выбрана оптимальная конфигурация перголы: {optimal_config['width']}x{optimal_config['length']} м "
@@ -293,19 +305,28 @@ def find_nearest_dimensions(price_dict, width_m, length_m):
     logger.debug(f"Доступные значения ширины: {widths}")
     logger.debug(f"Доступные значения длины: {lengths}")
     
-    # Проверяем, есть ли точное совпадение по ширине
-    if width_m in widths:
-        nearest_width = width_m
-        logger.debug(f"Найдено точное совпадение по ширине: {width_m}")
+    # Особый случай для очень широких пергол (более 9 метров)
+    # В этом случае в прайс-листе width - это ширина одного модуля, а не общая ширина перголы
+    if width_m > 9.0 and max(widths) < 9.0:
+        # Для широких пергол используем самое крупное значение ширины из прайса
+        # (это соответствует максимальной ширине одного модуля)
+        nearest_width = max(widths)
+        logger.debug(f"Для широкой перголы {width_m}м выбрана ширина модуля {nearest_width}м")
     else:
-        # Находим ближайшую большую ширину
-        filtered_widths = [w for w in widths if w >= width_m]
-        if filtered_widths:
-            nearest_width = min(filtered_widths)
-            logger.debug(f"Выбрана ближайшая большая ширина: {nearest_width}")
+        # Стандартный случай - ищем ближайшую большую ширину
+        # Проверяем, есть ли точное совпадение по ширине
+        if width_m in widths:
+            nearest_width = width_m
+            logger.debug(f"Найдено точное совпадение по ширине: {width_m}")
         else:
-            nearest_width = max(widths)
-            logger.debug(f"Выбрана максимальная ширина: {nearest_width}")
+            # Находим ближайшую большую ширину
+            filtered_widths = [w for w in widths if w >= width_m]
+            if filtered_widths:
+                nearest_width = min(filtered_widths)
+                logger.debug(f"Выбрана ближайшая большая ширина: {nearest_width}")
+            else:
+                nearest_width = max(widths)
+                logger.debug(f"Выбрана максимальная ширина: {nearest_width}")
     
     # Проверяем, есть ли точное совпадение по длине
     if length_m in lengths:
