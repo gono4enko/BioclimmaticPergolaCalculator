@@ -67,6 +67,10 @@ COLUMNS_PRICES = {
 GUTTER_INSERT_THRESHOLD = 6.5
 GUTTER_INSERT_PRICE_PER_METER = 80  # Цена усилителя лотка 80 евро за погонный метр
 
+# Наценки за доставку и установку (в процентах от базовой стоимости)
+DELIVERY_MARKUP_PERCENT = 10  # 10% наценка за доставку (добавляется автоматически)
+INSTALLATION_MARKUP_PERCENT = 10  # 10% наценка за установку (опционально)
+
 # Правила для выбора привода Bansbach для B500NEW
 BANSBACH_DRIVE_RULES = {
     1: [  # 1 модуль
@@ -549,6 +553,7 @@ def perform_calculation(dimensions, options):
         lamella_type = options.get("lamella_type", "")
         modules = get_modules_by_dimensions(width_m, length_m, pergola_type)  # Автоматически определяем модули по размерам
         lighting_options = options.get("lighting", [])
+        installation = options.get("installation", False)  # Опция установки
         
         # Определяем размер ламели в миллиметрах
         lamella_size = "PIR" if "PIR" in lamella_type else ("200" if "200" in lamella_type else "250")
@@ -574,7 +579,8 @@ def perform_calculation(dimensions, options):
             "options": {
                 "pergola_type": pergola_type,
                 "lamella_type": lamella_type,
-                "lighting": lighting_options
+                "lighting": lighting_options,
+                "installation": installation
             },
             "base_price": base_price,
             "items": [],
@@ -829,6 +835,54 @@ def perform_calculation(dimensions, options):
         
         results["specification"] = specification
         
+        # Базовая стоимость (без наценок)
+        base_total_price = results["total_price"]
+        
+        # Добавляем наценку за доставку (10% автоматически)
+        delivery_price = round(base_total_price * 0.1, 2)
+        results["delivery"] = {
+            "percentage": 10,
+            "price": delivery_price
+        }
+        results["items"].append({
+            "name": "Доставка (10%)",
+            "price": delivery_price
+        })
+        results["total_price"] += delivery_price
+        
+        # Добавляем наценку за установку (10%, если выбрана опция)
+        if installation:
+            installation_price = round(base_total_price * 0.1, 2)
+            results["installation"] = {
+                "selected": True,
+                "percentage": 10,
+                "price": installation_price
+            }
+            results["items"].append({
+                "name": "Установка (10%)",
+                "price": installation_price
+            })
+            results["total_price"] += installation_price
+        else:
+            results["installation"] = {
+                "selected": False,
+                "price": 0
+            }
+        
+        # Обновляем итоговую стоимость в спецификации
+        specification.append({
+            "name": "Доставка",
+            "count": "10%",
+            "price": ""
+        })
+        
+        if installation:
+            specification.append({
+                "name": "Установка",
+                "count": "10%",
+                "price": ""
+            })
+        
         # Округляем общую стоимость
         results["total_price"] = round(results["total_price"], 2)
         
@@ -842,7 +896,8 @@ def perform_calculation(dimensions, options):
             "pergola_type": pergola_type,
             "lamella_type": lamella_type,
             "lamella_size": lamella_size,
-            "lamellas_count": lamellas_count if 'lamellas_count' in locals() else 0
+            "lamellas_count": lamellas_count if 'lamellas_count' in locals() else 0,
+            "installation": installation
         }
         
         return results
@@ -989,11 +1044,18 @@ def render_options_form():
         if st.checkbox("RGB светодиодная лента", value=False):
             lighting_options.append("rgb_led")
     
+    # Установка
+    st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+    st.markdown("<p style='font-weight: 500;'>Установка</p>", unsafe_allow_html=True)
+    
+    installation = st.checkbox("С установкой (+10% к стоимости)", value=False)
+    
     # Возвращаем выбранные опции (не включаем модули, т.к. они рассчитываются автоматически)
     return {
         "pergola_type": pergola_type,
         "lamella_type": lamella_type,
-        "lighting": lighting_options
+        "lighting": lighting_options,
+        "installation": installation
     }
 
 def render_results(results):
@@ -1114,6 +1176,14 @@ def render_results(results):
             items_data.append([item["name"], f"{item['price']:.2f} €"])
         
         if "колон" in item["name"].lower():
+            items_data.append([item["name"], f"{item['price']:.2f} €"])
+    
+    # Доставка и установка
+    for item in results["items"]:
+        if "Доставка" in item["name"]:
+            items_data.append([item["name"], f"{item['price']:.2f} €"])
+            
+        if "Установка" in item["name"]:
             items_data.append([item["name"], f"{item['price']:.2f} €"])
     
     # Итоговая строка - просто добавляем строку "Итого" (жирный шрифт применяется через CSS)
