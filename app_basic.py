@@ -65,7 +65,7 @@ COLUMNS_PRICES = {
 
 # Усилитель лотка добавляется автоматически при выносе > 6.5м
 GUTTER_INSERT_THRESHOLD = 6.5
-GUTTER_INSERT_PRICE = 250  # Цена усилителя лотка (250 евро согласно спецификации)
+GUTTER_INSERT_PRICE_PER_METER = 80  # Цена усилителя лотка 80 евро за погонный метр
 
 # Правила для выбора привода Bansbach для B500NEW
 BANSBACH_DRIVE_RULES = {
@@ -392,6 +392,49 @@ def needs_additional_columns(pergola_type, lamella_size, length_m):
     
     return length_m > threshold
 
+def calculate_gutter_insert_price(length_m, modules):
+    """
+    Рассчитывает стоимость усилителя лотка по формуле:
+    Стоимость = цена за метр * длина выноса * количество лотков
+    
+    В перголах с 1 модулем - 2 лотка
+    В перголах с 2 модулями - 3 лотка
+    В перголах с 3 модулями - 4 лотка
+    
+    Args:
+        length_m (float): Вынос перголы в метрах
+        modules (int): Количество модулей
+    
+    Returns:
+        tuple: (нужен ли усилитель, стоимость усилителя, количество лотков, общая длина лотков)
+    """
+    # Проверяем, нужен ли усилитель лотка (вынос > 6.5м)
+    needs_insert = length_m > GUTTER_INSERT_THRESHOLD
+    
+    # Если не нужен усилитель, возвращаем нули
+    if not needs_insert:
+        return (False, 0, 0, 0)
+    
+    # Определяем количество лотков в зависимости от модулей
+    gutters_count = 0
+    if modules == 1:
+        gutters_count = 2
+    elif modules == 2:
+        gutters_count = 3
+    elif modules == 3:
+        gutters_count = 4
+    else:
+        gutters_count = modules + 1  # По умолчанию - на 1 больше чем модулей
+    
+    # Общая длина лотков = вынос * количество лотков
+    total_gutter_length = length_m * gutters_count
+    
+    # Общая стоимость = цена за метр * общая длина
+    total_price = GUTTER_INSERT_PRICE_PER_METER * total_gutter_length
+    
+    return (True, total_price, gutters_count, total_gutter_length)
+
+
 def needs_gutter_insert(length_m):
     """
     Проверяет, нужен ли усилитель лотка
@@ -516,18 +559,21 @@ def perform_calculation(dimensions, options):
         else:
             results["additional_columns"] = {"required": False}
         
-        # Проверяем, нужен ли усилитель лотка
-        need_gutter = needs_gutter_insert(length_m)
-        if need_gutter:
+        # Проверяем, нужен ли усилитель лотка и рассчитываем его стоимость
+        gutter_needed, gutter_price, gutters_count, total_gutter_length = calculate_gutter_insert_price(length_m, modules)
+        if gutter_needed:
             results["gutter_insert"] = {
                 "required": True,
-                "price": GUTTER_INSERT_PRICE
+                "gutters_count": gutters_count,
+                "length": total_gutter_length,
+                "price_per_meter": GUTTER_INSERT_PRICE_PER_METER,
+                "total_price": gutter_price
             }
             results["items"].append({
-                "name": "Усилитель лотка",
-                "price": GUTTER_INSERT_PRICE
+                "name": f"Усилитель лотка ({gutters_count} лотка, {total_gutter_length:.2f} м)",
+                "price": gutter_price
             })
-            results["total_price"] += GUTTER_INSERT_PRICE
+            results["total_price"] += gutter_price
         else:
             results["gutter_insert"] = {"required": False}
         
@@ -635,10 +681,10 @@ def perform_calculation(dimensions, options):
                 "price": ""
             })
         
-        if need_gutter:
+        if gutter_needed:
             specification.append({
                 "name": "Усилитель лотка",
-                "count": "1 шт.",
+                "count": f"{total_gutter_length:.2f} м ({gutters_count} лотка)",
                 "price": ""
             })
         
@@ -692,7 +738,7 @@ def perform_calculation(dimensions, options):
             "width": width_m,
             "modules": modules,
             "need_columns": need_columns,
-            "need_gutter": need_gutter,
+            "need_gutter": gutter_needed,
             "pergola_type": pergola_type,
             "lamella_size": lamella_size
         }
