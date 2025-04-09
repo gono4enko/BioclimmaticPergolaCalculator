@@ -530,7 +530,10 @@ def perform_calculation(dimensions, options):
         # Корректируем размер выноса в соответствии с размером ламелей для B500NEW и B700NEW
         if pergola_type in ["B500NEW", "B700NEW"]:
             lamella_size_mm = 200 if lamella_size == "200" else 250
+            original_length = length_m
             length_m = adjust_length_for_lamella_size(length_m, lamella_size_mm)
+            # Рассчитываем количество ламелей
+            lamellas_count = math.ceil(length_m / (lamella_size_mm / 1000))
         
         # Определяем базовую стоимость перголы из прайс-листа
         base_price = get_base_price(pergola_type, lamella_size, width_m, length_m)
@@ -676,9 +679,17 @@ def perform_calculation(dimensions, options):
         # Добавляем информацию о спецификации (без цен)
         specification = []
         
+        # Определяем тип ламелей и их количество
+        lamella_info = ""
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type)
+            lamellas_count_text = f", {lamellas_count} ламелей" if 'lamellas_count' in locals() else ""
+        else:
+            lamellas_count_text = ""
+                
         # Основная пергола
         specification.append({
-            "name": f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м",
+            "name": f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м с {lamella_info}{lamellas_count_text}",
             "count": f"{modules} модуль",
             "price": ""
         })
@@ -750,7 +761,9 @@ def perform_calculation(dimensions, options):
             "need_columns": need_columns,
             "need_gutter": gutter_needed,
             "pergola_type": pergola_type,
-            "lamella_size": lamella_size
+            "lamella_type": lamella_type,
+            "lamella_size": lamella_size,
+            "lamellas_count": lamellas_count if 'lamellas_count' in locals() else 0
         }
         
         return results
@@ -843,9 +856,9 @@ def render_options_form():
     # Тип ламелей - зависит от выбранного типа перголы
     lamella_options = []
     if pergola_type == "B500NEW":
-        lamella_options = ["B500-20NEW", "B500-25NEW"]
+        lamella_options = ["B500-25NEW", "B500-20NEW"]  # Стандартные 250 мм первыми
     elif pergola_type == "B700NEW":
-        lamella_options = ["B700-20NEW", "B700-25NEW"]
+        lamella_options = ["B700-25NEW", "B700-20NEW"]  # Стандартные 250 мм первыми
     elif pergola_type == "B600":
         lamella_options = ["B600-PIR"]
     
@@ -903,12 +916,22 @@ def render_results(results):
             st.markdown("### Отладочная информация")
             st.json(results["debug"])
     
+    # Получаем информацию о ламелях
+    lamella_type = results["options"]["lamella_type"]
+    lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type)
+    
+    # Получаем количество ламелей
+    lamellas_count = results["debug"].get("lamellas_count", 0)
+    
     # Заголовок результатов
     st.markdown(f"""
     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
         <h2 style='margin-top: 0; color: #0066cc; font-size: 1.4rem;'>Результаты расчета</h2>
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Пергола:</strong> {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м
+        </p>
+        <p style='font-size: 1.1rem; margin-bottom: 5px;'>
+            <strong>Тип ламелей:</strong> {lamella_info}
         </p>
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Количество модулей:</strong> {modules}
@@ -939,8 +962,15 @@ def render_results(results):
     # Создаем таблицу стоимости
     items_data = []
     
+    # Получаем информацию о ламелях
+    lamella_info = LAMELLA_TYPES.get(results["options"]["lamella_type"], results["options"]["lamella_type"])
+    lamellas_count = results["debug"].get("lamellas_count", 0)
+    lamellas_info = f" с {lamella_info}"
+    if lamellas_count > 0 and pergola_type in ["B500NEW", "B700NEW"]:
+        lamellas_info += f", {lamellas_count} ламелей"
+    
     # Базовая стоимость перголы - всегда первой строкой
-    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м ({modules} модуль)", f"{base_price:.2f} €"])
+    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} модуль)", f"{base_price:.2f} €"])
     
     # Привод и автоматика - второй строкой, если есть
     if pergola_type in ["B500NEW", "B700NEW"]:
@@ -1100,6 +1130,12 @@ def main():
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
     
+    # Включаем режим отладки для проверки соответствия цен в прайсе
+    if st.sidebar.checkbox("Режим отладки", value=False):
+        st.session_state.debug_mode = True
+    else:
+        st.session_state.debug_mode = False
+        
     # Отображаем результаты расчета под формами ввода
     if 'results' in st.session_state:
         # Показываем общий результат и детальную информацию
