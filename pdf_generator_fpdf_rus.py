@@ -248,10 +248,19 @@ def generate_commercial_offer(pergola_data, user_data=None):
         # Добавляем информацию о полной стоимости сразу под таблицей параметров
         pdf.ln(5)
         pdf.set_fill_color(240, 240, 240)  # Светло-серый фон
-        pdf.set_font('DejaVu', 'B', 12)
+        pdf.set_font('DejaVu', 'B', 13)  # Увеличиваем шрифт для лучшей видимости
         pdf.set_text_color(0, 0, 0)  # Черный текст
-        total_price_str = f"{total_cost:,.2f} ₽".replace(',', ' ')
-        pdf.cell(0, 10, f"Общая стоимость: {total_price_str}", 1, 1, "C", fill=True)
+        
+        # Форматируем стоимость в полном формате
+        total_price_value = int(total_cost)
+        if total_price_value >= 1000000:
+            # Для миллионов форматируем как "1 234 567 рублей"
+            total_price_str = f"{total_price_value:,d}".replace(',', ' ') + " рублей"
+        else:
+            # Для других значений так же
+            total_price_str = f"{total_price_value:,d}".replace(',', ' ') + " рублей"
+            
+        pdf.cell(0, 12, f"Общая стоимость: {total_price_str}", 1, 1, "C", fill=True)
         pdf.ln(5)
         
         # Добавляем спецификацию перголы
@@ -298,23 +307,50 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 pdf.chapter_title("Подробная стоимость:")  # Повторяем заголовок на новой странице
             
             headers = ["№", "Наименование", "Стоимость (₽)"]
-            widths = [15, 120, 25]  # Ширина колонок в мм
+            widths = [12, 95, 53]  # Ширина колонок в мм: уменьшили первые две, увеличили последнюю
             
             pdf.table_header(headers, widths)
             
+            # Устанавливаем меньший шрифт для цен в таблице
+            original_font_size = pdf.font_size_pt
+            
             for i, item in enumerate(cost_items, 1):
-                price_str = f"{item['price']:,.2f}".replace(',', ' ')
+                # Форматируем цену с полным отображением
+                price_value = int(item['price'])  # Убираем копейки для упрощения
+                
+                # Форматируем с разделением разрядов и добавляем символ рубля
+                if price_value >= 1000000:
+                    # Для миллионов: 1 000 000 ₽
+                    price_str = f"{price_value:,d}".replace(',', ' ') + " ₽"
+                elif price_value >= 1000:
+                    # Для тысяч: 100 000 ₽
+                    price_str = f"{price_value:,d}".replace(',', ' ') + " ₽"
+                else:
+                    # Для сотен: 100 ₽
+                    price_str = f"{price_value} ₽"
+                
+                # Устанавливаем шрифт немного меньше для цен
+                pdf.set_font('DejaVu', '', 9)
                 pdf.table_row([str(i), item['name'], price_str], widths, aligns=["C", "L", "R"])
+                pdf.set_font('DejaVu', '', 10)  # Возвращаем обычный размер
                 
             # Добавляем итоговую строку
             pdf.set_fill_color(211, 211, 211)  # Светло-серый цвет
-            pdf.set_font('DejaVu', 'B', 10)
+            pdf.set_font('DejaVu', 'B', 11)  # Увеличиваем шрифт для итоговой суммы
             pdf.set_text_color(0, 0, 0)  # Черный текст
-            total_price_str = f"{total_cost:,.2f}".replace(',', ' ')
             
-            pdf.cell(15, 8, "", 1, 0, "C", fill=True)
-            pdf.cell(120, 8, "ИТОГО:", 1, 0, "R", fill=True)
-            pdf.cell(25, 8, total_price_str, 1, 1, "R", fill=True)
+            # Форматируем итоговую цену
+            total_price_value = int(total_cost)
+            if total_price_value >= 1000000:
+                # Для миллионов форматируем как "1 234 567 ₽"
+                total_price_str = f"{total_price_value:,d}".replace(',', ' ') + " ₽"
+            else:
+                # Для других значений так же
+                total_price_str = f"{total_price_value:,d}".replace(',', ' ') + " ₽"
+            
+            pdf.cell(12, 10, "", 1, 0, "C", fill=True)
+            pdf.cell(95, 10, "ИТОГО:", 1, 0, "R", fill=True)
+            pdf.cell(53, 10, total_price_str, 1, 1, "R", fill=True)
         else:
             pdf.set_font('DejaVu', '', 10)
             pdf.cell(0, 7, "Данные о стоимости отсутствуют", 0, 1)
@@ -554,8 +590,17 @@ def generate_commercial_offer(pergola_data, user_data=None):
             simple_pdf.ln(5)
             simple_pdf.set_fill_color(240, 240, 240)
             simple_pdf.set_font('Arial', 'B', 14)
-            price_str = f"{p_cost:,.2f}".replace(',', ' ')
-            simple_pdf.cell(0, 10, f"Общая стоимость: {price_str} ₽", 1, 1, 'C', fill=True)
+            
+            # Форматируем стоимость в полном формате
+            price_value = int(p_cost)
+            if price_value >= 1000000:
+                # Для миллионов форматируем как "1 234 567 рублей"
+                price_str = f"{price_value:,d}".replace(',', ' ') + " рублей"
+            else:
+                # Для других значений так же
+                price_str = f"{price_value:,d}".replace(',', ' ') + " рублей"
+                
+            simple_pdf.cell(0, 10, f"Общая стоимость: {price_str}", 1, 1, 'C', fill=True)
             
             # Заметка о версии документа
             simple_pdf.ln(15)
