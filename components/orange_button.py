@@ -31,16 +31,20 @@ def create_orange_button(label="Рассчитать стоимость"):
         button_key = f"orange_button_{st.session_state.get('button_counter', 0)}"
         button_clicked = st.button(label, key=button_key, type="primary")
     
-    # Дополнительный CSS для скрытия именно этой кнопки
+    # Изменяем CSS для дополнительного скрытия стандартной кнопки
     st.markdown(f"""
     <style>
-    /* Дополнительное скрытие кнопки по специфическому ключу */
-    div[data-testid="element-container"]:has(button[kind="primary"][data-testid*="{button_key}"]) {{
+    /* Добавляем более точное скрытие стандартной кнопки "Рассчитать стоимость" */
+    div[data-testid="element-container"]:has(button[kind="primary"]) {{
         display: none !important;
         height: 0 !important;
         min-height: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
+        visibility: hidden !important;
+        position: absolute !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
     }}
     </style>
     """, unsafe_allow_html=True)

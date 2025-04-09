@@ -396,13 +396,96 @@ def render_options_form():
     # Создаём блок для выбора освещения с вертикальным расположением опций
     st.markdown("<div style='margin-top: 15px; margin-bottom: 10px;'></div>", unsafe_allow_html=True)
     
-    # Используем стандартный радиокомпонент Streamlit для выбора освещения
+    # Создаем собственные вариант выбора вместо радиокнопок
+    # Это позволит избежать проблемы с дублированием элементов и настроить внешний вид
+    
+    # Создаем заголовок вручную
+    st.markdown('<div style="font-weight:500; margin-bottom:10px; font-size:1rem;">Выберите тип подсветки:</div>', unsafe_allow_html=True)
+    
+    # Создаем кастомные элементы выбора освещения с галочками
+    custom_lighting_html = ""
+    for option in lighting_options_full:
+        is_selected = (selected_lighting == option)
+        label = lighting_labels.get(option, option)
+        description = lighting_descriptions.get(option, "")
+        
+        border_style = "3px solid #3f6daa" if is_selected else "1px solid #ddd"
+        check_mark = "✓" if is_selected else ""
+        
+        custom_lighting_html += f"""
+        <div class="lighting-option" data-value="{option}" style="
+            background-color: #FFFFFF; 
+            border: {border_style}; 
+            border-radius: 8px; 
+            padding: 12px; 
+            margin-bottom: 10px; 
+            cursor: pointer;">
+            <div style="display: flex; align-items: center;">
+                <div style="
+                    min-width: 20px; 
+                    min-height: 20px; 
+                    border: 2px solid #3f6daa; 
+                    border-radius: 4px; 
+                    margin-right: 10px; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    font-weight: bold; 
+                    color: #3f6daa;">{check_mark}</div>
+                <div style="font-size: 1.1rem;">{label}</div>
+            </div>
+            <div style="font-size: 0.9rem; margin-top: 5px; margin-left: 30px;">{description}</div>
+        </div>
+        """
+    
+    # Добавляем JavaScript для обработки кликов
+    lighting_js = f"""
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {{
+            const lightingOptions = document.querySelectorAll('.lighting-option');
+            lightingOptions.forEach(option => {{
+                option.addEventListener('click', function() {{
+                    // Получаем выбранное значение
+                    const value = this.getAttribute('data-value');
+                    // Находим скрытые радиокнопки и выбираем нужную
+                    const allRadios = document.querySelectorAll('input[type="radio"]');
+                    allRadios.forEach(radio => {{
+                        if (radio.value === value) {{
+                            radio.click();
+                        }}
+                    }});
+                }});
+            }});
+        }});
+    </script>
+    """
+    
+    # Выводим наш кастомный HTML
+    st.markdown(custom_lighting_html + lighting_js, unsafe_allow_html=True)
+    
+    # Добавляем дополнительный CSS для скрытия стандартных радиокнопок полностью
+    st.markdown("""
+    <style>
+    /* Полностью скрываем стандартные радиокнопки вместе с их контейнерами */
+    div[data-testid="element-container"]:has(div[role="radiogroup"]) {
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        pointer-events: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Скрытые радиокнопки для связи с Streamlit
     selected_lighting_option = st.radio(
-        "Выберите тип подсветки:",
+        "",  # Пустая метка, так как у нас свой заголовок
         options=lighting_options_full, 
-        format_func=lambda x: lighting_labels.get(x, x),
         index=lighting_options_full.index(selected_lighting) if selected_lighting in lighting_options_full else 0,
-        key="lighting_radio"
+        key="lighting_radio",
+        label_visibility="collapsed"  # Скрываем стандартный заголовок
     )
     
     # Добавляем CSS-стили для изменения отображения радиокнопок на галочки
@@ -448,9 +531,17 @@ def render_options_form():
         left: 2px !important;
     }
     
-    /* Скрываем стандартные круглые радиокнопки */
-    div[data-testid="stVerticalBlock"] div[role="radiogroup"] input[type="radio"] + div {
+    /* Скрываем стандартные круглые радиокнопки и квадратные чекбоксы */
+    div[data-testid="stVerticalBlock"] div[role="radiogroup"] input[type="radio"] + div,
+    div[data-testid="stVerticalBlock"] div[role="radiogroup"] > div > div:first-child {
         display: none !important;
+    }
+    
+    /* Добавляем текст после радиокнопок */
+    div[data-testid="stVerticalBlock"] div[role="radiogroup"] label::after {
+        content: attr(data-title);
+        margin-left: 5px;
+        font-size: 1rem;
     }
     
     /* Расположение текста рядом с галочкой на одном уровне */
