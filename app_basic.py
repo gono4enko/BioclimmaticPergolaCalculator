@@ -1319,114 +1319,125 @@ def render_results(results):
     # Добавляем разделитель
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
     
-    # Добавляем информацию о типе перголы и изображение
-    if pergola_type == "B500NEW":
-        st.markdown(f"""
-        <h3 style='font-size: 1.2rem; margin-top: 20px;'>Серия B500NEW (с поворотными ламелями)</h3>
-        <p style='margin-bottom: 15px;'>
-        Биоклиматическая пергола с поворотными ламелями, вращающимися вокруг нижней оси. 
-        Подходит для зон отдыха, террас, бассейнов.
-        </p>
+    # Добавляем информацию о типе перголы и изображение только один раз в сессии
+    if not st.session_state.get('description_shown', False):
+        # Устанавливаем флаг, что описание уже было показано в этой сессии
+        st.session_state.description_shown = True
         
-        <div style='margin-bottom: 15px;'>
-        <strong>Ламели:</strong><br/>
-        250x53 мм (NEW): Угол поворота 105°, шаг 250 мм, масса 4,684 кг/м.<br/>
-        200x56 мм (NEW): Угол поворота 112°, шаг 200 мм, масса 4,375 кг/м.
-        </div>
-        
-        <div style='margin-bottom: 15px;'>
-        <strong>Преимущества:</strong><br/>
-        • Высокая герметичность благодаря двойному уплотнению.<br/>
-        • Интегрированная дренажная система с лотком 164x260 мм.<br/>
-        • Быстрый монтаж (до 4 часов на модуль).<br/>
-        • LED/RGB подсветка по периметру (опция).<br/>
-        • Максимальный пролет до 8 м.
-        </div>
-        
-        <div style='margin-bottom: 15px;'>
-        <strong>Узлы:</strong><br/>
-        • Несущая балка: Алюминиевая конструкция с двойным сливным лотком (322x260 мм).<br/>
-        • Колонна: 164x164 мм, усиленная 7 анкерами для устойчивости.<br/>
-        • Система вращения: Немецкий двигатель Bansbach easylift (IP65), синхронизация TANDEM для больших конструкций.
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Добавляем изображение
-        try:
-            st.image("attached_assets/Снимок экрана 2025-04-09 в 13.57.24.png", caption="Пример расчета перголы B500", use_container_width=True)
-        except Exception as e:
-            st.warning(f"Не удалось загрузить изображение: {e}")
-    
-    elif pergola_type == "B700NEW":
-        st.markdown(f"""
-        <h3 style='font-size: 1.2rem; margin-top: 20px;'>Серия B700NEW (со сдвижными ламелями)</h3>
-        <p style='margin-bottom: 15px;'>
-        Пергола с ламелями, сдвигающимися в горизонтальной плоскости. Идеальна для больших пространств и экстремальных ветровых нагрузок.
-        </p>
-        
-        <div style='margin-bottom: 15px;'>
-        <strong>Ламели:</strong><br/>
-        250x46 мм: Сдвиг с углом 107°, шаг 250 мм, масса 4,144 кг/м.<br/>
-        200x56 мм (NEW): Сдвиг с углом 107°, шаг 200 мм, масса 4,375 кг/м.
-        </div>
-        
-        <div style='margin-bottom: 15px;'>
-        <strong>Преимущества:</strong><br/>
-        • Высокая ветровая устойчивость (до 50 кг/м² снеговой нагрузки).<br/>
-        • Французские двигатели Somfy с защитой IP65.<br/>
-        • Возможность интеграции с панорамным остеклением.
-        </div>
-        
-        <div style='margin-bottom: 15px;'>
-        <strong>Узлы:</strong><br/>
-        • Несущая балка: Двойной лоток 322x260 мм для отвода воды.<br/>
-        • Колонна: Усиленная конструкция с дренажными отверстиями.<br/>
-        • Система сдвига: Замок Roof-Lock для герметичности.
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Добавляем изображение
-        try:
-            st.image("attached_assets/В700 со сдвижением ламелей.png", caption="Пергола B700 со сдвижными ламелями", use_container_width=True)
-        except Exception as e:
+        # Отображаем информацию о выбранном типе перголы
+        if pergola_type == "B500NEW":
+            st.markdown(f"""
+            <h3 style='font-size: 1.2rem; margin-top: 20px;'>Серия B500NEW (с поворотными ламелями)</h3>
+            <p style='margin-bottom: 15px;'>
+            Биоклиматическая пергола с поворотными ламелями, вращающимися вокруг нижней оси. 
+            Подходит для зон отдыха, террас, бассейнов.
+            </p>
+            
+            <div style='margin-bottom: 15px;'>
+            <strong>Ламели:</strong><br/>
+            250x53 мм (NEW): Угол поворота 105°, шаг 250 мм, масса 4,684 кг/м.<br/>
+            200x56 мм (NEW): Угол поворота 112°, шаг 200 мм, масса 4,375 кг/м.
+            </div>
+            
+            <div style='margin-bottom: 15px;'>
+            <strong>Преимущества:</strong><br/>
+            • Высокая герметичность благодаря двойному уплотнению.<br/>
+            • Интегрированная дренажная система с лотком 164x260 мм.<br/>
+            • Быстрый монтаж (до 4 часов на модуль).<br/>
+            • LED/RGB подсветка по периметру (опция).<br/>
+            • Максимальный пролет до 8 м.
+            </div>
+            
+            <div style='margin-bottom: 15px;'>
+            <strong>Узлы:</strong><br/>
+            • Несущая балка: Алюминиевая конструкция с двойным сливным лотком (322x260 мм).<br/>
+            • Колонна: 164x164 мм, усиленная 7 анкерами для устойчивости.<br/>
+            • Система вращения: Немецкий двигатель Bansbach easylift (IP65), синхронизация TANDEM для больших конструкций.
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Добавляем изображение
             try:
-                st.image("attached_assets/Снимок экрана 2025-04-09 в 13.51.02.png", caption="Пример перголы со сдвижными ламелями", use_container_width=True)
-            except Exception as e2:
-                st.warning(f"Не удалось загрузить изображение: {e2}")
+                st.image("attached_assets/b500_rotation.png", caption="Пергола B500 с поворотными ламелями", use_container_width=True)
+            except Exception as e:
+                try:
+                    st.image("attached_assets/Снимок экрана 2025-04-09 в 13.57.24.png", caption="Пример расчета перголы B500", use_container_width=True)
+                except Exception as e2:
+                    st.warning(f"Не удалось загрузить изображение: {e2}")
         
-    elif pergola_type == "B600":
-        st.markdown(f"""
-        <h3 style='font-size: 1.2rem; margin-top: 20px;'>Серия B600 (с сэндвич-панелями PIR)</h3>
-        <p style='margin-bottom: 15px;'>
-        Пергола с неподвижными сэндвич-панелями PIR. Оптимальна для северных регионов с высокими снеговыми нагрузками.
-        </p>
-        
-        <div style='margin-bottom: 15px;'>
-        <strong>Характеристики:</strong><br/>
-        • Панели PIR: Толщина 100 мм, замок Rolf-Lock, RAL 9003/7024.<br/>
-        • Максимальный пролет: До 8 м.
-        </div>
-        
-        <div style='margin-bottom: 15px;'>
-        <strong>Преимущества:</strong><br/>
-        • Снеговая нагрузка до 100 кг/м².<br/>
-        • Термоизоляция и защита от шума.<br/>
-        • Экологичность и устойчивость к УФ-излучению.
-        </div>
-        
-        <div style='margin-bottom: 15px;'>
-        <strong>Узлы:</strong><br/>
-        • Сэндвич-панели: Трехслойная конструкция с пенополиизоциануратом.<br/>
-        • Колонна: 164x164 мм с жестким креплением.<br/>
-        • Дренаж: Интегрированный лоток по периметру.
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Добавляем изображение
-        try:
-            st.image("attached_assets/Снимок экрана 2025-04-09 в 13.39.51.png", caption="Пример перголы с PIR-панелями", use_container_width=True)
-        except Exception as e:
-            st.warning(f"Не удалось загрузить изображение: {e}")
+        elif pergola_type == "B700NEW":
+            st.markdown(f"""
+            <h3 style='font-size: 1.2rem; margin-top: 20px;'>Серия B700NEW (со сдвижными ламелями)</h3>
+            <p style='margin-bottom: 15px;'>
+            Пергола с ламелями, сдвигающимися в горизонтальной плоскости. Идеальна для больших пространств и экстремальных ветровых нагрузок.
+            </p>
+            
+            <div style='margin-bottom: 15px;'>
+            <strong>Ламели:</strong><br/>
+            250x46 мм: Сдвиг с углом 107°, шаг 250 мм, масса 4,144 кг/м.<br/>
+            200x56 мм (NEW): Сдвиг с углом 107°, шаг 200 мм, масса 4,375 кг/м.
+            </div>
+            
+            <div style='margin-bottom: 15px;'>
+            <strong>Преимущества:</strong><br/>
+            • Высокая ветровая устойчивость (до 50 кг/м² снеговой нагрузки).<br/>
+            • Французские двигатели Somfy с защитой IP65.<br/>
+            • Возможность интеграции с панорамным остеклением.
+            </div>
+            
+            <div style='margin-bottom: 15px;'>
+            <strong>Узлы:</strong><br/>
+            • Несущая балка: Двойной лоток 322x260 мм для отвода воды.<br/>
+            • Колонна: Усиленная конструкция с дренажными отверстиями.<br/>
+            • Система сдвига: Замок Roof-Lock для герметичности.
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Добавляем изображение
+            try:
+                st.image("attached_assets/b700_sliding.png", caption="Пергола B700 со сдвижными ламелями", use_container_width=True)
+            except Exception as e:
+                try:
+                    st.image("attached_assets/Снимок экрана 2025-04-09 в 13.51.02.png", caption="Пример перголы со сдвижными ламелями", use_container_width=True)
+                except Exception as e2:
+                    st.warning(f"Не удалось загрузить изображение: {e2}")
+            
+        elif pergola_type == "B600":
+            st.markdown(f"""
+            <h3 style='font-size: 1.2rem; margin-top: 20px;'>Серия B600 (с сэндвич-панелями PIR)</h3>
+            <p style='margin-bottom: 15px;'>
+            Пергола с неподвижными сэндвич-панелями PIR. Оптимальна для северных регионов с высокими снеговыми нагрузками.
+            </p>
+            
+            <div style='margin-bottom: 15px;'>
+            <strong>Характеристики:</strong><br/>
+            • Панели PIR: Толщина 100 мм, замок Rolf-Lock, RAL 9003/7024.<br/>
+            • Максимальный пролет: До 8 м.
+            </div>
+            
+            <div style='margin-bottom: 15px;'>
+            <strong>Преимущества:</strong><br/>
+            • Снеговая нагрузка до 100 кг/м².<br/>
+            • Термоизоляция и защита от шума.<br/>
+            • Экологичность и устойчивость к УФ-излучению.
+            </div>
+            
+            <div style='margin-bottom: 15px;'>
+            <strong>Узлы:</strong><br/>
+            • Сэндвич-панели: Трехслойная конструкция с пенополиизоциануратом.<br/>
+            • Колонна: 164x164 мм с жестким креплением.<br/>
+            • Дренаж: Интегрированный лоток по периметру.
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Добавляем изображение
+            try:
+                st.image("attached_assets/b600_sandwich.png", caption="Пергола B600 с PIR-панелями", use_container_width=True)
+            except Exception as e:
+                try:
+                    st.image("attached_assets/Снимок экрана 2025-04-09 в 13.39.51.png", caption="Пример перголы с PIR-панелями", use_container_width=True)
+                except Exception as e2:
+                    st.warning(f"Не удалось загрузить изображение: {e2}")
 
 def scroll_to_results():
     """
@@ -1543,6 +1554,9 @@ def main():
                 
                 # Добавляем флаг, что нужно прокрутить к результатам
                 st.session_state.scroll_to_results = True
+                
+                # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
+                st.session_state.description_shown = False
                 
                 # Перезагружаем страницу для отображения результатов
                 st.rerun()
