@@ -1116,9 +1116,9 @@ def render_results(results):
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Количество модулей:</strong> {modules}
         </p>
-        <p style='font-size: 1.2rem; color: #0066cc;'>
-            <strong>Итоговая стоимость:</strong> {formatted_price} ₽
-        </p>
+        <div style='font-size: 1.4rem; color: #0066cc; font-weight: 700; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0;'>
+            Итоговая стоимость: <span style='font-size: 1.5rem; color: #0066cc;'>{formatted_price} ₽</span>
+        </div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1253,9 +1253,9 @@ def render_results(results):
     for i, item in enumerate(items_data):
         # Особое форматирование для строки "Итого"
         if i == len(items_data) - 1:
-            html_table += '<tr style="background-color:#f0f7ff;">'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-weight:bold;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-weight:bold;">{item[1]}</td>'
+            html_table += '<tr style="background-color:#e0f0ff;">'
+            html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.2rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:10px 10px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; color:#0066cc;">{item[1]}</td>'
             html_table += '</tr>'
         else:
             html_table += '<tr>'
