@@ -1353,7 +1353,7 @@ def render_results(results):
         
         # Добавляем изображение
         try:
-            st.image("attached_assets/Снимок экрана 2025-04-09 в 13.57.24.png", caption="Пример расчета перголы B500", use_column_width=True)
+            st.image("attached_assets/Снимок экрана 2025-04-09 в 13.57.24.png", caption="Пример расчета перголы B500", use_container_width=True)
         except Exception as e:
             st.warning(f"Не удалось загрузить изображение: {e}")
     
@@ -1361,25 +1361,38 @@ def render_results(results):
         st.markdown(f"""
         <h3 style='font-size: 1.2rem; margin-top: 20px;'>Серия B700NEW (со сдвижными ламелями)</h3>
         <p style='margin-bottom: 15px;'>
-        Биоклиматическая пергола со сдвижными ламелями. Идеальна для кафе, ресторанов и частных террас.
-        Ламели сдвигаются по направляющим, полностью открывая пространство.
+        Пергола с ламелями, сдвигающимися в горизонтальной плоскости. Идеальна для больших пространств и экстремальных ветровых нагрузок.
         </p>
         
         <div style='margin-bottom: 15px;'>
+        <strong>Ламели:</strong><br/>
+        250x46 мм: Сдвиг с углом 107°, шаг 250 мм, масса 4,144 кг/м.<br/>
+        200x56 мм (NEW): Сдвиг с углом 107°, шаг 200 мм, масса 4,375 кг/м.
+        </div>
+        
+        <div style='margin-bottom: 15px;'>
         <strong>Преимущества:</strong><br/>
-        • Максимальное открытие пространства при сдвижении ламелей.<br/>
-        • Высокая ветроустойчивость.<br/>
-        • Надежная защита от дождя в закрытом положении.<br/>
-        • Интегрированная дренажная система.<br/>
-        • Возможность установки боковых штор и LED-подсветки.
+        • Высокая ветровая устойчивость (до 50 кг/м² снеговой нагрузки).<br/>
+        • Французские двигатели Somfy с защитой IP65.<br/>
+        • Возможность интеграции с панорамным остеклением.
+        </div>
+        
+        <div style='margin-bottom: 15px;'>
+        <strong>Узлы:</strong><br/>
+        • Несущая балка: Двойной лоток 322x260 мм для отвода воды.<br/>
+        • Колонна: Усиленная конструкция с дренажными отверстиями.<br/>
+        • Система сдвига: Замок Roof-Lock для герметичности.
         </div>
         """, unsafe_allow_html=True)
         
         # Добавляем изображение
         try:
-            st.image("attached_assets/Снимок экрана 2025-04-09 в 13.51.02.png", caption="Пример перголы со сдвижными ламелями", use_column_width=True)
+            st.image("attached_assets/В700 со сдвижением ламелей.png", caption="Пергола B700 со сдвижными ламелями", use_container_width=True)
         except Exception as e:
-            st.warning(f"Не удалось загрузить изображение: {e}")
+            try:
+                st.image("attached_assets/Снимок экрана 2025-04-09 в 13.51.02.png", caption="Пример перголы со сдвижными ламелями", use_container_width=True)
+            except Exception as e2:
+                st.warning(f"Не удалось загрузить изображение: {e2}")
         
     elif pergola_type == "B600":
         st.markdown(f"""
@@ -1401,7 +1414,7 @@ def render_results(results):
         
         # Добавляем изображение
         try:
-            st.image("attached_assets/Снимок экрана 2025-04-09 в 13.39.51.png", caption="Пример перголы с PIR-панелями", use_column_width=True)
+            st.image("attached_assets/Снимок экрана 2025-04-09 в 13.39.51.png", caption="Пример перголы с PIR-панелями", use_container_width=True)
         except Exception as e:
             st.warning(f"Не удалось загрузить изображение: {e}")
 
