@@ -629,10 +629,9 @@ ENGINEERING_DESCRIPTION = """
 </div>
 
 <div style='margin-bottom: 15px;'>
-<strong>Сравнение ламелей:</strong><br/>
+<strong>Преимущества ламелей:</strong><br/>
 <ul>
 <li><strong>Ламели 200 мм:</strong> Оптимальны для областей с частыми осадками, обеспечивают более частое расположение для лучшего отвода воды.</li>
-<li><strong>Ламели 250 мм:</strong> Стандартный вариант, обеспечивающий хороший баланс между прочностью и эстетикой.</li>
 </ul>
 </div>
 </div>
@@ -652,17 +651,7 @@ TECHNICAL_ENGINEERING_DESCRIPTION = """
 Ламели — это «скелет» перголы, и их прочность определяет, как конструкция поведет себя под нагрузками. Мы протестировали каждую модель в экстремальных условиях. Вот что важно знать:
 </p>
 
-<p style='margin-bottom: 10px;'><strong>Ламель 250×53 NEW</strong></p>
-<ul style='margin-bottom: 10px; padding-left: 20px;'>
-    <li>Масса: 4,684 кг/м | Шаг: 250 мм</li>
-    <li>Прогиб под нагрузкой:
-        <ul style='padding-left: 20px;'>
-            <li>Рабочая (масса ламели + 50%): 12 мм при ширине 4,5 м.</li>
-            <li>Снеговая (50 кг/м²): 30 мм при ширине 4,5 м.</li>
-        </ul>
-    </li>
-    <li>Макс. снеговая нагрузка: 50 кг/м² (эквивалент 40-50 см свежего снега).</li>
-</ul>
+
 
 <p style='margin-bottom: 10px;'><strong>Ламель 200×56 NEW</strong></p>
 <ul style='margin-bottom: 10px; padding-left: 20px;'>
@@ -714,36 +703,30 @@ TECHNICAL_ENGINEERING_DESCRIPTION = """
 </div>
 
 <div style='margin-bottom: 20px;'>
-<h4 style='font-size: 1.1rem; margin-top: 15px;'>Сравнительная таблица: какая ламель подходит вам?</h4>
+<h4 style='font-size: 1.1rem; margin-top: 15px;'>Технические характеристики ламели</h4>
 <table style='width: 100%; border-collapse: collapse; margin-bottom: 15px;'>
     <tr>
         <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Параметр</th>
-        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Ламель 250×53 NEW</th>
-        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Ламель 200×56 NEW</th>
+        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Характеристики ламели 200×56 NEW</th>
     </tr>
     <tr>
         <td style='border: 1px solid #ddd; padding: 8px;'>Снеговая нагрузка</td>
-        <td style='border: 1px solid #ddd; padding: 8px;'>50 кг/м²</td>
         <td style='border: 1px solid #ddd; padding: 8px;'>70 кг/м²</td>
     </tr>
     <tr>
         <td style='border: 1px solid #ddd; padding: 8px;'>Прогиб под снегом</td>
-        <td style='border: 1px solid #ddd; padding: 8px;'>30 мм (4,5 м)</td>
         <td style='border: 1px solid #ddd; padding: 8px;'>22 мм (5,0 м)</td>
     </tr>
     <tr>
         <td style='border: 1px solid #ddd; padding: 8px;'>Шаг ламелей</td>
-        <td style='border: 1px solid #ddd; padding: 8px;'>250 мм</td>
         <td style='border: 1px solid #ddd; padding: 8px;'>200 мм (плотнее защита)</td>
     </tr>
     <tr>
         <td style='border: 1px solid #ddd; padding: 8px;'>Ветровая стойкость</td>
-        <td style='border: 1px solid #ddd; padding: 8px;'>До 25 м/с</td>
         <td style='border: 1px solid #ddd; padding: 8px;'>До 30 м/с</td>
     </tr>
     <tr>
         <td style='border: 1px solid #ddd; padding: 8px;'>Идеальный сценарий</td>
-        <td style='border: 1px solid #ddd; padding: 8px;'>Умеренный климат</td>
         <td style='border: 1px solid #ddd; padding: 8px;'>Северные регионы</td>
     </tr>
 </table>
