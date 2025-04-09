@@ -12,7 +12,7 @@ st.markdown("""
 body.dark-mode .section-header, 
 .dark-mode .section-header,
 .stApp.dark .section-header {
-    color: white !important;
+    color: black !important;
 }
 
 /* Максимальное уменьшение отступов между элементами подсветки */
@@ -392,15 +392,16 @@ def render_options_form():
         "led_rgb": LIGHTING_TYPES["led_rgb"]["description"] if "led_rgb" in LIGHTING_TYPES else ""
     }
     
-    # Используем стандартный радиокомпонент Streamlit для выбора освещения,
-    # но теперь с вертикальным расположением (horizontal=False)
+    # Создаём блок для выбора освещения с вертикальным расположением опций
+    st.markdown("<div style='margin-top: 15px; margin-bottom: 10px;'></div>", unsafe_allow_html=True)
+    
+    # Используем стандартный радиокомпонент Streamlit для выбора освещения
     selected_lighting_option = st.radio(
         "Выберите тип подсветки:",
-        options=lighting_options_full,
+        options=lighting_options_full, 
         format_func=lambda x: lighting_labels.get(x, x),
         index=lighting_options_full.index(selected_lighting) if selected_lighting in lighting_options_full else 0,
-        key="lighting_radio",
-        horizontal=False  # Вертикальное расположение
+        key="lighting_radio"
     )
     
     # Добавляем CSS-стили для увеличения вертикального отступа между опциями
