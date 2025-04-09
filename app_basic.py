@@ -605,15 +605,16 @@ def perform_calculation(dimensions, options):
     additional_columns_components_for_results = []
     
     if additional_columns:
+        # ВАЖНО: Сохраняем значения для результатов
         additional_columns_cost_for_results = additional_columns_cost
         additional_columns_components_for_results = additional_columns_components.copy()
-        # Не добавляем компоненты к автоматике, оставляем их отдельно
-        # Раньше: automation_components.extend(additional_columns_components)
-        # Теперь отображаем их отдельной секцией
         
         # Отладочная информация
         st.sidebar.write(f"Доп. колонны стоимость: {additional_columns_cost}")
         st.sidebar.write(f"Доп. колонны компоненты: {additional_columns_components}")
+        
+        # Добавляем к общей стоимости автоматически
+        st.sidebar.write("Доп. колонны добавлены к результатам")
     
     # Учитываем установку
     installation_cost = 0
@@ -808,6 +809,13 @@ def main():
         # Отображаем спецификацию перголы
         st.markdown("### Спецификация перголы")
         
+        # Проверяем, есть ли дополнительные колонны и отображаем их сразу вверху
+        if results['details']['additional_columns_cost'] > 0 and results['details']['additional_columns_components']:
+            st.markdown("#### Дополнительные компоненты (автоматически подобраны)")
+            additional_columns = [[comp] for comp in results['details']['additional_columns_components']]
+            additional_columns_df = pd.DataFrame(additional_columns, columns=["Наименование"])
+            st.table(additional_columns_df)
+        
         # Основные характеристики перголы
         basic_specs = [
             ["Тип перголы", PERGOLA_TYPES.get(options["pergola_type"], options["pergola_type"])],
@@ -863,13 +871,6 @@ def main():
         # Добавляем информацию о дополнительных колоннах, если они есть
         if results['details']['additional_columns_cost'] > 0 and results['details']['additional_columns_components']:
             cost_items.append(["Усилитель лотка и дополнительные колонны", f"{results['details']['additional_columns_cost']:.0f}"])
-            
-            # Также добавляем их отдельной секцией в спецификацию, если ещё не добавили
-            if results['details']['additional_columns_components']:
-                st.markdown("#### Дополнительные компоненты")
-                additional_columns = [[comp] for comp in results['details']['additional_columns_components']]
-                additional_columns_df = pd.DataFrame(additional_columns, columns=["Наименование"])
-                st.table(additional_columns_df)
         
         # Добавляем информацию о стоимости установки
         if results['details']['installation_cost'] > 0:
