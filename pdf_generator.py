@@ -112,25 +112,35 @@ def generate_commercial_offer(pergola_data, user_data=None):
     # Список элементов, которые будут добавлены в PDF
     elements = []
     
-    # Добавляем шапку с логотипом компании
-    # Ключевые реквизиты организации
-    try:
-        logo_path = "attached_assets/IMG_1030.jpeg"
-        logo = Image(logo_path, width=17*cm, height=4*cm)
-        elements.append(logo)
-    except Exception as e:
-        # Если не удалось загрузить логотип, добавляем текстовую шапку
-        elements.append(Paragraph("КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", styles['KPTitle']))
-        elements.append(Paragraph("ООО 'Комфортный дом'", styles['KPSubtitle']))
-        elements.append(Paragraph("ИНН/КПП: XXXXXXXXXX / YYYYYYYYY", styles['SmallText']))
-        elements.append(Paragraph("Адрес: г. Москва, ул. Примерная, д. 123", styles['SmallText']))
-        elements.append(Paragraph("Телефон: +7 (XXX) XXX-XX-XX", styles['SmallText']))
-        elements.append(Paragraph("Email: info@example.com", styles['SmallText']))
+    # Создаем текстовую шапку как в представленном скриншоте
+    # Добавляем синюю плашку с текстом "Компания «Комфортный дом»"
+    header_table = Table([["Компания «Комфортный дом»"]], colWidths=[18*cm])
+    header_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, 0), colors.lightblue),
+        ('TEXTCOLOR', (0, 0), (0, 0), colors.white),
+        ('ALIGNMENT', (0, 0), (0, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (0, 0), 14),
+        ('PADDING', (0, 0), (0, 0), 8),
+        ('BOTTOMPADDING', (0, 0), (0, 0), 10),
+        ('TOPPADDING', (0, 0), (0, 0), 10),
+    ]))
+    elements.append(header_table)
     
-    # Добавляем дату и номер коммерческого предложения
+    # Добавляем счетчик страниц и другую информацию
+    elements.append(Spacer(1, 5*mm))
+    elements.append(Paragraph(f"1 из 4", styles['Normal']))
+    elements.append(Spacer(1, 3*mm))
+    elements.append(Paragraph(f"г. Москва, {current_date}", styles['Normal']))
+    
+    # Добавляем номер коммерческого предложения
     elements.append(Spacer(1, 10*mm))
-    elements.append(Paragraph(f"Дата: {current_date}", styles['Normal']))
-    elements.append(Paragraph(f"Коммерческое предложение № КП-{timestamp[:8]}", styles['Normal']))
+    elements.append(Paragraph(f"№ {timestamp[:8]}", styles['Normal']))
+    
+    # Добавляем заголовок коммерческого предложения
+    elements.append(Spacer(1, 10*mm))
+    elements.append(Paragraph("КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", styles['KPTitle']))
+    elements.append(Paragraph("на поставку и монтаж биоклиматической перголы", styles['KPSubtitle']))
     
     # Добавляем информацию о клиенте, если она доступна
     if user_data:
@@ -145,11 +155,6 @@ def generate_commercial_offer(pergola_data, user_data=None):
         
         if user_data.get('email'):
             elements.append(Paragraph(f"Email: {user_data['email']}", styles['Normal']))
-    
-    # Добавляем заголовок коммерческого предложения
-    elements.append(Spacer(1, 10*mm))
-    elements.append(Paragraph("КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", styles['KPTitle']))
-    elements.append(Paragraph("на поставку и монтаж биоклиматической перголы", styles['KPSubtitle']))
     
     # Добавляем информацию о выбранной конфигурации перголы
     elements.append(Spacer(1, 10*mm))
