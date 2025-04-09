@@ -392,15 +392,35 @@ def render_options_form():
         "led_rgb": LIGHTING_TYPES["led_rgb"]["description"] if "led_rgb" in LIGHTING_TYPES else ""
     }
     
-    # Используем стандартный радиокомпонент Streamlit для выбора освещения
+    # Используем стандартный радиокомпонент Streamlit для выбора освещения,
+    # но теперь с вертикальным расположением (horizontal=False)
     selected_lighting_option = st.radio(
         "Выберите тип подсветки:",
         options=lighting_options_full,
         format_func=lambda x: lighting_labels.get(x, x),
         index=lighting_options_full.index(selected_lighting) if selected_lighting in lighting_options_full else 0,
         key="lighting_radio",
-        horizontal=True
+        horizontal=False,  # Вертикальное расположение
+        label_visibility="visible"
     )
+    
+    # Добавляем CSS-стили для увеличения вертикального отступа между опциями
+    st.markdown("""
+    <style>
+    /* Увеличиваем вертикальный отступ между радиокнопками в блоке LED */
+    div[data-testid="stVerticalBlock"] div[role="radiogroup"] > div {
+        margin-bottom: 10px !important;
+        padding-top: 5px !important;
+        padding-bottom: 5px !important;
+    }
+    
+    /* Выравниваем описания опций */
+    div[data-testid="stVerticalBlock"] div[role="radiogroup"] label {
+        display: block !important;
+        padding-left: 10px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
     
     # Показываем описание выбранного варианта подсветки
     if selected_lighting_option != "none" and lighting_descriptions.get(selected_lighting_option):
