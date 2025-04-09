@@ -1018,6 +1018,26 @@ def render_options_form():
     Returns:
         dict: Словарь с выбранными опциями
     """
+    # Добавляем CSS стиль для выравнивания всех чекбоксов и радио кнопок на одном уровне
+    st.markdown("""
+    <style>
+    .stCheckbox > label, .stRadio > div > label {
+        display: flex !important;
+        align-items: center !important;
+        margin-left: 0px !important;
+        padding-left: 0px !important;
+    }
+    .stCheckbox [data-testid="stMarkdownContainer"] {
+        margin-left: 0px !important;
+        padding-left: 0px !important;
+        left: 0px !important;
+    }
+    .stRadio [data-testid="stMarkdownContainer"] {
+        margin-left: 0px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     st.markdown("<h2 class='section-header' style='text-align: center;'>Параметры перголы</h2>", unsafe_allow_html=True)
     
     # Тип перголы
@@ -1047,17 +1067,6 @@ def render_options_form():
     # Освещение
     st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
     st.markdown("<p style='font-weight: 500; margin-bottom: 5px;'>Освещение</p>", unsafe_allow_html=True)
-    
-    # Добавляем CSS стиль для выравнивания всех чекбоксов
-    st.markdown("""
-    <style>
-    .stCheckbox > label {
-        display: flex !important;
-        align-items: center !important;
-        margin-left: 0px !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
     
     lighting_options = []
     col1, col2 = st.columns(2)
