@@ -608,13 +608,24 @@ def main():
     with center_col:
         st.markdown("""
         <style>
-        /* Глобальные стили для кнопки расчета - применяются с наивысшим приоритетом */
-        div[data-testid="stButton"] > button,
-        div[data-testid="stButton"] > button[kind="primary"],
-        div[data-testid="column"] > div[data-testid="stButton"] > button,
+        /* Глобальные стили для ВСЕХ кнопок Streamlit */
+        div[data-testid="stButton"] > button:not([data-testid="baseButton-primary"]),
+        div[data-testid="stButton"] > button:not([kind="primary"]),
+        div[data-testid="column"] > div[data-testid="stButton"]:not(:has(> button[data-testid="baseButton-primary"])) > button,
+        button:not([data-testid="baseButton-primary"]),
+        .element-container div[data-testid="stButton"]:not(:has(> button[data-testid="baseButton-primary"])) button,
+        .stButton:not(:has(> button[data-testid="baseButton-primary"])) > button {
+            background-color: #FFFFFF !important;
+            color: #000000 !important;
+            border: 1px solid #dddddd !important;
+            border-radius: 8px !important;
+            box-shadow: none !important;
+        }
+        
+        /* Стили ТОЛЬКО для кнопки расчета "Рассчитать стоимость" */
+        div[data-testid="stButton"] > button[data-testid="baseButton-primary"],
         button[data-testid="baseButton-primary"],
-        .element-container div[data-testid="stButton"] button,
-        .stButton > button {
+        .stButton > button[data-testid="baseButton-primary"] {
             background-color: var(--button-bg) !important;
             color: var(--button-text) !important;
             font-size: 2rem !important; /* Сделаем еще больше */

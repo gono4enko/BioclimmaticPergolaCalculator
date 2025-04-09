@@ -225,8 +225,9 @@ def render_options_form():
             
             # Отображаем состояние выбора визуально с улучшенной читаемостью
             if is_selected:
+                # Создаем HTML для выбранной опции - четкий стиль белый фон + синяя рамка + галочка
                 st.markdown(f"""
-                <div style="background-color: #FFFFFF; border: 2px solid #0066cc; color: #000000; 
+                <div style="background-color: #FFFFFF; border: 3px solid #0066cc; color: #000000; 
                      font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; 
                      margin-bottom: 5px;">
                     <div style="font-size: 1.1rem; color: #000000;">{pergola_name} ✓</div>
@@ -341,8 +342,9 @@ def render_options_form():
                     
                     # Используем улучшенный стиль кнопок для ламелей (как для типа перголы)
                     if is_selected:
+                        # Единый стиль для выбранных опций - белый фон + синяя рамка + галочка
                         st.markdown(f"""
-                        <div style="background-color: #FFFFFF; border: 2px solid #0066cc; color: #000000; 
+                        <div style="background-color: #FFFFFF; border: 3px solid #0066cc; color: #000000; 
                              font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; 
                              margin-bottom: 5px;">
                             <div style="font-size: 1.1rem; color: #000000;">{size_display} ✓</div>
@@ -418,8 +420,9 @@ def render_options_form():
     install_cols = st.columns([1, 1])
     
     with install_cols[0]:
+        # Стиль для выбранной опции установки - также с увеличенной рамкой
         st.markdown(f"""
-        <div style="background-color: #FFFFFF; border: 2px solid #0066cc; color: #000000; 
+        <div style="background-color: #FFFFFF; border: 3px solid #0066cc; color: #000000; 
              font-weight: bold; text-align: left; border-radius: 8px; padding: 12px 8px; 
              margin-bottom: 5px;">
             <div style="font-size: 1.1rem; color: #000000;">Без установки ✓</div>
