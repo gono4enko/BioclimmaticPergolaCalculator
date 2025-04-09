@@ -1131,7 +1131,7 @@ def render_results(results):
         import pandas as pd
         spec_df = pd.DataFrame(spec_data, columns=["Наименование", "Количество"])
         
-        # Добавляем CSS для корректного отображения таблицы спецификаций
+        # Добавляем CSS для корректного отображения таблицы спецификаций с адаптивным дизайном
         st.markdown(
             """
             <style>
@@ -1139,12 +1139,35 @@ def render_results(results):
             [data-testid="stDataFrame"] table td:first-child {
                 white-space: normal !important;
                 word-wrap: break-word !important;
-                max-width: 500px !important;
+                max-width: 70% !important;
+            }
+            
+            /* Адаптивный дизайн для мобильных устройств */
+            @media (max-width: 768px) {
+                [data-testid="stDataFrame"] {
+                    width: 100% !important;
+                    overflow-x: hidden !important;
+                }
+                
+                [data-testid="stDataFrame"] table {
+                    width: 100% !important;
+                    table-layout: fixed !important;
+                }
+                
+                [data-testid="stDataFrame"] table td:first-child {
+                    width: 70% !important;
+                    max-width: 70% !important;
+                }
+                
+                [data-testid="stDataFrame"] table td:last-child {
+                    width: 30% !important;
+                }
             }
             </style>
             """, unsafe_allow_html=True
         )
         
+        # На мобильных устройствах используем контейнер с возможностью прокрутки
         st.dataframe(spec_df, use_container_width=True, hide_index=True)
     
     # Отображаем таблицу стоимости
@@ -1216,41 +1239,75 @@ def render_results(results):
     import pandas as pd
     df_items = pd.DataFrame(items_data, columns=["Наименование", "Стоимость"])
     
-    # Добавляем CSS для настройки ширины колонок, выравнивания цен и выделения строки итого
+    # Добавляем CSS для настройки ширины колонок, выравнивания цен и адаптивности
     st.markdown(
         """
         <style>
         /* Корректируем ширину колонок в таблице стоимости */
         [data-testid="stDataFrame"] table {
             width: 100%;
+            table-layout: fixed !important;
         }
+        
         /* Выравниваем значения в колонке "Стоимость" по правому краю */
         [data-testid="stDataFrame"] table td:last-child {
             text-align: right !important;
             padding-right: 20px !important;
-            min-width: 200px !important;
+            width: 30% !important;
             white-space: nowrap !important;
         }
+        
         /* Увеличиваем ширину последней колонки */
         [data-testid="stDataFrame"] table th:last-child {
-            min-width: 200px !important;
+            width: 30% !important;
             text-align: center !important;
         }
+        
         /* Стиль для строки итого */
         [data-testid="stDataFrame"] table tr:last-child td {
             font-weight: bold !important;
             background-color: #f0f7ff !important;
         }
+        
         /* Разрешаем перенос длинных наименований в столбце Наименование */
         [data-testid="stDataFrame"] table td:first-child {
             white-space: normal !important;
             word-wrap: break-word !important;
-            max-width: 500px !important; 
+            width: 70% !important;
         }
+        
         /* Стиль для текста в ячейках */
         [data-testid="stDataFrame"] td {
             font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
             padding: 8px 12px !important;
+        }
+        
+        /* Адаптивный дизайн для мобильных устройств */
+        @media (max-width: 768px) {
+            [data-testid="stDataFrame"] {
+                width: 100% !important;
+                overflow-x: hidden !important;
+            }
+            
+            [data-testid="stDataFrame"] table {
+                width: 100% !important;
+                table-layout: fixed !important;
+            }
+            
+            [data-testid="stDataFrame"] table td:first-child {
+                width: 70% !important;
+            }
+            
+            [data-testid="stDataFrame"] table td:last-child {
+                width: 30% !important;
+                font-size: 0.9rem !important;
+            }
+            
+            /* Улучшаем читаемость на мобильных устройствах */
+            .block-container {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
         }
         </style>
         """, unsafe_allow_html=True
