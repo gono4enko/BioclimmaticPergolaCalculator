@@ -585,10 +585,15 @@ def perform_calculation(dimensions, options):
     # Добавляем стоимость пульта к стоимости автоматики
     automation_cost += remote_cost
     
-    # Добавляем компоненты дополнительных колонн, если они есть
+    # Добавляем стоимость дополнительных колонн отдельно
+    additional_columns_cost_for_results = 0
+    additional_columns_components_for_results = []
+    
     if additional_columns:
+        additional_columns_cost_for_results = additional_columns_cost
+        additional_columns_components_for_results = additional_columns_components.copy()
+        # Добавляем компоненты к автоматике только для отображения в списке
         automation_components.extend(additional_columns_components)
-        automation_cost += additional_columns_cost
     
     # Учитываем установку
     installation_cost = 0
@@ -618,7 +623,9 @@ def perform_calculation(dimensions, options):
             "automation_type": automation_type,
             "automation_components": automation_components,
             "installation_cost": installation_cost,
-            "modules": modules
+            "modules": modules,
+            "additional_columns_cost": additional_columns_cost_for_results,
+            "additional_columns_components": additional_columns_components_for_results
         },
         "dimensions": {
             "width_m": width_m,
@@ -783,6 +790,13 @@ def main():
         # Добавляем информацию об автоматизации
         basic_specs.append(["Автоматизация", results["details"]["automation_type"]])
         
+        # Добавляем информацию о количестве ламелей (для пергол с ламелями)
+        if options["pergola_type"] != "B600":
+            # Расчет количества ламелей
+            lamella_size_m = options["lamella_step"] / 1000  # переводим в метры
+            num_lamellas = int(results["dimensions"]["length_m"] / lamella_size_m) + (1 if (results["dimensions"]["length_m"] % lamella_size_m) > 0 else 0)
+            basic_specs.append(["Количество ламелей", f"{num_lamellas} шт."])
+        
         # Создаем DataFrame для базовой спецификации
         spec_df = pd.DataFrame(basic_specs, columns=["Параметр", "Значение"])
         st.table(spec_df)
@@ -814,6 +828,17 @@ def main():
         # Добавляем информацию о стоимости освещения
         if results['details']['lighting_cost'] > 0:
             cost_items.append(["Светодиодная подсветка", f"{results['details']['lighting_cost']:.0f}"])
+        
+        # Добавляем информацию о дополнительных колоннах, если они есть
+        if results['details']['additional_columns_cost'] > 0 and results['details']['additional_columns_components']:
+            cost_items.append(["Усилитель лотка и дополнительные колонны", f"{results['details']['additional_columns_cost']:.0f}"])
+            
+            # Также добавляем их отдельной секцией в спецификацию, если ещё не добавили
+            if results['details']['additional_columns_components']:
+                st.markdown("#### Дополнительные компоненты")
+                additional_columns = [[comp] for comp in results['details']['additional_columns_components']]
+                additional_columns_df = pd.DataFrame(additional_columns, columns=["Наименование"])
+                st.table(additional_columns_df)
         
         # Добавляем информацию о стоимости установки
         if results['details']['installation_cost'] > 0:
