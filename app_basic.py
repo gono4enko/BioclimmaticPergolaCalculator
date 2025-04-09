@@ -1069,6 +1069,9 @@ def render_results(results):
     Args:
         results (dict): Словарь с результатами расчета
     """
+    # Создаем якорь для скролла
+    st.markdown('<div id="results-anchor"></div>', unsafe_allow_html=True)
+    
     if "error" in results:
         st.error(f"Ошибка при расчете: {results['error']}")
         return
@@ -1403,122 +1406,76 @@ def render_results(results):
 
 def scroll_to_results():
     """
-    Добавляет JavaScript-код для принудительного скролла к результатам
-    с крайне надежным подходом - прямым поиском по DOM и использованием нескольких
-    стратегий обнаружения и скроллинга
+    Добавляет JavaScript-код для принудительного скролла к якорю результатов
     """
-    # Создаем уникальный идентификатор для блока результатов, чтобы легко его находить
-    results_id = f"results-scroll-target-{int(time.time())}"
-    
-    # Добавляем маркер с ID к заголовку результатов
-    st.markdown(f'<div id="{results_id}" style="height:1px; width:1px; position:absolute;"></div>', unsafe_allow_html=True)
-    
-    # Добавляем JavaScript для скролла к результатам
-    st.markdown(f"""
+    # Добавляем JavaScript для скролла к результатам по якорю
+    st.markdown("""
     <script>
-        // Добавляем информационные логи для отладки
-        console.log('Scroll script loaded with target: #{results_id}');
-        
-        // Функция для прямого скролла к элементу по ID (наиболее надежный метод)
-        function scrollToId(id) {{
-            console.log(`Trying to scroll to #${{id}}`);
-            const element = document.getElementById(id);
+        // Функция поиска якоря результатов
+        function scrollToResultsAnchor() {
+            console.log('Trying to scroll to results anchor');
+            // Ищем все элементы с id="results-anchor" на странице
+            const resultsAnchor = document.getElementById('results-anchor');
             
-            if (element) {{
-                console.log(`Found element with ID: ${{id}}, scrolling...`);
-                // Сначала пробуем простой scroll
-                window.scrollTo({{
-                    top: element.offsetTop - 100,  // Немного выше для лучшей видимости
-                    behavior: 'smooth'
-                }});
+            if (resultsAnchor) {
+                console.log('Found results anchor, scrolling to it...');
                 
-                // Затем после небольшой задержки используем scrollIntoView
-                setTimeout(() => {{
-                    element.scrollIntoView({{
-                        behavior: 'smooth',
-                        block: 'start'
-                    }});
-                    console.log('Second scroll attempt completed');
-                }}, 100);
+                // Используем requestAnimationFrame для гарантированного выполнения после рендеринга
+                window.requestAnimationFrame(() => {
+                    // Скроллим с учетом положения якоря
+                    window.scrollTo({
+                        top: resultsAnchor.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Повторная попытка через 50ms
+                    setTimeout(() => {
+                        resultsAnchor.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                        console.log('Scroll attempt completed');
+                    }, 50);
+                });
                 
                 return true;
-            }}
+            }
             
-            console.log(`Element with ID: ${{id}} not found`);
-            return false;
-        }}
-        
-        // Резервная функция для поиска по содержимому
-        function scrollToResultsByContent() {{
-            // Ищем блок с текстом "Результаты расчета"
-            const elements = document.querySelectorAll('div, h2, h3, p');
-            
-            for (const el of elements) {{
-                if (el.textContent && el.textContent.includes('Результаты расчета')) {{
-                    console.log('Found results by content, scrolling...');
-                    window.scrollTo({{
-                        top: el.offsetTop - 100,
+            // Если якорь не найден, ищем заголовок результатов
+            console.log('Results anchor not found, searching for heading');
+            const headings = document.querySelectorAll('h2');
+            for (const heading of headings) {
+                if (heading.textContent.includes('Результаты расчета')) {
+                    console.log('Found results heading, scrolling to it...');
+                    window.scrollTo({
+                        top: heading.offsetTop - 80,
                         behavior: 'smooth'
-                    }});
+                    });
                     return true;
-                }}
-            }}
+                }
+            }
             
-            // Ищем блок с текстом "Спецификация перголы"
-            for (const el of elements) {{
-                if (el.textContent && el.textContent.includes('Спецификация перголы')) {{
-                    console.log('Found specification by content, scrolling...');
-                    window.scrollTo({{
-                        top: el.offsetTop - 100,
-                        behavior: 'smooth'
-                    }});
-                    return true;
-                }}
-            }}
-            
-            // Ищем блок с голубым фоном (блок результатов)
-            const blueBlocks = document.querySelectorAll('div[style*="background-color: #f8f9fa"]');
-            if (blueBlocks.length > 0) {{
-                console.log('Found blue background block, scrolling...');
-                window.scrollTo({{
-                    top: blueBlocks[0].offsetTop - 100,
-                    behavior: 'smooth'
-                }});
-                return true;
-            }}
-            
-            return false;
-        }}
-        
-        // Основная функция для выполнения скролла с повторными попытками
-        function performScrollToResults() {{
-            console.log('Starting scroll operation...');
-            
-            // Сначала пробуем скролл по ID (самый надежный)
-            if (scrollToId('{results_id}')) {{
-                return;
-            }}
-            
-            // Если не сработало, пробуем по содержимому
-            if (scrollToResultsByContent()) {{
-                return;
-            }}
-            
-            // Если всё ещё не нашли, просто скроллим на 500px вниз
-            console.log('Fallback: scrolling down 500px');
-            window.scrollBy({{
+            // Крайний случай - просто скроллим на 500px вниз
+            console.log('No targets found, scrolling down 500px as fallback');
+            window.scrollBy({
                 top: 500,
                 behavior: 'smooth'
-            }});
-        }}
+            });
+            
+            return false;
+        }
         
-        // Запускаем первую попытку с задержкой
-        console.log('Scheduling scroll in 1000ms');
-        setTimeout(performScrollToResults, 1000);
+        // Запускаем первую попытку скролла сразу после загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, attempting scroll');
+            setTimeout(scrollToResultsAnchor, 100);
+        });
         
-        // И повторную попытку через 3 секунды для надежности
-        console.log('Scheduling backup scroll in 3000ms');
-        setTimeout(performScrollToResults, 3000);
+        // Запускаем дополнительную попытку через 1 секунду
+        setTimeout(scrollToResultsAnchor, 1000);
+        
+        // И еще одну попытку через 2 секунды для надежности
+        setTimeout(scrollToResultsAnchor, 2000);
     </script>
     """, unsafe_allow_html=True)
 
