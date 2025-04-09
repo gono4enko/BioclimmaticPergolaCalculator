@@ -150,13 +150,13 @@ def load_price_data(pergola_type, lamella_size):
         dict: Словарь с ценами для разных размеров перголы
     """
     # Определяем соответствие типов пергол и имен файлов
-    # Используем русские и английские названия файлов
+    # Ищем как русские, так и английские версии файлов
     file_mapping = {
-        ("B500NEW", "200"): "attached_assets/Price_B500-20.csv",
-        ("B500NEW", "250"): "attached_assets/Price_B500-25.csv",
-        ("B700NEW", "200"): "attached_assets/Price_B700-20.csv",
-        ("B700NEW", "250"): "attached_assets/Price_B700-25.csv",
-        ("B600", "PIR"): "attached_assets/Price_B600_PIR.csv"
+        ("B500NEW", "200"): ["attached_assets/Price_B500-20.csv", "attached_assets/Прайс_В500-20.csv"],
+        ("B500NEW", "250"): ["attached_assets/Price_B500-25.csv", "attached_assets/Прайс_В500-25.csv"],
+        ("B700NEW", "200"): ["attached_assets/Price_B700-20.csv", "attached_assets/Прайс_B700-20.csv"],
+        ("B700NEW", "250"): ["attached_assets/Price_B700-25.csv", "attached_assets/Прайс_B700-25.csv"],
+        ("B600", "PIR"): ["attached_assets/Price_B600_PIR.csv", "attached_assets/Прайс_В600_PIR.csv"]
     }
     
     key = (pergola_type, lamella_size)
@@ -164,11 +164,22 @@ def load_price_data(pergola_type, lamella_size):
         print(f"Ошибка: Комбинация {pergola_type} и {lamella_size} не найдена в маппинге файлов")
         return {}
     
-    # Получаем путь к файлу прайса
-    file_path = file_mapping[key]
-    if not os.path.exists(file_path):
-        print(f"Ошибка: Файл прайса {file_path} не найден")
+    # Получаем пути к файлам прайса (поддерживаем и английскую, и русскую версию)
+    file_paths = file_mapping[key]
+    
+    # Проверяем, существует ли хотя бы один из файлов
+    existing_file_path = None
+    for path in file_paths:
+        if os.path.exists(path):
+            existing_file_path = path
+            break
+    
+    if not existing_file_path:
+        print(f"Ошибка: Файлы прайса {file_paths} не найдены")
         return {}
+    
+    # Используем найденный файл
+    file_path = existing_file_path
     
     print(f"Загрузка прайс-листа из файла: {file_path}")
     
