@@ -666,12 +666,15 @@ def perform_calculation(dimensions, options):
             lighting_cost = 0
             led_types = []
             
-            # Блок управления освещением
+            # Блок управления освещением - по 1 блоку на каждый модуль
             if has_lighting:
-                lighting_cost += LIGHTING_PRICES["controller"]
+                # Количество блоков управления зависит от количества модулей
+                controllers_count = modules
+                total_controller_price = LIGHTING_PRICES["controller"] * controllers_count
+                lighting_cost += total_controller_price
                 results["items"].append({
-                    "name": "Блок управления освещением Somfy RTS Dimmer",
-                    "price": LIGHTING_PRICES["controller"]
+                    "name": f"Блок управления освещением Somfy RTS Dimmer ({controllers_count} шт.)",
+                    "price": total_controller_price
                 })
             
             # Белая светодиодная лента
@@ -697,7 +700,8 @@ def perform_calculation(dimensions, options):
             # Для B600 добавляем пульт управления освещением
             if pergola_type == "B600":
                 # Для B600 нужен отдельный пульт для освещения
-                lighting_devices_count = 1  # 1 блок управления освещением
+                # Количество устройств = количество блоков освещения (по одному на каждый модуль)
+                lighting_devices_count = controllers_count  
                 remote_name, remote_price = get_remote_control(lighting_devices_count)
                 
                 results["lighting_remote"] = {
@@ -707,7 +711,7 @@ def perform_calculation(dimensions, options):
                 }
                 
                 results["items"].append({
-                    "name": f"Пульт ДУ {remote_name} для освещения",
+                    "name": f"Пульт ДУ {remote_name} для освещения ({lighting_devices_count} каналов)",
                     "price": remote_price
                 })
                 
@@ -773,15 +777,15 @@ def perform_calculation(dimensions, options):
         
         # Освещение
         if has_lighting:
-            # Добавляем блок управления освещением
+            # Добавляем блок управления освещением - по 1 блоку на каждый модуль
             specification.append({
                 "name": "Блок управления освещением Somfy RTS Dimmer",
-                "count": "1 шт.",
+                "count": f"{modules} шт.",
                 "price": ""
             })
             
             # Увеличиваем счетчик устройств для определения типа пульта
-            lighting_devices_count = 1  # 1 блок управления освещением
+            lighting_devices_count = modules  # По 1 блоку управления на каждый модуль
             
             if "white_led" in lighting_options:
                 specification.append({
@@ -819,7 +823,7 @@ def perform_calculation(dimensions, options):
                 remote_name, _ = get_remote_control(lighting_devices_count)
                 specification.append({
                     "name": f"Пульт ДУ {remote_name} для освещения",
-                    "count": "1 шт.",
+                    "count": f"1 шт. ({lighting_devices_count} каналов)",
                     "price": ""
                 })
         
