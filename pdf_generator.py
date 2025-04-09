@@ -196,15 +196,12 @@ def generate_commercial_offer(pergola_data, user_data=None):
         textColor=colors.gray
     ))
     
-    # Добавляем стиль для подзаголовков 4 уровня
-    styles.add(ParagraphStyle(
-        name='Heading4', 
-        parent=styles['Heading3'],
-        fontName='CustomFont', 
-        fontSize=11,
-        alignment=0,  # по левому краю
-        textColor=colors.black
-    ))
+    # Переопределяем стиль для подзаголовков 4 уровня
+    # Не используем add, а переопределяем существующий стиль
+    styles['Heading4'].fontName = 'CustomFont'
+    styles['Heading4'].fontSize = 11
+    styles['Heading4'].alignment = 0  # по левому краю
+    styles['Heading4'].textColor = colors.black
     
     # Список элементов, которые будут добавлены в PDF
     elements = []
