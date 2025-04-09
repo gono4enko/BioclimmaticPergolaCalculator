@@ -298,6 +298,7 @@ def render_results(results):
             border-radius: 5px 5px 0 0 !important;
             font-weight: bold !important;
             display: block !important;
+            text-align: center !important;
         }
         .blue-header * {
             color: #ffffff !important;
