@@ -169,25 +169,60 @@ def load_price_data(pergola_type, lamella_size):
     prices = {}
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
-            reader = csv.reader(file)
-            header = next(reader)
+            # Определяем разделитель CSV (точка с запятой или запятая)
+            first_line = file.readline().strip()
+            if ';' in first_line:
+                delimiter = ';'
+            else:
+                delimiter = ','
             
-            # Предполагаем, что первая колонка - это значения длины/выноса
-            length_values = [float(val.replace(',', '.')) for val in header[1:] if val.strip()]
+            # Перематываем файл в начало
+            file.seek(0)
             
+            reader = csv.reader(file, delimiter=delimiter)
+            
+            # Пропускаем первую строку (если она содержит информацию о модулях)
+            first_row = next(reader)
+            if "модуль" in ' '.join(first_row):
+                header = next(reader)  # Берем следующую строку как заголовок
+            else:
+                header = first_row  # Если первая строка не о модулях, она и есть заголовок
+            
+            # Извлекаем значения длины из заголовка
+            length_values = []
+            for val in header[1:]:  # Пропускаем первую колонку
+                if val.strip():
+                    try:
+                        # Обрабатываем разные форматы чисел
+                        length_values.append(float(val.replace(',', '.').strip()))
+                    except ValueError:
+                        continue  # Пропускаем, если не удалось преобразовать в число
+            
+            # Обрабатываем строки с данными
             for row in reader:
                 if not row or len(row) <= 1:
                     continue
                 
                 try:
-                    width = float(row[0].replace(',', '.'))
+                    # Получаем ширину из первой колонки
+                    width_str = row[0].strip()
+                    if not width_str:
+                        continue
+                    
+                    width = float(width_str.replace(',', '.'))
+                    
+                    # Обрабатываем цены
                     for i, price_str in enumerate(row[1:]):
                         if i < len(length_values) and price_str.strip():
                             length = length_values[i]
-                            price = float(price_str.replace('.', '').replace(',', '.'))
-                            if width not in prices:
-                                prices[width] = {}
-                            prices[width][length] = price
+                            try:
+                                # Преобразуем строку цены в число
+                                price = float(price_str.replace(' ', '').replace('.', '').replace(',', '.'))
+                                if width not in prices:
+                                    prices[width] = {}
+                                prices[width][length] = price
+                            except ValueError:
+                                continue  # Пропускаем, если не удалось преобразовать в число
                 except (ValueError, IndexError):
                     continue
         
