@@ -1282,7 +1282,7 @@ def render_results(results):
         
         # Отображаем информацию о выбранном типе перголы
         if pergola_type == "B500NEW":
-            st.markdown(f"""
+            st.markdown("""
             <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
                 <h3 style='font-size: 1.2rem; margin-top: 20px;'>Серия B500NEW (с поворотными ламелями)</h3>
                 <p style='margin-bottom: 15px;'>
@@ -1330,7 +1330,7 @@ def render_results(results):
                         st.warning(f"Не удалось загрузить изображение: {e3}")
         
         elif pergola_type == "B700NEW":
-            st.markdown(f"""
+            st.markdown("""
             <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
                 <h3 style='font-size: 1.2rem; margin-top: 20px;'>Серия B700NEW (со сдвижными ламелями)</h3>
                 <p style='margin-bottom: 15px;'>
@@ -1372,7 +1372,7 @@ def render_results(results):
                         st.warning(f"Не удалось загрузить изображение: {e3}")
             
         elif pergola_type == "B600":
-            st.markdown(f"""
+            st.markdown("""
             <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
                 <h3 style='font-size: 1.2rem; margin-top: 20px;'>Серия B600 (с сэндвич-панелями PIR)</h3>
                 <p style='margin-bottom: 15px;'>
