@@ -961,7 +961,7 @@ def render_dimensions_form():
     Returns:
         dict: Словарь с введенными размерами
     """
-    st.markdown("<h2 class='section-header'>Размеры перголы</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 class='section-header' style='text-align: center;'>Размеры перголы</h2>", unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
@@ -1007,7 +1007,7 @@ def render_options_form():
     Returns:
         dict: Словарь с выбранными опциями
     """
-    st.markdown("<h2 class='section-header'>Параметры перголы</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 class='section-header' style='text-align: center;'>Параметры перголы</h2>", unsafe_allow_html=True)
     
     # Тип перголы
     pergola_type = st.radio(
