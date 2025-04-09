@@ -810,8 +810,16 @@ def main():
             color: #000000 !important;
         }
         
-        /* Белый текст только для кнопок */
-        [data-testid="stButton"] button[data-testid="baseButton-primary"] {
+        /* Белый текст для кнопок и синего фона */
+        [data-testid="stButton"] button[data-testid="baseButton-primary"],
+        div[style*="background-color: #3f6daa"], div[style*="background-color:#3f6daa"],
+        .result-heading, div.result-heading {
+            color: #FFFFFF !important;
+        }
+        
+        /* Принудительно белый текст для всех элементов с синим фоном */
+        div[style*="background-color: #3f6daa"] *, div[style*="background-color:#3f6daa"] *,
+        .result-heading *, div.result-heading * {
             color: #FFFFFF !important;
         }
         

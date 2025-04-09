@@ -257,9 +257,11 @@ def render_results(results):
     </style>
     """, unsafe_allow_html=True)
     
-    # Отображаем заголовок результатов по центру в стиле pergolamarket.ru
+    # Отображаем заголовок результатов по центру в стиле pergolamarket.ru с инлайн-стилями
     st.markdown("""
-    <div class="result-heading">
+    <div style="font-size: 24px; font-weight: 700; margin: 25px 0 20px 0; text-align: center; 
+         color: #ffffff; background-color: #3f6daa; padding: 10px 15px; border-radius: 5px; 
+         box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-transform: uppercase;">
         РЕЗУЛЬТАТЫ РАСЧЕТА
     </div>
     <div style="height: 3px; width: 100px; background-color: #ff9c00; margin: 10px auto;"></div>
@@ -269,10 +271,10 @@ def render_results(results):
     col1, col2 = st.columns(2)
     
     with col1:
-        # Таблица "Спецификация перголы" в стиле pergolamarket.ru
+        # Таблица "Спецификация перголы" в стиле pergolamarket.ru с принудительным белым цветом текста
         st.markdown("""
-        <div style="background-color: #3f6daa; color: white; padding: 10px 15px; border-radius: 5px 5px 0 0; font-weight: bold;">
-            Спецификация перголы
+        <div style="background-color: #3f6daa; color: #ffffff !important; padding: 10px 15px; border-radius: 5px 5px 0 0; font-weight: bold;">
+            <span style="color: #ffffff !important;">Спецификация перголы</span>
         </div>
         """, unsafe_allow_html=True)
         
@@ -327,10 +329,10 @@ def render_results(results):
         """, unsafe_allow_html=True)
     
     with col2:
-        # Таблица "Стоимость" в стиле pergolamarket.ru
+        # Таблица "Стоимость" в стиле pergolamarket.ru с принудительным белым цветом текста
         st.markdown("""
-        <div style="background-color: #3f6daa; color: white; padding: 10px 15px; border-radius: 5px 5px 0 0; font-weight: bold;">
-            Стоимость
+        <div style="background-color: #3f6daa; color: #ffffff !important; padding: 10px 15px; border-radius: 5px 5px 0 0; font-weight: bold;">
+            <span style="color: #ffffff !important;">Стоимость</span>
         </div>
         """, unsafe_allow_html=True)
         
