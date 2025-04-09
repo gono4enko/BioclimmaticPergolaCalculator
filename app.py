@@ -19,6 +19,7 @@ from components.dimensions_form import render_dimensions_form
 from components.scroll_helper import scroll_to_results, add_button_animation
 from components.options_form import render_options_form
 from components.results_new import render_results
+from components.orange_button import create_orange_button
 
 # Импортируем специальный модуль для решения проблемы с синей заливкой
 from force_white_background import fix_blue_tiles
@@ -856,25 +857,8 @@ def main():
         """, unsafe_allow_html=True)
         
         # Создаем обычную кнопку Streamlit
-        # Кнопка расчета стоимости с принудительной оранжевой заливкой через CSS
-        st.markdown("""
-        <style>
-        /* Самый высокий приоритет для кнопки с текстом "Рассчитать стоимость" */
-        button[kind="primary"], 
-        button[data-testid="baseButton-primary"],
-        div.stButton > button[data-testid="baseButton-primary"],
-        div[data-testid="stButton"] > button:contains("Рассчитать стоимость") {
-            background-color: #ff7a2f !important;
-            color: #ffffff !important;
-            font-size: 2rem !important;
-            padding: 25px 25px !important;
-            min-height: 80px !important;
-            font-weight: 700 !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        if st.button("Рассчитать стоимость", type="primary", use_container_width=True, help="Нажмите для расчета стоимости перголы"):
+        # Используем специальный компонент оранжевой кнопки
+        if create_orange_button("Рассчитать стоимость"):
             with st.spinner("Выполняется расчет..."):
                 # Проверяем, что у нас есть данные для расчета
                 if dimensions and options:
