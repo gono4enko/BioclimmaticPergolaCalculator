@@ -1304,7 +1304,7 @@ def render_results(results):
                 # Пробуем загрузить изображения по очереди, пока не найдем рабочее
                 for img_path in images:
                     try:
-                        st.image(img_path, caption=caption, use_container_width=True)
+                        display_image_with_padding(img_path, caption=caption)
                         break  # Прерываем цикл, если изображение успешно загружено
                     except Exception as e:
                         continue  # Пробуем следующее изображение
@@ -1323,7 +1323,7 @@ def render_results(results):
             if modular_images:
                 for img_path in modular_images:
                     try:
-                        st.image(img_path, caption=modular_caption, use_container_width=True)
+                        display_image_with_padding(img_path, caption=modular_caption)
                         break
                     except Exception as e:
                         continue
@@ -1342,7 +1342,7 @@ def render_results(results):
             if drainage_images:
                 for img_path in drainage_images:
                     try:
-                        st.image(img_path, caption=drainage_caption, use_container_width=True)
+                        display_image_with_padding(img_path, caption=drainage_caption)
                         break
                     except Exception as e:
                         continue
@@ -1361,7 +1361,7 @@ def render_results(results):
                 if bansbach_images:
                     for img_path in bansbach_images:
                         try:
-                            st.image(img_path, caption=bansbach_caption, use_container_width=True)
+                            display_image_with_padding(img_path, caption=bansbach_caption)
                             break
                         except Exception as e:
                             continue
@@ -1380,7 +1380,7 @@ def render_results(results):
                 if somfy_images:
                     for img_path in somfy_images:
                         try:
-                            st.image(img_path, caption=somfy_caption, use_container_width=True)
+                            display_image_with_padding(img_path, caption=somfy_caption)
                             break
                         except Exception as e:
                             continue
@@ -1398,7 +1398,7 @@ def render_results(results):
             if install_system_images:
                 for img_path in install_system_images:
                     try:
-                        st.image(img_path, caption=install_system_caption, use_container_width=True)
+                        display_image_with_padding(img_path, caption=install_system_caption)
                         break
                     except Exception as e:
                         continue
@@ -1417,12 +1417,36 @@ def render_results(results):
                 if lamella_engineering_images:
                     for img_path in lamella_engineering_images:
                         try:
-                            st.image(img_path, caption=lamella_engineering_caption, use_container_width=True)
+                            display_image_with_padding(img_path, caption=lamella_engineering_caption)
                             break
                         except Exception as e:
                             continue
                     else:
                         st.warning(f"Не удалось загрузить изображение технических характеристик ламелей")
+
+def display_image_with_padding(image_path, caption=None, padding_percent=5):
+    """
+    Отображает изображение с отступами по краям и подписью.
+    
+    Args:
+        image_path (str): Путь к изображению
+        caption (str, optional): Подпись к изображению
+        padding_percent (int, optional): Процент отступа от ширины контейнера (по умолчанию 5%)
+    """
+    # Создаем контейнер с отступами для изображения
+    st.markdown(f"""
+    <style>
+    .image-container {{
+        padding-left: {padding_percent}%;
+        padding-right: {padding_percent}%;
+        margin-bottom: 20px;
+    }}
+    </style>
+    <div class="image-container"></div>
+    """, unsafe_allow_html=True)
+    
+    # Отображаем изображение внутри контейнера с отступами
+    st.image(image_path, caption=caption, use_container_width=True)
 
 def scroll_to_results():
     """
