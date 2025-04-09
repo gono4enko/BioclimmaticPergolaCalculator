@@ -960,7 +960,6 @@ def render_dimensions_form():
     Returns:
         dict: Словарь с введенными размерами
     """
-    st.markdown("<div style='width: 90%; margin: 0 auto; padding-left: 25px; padding-right: 25px;'>", unsafe_allow_html=True)
     st.markdown("<h2 class='section-header'>Размеры перголы</h2>", unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
@@ -1007,11 +1006,6 @@ def render_options_form():
     Returns:
         dict: Словарь с выбранными опциями
     """
-    # Закрываем div-контейнер формы размеров
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Открываем новый div-контейнер для формы параметров
-    st.markdown("<div style='width: 90%; margin: 0 auto; padding-left: 25px; padding-right: 25px;'>", unsafe_allow_html=True)
     st.markdown("<h2 class='section-header'>Параметры перголы</h2>", unsafe_allow_html=True)
     
     # Тип перголы
@@ -1610,51 +1604,106 @@ def render_results(results):
 def scroll_to_results():
     """
     Добавляет JavaScript-код для автоматического скролла к результатам
-    с увеличенной задержкой и улучшенной логикой обнаружения результатов
+    с большей задержкой и полным мониторингом рендеринга страницы
     """
     st.markdown("""
     <script>
-        function waitForResults() {
-            // Ищем элемент с заголовком "Результаты расчета"
-            const headers = document.querySelectorAll('h2, div.stMarkdown h2');
-            let resultsElement = null;
-            
-            for (const header of headers) {
+        // Добавляем информационные логи для отладки
+        console.log('Script for scrolling to results is loaded');
+        
+        // Функция поиска заголовка результатов
+        function findResultsHeader() {
+            // Ищем по разным селекторам для максимальной надежности
+            // 1. Ищем по h2 с текстом "Результаты расчета"
+            const allHeaders = document.querySelectorAll('h2, div.stMarkdown h2, .stMarkdown div h2');
+            for (const header of allHeaders) {
                 if (header.textContent.includes('Результаты расчета')) {
-                    resultsElement = header;
-                    break;
+                    console.log('Found results header by h2 text:', header);
+                    return header;
                 }
             }
+            
+            // 2. Ищем по блоку результатов (голубой фон)
+            const resultBlocks = document.querySelectorAll('div[style*="background-color: #f8f9fa"]');
+            for (const block of resultBlocks) {
+                const headerInBlock = block.querySelector('h2');
+                if (headerInBlock && headerInBlock.textContent.includes('Результаты расчета')) {
+                    console.log('Found results header by block:', headerInBlock);
+                    return block;
+                }
+            }
+            
+            // 3. Ищем по заголовку спецификации перголы
+            const specHeaders = document.querySelectorAll('h3');
+            for (const header of specHeaders) {
+                if (header.textContent.includes('Спецификация перголы')) {
+                    console.log('Found specification header:', header);
+                    return header;
+                }
+            }
+            
+            console.log('Results header not found yet');
+            return null;
+        }
+        
+        // Функция для проверки видимости элемента
+        function isElementInViewport(el) {
+            const rect = el.getBoundingClientRect();
+            return (
+                rect.top >= 0 &&
+                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight)
+            );
+        }
+        
+        // Функция, которая выполняет скролл к результатам
+        function scrollToResultsElement() {
+            const resultsElement = findResultsHeader();
             
             if (resultsElement) {
-                console.log('Found results header, scrolling to it...');
-                // Проверяем если элемент уже виден на странице
-                const rect = resultsElement.getBoundingClientRect();
-                const isVisible = (
-                    rect.top >= 0 &&
-                    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight)
-                );
-                
-                // Скроллим только если элемент не виден
-                if (!isVisible) {
-                    resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Проверяем, виден ли элемент уже
+                if (!isElementInViewport(resultsElement)) {
+                    console.log('Scrolling to results element...');
+                    // Используем плавный скролл
+                    resultsElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    return true;
+                } else {
+                    console.log('Results already visible, no need to scroll');
+                    return true;
                 }
-                return true;
+            }
+            
+            return false;
+        }
+        
+        // Функция для попыток скролла с интервалом
+        let attempts = 0;
+        const maxAttempts = 10; // Максимальное количество попыток
+        
+        function tryScrollWithRetry() {
+            console.log(`Attempting to scroll, attempt ${attempts + 1} of ${maxAttempts}`);
+            
+            if (scrollToResultsElement()) {
+                console.log('Successfully scrolled to results');
+                return;
+            }
+            
+            attempts++;
+            if (attempts < maxAttempts) {
+                // Увеличиваем интервал между попытками
+                const delay = 500 + (attempts * 200);
+                console.log(`Will retry in ${delay}ms`);
+                setTimeout(tryScrollWithRetry, delay);
             } else {
-                console.log('Results header not found, retrying...');
-                return false;
+                console.log('Max attempts reached, giving up');
             }
         }
         
-        function attemptScroll() {
-            if (!waitForResults()) {
-                // Если результаты не найдены, пробуем еще раз через 500мс
-                setTimeout(attemptScroll, 500);
-            }
-        }
-        
-        // Начинаем попытки с большей задержкой для полной загрузки страницы
-        setTimeout(attemptScroll, 1500);
+        // Запускаем первую попытку с задержкой 2500мс после загрузки страницы
+        console.log('Scheduling first scroll attempt in 2500ms');
+        setTimeout(tryScrollWithRetry, 2500);
     </script>
     """, unsafe_allow_html=True)
 
@@ -1670,17 +1719,53 @@ def main():
     # Задаем стили для компактного и читаемого интерфейса по новому дизайну
     st.markdown("""
     <style>
+    /* Глобальный контейнер */
     .block-container {
         max-width: 800px;
         padding-top: 1rem;
         padding-bottom: 1rem;
         margin: 0 auto;
     }
+    
+    /* Применяем отступы ко ВСЕМ формам ввода */
+    div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
+    div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect {
+        width: 90% !important;
+        margin: 0 auto !important;
+        padding-left: 25px !important;
+        padding-right: 25px !important;
+    }
+    
+    /* Отступы для секций заголовков */
+    div.stMarkdown h2 {
+        width: 90% !important;
+        margin: 0 auto !important;
+        padding-left: 25px !important;
+        padding-right: 25px !important;
+    }
+    
+    /* Отступы для текстовых параграфов */
+    div.stMarkdown p {
+        width: 90% !important;
+        margin: 0 auto !important;
+        padding-left: 25px !important;
+        padding-right: 25px !important;
+    }
+    
+    /* Отступы для горизонтальных разделителей */
+    div.stMarkdown hr {
+        width: 90% !important;
+        margin: 0 auto !important;
+        margin-top: 10px !important;
+        margin-bottom: 10px !important;
+    }
+    
     /* Глобальные стили для улучшения читаемости */
     .stApp, .stApp p, .stApp div {
         font-size: 1rem;
         font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
     }
+    
     /* Заголовки секций */
     .section-header {
         font-size: 1.2rem;
@@ -1690,35 +1775,44 @@ def main():
         padding-bottom: 5px;
         border-bottom: 1px solid #eee;
     }
+    
     /* Таблицы */
     table {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 1rem;
     }
+    
     th, td {
         padding: 8px 12px;
         text-align: left;
         border-bottom: 1px solid #ddd;
     }
+    
     th {
         background-color: #f8f9fa;
         font-weight: 600;
     }
+    
     /* Адаптивность для мобильных устройств */
     @media (max-width: 768px) {
         .block-container {
             max-width: 100%;
             padding: 0.25rem !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-            margin-left: 0 !important;
-            margin-right: 0 !important;
+        }
+        
+        /* Уменьшаем отступы на мобильных */
+        div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
+        div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect,
+        div.stMarkdown h2, div.stMarkdown p, div.stMarkdown hr {
+            width: 95% !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
         }
         
         .stButton {
-            padding: 0 !important;
-            margin: 0 !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
         }
         
         /* Убираем горизонтальный скролл на мобильных */
@@ -1726,8 +1820,6 @@ def main():
         div[data-testid="stDataFrame"] {
             width: 100% !important;
             overflow-x: hidden !important;
-            padding: 0 !important;
-            margin: 0 !important; 
         }
         
         /* Уменьшаем размер шрифта в элементах форм */
@@ -1755,11 +1847,6 @@ def main():
     
     # Получаем опции перголы
     options = render_options_form()
-    # Закрываем div-контейнер формы параметров
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Открываем новый div-контейнер для кнопки расчета с отступами
-    st.markdown("<div style='width: 90%; margin: 0 auto; padding-left: 25px; padding-right: 25px;'>", unsafe_allow_html=True)
     
     # Кнопка для расчета с улучшенным стилем
     if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
