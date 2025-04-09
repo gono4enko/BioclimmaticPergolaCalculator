@@ -700,64 +700,86 @@ def main():
     # Используем только стандартную форму опций
     options = render_options_form()
     
-    # Кнопка для расчета с улучшенным стилем
+    # Кнопка для расчета с улучшенным стилем - используем инлайн-стиль вместо CSS классов
     _, center_col, _ = st.columns([1, 3, 1]) # Делаем кнопку шире, увеличивая относительный размер колонки
     with center_col:
+        # Создаем стилизованную кнопку напрямую через HTML/CSS
         st.markdown("""
         <style>
-        /* Глобальные стили для ВСЕХ кнопок Streamlit */
-        div[data-testid="stButton"] > button:not([data-testid="baseButton-primary"]),
-        div[data-testid="stButton"] > button:not([kind="primary"]),
-        div[data-testid="column"] > div[data-testid="stButton"]:not(:has(> button[data-testid="baseButton-primary"])) > button,
+        /* Сбрасываем все текущие стили для primary кнопок */
+        button[data-testid="baseButton-primary"],
+        button[kind="primary"],
+        div[data-testid="stButton"] > button[data-testid="baseButton-primary"],
+        .stButton > button[data-testid="baseButton-primary"],
+        div button[data-testid="baseButton-primary"] {
+            all: initial !important;
+            font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            background-color: #ff7a2f !important;
+            color: #ffffff !important;
+            font-size: 2rem !important;
+            font-weight: 700 !important;
+            text-align: center !important;
+            border-radius: 8px !important;
+            padding: 25px 25px !important;
+            width: 100% !important;
+            margin-top: 25px !important;
+            margin-bottom: 25px !important;
+            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2) !important;
+            transition: all 0.2s ease !important;
+            cursor: pointer !important;
+            display: block !important;
+            box-sizing: border-box !important;
+            border: none !important;
+            line-height: 1.4 !important;
+        }
+        
+        /* Эффект при наведении */
+        button[data-testid="baseButton-primary"]:hover,
+        button[kind="primary"]:hover,
+        div[data-testid="stButton"] > button[data-testid="baseButton-primary"]:hover,
+        .stButton > button[data-testid="baseButton-primary"]:hover,
+        div button[data-testid="baseButton-primary"]:hover {
+            background-color: #e86c29 !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+            transform: translateY(-2px) !important;
+        }
+        
+        /* Эффект при нажатии */
+        button[data-testid="baseButton-primary"]:active,
+        button[kind="primary"]:active,
+        div[data-testid="stButton"] > button[data-testid="baseButton-primary"]:active,
+        .stButton > button[data-testid="baseButton-primary"]:active,
+        div button[data-testid="baseButton-primary"]:active {
+            background-color: #d46225 !important;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+            transform: translateY(1px) !important;
+        }
+        
+        /* Стили для обычных кнопок */
         button:not([data-testid="baseButton-primary"]),
-        .element-container div[data-testid="stButton"]:not(:has(> button[data-testid="baseButton-primary"])) button,
-        .stButton:not(:has(> button[data-testid="baseButton-primary"])) > button {
+        div[data-testid="stButton"] > button:not([data-testid="baseButton-primary"]),
+        .stButton > button:not([data-testid="baseButton-primary"]) {
             background-color: #FFFFFF !important;
             color: #000000 !important;
             border: 1px solid #dddddd !important;
             border-radius: 8px !important;
             box-shadow: none !important;
+            transition: all 0.2s ease !important;
         }
         
-        /* Стили ТОЛЬКО для кнопки расчета "Рассчитать стоимость" */
-        div[data-testid="stButton"] > button[data-testid="baseButton-primary"],
-        button[data-testid="baseButton-primary"],
-        .stButton > button[data-testid="baseButton-primary"] {
-            background-color: #ff7a2f !important; /* Оранжевый цвет по запросу пользователя */
-            color: #FFFFFF !important; /* Белый текст */
-            font-size: 2rem !important; /* Сделаем еще больше */
-            font-weight: 700 !important; /* Жирный шрифт */
-            border-radius: 8px !important;
-            padding: 25px 25px !important; /* Увеличиваем отступы со всех сторон */
-            border: none !important;
-            margin-top: 25px !important;
-            margin-bottom: 25px !important;
-            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2) !important;
-            transition: all 0.2s !important;
-            height: auto !important; /* Убедимся, что высота определяется контентом */
-            min-height: 80px !important; /* Минимальная высота */
-            letter-spacing: 0.5px !important; /* Улучшаем читаемость */
-            width: 100% !important; /* Убеждаемся, что кнопка занимает всю ширину */
-        }
-        /* Стиль для кнопки при наведении */
-        div[data-testid="stButton"] > button[kind="primary"]:hover,
-        div[data-testid="stButton"] > button[data-testid="baseButton-primary"]:hover,
-        button[data-testid="baseButton-primary"]:hover,
-        .element-container div[data-testid="stButton"] button[data-testid="baseButton-primary"]:hover,
-        .stButton > button[data-testid="baseButton-primary"]:hover {
-            background-color: #e86c29 !important; /* Темнее оранжевый при наведении */
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
-            transform: translateY(-2px) !important;
-        }
         /* Стиль для обычных кнопок при наведении */
-        div[data-testid="stButton"] > button:not([data-testid="baseButton-primary"]):hover,
         button:not([data-testid="baseButton-primary"]):hover,
-        .element-container div[data-testid="stButton"] button:not([data-testid="baseButton-primary"]):hover,
+        div[data-testid="stButton"] > button:not([data-testid="baseButton-primary"]):hover,
         .stButton > button:not([data-testid="baseButton-primary"]):hover {
             background-color: #f5f5f5 !important;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
         }
+        </style>
+        """, unsafe_allow_html=True)
         
+        # Добавляем глобальные стили для всего приложения
+        st.markdown("""
+        <style>
         /* Стили для полей ввода и меток - абсолютный белый цвет в темном режиме */
         .stTextInput label, .stNumberInput label, .stSelectbox label,
         .stCheckbox label, .stRadio label, .stSlider label {
