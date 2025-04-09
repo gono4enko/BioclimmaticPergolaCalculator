@@ -365,92 +365,230 @@ def perform_calculation(dimensions, options):
     lighting_components = []
     
     if lighting_type == "white":
-        perimeter = 2 * (width_m + length_m)  # Периметр перголы
-        led_price_per_meter = 18  # Цена за метр белой ленты
-        controller_price = 250  # Цена за один блок управления
+        # Расчет периметра подсветки согласно инструкции
+        if modules == 1:
+            # Для одного модуля - просто периметр
+            perimeter = 2 * (width_m + length_m)
+        else:
+            # Для нескольких модулей считаем периметр для каждого модуля
+            module_width = width_m / modules
+            perimeter = modules * 2 * (module_width + length_m)
+            
+        led_price_per_meter = 20  # Цена за метр сверхъяркой LED ленты согласно инструкции
+        controller_price = 300  # Блок управления Somfy RTS Dimmer согласно инструкции
         
-        # На каждый модуль один блок управления
         lighting_cost = led_price_per_meter * perimeter + controller_price
         
         # Добавляем только один блок управления LED на всю перголу
         lighting_components = [
-            f"LED лента белая - {perimeter:.2f} м",
-            "Блок управления освещением Somfy RTS - 1 шт."
+            f"Сверхъяркая LED лента белая - {perimeter:.2f} м",
+            "Блок управления освещением Somfy RTS Dimmer - 1 шт."
         ]
     elif lighting_type == "rgb":
-        perimeter = 2 * (width_m + length_m)
-        led_price_per_meter = 25  # Цена за метр RGB ленты
-        controller_price = 280  # Цена за один блок управления RGB
+        # Расчет периметра подсветки согласно инструкции
+        if modules == 1:
+            # Для одного модуля - просто периметр
+            perimeter = 2 * (width_m + length_m)
+        else:
+            # Для нескольких модулей считаем периметр для каждого модуля
+            module_width = width_m / modules
+            perimeter = modules * 2 * (module_width + length_m)
+            
+        led_price_per_meter = 20  # Цена за метр сверхъяркой RGB ленты согласно инструкции
+        controller_price = 300  # Блок управления Somfy RTS Dimmer согласно инструкции
         
-        # На каждый модуль один блок управления
         lighting_cost = led_price_per_meter * perimeter + controller_price
         
         # Добавляем только один блок управления LED на всю перголу
         lighting_components = [
-            f"RGB лента - {perimeter:.2f} м",
-            "Блок управления RGB освещением Somfy RTS - 1 шт."
+            f"Сверхъяркая RGB лента - {perimeter:.2f} м",
+            "Блок управления освещением Somfy RTS Dimmer - 1 шт."
         ]
     elif lighting_type == "rgbw":
-        perimeter = 2 * (width_m + length_m)
-        led_price_per_meter = 38  # Цена за метр RGBW ленты
-        controller_price = 320  # Цена за один блок управления RGBW
+        # Расчет периметра подсветки согласно инструкции
+        if modules == 1:
+            # Для одного модуля - просто периметр
+            perimeter = 2 * (width_m + length_m)
+        else:
+            # Для нескольких модулей считаем периметр для каждого модуля
+            module_width = width_m / modules
+            perimeter = modules * 2 * (module_width + length_m)
+            
+        # Для RGBW используем обе ленты - и LED, и RGB согласно инструкции
+        led_price_per_meter = 20 + 20  # Сумма цен за метр LED и RGB ленты
+        controller_price = 300  # Блок управления Somfy RTS Dimmer согласно инструкции
         
-        # На каждый модуль один блок управления
         lighting_cost = led_price_per_meter * perimeter + controller_price
         
-        # Добавляем только один блок управления LED на всю перголу
+        # Добавляем обе ленты и один блок управления
         lighting_components = [
-            f"RGBW лента - {perimeter:.2f} м",
-            "Блок управления RGBW освещением Somfy RTS - 1 шт."
+            f"Сверхъяркая LED лента белая - {perimeter:.2f} м",
+            f"Сверхъяркая RGB лента - {perimeter:.2f} м",
+            "Блок управления освещением Somfy RTS Dimmer - 1 шт."
         ]
+    
+    # Проверяем нужны ли дополнительные колонны
+    additional_columns = False
+    additional_columns_cost = 0
+    additional_columns_components = []
+    
+    # По правилам из инструкции
+    if pergola_type == "B500NEW":
+        if "250" in real_lamella_type and length_m > 6.5:
+            additional_columns = True
+        elif "200" in real_lamella_type and length_m > 6.85:
+            additional_columns = True
+    elif pergola_type == "B700NEW":
+        if "250" in real_lamella_type and length_m > 6.5:
+            additional_columns = True
+        elif "200" in real_lamella_type and length_m > 6.85:
+            additional_columns = True
+    elif pergola_type == "B600" and length_m > 6.5:
+        additional_columns = True
+        
+    # Добавляем стоимость дополнительных колонн
+    if additional_columns:
+        if modules == 1:
+            additional_columns_cost = 653  # 2 колонны
+            additional_columns_components = ["Дополнительные колонны - 2 шт."]
+        elif modules == 2:
+            additional_columns_cost = 980  # 3 колонны
+            additional_columns_components = ["Дополнительные колонны - 3 шт."]
+        elif modules >= 3:
+            additional_columns_cost = 1306  # 4 колонны
+            additional_columns_components = ["Дополнительные колонны - 4 шт."]
     
     # Определяем тип автоматизации и стоимость в зависимости от типа перголы и размеров
     automation_components = []
+    
     if pergola_type == "B500NEW":
-        # Для B500NEW используем привод Bansbach
-        if width_m > 3.5 and length_m > 5.5:
+        # Для B500NEW используем привод Bansbach по правилам из инструкции
+        
+        # Проверка критериев для использования Bansbach Tandem
+        need_tandem = False
+        
+        # Если 1 модуль
+        if modules == 1:
+            if width_m <= 2.5 and length_m > 8.0:
+                need_tandem = True
+            elif width_m > 2.5 and length_m > 7.5:
+                need_tandem = True
+            elif width_m > 3.0 and length_m > 6.5:
+                need_tandem = True
+            elif width_m > 3.5 and length_m > 5.5:
+                need_tandem = True
+            elif width_m > 4.0 and length_m > 5.0:
+                need_tandem = True
+        # Если 2 модуля
+        elif modules == 2:
+            if width_m > 5.0 and length_m > 7.5:
+                need_tandem = True
+            elif width_m > 6.0 and length_m > 6.5:
+                need_tandem = True
+            elif width_m > 7.0 and length_m > 5.5:
+                need_tandem = True
+            elif width_m > 8.0 and length_m > 5.0:
+                need_tandem = True
+        # Если 3 модуля
+        elif modules == 3:
+            if width_m > 7.5 and length_m > 7.5:
+                need_tandem = True
+            elif width_m > 9.0 and length_m > 6.5:
+                need_tandem = True
+            elif width_m > 10.5 and length_m > 5.5:
+                need_tandem = True
+            elif width_m > 12.0 and length_m > 5.0:
+                need_tandem = True
+        
+        if need_tandem:
             automation_type = "Bansbach Tandem"
             automation_cost = 1250  # Усиленный привод Bansbach Tandem
             automation_components = [
-                "Привод Bansbach easyE-lift-50 Tandem - 1 шт.",
-                "Блок управления Bansbach - 1 шт.",
-                "Пульт ДУ Simu 1K - 1 шт."
+                "Двигатель easyE-lift-50 Bansbach - 2 шт.",
+                "Блок управления для 2-х двигателей + блок питания - 1 шт.",
+                "Приемник - 1 шт."
             ]
         else:
             automation_type = "Bansbach T1"
             automation_cost = 700  # Стандартный привод Bansbach T1
             automation_components = [
-                "Привод Bansbach easyE-lift-50 - 1 шт.",
-                "Блок управления Bansbach - 1 шт.",
-                "Пульт ДУ Simu 1K - 1 шт."
+                "Двигатель easyE-lift-50 Bansbach - 1 шт.",
+                "Блок управления для 1-го двигателя + блок питания - 1 шт.",
+                "Приемник - 1 шт."
             ]
+    
     elif pergola_type == "B700NEW":
-        # Для B700NEW используем привод Somfy
-        if width_m > 3.5 and length_m > 6.0:
+        # Для B700NEW используем привод Somfy по правилам из инструкции
+        
+        # Проверка критериев для использования Somfy M2 TANDEM
+        need_tandem = False
+        
+        # Если 1 модуль
+        if modules == 1:
+            if width_m <= 3.0 and length_m > 7.0:
+                need_tandem = True
+            elif width_m <= 3.5 and length_m > 6.0:
+                need_tandem = True
+        # Если 2 модуля
+        elif modules == 2:
+            if width_m > 6.0 and length_m > 7.0:
+                need_tandem = True
+            elif width_m > 7.0 and length_m > 6.0:
+                need_tandem = True
+        
+        if need_tandem:
             automation_type = "Somfy M2 TANDEM"
             automation_cost = 1000  # Усиленный привод Somfy M2 TANDEM
             automation_components = [
                 "Привод Somfy Altus RTS 120/12 - 2 шт.",
-                "Блок управления Somfy для двух двигателей - 1 шт.",
-                "Пульт ДУ Simu 1K - 1 шт."
+                "Блок управления Somfy для двух двигателей - 1 шт."
             ]
         else:
             automation_type = "Somfy M1"
-            automation_cost = 680  # Стандартный привод Somfy M1
+            automation_cost = 300  # Стандартный привод Somfy M1 согласно инструкции
             automation_components = [
                 "Привод Somfy Altus RTS 120/12 - 1 шт.",
-                "Блок управления Somfy - 1 шт.",
-                "Пульт ДУ Simu 1K - 1 шт."
+                "Блок управления Somfy - 1 шт."
             ]
+    
     else:
         # Для B600 и других типов
         automation_type = "Стандартный привод для PIR-панелей"
         automation_cost = 580
         automation_components = [
             "Стандартный привод для PIR-панелей - 1 шт.",
-            "Блок управления - 1 шт.",
-            "Пульт ДУ Simu 1K - 1 шт."
+            "Блок управления - 1 шт."
         ]
+    
+    # Определяем какой пульт нужен в зависимости от количества устройств
+    # Считаем количество устройств: привод + освещение (если есть)
+    num_devices = 1  # Минимум привод
+    
+    # Если есть освещение, добавляем еще устройство
+    if lighting_type != "none":
+        num_devices += 1
+    
+    # Выбираем пульт на основе количества устройств
+    if num_devices <= 1:
+        remote_type = "Simu 1K"
+        remote_cost = 25
+        automation_components.append(f"Пульт {remote_type} (1 канал) - 1 шт.")
+    elif num_devices <= 5:
+        remote_type = "Simu 5K"
+        remote_cost = 40
+        automation_components.append(f"Пульт {remote_type} (5 каналов) - 1 шт.")
+    else:
+        remote_type = "Simu 15K"
+        remote_cost = 90
+        automation_components.append(f"Пульт {remote_type} (15 каналов) - 1 шт.")
+    
+    # Добавляем стоимость пульта к стоимости автоматики
+    automation_cost += remote_cost
+    
+    # Добавляем компоненты дополнительных колонн, если они есть
+    if additional_columns:
+        automation_components.extend(additional_columns_components)
+        automation_cost += additional_columns_cost
     
     # Учитываем установку
     installation_cost = 0
