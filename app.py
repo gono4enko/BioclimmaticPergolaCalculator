@@ -84,6 +84,14 @@ def main():
         background-color: #FFFFFF !important;
     }
     
+    /* Добавляем отступы слева и справа для калькулятора */
+    .block-container {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+        max-width: 1000px !important;
+        margin: 0 auto !important;
+    }
+    
     /* Форсируем черный цвет для всех текстовых элементов */
     h1, h2, h3, h4, h5, h6, p, span, div, label, button {
         color: #000000 !important;
