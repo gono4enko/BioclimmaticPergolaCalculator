@@ -299,8 +299,8 @@ def adjust_length_for_lamella_size(length_m, lamella_size_mm):
 
 def get_base_price(pergola_type, lamella_size, width_m, length_m):
     """
-    Получает базовую стоимость перголы из прайс-листа,
-    выбирая точную или ближайшую большую стоимость из таблицы
+    Получает базовую стоимость перголы из прайс-листа, используя точное соответствие
+    шириной и длиной (выносом) из таблицы прайса
     
     Args:
         pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
@@ -318,47 +318,61 @@ def get_base_price(pergola_type, lamella_size, width_m, length_m):
     # Логирование для отладки
     print(f"Поиск цены для {pergola_type} с ламелями {lamella_size}, размер {width_m}x{length_m}м")
     
-    # Находим ближайшие большие значения для ширины и длины
+    # Получаем доступные размеры
     available_widths = sorted(prices.keys())
     available_lengths = set()
     for width_data in prices.values():
         available_lengths.update(width_data.keys())
     available_lengths = sorted(available_lengths)
     
-    # Находим ближайшую большую ширину
-    nearest_width = next((w for w in available_widths if w >= width_m), max(available_widths))
-    
-    # Находим ближайшую большую длину
-    nearest_length = next((l for l in available_lengths if l >= length_m), max(available_lengths))
-    
     # Логирование доступных размеров для отладки
     print(f"Доступные ширины: {available_widths}")
     print(f"Доступные длины: {available_lengths}")
     
-    # Ищем точную цену по найденным ближайшим размерам
-    if nearest_width in prices and nearest_length in prices[nearest_width]:
-        print(f"Найдена цена для размера {nearest_width}x{nearest_length}м: {prices[nearest_width][nearest_length]} евро")
-        return prices[nearest_width][nearest_length]
+    # Находим точный размер или ближайший больший размер
+    # Ищем точное совпадение по ширине
+    if width_m in available_widths:
+        width_match = width_m
+    else:
+        # Если точного совпадения нет, ищем ближайшую большую ширину
+        width_match = next((w for w in available_widths if w > width_m), max(available_widths))
     
-    # Если точная комбинация не найдена, ищем наиболее близкую (минимальную подходящую)
-    best_price = None
-    best_width = None
-    best_length = None
+    # Ищем точное совпадение по длине
+    if length_m in available_lengths:
+        length_match = length_m
+    else:
+        # Если точного совпадения нет, ищем ближайшую большую длину
+        length_match = next((l for l in available_lengths if l > length_m), max(available_lengths))
+    
+    # Проверяем, есть ли цена для найденной комбинации ширины и длины
+    if width_match in prices and length_match in prices[width_match]:
+        price = prices[width_match][length_match]
+        print(f"Найдена цена для размера {width_match}x{length_match}м: {price} евро")
+        return price
+    
+    # Если цены нет, ищем минимальную цену среди всех подходящих размеров
+    # (размеров, которые больше или равны заданным)
+    min_price = None
+    min_width = None
+    min_length = None
     
     for width in available_widths:
-        for length in available_lengths:
-            if width >= width_m and length >= length_m:
-                price = prices[width].get(length)
-                if price is not None and (best_price is None or price < best_price):
-                    best_price = price
-                    best_width = width
-                    best_length = length
+        if width >= width_m:
+            for length in available_lengths:
+                if length >= length_m:
+                    if width in prices and length in prices[width]:
+                        price = prices[width][length]
+                        if min_price is None or price < min_price:
+                            min_price = price
+                            min_width = width
+                            min_length = length
     
-    if best_price is None:
-        raise ValueError(f"Не удалось найти подходящую цену для перголы {pergola_type} размером {width_m}x{length_m}")
+    if min_price is None:
+        # Если не нашли ни одной подходящей цены, это ошибка
+        raise ValueError(f"Не удалось найти цену для перголы {pergola_type} с размерами {width_m}x{length_m}м")
     
-    print(f"Найдена ближайшая цена для размера {best_width}x{best_length}м: {best_price} евро")
-    return best_price
+    print(f"Найдена ближайшая цена для размера {min_width}x{min_length}м: {min_price} евро")
+    return min_price
 
 def needs_additional_columns(pergola_type, lamella_size, length_m):
     """
@@ -915,13 +929,27 @@ def scroll_to_results():
     st.markdown("""
     <script>
         function scrollToResults() {
-            const resultsElement = document.querySelector('h2:contains("Результаты расчета")');
+            // Ищем элемент с заголовком "Результаты расчета"
+            const headers = document.querySelectorAll('h2, div.stMarkdown h2');
+            let resultsElement = null;
+            
+            for (const header of headers) {
+                if (header.textContent.includes('Результаты расчета')) {
+                    resultsElement = header;
+                    break;
+                }
+            }
+            
             if (resultsElement) {
+                console.log('Found results header, scrolling to it...');
                 resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                console.log('Results header not found');
             }
         }
-        // Запускаем с небольшой задержкой
-        setTimeout(scrollToResults, 300);
+        
+        // Запускаем с задержкой чтобы дать странице время на рендеринг
+        setTimeout(scrollToResults, 500);
     </script>
     """, unsafe_allow_html=True)
 
@@ -1007,6 +1035,9 @@ def main():
                 st.session_state.results = results
                 st.session_state.options = options
                 
+                # Добавляем флаг, что нужно прокрутить к результатам
+                st.session_state.scroll_to_results = True
+                
                 # Перезагружаем страницу для отображения результатов
                 st.rerun()
     
@@ -1017,6 +1048,12 @@ def main():
     if 'results' in st.session_state:
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
+        
+        # Если нужна прокрутка к результатам, добавляем JS код
+        if st.session_state.get('scroll_to_results', False):
+            scroll_to_results()
+            # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
+            st.session_state.scroll_to_results = False
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
