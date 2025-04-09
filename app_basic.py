@@ -104,9 +104,7 @@ def get_bioclimatic_install_description():
     </ul>
     </div>
     
-    <p style='margin-bottom: 15px; font-weight: bold;'>Вы готовы выйти за рамки стандартов? Биоклиматическая пергола — это не «навес», а ваш личный климатический контролер. Оставьте заявку, и наши инженеры создадут проект, где каждая деталь будет работать на ваш комфорт.</p>
-    
-    <div style="margin: 20px auto; text-align: center;">
+    <p style='margin-bottom: 15px; font-weight: bold;'>Вы готовы выйти за рамки стандартов? Биоклиматическая пергола — это не «навес», а ваш личный климатический контролер. Оставьте заявку, и наши инженеры создадут проект, где каждая деталь будет работать на ваш комфорт.</p><div style="margin: 20px auto; text-align: center;">
         <img src="attached_assets/install_design_system.png" style="max-width: 100%; height: auto;" alt="Система установки и проектирования пергол">
     </div>
     """
@@ -225,9 +223,7 @@ def get_lamella_engineering_description(pergola_type=None):
     </div>
     
     <p style='margin-bottom: 15px; font-weight: bold;'>Финал: Биоклиматическая пергола — это не «навес», а инженерная система, которая считает каждую каплю дождя и снежинку. Выбирайте ламели, которые работают как швейцарские часы — тихо, точно, без компромиссов.</p>
-    </div>
-    
-    <div style="margin: 20px auto; text-align: center;">
+    </div><div style="margin: 20px auto; text-align: center;">
         <img src="attached_assets/aluminum slats.png" style="max-width: 100%; height: auto;" alt="Алюминиевые ламели для пергол">
     </div>
     """
