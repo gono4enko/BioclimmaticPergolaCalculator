@@ -226,11 +226,11 @@ def render_options_form():
             # Отображаем состояние выбора визуально с улучшенной читаемостью
             if is_selected:
                 st.markdown(f"""
-                <div style="background-color: #0066cc; border: 2px solid #0066cc; color: #FFFFFF; 
+                <div style="background-color: #FFFFFF; border: 2px solid #0066cc; color: #000000; 
                      font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; 
                      margin-bottom: 5px;">
-                    <div style="font-size: 1.1rem; color: #FFFFFF;">{pergola_name} ✓</div>
-                    <div style="font-size: 0.9rem; margin-top: 5px; color: #FFFFFF;">{pergola_short_desc}</div>
+                    <div style="font-size: 1.1rem; color: #000000;">{pergola_name} ✓</div>
+                    <div style="font-size: 0.9rem; margin-top: 5px; color: #000000;">{pergola_short_desc}</div>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -340,11 +340,11 @@ def render_options_form():
                     # Используем улучшенный стиль кнопок для ламелей (как для типа перголы)
                     if is_selected:
                         st.markdown(f"""
-                        <div style="background-color: #0066cc; border: 2px solid #0066cc; color: #FFFFFF; 
+                        <div style="background-color: #FFFFFF; border: 2px solid #0066cc; color: #000000; 
                              font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; 
                              margin-bottom: 5px;">
-                            <div style="font-size: 1.1rem; color: #FFFFFF;">{size_display} ✓</div>
-                            <div style="font-size: 0.9rem; margin-top: 5px; color: #FFFFFF;">{lamella_short_desc.split(',')[-1].strip()}</div>
+                            <div style="font-size: 1.1rem; color: #000000;">{size_display} ✓</div>
+                            <div style="font-size: 0.9rem; margin-top: 5px; color: #000000;">{lamella_short_desc.split(',')[-1].strip()}</div>
                         </div>
                         """, unsafe_allow_html=True)
                         
@@ -417,11 +417,11 @@ def render_options_form():
     
     with install_cols[0]:
         st.markdown(f"""
-        <div style="background-color: #0066cc; border: 2px solid #0066cc; color: #FFFFFF; 
+        <div style="background-color: #FFFFFF; border: 2px solid #0066cc; color: #000000; 
              font-weight: bold; text-align: left; border-radius: 8px; padding: 12px 8px; 
              margin-bottom: 5px;">
-            <div style="font-size: 1.1rem; color: #FFFFFF;">Без установки ✓</div>
-            <div style="font-size: 0.9rem; margin-top: 5px; color: #FFFFFF;"></div>
+            <div style="font-size: 1.1rem; color: #000000;">Без установки ✓</div>
+            <div style="font-size: 0.9rem; margin-top: 5px; color: #000000;"></div>
         </div>
         """, unsafe_allow_html=True)
     
