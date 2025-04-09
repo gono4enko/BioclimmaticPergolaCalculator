@@ -455,12 +455,25 @@ def render_results(results):
                     {price_table_html}
                 </div>
                 <style>
+                    /* Полное соответствие стилей таблиц */
                     .price-table-container table {{
                         width: 100%;
                         border-collapse: collapse;
+                        font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
                     }}
                     .price-table-container table tr td {{
                         padding: 6px 10px;
+                        font-size: 0.9rem !important;
+                        font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
+                    }}
+                    /* Обеспечиваем выравнивание значений по правому краю */
+                    .price-table-container table tr td:nth-child(2) {{
+                        text-align: right !important;
+                    }}
+                    /* Стиль для заголовка колонки с параметрами */
+                    .price-table-container table tr td:first-child {{
+                        font-weight: bold;
+                        color: #000000;
                     }}
                 </style>
             """, height=250)  # Задаем фиксированную высоту для компонента
