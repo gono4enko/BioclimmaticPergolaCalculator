@@ -1134,104 +1134,30 @@ def render_results(results):
         # Создаем уникальный ключ для таблицы спецификации (для применения уникальных стилей)
         spec_table_key = "spec_table_" + str(hash(str(spec_data)))
         
-        # Добавляем CSS для корректного отображения таблицы спецификаций с адаптивным дизайном
-        st.markdown(
-            f"""
-            <style>
-            /* Глобальные стили для всех таблиц */
-            div[data-testid="stDataFrame"] {{
-                margin: 0 auto !important;
-                max-width: 85% !important;
-                width: 85% !important;
-                padding-left: 25px !important;
-                padding-right: 25px !important;
-                overflow-x: auto !important;
-            }}
-            
-            div[data-testid="stDataFrame"] > div {{
-                max-width: 100% !important;
-                width: 100% !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }}
-            
-            div[data-testid="stDataFrame"] > div > div {{
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }}
-            
-            /* Стили для таблицы спецификации */
-            [data-testid="stDataFrame"] table {{
-                width: 100% !important;
-                border-collapse: collapse !important;
-                margin: 0 !important;
-            }}
-            
-            [data-testid="stDataFrame"] table td {{
-                height: auto !important;
-                min-height: 40px !important;
-                vertical-align: middle !important;
-                line-height: 1.3 !important;
-                padding: 8px 5px !important;
-                white-space: normal !important;
-                word-wrap: break-word !important;
-            }}
-            
-            [data-testid="stDataFrame"] table td:first-child {{
-                word-wrap: break-word !important;
-                word-break: break-word !important;
-                width: 70% !important;
-                min-width: 250px !important;
-                font-size: 0.95rem !important;
-            }}
-            
-            [data-testid="stDataFrame"] table td:last-child {{
-                width: 30% !important;
-                min-width: 80px !important;
-                text-align: center !important;
-                font-size: 0.95rem !important;
-                white-space: nowrap !important;
-            }}
-            
-            /* Адаптивность для таблиц на мобильных устройствах */
-            @media (max-width: 768px) {{
-                div[data-testid="stDataFrame"] {{
-                    max-width: 95% !important;
-                    width: 95% !important;
-                    padding-left: 10px !important;
-                    padding-right: 10px !important;
-                    overflow-x: auto !important;
-                }}
-                
-                [data-testid="stDataFrame"] table td {{
-                    padding: 6px 3px !important;
-                    font-size: 0.8rem !important;
-                }}
-                
-                [data-testid="stDataFrame"] table th {{
-                    font-size: 0.85rem !important;
-                    padding: 5px 3px !important;
-                }}
-                
-                [data-testid="stDataFrame"] table td:first-child {{
-                    max-width: 70% !important;
-                    font-size: 0.8rem !important;
-                }}
-                
-                [data-testid="stDataFrame"] table td:last-child {{
-                    min-width: 70px !important;
-                    font-size: 0.8rem !important;
-                }}
-            }}
-            </style>
-            """, unsafe_allow_html=True
-        )
+        # Создаем HTML-таблицу напрямую для обхода проблем с шириной
+        html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px;">'
         
-        # Обратите внимание, что здесь мы УДАЛЯЕМ use_container_width=True, 
-        # чтобы таблица отображалась полностью без обрезки
-        st.dataframe(spec_df, hide_index=True, key=spec_table_key)
+        # Добавляем заголовки
+        html_table += '<tr>'
+        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%;">Наименование</th>'
+        html_table += '<th style="text-align:center; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%;">Количество</th>'
+        html_table += '</tr>'
+        
+        # Добавляем строки с данными
+        for item in spec_data:
+            html_table += '<tr>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[0]}</td>'
+            html_table += f'<td style="text-align:center; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[1]}</td>'
+            html_table += '</tr>'
+        
+        html_table += '</table>'
+        
+        # Выводим HTML-таблицу напрямую через markdown
+        st.markdown(f"""
+        <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
+            {html_table}
+        </div>
+        """, unsafe_allow_html=True)
     
     # Отображаем таблицу стоимости
     st.markdown("<h3 style='font-size: 1.1rem; margin-top: 15px; margin-bottom: 10px;'>Стоимость</h3>", unsafe_allow_html=True)
@@ -1310,128 +1236,37 @@ def render_results(results):
     rub_total = total_price * euro_rate
     items_data.append(["Итого", format_price(rub_total)])
     
-    # Используем стандартный компонент Streamlit для отображения таблицы
-    import pandas as pd
-    df_items = pd.DataFrame(items_data, columns=["Наименование", "Стоимость"])
+    # Создаем HTML-таблицу напрямую для обхода проблем с шириной
+    html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px;">'
     
-    # Создаем уникальный ключ для таблицы стоимости (для применения уникальных стилей)
-    price_table_key = "price_table_" + str(hash(str(items_data)))
+    # Добавляем заголовки
+    html_table += '<tr>'
+    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%;">Наименование</th>'
+    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%;">Стоимость</th>'
+    html_table += '</tr>'
     
-    # Добавляем CSS для настройки ширины колонок, выравнивания цен и адаптивности
-    st.markdown(
-        f"""
-        <style>
-        /* Глобальные стили для таблицы стоимости - ключ {price_table_key} */
-        div[data-testid="stDataFrame"] {{
-            margin: 0 auto !important;
-            max-width: 85% !important;
-            width: 85% !important;
-            padding-left: 25px !important;
-            padding-right: 25px !important;
-            overflow-x: auto !important;
-        }}
-        
-        div[data-testid="stDataFrame"] > div {{
-            width: 100% !important;
-            max-width: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }}
-        
-        div[data-testid="stDataFrame"] > div > div {{
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }}
-        
-        /* Стили для таблицы спецификации */
-        [data-testid="stDataFrame"] table {{
-            width: 100% !important;
-            border-collapse: collapse !important;
-            margin: 0 !important;
-        }}
-        
-        /* Выравниваем значения в колонке "Стоимость" по правому краю */
-        [data-testid="stDataFrame"] table td:last-child {{
-            width: 30% !important;
-            min-width: 80px !important;
-            text-align: right !important;
-            padding-right: 10px !important;
-            font-size: 0.9rem !important;
-            white-space: nowrap !important;
-        }}
-        
-        /* Увеличиваем ширину последней колонки */
-        [data-testid="stDataFrame"] table th:last-child {{
-            width: 30% !important;
-            min-width: 80px !important;
-            text-align: center !important;
-            font-size: 0.9rem !important;
-        }}
-        
-        /* Стиль для строки итого */
-        [data-testid="stDataFrame"] table tr:last-child td {{
-            font-weight: bold !important;
-            background-color: #f0f7ff !important;
-        }}
-        
-        /* Разрешаем перенос длинных наименований в столбце Наименование */
-        [data-testid="stDataFrame"] table td:first-child {{
-            word-wrap: break-word !important;
-            word-break: break-word !important;
-            width: 70% !important;
-            min-width: 200px !important;
-            font-size: 0.95rem !important;
-            padding-left: 10px !important;
-            white-space: normal !important;
-        }}
-        
-        /* Стиль для текста в ячейках */
-        [data-testid="stDataFrame"] table td {{
-            height: auto !important;
-            min-height: 40px !important;
-            vertical-align: middle !important;
-            padding: 8px 5px !important;
-            white-space: normal !important;
-            line-height: 1.3 !important;
-        }}
-        
-        /* Адаптивность для таблиц на мобильных устройствах */
-        @media (max-width: 768px) {{
-            div[data-testid="stDataFrame"] {{
-                max-width: 95% !important;
-                width: 95% !important;
-                padding-left: 10px !important;
-                padding-right: 10px !important;
-            }}
-            
-            [data-testid="stDataFrame"] table td {{
-                padding: 6px 3px !important;
-                font-size: 0.8rem !important;
-            }}
-            
-            [data-testid="stDataFrame"] table th {{
-                font-size: 0.85rem !important;
-                padding: 5px 3px !important;
-            }}
-            
-            [data-testid="stDataFrame"] table td:first-child {{
-                max-width: 70% !important;
-                font-size: 0.8rem !important;
-            }}
-            
-            [data-testid="stDataFrame"] table td:last-child {{
-                min-width: 70px !important;
-                font-size: 0.8rem !important;
-            }}
-        }}
-        </style>
-        """, unsafe_allow_html=True
-    )
+    # Добавляем строки с данными
+    for i, item in enumerate(items_data):
+        # Особое форматирование для строки "Итого"
+        if i == len(items_data) - 1:
+            html_table += '<tr style="background-color:#f0f7ff;">'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-weight:bold;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-weight:bold;">{item[1]}</td>'
+            html_table += '</tr>'
+        else:
+            html_table += '<tr>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee;">{item[1]}</td>'
+            html_table += '</tr>'
     
-    # Убираем use_container_width=True для правильного отображения всех данных
-    st.dataframe(df_items, hide_index=True, key=price_table_key)
+    html_table += '</table>'
+    
+    # Выводим HTML-таблицу напрямую через markdown
+    st.markdown(f"""
+    <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
+        {html_table}
+    </div>
+    """, unsafe_allow_html=True)
     
     # Добавляем разделитель
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
