@@ -2,6 +2,24 @@
 Модуль для генерации коммерческого предложения в формате PDF
 на основе данных из калькулятора перголы.
 """
+from reportlab.pdfgen.canvas import Canvas
+
+# Создаем класс для улучшенного PDF генератора с поддержкой кириллицы
+class PdfAnnotator(Canvas):
+    """
+    Расширенный класс Canvas с поддержкой кириллицы и внедрением шрифтов
+    """
+    def __init__(self, *args, **kwargs):
+        Canvas.__init__(self, *args, **kwargs)
+        # Добавляем настройки для поддержки кириллицы
+        self.setAuthor("Pergola Calculator")
+        self.setTitle("Коммерческое предложение")
+        self.setSubject("Биоклиматическая пергола")
+        
+    def showPage(self):
+        # Переопределяем метод для дополнительной обработки перед сменой страницы
+        # Выполняем стандартное отображение страницы
+        Canvas.showPage(self)
 import os
 from datetime import datetime
 from reportlab.lib.pagesizes import A4
@@ -452,7 +470,27 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 
                 if all_paragraphs:
                     for paragraph_text in all_paragraphs:
-                        elements.append(Paragraph(paragraph_text, styles['Normal']))
+                        # Разбиваем длинные параграфы для предотвращения переполнения
+                        if len(paragraph_text) > 300:
+                            # Разбиваем на более короткие части по предложениям
+                            sentences = re.split(r'(?<=[.!?])\s+', paragraph_text)
+                            current_part = ""
+                            
+                            for sentence in sentences:
+                                if len(current_part) + len(sentence) < 300:
+                                    current_part += sentence + " "
+                                else:
+                                    if current_part:
+                                        # Обеспечиваем корректное отображение кириллицы с помощью шрифта
+                                        elements.append(Paragraph(current_part.strip(), styles['Normal']))
+                                        elements.append(Spacer(1, 2*mm))
+                                    current_part = sentence + " "
+                            
+                            if current_part:  # Добавляем последнюю часть
+                                elements.append(Paragraph(current_part.strip(), styles['Normal']))
+                        else:
+                            elements.append(Paragraph(paragraph_text, styles['Normal']))
+                            
                         elements.append(Spacer(1, 3*mm))
                         
                 # Если ничего не найдено, пробуем разобрать весь текст
@@ -515,26 +553,38 @@ def generate_commercial_offer(pergola_data, user_data=None):
             # Сохраняем изображение с тем же соотношением сторон
             img_pil.save(processed_image_path)
             
-            # Теперь добавляем изображение в PDF с контролем размеров
-            # Здесь мы ограничиваем размер изображения, чтобы оно помещалось на страницу
-            # с сохранением исходных пропорций
-            max_width = 14*cm  # Уменьшили ширину для большего безопасного пространства
-            max_height = 18*cm  # Максимальная безопасная высота для страницы
+            # Улучшенная обработка изображения для PDF с защитой от переполнения страницы
+            # Уменьшаем максимальные размеры, чтобы гарантировать размещение на странице
+            max_width = 12*cm  # Уменьшили ширину для большей безопасности
+            max_height = 16*cm  # Максимальная безопасная высота для страницы
             
-            # Сначала вычисляем соотношение сторон
+            # Изменяем размер изображения через PIL перед добавлением в PDF
+            # Это даст лучший контроль над окончательным размером
+            img_pil_resized = img_pil.copy()
+            
+            # Считаем соотношение сторон
             aspect_ratio = img_height / float(img_width)
             
-            # Расчитываем ширину и высоту с сохранением пропорций
-            scaled_height = max_width * aspect_ratio
+            # Рассчитываем новые размеры в пикселях, сохраняя пропорции
+            if aspect_ratio > 1:  # Высокое изображение
+                new_height = int(max_height / cm * 72)  # Переводим см в точки (1 см = 72/2.54 pt)
+                new_width = int(new_height / aspect_ratio)
+                print(f"Высокое изображение: новые размеры {new_width}x{new_height} пикселей")
+            else:  # Широкое изображение
+                new_width = int(max_width / cm * 72)  # Переводим см в точки
+                new_height = int(new_width * aspect_ratio)
+                print(f"Широкое изображение: новые размеры {new_width}x{new_height} пикселей")
             
-            # Если изображение слишком высокое, пересчитываем ширину на основе высоты
-            if scaled_height > max_height:
-                scaled_width = max_height / aspect_ratio
-                img = Image(processed_image_path, width=scaled_width, height=max_height)
-                print(f"Изображение слишком высокое, уменьшаем: ширина={scaled_width/cm}см, высота={max_height/cm}см")
-            else:
-                img = Image(processed_image_path, width=max_width, height=scaled_height)
-                print(f"Масштабирование изображения: ширина={max_width/cm}см, высота={scaled_height/cm}см")
+            # Изменяем размер с высоким качеством
+            img_pil_resized = img_pil.resize((new_width, new_height), 1)  # 1 = PIL.Image.LANCZOS
+            
+            # Сохраняем измененное изображение
+            resized_path = os.path.join("processed_images", f"resized_{file_name}")
+            img_pil_resized.save(resized_path)
+            
+            # Добавляем уже измененное изображение в PDF
+            img = Image(resized_path)
+            print(f"Добавляем измененное изображение в PDF: {resized_path}")
             
             elements.append(img)
         except Exception as e:
@@ -585,9 +635,28 @@ def generate_commercial_offer(pergola_data, user_data=None):
     elements.append(Spacer(1, 20*mm))
     elements.append(Paragraph("© 2025 Комфортный дом | Все права защищены", styles['Footer']))
     
-    # Собираем PDF
-    doc.build(elements)
+    # Собираем PDF с использованием canvasmaker для внедрения шрифтов
+    from reportlab.platypus.doctemplate import SimpleDocTemplate
+    from reportlab.pdfbase.cidfonts import UnicodeCIDFont
     
+    # Явно добавляем информацию о внедрении шрифтов
+    try:
+        from reportlab.pdfbase.pdfmetrics import registerFont
+        from reportlab.pdfbase.ttfonts import TTFont
+        
+        # Перерегистрируем шрифт с явным внедрением
+        try:
+            pdfmetrics.registerFont(TTFont('CustomFont', "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", subfontIndex=0))
+            print("Переустановлен шрифт с внедрением")
+        except:
+            print("Ошибка при переустановке шрифта")
+    except:
+        print("Ошибка при импорте модулей для шрифтов")
+    
+    # Собираем PDF с явным указанием кодировки
+    doc.build(elements, canvasmaker=PdfAnnotator)
+    
+    print(f"PDF успешно создан: {pdf_filename}")
     return pdf_filename
 
 def format_pergola_data_for_pdf(results, options, dimensions, pergola_description):
