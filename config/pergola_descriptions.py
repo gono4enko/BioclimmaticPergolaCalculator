@@ -360,14 +360,14 @@ BANSBACH_DESCRIPTION = """
 Bansbach — это не «автоматика». Это ваш личный метеоролог, инженер и охранник в одном флаконе. Немецкая надежность, которая не просит второго шанса — потому что не ошибается в первый раз.</p>
 
 <div style='text-align: center; margin: 20px 0;'>
-<img src='attached_assets/lineardrive.jpeg' style='max-width: 100%; height: auto;' alt='Линейный привод Bansbach'>
-<p style='font-style: italic; margin-top: 5px;'>Линейный привод Bansbach для управления перголой</p>
+<img src='attached_assets/Lin gate.jpg' style='max-width: 100%; height: auto;' alt='Линейный привод Bansbach'>
+<p style='font-style: italic; margin-top: 5px;'>Линейный привод Bansbach для управления перголой В500</p>
 </div>
 """
 
 # Изображение привода Bansbach
 PERGOLA_IMAGES["BANSBACH"] = [
-    "attached_assets/lineardrive.jpeg"
+    "attached_assets/Lin gate.jpg"
 ]
 
 # Подпись к изображению привода Bansbach
