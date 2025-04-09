@@ -544,6 +544,7 @@ def get_drive_price(pergola_type, width_m, length_m, modules):
 def get_remote_control(devices_count):
     """
     Определяет тип и стоимость пульта управления
+    в зависимости от количества устройств.
     
     Args:
         devices_count (int): Количество устройств для управления
@@ -555,6 +556,9 @@ def get_remote_control(devices_count):
         return "Simu 1K", REMOTE_CONTROL_TYPES[1]["price"]
     elif devices_count <= 5:
         return "Simu 5K", REMOTE_CONTROL_TYPES[5]["price"]
+    elif devices_count <= 6:
+        # Важное исправление: для 6 устройств (3 привода + 3 освещения) используем Simu 6K
+        return "Simu 6K", REMOTE_CONTROL_TYPES[6]["price"]
     else:
         return "Simu 15K", REMOTE_CONTROL_TYPES[15]["price"]
 
