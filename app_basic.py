@@ -1019,7 +1019,7 @@ def render_results(results):
         if "колон" in item["name"].lower():
             items_data.append([item["name"], f"{item['price']:.2f} €"])
     
-    # Итоговая строка
+    # Итоговая строка - просто добавляем строку "Итого" (жирный шрифт применяется через CSS)
     items_data.append(["Итого", f"{total_price:.2f} €"])
     
     # Используем стандартный компонент Streamlit для отображения таблицы
@@ -1027,7 +1027,7 @@ def render_results(results):
     import pandas as pd
     df_items = pd.DataFrame(items_data, columns=["Наименование", "Стоимость"])
     
-    # Добавляем CSS для настройки ширины колонок и выравнивания цен
+    # Добавляем CSS для настройки ширины колонок, выравнивания цен и выделения строки итого
     st.markdown(
         """
         <style>
@@ -1046,6 +1046,15 @@ def render_results(results):
         [data-testid="stDataFrame"] table th:last-child {
             min-width: 200px !important;
             text-align: center !important;
+        }
+        /* Стиль для строки итого */
+        [data-testid="stDataFrame"] table tr:last-child {
+            font-weight: bold !important;
+            background-color: #f0f7ff !important;
+        }
+        /* Добавляем поддержку HTML-тегов в текстовых ячейках */
+        [data-testid="stDataFrame"] td {
+            font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
         }
         </style>
         """, unsafe_allow_html=True
