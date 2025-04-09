@@ -369,7 +369,8 @@ def render_options_form():
         lamella_step = 250  # Для ламелей B500-25NEW и B700-25NEW
     
     # Использовать ТОЛЬКО СТАНДАРТНЫЕ функции Streamlit для заголовка - никакого HTML, CSS или JS
-    st.subheader("Подсветка (LED по периметру)")
+    # Используем тот же стиль оформления как у "Тип ламелей"
+    st.markdown('<div class="section-header" style="color: #000000 !important;">Подсветка (LED по периметру)</div>', unsafe_allow_html=True)
     
     # Доступные типы освещения для выбранного типа перголы - убираем 'none' и добавляем 'none' обратно в начало для радиокнопок
     lighting_options_full = ["none"] + [opt for opt in PERGOLA_TYPES[pergola_type]["available_lighting"] if opt != "none"] if pergola_type in PERGOLA_TYPES else ["none"]
@@ -434,7 +435,8 @@ def render_options_form():
     # Нет необходимости закрывать контейнер, так как мы используем встроенные компоненты Streamlit
     
     # Используем стандартный компонент подзаголовка Streamlit для установки
-    st.subheader("Установка")
+    # Используем тот же стиль оформления как у "Тип ламелей" и "Подсветка"
+    st.markdown('<div class="section-header" style="color: #000000 !important;">Установка</div>', unsafe_allow_html=True)
     
     # Создаем колонки для опций установки
     install_cols = st.columns([1, 1])

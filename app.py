@@ -735,8 +735,9 @@ def main():
             padding-bottom: 5px;
             margin-bottom: 10px;
             font-size: 1.1rem;
-            color: #3f6daa !important;
+            color: #000000 !important;
             background-color: #FFFFFF !important;
+            text-transform: uppercase; /* Аналогично заголовку "Тип ламелей" со скриншота */
         }
         
         /* Заголовки секций с высшим приоритетом - в стиле pergolamarket.ru */
@@ -746,9 +747,10 @@ def main():
         .dark-mode .section-header,
         body.dark-mode .section-header,
         [data-theme="dark"] .section-header {
-            color: #3f6daa !important;
+            color: #000000 !important;
             border-bottom-color: #3f6daa !important;
             background-color: #FFFFFF !important;
+            text-transform: uppercase;
         }
         
         /* Делаем текст в таблицах всегда черным, независимо от режима */
