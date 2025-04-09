@@ -689,6 +689,25 @@ def perform_calculation(dimensions, options):
                     "name": f"Светодиодная лента RGB ({lighting_perimeter:.2f} м)",
                     "price": rgb_led_cost
                 })
+                
+            # Для B600 добавляем пульт управления освещением
+            if pergola_type == "B600":
+                # Для B600 нужен отдельный пульт для освещения
+                lighting_devices_count = 1  # 1 блок управления освещением
+                remote_name, remote_price = get_remote_control(lighting_devices_count)
+                
+                results["lighting_remote"] = {
+                    "name": remote_name,
+                    "devices_count": lighting_devices_count,
+                    "price": remote_price
+                }
+                
+                results["items"].append({
+                    "name": f"Пульт ДУ {remote_name} для освещения",
+                    "price": remote_price
+                })
+                
+                lighting_cost += remote_price
             
             results["lighting"] = {
                 "types": led_types,
@@ -750,11 +769,15 @@ def perform_calculation(dimensions, options):
         
         # Освещение
         if has_lighting:
+            # Добавляем блок управления освещением
             specification.append({
                 "name": "Блок управления освещением Somfy RTS Dimmer",
                 "count": "1 шт.",
                 "price": ""
             })
+            
+            # Увеличиваем счетчик устройств для определения типа пульта
+            lighting_devices_count = 1  # 1 блок управления освещением
             
             if "white_led" in lighting_options:
                 specification.append({
@@ -767,6 +790,32 @@ def perform_calculation(dimensions, options):
                 specification.append({
                     "name": "Светодиодная лента RGB",
                     "count": f"{lighting_perimeter:.2f} м",
+                    "price": ""
+                })
+            
+            # Добавляем пульт для управления освещением
+            # Если уже есть пульт от привода перголы (B500/B700), выбираем пульт с большим числом каналов
+            # Если перголы B600 без привода, добавляем пульт для освещения
+            if pergola_type in ["B500NEW", "B700NEW"]:
+                # Обновляем devices_count для выбора пульта с большим числом каналов
+                devices_count += lighting_devices_count
+                
+                # Обновляем информацию о пульте в спецификации
+                for i, item in enumerate(specification):
+                    if "Пульт ДУ" in item["name"]:
+                        remote_name, _ = get_remote_control(devices_count)
+                        specification[i] = {
+                            "name": f"Пульт ДУ {remote_name}",
+                            "count": "1 шт.",
+                            "price": ""
+                        }
+                        break
+            else:
+                # Для B600 добавляем отдельный пульт для освещения
+                remote_name, _ = get_remote_control(lighting_devices_count)
+                specification.append({
+                    "name": f"Пульт ДУ {remote_name} для освещения",
+                    "count": "1 шт.",
                     "price": ""
                 })
         
@@ -1015,11 +1064,10 @@ def render_results(results):
             if "Привод" in item["name"] or "привод" in item["name"]:
                 items_data.append([item["name"], f"{item['price']:.2f} €"])
     
-    # Пульт ДУ - третьей строкой, если есть
-    if pergola_type in ["B500NEW", "B700NEW"]:
-        for item in results["items"]:
-            if "Пульт" in item["name"] or "пульт" in item["name"]:
-                items_data.append([item["name"], f"{item['price']:.2f} €"])
+    # Пульт ДУ - третьей строкой, если есть (для всех типов пергол)
+    for item in results["items"]:
+        if "Пульт" in item["name"] or "пульт" in item["name"]:
+            items_data.append([item["name"], f"{item['price']:.2f} €"])
     
     # Освещение - четвертой строкой, если есть
     for item in results["items"]:
