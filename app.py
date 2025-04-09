@@ -599,9 +599,39 @@ def main():
     
     # Добавляем скрипт для принудительного обновления страницы без кэша
     # Создадим хард-ресет кэша для стилей с уникальным идентификатором
-    import uuid
-    cache_bust_id = str(uuid.uuid4())
+    import uuid, time
+    cache_bust_id = f"{uuid.uuid4()}_{int(time.time())}"
     
+    # Принудительный сброс кэша через мета-теги
+    st.markdown(f"""
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="cache-version" content="{cache_bust_id}">
+    """, unsafe_allow_html=True)
+    
+    # Добавляем JavaScript для принудительной перезагрузки стилей
+    st.markdown(f"""
+    <script>
+        // Принудительная перезагрузка стилей
+        (function() {{
+            // Создаем новую метку времени при каждой загрузке
+            const ts = new Date().getTime();
+            // Получаем все элементы link (CSS)
+            const links = document.getElementsByTagName('link');
+            // Добавляем timestamp к URL каждого CSS файла
+            for(let i = 0; i < links.length; i++) {{
+                if (links[i].rel === 'stylesheet') {{
+                    links[i].href = links[i].href + '?v=' + ts;
+                }}
+            }}
+            // Обновляем стили внутренних элементов
+            console.log('Обновление кэша стилей: ' + ts);
+        }})();
+    </script>
+    """, unsafe_allow_html=True)
+    
+    # Добавляем обновленные стили с принудительным версионированием
     st.markdown(f"""
     <style data-cache-bust="{cache_bust_id}">
         /* Принудительное применение стилей pergolamarket.ru */
@@ -610,14 +640,15 @@ def main():
             --st-color-secondary: #ff9c00 !important;
         }}
         
-        h1, h2, h3, h4, h5, .stButton > button[data-testid="baseButton-primary"] {{
+        h1, h2, h3, h4, h5 {{
             color: #FFFFFF !important;
             background-color: #3f6daa !important;
         }}
         
         .section-header {{
-            color: #3f6daa !important;
+            color: #000000 !important;
             border-color: #3f6daa !important;
+            text-transform: uppercase !important;
         }}
         
         /* Дополнительные стили */
@@ -626,6 +657,15 @@ def main():
             height: 3px;
             width: 100px;
             margin: 5px auto;
+        }}
+        
+        /* ПРИНУДИТЕЛЬНЫЙ СТИЛЬ ДЛЯ ОРАНЖЕВОЙ КНОПКИ */
+        button[kind="primary"],
+        button[data-testid="baseButton-primary"],
+        div[data-testid="stButton"] button[data-testid="baseButton-primary"],
+        .stButton > button[data-testid="baseButton-primary"] {{
+            background-color: #ff7a2f !important;
+            color: #ffffff !important;
         }}
     </style>
     """, unsafe_allow_html=True)
@@ -759,8 +799,69 @@ def main():
         }
         </style>
         """, unsafe_allow_html=True)
-        # Создаем кнопку с усиленным стилем через атрибут style
-        if st.button("Рассчитать стоимость", type="primary", use_container_width=True, help="Нажмите для расчета стоимости перголы"):
+        # Используем нашу новую методику с непосредственным внедрением HTML
+        import uuid
+        import time
+        button_id = f"calc_button_{uuid.uuid4()}_{int(time.time())}"
+        
+        # Создаем HTML-кнопку напрямую вместо использования st.button
+        button_clicked = False
+        st.markdown(f"""
+        <style>
+        /* Принудительный стиль для ВСЕХ primary кнопок */
+        button[kind="primary"],
+        button[data-testid="baseButton-primary"],
+        div[data-testid="stButton"] button[data-testid="baseButton-primary"],
+        .stButton > button[data-testid="baseButton-primary"],
+        div[data-testid="element-container"] div[data-testid="stButton"] button[kind="primary"],
+        [data-testid="baseButton-primary"],
+        div[data-baseweb="button"] button[kind="primary"] {{
+            background-color: #ff7a2f !important;
+            color: #ffffff !important;
+            font-size: 2rem !important;
+            font-weight: 700 !important;
+            text-align: center;
+            border-radius: 8px !important;
+            padding: 25px 25px !important;
+            border: none !important;
+            margin-top: 25px !important;
+            margin-bottom: 25px !important;
+            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2) !important;
+            transition: all 0.2s !important;
+            width: 100% !important;
+            cursor: pointer;
+            display: block;
+        }}
+        
+        /* Стиль при наведении */
+        button[kind="primary"]:hover,
+        button[data-testid="baseButton-primary"]:hover,
+        div[data-testid="stButton"] button[data-testid="baseButton-primary"]:hover,
+        .stButton > button[data-testid="baseButton-primary"]:hover,
+        div[data-testid="element-container"] div[data-testid="stButton"] button[kind="primary"]:hover,
+        [data-testid="baseButton-primary"]:hover,
+        div[data-baseweb="button"] button[kind="primary"]:hover {{
+            background-color: #e86c29 !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+            transform: translateY(-2px) !important;
+        }}
+        
+        /* Стиль при нажатии */
+        button[kind="primary"]:active,
+        button[data-testid="baseButton-primary"]:active,
+        div[data-testid="stButton"] button[data-testid="baseButton-primary"]:active,
+        .stButton > button[data-testid="baseButton-primary"]:active,
+        div[data-testid="element-container"] div[data-testid="stButton"] button[kind="primary"]:active,
+        [data-testid="baseButton-primary"]:active,
+        div[data-baseweb="button"] button[kind="primary"]:active {{
+            transform: translateY(1px) !important;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # Используем обычную кнопку Streamlit, но скрываем ее стилями
+        if st.button("Рассчитать стоимость", type="primary", use_container_width=True, help="Нажмите для расчета стоимости перголы", key=button_id):
             with st.spinner("Выполняется расчет..."):
                 # Проверяем, что у нас есть данные для расчета
                 if dimensions and options:
