@@ -416,11 +416,6 @@ PERGOLA_DESCRIPTIONS["SOMFY"] = """
 <p style='margin-bottom: 15px; font-weight: bold;'>Финал: Somfy — это не просто автоматика. Это ваш личный французский дворецкий, который предупредит капризы погоды раньше, чем вы о них подумаете. Выбирайте элегантность, которая не просит второго шанса — потому что не ошибется в первый раз.</p>
 
 <p style='margin-bottom: 15px; font-style: italic;'>P.S. Хотите перголу, которая закрывается быстрее, чем официант подает круассан? Somfy сделает это за 15 секунд. Без суеты, капель и разочарований.</p>
-
-<div style='text-align: center; margin: 20px 0;'>
-<img src='attached_assets/Somfy Pergola.jpeg' style='max-width: 100%; height: auto;' alt='Привод Somfy для пергол B700'>
-<p style='font-style: italic; margin-top: 5px;'>Автоматика Somfy для пергол B700 со сдвижными ламелями</p>
-</div>
 """
 
 # Изображение для привода Somfy
