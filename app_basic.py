@@ -1411,15 +1411,15 @@ def render_results(results):
         if price >= 1000000:
             price_in_millions = price / 1000000
             # Округляем до 1 знака после запятой для миллионов
-            return "{:.1f}M₽".format(price_in_millions)
+            return "{:.1f} M₽".format(price_in_millions)
         # Для сотен тысяч используем формат с K
         if price >= 100000:
-            return "{:.0f}K₽".format(price_in_thousands)
+            return "{:.0f} K₽".format(price_in_thousands)
         # Для десятков тысяч тоже используем формат с K, но с 1 знаком после запятой
         if price >= 10000:
-            return "{:.1f}K₽".format(price_in_thousands)
+            return "{:.1f} K₽".format(price_in_thousands)
         # Для маленьких чисел используем обычный формат с разделителями
-        return "{:,.0f}₽".format(price).replace(",", " ")
+        return "{:,.0f} ₽".format(price).replace(",", " ")
     
     # Базовая стоимость перголы - всегда первой строкой
     rub_base_price = base_price * euro_rate
@@ -1473,8 +1473,8 @@ def render_results(results):
     
     # Добавляем заголовки
     html_table += '<tr>'
-    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%;">Наименование</th>'
-    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%;">Стоимость</th>'
+    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:60%;">Наименование</th>'
+    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:40%;">Стоимость</th>'
     html_table += '</tr>'
     
     # Добавляем строки с данными
@@ -1483,19 +1483,19 @@ def render_results(results):
         if i == len(items_data) - 1:
             html_table += '<tr style="background-color:#e0f0ff;">'
             html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.2rem;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:10px 10px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; color:#0066cc;">{item[1]}</td>'
+            html_table += f'<td style="text-align:right; padding:10px 15px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; color:#0066cc; min-width:120px; white-space:nowrap;">{item[1]}</td>'
             html_table += '</tr>'
         else:
             html_table += '<tr>'
             html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee;">{item[1]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #eee; min-width:120px; white-space:nowrap;">{item[1]}</td>'
             html_table += '</tr>'
     
     html_table += '</table>'
     
     # Выводим HTML-таблицу напрямую через markdown
     st.markdown(f"""
-    <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
+    <div style="width:95%; margin:0 auto; padding-left:15px; padding-right:15px;">
         {html_table}
     </div>
     """, unsafe_allow_html=True)
