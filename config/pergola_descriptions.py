@@ -143,7 +143,9 @@ PERGOLA_IMAGE_CAPTIONS = {
     "B500NEW": "Пергола B500 с поворотными ламелями",
     "B700NEW": "Пергола B700 со сдвижными ламелями",
     "B600": "Пергола B600 с PIR-панелями",
-    "MODULAR": "Принцип модульной системы пергол"
+    "MODULAR": "Принцип модульной системы пергол",
+    "INSTALL_SYSTEM": "Система установки и проектирования пергол",
+    "LAMELLA_ENGINEERING": "Технические характеристики ламелей"
 }
 
 def get_pergola_description(pergola_type):
@@ -303,6 +305,18 @@ PERGOLA_IMAGES["DRAINAGE"] = [
 
 # Подпись к изображению системы водоотведения
 PERGOLA_IMAGE_CAPTIONS["DRAINAGE"] = "Система водоотведения Decolife"
+
+# Изображения для системы установки и проектирования
+PERGOLA_IMAGES["INSTALL_SYSTEM"] = [
+    "attached_assets/install_design_system.png",
+    "attached_assets/Instal and design Sistem.png"
+]
+
+# Изображения для технических характеристик ламелей
+PERGOLA_IMAGES["LAMELLA_ENGINEERING"] = [
+    "attached_assets/aluminum_slats.png",
+    "attached_assets/aluminum slats.png"
+]
 
 # Описание привода Bansbach для пергол B500
 PERGOLA_DESCRIPTIONS["B500NEW"] = B500_DESCRIPTION

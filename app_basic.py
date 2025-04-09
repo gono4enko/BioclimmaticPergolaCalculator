@@ -594,7 +594,11 @@ def get_drive_price(pergola_type, width_m, length_m, modules):
 
 def get_remote_control(devices_count):
     """
-    Определяет тип и стоимость пульта управления
+    Определяет тип и стоимость пульта управления на основе количества управляемых устройств.
+    Выбор происходит по следующим правилам:
+    - Если устройств не более 1, выбирается одноканальный пульт Simu 1K
+    - Если устройств от 2 до 5, выбирается пятиканальный пульт Simu 5K
+    - Если устройств более 5, выбирается пятнадцатиканальный пульт Simu 15K
     
     Args:
         devices_count (int): Количество устройств для управления
@@ -603,11 +607,11 @@ def get_remote_control(devices_count):
         tuple: (название пульта, цена пульта)
     """
     if devices_count <= 1:
-        return "Simu 1K", REMOTE_CONTROL_TYPES[1]["price"]
+        return REMOTE_CONTROL_TYPES[1]["name"], REMOTE_CONTROL_TYPES[1]["price"]
     elif devices_count <= 5:
-        return "Simu 5K", REMOTE_CONTROL_TYPES[5]["price"]
+        return REMOTE_CONTROL_TYPES[5]["name"], REMOTE_CONTROL_TYPES[5]["price"]
     else:
-        return "Simu 15K", REMOTE_CONTROL_TYPES[15]["price"]
+        return REMOTE_CONTROL_TYPES[15]["name"], REMOTE_CONTROL_TYPES[15]["price"]
 
 def perform_calculation(dimensions, options):
     """Выполнить расчет стоимости перголы"""
