@@ -120,36 +120,20 @@ def generate_commercial_offer(pergola_data, user_data=None):
     # Создаем экземпляр PDF с поддержкой кириллицы
     pdf = PDF()
     
-    # Создаем локальную копию системного шрифта
-    font_path = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
-    local_font_path = 'fonts/DejaVuSans.ttf'
+    # Создаем директорию для шрифтов (если ее нет)
+    os.makedirs('fonts', exist_ok=True)
     
-    # Проверяем, существует ли локальная копия шрифта
-    if not os.path.exists(local_font_path):
-        os.makedirs('fonts', exist_ok=True)
-        try:
-            import shutil
-            shutil.copy(font_path, local_font_path)
-            print(f"Локальная копия шрифта создана в {local_font_path}")
-        except Exception as e:
-            print(f"Ошибка при копировании шрифта: {str(e)}")
-            # Если копирование не удалось, используем альтернативный шрифт или встроенный
-            local_font_path = None
+    # Используем встроенные шрифты FPDF
+    # Arial поддерживает кириллицу и является стандартным шрифтом
     
-    # Используем локальную копию шрифта, если она есть
-    if local_font_path and os.path.exists(local_font_path):
-        pdf.add_font('DejaVu', '', local_font_path, uni=True)
-    else:
-        # Если локальной копии нет, используем встроенный шрифт с поддержкой кириллицы
-        pdf.add_font('DejaVu', '', font_path, uni=True)
-    
-    pdf.set_font('DejaVu', '', 12)
+    # Указываем, что мы будем использовать стандартный шрифт Arial
+    pdf.set_font('Arial', '', 12)
     
     # Добавляем первую страницу
     pdf.add_page()
     
     # Устанавливаем информацию о текущей дате
-    pdf.set_font('DejaVu', '', 10)
+    pdf.set_font('Arial', '', 10)
     pdf.cell(0, 5, f"г. Москва, {current_date}", 0, 1, "L")
     
     # Добавляем номер коммерческого предложения
@@ -158,9 +142,9 @@ def generate_commercial_offer(pergola_data, user_data=None):
     
     # Добавляем заголовок коммерческого предложения
     pdf.ln(10)
-    pdf.set_font('DejaVu', 'B', 16)
+    pdf.set_font('Arial', 'B', 16)
     pdf.cell(0, 10, "КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", 0, 1, "C")
-    pdf.set_font('DejaVu', '', 14)
+    pdf.set_font('Arial', '', 14)
     pdf.cell(0, 10, "на поставку и монтаж биоклиматической перголы", 0, 1, "C")
     
     # Добавляем информацию о клиенте, если она доступна
@@ -168,7 +152,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
         pdf.ln(5)
         pdf.chapter_title("Информация о клиенте:")
         
-        pdf.set_font('DejaVu', '', 10)
+        pdf.set_font('Arial', '', 10)
         if user_data.get('name'):
             pdf.cell(0, 7, f"Имя: {user_data['name']}", 0, 1)
         
@@ -227,7 +211,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
         for i, item in enumerate(specification, 1):
             pdf.table_row([str(i), item['name'], str(item['quantity'])], widths, aligns=["C", "L", "C"])
     else:
-        pdf.set_font('DejaVu', '', 10)
+        pdf.set_font('Arial', '', 10)
         pdf.cell(0, 7, "Данные о спецификации отсутствуют", 0, 1)
     
     # Добавляем информацию о стоимости
@@ -250,7 +234,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
             
         # Добавляем итоговую строку
         pdf.set_fill_color(211, 211, 211)  # Светло-серый цвет
-        pdf.set_font('DejaVu', 'B', 10)
+        pdf.set_font('Arial', 'B', 10)
         pdf.set_text_color(0, 0, 0)  # Черный текст
         total_price_str = f"{total_cost:,.2f}".replace(',', ' ')
         
@@ -258,7 +242,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
         pdf.cell(120, 8, "ИТОГО:", 1, 0, "R", fill=True)
         pdf.cell(25, 8, total_price_str, 1, 1, "R", fill=True)
     else:
-        pdf.set_font('DejaVu', '', 10)
+        pdf.set_font('Arial', '', 10)
         pdf.cell(0, 7, "Данные о стоимости отсутствуют", 0, 1)
     
     # Добавляем описание перголы
@@ -278,7 +262,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
         clean_text = soup.get_text(separator="\n\n")
         
         # Выводим текст в PDF
-        pdf.set_font('DejaVu', '', 11)
+        pdf.set_font('Arial', '', 11)
         
         # Разбиваем текст на параграфы
         paragraphs = clean_text.split("\n\n")
@@ -287,7 +271,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 pdf.multi_cell(0, 6, paragraph.strip())
                 pdf.ln(3)
     else:
-        pdf.set_font('DejaVu', '', 10)
+        pdf.set_font('Arial', '', 10)
         pdf.cell(0, 7, "Описание перголы недоступно", 0, 1)
     
     # Добавляем изображение перголы, если оно есть
@@ -343,7 +327,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
     pdf.add_page()
     pdf.chapter_title("Контактная информация:")
     
-    pdf.set_font('DejaVu', '', 11)
+    pdf.set_font('Arial', '', 11)
     pdf.multi_cell(0, 6, "Для получения дополнительной информации или оформления заказа, пожалуйста, свяжитесь с нами:")
     pdf.ln(5)
     
