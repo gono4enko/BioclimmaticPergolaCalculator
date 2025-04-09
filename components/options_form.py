@@ -199,9 +199,9 @@ def render_options_form():
             button_style = """ 
             <style>
             div[data-testid*="stButton"] > button {
-                background-color: var(--tile-bg, white);
-                border: 1px solid var(--tile-border, #ddd);
-                color: var(--text-color, #333);
+                background-color: #FFFFFF !important;
+                border: 1px solid #ddd !important;
+                color: #000000 !important;
                 font-weight: 500;
                 text-align: center;
                 border-radius: 8px;
@@ -211,13 +211,12 @@ def render_options_form():
                 transition: all 0.2s;
                 font-size: 1rem;
                 line-height: 1.3;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             }
             div[data-testid*="stButton"] > button:hover {
-                background-color: #e6f3ff;
-                border-color: #0066cc;
-                color: #0066cc;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                background-color: #FFFFFF !important;
+                border-color: #0066cc !important;
+                color: #000000 !important;
+                border-width: 1px !important;
             }
             </style>
             """

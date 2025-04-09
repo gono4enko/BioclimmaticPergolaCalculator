@@ -452,6 +452,32 @@ def main():
         background-color: white !important;
     }
     
+    /* Принудительно делаем фон любых кнопок белым */
+    button, button:hover, button:active, button:focus,
+    .stButton > button, .stButton > button:hover, .stButton > button:active,
+    [data-baseweb="button"], [data-baseweb="button"]:hover, [data-baseweb="button"]:active {
+        background-color: white !important;
+        color: black !important;
+    }
+    
+    /* Удаляем все стили для всех кнопок Streamlit, делаем их всегда белыми */
+    [data-testid="baseButton-secondary"], 
+    [data-testid="baseButton-secondary"]:hover,
+    [data-testid="baseButton-secondary"]:active,
+    [data-testid="baseButton-secondary"]:focus {
+        background-color: white !important;
+        color: black !important;
+        border-color: #ddd !important;
+    }
+    
+    /* Исключение только для основной кнопки расчета */
+    button[data-testid="baseButton-primary"],
+    button[data-testid="baseButton-primary"]:hover,
+    button[data-testid="baseButton-primary"]:active {
+        background-color: var(--button-bg) !important;
+        color: white !important;
+    }
+    
     /* Устанавливаем минимальный отступ между блоками формы */
     .stMarkdown {
         margin-bottom: 0 !important;
