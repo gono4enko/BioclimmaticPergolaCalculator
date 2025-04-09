@@ -20,6 +20,20 @@ from components.scroll_helper import scroll_to_results, add_button_animation
 from components.options_form import render_options_form
 from components.results_new import render_results
 
+# Импортируем специальный модуль для решения проблемы с синей заливкой
+from force_white_background import fix_blue_tiles
+
+# Импортируем модуль для создания компонентов без синей заливки
+try:
+    from custom_widgets import fixed_button, white_tile
+except:
+    # Если модуль не найден, создаем заглушки
+    def fixed_button(label, key=None, help=None, on_click=None, disabled=False, white_background=True):
+        return st.button(label, key=key, help=help, on_click=on_click, disabled=disabled)
+    
+    def white_tile(title, subtitle="", key=None, is_selected=False, on_click=None):
+        return st.button(f"{title}\n{subtitle}", key=key)
+
 # Обновляем освещение напрямую в конфигурации
 from config.pergola_types import LIGHTING_TYPES
 LIGHTING_TYPES["none"]["description"] = ""  # Убираем описание для опции "Без освещения"
@@ -59,6 +73,9 @@ def perform_calculation(dimensions, options):
 
 def main():
     """Основная функция приложения"""
+    
+    # Применяем фикс для удаления синей заливки кнопок
+    fix_blue_tiles()
     
     # Добавляем CSS для увеличения кнопки сразу после загрузки страницы
     st.markdown("""
@@ -570,7 +587,7 @@ def main():
     st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem; color: var(--text-color);'>Введите размеры и параметры перголы для расчета стоимости в евро (€)</p>", unsafe_allow_html=True)
     dimensions = render_dimensions_form()
     
-    # Убираем заголовок конфигурации для более чистого интерфейса
+    # Используем только стандартную форму опций
     options = render_options_form()
     
     # Кнопка для расчета с улучшенным стилем

@@ -162,7 +162,8 @@ def render_options_form():
             'pergola_type': 'B500NEW',
             'lamella_type': 'B500-20NEW',
             'lamella_step': 200,
-            'lighting_type': 'none',
+            'lighting': 'none',  # Изменение ключа с lighting_type на lighting
+            'lighting_type': 'none',  # Оставляем для обратной совместимости
             'additional_options': []
         }
     
@@ -238,7 +239,8 @@ def render_options_form():
                     pass
             else:
                 # Видимая кнопка для выбора перголы в новом стиле
-                if st.button(f"{pergola_name}\n{pergola_short_desc}", key=f"btn_pergola_{pergola_type}", use_container_width=True):
+                # Добавляем уникальный идентификатор индекса для предотвращения дублирования ключей
+                if st.button(f"{pergola_name}\n{pergola_short_desc}", key=f"btn_pergola_{pergola_type}_{i}", use_container_width=True):
                     selected_pergola_type = pergola_type
                 
                     # Обновляем тип ламелей при смене типа перголы
@@ -351,7 +353,8 @@ def render_options_form():
                             pass
                     else:
                         # Видимая кнопка для выбора ламели с улучшенным стилем
-                        if st.button(f"{size_display}\n{lamella_short_desc.split(',')[-1].strip()}", key=f"btn_lamella_{lam_type}", use_container_width=True):
+                        # Добавляем уникальный индекс для предотвращения дублирования ключей
+                        if st.button(f"{size_display}\n{lamella_short_desc.split(',')[-1].strip()}", key=f"btn_lamella_{lam_type}_{i}", use_container_width=True):
                             st.session_state.options['lamella_type'] = lam_type
                             st.rerun()
     
@@ -455,6 +458,13 @@ def render_options_form():
         
         st.session_state.options = options
         log_user_action("Обновлены опции перголы", options)
+    
+    # Применяем фикс для удаления синей заливки
+    try:
+        from force_white_background import fix_blue_tiles
+        fix_blue_tiles()
+    except:
+        pass
     
     # Возвращаем выбранные опции
     return options
