@@ -1140,6 +1140,17 @@ def render_results(results):
                 white-space: normal !important;
                 word-wrap: break-word !important;
                 max-width: 70% !important;
+                min-height: 50px !important;
+                height: auto !important;
+                line-height: 1.3 !important;
+            }
+            
+            /* Стиль для ячеек */
+            [data-testid="stDataFrame"] td {
+                padding: 8px 12px !important;
+                height: auto !important;
+                min-height: 50px !important;
+                vertical-align: middle !important;
             }
             
             /* Адаптивный дизайн для мобильных устройств */
@@ -1147,6 +1158,8 @@ def render_results(results):
                 [data-testid="stDataFrame"] {
                     width: 100% !important;
                     overflow-x: hidden !important;
+                    margin-left: 5px !important;
+                    margin-right: 5px !important;
                 }
                 
                 [data-testid="stDataFrame"] table {
@@ -1155,12 +1168,18 @@ def render_results(results):
                 }
                 
                 [data-testid="stDataFrame"] table td:first-child {
-                    width: 70% !important;
-                    max-width: 70% !important;
+                    width: 65% !important;
+                    max-width: 65% !important;
+                    font-size: 0.9rem !important;
+                    padding: 10px 5px !important;
+                    line-height: 1.4 !important;
                 }
                 
                 [data-testid="stDataFrame"] table td:last-child {
-                    width: 30% !important;
+                    width: 35% !important;
+                    text-align: center !important;
+                    font-size: 0.9rem !important;
+                    padding: 10px 5px !important;
                 }
             }
             </style>
@@ -1274,12 +1293,18 @@ def render_results(results):
             white-space: normal !important;
             word-wrap: break-word !important;
             width: 70% !important;
+            min-height: 50px !important;
+            height: auto !important;
+            line-height: 1.3 !important;
         }
         
         /* Стиль для текста в ячейках */
         [data-testid="stDataFrame"] td {
             font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
             padding: 8px 12px !important;
+            height: auto !important;
+            min-height: 50px !important;
+            vertical-align: middle !important;
         }
         
         /* Адаптивный дизайн для мобильных устройств */
@@ -1287,6 +1312,8 @@ def render_results(results):
             [data-testid="stDataFrame"] {
                 width: 100% !important;
                 overflow-x: hidden !important;
+                margin-left: 5px !important;
+                margin-right: 5px !important;
             }
             
             [data-testid="stDataFrame"] table {
@@ -1295,18 +1322,16 @@ def render_results(results):
             }
             
             [data-testid="stDataFrame"] table td:first-child {
-                width: 70% !important;
+                width: 65% !important;
+                font-size: 0.9rem !important;
+                padding: 10px 5px !important;
+                line-height: 1.4 !important;
             }
             
             [data-testid="stDataFrame"] table td:last-child {
-                width: 30% !important;
+                width: 35% !important;
                 font-size: 0.9rem !important;
-            }
-            
-            /* Улучшаем читаемость на мобильных устройствах */
-            .block-container {
-                padding: 0 !important;
-                margin: 0 !important;
+                padding: 10px 5px !important;
             }
         }
         </style>
@@ -1531,6 +1556,28 @@ def main():
         .block-container {
             max-width: 100%;
             padding: 0.5rem;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+            margin-left: 5px !important;
+            margin-right: 5px !important;
+        }
+        
+        .stButton {
+            padding-left: 5px !important;
+            padding-right: 5px !important;
+        }
+        
+        /* Убираем горизонтальный скролл на мобильных */
+        div[data-testid="stTable"] {
+            width: 100% !important;
+            overflow-x: hidden !important; 
+        }
+        
+        /* Увеличиваем высоту ячеек для переноса текста */
+        div[data-testid="stDataFrame"] td {
+            min-height: 60px !important;
+            height: auto !important;
+            vertical-align: middle !important;
         }
     }
     </style>
