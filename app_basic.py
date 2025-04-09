@@ -157,12 +157,12 @@ def perform_calculation(dimensions, options):
     length_mm = length_m * 1000
     
     # Рассчитываем количество модулей в зависимости от ширины
-    # Максимальная ширина модуля около 3.375 метра
-    if width_m <= 3.375:
+    # Согласно прайсу B500-20
+    if width_m <= 4.5:
         modules = 1
-    elif width_m <= 6.75:
+    elif width_m <= 10.0:
         modules = 2
-    elif width_m <= 10.125:
+    elif width_m <= 15.0:
         modules = 3
     else:
         modules = 4
@@ -190,16 +190,29 @@ def perform_calculation(dimensions, options):
     if pergola_type == "B500NEW":
         if "20" in real_lamella_type:
             # Для B500-20NEW
+            # Ищем ближайшие значения из прайса (B500-20)
+            # Ширина (м): 3.0, 3.5, 4.0, 4.5, 6.0, 7.0, 8.0, 9.0, 10.0, 9.0, 10.5, 12.0, 13.5, 15.0
+            # Вынос (м): 2.45, 2.85, 3.25, 3.65, 4.05, 4.45, 4.85, 5.25, 5.65, 6.05, 6.45, 6.85, 7.25, 7.65, 8.05
+            
+            # Базовые цены из прайса
             if width_m <= 3.0 and length_m <= 2.45:
                 pergola_cost = 6245
             elif width_m <= 3.5 and length_m <= 2.45:
                 pergola_cost = 6810
             elif width_m <= 4.0 and length_m <= 2.45:
                 pergola_cost = 7375
+            elif width_m <= 4.5 and length_m <= 2.45:
+                pergola_cost = 7940
+            elif width_m <= 3.0 and length_m <= 2.85:
+                pergola_cost = 6866
             elif width_m <= 3.0 and length_m <= 3.25:
                 pergola_cost = 7487
+            elif width_m <= 3.0 and length_m <= 3.65:
+                pergola_cost = 8108
+            elif width_m <= 3.0 and length_m <= 4.05:
+                pergola_cost = 8729
             else:
-                # Для других размеров используем приближенную формулу
+                # Для других размеров по-прежнему используем приближенную формулу
                 pergola_cost = 6245 * (width_m * length_m) / (3.0 * 2.45)
         else:
             # Для B500-25NEW
