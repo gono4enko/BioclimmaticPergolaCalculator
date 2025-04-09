@@ -32,6 +32,9 @@ from reportlab.platypus import (
 )
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+from reportlab.pdfbase.pdfmetrics import registerFont, registerFontFamily
+from reportlab.platypus.doctemplate import SimpleDocTemplate
 
 # Создаем директорию для сохранения сгенерированных PDF
 os.makedirs("generated_pdf", exist_ok=True)
@@ -636,22 +639,14 @@ def generate_commercial_offer(pergola_data, user_data=None):
     elements.append(Paragraph("© 2025 Комфортный дом | Все права защищены", styles['Footer']))
     
     # Собираем PDF с использованием canvasmaker для внедрения шрифтов
-    from reportlab.platypus.doctemplate import SimpleDocTemplate
-    from reportlab.pdfbase.cidfonts import UnicodeCIDFont
     
     # Явно добавляем информацию о внедрении шрифтов
+    # Перерегистрируем шрифт с явным внедрением
     try:
-        from reportlab.pdfbase.pdfmetrics import registerFont
-        from reportlab.pdfbase.ttfonts import TTFont
-        
-        # Перерегистрируем шрифт с явным внедрением
-        try:
-            pdfmetrics.registerFont(TTFont('CustomFont', "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", subfontIndex=0))
-            print("Переустановлен шрифт с внедрением")
-        except:
-            print("Ошибка при переустановке шрифта")
-    except:
-        print("Ошибка при импорте модулей для шрифтов")
+        pdfmetrics.registerFont(TTFont('CustomFont', "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", subfontIndex=0))
+        print("Переустановлен шрифт с внедрением")
+    except Exception as e:
+        print(f"Ошибка при переустановке шрифта: {str(e)}")
     
     # Собираем PDF с явным указанием кодировки
     doc.build(elements, canvasmaker=PdfAnnotator)
