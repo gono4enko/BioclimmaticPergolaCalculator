@@ -226,9 +226,9 @@ def render_options_form():
             # Отображаем состояние выбора визуально с улучшенной читаемостью
             if is_selected:
                 st.markdown(f"""
-                <div style="background-color: #FFFFFF; border: 1px solid #0066cc; color: #000000; 
+                <div style="background-color: #FFFFFF; border: 2px solid #0066cc; color: #000000; 
                      font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; 
-                     margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                     margin-bottom: 5px;">
                     <div style="font-size: 1.1rem;">{pergola_name} ✓</div>
                     <div style="font-size: 0.9rem; margin-top: 5px;">{pergola_short_desc}</div>
                 </div>
@@ -339,9 +339,9 @@ def render_options_form():
                     # Используем улучшенный стиль кнопок для ламелей (как для типа перголы)
                     if is_selected:
                         st.markdown(f"""
-                        <div style="background-color: #FFFFFF; border: 1px solid #0066cc; color: #000000; 
+                        <div style="background-color: #FFFFFF; border: 2px solid #0066cc; color: #000000; 
                              font-weight: bold; text-align: center; border-radius: 8px; padding: 12px 8px; 
-                             margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                             margin-bottom: 5px;">
                             <div style="font-size: 1.1rem;">{size_display} ✓</div>
                             <div style="font-size: 0.9rem; margin-top: 5px;">{lamella_short_desc.split(',')[-1].strip()}</div>
                         </div>
@@ -415,9 +415,9 @@ def render_options_form():
     
     with install_cols[0]:
         st.markdown(f"""
-        <div style="background-color: #FFFFFF; border: 1px solid #0066cc; color: #000000; 
+        <div style="background-color: #FFFFFF; border: 2px solid #0066cc; color: #000000; 
              font-weight: bold; text-align: left; border-radius: 8px; padding: 12px 8px; 
-             margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+             margin-bottom: 5px;">
             <div style="font-size: 1.1rem;">Без установки ✓</div>
             <div style="font-size: 0.9rem; margin-top: 5px;"></div>
         </div>
@@ -425,7 +425,7 @@ def render_options_form():
     
     with install_cols[1]:
         st.markdown(f"""
-        <div style="background-color: var(--tile-bg, white); border: 1px solid var(--tile-border, #ddd); color: var(--text-color, #333); 
+        <div style="background-color: #FFFFFF; border: 1px solid #ddd; color: #000000; 
              text-align: left; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px;">
             <div style="font-size: 1.1rem;">С установкой</div>
             <div style="font-size: 0.9rem; margin-top: 5px;"></div>

@@ -438,6 +438,20 @@ def main():
         background-color: #FFFFFF !important;
     }
     
+    /* Удаляем синюю заливку для всех элементов, кроме основной кнопки */
+    .stButton button:not([data-testid="baseButton-primary"]),
+    .stButton button:not([data-testid="baseButton-primary"]):hover,
+    .stButton button:not([data-testid="baseButton-primary"]):active,
+    .stButton button:not([data-testid="baseButton-primary"]):focus {
+        background-color: white !important;
+        color: black !important;
+    }
+    
+    /* Удаляем синюю заливку для выбранных радиокнопок */
+    div[role="radiogroup"] label[data-baseweb="radio"] div[data-testid="stMarkdownContainer"] ~ div {
+        background-color: white !important;
+    }
+    
     /* Устанавливаем минимальный отступ между блоками формы */
     .stMarkdown {
         margin-bottom: 0 !important;
