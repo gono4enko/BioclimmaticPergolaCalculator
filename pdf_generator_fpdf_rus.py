@@ -335,12 +335,12 @@ def generate_commercial_offer(pergola_data, user_data=None):
             # и избежать пустых мест на страницах
             
             headers = ["№", "Наименование", "Стоимость (₽)"]
-            widths = [10, 93, 57]  # Ширина колонок в мм: уменьшили первые две, значительно увеличили последнюю
+            widths = [10, 83, 67]  # Ширина колонок в мм: еще больше увеличиваем последнюю колонку для цен
             
             pdf.table_header(headers, widths)
             
-            # Устанавливаем меньший шрифт для цен в таблице
-            pdf.set_font('DejaVu', '', 9)  # Уменьшаем размер шрифта для всех записей таблицы
+            # Устанавливаем еще меньший шрифт для цен в таблице, чтобы гарантированно поместились полные суммы
+            pdf.set_font('DejaVu', '', 8)  # Дополнительно уменьшаем размер шрифта для всех записей таблицы
             
             for i, item in enumerate(cost_items, 1):
                 # Форматируем цену с полным отображением
@@ -358,7 +358,8 @@ def generate_commercial_offer(pergola_data, user_data=None):
                     price_str = f"{price_value} ₽"
                 
                 # Используем уменьшенную высоту строки (6 мм вместо 8 мм)
-                pdf.table_row([str(i), item['name'], price_str], widths, aligns=["C", "L", "R"], row_height=6)
+                # Меняем выравнивание с R (правого) на L (левое) для соответствия таблице спецификации
+                pdf.table_row([str(i), item['name'], price_str], widths, aligns=["C", "L", "L"], row_height=6)
                 
             # Добавляем итоговую строку
             pdf.set_fill_color(211, 211, 211)  # Светло-серый цвет
@@ -375,8 +376,8 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 total_price_str = f"{total_price_value:,d}".replace(',', ' ') + " ₽"
             
             pdf.cell(10, 10, "", 1, 0, "C", fill=True)
-            pdf.cell(93, 10, "ИТОГО:", 1, 0, "R", fill=True)
-            pdf.cell(57, 10, total_price_str, 1, 1, "R", fill=True)
+            pdf.cell(83, 10, "ИТОГО:", 1, 0, "R", fill=True)
+            pdf.cell(67, 10, total_price_str, 1, 1, "L", fill=True)
             
             # Убрали дублирование итоговой суммы, чтобы не повторяться
         else:
