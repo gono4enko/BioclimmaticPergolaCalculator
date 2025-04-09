@@ -21,9 +21,6 @@ import os
 import math
 import csv
 import time
-import tempfile
-import base64
-from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
 from config.pergola_descriptions import (
     get_pergola_description,
     get_modular_system_description,
@@ -1306,44 +1303,6 @@ def render_options_form():
         "installation": installation
     }
 
-def create_pdf_download_link(pdf_path, link_text="Скачать коммерческое предложение в PDF"):
-    """
-    Создает HTML-ссылку для скачивания сгенерированного PDF-файла
-    
-    Args:
-        pdf_path (str): Путь к PDF-файлу
-        link_text (str): Текст ссылки
-        
-    Returns:
-        str: HTML-код ссылки для скачивания
-    """
-    with open(pdf_path, "rb") as file:
-        pdf_data = file.read()
-    
-    # Кодируем данные PDF в base64
-    b64_pdf = base64.b64encode(pdf_data).decode('utf-8')
-    
-    # Создаем ссылку для скачивания
-    # Используем чистый HTML вместо st.download_button для большей гибкости стиля
-    download_filename = os.path.basename(pdf_path)
-    href = f"""
-    <a href="data:application/octet-stream;base64,{b64_pdf}" 
-       download="{download_filename}" 
-       style="display: inline-block; 
-              background-color: #4CAF50; 
-              color: white; 
-              padding: 10px 20px; 
-              text-align: center; 
-              text-decoration: none; 
-              font-size: 16px; 
-              margin: 15px 0; 
-              border-radius: 4px;">
-        <i class="fas fa-file-pdf"></i> {link_text}
-    </a>
-    """
-    
-    return href
-
 def render_results(results):
     """
     Отображает результаты расчета стоимости перголы
@@ -1403,42 +1362,6 @@ def render_results(results):
         </div>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Добавляем кнопку для генерации PDF
-    pdf_col1, pdf_col2 = st.columns([4, 2])
-    
-    with pdf_col1:
-        st.markdown("<p style='margin-top: 15px;'>Создайте коммерческое предложение для вашего клиента:</p>", 
-                    unsafe_allow_html=True)
-    
-    with pdf_col2:
-        if st.button("Создать коммерческое предложение", key="create_pdf_btn"):
-            with st.spinner("Генерация PDF, пожалуйста подождите..."):
-                try:
-                    # Получаем описание перголы из конфигурации
-                    pergola_description = get_pergola_description(pergola_type)
-                    
-                    # Форматируем данные для PDF
-                    pergola_data = format_pergola_data_for_pdf(
-                        results=results,
-                        options=results["options"],
-                        dimensions=results["dimensions"],
-                        pergola_description=pergola_description
-                    )
-                    
-                    # Создаем PDF и получаем путь к файлу
-                    pdf_path = generate_commercial_offer(pergola_data)
-                    
-                    if pdf_path:
-                        # Создаем и отображаем ссылку для скачивания PDF
-                        pdf_download_link = create_pdf_download_link(pdf_path)
-                        st.markdown(f"<div style='text-align: center;'>{pdf_download_link}</div>", unsafe_allow_html=True)
-                        st.success("Коммерческое предложение успешно создано!")
-                    else:
-                        st.error("Не удалось создать PDF. Проверьте логи сервера.")
-                except Exception as e:
-                    st.error(f"Ошибка при создании PDF: {str(e)}")
-                    st.info("Проверьте наличие шрифтов в папке fonts/ и права доступа к директории generated_pdf/")
     
     # Отображаем спецификацию перголы
     if "specification" in results:
