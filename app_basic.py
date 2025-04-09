@@ -757,8 +757,9 @@ def get_remote_control(devices_count):
     """
     Определяет тип и стоимость пульта управления на основе количества управляемых устройств.
     Выбор происходит по следующим правилам:
-    - Если устройств не более 1, выбирается одноканальный пульт Simu 1K
-    - Если устройств от 2 до 5, выбирается пятиканальный пульт Simu 5K
+    - Если устройств 1, выбирается одноканальный пульт Simu 1K
+    - Если устройств 2-3, выбирается пятиканальный пульт Simu 5K
+    - Если устройств 4-5, выбирается пятиканальный пульт Simu 5K
     - Если устройств более 5, выбирается пятнадцатиканальный пульт Simu 15K
     
     Args:
@@ -767,9 +768,9 @@ def get_remote_control(devices_count):
     Returns:
         tuple: (название пульта, цена пульта)
     """
-    if devices_count <= 1:
+    if devices_count == 1:
         return REMOTE_CONTROL_TYPES[1]["name"], REMOTE_CONTROL_TYPES[1]["price"]
-    elif devices_count <= 5:
+    elif 2 <= devices_count <= 5:
         return REMOTE_CONTROL_TYPES[5]["name"], REMOTE_CONTROL_TYPES[5]["price"]
     else:
         return REMOTE_CONTROL_TYPES[15]["name"], REMOTE_CONTROL_TYPES[15]["price"]
@@ -904,15 +905,14 @@ def perform_calculation(dimensions, options):
             led_types = []
             
             # Блок управления освещением - по 1 блоку на каждый модуль
-            if has_lighting:
-                # Количество блоков управления зависит от количества модулей
-                controllers_count = modules
-                total_controller_price = LIGHTING_PRICES["controller"] * controllers_count
-                lighting_cost += total_controller_price
-                results["items"].append({
-                    "name": f"Блок управления освещением Somfy RTS Dimmer ({controllers_count} шт.)",
-                    "price": total_controller_price
-                })
+            # Количество блоков управления зависит от количества модулей
+            controllers_count = modules
+            total_controller_price = LIGHTING_PRICES["controller"] * controllers_count
+            lighting_cost += total_controller_price
+            results["items"].append({
+                "name": f"Блок управления освещением Somfy RTS Dimmer ({controllers_count} шт.)",
+                "price": total_controller_price
+            })
             
             # Белая светодиодная лента
             if "white_led" in lighting_options:
