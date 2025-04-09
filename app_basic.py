@@ -621,12 +621,23 @@ def perform_calculation(dimensions, options):
         installation_cost = pergola_cost * 0.15  # 15% от стоимости перголы
     
     # Итоговая стоимость
-    total_cost = pergola_cost + lighting_cost + automation_cost + installation_cost
+    # Добавляем стоимость дополнительных колонн к общей стоимости
+    total_cost = pergola_cost + lighting_cost + automation_cost + additional_columns_cost_for_results + installation_cost
+    
+    # Отладочная информация перед округлением
+    st.sidebar.write("======= Стоимость (до округления) =======")
+    st.sidebar.write(f"Базовая цена перголы: {pergola_cost}")
+    st.sidebar.write(f"Освещение: {lighting_cost}")
+    st.sidebar.write(f"Автоматизация: {automation_cost}")
+    st.sidebar.write(f"Дополнительные колонны: {additional_columns_cost_for_results}")
+    st.sidebar.write(f"Установка: {installation_cost}")
+    st.sidebar.write(f"Итого: {total_cost}")
     
     # Округляем все цены до целых чисел
     pergola_cost = round(pergola_cost)
     lighting_cost = round(lighting_cost)
     automation_cost = round(automation_cost)
+    additional_columns_cost_for_results = round(additional_columns_cost_for_results)
     installation_cost = round(installation_cost)
     total_cost = round(total_cost)
     
