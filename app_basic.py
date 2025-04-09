@@ -306,13 +306,12 @@ def main():
         st.subheader("Размеры перголы")
         width = st.number_input("Ширина (м)", min_value=1.0, max_value=10.0, value=3.0, step=0.5)
         length = st.number_input("Вынос (м)", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
-        height = st.number_input("Высота (м)", min_value=2.0, max_value=5.0, value=3.0, step=0.1)
         
-        # Сохраняем размеры
+        # Сохраняем размеры (высота фиксированная - 3.0 м)
         dimensions = {
             "width": width,
             "length": length,
-            "height": height
+            "height": 3.0
         }
         
         # Выбор типа перголы
