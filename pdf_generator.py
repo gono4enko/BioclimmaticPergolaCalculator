@@ -290,8 +290,21 @@ def generate_commercial_offer(pergola_data, user_data=None):
     pergola_description = pergola_data.get('description', '')
     
     if pergola_description:
-        # Добавляем описание перголы с учетом HTML-форматирования
-        elements.append(Paragraph(pergola_description, styles['Normal']))
+        # Корректно обрабатываем HTML-форматирование, заменяя теги на соответствующие стили
+        # Создаем индивидуальный стиль для каждого абзаца, чтобы избежать проблем с форматированием
+        
+        # Используем регулярные выражения для разделения HTML на параграфы
+        import re
+        paragraphs = re.split(r'</?(?:p|div|h[1-6])[^>]*>', pergola_description)
+        
+        # Удаляем пустые параграфы и добавляем каждый параграф как отдельный элемент
+        for p in paragraphs:
+            # Очищаем от оставшихся HTML-тегов
+            p = re.sub(r'<.*?>', '', p)
+            p = p.strip()
+            if p:
+                elements.append(Paragraph(p, styles['Normal']))
+                elements.append(Spacer(1, 3*mm))  # Небольшой отступ между параграфами
     else:
         elements.append(Paragraph("Описание перголы отсутствует", styles['Normal']))
     
@@ -300,10 +313,31 @@ def generate_commercial_offer(pergola_data, user_data=None):
     if pergola_image and os.path.exists(pergola_image):
         try:
             elements.append(Spacer(1, 10*mm))
-            img = Image(pergola_image, width=15*cm, height=10*cm)
+            
+            # Вместо фиксированных размеров, сохраняем пропорции изображения
+            # Получаем размеры изображения
+            from PIL import Image as PILImage
+            img_pil = PILImage.open(pergola_image)
+            img_width, img_height = img_pil.size
+            
+            # Рассчитываем размеры с сохранением пропорций
+            # Ограничиваем по ширине страницы (17 см), высота рассчитывается пропорционально
+            max_width = 17*cm
+            width = min(max_width, img_width * 0.5)  # масштабирование для повышения качества
+            scale = width / img_width
+            height = img_height * scale
+            
+            # Добавляем изображение с сохранением пропорций
+            img = Image(pergola_image, width=width, height=height)
             elements.append(img)
         except Exception as e:
-            pass
+            # Если не удалось обработать изображение через PIL, используем стандартный подход
+            try:
+                img = Image(pergola_image, width=15*cm)  # Указываем только ширину, высота будет пропорциональной
+                elements.append(img)
+            except Exception as e:
+                elements.append(Paragraph(f"Не удалось загрузить изображение: {str(e)}", styles['Normal']))
+                pass
     
     # Добавляем условия коммерческого предложения
     elements.append(Spacer(1, 10*mm))
@@ -396,12 +430,39 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
             })
     pdf_data['cost_items'] = cost_items
     
-    # Добавляем путь к изображению перголы, если такое имеется
+    # Добавляем пути к изображениям перголы, использующиеся в UI
+    # Проверяем наличие файлов из скриншотов в attached_assets
     if pergola_type == 'B500NEW':
-        pdf_data['image_path'] = "attached_assets/b500_rotation.png"
+        # Пробуем найти изображение B500 с вращением ламелей
+        possible_paths = [
+            "attached_assets/Снимок экрана 2025-04-09 в 22.44.59.png",
+            "attached_assets/aluminum slats.png",
+            "attached_assets/В500 со вращением ламелей.png",
+            "attached_assets/b500_rotation.png"
+        ]
+        for path in possible_paths:
+            if os.path.exists(path):
+                pdf_data['image_path'] = path
+                break
     elif pergola_type == 'B700NEW':
-        pdf_data['image_path'] = "attached_assets/b700_sliding.png"
+        # Пробуем найти изображение B700 со сдвижением ламелей
+        possible_paths = [
+            "attached_assets/В700 со сдвижением ламелей.png",
+            "attached_assets/b700_sliding.png"
+        ]
+        for path in possible_paths:
+            if os.path.exists(path):
+                pdf_data['image_path'] = path
+                break
     elif pergola_type == 'B600':
-        pdf_data['image_path'] = "attached_assets/b600_sandwich.png"
+        # Пробуем найти изображение B600 с сэндвич панелями
+        possible_paths = [
+            "attached_assets/В600 с сэндвич панелями.png",
+            "attached_assets/b600_sandwich.png"
+        ]
+        for path in possible_paths:
+            if os.path.exists(path):
+                pdf_data['image_path'] = path
+                break
     
     return pdf_data
