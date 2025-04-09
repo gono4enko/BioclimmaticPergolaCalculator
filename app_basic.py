@@ -1227,6 +1227,18 @@ def render_results(results):
     
     # Функция для форматирования цены в бухгалтерском стиле
     def format_price(price):
+        # Детектируем размер экрана через JavaScript не получится,
+        # поэтому используем сокращенный формат для больших чисел
+        if price >= 100000:
+            # Для мобильной версии (предполагаем) сокращаем тысячи и миллионы
+            price_in_thousands = price / 1000
+            if price >= 1000000:
+                price_in_millions = price / 1000000
+                # Округляем до 1 знака после запятой для миллионов
+                return "{:.1f}M ₽".format(price_in_millions)
+            # Округляем до 0 знаков для тысяч
+            return "{:.0f}K ₽".format(price_in_thousands)
+        # Для маленьких чисел используем обычный формат с разделителями
         return "{:,.0f}".format(price).replace(",", " ") + " ₽"
     
     # Базовая стоимость перголы - всегда первой строкой
@@ -1297,9 +1309,10 @@ def render_results(results):
         /* Выравниваем значения в колонке "Стоимость" по правому краю */
         [data-testid="stDataFrame"] table td:last-child {{
             text-align: right !important;
-            padding-right: 20px !important;
-            width: 35% !important;
+            padding-right: 10px !important;
+            width: 40% !important;
             white-space: nowrap !important;
+            font-size: 0.95rem !important;
         }}
         
         /* Увеличиваем ширину последней колонки */
@@ -1362,9 +1375,11 @@ def render_results(results):
             }}
             
             [data-testid="stDataFrame"] table td:last-child {{
-                width: 40% !important;
-                font-size: 0.9rem !important;
-                padding-right: 15px !important;
+                width: 45% !important;
+                max-width: 45% !important;
+                font-size: 0.8rem !important;
+                padding-right: 5px !important;
+                overflow: visible !important;
             }}
             
             /* Исправление проблемы обрезания строк в мобильной версии */
