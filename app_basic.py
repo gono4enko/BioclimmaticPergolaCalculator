@@ -216,17 +216,34 @@ def perform_calculation(dimensions, options):
                 pergola_cost = 6245 * (width_m * length_m) / (3.0 * 2.45)
         else:
             # Для B500-25NEW
-            if width_m <= 3.0 and length_m <= 2.45:
-                pergola_cost = 6557
-            elif width_m <= 3.5 and length_m <= 2.45:
-                pergola_cost = 7151
-            elif width_m <= 4.0 and length_m <= 2.45:
-                pergola_cost = 7744
-            elif width_m <= 3.0 and length_m <= 3.25:
-                pergola_cost = 7861
+            # Ищем ближайшие значения из прайса (B500-25)
+            # Ширина (м): 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 7.0, 8.0, 9.0, 7.5, 9.0, 10.5, 12.0, 13.5
+            # Вынос (м): 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0
+            
+            # Базовые цены из прайса B500-25
+            if width_m <= 2.5 and length_m <= 2.5:
+                pergola_cost = 5431
+            elif width_m <= 3.0 and length_m <= 2.5:
+                pergola_cost = 5945
+            elif width_m <= 3.5 and length_m <= 2.5:
+                pergola_cost = 6460
+            elif width_m <= 4.0 and length_m <= 2.5:
+                pergola_cost = 6974
+            elif width_m <= 4.5 and length_m <= 2.5:
+                pergola_cost = 7488
+            elif width_m <= 3.0 and length_m <= 3.0:
+                pergola_cost = 6638
+            elif width_m <= 3.0 and length_m <= 3.5:
+                pergola_cost = 7330
+            elif width_m <= 3.0 and length_m <= 4.0:
+                pergola_cost = 8022
+            elif width_m <= 3.0 and length_m <= 4.5:
+                pergola_cost = 8714
+            elif width_m <= 3.0 and length_m <= 5.0:
+                pergola_cost = 9406
             else:
                 # Для других размеров используем приближенную формулу
-                pergola_cost = 6557 * (width_m * length_m) / (3.0 * 2.45)
+                pergola_cost = 5431 * (width_m * length_m) / (2.5 * 2.5)
     
     elif pergola_type == "B700NEW":
         if "20" in real_lamella_type:
