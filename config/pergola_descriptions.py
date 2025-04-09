@@ -151,17 +151,13 @@ def get_pergola_description(pergola_type):
     Возвращает описание перголы по ее типу
     
     Args:
-        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
+        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600, SOMFY)
         
     Returns:
         str: HTML-описание перголы
     """
-    if pergola_type == "B500NEW":
-        return B500_DESCRIPTION
-    elif pergola_type == "B700NEW":
-        return B700_DESCRIPTION
-    elif pergola_type == "B600":
-        return B600_DESCRIPTION
+    if pergola_type in PERGOLA_DESCRIPTIONS:
+        return PERGOLA_DESCRIPTIONS[pergola_type]
     else:
         return "<p>Описание для данного типа перголы отсутствует.</p>"
 
@@ -384,7 +380,7 @@ PERGOLA_DESCRIPTIONS["SOMFY"] = """
 <h4 style='font-size: 1.1rem;'>Somfy: автоматика, которая не знает слова «сломается»</h4>
 <ul style='margin-bottom: 10px; padding-left: 20px;'>
     <li><strong>Мощь в простоте:</strong> Двигатели Somfy — это 160 Нм крутящего момента в компактном корпусе. Закрывают ламели даже под напором шквального ветра, словно Шарль де Голль ведет их в бой.</li>
-    <li><strong>Ресурс «на века»:</strong> 30 000 циклов — хватит, чтобы 30 лет встречать рассветы и дожди без единой поломки.</li>
+    <li><strong>Ресурс «на века»:</strong> 50 000 циклов — хватит, чтобы 30 лет встречать рассветы и дожди без единой поломки.</li>
 </ul>
 </div>
 
