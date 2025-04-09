@@ -1022,66 +1022,37 @@ def render_results(results):
     # Итоговая строка
     items_data.append(["Итого", f"{total_price:.2f} €"])
     
-    # Используем встроенные компоненты Streamlit для отображения таблицы
+    # Используем стандартный компонент Streamlit для отображения таблицы
+    # (такой же стиль как у таблицы "Спецификация перголы")
     import pandas as pd
     df_items = pd.DataFrame(items_data, columns=["Наименование", "Стоимость"])
     
-    # Настраиваем ширину колонок, чтобы цены не переносились на новую строку
-    # Используем HTML для создания таблицы с фиксированными размерами колонок
+    # Добавляем CSS для настройки ширины колонок и выравнивания цен
     st.markdown(
         """
         <style>
-        .price-table {
+        /* Корректируем ширину колонок в таблице стоимости */
+        [data-testid="stDataFrame"] table {
             width: 100%;
-            border-collapse: collapse;
         }
-        .price-table th, .price-table td {
-            border: 1px solid #ddd;
-            padding: 8px 12px;
-            text-align: left;
+        /* Выравниваем значения в колонке "Стоимость" по правому краю */
+        [data-testid="stDataFrame"] table td:last-child {
+            text-align: right !important;
+            padding-right: 20px !important;
+            min-width: 200px !important;
+            white-space: nowrap !important;
         }
-        .price-table th {
-            background-color: #f1f1f1;
-            font-weight: bold;
-        }
-        .price-table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .price-table tr:last-child {
-            font-weight: bold;
-            background-color: #f0f7ff;
-        }
-        .price-column {
-            width: 200px;
-            text-align: right;
-            white-space: nowrap;
-            font-family: monospace;
-            font-size: 16px;
+        /* Увеличиваем ширину последней колонки */
+        [data-testid="stDataFrame"] table th:last-child {
+            min-width: 200px !important;
+            text-align: center !important;
         }
         </style>
-        
-        <table class="price-table">
-            <tr>
-                <th>Наименование</th>
-                <th class="price-column">Стоимость</th>
-            </tr>
         """, unsafe_allow_html=True
     )
     
-    # Формируем строки таблицы
-    for i, row in enumerate(items_data):
-        row_class = "price-row-last" if i == len(items_data) - 1 else ""
-        st.markdown(
-            f"""
-            <tr class="{row_class}">
-                <td>{row[0]}</td>
-                <td class="price-column">{row[1]}</td>
-            </tr>
-            """, unsafe_allow_html=True
-        )
-    
-    # Закрываем таблицу
-    st.markdown("</table>", unsafe_allow_html=True)
+    # Отображаем таблицу стоимости
+    st.dataframe(df_items, use_container_width=True, hide_index=True)
     
     # Добавляем разделитель
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
