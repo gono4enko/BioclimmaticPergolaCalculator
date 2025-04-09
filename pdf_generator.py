@@ -7,7 +7,7 @@ from reportlab.pdfgen.canvas import Canvas
 # Создаем класс для улучшенного PDF генератора с поддержкой кириллицы
 class PdfAnnotator(Canvas):
     """
-    Расширенный класс Canvas с поддержкой кириллицы и внедрением шрифтов
+    Расширенный класс Canvas с улучшенной поддержкой кириллицы и внедрением шрифтов
     """
     def __init__(self, *args, **kwargs):
         Canvas.__init__(self, *args, **kwargs)
@@ -18,7 +18,6 @@ class PdfAnnotator(Canvas):
         
     def showPage(self):
         # Переопределяем метод для дополнительной обработки перед сменой страницы
-        # Выполняем стандартное отображение страницы
         Canvas.showPage(self)
 import os
 from datetime import datetime
