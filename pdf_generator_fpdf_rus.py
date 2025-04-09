@@ -307,12 +307,12 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 pdf.chapter_title("Подробная стоимость:")  # Повторяем заголовок на новой странице
             
             headers = ["№", "Наименование", "Стоимость (₽)"]
-            widths = [12, 95, 53]  # Ширина колонок в мм: уменьшили первые две, увеличили последнюю
+            widths = [10, 93, 57]  # Ширина колонок в мм: уменьшили первые две, значительно увеличили последнюю
             
             pdf.table_header(headers, widths)
             
             # Устанавливаем меньший шрифт для цен в таблице
-            original_font_size = pdf.font_size_pt
+            pdf.set_font('DejaVu', '', 9)  # Уменьшаем размер шрифта для всех записей таблицы
             
             for i, item in enumerate(cost_items, 1):
                 # Форматируем цену с полным отображением
@@ -329,10 +329,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
                     # Для сотен: 100 ₽
                     price_str = f"{price_value} ₽"
                 
-                # Устанавливаем шрифт немного меньше для цен
-                pdf.set_font('DejaVu', '', 9)
                 pdf.table_row([str(i), item['name'], price_str], widths, aligns=["C", "L", "R"])
-                pdf.set_font('DejaVu', '', 10)  # Возвращаем обычный размер
                 
             # Добавляем итоговую строку
             pdf.set_fill_color(211, 211, 211)  # Светло-серый цвет
@@ -348,129 +345,256 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 # Для других значений так же
                 total_price_str = f"{total_price_value:,d}".replace(',', ' ') + " ₽"
             
-            pdf.cell(12, 10, "", 1, 0, "C", fill=True)
-            pdf.cell(95, 10, "ИТОГО:", 1, 0, "R", fill=True)
-            pdf.cell(53, 10, total_price_str, 1, 1, "R", fill=True)
+            pdf.cell(10, 10, "", 1, 0, "C", fill=True)
+            pdf.cell(93, 10, "ИТОГО:", 1, 0, "R", fill=True)
+            pdf.cell(57, 10, total_price_str, 1, 1, "R", fill=True)
+            
+            # Добавляем общую стоимость отдельно после таблицы для лучшей видимости
+            pdf.ln(5)
+            pdf.set_font('DejaVu', 'B', 12)
+            pdf.set_fill_color(240, 240, 240)
+            pdf.cell(0, 12, f"Полная стоимость: {total_price_str}", 1, 1, "C", fill=True)
         else:
             pdf.set_font('DejaVu', '', 10)
             pdf.cell(0, 7, "Данные о стоимости отсутствуют", 0, 1)
         
-        # Добавляем описание перголы
+        # Добавляем описание перголы - более эффективная обработка HTML
         pdf.add_page()
         pdf.chapter_title("Описание перголы:")
         
         # Получаем описание перголы
         pergola_description = pergola_data.get('description', '')
+        pergola_type = pergola_data.get('pergola_type', 'биоклиматическая')
         
         # Выводим для отладки
         print(f"Длина HTML-описания: {len(pergola_description)} символов")
         print(f"Содержимое описания: {pergola_description[:100]}...")
         
-        # Если описание отсутствует или пустое, добавляем базовое описание
+        # Если описание отсутствует или пустое, добавляем базовое описание по типу перголы
         if not pergola_description or pergola_description == "<p>Описание для данного типа перголы отсутствует.</p>":
-            pergola_type = pergola_data.get('pergola_type', 'биоклиматическая')
             print(f"Добавляем базовое описание для перголы типа {pergola_type}")
             
-            pergola_description = f"""
-            <div style='padding: 0 20px;'>
-            <h3 style='font-size: 1.2rem; margin-top: 20px; text-align: center;'>Пергола {pergola_type}</h3>
-            <p style='margin-bottom: 15px;'>
-            Современная биоклиматическая пергола с автоматическим управлением. 
-            Изготовлена из высококачественного алюминия с порошковым покрытием.
-            </p>
-            <div style='margin-bottom: 15px;'>
-            <strong>Преимущества:</strong><br/>
-            • Защита от осадков и солнца<br/>
-            • Регулируемое положение ламелей<br/>
-            • Встроенная система отвода воды<br/>
-            • Долговечные материалы<br/>
-            • Простота управления
-            </div>
-            <div style='margin-bottom: 15px;'>
-            <strong>Технические характеристики:</strong><br/>
-            • Алюминиевый профиль: экструдированный алюминий с порошковым покрытием (322х260 мм)<br/>
-            • Размеры: 164x164 мм, используется 7 различных типов алюминиевых профилей<br/>
-            • Система автоматизации: приводной механизм Bansbach easylift (IP65),<br/>
-            дополнительно TANDEM привод доступен опционально
-            </div>
-            </div>
-            """
+            # Используем разные базовые описания в зависимости от типа перголы
+            if pergola_type == "B500NEW":
+                description_title = "Серия B500NEW (с поворотными ламелями)"
+                pergola_description = """
+                <div>
+                <h3>Серия B500NEW (с поворотными ламелями)</h3>
+                <p>
+                Биоклиматическая пергола с поворотными ламелями, вращающимися вокруг нижней оси. 
+                Подходит для зон отдыха, террас, бассейнов.
+                </p>
+                <div>
+                <strong>Ламели:</strong><br/>
+                250x53 мм (NEW): Угол поворота 105°, шаг 250 мм, масса 4,684 кг/м.<br/>
+                200x56 мм (NEW): Угол поворота 112°, шаг 200 мм, масса 4,375 кг/м.
+                </div>
+                <div>
+                <strong>Преимущества:</strong><br/>
+                • Высокая герметичность благодаря двойному уплотнению.<br/>
+                • Интегрированная дренажная система с лотком 164x260 мм.<br/>
+                • Быстрый монтаж (до 4 часов на модуль).<br/>
+                • LED/RGB подсветка по периметру (опция).<br/>
+                • Максимальный пролет до 8 м.
+                </div>
+                <div>
+                <strong>Узлы:</strong><br/>
+                • Несущая балка: Алюминиевая конструкция с двойным сливным лотком (322x260 мм).<br/>
+                • Колонна: 164x164 мм, усиленная 7 анкерами для устойчивости.<br/>
+                • Система вращения: Немецкий двигатель Bansbach easylift (IP65), синхронизация TANDEM для больших конструкций.
+                </div>
+                </div>
+                """
+            elif pergola_type == "B700NEW":
+                description_title = "Серия B700NEW (со сдвижными ламелями)"
+                pergola_description = """
+                <div>
+                <h3>Серия B700NEW (со сдвижными ламелями)</h3>
+                <p>
+                Пергола с ламелями, сдвигающимися в горизонтальной плоскости. Идеальна для больших пространств и экстремальных ветровых нагрузок.
+                </p>
+                <div>
+                <strong>Ламели:</strong><br/>
+                250x53 мм (NEW): Шаг 250 мм, масса 4,684 кг/м.<br/>
+                200x56 мм (NEW): Шаг 200 мм, масса 4,375 кг/м.
+                </div>
+                <div>
+                <strong>Преимущества:</strong><br/>
+                • Устойчивость к сильным ветровым нагрузкам.<br/>
+                • Не создает шума при закрытии/открытии.<br/>
+                • Может комбинироваться с фиксированными панелями.<br/>
+                • Компактное хранение ламелей в пачке.<br/>
+                • Идеальна для больших площадей.
+                </div>
+                <div>
+                <strong>Узлы:</strong><br/>
+                • Несущая балка: Усиленная алюминиевая конструкция со сливным лотком.<br/>
+                • Система привода: Немецкий привод Somfy с управлением через пульт или смартфон.
+                </div>
+                </div>
+                """
+            elif pergola_type == "B600":
+                description_title = "Серия B600 (с PIR-панелями)"
+                pergola_description = """
+                <div>
+                <h3>Серия B600 (с PIR-панелями)</h3>
+                <p>
+                Статичная пергола с сэндвич-панелями, предназначенная для всесезонного использования. Превосходная теплоизоляция.
+                </p>
+                <div>
+                <strong>Панели:</strong><br/>
+                Сэндвич-панели PIR: толщина 50 мм, двойной металлический лист с пенополиизоциануратным заполнением.
+                </div>
+                <div>
+                <strong>Преимущества:</strong><br/>
+                • Наилучшая теплоизоляция среди всех моделей.<br/>
+                • Защита от солнца, дождя и снега.<br/>
+                • Полностью водонепроницаемая конструкция.<br/>
+                • Возможность установки освещения и обогрева.<br/>
+                • Идеальна для всесезонных помещений.
+                </div>
+                <div>
+                <strong>Использование:</strong><br/>
+                • Зимние сады.<br/>
+                • Всесезонные террасы.<br/>
+                • Расширение жилых помещений.
+                </div>
+                </div>
+                """
+            else:
+                description_title = f"Пергола {pergola_type}"
+                pergola_description = f"""
+                <div>
+                <h3>Пергола {pergola_type}</h3>
+                <p>
+                Современная биоклиматическая пергола с автоматическим управлением. 
+                Изготовлена из высококачественного алюминия с порошковым покрытием.
+                </p>
+                <div>
+                <strong>Преимущества:</strong><br/>
+                • Защита от осадков и солнца<br/>
+                • Регулируемое положение ламелей<br/>
+                • Встроенная система отвода воды<br/>
+                • Долговечные материалы<br/>
+                • Простота управления
+                </div>
+                <div>
+                <strong>Технические характеристики:</strong><br/>
+                • Алюминиевый профиль: экструдированный алюминий с порошковым покрытием (322х260 мм)<br/>
+                • Размеры колонны: 164x164 мм, используется 7 различных типов алюминиевых профилей<br/>
+                • Система автоматизации: приводной механизм высокого качества, работающий от электросети
+                </div>
+                </div>
+                """
         
         # HTML-описание нужно преобразовать в чистый текст
         try:
             from bs4 import BeautifulSoup
             soup = BeautifulSoup(pergola_description, 'html.parser')
-            clean_text = soup.get_text(separator="\n\n")
             
-            # Выводим текст в PDF
-            pdf.set_font('DejaVu', '', 11)
+            # Уменьшаем базовый размер шрифта для более компактного размещения
+            pdf.set_font('DejaVu', '', 10)
             
-            # Очищаем текст от излишних пробелов и переносов
-            clean_text = ' '.join([line.strip() for line in clean_text.split('\n')])
+            # Проверяем, есть ли заголовок h2 или h3 в описании
+            title_tag = soup.find(['h2', 'h3'])
+            if title_tag:
+                pdf.set_font('DejaVu', 'B', 11)
+                pdf.multi_cell(0, 5, title_tag.get_text().strip())
+                pdf.ln(2)
+                pdf.set_font('DejaVu', '', 10)
             
-            # Разбиваем текст на смысловые блоки
-            sections = []
-            current_section = []
+            # Обрабатываем параграфы
+            paragraphs = soup.find_all('p')
+            for p in paragraphs:
+                text = p.get_text().strip()
+                if text:
+                    pdf.multi_cell(0, 5, text)
+                    pdf.ln(2)
             
-            for line in clean_text.split('\n\n'):
-                line = line.strip()
-                if line:
-                    current_section.append(line)
-                elif current_section:
-                    sections.append(' '.join(current_section))
-                    current_section = []
+            # Обрабатываем div-блоки с заголовками и списками
+            div_blocks = soup.find_all('div', recursive=False)
+            if not div_blocks:
+                # Если нет div на верхнем уровне, ищем их внутри первого div
+                main_div = soup.find('div')
+                if main_div:
+                    div_blocks = main_div.find_all('div', recursive=False)
             
-            if current_section:
-                sections.append(' '.join(current_section))
-            
-            # Добавляем блоки в PDF
-            for section in sections:
-                # Добавляем заголовки с жирным шрифтом
-                if "B500NEW" in section or "Серия B500NEW" in section:
-                    pdf.set_font('DejaVu', 'B', 12)
-                    pdf.multi_cell(0, 6, "Серия B500NEW (с поворотными ламелями)")
-                    pdf.ln(3)
-                    pdf.set_font('DejaVu', '', 11)
-                    continue
-                    
-                if "Ламели:" in section:
-                    pdf.set_font('DejaVu', 'B', 12)
-                    pdf.multi_cell(0, 6, "Ламели:")
-                    pdf.ln(3)
-                    pdf.set_font('DejaVu', '', 11)
-                    continue
-                    
-                if "Преимущества:" in section:
-                    pdf.set_font('DejaVu', 'B', 12)
-                    pdf.multi_cell(0, 6, "Преимущества:")
-                    pdf.ln(3)
-                    pdf.set_font('DejaVu', '', 11)
-                    continue
+            for div in div_blocks:
+                # Ищем заголовок (strong) внутри блока
+                strong_tag = div.find('strong')
+                if strong_tag:
+                    pdf.set_font('DejaVu', 'B', 10)
+                    pdf.multi_cell(0, 5, strong_tag.get_text().strip())
+                    pdf.ln(1)
+                    pdf.set_font('DejaVu', '', 10)
                 
-                if "Узлы:" in section:
-                    pdf.set_font('DejaVu', 'B', 12)
-                    pdf.multi_cell(0, 6, "Узлы:")
-                    pdf.ln(3)
-                    pdf.set_font('DejaVu', '', 11)
-                    continue
-                
-                # Обрабатываем маркированные списки
-                if section.startswith('•'):
-                    # Разбираем маркированные пункты
-                    items = section.split('•')
-                    for item in items:
-                        if item.strip():
-                            pdf.multi_cell(0, 6, f"• {item.strip()}")
-                            pdf.ln(2)
+                # Обрабатываем текст с маркерами
+                text = div.get_text()
+                if '•' in text:
+                    # Разделяем на отдельные маркированные пункты
+                    bullet_items = text.split('•')
+                    for item in bullet_items:
+                        if strong_tag and item.strip() == strong_tag.get_text().strip():
+                            continue
+                        if item.strip() and not item.strip().startswith('strong'):
+                            pdf.multi_cell(0, 5, f"• {item.strip()}")
+                            pdf.ln(1)
                 else:
-                    # Обычный текст
-                    pdf.multi_cell(0, 6, section)
-                    pdf.ln(3)
+                    # Обычный текст, исключая уже обработанный заголовок
+                    if strong_tag:
+                        text = text.replace(strong_tag.get_text(), "", 1)
+                    if text.strip():
+                        pdf.multi_cell(0, 5, text.strip())
+                        pdf.ln(2)
+            
+            # Если разметка не подходит под наш парсер, используем простое извлечение текста
+            if not paragraphs and not div_blocks:
+                clean_text = soup.get_text(separator="\n\n")
+                # Очищаем текст от излишних пробелов и переносов
+                clean_text = ' '.join([line.strip() for line in clean_text.split('\n')])
+                
+                # Разделяем текст на абзацы по двойным переносам
+                paragraphs = clean_text.split("\n\n")
+                for paragraph in paragraphs:
+                    if paragraph.strip():
+                        pdf.multi_cell(0, 5, paragraph.strip())
+                        pdf.ln(2)
                 
         except Exception as e:
             print(f"Ошибка при обработке HTML-описания: {str(e)}")
             pdf.set_font('DejaVu', '', 10)
-            pdf.cell(0, 7, "Ошибка при обработке описания перголы", 0, 1)
+            
+            # Если обработка HTML не удалась, используем простую разбивку текста
+            try:
+                # Удаляем HTML-теги и извлекаем только текст
+                import re
+                clean_text = re.sub('<.*?>', ' ', pergola_description)
+                clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+                
+                # Разбиваем текст на абзацы по длине
+                max_chars = 100
+                paragraphs = []
+                
+                words = clean_text.split()
+                current_paragraph = []
+                
+                for word in words:
+                    current_paragraph.append(word)
+                    if len(' '.join(current_paragraph)) >= max_chars:
+                        paragraphs.append(' '.join(current_paragraph))
+                        current_paragraph = []
+                
+                if current_paragraph:
+                    paragraphs.append(' '.join(current_paragraph))
+                
+                # Добавляем текст в PDF
+                for paragraph in paragraphs:
+                    pdf.multi_cell(0, 5, paragraph)
+                    pdf.ln(2)
+                    
+            except:
+                # Если даже это не сработало, показываем сообщение об ошибке
+                pdf.cell(0, 7, "Не удалось загрузить описание перголы", 0, 1)
         
         # Добавляем изображение перголы, если оно есть
         image_path = pergola_data.get('image_path')
@@ -482,19 +606,12 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 
                 # Определяем максимальную ширину для изображения (160 мм, учитывая поля)
                 max_width_mm = 160
-                max_width_px = int(max_width_mm * 300 / 25.4)  # Преобразуем мм в пиксели при 300 DPI
-                
-                # Создаем отдельную страницу для изображения
-                pdf.add_page()
-                
-                # Максимальная ширина для изображения в PDF
-                max_width_pdf = 160  # максимальная ширина в мм
                 
                 # Вычисляем отношение сторон
                 aspect_ratio = height / width
                 
                 # Рассчитываем размеры с сохранением пропорций
-                img_width_mm = max_width_pdf
+                img_width_mm = max_width_mm
                 img_height_mm = img_width_mm * aspect_ratio
                 
                 # Отладочная информация
@@ -502,7 +619,16 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 print(f"Отношение сторон: {aspect_ratio:.2f}")
                 print(f"Размеры для PDF: {img_width_mm:.1f}x{img_height_mm:.1f} мм")
                 
+                # Проверяем, поместится ли изображение на текущей странице
+                # (учитываем текущую позицию и высоту изображения + запас 20 мм)
+                available_space = 297 - pdf.get_y() - 20  # 297 мм - высота страницы A4
+                
+                # Если изображение не поместится на текущей странице, создаем новую
+                if img_height_mm + 15 > available_space:
+                    pdf.add_page()
+                
                 # Добавляем заголовок изображения
+                pdf.ln(5)
                 pdf.set_font('DejaVu', 'B', 12)
                 pdf.cell(0, 10, "Иллюстрация перголы:", 0, 1, "C")
                 pdf.ln(5)
@@ -520,13 +646,21 @@ def generate_commercial_offer(pergola_data, user_data=None):
             except Exception as e:
                 print(f"Ошибка при обработке изображения: {str(e)}")
         
-        # Добавляем контактную информацию
-        pdf.add_page()
+        # Добавляем контактную информацию - проверяем, может ли она поместиться на текущей странице
+        # Примерный размер для контактной информации (6 строк по 7 мм + заголовок и отступы)
+        contact_info_height = 60
+        
+        # Проверяем, поместится ли контактная информация на текущей странице
+        if 297 - pdf.get_y() < contact_info_height:
+            pdf.add_page()
+        else:
+            pdf.ln(15)  # Добавляем отступ перед контактной информацией
+            
         pdf.chapter_title("Контактная информация:")
         
-        pdf.set_font('DejaVu', '', 11)
-        pdf.multi_cell(0, 6, "Для получения дополнительной информации или оформления заказа, пожалуйста, свяжитесь с нами:")
-        pdf.ln(5)
+        pdf.set_font('DejaVu', '', 10)  # Уменьшаем размер шрифта для экономии места
+        pdf.multi_cell(0, 5, "Для получения дополнительной информации или оформления заказа, пожалуйста, свяжитесь с нами:")
+        pdf.ln(3)
         
         contact_info = [
             "Телефон: +7 (495) 123-45-67",
@@ -536,7 +670,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
         ]
         
         for info in contact_info:
-            pdf.cell(0, 7, info, 0, 1)
+            pdf.cell(0, 6, info, 0, 1)  # Уменьшаем высоту строк с 7 до 6 мм
         
         # Создаем директорию для сохранения PDF
         os.makedirs(os.path.dirname(pdf_filename), exist_ok=True)
