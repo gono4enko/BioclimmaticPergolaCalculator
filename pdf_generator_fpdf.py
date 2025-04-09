@@ -19,8 +19,9 @@ class PDF(FPDF):
     """
     Расширенный класс FPDF с поддержкой кириллицы и дополнительными функциями
     """
-    def __init__(self, orientation='P', unit='mm', format='A4'):
-        super().__init__(orientation, unit, format)
+    def __init__(self):
+        # Используем конкретные значения из перечисления литералов
+        super().__init__(orientation='P', unit='mm', format='A4')
         # Устанавливаем мета-информацию PDF
         self.set_title("Коммерческое предложение")
         self.set_author("Pergola Calculator")
@@ -118,7 +119,30 @@ def generate_commercial_offer(pergola_data, user_data=None):
     
     # Создаем экземпляр PDF с поддержкой кириллицы
     pdf = PDF()
-    pdf.add_font('DejaVu', '', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', uni=True)
+    
+    # Создаем локальную копию системного шрифта
+    font_path = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
+    local_font_path = 'fonts/DejaVuSans.ttf'
+    
+    # Проверяем, существует ли локальная копия шрифта
+    if not os.path.exists(local_font_path):
+        os.makedirs('fonts', exist_ok=True)
+        try:
+            import shutil
+            shutil.copy(font_path, local_font_path)
+            print(f"Локальная копия шрифта создана в {local_font_path}")
+        except Exception as e:
+            print(f"Ошибка при копировании шрифта: {str(e)}")
+            # Если копирование не удалось, используем альтернативный шрифт или встроенный
+            local_font_path = None
+    
+    # Используем локальную копию шрифта, если она есть
+    if local_font_path and os.path.exists(local_font_path):
+        pdf.add_font('DejaVu', '', local_font_path, uni=True)
+    else:
+        # Если локальной копии нет, используем встроенный шрифт с поддержкой кириллицы
+        pdf.add_font('DejaVu', '', font_path, uni=True)
+    
     pdf.set_font('DejaVu', '', 12)
     
     # Добавляем первую страницу
