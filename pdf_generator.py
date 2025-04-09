@@ -515,18 +515,26 @@ def generate_commercial_offer(pergola_data, user_data=None):
             # Сохраняем изображение с тем же соотношением сторон
             img_pil.save(processed_image_path)
             
-            # Теперь добавляем изображение в PDF, не указывая размеры
-            # Это позволяет ReportLab самостоятельно определить размеры
-            # исходя из размера страницы и сохраняя пропорции
-            # Здесь мы указываем только ширину, и ReportLab сам рассчитает высоту,
+            # Теперь добавляем изображение в PDF с контролем размеров
+            # Здесь мы ограничиваем размер изображения, чтобы оно помещалось на страницу
             # с сохранением исходных пропорций
-            max_width = 16*cm
-            img = Image(processed_image_path, width=max_width)
+            max_width = 14*cm  # Уменьшили ширину для большего безопасного пространства
+            max_height = 18*cm  # Максимальная безопасная высота для страницы
             
-            # Выводим информацию о масштабировании
+            # Сначала вычисляем соотношение сторон
             aspect_ratio = img_height / float(img_width)
-            scaled_height = max_width * aspect_ratio / cm
-            print(f"Масштабирование изображения: ширина={max_width/cm}см, приблизительная высота={scaled_height}см")
+            
+            # Расчитываем ширину и высоту с сохранением пропорций
+            scaled_height = max_width * aspect_ratio
+            
+            # Если изображение слишком высокое, пересчитываем ширину на основе высоты
+            if scaled_height > max_height:
+                scaled_width = max_height / aspect_ratio
+                img = Image(processed_image_path, width=scaled_width, height=max_height)
+                print(f"Изображение слишком высокое, уменьшаем: ширина={scaled_width/cm}см, высота={max_height/cm}см")
+            else:
+                img = Image(processed_image_path, width=max_width, height=scaled_height)
+                print(f"Масштабирование изображения: ширина={max_width/cm}см, высота={scaled_height/cm}см")
             
             elements.append(img)
         except Exception as e:
