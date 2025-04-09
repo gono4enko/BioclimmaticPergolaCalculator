@@ -816,69 +816,9 @@ def main():
         }
         </style>
         """, unsafe_allow_html=True)
-        # Используем нашу новую методику с непосредственным внедрением HTML
-        import uuid
-        import time
-        button_id = f"calc_button_{uuid.uuid4()}_{int(time.time())}"
         
-        # Создаем HTML-кнопку напрямую вместо использования st.button
-        button_clicked = False
-        st.markdown(f"""
-        <style>
-        /* Принудительный стиль для ВСЕХ primary кнопок */
-        button[kind="primary"],
-        button[data-testid="baseButton-primary"],
-        div[data-testid="stButton"] button[data-testid="baseButton-primary"],
-        .stButton > button[data-testid="baseButton-primary"],
-        div[data-testid="element-container"] div[data-testid="stButton"] button[kind="primary"],
-        [data-testid="baseButton-primary"],
-        div[data-baseweb="button"] button[kind="primary"] {{
-            background-color: #ff7a2f !important;
-            color: #ffffff !important;
-            font-size: 2rem !important;
-            font-weight: 700 !important;
-            text-align: center;
-            border-radius: 8px !important;
-            padding: 25px 25px !important;
-            border: none !important;
-            margin-top: 25px !important;
-            margin-bottom: 25px !important;
-            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2) !important;
-            transition: all 0.2s !important;
-            width: 100% !important;
-            cursor: pointer;
-            display: block;
-        }}
-        
-        /* Стиль при наведении */
-        button[kind="primary"]:hover,
-        button[data-testid="baseButton-primary"]:hover,
-        div[data-testid="stButton"] button[data-testid="baseButton-primary"]:hover,
-        .stButton > button[data-testid="baseButton-primary"]:hover,
-        div[data-testid="element-container"] div[data-testid="stButton"] button[kind="primary"]:hover,
-        [data-testid="baseButton-primary"]:hover,
-        div[data-baseweb="button"] button[kind="primary"]:hover {{
-            background-color: #e86c29 !important;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
-            transform: translateY(-2px) !important;
-        }}
-        
-        /* Стиль при нажатии */
-        button[kind="primary"]:active,
-        button[data-testid="baseButton-primary"]:active,
-        div[data-testid="stButton"] button[data-testid="baseButton-primary"]:active,
-        .stButton > button[data-testid="baseButton-primary"]:active,
-        div[data-testid="element-container"] div[data-testid="stButton"] button[kind="primary"]:active,
-        [data-testid="baseButton-primary"]:active,
-        div[data-baseweb="button"] button[kind="primary"]:active {{
-            transform: translateY(1px) !important;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
-        }}
-        </style>
-        """, unsafe_allow_html=True)
-        
-        # Используем обычную кнопку Streamlit, но скрываем ее стилями
-        if st.button("Рассчитать стоимость", type="primary", use_container_width=True, help="Нажмите для расчета стоимости перголы", key=button_id):
+        # Создаем обычную кнопку Streamlit
+        if st.button("Рассчитать стоимость", type="primary", use_container_width=True, help="Нажмите для расчета стоимости перголы"):
             with st.spinner("Выполняется расчет..."):
                 # Проверяем, что у нас есть данные для расчета
                 if dimensions and options:
