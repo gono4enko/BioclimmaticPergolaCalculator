@@ -171,6 +171,15 @@ def get_modular_system_description():
     """
     return MODULAR_SYSTEM_DESCRIPTION
 
+def get_drainage_system_description():
+    """
+    Возвращает описание системы водоотведения (для всех типов пергол)
+    
+    Returns:
+        str: HTML-описание системы водоотведения
+    """
+    return DRAINAGE_SYSTEM_DESCRIPTION
+
 def get_pergola_images(pergola_type):
     """
     Возвращает список изображений для перголы указанного типа
@@ -194,3 +203,95 @@ def get_pergola_image_caption(pergola_type):
         str: Подпись к изображению
     """
     return PERGOLA_IMAGE_CAPTIONS.get(pergola_type, "Пергола")
+# Описание системы водоотведения для пергол
+DRAINAGE_SYSTEM_DESCRIPTION = """
+<h3 style='font-size: 1.2rem; margin-top: 30px; text-align: center;'>Интегрированный лоток-невидимка: где эстетика встречает функциональность</h3>
+<div style='margin-bottom: 15px;'>
+<p style='margin-bottom: 10px;'><strong>Конструкция:</strong> Водосточный лоток встроен прямо в несущую балку перголы — никаких висящих желобов!</p>
+<ul style='margin-bottom: 10px; padding-left: 20px;'>
+    <li><strong>2 варианта под любые нагрузки:</strong>
+        <ul style='padding-left: 20px;'>
+            <li>Стандартный лоток 164×260 мм: Пропускная способность — 15 л/с (подходит для 90% регионов).</li>
+            <li>Усиленный лоток 322×260 мм: Пропускает 30 л/с — для тропических ливней или больших площадей.</li>
+        </ul>
+    </li>
+</ul>
+<p style='margin-bottom: 10px;'><strong>Почему это прорыв?</strong> Ребра жесткости и двойные стенки из анодированного алюминия (толщина 3 мм) делают систему в 3 раза прочнее стандартных аналогов.</p>
+</div>
+
+<div style='margin-bottom: 15px;'>
+<h4 style='font-size: 1.1rem; margin-top: 20px;'>Умные колонны: вода исчезает, как по волшебству</h4>
+<p style='margin-bottom: 10px;'><strong>Технические детали:</strong></p>
+<ul style='margin-bottom: 10px; padding-left: 20px;'>
+    <li>Сечение колонн: 164×164 мм — оптимально для быстрого отвода без засоров.</li>
+    <li>Скрытый дренаж: Вода уходит через внутренний канал колонны прямо в ливневку — никаких луж у основания.</li>
+    <li>Абсолютная герметичность: Соединение лотка и колонны фиксируется 7 усиленными анкерами + EPDM-уплотнители (как в автомобилях премиум-класса).</li>
+</ul>
+</div>
+
+<div style='margin-bottom: 15px;'>
+<h4 style='font-size: 1.1rem; margin-top: 20px;'>Преимущества, которые оценят даже скептики</h4>
+<ul style='margin-bottom: 10px; padding-left: 20px;'>
+    <li><strong>«Антиливень»:</strong> Система справляется с экстремальными осадками — 50 мм/час (сравните с обычными желобами, которые переполняются уже при 20 мм/час).</li>
+    <li><strong>Тишина — золото:</strong> Алюминиевые лотки гасят шум дождя на 40% лучше пластиковых аналогов.</li>
+    <li><strong>Защита 360°:</strong>
+        <ul style='padding-left: 20px;'>
+            <li>Уклон лотка + ребра жесткости = нулевой риск застоя воды даже при монтаже на идеально ровной поверхности.</li>
+            <li>Уплотнители EPDM не дубеют на морозе и не трескаются на солнце (срок службы — 15+ лет).</li>
+        </ul>
+    </li>
+    <li><strong>Модульность:</strong> Лотки и колонны можно наращивать бесконечно — система масштабируется под террасы, рестораны.</li>
+</ul>
+</div>
+
+<div style='margin-bottom: 15px;'>
+<h4 style='font-size: 1.1rem; margin-top: 20px;'>Почему конкуренты не дотягивают?</h4>
+<table style='width: 100%; border-collapse: collapse; margin-bottom: 15px;'>
+    <tr>
+        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Параметр</th>
+        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Decolife</th>
+        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Стандартные системы</th>
+    </tr>
+    <tr>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Пропускная способность</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>До 30 л/с</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>До 10 л/с</td>
+    </tr>
+    <tr>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Шумоподавление</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Алюминий + геометрия лотка</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Пластик (резонансный гул)</td>
+    </tr>
+    <tr>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Герметичность</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Двойные EPDM-уплотнители</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Резина (деформация через 2-3 года)</td>
+    </tr>
+    <tr>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Эстетика</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Лоток скрыт в балке</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Висящие трубы и желоба</td>
+    </tr>
+</table>
+</div>
+
+<div style='margin-bottom: 15px;'>
+<h4 style='font-size: 1.1rem; margin-top: 20px;'>Для кого это?</h4>
+<ul style='margin-bottom: 10px; padding-left: 20px;'>
+    <li><strong>Частные клиенты:</strong> Хотят сохранить дизайн участка без компромиссов в функциональности.</li>
+    <li><strong>Бизнес:</strong> Кафе, отели, ТРЦ — где лужи у перголы = потеря репутации.</li>
+    <li><strong>Архитекторы:</strong> Ищут систему, которую не придется маскировать в проектах.</li>
+</ul>
+</div>
+
+<p style='margin-bottom: 15px; font-weight: bold;'>Водосточная система Decolife — это не «декор» и не «опция». Это обязательный стандарт для тех, кто строит на века. Выбирайте инженерию, которая не подведет в самый ответственный момент — когда над головой бушует дождь, а под ногами должно быть сухо.</p>
+"""
+
+# Изображение системы водоотведения
+PERGOLA_IMAGES["DRAINAGE"] = [
+    "attached_assets/Система водоотведения.jpeg",
+    "attached_assets/Снимок экрана 2025-04-09 в 18.55.21.png"
+]
+
+# Подпись к изображению системы водоотведения
+PERGOLA_IMAGE_CAPTIONS["DRAINAGE"] = "Система водоотведения Decolife"

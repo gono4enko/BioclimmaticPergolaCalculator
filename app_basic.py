@@ -11,6 +11,7 @@ import time
 from config.pergola_descriptions import (
     get_pergola_description,
     get_modular_system_description,
+    get_drainage_system_description,
     get_pergola_images,
     get_pergola_image_caption
 )
@@ -1325,6 +1326,25 @@ def render_results(results):
                         continue
                 else:
                     st.warning(f"Не удалось загрузить изображение модульной системы")
+            
+            # Добавляем информацию о системе водоотведения для всех типов пергол
+            # Отображаем описание системы водоотведения из модуля конфигурации
+            drainage_description = get_drainage_system_description()
+            st.markdown(drainage_description, unsafe_allow_html=True)
+            
+            # Отображаем изображение системы водоотведения
+            drainage_images = get_pergola_images("DRAINAGE")
+            drainage_caption = get_pergola_image_caption("DRAINAGE")
+            
+            if drainage_images:
+                for img_path in drainage_images:
+                    try:
+                        st.image(img_path, caption=drainage_caption, use_container_width=True)
+                        break
+                    except Exception as e:
+                        continue
+                else:
+                    st.warning(f"Не удалось загрузить изображение системы водоотведения")
 
 def scroll_to_results():
     """
