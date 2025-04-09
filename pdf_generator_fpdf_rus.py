@@ -112,14 +112,46 @@ class PDF(FPDF):
             self.cell(widths[i], 8, header, 1, 0, "C", fill=True)
         self.ln()
         
-    def table_row(self, data, widths, aligns=None):
-        """Добавляет строку в таблицу"""
+    def table_row(self, data, widths, aligns=None, row_height=7):
+        """
+        Добавляет строку в таблицу с адаптивным размером шрифта
+        
+        Args:
+            data (list): Данные для ячеек
+            widths (list): Ширина каждой ячейки
+            aligns (list, optional): Выравнивание для каждой ячейки (L, C, R)
+            row_height (int, optional): Высота строки в мм
+        """
         if aligns is None:
             aligns = ["L"] * len(data)
+        
         self.set_text_color(0, 0, 0)  # Черный текст
-        self.set_font("DejaVu", "", 10)
+        
+        # Для каждой ячейки проверяем, помещается ли текст при текущем размере шрифта
         for i, cell in enumerate(data):
-            self.cell(widths[i], 8, str(cell), 1, 0, aligns[i])
+            cell_text = str(cell)
+            font_size = 10  # Начальный размер шрифта
+            
+            # Если это ячейка с ценой (обычно последняя), используем меньший шрифт сразу
+            if i == len(data) - 1 and "₽" in cell_text:
+                font_size = 9
+            
+            # Цикл уменьшения шрифта, пока текст не поместится
+            while font_size >= 7:  # Минимальный размер шрифта 7
+                # FPDF принимает только целые числа для размера шрифта
+                self.set_font("DejaVu", "", int(font_size))
+                text_width = self.get_string_width(cell_text)
+                
+                # Если текст помещается в ячейку (с небольшим отступом), выходим из цикла
+                if text_width <= widths[i] - 3:
+                    break
+                
+                # Уменьшаем размер шрифта
+                font_size -= 1  # Уменьшаем на целое число
+            
+            # Выводим ячейку с адаптированным размером шрифта
+            self.cell(widths[i], row_height, cell_text, 1, 0, aligns[i])
+        
         self.ln()
 
 
@@ -230,20 +262,20 @@ def generate_commercial_offer(pergola_data, user_data=None):
         
         pdf.table_header(headers, widths)
         
-        pdf.table_row(["Модель перголы", pergola_type], widths)
-        pdf.table_row(["Ширина", f"{width} м"], widths)
-        pdf.table_row(["Вынос (длина)", f"{length} м"], widths)
-        pdf.table_row(["Тип ламелей", lamella_type], widths)
-        pdf.table_row(["Количество модулей", str(modules)], widths)
+        pdf.table_row(["Модель перголы", pergola_type], widths, row_height=6)
+        pdf.table_row(["Ширина", f"{width} м"], widths, row_height=6)
+        pdf.table_row(["Вынос (длина)", f"{length} м"], widths, row_height=6)
+        pdf.table_row(["Тип ламелей", lamella_type], widths, row_height=6)
+        pdf.table_row(["Количество модулей", str(modules)], widths, row_height=6)
         
         # Если есть опции, добавляем их в таблицу
         if options:
             if 'lighting_type' in options and options['lighting_type'] != 'none':
-                pdf.table_row(["Тип освещения", options['lighting_type']], widths)
+                pdf.table_row(["Тип освещения", options['lighting_type']], widths, row_height=6)
             if options.get('installation', False):
-                pdf.table_row(["Установка", "Включена"], widths)
+                pdf.table_row(["Установка", "Включена"], widths, row_height=6)
             if options.get('delivery', False):
-                pdf.table_row(["Доставка", "Включена"], widths)
+                pdf.table_row(["Доставка", "Включена"], widths, row_height=6)
                 
         # Добавляем информацию о полной стоимости сразу под таблицей параметров
         pdf.ln(5)
@@ -285,7 +317,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
             pdf.table_header(headers, widths)
             
             for i, item in enumerate(specification, 1):
-                pdf.table_row([str(i), item['name'], str(item['quantity'])], widths, aligns=["C", "L", "C"])
+                pdf.table_row([str(i), item['name'], str(item['quantity'])], widths, aligns=["C", "L", "C"], row_height=6)
         else:
             pdf.set_font('DejaVu', '', 10)
             pdf.cell(0, 7, "Данные о спецификации отсутствуют", 0, 1)
@@ -329,7 +361,8 @@ def generate_commercial_offer(pergola_data, user_data=None):
                     # Для сотен: 100 ₽
                     price_str = f"{price_value} ₽"
                 
-                pdf.table_row([str(i), item['name'], price_str], widths, aligns=["C", "L", "R"])
+                # Используем уменьшенную высоту строки (6 мм вместо 8 мм)
+                pdf.table_row([str(i), item['name'], price_str], widths, aligns=["C", "L", "R"], row_height=6)
                 
             # Добавляем итоговую строку
             pdf.set_fill_color(211, 211, 211)  # Светло-серый цвет

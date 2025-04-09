@@ -1328,29 +1328,26 @@ def render_results(results):
     # Добавляем разделитель
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
     
-    # Добавляем информацию о типе перголы и изображение только один раз в сессии
-    if not st.session_state.get('description_shown', False):
-        # Устанавливаем флаг, что описание уже было показано в этой сессии
-        st.session_state.description_shown = True
+    # Отображаем информацию о типе перголы и изображение при каждом расчете
+    # Отображаем информацию о выбранном типе перголы с использованием модуля описаний
+    if pergola_type in ["B500NEW", "B700NEW", "B600"]:
+        # Используем описание из модуля конфигурации
+        description_html = get_pergola_description(pergola_type)
+        st.markdown(description_html, unsafe_allow_html=True)
         
-        # Отображаем информацию о выбранном типе перголы с использованием модуля описаний
-        if pergola_type in ["B500NEW", "B700NEW", "B600"]:
-            # Используем описание из модуля конфигурации
-            description_html = get_pergola_description(pergola_type)
-            st.markdown(description_html, unsafe_allow_html=True)
-            
-            # Отображаем изображения с использованием списка из конфигурации
-            images = get_pergola_images(pergola_type)
-            caption = get_pergola_image_caption(pergola_type)
-            
-            if images:
-                # Пробуем загрузить изображения по очереди, пока не найдем рабочее
-                for img_path in images:
-                    try:
-                        display_image_with_padding(img_path, caption=caption)
-                        break  # Прерываем цикл, если изображение успешно загружено
-                    except Exception as e:
-                        continue  # Пробуем следующее изображение
+        # Отображаем изображения с использованием списка из конфигурации
+        images = get_pergola_images(pergola_type)
+        caption = get_pergola_image_caption(pergola_type)
+        
+        if images:
+            # Пробуем загрузить изображения по очереди, пока не найдем рабочее
+            for img_path in images:
+                try:
+                    display_image_with_padding(img_path, caption=caption)
+                    break  # Прерываем цикл, если изображение успешно загружено
+                except Exception as e:
+                    print(f"Не удалось загрузить изображение {img_path}: {str(e)}")
+                    continue  # Пробуем следующее изображение
                 else:
                     st.warning(f"Не удалось загрузить изображение для {pergola_type}")
             
@@ -1767,8 +1764,7 @@ def main():
                 # Добавляем флаг, что нужно прокрутить к результатам
                 st.session_state.scroll_to_results = True
                 
-                # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
-                st.session_state.description_shown = False
+                # Удалено: Не используется больше сбрасывание флага описания
                 
                 # Перезагружаем страницу для отображения результатов
                 st.rerun()
