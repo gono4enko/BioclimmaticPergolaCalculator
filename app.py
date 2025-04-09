@@ -856,6 +856,24 @@ def main():
         """, unsafe_allow_html=True)
         
         # Создаем обычную кнопку Streamlit
+        # Кнопка расчета стоимости с принудительной оранжевой заливкой через CSS
+        st.markdown("""
+        <style>
+        /* Самый высокий приоритет для кнопки с текстом "Рассчитать стоимость" */
+        button[kind="primary"], 
+        button[data-testid="baseButton-primary"],
+        div.stButton > button[data-testid="baseButton-primary"],
+        div[data-testid="stButton"] > button:contains("Рассчитать стоимость") {
+            background-color: #ff7a2f !important;
+            color: #ffffff !important;
+            font-size: 2rem !important;
+            padding: 25px 25px !important;
+            min-height: 80px !important;
+            font-weight: 700 !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         if st.button("Рассчитать стоимость", type="primary", use_container_width=True, help="Нажмите для расчета стоимости перголы"):
             with st.spinner("Выполняется расчет..."):
                 # Проверяем, что у нас есть данные для расчета
