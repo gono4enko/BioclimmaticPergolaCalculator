@@ -77,6 +77,8 @@ def add_button_animation():
         min-height: 80px !important; /* Минимальная высота */
         width: 100% !important; /* Полная ширина */
         font-weight: 700 !important; /* Жирный шрифт */
+        background-color: #ff7a2f !important; /* Оранжевый цвет фона */
+        color: #ffffff !important; /* Белый текст */
     }
     
     .stButton button:active {
@@ -93,6 +95,18 @@ def add_button_animation():
         min-height: 80px !important; /* Минимальная высота */
         width: 100% !important; /* Полная ширина */
         font-weight: 700 !important; /* Жирный шрифт */
+        background-color: #ff7a2f !important; /* Оранжевый цвет фона */
+        color: #ffffff !important; /* Белый текст */
+    }
+    
+    /* Эффект при наведении */
+    .stButton button:hover,
+    div[data-testid="stButton"] > button:hover,
+    div[data-testid="stButton"] > button[kind="primary"]:hover,
+    button[data-testid="baseButton-primary"]:hover,
+    .element-container div[data-testid="stButton"] button:hover {
+        background-color: #e36c2a !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
     }
     
     /* Эффект пульсации при нажатии */
@@ -137,6 +151,8 @@ def add_button_animation():
             calculateButton.style.padding = '25px';
             calculateButton.style.minHeight = '80px';
             calculateButton.style.fontWeight = '700';
+            calculateButton.style.backgroundColor = '#ff7a2f';
+            calculateButton.style.color = '#ffffff';
         }
         
         if (calculateButton) {

@@ -257,11 +257,28 @@ def render_results(results):
     </style>
     """, unsafe_allow_html=True)
     
-    # Отображаем заголовок результатов по центру в стиле pergolamarket.ru с инлайн-стилями
+    # ПРИНУДИТЕЛЬНЫЙ СБРОС всех стилей и добавление специального стиля только для заголовка
     st.markdown("""
-    <div style="font-size: 24px; font-weight: 700; margin: 25px 0 20px 0; text-align: center; 
-         color: #ffffff; background-color: #3f6daa; padding: 10px 15px; border-radius: 5px; 
-         box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-transform: uppercase;">
+    <style>
+    /* Этот стиль будет иметь приоритет над всеми другими стилями */
+    .super-heading {
+        font-size: 24px !important;
+        font-weight: 700 !important;
+        margin: 25px 0 20px 0 !important;
+        text-align: center !important;
+        color: #ffffff !important;
+        background-color: #3f6daa !important;
+        padding: 10px 15px !important;
+        border-radius: 5px !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+        text-transform: uppercase !important;
+        display: block !important;
+    }
+    .super-heading * {
+        color: #ffffff !important;
+    }
+    </style>
+    <div class="super-heading">
         РЕЗУЛЬТАТЫ РАСЧЕТА
     </div>
     <div style="height: 3px; width: 100px; background-color: #ff9c00; margin: 10px auto;"></div>
@@ -271,10 +288,23 @@ def render_results(results):
     col1, col2 = st.columns(2)
     
     with col1:
-        # Таблица "Спецификация перголы" в стиле pergolamarket.ru с принудительным белым цветом текста
+        # Таблица "Спецификация перголы" в стиле pergolamarket.ru с использованием специального класса
         st.markdown("""
-        <div style="background-color: #3f6daa; color: #ffffff !important; padding: 10px 15px; border-radius: 5px 5px 0 0; font-weight: bold;">
-            <span style="color: #ffffff !important;">Спецификация перголы</span>
+        <style>
+        .blue-header {
+            background-color: #3f6daa !important;
+            color: #ffffff !important;
+            padding: 10px 15px !important;
+            border-radius: 5px 5px 0 0 !important;
+            font-weight: bold !important;
+            display: block !important;
+        }
+        .blue-header * {
+            color: #ffffff !important;
+        }
+        </style>
+        <div class="blue-header">
+            Спецификация перголы
         </div>
         """, unsafe_allow_html=True)
         
@@ -329,10 +359,10 @@ def render_results(results):
         """, unsafe_allow_html=True)
     
     with col2:
-        # Таблица "Стоимость" в стиле pergolamarket.ru с принудительным белым цветом текста
+        # Таблица "Стоимость" в стиле pergolamarket.ru с использованием специального класса (тот же, что и для первой таблицы)
         st.markdown("""
-        <div style="background-color: #3f6daa; color: #ffffff !important; padding: 10px 15px; border-radius: 5px 5px 0 0; font-weight: bold;">
-            <span style="color: #ffffff !important;">Стоимость</span>
+        <div class="blue-header">
+            Стоимость
         </div>
         """, unsafe_allow_html=True)
         
