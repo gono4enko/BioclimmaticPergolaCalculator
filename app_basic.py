@@ -15,7 +15,6 @@ from config.pergola_descriptions import (
     get_bansbach_description,
     get_bioclimatic_install_description,
     get_lamella_engineering_description,
-    get_somfy_description,
     get_pergola_images,
     get_pergola_image_caption
 )
@@ -544,7 +543,6 @@ def get_drive_price(pergola_type, width_m, length_m, modules):
 def get_remote_control(devices_count):
     """
     Определяет тип и стоимость пульта управления
-    в зависимости от количества устройств.
     
     Args:
         devices_count (int): Количество устройств для управления
@@ -556,9 +554,6 @@ def get_remote_control(devices_count):
         return "Simu 1K", REMOTE_CONTROL_TYPES[1]["price"]
     elif devices_count <= 5:
         return "Simu 5K", REMOTE_CONTROL_TYPES[5]["price"]
-    elif devices_count <= 6:
-        # Важное исправление: для 6 устройств (3 привода + 3 освещения) используем Simu 6K
-        return "Simu 6K", REMOTE_CONTROL_TYPES[6]["price"]
     else:
         return "Simu 15K", REMOTE_CONTROL_TYPES[15]["price"]
 
@@ -665,7 +660,7 @@ def perform_calculation(dimensions, options):
             # Количество устройств для пульта ДУ (привод + освещение)
             devices_count = drive_count
             if "white_led" in lighting_options or "rgb_led" in lighting_options:
-                devices_count += modules  # Добавляем блоки управления освещением (по одному на каждый модуль)
+                devices_count += 1  # Добавляем блок управления освещением
             
             # Определяем тип и стоимость пульта ДУ
             remote_name, remote_price = get_remote_control(devices_count)
@@ -1022,26 +1017,6 @@ def render_options_form():
     Returns:
         dict: Словарь с выбранными опциями
     """
-    # Добавляем CSS стиль для выравнивания всех чекбоксов и радио кнопок на одном уровне
-    st.markdown("""
-    <style>
-    .stCheckbox > label, .stRadio > div > label {
-        display: flex !important;
-        align-items: center !important;
-        margin-left: 0px !important;
-        padding-left: 0px !important;
-    }
-    .stCheckbox [data-testid="stMarkdownContainer"] {
-        margin-left: 0px !important;
-        padding-left: 0px !important;
-        left: 0px !important;
-    }
-    .stRadio [data-testid="stMarkdownContainer"] {
-        margin-left: 0px !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
     st.markdown("<h2 class='section-header' style='text-align: center;'>Параметры перголы</h2>", unsafe_allow_html=True)
     
     # Тип перголы
@@ -1213,7 +1188,19 @@ def render_results(results):
     
     # Функция для форматирования цены в бухгалтерском стиле
     def format_price(price):
-        # Отображаем полную стоимость с разделителями разрядов
+        # Всегда используем сокращенный формат для мобильной версии
+        price_in_thousands = price / 1000
+        if price >= 1000000:
+            price_in_millions = price / 1000000
+            # Округляем до 1 знака после запятой для миллионов
+            return "{:.1f}M₽".format(price_in_millions)
+        # Для сотен тысяч используем формат с K
+        if price >= 100000:
+            return "{:.0f}K₽".format(price_in_thousands)
+        # Для десятков тысяч тоже используем формат с K, но с 1 знаком после запятой
+        if price >= 10000:
+            return "{:.1f}K₽".format(price_in_thousands)
+        # Для маленьких чисел используем обычный формат с разделителями
         return "{:,.0f}₽".format(price).replace(",", " ")
     
     # Базовая стоимость перголы - всегда первой строкой
