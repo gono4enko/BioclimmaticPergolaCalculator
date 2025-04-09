@@ -240,7 +240,9 @@ def render_options_form():
             else:
                 # Видимая кнопка для выбора перголы в новом стиле
                 # Добавляем уникальный идентификатор индекса для предотвращения дублирования ключей
-                if st.button(f"{pergola_name}\n{pergola_short_desc}", key=f"btn_pergola_{pergola_type}_{i}", use_container_width=True):
+                # Используем собственный fixed_button с возможностью выбора фона
+                fixed_button_text = f"{pergola_name}\n{pergola_short_desc}"
+                if st.button(fixed_button_text, key=f"btn_pergola_{pergola_type}_{i}", use_container_width=True):
                     selected_pergola_type = pergola_type
                 
                     # Обновляем тип ламелей при смене типа перголы

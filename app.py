@@ -80,6 +80,19 @@ def main():
     # Добавляем CSS для увеличения кнопки сразу после загрузки страницы
     st.markdown("""
     <style>
+    /* Переменные CSS для управления цветами */
+    :root {
+        --button-bg: #0066cc;
+        --button-text: #FFFFFF;  
+        --text-color: #000000;
+        --highlight: #0066cc;
+        --highlight-hover: #0055BB;
+        --selected-bg: #0066cc;
+        --selected-text: #FFFFFF;
+        --unselected-bg: #FFFFFF;
+        --unselected-text: #000000;
+    }
+    
     /* Глобальные стили для кнопки расчета - управление размером */
     .stButton button {
         font-size: 2rem !important;
