@@ -556,8 +556,12 @@ def get_remote_control(devices_count):
         return "Simu 1K", REMOTE_CONTROL_TYPES[1]["price"]
     elif devices_count <= 5:
         return "Simu 5K", REMOTE_CONTROL_TYPES[5]["price"]
-    else:
+    elif devices_count <= 15:
         return "Simu 15K", REMOTE_CONTROL_TYPES[15]["price"]
+    else:
+        # Для очень большого количества устройств подбираем несколько пультов
+        # или возвращаем самый мощный доступный пульт
+        return "Simu 15K + Somfy TaHoma", REMOTE_CONTROL_TYPES[15]["price"] + 350  # Цена TaHoma примерно 350 евро
 
 def perform_calculation(dimensions, options):
     """Выполнить расчет стоимости перголы"""
@@ -662,7 +666,9 @@ def perform_calculation(dimensions, options):
             # Количество устройств для пульта ДУ (привод + освещение)
             devices_count = drive_count
             if "white_led" in lighting_options or "rgb_led" in lighting_options:
-                devices_count += 1  # Добавляем блок управления освещением
+                # Каждый модуль требует свой блок управления освещением,
+                # поэтому добавляем количество устройств равное количеству модулей
+                devices_count += modules
             
             # Определяем тип и стоимость пульта ДУ
             remote_name, remote_price = get_remote_control(devices_count)
@@ -827,8 +833,8 @@ def perform_calculation(dimensions, options):
             # Если уже есть пульт от привода перголы (B500/B700), выбираем пульт с большим числом каналов
             # Если перголы B600 без привода, добавляем пульт для освещения
             if pergola_type in ["B500NEW", "B700NEW"]:
-                # Обновляем devices_count для выбора пульта с большим числом каналов
-                devices_count += lighting_devices_count
+                # Здесь не обновляем devices_count, т.к. он был уже посчитан ранее.
+                # Выбор пульта учитывает и приводы, и блоки управления светом.
                 
                 # Обновляем информацию о пульте в спецификации
                 for i, item in enumerate(specification):
