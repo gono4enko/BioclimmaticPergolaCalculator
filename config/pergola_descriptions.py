@@ -180,6 +180,15 @@ def get_drainage_system_description():
     """
     return DRAINAGE_SYSTEM_DESCRIPTION
 
+def get_bansbach_description():
+    """
+    Возвращает описание привода Bansbach (только для пергол B500)
+    
+    Returns:
+        str: HTML-описание привода Bansbach
+    """
+    return BANSBACH_DESCRIPTION
+
 def get_pergola_images(pergola_type):
     """
     Возвращает список изображений для перголы указанного типа
@@ -295,3 +304,67 @@ PERGOLA_IMAGES["DRAINAGE"] = [
 
 # Подпись к изображению системы водоотведения
 PERGOLA_IMAGE_CAPTIONS["DRAINAGE"] = "Система водоотведения Decolife"
+
+# Описание привода Bansbach для пергол B500
+BANSBACH_DESCRIPTION = """
+<h3 style='font-size: 1.2rem; margin-top: 30px; text-align: center;'>Bansbach: Автоматика для перголы B500 — как в Boeing, только у вас во дворе</h3>
+<p style='margin-bottom: 15px; font-style: italic; text-align: center;'>(Потому что управление крышей должно быть таким же надежным, как полет на высоте 10 000 метров)</p>
+
+<div style='margin-bottom: 15px;'>
+<h4 style='font-size: 1.1rem; margin-top: 20px;'>Почему Bansbach — это «ум» вашей перголы?</h4>
+<p style='margin-bottom: 10px;'><strong>Мощность авиационного уровня:</strong><br>
+Двигатели Bansbach созданы для экстремальных нагрузок — 4500 Нм крутящего момента. Это как поставить турбину Boeing 737 на вашу перголу. Закрылки (ламели) двигаются плавно даже при ветре 20 м/с.</p>
+
+<p style='margin-bottom: 10px;'><strong>Ресурс на поколения:</strong><br>
+100 000 циклов открытия/закрытия — хватит, чтобы 27 лет каждый день встречать дождь и солнце.</p>
+</div>
+
+<div style='margin-bottom: 15px;'>
+<h4 style='font-size: 1.1rem; margin-top: 20px;'>Как это работает?</h4>
+<p style='margin-bottom: 10px;'><strong>Дистанционное управление:</strong><br>
+Пульт, смартфон или голосовой помощник — закрывайте крышу с дивана, из машины или с другого конца света.</p>
+
+<p style='margin-bottom: 10px;'><strong>Умная защита от дождя:</strong><br>
+Климатические датчики «просыпаются» при первых каплях → отправляют сигнал → Bansbach закрывает ламели за 20 секунд. Вы сохраняете мебель сухой, даже если вас нет дома.</p>
+
+<p style='margin-bottom: 10px;'><strong>Простота, которую оценит даже ребенок:</strong><br>
+Никаких ремней, тросов или ручных рычагов. Вся механика спрятана внутри балок — только гладкий алюминий и тихая работа.</p>
+</div>
+
+<div style='margin-bottom: 15px;'>
+<h4 style='font-size: 1.1rem; margin-top: 20px;'>5 причин выбрать Bansbach для B500:</h4>
+<ul style='margin-bottom: 10px; padding-left: 20px;'>
+    <li><strong>Сделано в Германии:</strong><br>
+Точность до микрона. Те же стандарты, что и для аэрокосмической техники.</li>
+    <li><strong>Защита IP65:</strong><br>
+Не боится пыли, ливней и морозов (-30°C → +70°C).</li>
+    <li><strong>Тишина:</strong><br>
+Шум двигателя — как шепот (45 дБ). Не перебивает даже пение птиц.</li>
+    <li><strong>Синхронизация TANDEM:</strong><br>
+Для больших пергол (от 8 м) — два двигателя работают как один. Никаких перекосов.</li>
+    <li><strong>Гарантия 5 лет:</strong><br>
+Потому что мы знаем: это навсегда.</li>
+</ul>
+</div>
+
+<div style='margin-bottom: 15px;'>
+<h4 style='font-size: 1.1rem; margin-top: 20px;'>Для кого?</h4>
+<ul style='margin-bottom: 10px; padding-left: 20px;'>
+    <li><strong>Перфекционисты:</strong> Кто хочет, чтобы техника слушалась с первого касания.</li>
+    <li><strong>Семейные дома:</strong> Когда нужно за секунду спасти пикник от внезапного дождя.</li>
+    <li><strong>Бизнес:</strong> Рестораны, отели — где гость не должен ждать, пока персонал побежит закрывать крышу.</li>
+</ul>
+</div>
+
+<p style='margin-bottom: 15px; font-weight: bold;'>Финал:<br>
+Bansbach — это не «автоматика». Это ваш личный метеоролог, инженер и охранник в одном флаконе. Немецкая надежность, которая не просит второго шанса — потому что не ошибается в первый раз.</p>
+"""
+
+# Изображение привода Bansbach
+PERGOLA_IMAGES["BANSBACH"] = [
+    "attached_assets/Линейный привод.jpeg",
+    "attached_assets/Снимок экрана 2025-04-09 в 18.58.28.png"
+]
+
+# Подпись к изображению привода Bansbach
+PERGOLA_IMAGE_CAPTIONS["BANSBACH"] = "Линейный привод Bansbach для пергол В500"

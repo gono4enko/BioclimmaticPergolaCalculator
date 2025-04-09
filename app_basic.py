@@ -12,6 +12,7 @@ from config.pergola_descriptions import (
     get_pergola_description,
     get_modular_system_description,
     get_drainage_system_description,
+    get_bansbach_description,
     get_pergola_images,
     get_pergola_image_caption
 )
@@ -1345,6 +1346,25 @@ def render_results(results):
                         continue
                 else:
                     st.warning(f"Не удалось загрузить изображение системы водоотведения")
+            
+            # Добавляем информацию о приводе Bansbach только для пергол B500NEW
+            if pergola_type == "B500NEW":
+                bansbach_description = get_bansbach_description()
+                st.markdown(bansbach_description, unsafe_allow_html=True)
+                
+                # Отображаем изображение привода Bansbach
+                bansbach_images = get_pergola_images("BANSBACH")
+                bansbach_caption = get_pergola_image_caption("BANSBACH")
+                
+                if bansbach_images:
+                    for img_path in bansbach_images:
+                        try:
+                            st.image(img_path, caption=bansbach_caption, use_container_width=True)
+                            break
+                        except Exception as e:
+                            continue
+                    else:
+                        st.warning(f"Не удалось загрузить изображение привода Bansbach")
 
 def scroll_to_results():
     """
