@@ -1392,8 +1392,8 @@ def render_results(results):
             st.markdown(bioclimatic_install_description, unsafe_allow_html=True)
             
             # Отображаем изображение вариантов установки
-            install_system_images = get_pergola_images("INSTALL_SYSTEM")
-            install_system_caption = get_pergola_image_caption("INSTALL_SYSTEM")
+            install_system_images = get_pergola_images("INSTALLATION")
+            install_system_caption = get_pergola_image_caption("INSTALLATION")
             
             if install_system_images:
                 for img_path in install_system_images:
@@ -1407,12 +1407,13 @@ def render_results(results):
             
             # Добавляем техническое описание ламелей только для пергол B500 и B700, не для B600
             if pergola_type in ["B500NEW", "B700NEW"]:
-                lamella_engineering_description = get_lamella_engineering_description()
+                # Получаем расширенное техническое описание для выбранного типа перголы
+                lamella_engineering_description = get_lamella_engineering_description(pergola_type)
                 st.markdown(lamella_engineering_description, unsafe_allow_html=True)
                 
                 # Отображаем изображение технических характеристик ламелей
-                lamella_engineering_images = get_pergola_images("LAMELLA_ENGINEERING")
-                lamella_engineering_caption = get_pergola_image_caption("LAMELLA_ENGINEERING")
+                lamella_engineering_images = get_pergola_images("TECHNICAL")
+                lamella_engineering_caption = get_pergola_image_caption("TECHNICAL")
                 
                 if lamella_engineering_images:
                     for img_path in lamella_engineering_images:
