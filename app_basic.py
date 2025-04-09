@@ -976,6 +976,21 @@ def render_results(results):
         # Преобразуем данные в DataFrame и отображаем
         import pandas as pd
         spec_df = pd.DataFrame(spec_data, columns=["Наименование", "Количество"])
+        
+        # Добавляем CSS для корректного отображения таблицы спецификаций
+        st.markdown(
+            """
+            <style>
+            /* Разрешаем перенос длинных наименований в столбце Наименование спецификации */
+            [data-testid="stDataFrame"] table td:first-child {
+                white-space: normal !important;
+                word-wrap: break-word !important;
+                max-width: 500px !important;
+            }
+            </style>
+            """, unsafe_allow_html=True
+        )
+        
         st.dataframe(spec_df, use_container_width=True, hide_index=True)
     
     # Отображаем таблицу стоимости
@@ -1048,13 +1063,20 @@ def render_results(results):
             text-align: center !important;
         }
         /* Стиль для строки итого */
-        [data-testid="stDataFrame"] table tr:last-child {
+        [data-testid="stDataFrame"] table tr:last-child td {
             font-weight: bold !important;
             background-color: #f0f7ff !important;
         }
-        /* Добавляем поддержку HTML-тегов в текстовых ячейках */
+        /* Разрешаем перенос длинных наименований в столбце Наименование */
+        [data-testid="stDataFrame"] table td:first-child {
+            white-space: normal !important;
+            word-wrap: break-word !important;
+            max-width: 500px !important; 
+        }
+        /* Стиль для текста в ячейках */
         [data-testid="stDataFrame"] td {
             font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            padding: 8px 12px !important;
         }
         </style>
         """, unsafe_allow_html=True
