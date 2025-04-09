@@ -166,11 +166,16 @@ def render_results(results):
     /* Основные стили */
     /* Стили для заголовка результатов в стиле pergolamarket.ru */
     .result-heading {
-        font-size: 20px;
-        font-weight: bold;
-        margin: 20px 0 15px 0;
-        text-align: center;
-        color: #3f6daa !important;
+        font-size: 24px !important;
+        font-weight: 700 !important;
+        margin: 25px 0 20px 0 !important;
+        text-align: center !important;
+        color: #ffffff !important;
+        background-color: #3f6daa !important;
+        padding: 10px 15px !important;
+        border-radius: 5px !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+        text-transform: uppercase !important;
         font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
@@ -254,10 +259,10 @@ def render_results(results):
     
     # Отображаем заголовок результатов по центру в стиле pergolamarket.ru
     st.markdown("""
-    <div style="text-align: center; margin-top: 20px; margin-bottom: 20px;">
-        <h3 style="font-size: 1.5rem; font-weight: 600; color: #3f6daa; margin-bottom: 5px;">Результаты расчета</h3>
-        <div style="height: 3px; width: 100px; background-color: #ff9c00; margin: 10px auto;"></div>
+    <div class="result-heading">
+        РЕЗУЛЬТАТЫ РАСЧЕТА
     </div>
+    <div style="height: 3px; width: 100px; background-color: #ff9c00; margin: 10px auto;"></div>
     """, unsafe_allow_html=True)
     
     # Создаем две колонки для таблиц
