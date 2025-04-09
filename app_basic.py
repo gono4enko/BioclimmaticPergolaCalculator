@@ -30,6 +30,13 @@ LAMELLA_TYPES = {
     "lamella-250": "Ламели 250 мм (стандарт)"
 }
 
+# Максимально допустимые размеры для каждого типа пергол
+MAX_DIMENSIONS = {
+    "B500NEW": {"width": 15.0, "length": 8.0},
+    "B700NEW": {"width": 15.0, "length": 7.25},
+    "B600": {"width": 10.0, "length": 6.0}
+}
+
 # Устанавливаем заголовок страницы
 st.set_page_config(
     page_title="Калькулятор пергол", 
@@ -257,14 +264,31 @@ def perform_calculation(dimensions, options):
     elif pergola_type == "B700NEW":
         if "20" in real_lamella_type:
             # Для B700-20NEW
+            # Ищем ближайшие значения из прайса (B700-20)
+            # Ширина (м): 3.0, 3.5, 4.0, 4.5, 6.0, 7.0, 8.0, 9.0, 10.0, 9.0, 10.5, 12.0, 13.5, 15.0
+            # Вынос (м): 2.45, 2.85, 3.25, 3.65, 4.05, 4.45, 4.85, 5.25, 5.65, 6.05, 6.45, 6.85, 7.25
+            
+            # Базовые цены из прайса B700-20
             if width_m <= 3.0 and length_m <= 2.45:
                 pergola_cost = 6878
             elif width_m <= 3.5 and length_m <= 2.45:
                 pergola_cost = 7451
             elif width_m <= 4.0 and length_m <= 2.45:
                 pergola_cost = 8023
+            elif width_m <= 4.5 and length_m <= 2.45:
+                pergola_cost = 8596
+            elif width_m <= 3.0 and length_m <= 2.85:
+                pergola_cost = 7529
             elif width_m <= 3.0 and length_m <= 3.25:
                 pergola_cost = 8179
+            elif width_m <= 3.0 and length_m <= 3.65:
+                pergola_cost = 8830
+            elif width_m <= 3.0 and length_m <= 4.05:
+                pergola_cost = 9480
+            elif width_m <= 3.0 and length_m <= 4.45:
+                pergola_cost = 10130
+            elif width_m <= 3.0 and length_m <= 4.85:
+                pergola_cost = 10781
             else:
                 # Для других размеров используем приближенную формулу
                 pergola_cost = 6878 * (width_m * length_m) / (3.0 * 2.45)
@@ -457,8 +481,14 @@ def main():
     with col1:
         # Форма для ввода размеров перголы
         st.subheader("Размеры перголы")
-        width = st.number_input("Ширина (м)", min_value=1.0, max_value=10.0, value=3.0, step=0.5)
-        length = st.number_input("Вынос (м)", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
+        
+        # Для ограничения размеров в зависимости от типа перголы
+        pergola_type_key = st.session_state.get('pergola_type', 'B500NEW')
+        max_width = MAX_DIMENSIONS.get(pergola_type_key, {}).get('width', 15.0)
+        max_length = MAX_DIMENSIONS.get(pergola_type_key, {}).get('length', 10.0)
+        
+        width = st.number_input("Ширина (м)", min_value=1.0, max_value=max_width, value=3.0, step=0.5)
+        length = st.number_input("Вынос (м)", min_value=1.0, max_value=max_length, value=4.0, step=0.5)
         
         # Сохраняем размеры (высота фиксированная - 3.0 м)
         dimensions = {
