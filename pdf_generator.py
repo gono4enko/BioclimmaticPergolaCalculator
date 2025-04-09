@@ -110,6 +110,17 @@ def generate_commercial_offer(pergola_data, user_data=None):
     Returns:
         str: Путь к сгенерированному PDF-файлу
     """
+    # Создаем директорию для обработанных изображений, если её нет
+    os.makedirs("processed_images", exist_ok=True)
+    
+    # Очищаем временные файлы обработанных изображений
+    for file in os.listdir("processed_images"):
+        if file.startswith("proc_"):
+            try:
+                os.remove(os.path.join("processed_images", file))
+            except:
+                pass
+    
     # Создаем уникальное имя файла на основе текущей даты и времени
     now = datetime.now()
     timestamp = now.strftime("%Y%m%d_%H%M%S")
@@ -485,42 +496,50 @@ def generate_commercial_offer(pergola_data, user_data=None):
         try:
             elements.append(Spacer(1, 10*mm))
             
-            # Вместо фиксированных размеров, сохраняем пропорции изображения
-            # Получаем размеры изображения
+            # Совершенно новый подход к обработке изображений для сохранения пропорций
+            # Создаем отдельную папку для обработанных изображений
+            os.makedirs("processed_images", exist_ok=True)
+            
+            # Создаем новый путь для обработанного изображения
+            file_name = os.path.basename(pergola_image)
+            processed_image_path = os.path.join("processed_images", f"proc_{file_name}")
+            
+            # Сохраняем копию с помощью PIL/Pillow
             from PIL import Image as PILImage
             img_pil = PILImage.open(pergola_image)
+            
+            # Получаем исходные размеры
             img_width, img_height = img_pil.size
+            print(f"Исходные размеры изображения: {img_width}x{img_height}")
             
-            # Рассчитываем размеры с сохранением пропорций
-            # Ограничиваем по ширине страницы (17 см), высота рассчитывается пропорционально
-            max_width = 16*cm  # Немного уменьшим максимальную ширину
+            # Сохраняем изображение с тем же соотношением сторон
+            img_pil.save(processed_image_path)
             
-            # Важно: сначала вычисляем соотношение сторон
+            # Теперь добавляем изображение в PDF, не указывая размеры
+            # Это позволяет ReportLab самостоятельно определить размеры
+            # исходя из размера страницы и сохраняя пропорции
+            # Здесь мы указываем только ширину, и ReportLab сам рассчитает высоту,
+            # с сохранением исходных пропорций
+            max_width = 16*cm
+            img = Image(processed_image_path, width=max_width)
+            
+            # Выводим информацию о масштабировании
             aspect_ratio = img_height / float(img_width)
+            scaled_height = max_width * aspect_ratio / cm
+            print(f"Масштабирование изображения: ширина={max_width/cm}см, приблизительная высота={scaled_height}см")
             
-            # Устанавливаем ширину изображения
-            width = max_width
-            
-            # Вычисляем высоту с учетом соотношения сторон
-            height = width * aspect_ratio
-            
-            print(f"Размеры изображения: {img_width}x{img_height}, соотношение сторон: {aspect_ratio}")
-            print(f"Размеры в PDF: {width/cm}x{height/cm} см")
-            
-            # Добавляем изображение с сохранением пропорций
-            # Используем явно указанные width и height для гарантии сохранения пропорций
-            img = Image(pergola_image)
-            img.drawWidth = width
-            img.drawHeight = height
             elements.append(img)
         except Exception as e:
-            # Если не удалось обработать изображение через PIL, используем стандартный подход
+            # Если произошла ошибка, печатаем её для отладки
+            print(f"Ошибка при обработке изображения: {str(e)}")
+            
+            # Пробуем использовать стандартный подход ReportLab
             try:
                 img = Image(pergola_image, width=15*cm)  # Указываем только ширину, высота будет пропорциональной
                 elements.append(img)
-            except Exception as e:
-                elements.append(Paragraph(f"Не удалось загрузить изображение: {str(e)}", styles['Normal']))
-                pass
+            except Exception as e2:
+                print(f"Ошибка при использовании стандартного подхода: {str(e2)}")
+                elements.append(Paragraph(f"Не удалось загрузить изображение", styles['Normal']))
     
     # Добавляем условия коммерческого предложения
     elements.append(Spacer(1, 10*mm))
