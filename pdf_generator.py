@@ -19,8 +19,56 @@ from reportlab.pdfbase.ttfonts import TTFont
 os.makedirs("generated_pdf", exist_ok=True)
 
 # Регистрируем шрифты для поддержки кириллицы
-# По умолчанию используем стандартный шрифт Helvetica
-# В будущем можно добавить поддержку кастомных шрифтов
+# Использование стандартного шрифта Helvetica не подходит для кириллицы
+# Необходимо установить и зарегистрировать шрифт с поддержкой кириллицы
+import os.path
+
+# Проверяем доступные шрифты
+font_paths = [
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",  # Для Linux
+    "/usr/share/fonts/TTF/DejaVuSans.ttf",  # Для некоторых дистрибутивов Linux
+    "C:/Windows/Fonts/Arial.ttf",  # Для Windows
+    "/Library/Fonts/Arial Unicode.ttf",  # Для MacOS
+    "arial.ttf",  # Относительный путь
+    "DejaVuSans.ttf",  # Относительный путь
+]
+
+font_found = False
+for font_path in font_paths:
+    if os.path.exists(font_path):
+        # Регистрируем шрифт с поддержкой кириллицы
+        pdfmetrics.registerFont(TTFont('CustomFont', font_path))
+        # Устанавливаем флаг, что шрифт найден
+        font_found = True
+        print(f"Найден шрифт с поддержкой кириллицы: {font_path}")
+        break
+
+# Если ни один шрифт не найден, выводим предупреждение
+if not font_found:
+    print("Внимание: Не найден шрифт с поддержкой кириллицы!")
+    print("PDF будет создан, но возможны проблемы с отображением кириллических символов.")
+    
+    # Попробуем создать базовый шрифт для кириллицы
+    try:
+        # Создаем директорию для шрифтов, если не существует
+        os.makedirs("fonts", exist_ok=True)
+        
+        # Попробуем скопировать системный шрифт
+        import shutil
+        for system_font in ["/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/TTF/DejaVuSans.ttf"]:
+            if os.path.exists(system_font):
+                shutil.copy(system_font, "fonts/DejaVuSans.ttf")
+                pdfmetrics.registerFont(TTFont('CustomFont', "fonts/DejaVuSans.ttf"))
+                font_found = True
+                print(f"Скопирован системный шрифт для кириллицы: {system_font}")
+                break
+    except Exception as e:
+        print(f"Ошибка при копировании шрифта: {str(e)}")
+        
+# Если всё еще не найден шрифт, то используем Helvetica (но с предупреждением)
+if not font_found:
+    print("Используется шрифт Helvetica по умолчанию (проблемы с кириллицей)")
+    pdfmetrics.registerFont(TTFont('CustomFont', "Helvetica"))
 
 def generate_commercial_offer(pergola_data, user_data=None):
     """
@@ -59,13 +107,19 @@ def generate_commercial_offer(pergola_data, user_data=None):
         bottomMargin=20*mm
     )
     
-    # Получаем базовые стили
+    # Получаем базовые стили и переопределяем их для поддержки кириллицы
     styles = getSampleStyleSheet()
+    
+    # Переопределяем базовые стили для использования нашего шрифта
+    for style_name in styles.byName:
+        style = styles[style_name]
+        style.fontName = 'CustomFont'
     
     # Создаем пользовательские стили, используя разные имена
     styles.add(ParagraphStyle(
         name='KPTitle', 
-        parent=styles['Heading1'], 
+        parent=styles['Heading1'],
+        fontName='CustomFont', 
         fontSize=16, 
         alignment=1,  # по центру
         spaceAfter=10*mm
@@ -73,7 +127,8 @@ def generate_commercial_offer(pergola_data, user_data=None):
     
     styles.add(ParagraphStyle(
         name='KPSubtitle', 
-        parent=styles['Heading2'], 
+        parent=styles['Heading2'],
+        fontName='CustomFont', 
         fontSize=14, 
         alignment=1,  # по центру
         spaceAfter=6*mm
@@ -81,14 +136,16 @@ def generate_commercial_offer(pergola_data, user_data=None):
     
     styles.add(ParagraphStyle(
         name='SmallText', 
-        parent=styles['Normal'], 
+        parent=styles['Normal'],
+        fontName='CustomFont', 
         fontSize=8,
         alignment=0  # по левому краю
     ))
     
     styles.add(ParagraphStyle(
         name='TableHeader', 
-        parent=styles['Normal'], 
+        parent=styles['Normal'],
+        fontName='CustomFont', 
         fontSize=10,
         alignment=1,  # по центру
         textColor=colors.white
@@ -96,14 +153,16 @@ def generate_commercial_offer(pergola_data, user_data=None):
     
     styles.add(ParagraphStyle(
         name='TableCell', 
-        parent=styles['Normal'], 
+        parent=styles['Normal'],
+        fontName='CustomFont', 
         fontSize=10,
         alignment=0  # по левому краю
     ))
     
     styles.add(ParagraphStyle(
         name='Footer', 
-        parent=styles['Normal'], 
+        parent=styles['Normal'],
+        fontName='CustomFont', 
         fontSize=9,
         alignment=1,  # по центру
         textColor=colors.gray
@@ -119,7 +178,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
         ('BACKGROUND', (0, 0), (0, 0), colors.lightblue),
         ('TEXTCOLOR', (0, 0), (0, 0), colors.white),
         ('ALIGNMENT', (0, 0), (0, 0), 'CENTER'),
-        ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 0), (0, 0), 'CustomFont'),
         ('FONTSIZE', (0, 0), (0, 0), 14),
         ('PADDING', (0, 0), (0, 0), 8),
         ('BOTTOMPADDING', (0, 0), (0, 0), 10),
@@ -193,7 +252,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
         ('BACKGROUND', (0, 0), (1, 0), colors.lightblue),
         ('TEXTCOLOR', (0, 0), (1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (1, 0), 'CENTER'),
-        ('FONTNAME', (0, 0), (1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 0), (1, 0), 'CustomFont'),
         ('FONTSIZE', (0, 0), (1, 0), 12),
         ('BOTTOMPADDING', (0, 0), (1, 0), 8),
         ('BACKGROUND', (0, 1), (1, -1), colors.white),
@@ -224,7 +283,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
             ('BACKGROUND', (0, 0), (2, 0), colors.lightblue),
             ('TEXTCOLOR', (0, 0), (2, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (2, 0), 'CENTER'),
-            ('FONTNAME', (0, 0), (2, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 0), (2, 0), 'CustomFont'),
             ('FONTSIZE', (0, 0), (2, 0), 12),
             ('BOTTOMPADDING', (0, 0), (2, 0), 8),
             ('BACKGROUND', (0, 1), (2, -1), colors.white),
@@ -264,7 +323,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
             ('BACKGROUND', (0, 0), (2, 0), colors.lightblue),
             ('TEXTCOLOR', (0, 0), (2, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (2, 0), 'CENTER'),
-            ('FONTNAME', (0, 0), (2, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 0), (2, 0), 'CustomFont'),
             ('FONTSIZE', (0, 0), (2, 0), 12),
             ('BOTTOMPADDING', (0, 0), (2, 0), 8),
             ('BACKGROUND', (0, 1), (2, -2), colors.white),
@@ -273,7 +332,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
             ('VALIGN', (0, 0), (2, -1), 'MIDDLE'),
             ('ALIGN', (0, 1), (0, -1), 'CENTER'),
             ('ALIGN', (2, 1), (2, -1), 'RIGHT'),
-            ('FONTNAME', (0, -1), (2, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (0, -1), (2, -1), 'CustomFont'),
             ('LEFTPADDING', (0, 0), (2, -1), 5),
             ('RIGHTPADDING', (0, 0), (2, -1), 5),
         ]))
@@ -290,21 +349,59 @@ def generate_commercial_offer(pergola_data, user_data=None):
     pergola_description = pergola_data.get('description', '')
     
     if pergola_description:
-        # Корректно обрабатываем HTML-форматирование, заменяя теги на соответствующие стили
-        # Создаем индивидуальный стиль для каждого абзаца, чтобы избежать проблем с форматированием
-        
-        # Используем регулярные выражения для разделения HTML на параграфы
+        # Улучшенная обработка HTML для корректного отображения всего текста
         import re
-        paragraphs = re.split(r'</?(?:p|div|h[1-6])[^>]*>', pergola_description)
+        from bs4 import BeautifulSoup
         
-        # Удаляем пустые параграфы и добавляем каждый параграф как отдельный элемент
-        for p in paragraphs:
-            # Очищаем от оставшихся HTML-тегов
-            p = re.sub(r'<.*?>', '', p)
-            p = p.strip()
-            if p:
-                elements.append(Paragraph(p, styles['Normal']))
-                elements.append(Spacer(1, 3*mm))  # Небольшой отступ между параграфами
+        try:
+            # Используем BeautifulSoup для обработки HTML (если доступен)
+            # Это более надежный способ парсинга HTML
+            soup = BeautifulSoup(pergola_description, 'html.parser')
+            
+            # Добавляем заголовки перед каждым h2 или h3-элементом
+            headers = soup.find_all(['h2', 'h3'])
+            for header in headers:
+                header_text = header.get_text().strip()
+                if header_text:
+                    elements.append(Paragraph(header_text, styles['Heading3']))
+                    elements.append(Spacer(1, 3*mm))
+            
+            # Добавляем все параграфы
+            paragraphs = soup.find_all('p')
+            for p in paragraphs:
+                paragraph_text = p.get_text().strip()
+                if paragraph_text:
+                    elements.append(Paragraph(paragraph_text, styles['Normal']))
+                    elements.append(Spacer(1, 3*mm))
+                    
+        except (ImportError, Exception) as e:
+            # Если BeautifulSoup недоступен или произошла ошибка, используем регулярные выражения
+            print(f"Ошибка при парсинге HTML с BeautifulSoup: {str(e)}")
+            
+            # В первую очередь выделяем заголовки
+            headers = re.findall(r'<h[23][^>]*>(.*?)</h[23]>', pergola_description)
+            for header in headers:
+                header_text = re.sub(r'<.*?>', '', header).strip()
+                if header_text:
+                    elements.append(Paragraph(header_text, styles['Heading3']))
+                    elements.append(Spacer(1, 3*mm))
+                    
+            # Затем выделяем параграфы
+            paragraphs = re.findall(r'<p[^>]*>(.*?)</p>', pergola_description)
+            for p in paragraphs:
+                paragraph_text = re.sub(r'<.*?>', '', p).strip()
+                if paragraph_text:
+                    elements.append(Paragraph(paragraph_text, styles['Normal']))
+                    elements.append(Spacer(1, 3*mm))
+            
+            # Если ничего не найдено, используем старый метод - разделение по тегам
+            if not paragraphs and not headers:
+                paragraphs = re.split(r'</?(?:p|div|h[1-6])[^>]*>', pergola_description)
+                for p in paragraphs:
+                    p = re.sub(r'<.*?>', '', p).strip()
+                    if p:
+                        elements.append(Paragraph(p, styles['Normal']))
+                        elements.append(Spacer(1, 3*mm))
     else:
         elements.append(Paragraph("Описание перголы отсутствует", styles['Normal']))
     
