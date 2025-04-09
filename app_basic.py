@@ -1365,6 +1365,25 @@ def render_results(results):
                             continue
                     else:
                         st.warning(f"Не удалось загрузить изображение привода Bansbach")
+            
+            # Добавляем информацию о приводе Somfy только для пергол B700NEW
+            if pergola_type == "B700NEW":
+                somfy_description = get_pergola_description("SOMFY")
+                st.markdown(somfy_description, unsafe_allow_html=True)
+                
+                # Отображаем изображение привода Somfy
+                somfy_images = get_pergola_images("SOMFY")
+                somfy_caption = get_pergola_image_caption("SOMFY")
+                
+                if somfy_images:
+                    for img_path in somfy_images:
+                        try:
+                            st.image(img_path, caption=somfy_caption, use_container_width=True)
+                            break
+                        except Exception as e:
+                            continue
+                    else:
+                        st.warning(f"Не удалось загрузить изображение привода Somfy")
 
 def scroll_to_results():
     """

@@ -3,6 +3,9 @@
 Отделяем описания от основного кода для облегчения будущих модификаций.
 """
 
+# Словарь описаний пергол и компонентов
+PERGOLA_DESCRIPTIONS = {}
+
 # Описание перголы B500NEW
 B500_DESCRIPTION = """
 <h3 style='font-size: 1.2rem; margin-top: 20px; text-align: center;'>Серия B500NEW (с поворотными ламелями)</h3>
@@ -306,6 +309,10 @@ PERGOLA_IMAGES["DRAINAGE"] = [
 PERGOLA_IMAGE_CAPTIONS["DRAINAGE"] = "Система водоотведения Decolife"
 
 # Описание привода Bansbach для пергол B500
+PERGOLA_DESCRIPTIONS["B500NEW"] = B500_DESCRIPTION
+PERGOLA_DESCRIPTIONS["B700NEW"] = B700_DESCRIPTION
+PERGOLA_DESCRIPTIONS["B600"] = B600_DESCRIPTION
+
 BANSBACH_DESCRIPTION = """
 <h3 style='font-size: 1.2rem; margin-top: 30px; text-align: center;'>Bansbach: Автоматика для перголы B500 — как в Boeing, только у вас во дворе</h3>
 <p style='margin-bottom: 15px; font-style: italic; text-align: center;'>(Потому что управление крышей должно быть таким же надежным, как полет на высоте 10 000 метров)</p>
@@ -367,3 +374,63 @@ PERGOLA_IMAGES["BANSBACH"] = [
 
 # Подпись к изображению привода Bansbach
 PERGOLA_IMAGE_CAPTIONS["BANSBACH"] = "Линейный привод Bansbach для пергол В500"
+
+# Описание привода Somfy для пергол серии B700
+PERGOLA_DESCRIPTIONS["SOMFY"] = """
+<h3 style='text-align: center; margin-bottom: 20px; font-size: 1.4rem;'>Somfy для перголы B700: французская элегантность, которая работает вместо вас</h3>
+<p style='text-align: center; margin-bottom: 15px; font-style: italic;'>(Потому что управление перголой должно быть таким же изысканным, как бокал бордо)</p>
+
+<div style='margin-bottom: 20px;'>
+<h4 style='font-size: 1.1rem;'>Somfy: автоматика, которая не знает слова «сломается»</h4>
+<ul style='margin-bottom: 10px; padding-left: 20px;'>
+    <li><strong>Мощь в простоте:</strong> Двигатели Somfy — это 160 Нм крутящего момента в компактном корпусе. Закрывают ламели даже под напором шквального ветра, словно Шарль де Голль ведет их в бой.</li>
+    <li><strong>Ресурс «на века»:</strong> 30 000 циклов — хватит, чтобы 30 лет встречать рассветы и дожди без единой поломки.</li>
+</ul>
+</div>
+
+<div style='margin-bottom: 20px;'>
+<h4 style='font-size: 1.1rem;'>Как это делает вашу жизнь идеальной?</h4>
+<ol style='margin-bottom: 10px; padding-left: 20px;'>
+    <li><strong>Дистанционное управление — как волшебная палочка:</strong> Пульт, приложение в смартфоне или интеграция с умным домом. Закройте перголу, не вставая с шезлонга — даже если вы в Париже, а она — в вашем саду.</li>
+    <li><strong>Умнее самой природы:</strong> Климатические датчики следят за погодой 24/7. Первые капли дождя? Система Somfy закрывает ламели за 15 секунд. Ваши подушки, книги и бокалы остаются сухими — вы даже не успеете сказать «Oh là là!».</li>
+    <li><strong>Простота, которой позавидует даже багет:</strong> Никаких сложных механизмов. Всё спрятано внутри балок — только чистые линии и тихая работа (шум — 40 дБ, как шепот влюбленных под Эйфелевой башней).</li>
+</ol>
+</div>
+
+<div style='margin-bottom: 20px;'>
+<h4 style='font-size: 1.1rem;'>5 причин, почему Somfy — эталон для B700:</h4>
+<ol style='margin-bottom: 10px; padding-left: 20px;'>
+    <li><strong>Сделано во Франции:</strong> Точность, проверенная десятилетиями. Технологии, которые покорили Европу — теперь и в вашем дворе.</li>
+    <li><strong>Защита IP66:</strong> Не боится ливней, песка, мороза (-25°C) и жары (+60°C). Как берётский сыр — выдержит всё.</li>
+    <li><strong>Синхронизация без проводов:</strong> Даже для пергол длиной 12 м двигатели работают в тандеме через радиосигнал. Ни проводов, ни задержек.</li>
+    <li><strong>Гарантия 10 лет:</strong> Потому что французы не признают компромиссов.</li>
+    <li><strong>Эстетика «невидимки»:</strong> Никаких коробок или проводов — только лаконичный дизайн, достойный парижских бутиков.</li>
+</ol>
+</div>
+
+<div style='margin-bottom: 20px;'>
+<h4 style='font-size: 1.1rem;'>Для кого?</h4>
+<ul style='margin-bottom: 10px; padding-left: 20px;'>
+    <li><strong>Ценители роскоши:</strong> Кто хочет, чтобы технологии служили незаметно, но безупречно.</li>
+    <li><strong>Владельцы ресторанов:</strong> Гости не должны видеть, как персонал бежит закрывать перголу — она сделает это сама.</li>
+    <li><strong>Семьи с детьми:</strong> Когда нужно за секунды спасти пикник от внезапного ливня, пока дети смеются, а не плачут.</li>
+</ul>
+</div>
+
+<p style='margin-bottom: 15px; font-weight: bold;'>Финал: Somfy — это не просто автоматика. Это ваш личный французский дворецкий, который предупредит капризы погоды раньше, чем вы о них подумаете. Выбирайте элегантность, которая не просит второго шанса — потому что не ошибется в первый раз.</p>
+
+<p style='margin-bottom: 15px; font-style: italic;'>P.S. Хотите перголу, которая закрывается быстрее, чем официант подает круассан? Somfy сделает это за 15 секунд. Без суеты, капель и разочарований.</p>
+
+<div style='text-align: center; margin: 20px 0;'>
+<img src='attached_assets/Somfy Pergola.jpeg' style='max-width: 100%; height: auto;' alt='Привод Somfy для пергол B700'>
+<p style='font-style: italic; margin-top: 5px;'>Автоматика Somfy для пергол B700 со сдвижными ламелями</p>
+</div>
+"""
+
+# Изображение для привода Somfy
+PERGOLA_IMAGES["SOMFY"] = [
+    "attached_assets/Somfy Pergola.jpeg"
+]
+
+# Подпись к изображению привода Somfy
+PERGOLA_IMAGE_CAPTIONS["SOMFY"] = "Автоматика Somfy для пергол B700"
