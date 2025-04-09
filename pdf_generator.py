@@ -62,9 +62,9 @@ def generate_commercial_offer(pergola_data, user_data=None):
     # Получаем базовые стили
     styles = getSampleStyleSheet()
     
-    # Создаем пользовательские стили
+    # Создаем пользовательские стили, используя разные имена
     styles.add(ParagraphStyle(
-        name='Title', 
+        name='KPTitle', 
         parent=styles['Heading1'], 
         fontSize=16, 
         alignment=1,  # по центру
@@ -72,7 +72,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
     ))
     
     styles.add(ParagraphStyle(
-        name='Subtitle', 
+        name='KPSubtitle', 
         parent=styles['Heading2'], 
         fontSize=14, 
         alignment=1,  # по центру
@@ -120,8 +120,8 @@ def generate_commercial_offer(pergola_data, user_data=None):
         elements.append(logo)
     except Exception as e:
         # Если не удалось загрузить логотип, добавляем текстовую шапку
-        elements.append(Paragraph("КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", styles['Title']))
-        elements.append(Paragraph("ООО 'Комфортный дом'", styles['Subtitle']))
+        elements.append(Paragraph("КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", styles['KPTitle']))
+        elements.append(Paragraph("ООО 'Комфортный дом'", styles['KPSubtitle']))
         elements.append(Paragraph("ИНН/КПП: XXXXXXXXXX / YYYYYYYYY", styles['SmallText']))
         elements.append(Paragraph("Адрес: г. Москва, ул. Примерная, д. 123", styles['SmallText']))
         elements.append(Paragraph("Телефон: +7 (XXX) XXX-XX-XX", styles['SmallText']))
@@ -148,8 +148,8 @@ def generate_commercial_offer(pergola_data, user_data=None):
     
     # Добавляем заголовок коммерческого предложения
     elements.append(Spacer(1, 10*mm))
-    elements.append(Paragraph("КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", styles['Title']))
-    elements.append(Paragraph("на поставку и монтаж биоклиматической перголы", styles['Subtitle']))
+    elements.append(Paragraph("КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", styles['KPTitle']))
+    elements.append(Paragraph("на поставку и монтаж биоклиматической перголы", styles['KPSubtitle']))
     
     # Добавляем информацию о выбранной конфигурации перголы
     elements.append(Spacer(1, 10*mm))
