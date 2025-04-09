@@ -65,7 +65,7 @@ COLUMNS_PRICES = {
 
 # Усилитель лотка добавляется автоматически при выносе > 6.5м
 GUTTER_INSERT_THRESHOLD = 6.5
-GUTTER_INSERT_PRICE = 150  # Цена усилителя лотка
+GUTTER_INSERT_PRICE = 250  # Цена усилителя лотка (250 евро согласно спецификации)
 
 # Правила для выбора привода Bansbach для B500NEW
 BANSBACH_DRIVE_RULES = {
@@ -151,11 +151,11 @@ def load_price_data(pergola_type, lamella_size):
     """
     # Определяем соответствие типов пергол и имен файлов
     file_mapping = {
-        ("B500NEW", "200"): "attached_assets/Прайс_В500-20.csv",
-        ("B500NEW", "250"): "attached_assets/Прайс_В500-25.csv",
-        ("B700NEW", "200"): "attached_assets/Прайс_B700-20.csv",
-        ("B700NEW", "250"): "attached_assets/Прайс_B700-25.csv",
-        ("B600", "PIR"): "attached_assets/Прайс_В600_PIR.csv"
+        ("B500NEW", "200"): "attached_assets/Price_B500-20.csv",
+        ("B500NEW", "250"): "attached_assets/Price_B500-25.csv",
+        ("B700NEW", "200"): "attached_assets/Price_B700-20.csv",
+        ("B700NEW", "250"): "attached_assets/Price_B700-25.csv",
+        ("B600", "PIR"): "attached_assets/Price_B600_PIR.csv"
     }
     
     key = (pergola_type, lamella_size)
@@ -603,68 +603,68 @@ def perform_calculation(dimensions, options):
             
             results["total_price"] += lighting_cost
         
-        # Добавляем информацию о спецификации
+        # Добавляем информацию о спецификации (без цен)
         specification = []
         
-        # Дополнительные колонны и усилитель лотка (на самом верху спецификации)
+        # Основная пергола
+        specification.append({
+            "name": f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м",
+            "count": f"{modules} модуль",
+            "price": ""
+        })
+        
+        # Дополнительные колонны и усилитель лотка
         if need_columns:
             specification.append({
-                "name": f"Дополнительные колонны ({modules + 1} шт.)",
-                "count": 1,
-                "price": COLUMNS_PRICES.get(modules, 0)
+                "name": "Дополнительные колонны",
+                "count": f"{modules + 1} шт.",
+                "price": ""
             })
         
         if need_gutter:
             specification.append({
                 "name": "Усилитель лотка",
-                "count": 1,
-                "price": GUTTER_INSERT_PRICE
+                "count": "1 шт.",
+                "price": ""
             })
-        
-        # Основная пергола
-        specification.append({
-            "name": f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м ({modules} модуль)",
-            "count": 1,
-            "price": base_price
-        })
         
         # Привод
         if pergola_type in ["B500NEW", "B700NEW"]:
-            drive_name, drive_price, _ = get_drive_price(pergola_type, width_m, length_m, modules)
+            drive_name, _, _ = get_drive_price(pergola_type, width_m, length_m, modules)
             specification.append({
                 "name": f"Привод {drive_name}",
-                "count": modules,
-                "price": drive_price * modules
+                "count": f"{modules} шт.",
+                "price": ""
             })
             
             # Пульт ДУ
-            remote_name, remote_price = get_remote_control(devices_count)
+            remote_name, _ = get_remote_control(devices_count)
             specification.append({
                 "name": f"Пульт ДУ {remote_name}",
-                "count": 1,
-                "price": remote_price
+                "count": "1 шт.",
+                "price": ""
             })
         
         # Освещение
         if has_lighting:
             specification.append({
                 "name": "Блок управления освещением Somfy RTS Dimmer",
-                "count": 1,
-                "price": LIGHTING_PRICES["controller"]
+                "count": "1 шт.",
+                "price": ""
             })
             
             if "white_led" in lighting_options:
                 specification.append({
-                    "name": f"Светодиодная лента белая",
+                    "name": "Светодиодная лента белая",
                     "count": f"{lighting_perimeter:.2f} м",
-                    "price": LIGHTING_PRICES["white_led"] * lighting_perimeter
+                    "price": ""
                 })
             
             if "rgb_led" in lighting_options:
                 specification.append({
-                    "name": f"Светодиодная лента RGB",
+                    "name": "Светодиодная лента RGB",
                     "count": f"{lighting_perimeter:.2f} м",
-                    "price": LIGHTING_PRICES["rgb_led"] * lighting_perimeter
+                    "price": ""
                 })
         
         results["specification"] = specification
@@ -856,11 +856,11 @@ def render_results(results):
         # Создаем таблицу спецификации
         spec_data = []
         for item in results["specification"]:
-            spec_data.append([item["name"], item["count"], f"{item['price']:.2f} €"])
+            spec_data.append([item["name"], item["count"]])
         
         # Преобразуем данные в DataFrame и отображаем
         import pandas as pd
-        spec_df = pd.DataFrame(spec_data, columns=["Наименование", "Количество", "Стоимость"])
+        spec_df = pd.DataFrame(spec_data, columns=["Наименование", "Количество"])
         st.dataframe(spec_df, use_container_width=True, hide_index=True)
     
     # Отображаем таблицу стоимости
