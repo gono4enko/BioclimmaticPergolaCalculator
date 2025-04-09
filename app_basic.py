@@ -1438,12 +1438,15 @@ def render_results(results):
             
             # Добавляем изображение
             try:
-                st.image("attached_assets/b600_sandwich.png", caption="Пергола B600 с PIR-панелями", use_container_width=True)
+                st.image("attached_assets/IMG_1003.png", caption="Пергола B600 с PIR-панелями", use_container_width=True)
             except Exception as e:
                 try:
-                    st.image("attached_assets/Снимок экрана 2025-04-09 в 13.39.51.png", caption="Пример перголы с PIR-панелями", use_container_width=True)
+                    st.image("attached_assets/b600_sandwich.png", caption="Пергола B600 с PIR-панелями", use_container_width=True)
                 except Exception as e2:
-                    st.warning(f"Не удалось загрузить изображение: {e2}")
+                    try:
+                        st.image("attached_assets/Снимок экрана 2025-04-09 в 13.39.51.png", caption="Пример перголы с PIR-панелями", use_container_width=True)
+                    except Exception as e3:
+                        st.warning(f"Не удалось загрузить изображение: {e3}")
 
 def scroll_to_results():
     """
