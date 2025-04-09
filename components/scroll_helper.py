@@ -72,6 +72,10 @@ def add_button_animation():
         position: relative;
         overflow: hidden;
         transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    
+    /* Стили только для кнопки "Рассчитать стоимость" */
+    .calculate-cost-button {
         font-size: 2rem !important; /* Большой размер шрифта */
         padding: 25px 25px !important; /* Большие отступы */
         min-height: 80px !important; /* Минимальная высота */
@@ -85,11 +89,8 @@ def add_button_animation():
         transform: scale(0.97);
     }
     
-    /* Дополнительные стили для более агрессивного изменения размера кнопки */
-    div[data-testid="stButton"] > button,
-    div[data-testid="stButton"] > button[kind="primary"],
-    button[data-testid="baseButton-primary"],
-    .element-container div[data-testid="stButton"] button {
+    /* Дополнительные стили для кнопки "Рассчитать стоимость" будут применяться через скрипт */
+    .calculate-button {
         font-size: 2rem !important; /* Большой размер шрифта */
         padding: 25px 25px !important; /* Большие отступы */
         min-height: 80px !important; /* Минимальная высота */
@@ -99,12 +100,8 @@ def add_button_animation():
         color: #ffffff !important; /* Белый текст */
     }
     
-    /* Эффект при наведении */
-    .stButton button:hover,
-    div[data-testid="stButton"] > button:hover,
-    div[data-testid="stButton"] > button[kind="primary"]:hover,
-    button[data-testid="baseButton-primary"]:hover,
-    .element-container div[data-testid="stButton"] button:hover {
+    /* Эффект при наведении только для кнопки "Рассчитать стоимость" */
+    .calculate-button:hover {
         background-color: #e36c2a !important;
         box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
     }
@@ -145,14 +142,24 @@ def add_button_animation():
             btn.innerText.includes('Рассчитать стоимость')
         );
         
-        // Примененяем стили напрямую через JavaScript
+        // Примененяем стили напрямую через JavaScript только для кнопки "Рассчитать стоимость"
         if (calculateButton) {
+            calculateButton.classList.add('calculate-button');
             calculateButton.style.fontSize = '2rem';
             calculateButton.style.padding = '25px';
             calculateButton.style.minHeight = '80px';
             calculateButton.style.fontWeight = '700';
             calculateButton.style.backgroundColor = '#ff7a2f';
             calculateButton.style.color = '#ffffff';
+            
+            // Сбрасываем стили для других кнопок
+            const allButtons = document.querySelectorAll('.stButton button');
+            allButtons.forEach(btn => {
+                if (btn !== calculateButton) {
+                    btn.style.backgroundColor = '';
+                    btn.style.color = '';
+                }
+            });
         }
         
         if (calculateButton) {
