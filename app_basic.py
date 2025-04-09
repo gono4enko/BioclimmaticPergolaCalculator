@@ -1120,7 +1120,7 @@ def render_results(results):
     
     # Отображаем спецификацию перголы
     if "specification" in results:
-        st.markdown("<h3 style='font-size: 1.2rem; margin-top: 0;'>Спецификация перголы</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 1.1rem; margin-top: 0; margin-bottom: 10px;'>Спецификация перголы</h3>", unsafe_allow_html=True)
         
         # Создаем таблицу спецификации
         spec_data = []
@@ -1138,19 +1138,35 @@ def render_results(results):
         st.markdown(
             f"""
             <style>
-            /* Специальные стили для таблицы спецификации */
+            /* Специальные стили для таблицы спецификации - ключ {spec_table_key} */
+            div[data-testid="stDataFrame"] {{
+                margin: 0 auto !important;
+                max-width: 95% !important;
+                width: 95% !important;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }}
+            
+            div[data-testid="stDataFrame"] > div {{
+                max-width: 100% !important;
+                overflow-x: hidden !important;
+            }}
+            
             [data-testid="stDataFrame"] table {{
                 width: 100% !important;
+                max-width: 100% !important;
                 table-layout: fixed !important;
                 border-collapse: collapse !important;
+                margin: 0 auto !important;
             }}
             
             [data-testid="stDataFrame"] table td {{
                 height: auto !important;
-                min-height: 60px !important;
+                min-height: 50px !important;
                 vertical-align: middle !important;
                 word-break: break-word !important;
-                line-height: 1.4 !important;
+                line-height: 1.3 !important;
+                padding: 8px 5px !important;
             }}
             
             [data-testid="stDataFrame"] table td:first-child {{
@@ -1158,50 +1174,59 @@ def render_results(results):
                 word-wrap: break-word !important;
                 overflow-wrap: break-word !important;
                 width: 70% !important;
-                padding: 12px 8px !important;
+                font-size: 0.95rem !important;
             }}
             
             [data-testid="stDataFrame"] table td:last-child {{
                 width: 30% !important;
                 text-align: center !important;
-                padding: 12px 8px !important;
+                font-size: 0.95rem !important;
             }}
             
             /* Адаптивный дизайн для мобильных устройств */
             @media (max-width: 768px) {{
-                [data-testid="stDataFrame"] {{
-                    width: 100% !important;
-                    overflow-x: hidden !important;
-                    margin-left: 5px !important;
-                    margin-right: 5px !important;
+                div[data-testid="stDataFrame"] {{
+                    width: 90% !important;
+                    max-width: 90% !important;
+                    margin: 0 auto !important;
+                    padding-left: 5px !important;
+                    padding-right: 5px !important;
                 }}
                 
                 [data-testid="stDataFrame"] table {{
                     width: 100% !important;
                     table-layout: fixed !important;
+                    margin: 0 auto !important;
                 }}
                 
                 [data-testid="stDataFrame"] table td {{
-                    min-height: 65px !important;
-                    padding: 12px 5px !important;
-                    font-size: 0.9rem !important;
+                    min-height: 40px !important;
+                    padding: 6px 3px !important;
+                    font-size: 0.8rem !important;
+                }}
+                
+                [data-testid="stDataFrame"] table th {{
+                    font-size: 0.85rem !important;
+                    padding: 5px 3px !important;
                 }}
                 
                 [data-testid="stDataFrame"] table td:first-child {{
                     width: 65% !important;
                     max-width: 65% !important;
-                    line-height: 1.5 !important;
+                    line-height: 1.3 !important;
+                    font-size: 0.8rem !important;
                 }}
                 
                 [data-testid="stDataFrame"] table td:last-child {{
                     width: 35% !important;
                     text-align: center !important;
+                    font-size: 0.8rem !important;
                 }}
                 
                 /* Исправление проблемы обрезания строк в мобильной версии */
                 [data-testid="stDataFrame"] table tbody tr {{
                     height: auto !important;
-                    min-height: 65px !important;
+                    min-height: 40px !important;
                     display: table-row !important;
                 }}
             }}
@@ -1213,7 +1238,7 @@ def render_results(results):
         st.dataframe(spec_df, use_container_width=True, hide_index=True, key=spec_table_key)
     
     # Отображаем таблицу стоимости
-    st.markdown("<h3 style='font-size: 1.2rem; margin-top: 20px;'>Стоимость</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 1.1rem; margin-top: 15px; margin-bottom: 10px;'>Стоимость</h3>", unsafe_allow_html=True)
     
     # Создаем таблицу стоимости
     items_data = []
@@ -1299,18 +1324,33 @@ def render_results(results):
     st.markdown(
         f"""
         <style>
-        /* Специальные стили для таблицы стоимости */
+        /* Специальные стили для таблицы стоимости - ключ {price_table_key} */
+        div[data-testid="stDataFrame"] {{
+            margin: 0 auto !important;
+            max-width: 95% !important;
+            width: 95% !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+        }}
+        
+        div[data-testid="stDataFrame"] > div {{
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+        }}
+        
         [data-testid="stDataFrame"] table {{
             width: 100% !important;
+            max-width: 100% !important;
             table-layout: fixed !important;
             border-collapse: collapse !important;
+            margin: 0 auto !important;
         }}
         
         /* Выравниваем значения в колонке "Стоимость" по правому краю */
         [data-testid="stDataFrame"] table td:last-child {{
             text-align: right !important;
-            padding-right: 10px !important;
-            width: 40% !important;
+            padding-right: 5px !important;
+            width: 35% !important;
             white-space: nowrap !important;
             font-size: 0.95rem !important;
         }}
@@ -1319,6 +1359,7 @@ def render_results(results):
         [data-testid="stDataFrame"] table th:last-child {{
             width: 35% !important;
             text-align: center !important;
+            font-size: 0.95rem !important;
         }}
         
         /* Стиль для строки итого */
@@ -1333,59 +1374,72 @@ def render_results(results):
             word-wrap: break-word !important;
             overflow-wrap: break-word !important;
             width: 65% !important;
-            min-height: 60px !important;
+            min-height: 50px !important;
             height: auto !important;
-            line-height: 1.4 !important;
+            line-height: 1.3 !important;
             word-break: break-word !important;
+            font-size: 0.95rem !important;
+            padding-left: 5px !important;
         }}
         
         /* Стиль для текста в ячейках */
         [data-testid="stDataFrame"] td {{
             font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
-            padding: 12px 8px !important;
+            padding: 8px 5px !important;
             height: auto !important;
-            min-height: 60px !important;
+            min-height: 50px !important;
             vertical-align: middle !important;
         }}
         
         /* Адаптивный дизайн для мобильных устройств */
         @media (max-width: 768px) {{
-            [data-testid="stDataFrame"] {{
-                width: 100% !important;
-                overflow-x: hidden !important;
-                margin-left: 5px !important;
-                margin-right: 5px !important;
+            div[data-testid="stDataFrame"] {{
+                width: 90% !important;
+                max-width: 90% !important;
+                margin: 0 auto !important;
+                padding-left: 5px !important;
+                padding-right: 5px !important;
             }}
             
             [data-testid="stDataFrame"] table {{
                 width: 100% !important;
+                max-width: 100% !important;
                 table-layout: fixed !important;
+                margin: 0 auto !important;
             }}
             
             [data-testid="stDataFrame"] table td {{
-                min-height: 65px !important;
-                padding: 12px 5px !important;
-                font-size: 0.9rem !important;
+                min-height: 40px !important;
+                padding: 6px 3px !important;
+                font-size: 0.8rem !important;
+            }}
+            
+            [data-testid="stDataFrame"] table th {{
+                font-size: 0.85rem !important;
+                padding: 5px 3px !important;
             }}
             
             [data-testid="stDataFrame"] table td:first-child {{
                 width: 60% !important;
                 max-width: 60% !important;
-                line-height: 1.5 !important;
+                line-height: 1.3 !important;
+                font-size: 0.8rem !important;
+                padding-left: 3px !important;
             }}
             
             [data-testid="stDataFrame"] table td:last-child {{
-                width: 45% !important;
-                max-width: 45% !important;
-                font-size: 0.8rem !important;
-                padding-right: 5px !important;
+                width: 40% !important;
+                max-width: 40% !important;
+                font-size: 0.75rem !important;
+                padding-right: 3px !important;
                 overflow: visible !important;
+                text-align: right !important;
             }}
             
             /* Исправление проблемы обрезания строк в мобильной версии */
             [data-testid="stDataFrame"] table tbody tr {{
                 height: auto !important;
-                min-height: 65px !important;
+                min-height: 40px !important;
                 display: table-row !important;
             }}
         }}
