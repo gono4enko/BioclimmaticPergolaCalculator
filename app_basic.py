@@ -1098,6 +1098,8 @@ def render_results(results):
     
     # Заголовок результатов
     rub_total = total_price * euro_rate
+    # Форматируем цену в бухгалтерском стиле с разделителями тысяч
+    formatted_price = "{:,.0f}".format(rub_total).replace(",", " ")
     st.markdown(f"""
     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
         <h2 style='margin-top: 0; color: #0066cc; font-size: 1.4rem;'>Результаты расчета</h2>
@@ -1111,7 +1113,7 @@ def render_results(results):
             <strong>Количество модулей:</strong> {modules}
         </p>
         <p style='font-size: 1.2rem; color: #0066cc;'>
-            <strong>Итоговая стоимость:</strong> {rub_total:.0f} ₽
+            <strong>Итоговая стоимость:</strong> {formatted_price} ₽
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -1158,52 +1160,56 @@ def render_results(results):
     if lamellas_count > 0 and pergola_type in ["B500NEW", "B700NEW"]:
         lamellas_info += f", {lamellas_count} ламелей"
     
+    # Функция для форматирования цены в бухгалтерском стиле
+    def format_price(price):
+        return "{:,.0f}".format(price).replace(",", " ") + " ₽"
+    
     # Базовая стоимость перголы - всегда первой строкой
     rub_base_price = base_price * euro_rate
-    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} модуль)", f"{rub_base_price:.0f} ₽"])
+    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} модуль)", format_price(rub_base_price)])
     
     # Привод и автоматика - второй строкой, если есть
     if pergola_type in ["B500NEW", "B700NEW"]:
         for item in results["items"]:
             if "Привод" in item["name"] or "привод" in item["name"]:
                 rub_price = item['price'] * euro_rate
-                items_data.append([item["name"], f"{rub_price:.0f} ₽"])
+                items_data.append([item["name"], format_price(rub_price)])
     
     # Пульт ДУ - третьей строкой, если есть (для всех типов пергол)
     for item in results["items"]:
         if "Пульт" in item["name"] or "пульт" in item["name"]:
             rub_price = item['price'] * euro_rate
-            items_data.append([item["name"], f"{rub_price:.0f} ₽"])
+            items_data.append([item["name"], format_price(rub_price)])
     
     # Освещение - четвертой строкой, если есть
     for item in results["items"]:
         if "освещен" in item["name"].lower() or "лента" in item["name"].lower():
             rub_price = item['price'] * euro_rate
-            items_data.append([item["name"], f"{rub_price:.0f} ₽"])
+            items_data.append([item["name"], format_price(rub_price)])
     
     # Дополнительные опции - усилитель лотка и колонны
     for item in results["items"]:
         if "Усилитель" in item["name"] or "усилитель" in item["name"]:
             rub_price = item['price'] * euro_rate
-            items_data.append([item["name"], f"{rub_price:.0f} ₽"])
+            items_data.append([item["name"], format_price(rub_price)])
         
         if "колон" in item["name"].lower():
             rub_price = item['price'] * euro_rate
-            items_data.append([item["name"], f"{rub_price:.0f} ₽"])
+            items_data.append([item["name"], format_price(rub_price)])
     
     # Доставка и установка
     for item in results["items"]:
         if "Доставка" in item["name"]:
             rub_price = item['price'] * euro_rate
-            items_data.append([item["name"], f"{rub_price:.0f} ₽"])
+            items_data.append([item["name"], format_price(rub_price)])
             
         if "Установка" in item["name"]:
             rub_price = item['price'] * euro_rate
-            items_data.append([item["name"], f"{rub_price:.0f} ₽"])
+            items_data.append([item["name"], format_price(rub_price)])
     
     # Итоговая строка - просто добавляем строку "Итого" (жирный шрифт применяется через CSS)
     rub_total = total_price * euro_rate
-    items_data.append(["Итого", f"{rub_total:.0f} ₽"])
+    items_data.append(["Итого", format_price(rub_total)])
     
     # Используем стандартный компонент Streamlit для отображения таблицы
     # (такой же стиль как у таблицы "Спецификация перголы")
