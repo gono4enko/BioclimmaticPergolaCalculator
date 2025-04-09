@@ -71,6 +71,9 @@ GUTTER_INSERT_PRICE_PER_METER = 80  # Цена усилителя лотка 80 
 DELIVERY_MARKUP_PERCENT = 10  # 10% наценка за доставку (добавляется автоматически)
 INSTALLATION_MARKUP_PERCENT = 10  # 10% наценка за установку (опционально)
 
+# Курс евро в рублях
+EURO_RATE = 110  # 1 евро = 110 рублей
+
 # Правила для выбора привода Bansbach для B500NEW
 BANSBACH_DRIVE_RULES = {
     1: [  # 1 модуль
@@ -1075,6 +1078,9 @@ def render_results(results):
     length = results["dimensions"]["length"]
     modules = results["dimensions"]["modules"]
     base_price = results["base_price"]
+    
+    # Курс евро для конвертации цен
+    euro_rate = EURO_RATE
     total_price = results["total_price"]
     
     # Отладочная информация только в режиме разработки
@@ -1091,6 +1097,7 @@ def render_results(results):
     lamellas_count = results["debug"].get("lamellas_count", 0)
     
     # Заголовок результатов
+    rub_total = total_price * euro_rate
     st.markdown(f"""
     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
         <h2 style='margin-top: 0; color: #0066cc; font-size: 1.4rem;'>Результаты расчета</h2>
@@ -1104,7 +1111,7 @@ def render_results(results):
             <strong>Количество модулей:</strong> {modules}
         </p>
         <p style='font-size: 1.2rem; color: #0066cc;'>
-            <strong>Итоговая стоимость:</strong> {total_price:.2f} €
+            <strong>Итоговая стоимость:</strong> {rub_total:.0f} ₽
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -1152,42 +1159,51 @@ def render_results(results):
         lamellas_info += f", {lamellas_count} ламелей"
     
     # Базовая стоимость перголы - всегда первой строкой
-    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} модуль)", f"{base_price:.2f} €"])
+    rub_base_price = base_price * euro_rate
+    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} модуль)", f"{rub_base_price:.0f} ₽"])
     
     # Привод и автоматика - второй строкой, если есть
     if pergola_type in ["B500NEW", "B700NEW"]:
         for item in results["items"]:
             if "Привод" in item["name"] or "привод" in item["name"]:
-                items_data.append([item["name"], f"{item['price']:.2f} €"])
+                rub_price = item['price'] * euro_rate
+                items_data.append([item["name"], f"{rub_price:.0f} ₽"])
     
     # Пульт ДУ - третьей строкой, если есть (для всех типов пергол)
     for item in results["items"]:
         if "Пульт" in item["name"] or "пульт" in item["name"]:
-            items_data.append([item["name"], f"{item['price']:.2f} €"])
+            rub_price = item['price'] * euro_rate
+            items_data.append([item["name"], f"{rub_price:.0f} ₽"])
     
     # Освещение - четвертой строкой, если есть
     for item in results["items"]:
         if "освещен" in item["name"].lower() or "лента" in item["name"].lower():
-            items_data.append([item["name"], f"{item['price']:.2f} €"])
+            rub_price = item['price'] * euro_rate
+            items_data.append([item["name"], f"{rub_price:.0f} ₽"])
     
     # Дополнительные опции - усилитель лотка и колонны
     for item in results["items"]:
         if "Усилитель" in item["name"] or "усилитель" in item["name"]:
-            items_data.append([item["name"], f"{item['price']:.2f} €"])
+            rub_price = item['price'] * euro_rate
+            items_data.append([item["name"], f"{rub_price:.0f} ₽"])
         
         if "колон" in item["name"].lower():
-            items_data.append([item["name"], f"{item['price']:.2f} €"])
+            rub_price = item['price'] * euro_rate
+            items_data.append([item["name"], f"{rub_price:.0f} ₽"])
     
     # Доставка и установка
     for item in results["items"]:
         if "Доставка" in item["name"]:
-            items_data.append([item["name"], f"{item['price']:.2f} €"])
+            rub_price = item['price'] * euro_rate
+            items_data.append([item["name"], f"{rub_price:.0f} ₽"])
             
         if "Установка" in item["name"]:
-            items_data.append([item["name"], f"{item['price']:.2f} €"])
+            rub_price = item['price'] * euro_rate
+            items_data.append([item["name"], f"{rub_price:.0f} ₽"])
     
     # Итоговая строка - просто добавляем строку "Итого" (жирный шрифт применяется через CSS)
-    items_data.append(["Итого", f"{total_price:.2f} €"])
+    rub_total = total_price * euro_rate
+    items_data.append(["Итого", f"{rub_total:.0f} ₽"])
     
     # Используем стандартный компонент Streamlit для отображения таблицы
     # (такой же стиль как у таблицы "Спецификация перголы")
@@ -1330,7 +1346,7 @@ def main():
     
     # Заголовок калькулятора - крупный и четкий
     st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 1.8rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в евро (€)</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
     # Получаем размеры перголы
     dimensions = render_dimensions_form()
@@ -1362,11 +1378,8 @@ def main():
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
     
-    # Включаем режим отладки для проверки соответствия цен в прайсе
-    if st.sidebar.checkbox("Режим отладки", value=False):
-        st.session_state.debug_mode = True
-    else:
-        st.session_state.debug_mode = False
+    # Режим отладки отключен
+    st.session_state.debug_mode = False
         
     # Отображаем результаты расчета под формами ввода
     if 'results' in st.session_state:
@@ -1381,7 +1394,7 @@ def main():
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 DecoLife | Калькулятор пергол v1.0</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v3.0</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Создаем директории, если они не существуют
