@@ -597,9 +597,9 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Заголовок калькулятора - крупный и четкий
-    st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 1.8rem; font-weight: 600; color: var(--header-color);'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem; color: var(--text-color);'>Введите размеры и параметры перголы для расчета стоимости в евро (€)</p>", unsafe_allow_html=True)
+    # Заголовок калькулятора - крупный и четкий в цветах pergolamarket.ru
+    st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 1.8rem; font-weight: 600; color: #3f6daa;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem; color: #111111;'>Введите размеры и параметры перголы для расчета стоимости в евро (€)</p>", unsafe_allow_html=True)
     dimensions = render_dimensions_form()
     
     # Используем только стандартную форму опций
@@ -628,8 +628,8 @@ def main():
         div[data-testid="stButton"] > button[data-testid="baseButton-primary"],
         button[data-testid="baseButton-primary"],
         .stButton > button[data-testid="baseButton-primary"] {
-            background-color: var(--button-bg) !important;
-            color: var(--button-text) !important;
+            background-color: #3f6daa !important; /* Синий цвет pergolamarket.ru */
+            color: #FFFFFF !important; /* Белый текст */
             font-size: 2rem !important; /* Сделаем еще больше */
             font-weight: 700 !important; /* Жирный шрифт */
             border-radius: 8px !important;
@@ -650,7 +650,7 @@ def main():
         button[data-testid="baseButton-primary"]:hover,
         .element-container div[data-testid="stButton"] button:hover,
         .stButton > button:hover {
-            background-color: var(--highlight-hover) !important;
+            background-color: #34598e !important; /* Темнее синий при наведении */
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
             transform: translateY(-2px) !important;
         }
@@ -690,26 +690,26 @@ def main():
             color: #FFFFFF !important;
         }
         
-        /* Заголовки секций - общие стили - ТЕПЕРЬ ВСЕГДА ЧЕРНЫЙ ТЕКСТ */
+        /* Заголовки секций - в стиле pergolamarket.ru */
         .section-header {
             font-weight: bold;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #3f6daa;
             padding-bottom: 5px;
             margin-bottom: 10px;
             font-size: 1.1rem;
-            color: #000000 !important;
+            color: #3f6daa !important;
             background-color: #FFFFFF !important;
         }
         
-        /* Заголовки секций с высшим приоритетом - всегда черный текст */
+        /* Заголовки секций с высшим приоритетом - в стиле pergolamarket.ru */
         .section-header,
         .stApp .section-header,
         .stApp.dark .section-header,
         .dark-mode .section-header,
         body.dark-mode .section-header,
         [data-theme="dark"] .section-header {
-            color: #000000 !important;
-            border-bottom-color: #dddddd !important;
+            color: #3f6daa !important;
+            border-bottom-color: #3f6daa !important;
             background-color: #FFFFFF !important;
         }
         
@@ -757,7 +757,7 @@ def main():
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid var(--border-color);'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: var(--text-color);'>© 2025 DecoLife | Калькулятор пергол v1.0</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #3f6daa;'>© 2025 DecoLife | Калькулятор пергол v1.0</div>", unsafe_allow_html=True)
     
     # Добавляем анимацию нажатия кнопки
     add_button_animation()
