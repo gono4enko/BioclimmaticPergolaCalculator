@@ -8,6 +8,8 @@ import os
 import math
 import csv
 import time
+from datetime import datetime
+from pdf_generator import generate_commercial_offer, format_pergola_data_for_pdf
 from config.pergola_descriptions import (
     get_pergola_description,
     get_modular_system_description,
@@ -1423,6 +1425,47 @@ def render_results(results):
                             continue
                     else:
                         st.warning(f"Не удалось загрузить изображение технических характеристик ламелей")
+    
+    # Добавляем кнопку для генерации коммерческого предложения
+    st.markdown("<hr style='margin-top: 30px; margin-bottom: 30px;'>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 1.1rem; margin-top: 15px; margin-bottom: 15px; text-align: center;'>Коммерческое предложение</h3>", unsafe_allow_html=True)
+    
+    # Создаем контейнер для кнопки с центрированием
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("Сформировать коммерческое предложение", type="primary", use_container_width=True):
+            with st.spinner("Формирование коммерческого предложения..."):
+                try:
+                    # Получаем описание перголы для добавления в КП
+                    pergola_description = get_pergola_description(pergola_type).replace('<h2', '<h3').replace('</h2>', '</h3>')
+                    
+                    # Форматируем данные для создания PDF
+                    pdf_data = format_pergola_data_for_pdf(
+                        results=results,
+                        options=results["options"],
+                        dimensions=results["dimensions"],
+                        pergola_description=pergola_description
+                    )
+                    
+                    # Генерируем PDF
+                    pdf_path = generate_commercial_offer(pdf_data)
+                    
+                    # Отображаем ссылку на скачивание
+                    st.success(f"Коммерческое предложение успешно сформировано!")
+                    
+                    # Добавляем кнопку для скачивания
+                    with open(pdf_path, "rb") as pdf_file:
+                        st.download_button(
+                            label="Скачать коммерческое предложение (PDF)", 
+                            data=pdf_file, 
+                            file_name=os.path.basename(pdf_path), 
+                            mime="application/pdf",
+                            use_container_width=True
+                        )
+                except Exception as e:
+                    st.error(f"Ошибка при формировании коммерческого предложения: {str(e)}")
+                    if st.session_state.get('debug_mode', False):
+                        st.exception(e)
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
