@@ -22,8 +22,8 @@ class PDF(FPDF):
     def __init__(self):
         # Используем конкретные значения из перечисления литералов
         super().__init__(orientation='P', unit='mm', format='A4')
-        # Добавляем поддержку кириллицы
-        self.add_font('Courier', '', 'Courier', uni=True)
+        # Используем встроенные шрифты FPDF
+        # Arial уже включен по умолчанию и поддерживает кириллицу
         # Устанавливаем мета-информацию PDF
         self.set_title("Коммерческое предложение")
         self.set_author("Pergola Calculator")
