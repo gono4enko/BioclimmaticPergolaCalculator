@@ -306,10 +306,8 @@ def generate_commercial_offer(pergola_data, user_data=None):
             # Подсчитываем количество строк в таблице спецификации
             spec_rows = len(specification) + 1  # +1 для заголовка
             
-            # Проверяем, поместится ли таблица спецификации на текущей странице
-            if not pdf.check_table_fit(spec_rows):
-                pdf.add_page()
-                pdf.chapter_title("Спецификация перголы:")  # Повторяем заголовок на новой странице
+            # Убрали проверку поместится ли таблица, чтобы лучше использовать пространство
+            # и избежать пустых мест на страницах
             
             headers = ["№", "Наименование", "Количество"]
             widths = [15, 120, 25]  # Ширина колонок в мм
@@ -333,10 +331,8 @@ def generate_commercial_offer(pergola_data, user_data=None):
             # Подсчитываем количество строк в таблице стоимости
             cost_rows = len(cost_items) + 2  # +1 для заголовка, +1 для итоговой строки
             
-            # Проверяем, поместится ли таблица стоимости на текущей странице
-            if not pdf.check_table_fit(cost_rows):
-                pdf.add_page()
-                pdf.chapter_title("Подробная стоимость:")  # Повторяем заголовок на новой странице
+            # Убрали проверку поместится ли таблица, чтобы лучше использовать пространство
+            # и избежать пустых мест на страницах
             
             headers = ["№", "Наименование", "Стоимость (₽)"]
             widths = [10, 93, 57]  # Ширина колонок в мм: уменьшили первые две, значительно увеличили последнюю
@@ -382,11 +378,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
             pdf.cell(93, 10, "ИТОГО:", 1, 0, "R", fill=True)
             pdf.cell(57, 10, total_price_str, 1, 1, "R", fill=True)
             
-            # Добавляем общую стоимость отдельно после таблицы для лучшей видимости
-            pdf.ln(5)
-            pdf.set_font('DejaVu', 'B', 12)
-            pdf.set_fill_color(240, 240, 240)
-            pdf.cell(0, 12, f"Полная стоимость: {total_price_str}", 1, 1, "C", fill=True)
+            # Убрали дублирование итоговой суммы, чтобы не повторяться
         else:
             pdf.set_font('DejaVu', '', 10)
             pdf.cell(0, 7, "Данные о стоимости отсутствуют", 0, 1)
@@ -520,78 +512,125 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 </div>
                 """
         
-        # HTML-описание нужно преобразовать в чистый текст
+        # Печатаем весь HTML-текст для отладки
+        print("ПОЛНОЕ ОПИСАНИЕ ПЕРГОЛЫ:")
+        print(pergola_description)
+        
+        # HTML-описание нужно преобразовать в чистый текст более эффективным способом
         try:
             from bs4 import BeautifulSoup
             soup = BeautifulSoup(pergola_description, 'html.parser')
             
-            # Уменьшаем базовый размер шрифта для более компактного размещения
-            pdf.set_font('DejaVu', '', 10)
+            # Сначала обрабатываем заголовок и печатаем его для отладки
+            pdf.set_font('DejaVu', 'B', 12)  # Больший размер шрифта для заголовка
             
             # Проверяем, есть ли заголовок h2 или h3 в описании
             title_tag = soup.find(['h2', 'h3'])
             if title_tag:
-                pdf.set_font('DejaVu', 'B', 11)
-                pdf.multi_cell(0, 5, title_tag.get_text().strip())
-                pdf.ln(2)
-                pdf.set_font('DejaVu', '', 10)
+                title_text = title_tag.get_text().strip()
+                print(f"Заголовок описания: {title_text}")
+                pdf.multi_cell(0, 5, title_text)
+                pdf.ln(3)
+            else:
+                # Если заголовка нет, используем тип перголы как заголовок
+                if "B500" in pergola_type:
+                    title_text = "Серия B500NEW (с поворотными ламелями)"
+                elif "B700" in pergola_type:
+                    title_text = "Серия B700NEW (со сдвижными ламелями)"
+                elif "B600" in pergola_type:
+                    title_text = "Серия B600 (с PIR-панелями)"
+                else:
+                    title_text = f"Пергола {pergola_type}"
+                
+                print(f"Используем тип перголы как заголовок: {title_text}")
+                pdf.multi_cell(0, 5, title_text)
+                pdf.ln(3)
             
-            # Обрабатываем параграфы
+            # Уменьшаем базовый размер шрифта для более компактного размещения
+            pdf.set_font('DejaVu', '', 10)
+            
+            # Находим всё описание сразу - параграфы, div-блоки, списки и т.д.
+            # Извлекаем все текстовые элементы в порядке их появления
+            text_elements = []
+            
+            # 1. Ищем все параграфы
             paragraphs = soup.find_all('p')
+            print(f"Найдено {len(paragraphs)} параграфов")
             for p in paragraphs:
                 text = p.get_text().strip()
                 if text:
-                    pdf.multi_cell(0, 5, text)
-                    pdf.ln(2)
+                    text_elements.append({"type": "paragraph", "text": text})
             
-            # Обрабатываем div-блоки с заголовками и списками
-            div_blocks = soup.find_all('div', recursive=False)
-            if not div_blocks:
-                # Если нет div на верхнем уровне, ищем их внутри первого div
+            # 2. Ищем и обрабатываем div-блоки
+            div_blocks = []
+            # Сначала ищем блоки на верхнем уровне
+            top_divs = soup.find_all('div', recursive=False)
+            if top_divs:
+                div_blocks.extend(top_divs)
+            else:
+                # Если на верхнем уровне нет, ищем внутри первого div
                 main_div = soup.find('div')
                 if main_div:
-                    div_blocks = main_div.find_all('div', recursive=False)
+                    nested_divs = main_div.find_all('div', recursive=False)
+                    div_blocks.extend(nested_divs)
             
+            print(f"Найдено {len(div_blocks)} div-блоков")
+            
+            # Обрабатываем каждый div-блок
             for div in div_blocks:
                 # Ищем заголовок (strong) внутри блока
                 strong_tag = div.find('strong')
                 if strong_tag:
-                    pdf.set_font('DejaVu', 'B', 10)
-                    pdf.multi_cell(0, 5, strong_tag.get_text().strip())
-                    pdf.ln(1)
-                    pdf.set_font('DejaVu', '', 10)
-                
-                # Обрабатываем текст с маркерами
-                text = div.get_text()
-                if '•' in text:
-                    # Разделяем на отдельные маркированные пункты
-                    bullet_items = text.split('•')
-                    for item in bullet_items:
-                        if strong_tag and item.strip() == strong_tag.get_text().strip():
-                            continue
-                        if item.strip() and not item.strip().startswith('strong'):
-                            pdf.multi_cell(0, 5, f"• {item.strip()}")
-                            pdf.ln(1)
+                    header_text = strong_tag.get_text().strip()
+                    text_elements.append({"type": "header", "text": header_text})
+                    
+                    # Если в блоке есть маркированный список (со знаком •)
+                    div_text = div.get_text()
+                    if '•' in div_text:
+                        # Разделяем на отдельные маркированные пункты
+                        bullet_items = div_text.split('•')
+                        for item in bullet_items[1:]:  # Пропускаем первый элемент (заголовок)
+                            item_text = item.strip()
+                            if item_text and not header_text in item_text:
+                                text_elements.append({"type": "bullet", "text": item_text})
+                    else:
+                        # Обычный текст, исключая заголовок
+                        content_text = div_text.replace(header_text, '', 1).strip()
+                        if content_text:
+                            text_elements.append({"type": "paragraph", "text": content_text})
                 else:
-                    # Обычный текст, исключая уже обработанный заголовок
-                    if strong_tag:
-                        text = text.replace(strong_tag.get_text(), "", 1)
-                    if text.strip():
-                        pdf.multi_cell(0, 5, text.strip())
-                        pdf.ln(2)
+                    # Если нет заголовка, добавляем весь текст как параграф
+                    text = div.get_text().strip()
+                    if text:
+                        text_elements.append({"type": "paragraph", "text": text})
             
-            # Если разметка не подходит под наш парсер, используем простое извлечение текста
-            if not paragraphs and not div_blocks:
-                clean_text = soup.get_text(separator="\n\n")
-                # Очищаем текст от излишних пробелов и переносов
+            # Если мы не нашли никаких структурированных элементов, используем весь текст
+            if not text_elements:
+                print("Не найдено структурированных элементов, используем весь текст")
+                clean_text = soup.get_text()
                 clean_text = ' '.join([line.strip() for line in clean_text.split('\n')])
+                text_elements.append({"type": "paragraph", "text": clean_text})
+            
+            # Добавляем все элементы в PDF
+            print(f"Добавляем {len(text_elements)} элементов в PDF")
+            for element in text_elements:
+                element_type = element["type"]
+                element_text = element["text"]
                 
-                # Разделяем текст на абзацы по двойным переносам
-                paragraphs = clean_text.split("\n\n")
-                for paragraph in paragraphs:
-                    if paragraph.strip():
-                        pdf.multi_cell(0, 5, paragraph.strip())
-                        pdf.ln(2)
+                if element_type == "header":
+                    # Заголовок блока с жирным шрифтом
+                    pdf.set_font('DejaVu', 'B', 10)
+                    pdf.multi_cell(0, 5, element_text)
+                    pdf.ln(2)
+                    pdf.set_font('DejaVu', '', 10)
+                elif element_type == "bullet":
+                    # Маркированный список
+                    pdf.multi_cell(0, 5, f"• {element_text}")
+                    pdf.ln(1)
+                else:  # paragraph
+                    # Обычный параграф
+                    pdf.multi_cell(0, 5, element_text)
+                    pdf.ln(2)
                 
         except Exception as e:
             print(f"Ошибка при обработке HTML-описания: {str(e)}")
