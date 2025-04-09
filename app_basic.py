@@ -450,13 +450,22 @@ def perform_calculation(dimensions, options):
     if additional_columns:
         if modules == 1:
             additional_columns_cost = 653  # 2 колонны
-            additional_columns_components = ["Дополнительные колонны - 2 шт."]
+            additional_columns_components = [
+                "Усилитель лотка для большого выноса - 1 шт.",
+                "Дополнительные колонны - 2 шт."
+            ]
         elif modules == 2:
             additional_columns_cost = 980  # 3 колонны
-            additional_columns_components = ["Дополнительные колонны - 3 шт."]
+            additional_columns_components = [
+                "Усилитель лотка для большого выноса - 1 шт.",
+                "Дополнительные колонны - 3 шт."
+            ]
         elif modules >= 3:
             additional_columns_cost = 1306  # 4 колонны
-            additional_columns_components = ["Дополнительные колонны - 4 шт."]
+            additional_columns_components = [
+                "Усилитель лотка для большого выноса - 1 шт.",
+                "Дополнительные колонны - 4 шт."
+            ]
     
     # Определяем тип автоматизации и стоимость в зависимости от типа перголы и размеров
     automation_components = []
