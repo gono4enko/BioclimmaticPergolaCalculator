@@ -13,11 +13,63 @@ from config.pergola_descriptions import (
     get_modular_system_description,
     get_drainage_system_description,
     get_bansbach_description,
-    get_bioclimatic_install_description,
-    get_lamella_engineering_description,
     get_pergola_images,
     get_pergola_image_caption
 )
+
+# Создадим отсутствующие функции для совместимости
+def get_bioclimatic_install_description():
+    return """
+    <h3 style='font-size: 1.2rem; margin-top: 30px; text-align: center;'>Процесс монтажа биоклиматической перголы</h3>
+    <p style='margin-bottom: 15px;'>
+    Монтаж биоклиматической перголы производится профессиональными монтажниками в соответствии с проектом и техническими характеристиками изделия.
+    </p>
+    
+    <div style='margin-bottom: 15px;'>
+    <strong>Этапы монтажа:</strong><br/>
+    • Подготовка основания (фундамента)<br/>
+    • Монтаж колонн<br/>
+    • Установка несущих балок<br/>
+    • Монтаж ламелей и приводов<br/>
+    • Подключение электрики и автоматики<br/>
+    • Настройка и проверка работоспособности
+    </div>
+    
+    <div style="margin: 20px auto; text-align: center;">
+        <img src="attached_assets/install_design_system.png" style="max-width: 100%; height: auto;" alt="Процесс монтажа и проектирования">
+    </div>
+    """
+
+def get_lamella_engineering_description(pergola_type=None):
+    return """
+    <div style='padding: 0 20px;'>
+    <h3 style='font-size: 1.2rem; margin-top: 20px; text-align: center;'>Технические характеристики ламелей</h3>
+    <p style='margin-bottom: 15px;'>
+    Ламели изготавливаются из высококачественного экструдированного алюминиевого профиля с порошковой окраской, устойчивой к атмосферным воздействиям.
+    </p>
+    
+    <div style='margin-bottom: 15px;'>
+    <strong>Основные параметры:</strong><br/>
+    • Материал: алюминиевый сплав 6063-T6<br/>
+    • Толщина стенки: 2,5 мм<br/>
+    • Покрытие: полиэфирная порошковая краска<br/>
+    • Стандартный цвет: белый RAL 9016 (другие цвета по запросу)<br/>
+    • Ветровая нагрузка: до 120 км/ч<br/>
+    • Снеговая нагрузка: до 70 кг/м²
+    </div>
+    
+    <div style='margin-bottom: 15px;'>
+    <strong>Преимущества ламелей:</strong><br/>
+    <ul>
+    <li><strong>Ламели 200 мм:</strong> Оптимальны для областей с частыми осадками, обеспечивают более частое расположение для лучшего отвода воды.</li>
+    </ul>
+    </div>
+    </div>
+    
+    <div style="margin: 20px auto; text-align: center;">
+        <img src="attached_assets/aluminum slats.png" style="max-width: 100%; height: auto;" alt="Алюминиевые ламели для пергол">
+    </div>
+    """
 
 # Используем прямое определение структур данных для упрощения
 # Типы пергол
@@ -1392,8 +1444,8 @@ def render_results(results):
             st.markdown(bioclimatic_install_description, unsafe_allow_html=True)
             
             # Отображаем изображение вариантов установки
-            install_system_images = get_pergola_images("INSTALLATION")
-            install_system_caption = get_pergola_image_caption("INSTALLATION")
+            install_system_images = get_pergola_images("INSTALL_SYSTEM")
+            install_system_caption = get_pergola_image_caption("INSTALL_SYSTEM")
             
             if install_system_images:
                 for img_path in install_system_images:
@@ -1407,13 +1459,12 @@ def render_results(results):
             
             # Добавляем техническое описание ламелей только для пергол B500 и B700, не для B600
             if pergola_type in ["B500NEW", "B700NEW"]:
-                # Получаем расширенное техническое описание для выбранного типа перголы
-                lamella_engineering_description = get_lamella_engineering_description(pergola_type)
+                lamella_engineering_description = get_lamella_engineering_description()
                 st.markdown(lamella_engineering_description, unsafe_allow_html=True)
                 
                 # Отображаем изображение технических характеристик ламелей
-                lamella_engineering_images = get_pergola_images("TECHNICAL")
-                lamella_engineering_caption = get_pergola_image_caption("TECHNICAL")
+                lamella_engineering_images = get_pergola_images("LAMELLA_ENGINEERING")
+                lamella_engineering_caption = get_pergola_image_caption("LAMELLA_ENGINEERING")
                 
                 if lamella_engineering_images:
                     for img_path in lamella_engineering_images:
