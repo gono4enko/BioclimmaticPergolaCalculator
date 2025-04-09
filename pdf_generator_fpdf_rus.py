@@ -304,13 +304,67 @@ def generate_commercial_offer(pergola_data, user_data=None):
             # Выводим текст в PDF
             pdf.set_font('DejaVu', '', 11)
             
-            # Разбиваем текст на параграфы и удаляем лишние пробелы
-            paragraphs = [p.strip() for p in clean_text.split("\n\n") if p.strip()]
+            # Очищаем текст от излишних пробелов и переносов
+            clean_text = ' '.join([line.strip() for line in clean_text.split('\n')])
             
-            # Выводим параграфы
-            for paragraph in paragraphs:
-                pdf.multi_cell(0, 6, paragraph)
-                pdf.ln(3)
+            # Разбиваем текст на смысловые блоки
+            sections = []
+            current_section = []
+            
+            for line in clean_text.split('\n\n'):
+                line = line.strip()
+                if line:
+                    current_section.append(line)
+                elif current_section:
+                    sections.append(' '.join(current_section))
+                    current_section = []
+            
+            if current_section:
+                sections.append(' '.join(current_section))
+            
+            # Добавляем блоки в PDF
+            for section in sections:
+                # Добавляем заголовки с жирным шрифтом
+                if "B500NEW" in section or "Серия B500NEW" in section:
+                    pdf.set_font('DejaVu', 'B', 12)
+                    pdf.multi_cell(0, 6, "Серия B500NEW (с поворотными ламелями)")
+                    pdf.ln(3)
+                    pdf.set_font('DejaVu', '', 11)
+                    continue
+                    
+                if "Ламели:" in section:
+                    pdf.set_font('DejaVu', 'B', 12)
+                    pdf.multi_cell(0, 6, "Ламели:")
+                    pdf.ln(3)
+                    pdf.set_font('DejaVu', '', 11)
+                    continue
+                    
+                if "Преимущества:" in section:
+                    pdf.set_font('DejaVu', 'B', 12)
+                    pdf.multi_cell(0, 6, "Преимущества:")
+                    pdf.ln(3)
+                    pdf.set_font('DejaVu', '', 11)
+                    continue
+                
+                if "Узлы:" in section:
+                    pdf.set_font('DejaVu', 'B', 12)
+                    pdf.multi_cell(0, 6, "Узлы:")
+                    pdf.ln(3)
+                    pdf.set_font('DejaVu', '', 11)
+                    continue
+                
+                # Обрабатываем маркированные списки
+                if section.startswith('•'):
+                    # Разбираем маркированные пункты
+                    items = section.split('•')
+                    for item in items:
+                        if item.strip():
+                            pdf.multi_cell(0, 6, f"• {item.strip()}")
+                            pdf.ln(2)
+                else:
+                    # Обычный текст
+                    pdf.multi_cell(0, 6, section)
+                    pdf.ln(3)
                 
         except Exception as e:
             print(f"Ошибка при обработке HTML-описания: {str(e)}")
@@ -329,29 +383,37 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 max_width_mm = 160
                 max_width_px = int(max_width_mm * 300 / 25.4)  # Преобразуем мм в пиксели при 300 DPI
                 
-                # Вычисляем максимальную ширину для изображения в формате PDF
-                max_width_pdf = 170  # Максимальная ширина в мм
+                # Создаем отдельную страницу для изображения
+                pdf.add_page()
                 
-                # Добавляем новую страницу, если изображение слишком велико для текущей
-                if pdf.get_y() > pdf.page_break_trigger - 100:
-                    pdf.add_page()
+                # Максимальная ширина для изображения в PDF
+                max_width_pdf = 160  # максимальная ширина в мм
                 
-                # Центрируем изображение и устанавливаем правильную ширину
-                pdf.ln(10)
+                # Вычисляем отношение сторон
+                aspect_ratio = height / width
                 
-                # Сохраняем пропорции изображения
-                img_width_mm = min(max_width_pdf, 170)  # Ограничиваем максимальную ширину
+                # Рассчитываем размеры с сохранением пропорций
+                img_width_mm = max_width_pdf
+                img_height_mm = img_width_mm * aspect_ratio
                 
                 # Отладочная информация
                 print(f"Исходные размеры изображения: {width}x{height}")
-                print(f"Добавляем изображение с шириной: {img_width_mm} мм")
+                print(f"Отношение сторон: {aspect_ratio:.2f}")
+                print(f"Размеры для PDF: {img_width_mm:.1f}x{img_height_mm:.1f} мм")
                 
-                # Добавляем изображение с сохранением пропорций
+                # Добавляем заголовок изображения
+                pdf.set_font('DejaVu', 'B', 12)
+                pdf.cell(0, 10, "Иллюстрация перголы:", 0, 1, "C")
+                pdf.ln(5)
+                
+                # Вставляем изображение с явным указанием ширины и высоты
+                # для гарантии сохранения пропорций
                 pdf.image(
-                    image_path, 
-                    x=(210 - img_width_mm) / 2,  # Центрируем по горизонтали
-                    w=img_width_mm,  # Устанавливаем ширину
-                    h=0  # Высота 0 означает автоматическое сохранение пропорций
+                    image_path,
+                    x=(210 - img_width_mm) / 2,  # центрируем
+                    y=pdf.get_y(),  # текущая позиция Y
+                    w=img_width_mm,  # ширина
+                    h=img_height_mm  # высота, рассчитанная с сохранением пропорций
                 )
                 print(f"Добавляем изображение в PDF: {image_path}")
             except Exception as e:
