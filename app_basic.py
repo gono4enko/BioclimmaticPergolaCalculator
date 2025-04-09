@@ -1143,8 +1143,8 @@ def render_results(results):
                 margin: 0 auto !important;
                 max-width: 95% !important;
                 width: 95% !important;
-                padding-left: 10px !important;
-                padding-right: 10px !important;
+                padding-left: 15px !important;
+                padding-right: 15px !important;
             }}
             
             div[data-testid="stDataFrame"] > div {{
@@ -1186,11 +1186,11 @@ def render_results(results):
             /* Адаптивный дизайн для мобильных устройств */
             @media (max-width: 768px) {{
                 div[data-testid="stDataFrame"] {{
-                    width: 90% !important;
-                    max-width: 90% !important;
+                    width: 95% !important;
+                    max-width: 95% !important;
                     margin: 0 auto !important;
-                    padding-left: 5px !important;
-                    padding-right: 5px !important;
+                    padding-left: 10px !important;
+                    padding-right: 10px !important;
                 }}
                 
                 [data-testid="stDataFrame"] table {{
@@ -1327,10 +1327,12 @@ def render_results(results):
         <style>
         /* Специальные стили для таблицы стоимости - ключ {price_table_key} */
         div[data-testid="stDataFrame"] {{
-            margin: 0 !important;
+            margin: 0 auto !important;
             padding: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
+            width: 95% !important;
+            max-width: 95% !important;
+            padding-left: 15px !important;
+            padding-right: 15px !important;
         }}
         
         div[data-testid="stDataFrame"] > div {{
@@ -1401,10 +1403,12 @@ def render_results(results):
         /* Адаптивный дизайн для мобильных устройств */
         @media (max-width: 768px) {{
             div[data-testid="stDataFrame"] {{
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
+                width: 95% !important;
+                max-width: 95% !important;
+                margin: 0 auto !important;
                 padding: 0 !important;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
             }}
             
             div[data-testid="stDataFrame"] > div {{
