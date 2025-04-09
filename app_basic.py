@@ -1398,12 +1398,15 @@ def render_results(results):
             
             # Добавляем изображение
             try:
-                st.image("attached_assets/b700_sliding.png", caption="Пергола B700 со сдвижными ламелями", use_container_width=True)
+                st.image("attached_assets/IMG_1002.jpeg", caption="Пергола B700 со сдвижными ламелями", use_container_width=True)
             except Exception as e:
                 try:
-                    st.image("attached_assets/Снимок экрана 2025-04-09 в 13.51.02.png", caption="Пример перголы со сдвижными ламелями", use_container_width=True)
+                    st.image("attached_assets/b700_sliding.png", caption="Пергола B700 со сдвижными ламелями", use_container_width=True)
                 except Exception as e2:
-                    st.warning(f"Не удалось загрузить изображение: {e2}")
+                    try:
+                        st.image("attached_assets/Снимок экрана 2025-04-09 в 13.51.02.png", caption="Пример перголы со сдвижными ламелями", use_container_width=True)
+                    except Exception as e3:
+                        st.warning(f"Не удалось загрузить изображение: {e3}")
             
         elif pergola_type == "B600":
             st.markdown(f"""
