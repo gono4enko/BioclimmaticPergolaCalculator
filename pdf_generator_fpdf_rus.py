@@ -384,13 +384,27 @@ def generate_commercial_offer(pergola_data, user_data=None):
             pdf.set_font('DejaVu', '', 10)
             pdf.cell(0, 7, "Данные о стоимости отсутствуют", 0, 1)
         
-        # Добавляем описание перголы - более эффективная обработка HTML
+        # Добавляем описание перголы и дополнительные разделы
         pdf.add_page()
         pdf.chapter_title("Описание перголы:")
         
-        # Получаем описание перголы
+        # Собираем все типы описаний
+        descriptions = []
+        
+        # Основное описание перголы
         pergola_description = pergola_data.get('description', '')
         pergola_type = pergola_data.get('pergola_type', 'биоклиматическая')
+        if pergola_description:
+            descriptions.append(pergola_description)
+            
+        # Дополнительные описания
+        modular_description = pergola_data.get('modular_description', '')
+        if modular_description:
+            descriptions.append(modular_description)
+            
+        drainage_description = pergola_data.get('drainage_description', '')
+        if drainage_description:
+            descriptions.append(drainage_description)
         
         # Выводим для отладки
         print(f"Длина HTML-описания: {len(pergola_description)} символов")
@@ -517,207 +531,290 @@ def generate_commercial_offer(pergola_data, user_data=None):
         print("ПОЛНОЕ ОПИСАНИЕ ПЕРГОЛЫ:")
         print(pergola_description)
         
-        # HTML-описание нужно преобразовать в чистый текст более эффективным способом
-        try:
-            from bs4 import BeautifulSoup
-            soup = BeautifulSoup(pergola_description, 'html.parser')
+        # Обрабатываем все блоки описаний последовательно
+        for section_index, html_description in enumerate(descriptions):
+            # Добавляем разрыв страницы между разными описаниями (кроме первого)
+            if section_index > 0:
+                pdf.add_page()
+                # Если у нас более одного раздела, добавляем заголовки для дополнительных
+                if section_index == 1:
+                    pdf.chapter_title("Модульная система пергол:")
+                elif section_index == 2:
+                    pdf.chapter_title("Система водоотведения:")
             
-            # Сначала обрабатываем заголовок и печатаем его для отладки
-            pdf.set_font('DejaVu', 'B', 12)  # Больший размер шрифта для заголовка
-            
-            # Проверяем, есть ли заголовок h2 или h3 в описании
-            title_tag = soup.find(['h2', 'h3'])
-            if title_tag:
-                title_text = title_tag.get_text().strip()
-                print(f"Заголовок описания: {title_text}")
-                pdf.multi_cell(0, 5, title_text)
-                pdf.ln(3)
-            else:
-                # Если заголовка нет, используем тип перголы как заголовок
-                if "B500" in pergola_type:
-                    title_text = "Серия B500NEW (с поворотными ламелями)"
-                elif "B700" in pergola_type:
-                    title_text = "Серия B700NEW (со сдвижными ламелями)"
-                elif "B600" in pergola_type:
-                    title_text = "Серия B600 (с PIR-панелями)"
-                else:
-                    title_text = f"Пергола {pergola_type}"
+            # HTML-описание нужно преобразовать в чистый текст более эффективным способом
+            try:
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(html_description, 'html.parser')
                 
-                print(f"Используем тип перголы как заголовок: {title_text}")
-                pdf.multi_cell(0, 5, title_text)
-                pdf.ln(3)
-            
-            # Уменьшаем базовый размер шрифта для более компактного размещения
-            pdf.set_font('DejaVu', '', 10)
-            
-            # Находим всё описание сразу - параграфы, div-блоки, списки и т.д.
-            # Извлекаем все текстовые элементы в порядке их появления
-            text_elements = []
-            
-            # 1. Ищем все параграфы
-            paragraphs = soup.find_all('p')
-            print(f"Найдено {len(paragraphs)} параграфов")
-            for p in paragraphs:
-                text = p.get_text().strip()
-                if text:
-                    text_elements.append({"type": "paragraph", "text": text})
-            
-            # 2. Ищем и обрабатываем div-блоки
-            div_blocks = []
-            # Сначала ищем блоки на верхнем уровне
-            top_divs = soup.find_all('div', recursive=False)
-            if top_divs:
-                div_blocks.extend(top_divs)
-            else:
-                # Если на верхнем уровне нет, ищем внутри первого div
-                main_div = soup.find('div')
-                if main_div:
-                    nested_divs = main_div.find_all('div', recursive=False)
-                    div_blocks.extend(nested_divs)
-            
-            print(f"Найдено {len(div_blocks)} div-блоков")
-            
-            # Обрабатываем каждый div-блок
-            for div in div_blocks:
-                # Ищем заголовок (strong) внутри блока
-                strong_tag = div.find('strong')
-                if strong_tag:
-                    header_text = strong_tag.get_text().strip()
-                    text_elements.append({"type": "header", "text": header_text})
-                    
-                    # Если в блоке есть маркированный список (со знаком •)
-                    div_text = div.get_text()
-                    if '•' in div_text:
-                        # Разделяем на отдельные маркированные пункты
-                        bullet_items = div_text.split('•')
-                        for item in bullet_items[1:]:  # Пропускаем первый элемент (заголовок)
-                            item_text = item.strip()
-                            if item_text and not header_text in item_text:
-                                text_elements.append({"type": "bullet", "text": item_text})
+                # Сначала обрабатываем заголовок и печатаем его для отладки
+                pdf.set_font('DejaVu', 'B', 12)  # Больший размер шрифта для заголовка
+                
+                # Проверяем, есть ли заголовок h2 или h3 в описании
+                title_tag = soup.find(['h2', 'h3'])
+                if title_tag:
+                    title_text = title_tag.get_text().strip()
+                    print(f"Заголовок описания: {title_text}")
+                    pdf.multi_cell(0, 5, title_text)
+                    pdf.ln(3)
+                elif section_index == 0:  # Только для первого раздела используем тип перголы
+                    # Если заголовка нет, используем тип перголы как заголовок
+                    if "B500" in pergola_type:
+                        title_text = "Серия B500NEW (с поворотными ламелями)"
+                    elif "B700" in pergola_type:
+                        title_text = "Серия B700NEW (со сдвижными ламелями)"
+                    elif "B600" in pergola_type:
+                        title_text = "Серия B600 (с PIR-панелями)"
                     else:
-                        # Обычный текст, исключая заголовок
+                        title_text = f"Пергола {pergola_type}"
+                    
+                    print(f"Используем тип перголы как заголовок: {title_text}")
+                    pdf.multi_cell(0, 5, title_text)
+                    pdf.ln(3)
+                
+                # Уменьшаем базовый размер шрифта для более компактного размещения
+                pdf.set_font('DejaVu', '', 10)
+                
+                # Находим всё описание сразу - параграфы, div-блоки, списки и т.д.
+                # Извлекаем все текстовые элементы в порядке их появления
+                text_elements = []
+                
+                # 1. Ищем все параграфы
+                paragraphs = soup.find_all('p')
+                print(f"Найдено {len(paragraphs)} параграфов")
+                for p in paragraphs:
+                    text = p.get_text().strip()
+                    if text:
+                        text_elements.append({"type": "paragraph", "text": text})
+                
+                # 2. Ищем и обрабатываем div-блоки
+                div_blocks = []
+                # Сначала ищем блоки на верхнем уровне
+                top_divs = soup.find_all('div', recursive=False)
+                if top_divs:
+                    div_blocks.extend(top_divs)
+                else:
+                    # Если на верхнем уровне нет, ищем внутри первого div
+                    main_div = soup.find('div')
+                    if main_div:
+                        nested_divs = main_div.find_all('div', recursive=False)
+                        div_blocks.extend(nested_divs)
+                
+                print(f"Найдено {len(div_blocks)} div-блоков")
+                
+                # 3. Ищем все списки
+                list_elements = soup.find_all(['ul', 'ol'])
+                for list_elem in list_elements:
+                    # Определяем тип списка (нумерованный или маркированный)
+                    is_ordered = list_elem.name == 'ol'
+                    
+                    # Получаем все элементы списка
+                    list_items = list_elem.find_all('li')
+                    for i, li in enumerate(list_items):
+                        item_text = li.get_text().strip()
+                        if is_ordered:
+                            text_elements.append({"type": "ordered", "number": i+1, "text": item_text})
+                        else:
+                            text_elements.append({"type": "bullet", "text": item_text})
+                
+                # 4. Обрабатываем каждый div-блок
+                for div in div_blocks:
+                    # Ищем заголовок (strong, b) внутри блока
+                    header_tag = div.find(['strong', 'b', 'h4', 'h5', 'h6'])
+                    if header_tag:
+                        header_text = header_tag.get_text().strip()
+                        # Проверяем, что это действительно заголовок, а не просто выделенный текст
+                        if len(header_text) < 100:  # Заголовки обычно короткие
+                            text_elements.append({"type": "header", "text": header_text})
+                    
+                    # Проверяем, есть ли в div маркированный список
+                    list_markers = ['•', '◦', '▪', '▫', '–', '-']
+                    div_text = div.get_text()
+                    
+                    has_markers = any(marker in div_text for marker in list_markers)
+                    
+                    if has_markers:
+                        # Если есть маркированный список, разделяем по маркерам
+                        for marker in list_markers:
+                            if marker in div_text:
+                                # Разделяем на отдельные маркированные пункты
+                                bullet_items = div_text.split(marker)
+                                for i, item in enumerate(bullet_items):
+                                    if i == 0 and header_tag:  # Пропускаем первый элемент, если есть заголовок
+                                        continue
+                                    
+                                    item_text = item.strip()
+                                    if item_text:
+                                        # Проверяем, не содержит ли этот элемент заголовок
+                                        if header_tag and header_text in item_text:
+                                            # Если содержит, удаляем заголовок из текста
+                                            item_text = item_text.replace(header_text, '', 1).strip()
+                                        
+                                        if item_text:  # Добавляем только если есть текст
+                                            text_elements.append({"type": "bullet", "text": item_text})
+                                break  # Используем только первый найденный маркер
+                    elif header_tag:
+                        # Если есть заголовок, но нет маркированного списка, обрабатываем обычный текст
                         content_text = div_text.replace(header_text, '', 1).strip()
                         if content_text:
                             text_elements.append({"type": "paragraph", "text": content_text})
-                else:
-                    # Если нет заголовка, добавляем весь текст как параграф
-                    text = div.get_text().strip()
-                    if text:
-                        text_elements.append({"type": "paragraph", "text": text})
-            
-            # Если мы не нашли никаких структурированных элементов, используем весь текст
-            if not text_elements:
-                print("Не найдено структурированных элементов, используем весь текст")
-                clean_text = soup.get_text()
-                clean_text = ' '.join([line.strip() for line in clean_text.split('\n')])
-                text_elements.append({"type": "paragraph", "text": clean_text})
-            
-            # Добавляем все элементы в PDF
-            print(f"Добавляем {len(text_elements)} элементов в PDF")
-            for element in text_elements:
-                element_type = element["type"]
-                element_text = element["text"]
+                    else:
+                        # Если нет ни заголовка, ни маркированного списка, 
+                        # добавляем весь текст div как параграф
+                        text = div.get_text().strip()
+                        if text:
+                            text_elements.append({"type": "paragraph", "text": text})
                 
-                if element_type == "header":
-                    # Заголовок блока с жирным шрифтом
-                    pdf.set_font('DejaVu', 'B', 10)
-                    pdf.multi_cell(0, 5, element_text)
-                    pdf.ln(2)
-                    pdf.set_font('DejaVu', '', 10)
-                elif element_type == "bullet":
-                    # Маркированный список
-                    pdf.multi_cell(0, 5, f"• {element_text}")
-                    pdf.ln(1)
-                else:  # paragraph
-                    # Обычный параграф
-                    pdf.multi_cell(0, 5, element_text)
-                    pdf.ln(2)
+                # Если мы не нашли никаких структурированных элементов, используем весь текст
+                if not text_elements:
+                    print("Не найдено структурированных элементов, используем весь текст")
+                    clean_text = soup.get_text()
+                    # Удаляем лишние пробелы и переносы строк
+                    clean_text = ' '.join([line.strip() for line in clean_text.split('\n')])
+                    text_elements.append({"type": "paragraph", "text": clean_text})
                 
-        except Exception as e:
-            print(f"Ошибка при обработке HTML-описания: {str(e)}")
-            pdf.set_font('DejaVu', '', 10)
-            
-            # Если обработка HTML не удалась, используем простую разбивку текста
-            try:
-                # Удаляем HTML-теги и извлекаем только текст
-                import re
-                clean_text = re.sub('<.*?>', ' ', pergola_description)
-                clean_text = re.sub(r'\s+', ' ', clean_text).strip()
-                
-                # Разбиваем текст на абзацы по длине
-                max_chars = 100
-                paragraphs = []
-                
-                words = clean_text.split()
-                current_paragraph = []
-                
-                for word in words:
-                    current_paragraph.append(word)
-                    if len(' '.join(current_paragraph)) >= max_chars:
-                        paragraphs.append(' '.join(current_paragraph))
-                        current_paragraph = []
-                
-                if current_paragraph:
-                    paragraphs.append(' '.join(current_paragraph))
-                
-                # Добавляем текст в PDF
-                for paragraph in paragraphs:
-                    pdf.multi_cell(0, 5, paragraph)
-                    pdf.ln(2)
+                # Добавляем все элементы в PDF
+                print(f"Добавляем {len(text_elements)} элементов в PDF")
+                for element in text_elements:
+                    element_type = element["type"]
+                    element_text = element["text"]
                     
-            except:
-                # Если даже это не сработало, показываем сообщение об ошибке
-                pdf.cell(0, 7, "Не удалось загрузить описание перголы", 0, 1)
-        
-        # Добавляем изображение перголы, если оно есть
-        image_path = pergola_data.get('image_path')
-        if image_path and os.path.exists(image_path):
-            try:
-                # Обрабатываем изображение перед добавлением
-                original_img = Image.open(image_path)
-                width, height = original_img.size
+                    if element_type == "header":
+                        # Заголовок блока с жирным шрифтом
+                        pdf.set_font('DejaVu', 'B', 10)
+                        pdf.multi_cell(0, 5, element_text)
+                        pdf.ln(2)
+                        pdf.set_font('DejaVu', '', 10)
+                    elif element_type == "bullet":
+                        # Маркированный список
+                        pdf.multi_cell(0, 5, f"• {element_text}")
+                        pdf.ln(1)
+                    elif element_type == "ordered":
+                        # Нумерованный список
+                        number = element.get("number", 1)
+                        pdf.multi_cell(0, 5, f"{number}. {element_text}")
+                        pdf.ln(1)
+                    else:  # paragraph
+                        # Обычный параграф
+                        pdf.multi_cell(0, 5, element_text)
+                        pdf.ln(2)
                 
-                # Определяем максимальную ширину для изображения (160 мм, учитывая поля)
-                max_width_mm = 160
-                
-                # Вычисляем отношение сторон
-                aspect_ratio = height / width
-                
-                # Рассчитываем размеры с сохранением пропорций
-                img_width_mm = max_width_mm
-                img_height_mm = img_width_mm * aspect_ratio
-                
-                # Отладочная информация
-                print(f"Исходные размеры изображения: {width}x{height}")
-                print(f"Отношение сторон: {aspect_ratio:.2f}")
-                print(f"Размеры для PDF: {img_width_mm:.1f}x{img_height_mm:.1f} мм")
-                
-                # Проверяем, поместится ли изображение на текущей странице
-                # (учитываем текущую позицию и высоту изображения + запас 20 мм)
-                available_space = 297 - pdf.get_y() - 20  # 297 мм - высота страницы A4
-                
-                # Если изображение не поместится на текущей странице, создаем новую
-                if img_height_mm + 15 > available_space:
-                    pdf.add_page()
-                
-                # Добавляем заголовок изображения
-                pdf.ln(5)
-                pdf.set_font('DejaVu', 'B', 12)
-                pdf.cell(0, 10, "Иллюстрация перголы:", 0, 1, "C")
-                pdf.ln(5)
-                
-                # Вставляем изображение с явным указанием ширины и высоты
-                # для гарантии сохранения пропорций
-                pdf.image(
-                    image_path,
-                    x=(210 - img_width_mm) / 2,  # центрируем
-                    y=pdf.get_y(),  # текущая позиция Y
-                    w=img_width_mm,  # ширина
-                    h=img_height_mm  # высота, рассчитанная с сохранением пропорций
-                )
-                print(f"Добавляем изображение в PDF: {image_path}")
             except Exception as e:
-                print(f"Ошибка при обработке изображения: {str(e)}")
+                print(f"Ошибка при обработке HTML-описания (раздел {section_index}): {str(e)}")
+                pdf.set_font('DejaVu', '', 10)
+                
+                # Если обработка HTML не удалась, используем простую разбивку текста
+                try:
+                    # Удаляем HTML-теги и извлекаем только текст
+                    import re
+                    clean_text = re.sub('<.*?>', ' ', html_description)
+                    clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+                    
+                    # Разбиваем текст на абзацы по длине
+                    max_chars = 100
+                    paragraphs = []
+                    
+                    words = clean_text.split()
+                    current_paragraph = []
+                    
+                    for word in words:
+                        current_paragraph.append(word)
+                        if len(' '.join(current_paragraph)) >= max_chars:
+                            paragraphs.append(' '.join(current_paragraph))
+                            current_paragraph = []
+                    
+                    if current_paragraph:
+                        paragraphs.append(' '.join(current_paragraph))
+                    
+                    # Добавляем текст в PDF
+                    for paragraph in paragraphs:
+                        pdf.multi_cell(0, 5, paragraph)
+                        pdf.ln(2)
+                        
+                except Exception as ex:
+                    print(f"Ошибка при обработке текста: {str(ex)}")
+                    # Если даже это не сработало, показываем сообщение об ошибке
+                    pdf.cell(0, 7, f"Не удалось загрузить описание перголы (раздел {section_index})", 0, 1)
+        
+        # Добавляем изображения перголы (может быть несколько)
+        image_paths = pergola_data.get('image_paths', [])
+        if not image_paths and 'image_path' in pergola_data:
+            # Для обратной совместимости
+            image_path = pergola_data.get('image_path')
+            if image_path and os.path.exists(image_path):
+                image_paths = [image_path]
+        
+        # Получаем подпись для изображений
+        image_caption = pergola_data.get('image_caption', "Иллюстрация перголы")
+        
+        # Добавляем все изображения
+        if image_paths:
+            # Добавляем заголовок для раздела с изображениями (один раз)
+            pdf.add_page()
+            pdf.set_font('DejaVu', 'B', 14)
+            pdf.cell(0, 10, "Иллюстрации:", 0, 1, "C")
+            pdf.ln(5)
+            
+            # Добавляем все изображения по очереди
+            for i, img_path in enumerate(image_paths):
+                if os.path.exists(img_path):
+                    try:
+                        # Обрабатываем изображение перед добавлением
+                        original_img = Image.open(img_path)
+                        width, height = original_img.size
+                        
+                        # Определяем максимальную ширину для изображения (160 мм, учитывая поля)
+                        max_width_mm = 160
+                        
+                        # Вычисляем отношение сторон
+                        aspect_ratio = height / width
+                        
+                        # Рассчитываем размеры с сохранением пропорций
+                        img_width_mm = max_width_mm
+                        img_height_mm = img_width_mm * aspect_ratio
+                        
+                        # Отладочная информация
+                        print(f"Изображение {i+1}: {img_path}")
+                        print(f"Исходные размеры изображения: {width}x{height}")
+                        print(f"Отношение сторон: {aspect_ratio:.2f}")
+                        print(f"Размеры для PDF: {img_width_mm:.1f}x{img_height_mm:.1f} мм")
+                        
+                        # Проверяем, поместится ли изображение на текущей странице
+                        # (учитываем текущую позицию и высоту изображения + запас 20 мм)
+                        available_space = 297 - pdf.get_y() - 20  # 297 мм - высота страницы A4
+                        
+                        # Если изображение не поместится на текущей странице, создаем новую
+                        if img_height_mm + 20 > available_space:
+                            pdf.add_page()
+                        
+                        # Добавляем изображение с подписью
+                        if i > 0:
+                            pdf.ln(15)  # Отступ между изображениями
+                            
+                        # Формируем подпись с номером изображения, если их несколько
+                        if len(image_paths) > 1:
+                            caption = f"{image_caption} ({i+1}/{len(image_paths)})"
+                        else:
+                            caption = image_caption
+                            
+                        pdf.set_font('DejaVu', 'B', 11)
+                        pdf.cell(0, 8, caption, 0, 1, "C")
+                        pdf.ln(5)
+                        
+                        # Вставляем изображение с явным указанием ширины и высоты
+                        # для гарантии сохранения пропорций
+                        pdf.image(
+                            img_path,
+                            x=(210 - img_width_mm) / 2,  # центрируем
+                            y=pdf.get_y(),  # текущая позиция Y
+                            w=img_width_mm,  # ширина
+                            h=img_height_mm  # высота, рассчитанная с сохранением пропорций
+                        )
+                        print(f"Добавлено изображение в PDF: {img_path}")
+                    except Exception as e:
+                        print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
+                else:
+                    print(f"Изображение не найдено: {img_path}")
         
         # Добавляем контактную информацию - проверяем, может ли она поместиться на текущей странице
         # Примерный размер для контактной информации (6 строк по 7 мм + заголовок и отступы)
@@ -888,42 +985,106 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
             })
     pdf_data['cost_items'] = cost_items
     
-    # Добавляем пути к изображениям перголы, использующиеся в UI
-    # Проверяем наличие файлов из скриншотов в attached_assets
-    if pergola_type == 'B500NEW':
-        # Пробуем найти изображение B500 с вращением ламелей
-        possible_paths = [
-            "attached_assets/Снимок экрана 2025-04-09 в 22.44.59.png",
-            "attached_assets/aluminum slats.png",
-            "attached_assets/В500 со вращением ламелей.png",
-            "attached_assets/b500_rotation.png",
-            "attached_assets/Снимок экрана 2025-04-09 в 23.20.06.png"  # Добавлен новый скриншот
-        ]
-        for path in possible_paths:
-            if os.path.exists(path):
-                pdf_data['image_path'] = path
-                break
-    elif pergola_type == 'B700NEW':
-        # Пробуем найти изображение B700 со сдвижением ламелей
-        possible_paths = [
-            "attached_assets/В700 со сдвижением ламелей.png",
-            "attached_assets/b700_sliding.png",
-            "attached_assets/Снимок экрана 2025-04-09 в 23.11.44.png"  # Добавлен новый скриншот
-        ]
-        for path in possible_paths:
-            if os.path.exists(path):
-                pdf_data['image_path'] = path
-                break
-    elif pergola_type == 'B600':
-        # Пробуем найти изображение B600 с сэндвич панелями
-        possible_paths = [
-            "attached_assets/В600 с сэндвич панелями.png",
-            "attached_assets/b600_sandwich.png",
-            "attached_assets/Снимок экрана 2025-04-09 в 23.02.37.png"  # Добавлен новый скриншот
-        ]
-        for path in possible_paths:
-            if os.path.exists(path):
-                pdf_data['image_path'] = path
-                break
+    # Импортируем функции для работы с описаниями и изображениями пергол
+    try:
+        from config.pergola_descriptions import (
+            get_pergola_description, 
+            get_pergola_images, 
+            get_modular_system_description,
+            get_drainage_system_description,
+            get_pergola_image_caption
+        )
+        
+        # Получаем полное HTML-описание перголы
+        # Если описание не было передано, запрашиваем его
+        if not pergola_description or pergola_description == "<p>Описание для данного типа перголы отсутствует.</p>":
+            full_description = get_pergola_description(pergola_type)
+            if full_description:
+                pdf_data['description'] = full_description
+            
+            # Добавляем модульную систему и другие общие описания
+            modular_description = get_modular_system_description()
+            drainage_description = get_drainage_system_description()
+            
+            if modular_description:
+                pdf_data['modular_description'] = modular_description
+            
+            if drainage_description:
+                pdf_data['drainage_description'] = drainage_description
+        
+        # Получаем список изображений для данного типа перголы
+        image_paths = []
+        pergola_images = get_pergola_images(pergola_type)
+        
+        # Проверяем наличие всех изображений
+        for img_path in pergola_images:
+            if os.path.exists(img_path):
+                image_paths.append(img_path)
+        
+        # Если нашли хотя бы одно изображение, добавляем его
+        if image_paths:
+            pdf_data['image_paths'] = image_paths
+            pdf_data['image_caption'] = get_pergola_image_caption(pergola_type)
+        else:
+            # Запасной вариант: используем скриншоты как раньше
+            if pergola_type == 'B500NEW':
+                # Пробуем найти изображение B500 с вращением ламелей
+                possible_paths = [
+                    "attached_assets/Снимок экрана 2025-04-09 в 22.44.59.png",
+                    "attached_assets/aluminum slats.png",
+                    "attached_assets/В500 со вращением ламелей.png",
+                    "attached_assets/b500_rotation.png",
+                    "attached_assets/Снимок экрана 2025-04-09 в 23.20.06.png"
+                ]
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        image_paths.append(path)
+            elif pergola_type == 'B700NEW':
+                # Пробуем найти изображение B700 со сдвижением ламелей
+                possible_paths = [
+                    "attached_assets/В700 со сдвижением ламелей.png",
+                    "attached_assets/b700_sliding.png",
+                    "attached_assets/Снимок экрана 2025-04-09 в 23.11.44.png"
+                ]
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        image_paths.append(path)
+            elif pergola_type == 'B600':
+                # Пробуем найти изображение B600 с сэндвич панелями
+                possible_paths = [
+                    "attached_assets/В600 с сэндвич панелями.png",
+                    "attached_assets/b600_sandwich.png",
+                    "attached_assets/Снимок экрана 2025-04-09 в 23.02.37.png"
+                ]
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        image_paths.append(path)
+                
+            if image_paths:
+                pdf_data['image_paths'] = image_paths
+                if len(image_paths) == 1:
+                    pdf_data['image_path'] = image_paths[0]  # Для обратной совместимости
+    
+    except ImportError as e:
+        print(f"Ошибка при импорте модулей для работы с описаниями: {str(e)}")
+        # Запасной вариант со старым кодом
+        if pergola_type == 'B500NEW':
+            possible_paths = ["attached_assets/b500_rotation.png"]
+            for path in possible_paths:
+                if os.path.exists(path):
+                    pdf_data['image_path'] = path
+                    break
+        elif pergola_type == 'B700NEW':
+            possible_paths = ["attached_assets/b700_sliding.png"]
+            for path in possible_paths:
+                if os.path.exists(path):
+                    pdf_data['image_path'] = path
+                    break
+        elif pergola_type == 'B600':
+            possible_paths = ["attached_assets/b600_sandwich.png"]
+            for path in possible_paths:
+                if os.path.exists(path):
+                    pdf_data['image_path'] = path
+                    break
     
     return pdf_data
