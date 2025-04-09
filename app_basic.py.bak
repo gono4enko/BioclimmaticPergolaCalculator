@@ -1478,7 +1478,6 @@ def render_results(results):
             with st.spinner("Формирование коммерческого предложения..."):
                 try:
                     # Получаем описание перголы для добавления в КП
-                    print(f"Генерируем КП для перголы типа: {pergola_type}")
                     pergola_description = get_pergola_description(pergola_type).replace('<h2', '<h3').replace('</h2>', '</h3>')
                     
                     # Форматируем данные для создания PDF

@@ -256,9 +256,33 @@ def generate_commercial_offer(pergola_data, user_data=None):
     
     # Выводим для отладки
     print(f"Длина HTML-описания: {len(pergola_description)} символов")
+    print(f"Содержимое описания: {pergola_description[:100]}...")
     
-    if pergola_description:
-        # HTML-описание нужно преобразовать в чистый текст
+    # Если описание отсутствует или пустое, добавляем базовое описание
+    if not pergola_description or pergola_description == "<p>Описание для данного типа перголы отсутствует.</p>":
+        pergola_type = pergola_data.get('pergola_type', 'биоклиматическая')
+        print(f"Добавляем базовое описание для перголы типа {pergola_type}")
+        
+        pergola_description = f"""
+        <div style='padding: 0 20px;'>
+        <h3 style='font-size: 1.2rem; margin-top: 20px; text-align: center;'>Пергола {pergola_type}</h3>
+        <p style='margin-bottom: 15px;'>
+        Современная биоклиматическая пергола с автоматическим управлением. 
+        Изготовлена из высококачественного алюминия с порошковым покрытием.
+        </p>
+        <div style='margin-bottom: 15px;'>
+        <strong>Преимущества:</strong><br/>
+        • Защита от осадков и солнца<br/>
+        • Регулируемое положение ламелей<br/>
+        • Встроенная система отвода воды<br/>
+        • Долговечные материалы<br/>
+        • Простота управления
+        </div>
+        </div>
+        """
+    
+    # HTML-описание нужно преобразовать в чистый текст
+    try:
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(pergola_description, 'html.parser')
         clean_text = soup.get_text(separator="\n\n")
@@ -266,15 +290,21 @@ def generate_commercial_offer(pergola_data, user_data=None):
         # Выводим текст в PDF
         pdf.set_font('Arial', '', 11)
         
-        # Разбиваем текст на параграфы
-        paragraphs = clean_text.split("\n\n")
+        # Разбиваем текст на параграфы и удаляем лишние пробелы
+        paragraphs = [p.strip() for p in clean_text.split("\n\n") if p.strip()]
+        
+        # Ограничиваем длину параграфов для совместимости
         for paragraph in paragraphs:
-            if paragraph.strip():
-                pdf.multi_cell(0, 6, paragraph.strip())
-                pdf.ln(3)
-    else:
+            # Разбиваем длинные параграфы на части по 200 символов
+            for i in range(0, len(paragraph), 200):
+                chunk = paragraph[i:i+200]
+                if chunk:
+                    pdf.multi_cell(0, 6, chunk)
+            pdf.ln(3)
+    except Exception as e:
+        print(f"Ошибка при обработке HTML-описания: {str(e)}")
         pdf.set_font('Arial', '', 10)
-        pdf.cell(0, 7, "Описание перголы недоступно", 0, 1)
+        pdf.cell(0, 7, "Ошибка при обработке описания перголы", 0, 1)
     
     # Добавляем изображение перголы, если оно есть
     image_path = pergola_data.get('image_path')
