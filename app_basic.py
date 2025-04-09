@@ -34,7 +34,7 @@ LAMELLA_TYPES = {
 MAX_DIMENSIONS = {
     "B500NEW": {"width": 15.0, "length": 8.0},
     "B700NEW": {"width": 15.0, "length": 7.25},
-    "B600": {"width": 10.0, "length": 6.0}
+    "B600": {"width": 13.5, "length": 8.0}
 }
 
 # Устанавливаем заголовок страницы
@@ -446,6 +446,12 @@ def perform_calculation(dimensions, options):
     elif pergola_type == "B600" and length_m > 6.5:
         additional_columns = True
         
+    # Отладочная информация для проверки
+    st.sidebar.write(f"Тип перголы: {pergola_type}")
+    st.sidebar.write(f"Вынос: {length_m} м")
+    st.sidebar.write(f"Требуются доп. колонны: {additional_columns}")
+    st.sidebar.write(f"Тип ламелей: {real_lamella_type}")
+        
     # Добавляем стоимость дополнительных колонн
     if additional_columns:
         if modules == 1:
@@ -601,8 +607,13 @@ def perform_calculation(dimensions, options):
     if additional_columns:
         additional_columns_cost_for_results = additional_columns_cost
         additional_columns_components_for_results = additional_columns_components.copy()
-        # Добавляем компоненты к автоматике только для отображения в списке
-        automation_components.extend(additional_columns_components)
+        # Не добавляем компоненты к автоматике, оставляем их отдельно
+        # Раньше: automation_components.extend(additional_columns_components)
+        # Теперь отображаем их отдельной секцией
+        
+        # Отладочная информация
+        st.sidebar.write(f"Доп. колонны стоимость: {additional_columns_cost}")
+        st.sidebar.write(f"Доп. колонны компоненты: {additional_columns_components}")
     
     # Учитываем установку
     installation_cost = 0
