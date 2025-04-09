@@ -1414,7 +1414,7 @@ def render_results(results):
                         st.warning(f"Не удалось загрузить изображение: {e3}")
             
             # Добавляем общую информацию о масштабируемости для всех типов пергол
-            st.markdown(f"""
+            st.markdown("""
             <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
                 <h3 style='font-size: 1.2rem; margin-top: 30px;'>Масштабируемость пергол: модульная система без границ</h3>
                 <p style='margin-bottom: 15px;'>
