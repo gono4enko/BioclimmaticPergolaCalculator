@@ -1252,19 +1252,20 @@ def render_results(results):
     
     # Функция для форматирования цены в бухгалтерском стиле
     def format_price(price):
-        # Детектируем размер экрана через JavaScript не получится,
-        # поэтому используем сокращенный формат для больших чисел
+        # Всегда используем сокращенный формат для мобильной версии
+        price_in_thousands = price / 1000
+        if price >= 1000000:
+            price_in_millions = price / 1000000
+            # Округляем до 1 знака после запятой для миллионов
+            return "{:.1f}M₽".format(price_in_millions)
+        # Для сотен тысяч используем формат с K
         if price >= 100000:
-            # Для мобильной версии (предполагаем) сокращаем тысячи и миллионы
-            price_in_thousands = price / 1000
-            if price >= 1000000:
-                price_in_millions = price / 1000000
-                # Округляем до 1 знака после запятой для миллионов
-                return "{:.1f}M ₽".format(price_in_millions)
-            # Округляем до 0 знаков для тысяч
-            return "{:.0f}K ₽".format(price_in_thousands)
+            return "{:.0f}K₽".format(price_in_thousands)
+        # Для десятков тысяч тоже используем формат с K, но с 1 знаком после запятой
+        if price >= 10000:
+            return "{:.1f}K₽".format(price_in_thousands)
         # Для маленьких чисел используем обычный формат с разделителями
-        return "{:,.0f}".format(price).replace(",", " ") + " ₽"
+        return "{:,.0f}₽".format(price).replace(",", " ")
     
     # Базовая стоимость перголы - всегда первой строкой
     rub_base_price = base_price * euro_rate
@@ -1326,16 +1327,17 @@ def render_results(results):
         <style>
         /* Специальные стили для таблицы стоимости - ключ {price_table_key} */
         div[data-testid="stDataFrame"] {{
-            margin: 0 auto !important;
-            max-width: 95% !important;
-            width: 95% !important;
-            padding-left: 10px !important;
-            padding-right: 10px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
         }}
         
         div[data-testid="stDataFrame"] > div {{
             max-width: 100% !important;
             overflow-x: hidden !important;
+            padding: 0 !important;
+            margin: 0 !important;
         }}
         
         [data-testid="stDataFrame"] table {{
@@ -1343,23 +1345,28 @@ def render_results(results):
             max-width: 100% !important;
             table-layout: fixed !important;
             border-collapse: collapse !important;
-            margin: 0 auto !important;
+            margin: 0 !important;
         }}
         
         /* Выравниваем значения в колонке "Стоимость" по правому краю */
         [data-testid="stDataFrame"] table td:last-child {{
             text-align: right !important;
-            padding-right: 5px !important;
-            width: 35% !important;
+            padding-right: 4px !important;
+            width: 30% !important;
+            min-width: 30% !important;
+            max-width: 30% !important;
             white-space: nowrap !important;
-            font-size: 0.95rem !important;
+            font-size: 0.9rem !important;
+            overflow: visible !important;
         }}
         
         /* Увеличиваем ширину последней колонки */
         [data-testid="stDataFrame"] table th:last-child {{
-            width: 35% !important;
+            width: 30% !important;
+            min-width: 30% !important;
+            max-width: 30% !important;
             text-align: center !important;
-            font-size: 0.95rem !important;
+            font-size: 0.9rem !important;
         }}
         
         /* Стиль для строки итого */
@@ -1394,44 +1401,53 @@ def render_results(results):
         /* Адаптивный дизайн для мобильных устройств */
         @media (max-width: 768px) {{
             div[data-testid="stDataFrame"] {{
-                width: 90% !important;
-                max-width: 90% !important;
-                margin: 0 auto !important;
-                padding-left: 5px !important;
-                padding-right: 5px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }}
+            
+            div[data-testid="stDataFrame"] > div {{
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }}
             
             [data-testid="stDataFrame"] table {{
                 width: 100% !important;
                 max-width: 100% !important;
                 table-layout: fixed !important;
-                margin: 0 auto !important;
-            }}
-            
-            [data-testid="stDataFrame"] table td {{
-                min-height: 40px !important;
-                padding: 6px 3px !important;
-                font-size: 0.8rem !important;
+                margin: 0 !important;
             }}
             
             [data-testid="stDataFrame"] table th {{
-                font-size: 0.85rem !important;
-                padding: 5px 3px !important;
+                padding: 4px 2px !important;
+                font-size: 0.8rem !important;
+            }}
+            
+            [data-testid="stDataFrame"] table td {{
+                padding: 4px 2px !important;
+                min-height: 36px !important;
+                font-size: 0.75rem !important;
             }}
             
             [data-testid="stDataFrame"] table td:first-child {{
-                width: 60% !important;
-                max-width: 60% !important;
-                line-height: 1.3 !important;
-                font-size: 0.8rem !important;
-                padding-left: 3px !important;
+                width: 70% !important;
+                min-width: 70% !important;
+                max-width: 70% !important;
+                font-size: 0.75rem !important;
+                line-height: 1.2 !important;
+                padding-left: 2px !important;
             }}
             
             [data-testid="stDataFrame"] table td:last-child {{
-                width: 40% !important;
-                max-width: 40% !important;
-                font-size: 0.75rem !important;
-                padding-right: 3px !important;
+                width: 30% !important;
+                min-width: 30% !important;
+                max-width: 30% !important;
+                font-size: 0.72rem !important;
+                padding-right: 2px !important;
+                white-space: nowrap !important;
                 overflow: visible !important;
                 text-align: right !important;
             }}
@@ -1439,8 +1455,7 @@ def render_results(results):
             /* Исправление проблемы обрезания строк в мобильной версии */
             [data-testid="stDataFrame"] table tbody tr {{
                 height: auto !important;
-                min-height: 40px !important;
-                display: table-row !important;
+                min-height: 36px !important;
             }}
         }}
         </style>
@@ -1664,29 +1679,35 @@ def main():
     @media (max-width: 768px) {
         .block-container {
             max-width: 100%;
-            padding: 0.5rem;
-            padding-left: 10px !important;
-            padding-right: 10px !important;
-            margin-left: 5px !important;
-            margin-right: 5px !important;
+            padding: 0.25rem !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
         }
         
         .stButton {
-            padding-left: 5px !important;
-            padding-right: 5px !important;
+            padding: 0 !important;
+            margin: 0 !important;
         }
         
         /* Убираем горизонтальный скролл на мобильных */
-        div[data-testid="stTable"] {
+        div[data-testid="stTable"],
+        div[data-testid="stDataFrame"] {
             width: 100% !important;
-            overflow-x: hidden !important; 
+            overflow-x: hidden !important;
+            padding: 0 !important;
+            margin: 0 !important; 
         }
         
-        /* Увеличиваем высоту ячеек для переноса текста */
-        div[data-testid="stDataFrame"] td {
-            min-height: 60px !important;
-            height: auto !important;
-            vertical-align: middle !important;
+        /* Уменьшаем размер шрифта в элементах форм */
+        .stSelectbox, .stRadio, .stCheckbox {
+            font-size: 0.85rem !important;
+        }
+        
+        /* Уменьшаем размер текста везде */
+        .stApp, .stApp p, .stApp div, .stMarkdown {
+            font-size: 0.9rem !important;
         }
     }
     </style>
