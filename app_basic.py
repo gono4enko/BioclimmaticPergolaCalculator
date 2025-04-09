@@ -661,7 +661,7 @@ def perform_calculation(dimensions, options):
             # Количество устройств для пульта ДУ (привод + освещение)
             devices_count = drive_count
             if "white_led" in lighting_options or "rgb_led" in lighting_options:
-                devices_count += 1  # Добавляем блок управления освещением
+                devices_count += modules  # Добавляем блоки управления освещением (по одному на каждый модуль)
             
             # Определяем тип и стоимость пульта ДУ
             remote_name, remote_price = get_remote_control(devices_count)
@@ -1048,6 +1048,17 @@ def render_options_form():
     st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
     st.markdown("<p style='font-weight: 500; margin-bottom: 5px;'>Освещение</p>", unsafe_allow_html=True)
     
+    # Добавляем CSS стиль для выравнивания всех чекбоксов
+    st.markdown("""
+    <style>
+    .stCheckbox > label {
+        display: flex !important;
+        align-items: center !important;
+        margin-left: 0px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     lighting_options = []
     col1, col2 = st.columns(2)
     
@@ -1189,19 +1200,7 @@ def render_results(results):
     
     # Функция для форматирования цены в бухгалтерском стиле
     def format_price(price):
-        # Всегда используем сокращенный формат для мобильной версии
-        price_in_thousands = price / 1000
-        if price >= 1000000:
-            price_in_millions = price / 1000000
-            # Округляем до 1 знака после запятой для миллионов
-            return "{:.1f}M₽".format(price_in_millions)
-        # Для сотен тысяч используем формат с K
-        if price >= 100000:
-            return "{:.0f}K₽".format(price_in_thousands)
-        # Для десятков тысяч тоже используем формат с K, но с 1 знаком после запятой
-        if price >= 10000:
-            return "{:.1f}K₽".format(price_in_thousands)
-        # Для маленьких чисел используем обычный формат с разделителями
+        # Отображаем полную стоимость с разделителями разрядов
         return "{:,.0f}₽".format(price).replace(",", " ")
     
     # Базовая стоимость перголы - всегда первой строкой
