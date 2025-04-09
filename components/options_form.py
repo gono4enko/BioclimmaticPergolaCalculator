@@ -365,86 +365,45 @@ def render_options_form():
     # Использовать ТОЛЬКО СТАНДАРТНЫЕ функции Streamlit для заголовка - никакого HTML, CSS или JS
     st.subheader("Подсветка (LED по периметру)")
     
-    # Доступные типы освещения для выбранного типа перголы - убираем 'none'
-    lighting_options = [opt for opt in PERGOLA_TYPES[pergola_type]["available_lighting"] if opt != "none"] if pergola_type in PERGOLA_TYPES else []
+    # Доступные типы освещения для выбранного типа перголы - убираем 'none' и добавляем 'none' обратно в начало для радиокнопок
+    lighting_options_full = ["none"] + [opt for opt in PERGOLA_TYPES[pergola_type]["available_lighting"] if opt != "none"] if pergola_type in PERGOLA_TYPES else ["none"]
     selected_lighting = st.session_state.options['lighting_type']
     lighting_type = selected_lighting
     
-    # Добавляем очень агрессивный CSS для принудительного уменьшения отступов и изменения дизайна
-    st.markdown("""
-    <style>
-    /* Максимальная компактность карточек подсветки */
-    div.stButton > button {
-        margin: 0px !important;
-        padding: 2px !important;
-        height: auto !important;
-        line-height: 1 !important;
-        background-color: white !important;
-        color: black !important;
-        border: 1px solid #ddd !important;
-        box-shadow: none !important;
+    # Создаем словарь для отображения человекочитаемых названий
+    lighting_labels = {
+        "none": "Без подсветки",
+        "led": "Сверхъяркая LED подсветка (белый свет)",
+        "rgb": "Светодиодная RGB подсветка (многоцветная)",
+        "led_rgb": "Комбинированное LED + RGB освещение (2в1)"
     }
     
-    /* Делаем кнопки подсветки максимально компактными */
-    div.stButton > button > div {
-        padding: 0px !important;
-        margin: 0px !important;
+    # Получаем полные описания из конфигурации
+    lighting_descriptions = {
+        "none": "",
+        "led": LIGHTING_TYPES["led"]["description"] if "led" in LIGHTING_TYPES else "",
+        "rgb": LIGHTING_TYPES["rgb"]["description"] if "rgb" in LIGHTING_TYPES else "",
+        "led_rgb": LIGHTING_TYPES["led_rgb"]["description"] if "led_rgb" in LIGHTING_TYPES else ""
     }
     
-    /* Принудительно убираем все цвета и стили Streamlit */
-    div.stButton > button:hover {
-        background-color: white !important;
-        color: black !important;
-        border: 1px solid #0066cc !important;
-        box-shadow: none !important;
-    }
+    # Используем стандартный радиокомпонент Streamlit для выбора освещения
+    selected_lighting_option = st.radio(
+        "Выберите тип подсветки:",
+        options=lighting_options_full,
+        format_func=lambda x: lighting_labels.get(x, x),
+        index=lighting_options_full.index(selected_lighting) if selected_lighting in lighting_options_full else 0,
+        key="lighting_radio",
+        horizontal=True
+    )
     
-    /* Уменьшаем расстояние между колонками */
-    div.row-widget.stHorizontal {
-        gap: 0px !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # Показываем описание выбранного варианта подсветки
+    if selected_lighting_option != "none" and lighting_descriptions.get(selected_lighting_option):
+        st.caption(lighting_descriptions.get(selected_lighting_option))
     
-    # Создаем одну строку, где все элементы будут плотно друг к другу
-    cols = st.columns(len(lighting_options), gap="small")
-    
-    # Для каждого варианта подсветки создаем кнопку с минимальными размерами
-    for i, light_type in enumerate(lighting_options):
-        with cols[i]:
-            # Получаем информацию о типе освещения с короткими названиями
-            if light_type == "led":
-                light_name = "Сверхъяркая LED"
-                light_desc = "белый свет"
-            elif light_type == "rgb":
-                light_name = "RGB подсветка"
-                light_desc = "цветная"
-            elif light_type == "led_rgb":
-                light_name = "LED + RGB"
-                light_desc = "2в1"
-            else:
-                light_name = LIGHTING_TYPES[light_type]['name'] if light_type in LIGHTING_TYPES else light_type
-                light_desc = ""
-            
-            # Определяем, выбрана ли текущая опция
-            is_selected = light_type == selected_lighting
-            
-            # Если опция выбрана, показываем карточку белого цвета с галочкой
-            if is_selected:
-                # Используем максимально компактный div вместо стандартного элемента Streamlit - БЕЗ синего индикатора
-                st.markdown(f"""
-                <div style="border:1px solid #0066cc; background-color:white; 
-                     border-radius:5px; padding:5px; margin:0; text-align:center;">
-                    <p style="margin:0; padding:0; font-size:0.9rem; font-weight:bold; color:#000000;">{light_name} ✓</p>
-                    <p style="margin:0; padding:0; font-size:0.7rem; color:#000000;">{light_desc}</p>
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                # Используем стандартную кнопку Streamlit с минимальным дизайном для выбора подсветки
-                if st.button(f"{light_name}\n{light_desc}", key=f"lighting_{light_type}", 
-                          help=f"Выбрать {light_name}"):
-                    st.session_state.options['lighting_type'] = light_type
-                    st.rerun()
+    # Обновляем состояние при изменении выбора
+    if selected_lighting_option != selected_lighting:
+        st.session_state.options['lighting_type'] = selected_lighting_option
+        st.rerun()
     
     # Нет необходимости закрывать контейнер, так как мы используем встроенные компоненты Streamlit
     
