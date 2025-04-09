@@ -311,7 +311,7 @@ def perform_calculation(dimensions, options):
             automation_components = [
                 "Привод Bansbach easyE-lift-50 Tandem - 1 шт.",
                 "Блок управления Bansbach - 1 шт.",
-                "Пульт ДУ Somfy Situo 1 io Pure II - 1 шт."
+                "Пульт ДУ Simu 1K - 1 шт."
             ]
         else:
             automation_type = "Bansbach T1"
@@ -319,7 +319,7 @@ def perform_calculation(dimensions, options):
             automation_components = [
                 "Привод Bansbach easyE-lift-50 - 1 шт.",
                 "Блок управления Bansbach - 1 шт.",
-                "Пульт ДУ Somfy Situo 1 io Pure II - 1 шт."
+                "Пульт ДУ Simu 1K - 1 шт."
             ]
     elif pergola_type == "B700NEW":
         # Для B700NEW используем привод Somfy
@@ -329,7 +329,7 @@ def perform_calculation(dimensions, options):
             automation_components = [
                 "Привод Somfy Altus RTS 120/12 - 2 шт.",
                 "Блок управления Somfy для двух двигателей - 1 шт.",
-                "Пульт ДУ Somfy Situo 1 io Pure II - 1 шт."
+                "Пульт ДУ Simu 1K - 1 шт."
             ]
         else:
             automation_type = "Somfy M1"
@@ -337,7 +337,7 @@ def perform_calculation(dimensions, options):
             automation_components = [
                 "Привод Somfy Altus RTS 120/12 - 1 шт.",
                 "Блок управления Somfy - 1 шт.",
-                "Пульт ДУ Somfy Situo 1 io Pure II - 1 шт."
+                "Пульт ДУ Simu 1K - 1 шт."
             ]
     else:
         # Для B600 и других типов
@@ -346,7 +346,7 @@ def perform_calculation(dimensions, options):
         automation_components = [
             "Стандартный привод для PIR-панелей - 1 шт.",
             "Блок управления - 1 шт.",
-            "Пульт ДУ Somfy Situo 1 io Pure II - 1 шт."
+            "Пульт ДУ Simu 1K - 1 шт."
         ]
     
     # Учитываем установку
