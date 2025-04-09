@@ -405,7 +405,7 @@ def render_options_form():
         key="lighting_radio"
     )
     
-    # Добавляем CSS-стили для увеличения вертикального отступа между опциями
+    # Добавляем CSS-стили для изменения отображения радиокнопок на галочки
     st.markdown("""
     <style>
     /* Увеличиваем вертикальный отступ между радиокнопками в блоке LED */
@@ -419,6 +419,37 @@ def render_options_form():
     div[data-testid="stVerticalBlock"] div[role="radiogroup"] label {
         display: block !important;
         padding-left: 10px !important;
+    }
+    
+    /* Заменяем радиокнопки на галочки */
+    div[data-testid="stVerticalBlock"] div[role="radiogroup"] input[type="radio"] {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #3f6daa;
+        border-radius: 4px;
+        outline: none;
+        position: relative;
+        margin-right: 10px;
+        vertical-align: middle;
+    }
+    
+    div[data-testid="stVerticalBlock"] div[role="radiogroup"] input[type="radio"]:checked::before {
+        content: "✓";
+        position: absolute;
+        color: #3f6daa;
+        font-size: 18px;
+        font-weight: bold;
+        top: -2px;
+        left: 2px;
+    }
+    
+    /* Расположение текста рядом с галочкой на одном уровне */
+    div[data-testid="stVerticalBlock"] div[role="radiogroup"] label {
+        display: flex !important;
+        align-items: center !important;
     }
     </style>
     """, unsafe_allow_html=True)
