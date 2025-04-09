@@ -436,13 +436,13 @@ def render_results(results):
         </tr>
         """
         
-        # Добавляем строку ИТОГО
+        # Добавляем строку ИТОГО с таким же размером шрифта, как в других строках таблицы
         row_count += 1
         bg_color = "#f9f9f9" if row_count % 2 == 1 else "#f0f0f0"
         price_table_html += """
         <tr style="background-color: """ + bg_color + """;">
-            <td style="padding: 6px 10px; font-weight: bold; font-size: 18px; color: #000000;">ИТОГО:</td>
-            <td style="padding: 6px 10px; text-align: right; font-weight: bold; font-size: 18px; color: #1b6b1b;">""" + str(int(total_cost_eur)) + """ €</td>
+            <td style="padding: 6px 10px; font-weight: bold; font-size: 0.9rem; color: #000000;">ИТОГО:</td>
+            <td style="padding: 6px 10px; text-align: right; font-weight: bold; font-size: 0.9rem; color: #1b6b1b;">""" + str(int(total_cost_eur)) + """ €</td>
         </tr>
         </table>
         """
