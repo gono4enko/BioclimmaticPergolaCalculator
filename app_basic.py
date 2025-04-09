@@ -492,6 +492,10 @@ def get_drive_price(pergola_type, width_m, length_m, modules):
             
         # Проверяем правила
         for rule in rules:
+            # При большом выносе (> 6м) всегда нужен Tandem, даже если ширина небольшая
+            if length_m > 6.0:
+                return "Bansbach Tandem, Germany", DRIVE_PRICES["B500NEW"]["tandem"], True
+            
             if width_m > rule["width"] and length_m > rule["length"]:
                 if rule["tandem"]:
                     return "Bansbach Tandem, Germany", DRIVE_PRICES["B500NEW"]["tandem"], True
@@ -543,7 +547,7 @@ def perform_calculation(dimensions, options):
         length_m = float(dimensions.get("length", 0))
         pergola_type = options.get("pergola_type", "")
         lamella_type = options.get("lamella_type", "")
-        modules = get_modules_by_width(width_m)  # Автоматически определяем модули по ширине
+        modules = get_modules_by_dimensions(width_m, length_m, pergola_type)  # Автоматически определяем модули по размерам
         lighting_options = options.get("lighting", [])
         
         # Определяем размер ламели в миллиметрах
@@ -844,9 +848,40 @@ def perform_calculation(dimensions, options):
         print(error_msg)
         return {"error": error_msg}
 
+def get_modules_by_dimensions(width, length, pergola_type=None):
+    """
+    Определяет количество модулей в зависимости от размеров перголы и ее типа.
+    Учитывает как ширину, так и вынос (длину) перголы.
+    
+    Args:
+        width (float): Ширина перголы в метрах
+        length (float): Вынос (длина) перголы в метрах
+        pergola_type (str, optional): Тип перголы
+        
+    Returns:
+        int: Количество модулей
+    """
+    # Особые правила для больших выносов
+    if length > 6.0:
+        if width <= 4.5:
+            return 2  # Для выноса > 6.0м даже при малой ширине нужно 2 модуля
+        elif width <= 9.0:
+            return 2  # Для ширины 5-9м - 2 модуля
+        else:
+            return 3  # Для ширины 9.5м и более - 3 модуля
+    
+    # Стандартные правила по ширине
+    if width <= 4.5:
+        return 1  # Для ширины до 4.5м - 1 модуль
+    elif width <= 9.0:
+        return 2  # Для ширины 5-9м - 2 модуля
+    else:
+        return 3  # Для ширины 9.5м и более - 3 модуля
+        
 def get_modules_by_width(width):
     """
-    Определяет количество модулей в зависимости от ширины перголы
+    Устаревшая функция, оставлена для совместимости.
+    Используйте get_modules_by_dimensions вместо нее.
     
     Args:
         width (float): Ширина перголы в метрах
@@ -854,12 +889,7 @@ def get_modules_by_width(width):
     Returns:
         int: Количество модулей
     """
-    if width <= 4.5:
-        return 1  # Для ширины до 4.5м - 1 модуль
-    elif width <= 9.0:
-        return 2  # Для ширины 5-9м - 2 модуля
-    else:
-        return 3  # Для ширины 9.5м и более - 3 модуля
+    return get_modules_by_dimensions(width, 4.0)  # Используем стандартный вынос 4.0
 
 def render_dimensions_form():
     """
@@ -894,12 +924,12 @@ def render_dimensions_form():
             help="Глубина (вынос) перголы в метрах (2.0 - 8.0 м)"
         )
     
-    # Определяем количество модулей автоматически
-    modules = get_modules_by_width(width)
+    # Определяем количество модулей автоматически по обоим параметрам - ширине и выносу
+    modules = get_modules_by_dimensions(width, length)
     
     # Показываем информацию о модулях (только для отображения)
     if modules > 1:
-        st.info(f"При ширине {width:.2f} м будет автоматически использовано {modules} модуля")
+        st.info(f"При размере {width:.2f}×{length:.2f} м будет автоматически использовано {modules} модуля")
     
     return {
         "width": width,
