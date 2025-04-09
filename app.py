@@ -666,7 +666,7 @@ def main():
         div[data-testid="stButton"] > button[data-testid="baseButton-primary"],
         button[data-testid="baseButton-primary"],
         .stButton > button[data-testid="baseButton-primary"] {
-            background-color: #3f6daa !important; /* Синий цвет pergolamarket.ru */
+            background-color: #ff7a2f !important; /* Оранжевый цвет по запросу пользователя */
             color: #FFFFFF !important; /* Белый текст */
             font-size: 2rem !important; /* Сделаем еще больше */
             font-weight: 700 !important; /* Жирный шрифт */
@@ -688,7 +688,7 @@ def main():
         button[data-testid="baseButton-primary"]:hover,
         .element-container div[data-testid="stButton"] button:hover,
         .stButton > button:hover {
-            background-color: #34598e !important; /* Темнее синий при наведении */
+            background-color: #e86c29 !important; /* Темнее оранжевый при наведении */
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
             transform: translateY(-2px) !important;
         }
