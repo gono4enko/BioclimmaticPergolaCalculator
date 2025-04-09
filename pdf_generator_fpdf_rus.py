@@ -79,6 +79,30 @@ class PDF(FPDF):
         self.cell(0, 10, title, 0, 1, "L")
         self.ln(1)  # Небольшой отступ после заголовка
         
+    def check_table_fit(self, rows_count, row_height=8):
+        """
+        Проверяет, поместится ли таблица на текущей странице
+        Если не поместится - добавляет новую страницу
+        
+        Args:
+            rows_count (int): Количество строк в таблице
+            row_height (int): Высота одной строки в мм
+            
+        Returns:
+            bool: True если таблица помещается, False если добавлена новая страница
+        """
+        # Получаем текущую позицию Y
+        current_y = self.get_y()
+        
+        # Рассчитываем необходимую высоту
+        table_height = rows_count * row_height
+        
+        # Проверяем, поместится ли таблица
+        if current_y + table_height > self.page_break_trigger:
+            self.add_page()
+            return False
+        return True
+    
     def table_header(self, headers, widths):
         """Создает заголовок таблицы"""
         self.set_fill_color(173, 216, 230)  # Светло-голубой цвет
@@ -181,7 +205,25 @@ def generate_commercial_offer(pergola_data, user_data=None):
         length = pergola_data.get('length', 0)
         lamella_type = pergola_data.get('lamella_type', '')
         modules = pergola_data.get('modules', 1)
+        total_cost = pergola_data.get('total_cost', 0)
         
+        # Подсчитываем количество строк в таблице параметров
+        parameters_rows = 5  # Базовые параметры
+        
+        # Если есть опции, учитываем их в количестве строк
+        options = pergola_data.get('options', {})
+        if options:
+            if 'lighting_type' in options and options['lighting_type'] != 'none':
+                parameters_rows += 1
+            if options.get('installation', False):
+                parameters_rows += 1
+            if options.get('delivery', False):
+                parameters_rows += 1
+        
+        # Проверяем, поместится ли таблица параметров на текущей странице
+        if not pdf.check_table_fit(parameters_rows + 3):  # +3 для заголовка и итоговой строки
+            pdf.chapter_title("Параметры перголы:")  # Повторяем заголовок на новой странице
+            
         # Создаем таблицу с основными параметрами перголы
         headers = ["Параметр", "Значение"]
         widths = [80, 80]  # Ширина колонок в мм
@@ -195,7 +237,6 @@ def generate_commercial_offer(pergola_data, user_data=None):
         pdf.table_row(["Количество модулей", str(modules)], widths)
         
         # Если есть опции, добавляем их в таблицу
-        options = pergola_data.get('options', {})
         if options:
             if 'lighting_type' in options and options['lighting_type'] != 'none':
                 pdf.table_row(["Тип освещения", options['lighting_type']], widths)
@@ -203,6 +244,15 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 pdf.table_row(["Установка", "Включена"], widths)
             if options.get('delivery', False):
                 pdf.table_row(["Доставка", "Включена"], widths)
+                
+        # Добавляем информацию о полной стоимости сразу под таблицей параметров
+        pdf.ln(5)
+        pdf.set_fill_color(240, 240, 240)  # Светло-серый фон
+        pdf.set_font('DejaVu', 'B', 12)
+        pdf.set_text_color(0, 0, 0)  # Черный текст
+        total_price_str = f"{total_cost:,.2f} ₽".replace(',', ' ')
+        pdf.cell(0, 10, f"Общая стоимость: {total_price_str}", 1, 1, "C", fill=True)
+        pdf.ln(5)
         
         # Добавляем спецификацию перголы
         pdf.ln(10)
@@ -212,6 +262,14 @@ def generate_commercial_offer(pergola_data, user_data=None):
         specification = pergola_data.get('specification', [])
         
         if specification:
+            # Подсчитываем количество строк в таблице спецификации
+            spec_rows = len(specification) + 1  # +1 для заголовка
+            
+            # Проверяем, поместится ли таблица спецификации на текущей странице
+            if not pdf.check_table_fit(spec_rows):
+                pdf.add_page()
+                pdf.chapter_title("Спецификация перголы:")  # Повторяем заголовок на новой странице
+            
             headers = ["№", "Наименование", "Количество"]
             widths = [15, 120, 25]  # Ширина колонок в мм
             
@@ -225,13 +283,20 @@ def generate_commercial_offer(pergola_data, user_data=None):
         
         # Добавляем информацию о стоимости
         pdf.ln(10)
-        pdf.chapter_title("Стоимость:")
+        pdf.chapter_title("Подробная стоимость:")
         
         # Получаем данные о стоимости
         cost_items = pergola_data.get('cost_items', [])
-        total_cost = pergola_data.get('total_cost', 0)
         
         if cost_items:
+            # Подсчитываем количество строк в таблице стоимости
+            cost_rows = len(cost_items) + 2  # +1 для заголовка, +1 для итоговой строки
+            
+            # Проверяем, поместится ли таблица стоимости на текущей странице
+            if not pdf.check_table_fit(cost_rows):
+                pdf.add_page()
+                pdf.chapter_title("Подробная стоимость:")  # Повторяем заголовок на новой странице
+            
             headers = ["№", "Наименование", "Стоимость (₽)"]
             widths = [15, 120, 25]  # Ширина колонок в мм
             
@@ -462,18 +527,51 @@ def generate_commercial_offer(pergola_data, user_data=None):
             # Создаем упрощенный PDF
             simple_pdf = FPDF()
             simple_pdf.add_page()
-            simple_pdf.set_font('Arial', 'B', 14)
-            simple_pdf.cell(0, 10, "Калькулятор пергол", 0, 1, 'C')
-            simple_pdf.set_font('Arial', '', 12)
-            simple_pdf.cell(0, 10, f"Модель: {p_type}", 0, 1)
-            simple_pdf.cell(0, 10, f"Размеры: {p_width}x{p_length}м", 0, 1)
-            simple_pdf.cell(0, 10, f"Общая стоимость: {p_cost:,.2f} руб", 0, 1)
             
-            # Добавляем заметку о проблеме
+            # Заголовок документа
+            simple_pdf.set_font('Arial', 'B', 16)
+            simple_pdf.cell(0, 10, "КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", 0, 1, 'C')
+            simple_pdf.set_font('Arial', '', 12)
+            simple_pdf.cell(0, 10, "на поставку и монтаж биоклиматической перголы", 0, 1, 'C')
             simple_pdf.ln(10)
+            
+            # Основная информация
+            simple_pdf.set_font('Arial', 'B', 14)
+            simple_pdf.cell(0, 10, "Параметры перголы:", 0, 1, 'L')
+            
+            # Таблица параметров
+            simple_pdf.set_font('Arial', '', 12)
+            simple_pdf.cell(70, 10, "Модель:", 0, 0)
+            simple_pdf.cell(0, 10, p_type, 0, 1)
+            
+            simple_pdf.cell(70, 10, "Ширина:", 0, 0)
+            simple_pdf.cell(0, 10, f"{p_width} м", 0, 1)
+            
+            simple_pdf.cell(70, 10, "Вынос (длина):", 0, 0)
+            simple_pdf.cell(0, 10, f"{p_length} м", 0, 1)
+            
+            # Стоимость
+            simple_pdf.ln(5)
+            simple_pdf.set_fill_color(240, 240, 240)
+            simple_pdf.set_font('Arial', 'B', 14)
+            price_str = f"{p_cost:,.2f}".replace(',', ' ')
+            simple_pdf.cell(0, 10, f"Общая стоимость: {price_str} ₽", 1, 1, 'C', fill=True)
+            
+            # Заметка о версии документа
+            simple_pdf.ln(15)
             simple_pdf.set_font('Arial', 'I', 10)
-            simple_pdf.cell(0, 10, "Произошла ошибка при создании полного PDF с описанием.", 0, 1)
-            simple_pdf.cell(0, 10, "Это упрощенная версия с основной информацией.", 0, 1)
+            simple_pdf.cell(0, 10, "Данный документ является упрощенной версией коммерческого предложения.", 0, 1)
+            simple_pdf.cell(0, 10, "Для получения полного предложения с детальным описанием, пожалуйста, свяжитесь с нами.", 0, 1)
+            
+            # Контактная информация
+            simple_pdf.ln(10)
+            simple_pdf.set_font('Arial', 'B', 12)
+            simple_pdf.cell(0, 10, "Контактная информация:", 0, 1)
+            
+            simple_pdf.set_font('Arial', '', 10)
+            simple_pdf.cell(0, 7, "Телефон: +7 (495) 123-45-67", 0, 1)
+            simple_pdf.cell(0, 7, "Email: info@komfortnyj-dom.ru", 0, 1)
+            simple_pdf.cell(0, 7, "Веб-сайт: www.komfortnyj-dom.ru", 0, 1)
             
             # Сохраняем упрощенный PDF в дефолтную директорию
             backup_filename = f"generated_pdf/KP_Pergola_simple_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
