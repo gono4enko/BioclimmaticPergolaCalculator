@@ -1131,63 +1131,86 @@ def render_results(results):
         import pandas as pd
         spec_df = pd.DataFrame(spec_data, columns=["Наименование", "Количество"])
         
+        # Создаем уникальный ключ для таблицы спецификации (для применения уникальных стилей)
+        spec_table_key = "spec_table_" + str(hash(str(spec_data)))
+        
         # Добавляем CSS для корректного отображения таблицы спецификаций с адаптивным дизайном
         st.markdown(
-            """
+            f"""
             <style>
-            /* Разрешаем перенос длинных наименований в столбце Наименование спецификации */
-            [data-testid="stDataFrame"] table td:first-child {
+            /* Специальные стили для таблицы спецификации */
+            [data-testid="stDataFrame"] table {{
+                width: 100% !important;
+                table-layout: fixed !important;
+                border-collapse: collapse !important;
+            }}
+            
+            [data-testid="stDataFrame"] table td {{
+                height: auto !important;
+                min-height: 60px !important;
+                vertical-align: middle !important;
+                word-break: break-word !important;
+                line-height: 1.4 !important;
+            }}
+            
+            [data-testid="stDataFrame"] table td:first-child {{
                 white-space: normal !important;
                 word-wrap: break-word !important;
-                max-width: 70% !important;
-                min-height: 50px !important;
-                height: auto !important;
-                line-height: 1.3 !important;
-            }
+                overflow-wrap: break-word !important;
+                width: 70% !important;
+                padding: 12px 8px !important;
+            }}
             
-            /* Стиль для ячеек */
-            [data-testid="stDataFrame"] td {
-                padding: 8px 12px !important;
-                height: auto !important;
-                min-height: 50px !important;
-                vertical-align: middle !important;
-            }
+            [data-testid="stDataFrame"] table td:last-child {{
+                width: 30% !important;
+                text-align: center !important;
+                padding: 12px 8px !important;
+            }}
             
             /* Адаптивный дизайн для мобильных устройств */
-            @media (max-width: 768px) {
-                [data-testid="stDataFrame"] {
+            @media (max-width: 768px) {{
+                [data-testid="stDataFrame"] {{
                     width: 100% !important;
                     overflow-x: hidden !important;
                     margin-left: 5px !important;
                     margin-right: 5px !important;
-                }
+                }}
                 
-                [data-testid="stDataFrame"] table {
+                [data-testid="stDataFrame"] table {{
                     width: 100% !important;
                     table-layout: fixed !important;
-                }
+                }}
                 
-                [data-testid="stDataFrame"] table td:first-child {
+                [data-testid="stDataFrame"] table td {{
+                    min-height: 65px !important;
+                    padding: 12px 5px !important;
+                    font-size: 0.9rem !important;
+                }}
+                
+                [data-testid="stDataFrame"] table td:first-child {{
                     width: 65% !important;
                     max-width: 65% !important;
-                    font-size: 0.9rem !important;
-                    padding: 10px 5px !important;
-                    line-height: 1.4 !important;
-                }
+                    line-height: 1.5 !important;
+                }}
                 
-                [data-testid="stDataFrame"] table td:last-child {
+                [data-testid="stDataFrame"] table td:last-child {{
                     width: 35% !important;
                     text-align: center !important;
-                    font-size: 0.9rem !important;
-                    padding: 10px 5px !important;
-                }
-            }
+                }}
+                
+                /* Исправление проблемы обрезания строк в мобильной версии */
+                [data-testid="stDataFrame"] table tbody tr {{
+                    height: auto !important;
+                    min-height: 65px !important;
+                    display: table-row !important;
+                }}
+            }}
             </style>
             """, unsafe_allow_html=True
         )
         
         # На мобильных устройствах используем контейнер с возможностью прокрутки
-        st.dataframe(spec_df, use_container_width=True, hide_index=True)
+        st.dataframe(spec_df, use_container_width=True, hide_index=True, key=spec_table_key)
     
     # Отображаем таблицу стоимости
     st.markdown("<h3 style='font-size: 1.2rem; margin-top: 20px;'>Стоимость</h3>", unsafe_allow_html=True)
@@ -1254,92 +1277,109 @@ def render_results(results):
     items_data.append(["Итого", format_price(rub_total)])
     
     # Используем стандартный компонент Streamlit для отображения таблицы
-    # (такой же стиль как у таблицы "Спецификация перголы")
     import pandas as pd
     df_items = pd.DataFrame(items_data, columns=["Наименование", "Стоимость"])
     
+    # Создаем уникальный ключ для таблицы стоимости (для применения уникальных стилей)
+    price_table_key = "price_table_" + str(hash(str(items_data)))
+    
     # Добавляем CSS для настройки ширины колонок, выравнивания цен и адаптивности
     st.markdown(
-        """
+        f"""
         <style>
-        /* Корректируем ширину колонок в таблице стоимости */
-        [data-testid="stDataFrame"] table {
-            width: 100%;
+        /* Специальные стили для таблицы стоимости */
+        [data-testid="stDataFrame"] table {{
+            width: 100% !important;
             table-layout: fixed !important;
-        }
+            border-collapse: collapse !important;
+        }}
         
         /* Выравниваем значения в колонке "Стоимость" по правому краю */
-        [data-testid="stDataFrame"] table td:last-child {
+        [data-testid="stDataFrame"] table td:last-child {{
             text-align: right !important;
             padding-right: 20px !important;
-            width: 30% !important;
+            width: 35% !important;
             white-space: nowrap !important;
-        }
+        }}
         
         /* Увеличиваем ширину последней колонки */
-        [data-testid="stDataFrame"] table th:last-child {
-            width: 30% !important;
+        [data-testid="stDataFrame"] table th:last-child {{
+            width: 35% !important;
             text-align: center !important;
-        }
+        }}
         
         /* Стиль для строки итого */
-        [data-testid="stDataFrame"] table tr:last-child td {
+        [data-testid="stDataFrame"] table tr:last-child td {{
             font-weight: bold !important;
             background-color: #f0f7ff !important;
-        }
+        }}
         
         /* Разрешаем перенос длинных наименований в столбце Наименование */
-        [data-testid="stDataFrame"] table td:first-child {
+        [data-testid="stDataFrame"] table td:first-child {{
             white-space: normal !important;
             word-wrap: break-word !important;
-            width: 70% !important;
-            min-height: 50px !important;
+            overflow-wrap: break-word !important;
+            width: 65% !important;
+            min-height: 60px !important;
             height: auto !important;
-            line-height: 1.3 !important;
-        }
+            line-height: 1.4 !important;
+            word-break: break-word !important;
+        }}
         
         /* Стиль для текста в ячейках */
-        [data-testid="stDataFrame"] td {
+        [data-testid="stDataFrame"] td {{
             font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
-            padding: 8px 12px !important;
+            padding: 12px 8px !important;
             height: auto !important;
-            min-height: 50px !important;
+            min-height: 60px !important;
             vertical-align: middle !important;
-        }
+        }}
         
         /* Адаптивный дизайн для мобильных устройств */
-        @media (max-width: 768px) {
-            [data-testid="stDataFrame"] {
+        @media (max-width: 768px) {{
+            [data-testid="stDataFrame"] {{
                 width: 100% !important;
                 overflow-x: hidden !important;
                 margin-left: 5px !important;
                 margin-right: 5px !important;
-            }
+            }}
             
-            [data-testid="stDataFrame"] table {
+            [data-testid="stDataFrame"] table {{
                 width: 100% !important;
                 table-layout: fixed !important;
-            }
+            }}
             
-            [data-testid="stDataFrame"] table td:first-child {
-                width: 65% !important;
+            [data-testid="stDataFrame"] table td {{
+                min-height: 65px !important;
+                padding: 12px 5px !important;
                 font-size: 0.9rem !important;
-                padding: 10px 5px !important;
-                line-height: 1.4 !important;
-            }
+            }}
             
-            [data-testid="stDataFrame"] table td:last-child {
-                width: 35% !important;
+            [data-testid="stDataFrame"] table td:first-child {{
+                width: 60% !important;
+                max-width: 60% !important;
+                line-height: 1.5 !important;
+            }}
+            
+            [data-testid="stDataFrame"] table td:last-child {{
+                width: 40% !important;
                 font-size: 0.9rem !important;
-                padding: 10px 5px !important;
-            }
-        }
+                padding-right: 15px !important;
+            }}
+            
+            /* Исправление проблемы обрезания строк в мобильной версии */
+            [data-testid="stDataFrame"] table tbody tr {{
+                height: auto !important;
+                min-height: 65px !important;
+                display: table-row !important;
+            }}
+        }}
         </style>
         """, unsafe_allow_html=True
     )
     
     # Отображаем таблицу стоимости
-    st.dataframe(df_items, use_container_width=True, hide_index=True)
+    st.dataframe(df_items, use_container_width=True, hide_index=True, key=price_table_key)
     
     # Добавляем разделитель
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
