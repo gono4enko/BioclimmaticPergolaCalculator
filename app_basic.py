@@ -156,16 +156,25 @@ def perform_calculation(dimensions, options):
     width_mm = width_m * 1000
     length_mm = length_m * 1000
     
-    # Рассчитываем количество модулей в зависимости от ширины
-    # Согласно прайсу B500-20
-    if width_m <= 4.5:
-        modules = 1
-    elif width_m <= 10.0:
-        modules = 2
-    elif width_m <= 15.0:
-        modules = 3
+    # Рассчитываем количество модулей в зависимости от ширины и типа перголы
+    # Согласно прайсам B500-20, B500-25, B700-25
+    if pergola_type == "B500NEW" or pergola_type == "B700NEW":
+        if width_m <= 4.5:
+            modules = 1
+        elif width_m <= 9.0:  # В прайсах до 9.0 идет 2 модуля
+            modules = 2
+        elif width_m <= 13.5:  # В прайсах до 13.5 идет 3 модуля
+            modules = 3
+        else:
+            modules = 4
     else:
-        modules = 4
+        # Для B600 и других типов используем упрощенную формулу
+        if width_m <= 4.0:
+            modules = 1
+        elif width_m <= 8.0:
+            modules = 2
+        else:
+            modules = 3
     
     # Определяем тип ламелей по коду
     # Для B500NEW и B700NEW преобразуем упрощенные коды в коды из прайса
@@ -261,17 +270,34 @@ def perform_calculation(dimensions, options):
                 pergola_cost = 6878 * (width_m * length_m) / (3.0 * 2.45)
         else:
             # Для B700-25NEW
-            if width_m <= 3.0 and length_m <= 2.45:
-                pergola_cost = 7222
-            elif width_m <= 3.5 and length_m <= 2.45:
-                pergola_cost = 7824
-            elif width_m <= 4.0 and length_m <= 2.45:
-                pergola_cost = 8424
-            elif width_m <= 3.0 and length_m <= 3.25:
-                pergola_cost = 8588
+            # Ищем ближайшие значения из прайса (B700-25)
+            # Ширина (м): 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 7.0, 8.0, 9.0, 7.5, 9.0, 10.5, 12.0, 13.5
+            # Вынос (м): 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0
+            
+            # Базовые цены из прайса B700-25
+            if width_m <= 2.5 and length_m <= 2.5:
+                pergola_cost = 6048
+            elif width_m <= 3.0 and length_m <= 2.5:
+                pergola_cost = 6570
+            elif width_m <= 3.5 and length_m <= 2.5:
+                pergola_cost = 7092
+            elif width_m <= 4.0 and length_m <= 2.5:
+                pergola_cost = 7613
+            elif width_m <= 4.5 and length_m <= 2.5:
+                pergola_cost = 8135
+            elif width_m <= 3.0 and length_m <= 3.0:
+                pergola_cost = 7297
+            elif width_m <= 3.0 and length_m <= 3.5:
+                pergola_cost = 8023
+            elif width_m <= 3.0 and length_m <= 4.0:
+                pergola_cost = 8750
+            elif width_m <= 3.0 and length_m <= 4.5:
+                pergola_cost = 9476
+            elif width_m <= 3.0 and length_m <= 5.0:
+                pergola_cost = 10203
             else:
                 # Для других размеров используем приближенную формулу
-                pergola_cost = 7222 * (width_m * length_m) / (3.0 * 2.45)
+                pergola_cost = 6048 * (width_m * length_m) / (2.5 * 2.5)
     
     elif pergola_type == "B600":
         # Для B600
