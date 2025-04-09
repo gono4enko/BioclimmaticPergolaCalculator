@@ -402,11 +402,20 @@ def render_options_form():
     # Добавляем заголовок с корректным стилем
     st.markdown("<div style='font-weight:500; margin-bottom:10px; font-size:1rem;'>Выберите тип подсветки:</div>", unsafe_allow_html=True)
     
+    # Подготавливаем описания для каждого варианта
+    lighting_descriptions = {
+        "none": "Без подсветки (светодиодная лента не устанавливается)",
+        "white": "Белая подсветка по периметру перголы (5000K)",
+        "rgb": "RGB подсветка с изменением цвета и яркости",
+        "rgbw": "RGBW подсветка с полным управлением цветовой температурой"
+    }
+    
     # Используем стандартный радиокомпонент Streamlit с нашими модификациями
+    # Добавляем описания через format_func
     selected_lighting_option = st.radio(
         "", # Пустая метка, так как заголовок добавлен выше
         options=lighting_options_full, 
-        format_func=lambda x: lighting_labels.get(x, x),
+        format_func=lambda x: f"{lighting_labels.get(x, x)} - {lighting_descriptions.get(x, '')}",
         index=lighting_options_full.index(selected_lighting) if selected_lighting in lighting_options_full else 0,
         key="lighting_radio",
         label_visibility="collapsed" # Скрываем стандартный заголовок
@@ -492,28 +501,29 @@ def render_options_form():
     # Используем тот же стиль оформления как у "Тип ламелей" и "Подсветка"
     st.markdown('<div class="section-header" style="color: #000000 !important;">Установка</div>', unsafe_allow_html=True)
     
-    # Создаем колонки для опций установки
-    install_cols = st.columns([1, 1])
+    # Создаем переключатель установки через радиокнопки, как и для остальных опций
+    install_options = ["no_install", "with_install"]
+    install_labels = {
+        "no_install": "Без установки",
+        "with_install": "С установкой"
+    }
+    install_descriptions = {
+        "no_install": "Только оборудование, без монтажа",
+        "with_install": "Полный комплекс: оборудование + монтаж"
+    }
     
-    with install_cols[0]:
-        # Стиль для выбранной опции установки - также с увеличенной рамкой
-        st.markdown(f"""
-        <div style="background-color: #FFFFFF; border: 3px solid #0066cc; color: #000000; 
-             font-weight: bold; text-align: left; border-radius: 8px; padding: 12px 8px; 
-             margin-bottom: 5px;">
-            <div style="font-size: 1.1rem; color: #000000;">Без установки ✓</div>
-            <div style="font-size: 0.9rem; margin-top: 5px; color: #000000;"></div>
-        </div>
-        """, unsafe_allow_html=True)
+    # Значение по умолчанию
+    default_install = "no_install"
     
-    with install_cols[1]:
-        st.markdown(f"""
-        <div style="background-color: #FFFFFF; border: 1px solid #ddd; color: #000000; 
-             text-align: left; border-radius: 8px; padding: 12px 8px; margin-bottom: 5px;">
-            <div style="font-size: 1.1rem;">С установкой</div>
-            <div style="font-size: 0.9rem; margin-top: 5px;"></div>
-        </div>
-        """, unsafe_allow_html=True)
+    # Используем тот же радиокомпонент, что и для других опций
+    selected_install = st.radio(
+        "",  # Пустая метка
+        options=install_options,
+        format_func=lambda x: f"{install_labels.get(x, x)} - {install_descriptions.get(x, '')}",
+        index=0,  # По умолчанию "Без установки"
+        key="install_radio",
+        label_visibility="collapsed"
+    )
     
     # Нет необходимости закрывать блок, так как мы используем встроенные компоненты Streamlit
     

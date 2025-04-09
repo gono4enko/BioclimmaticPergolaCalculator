@@ -2,10 +2,13 @@
 Компонент для создания оранжевой кнопки "Рассчитать стоимость"
 """
 import streamlit as st
+import uuid
+import time
 
 def create_orange_button(label="Рассчитать стоимость"):
     """
-    Создает оранжевую кнопку с принудительной стилизацией через HTML и CSS.
+    Создает оранжевую кнопку с принудительной стилизацией через HTML.
+    Использует один скрытый элемент Streamlit для отслеживания нажатия.
     
     Args:
         label (str): Текст кнопки, по умолчанию "Рассчитать стоимость"
@@ -13,105 +16,97 @@ def create_orange_button(label="Рассчитать стоимость"):
     Returns:
         bool: True если кнопка была нажата
     """
-    # Скрываем только станадартную кнопку в основной форме
-    # Используем более точный селектор для кнопки с нужным label
-    st.markdown(f"""
-    <style>
-    /* Скрываем стандартные кнопки Streamlit с текстом "Рассчитать стоимость" */
-    div[data-testid="stButton"] > button:contains("{label}") {{
-        display: none !important;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
+    # Создаем уникальный ID для кнопки, включая временную метку для обхода кэширования
+    unique_id = f"orange_btn_{uuid.uuid4()}_{int(time.time())}"
     
-    # Создаем обычную скрытую кнопку Streamlit для отслеживания нажатия
-    # Помещаем кнопку в контейнер, чтобы легче было выбрать её с помощью CSS
+    # Создаем скрытую кнопку Streamlit для получения обратной связи
+    # Используем container чтобы скрыть эту кнопку
     container = st.container()
     with container:
-        button_key = f"orange_button_{st.session_state.get('button_counter', 0)}"
-        button_clicked = st.button(label, key=button_key, type="primary")
+        clicked = st.button(label, key=unique_id)
     
-    # Изменяем CSS для дополнительного скрытия стандартной кнопки
+    # Скрываем контейнер с кнопкой Streamlit и удаляем все остальные primary кнопки
     st.markdown(f"""
     <style>
-    /* Добавляем более точное скрытие стандартной кнопки "Рассчитать стоимость" */
-    div[data-testid="element-container"]:has(button[kind="primary"]) {{
+    /* Полностью скрываем контейнер с нашей скрытой кнопкой */
+    div[data-testid="element-container"]:has(button[key="{unique_id}"]) {{
         display: none !important;
+        visibility: hidden !important;
         height: 0 !important;
-        min-height: 0 !important;
+        width: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
-        visibility: hidden !important;
         position: absolute !important;
-        overflow: hidden !important;
+        pointer-events: none !important;
+    }}
+    
+    /* Запрещаем дублированные кнопки с текстом "Рассчитать стоимость" */
+    div[data-testid="element-container"]:has(button:not([key="{unique_id}"]):contains("{label}")) {{
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: absolute !important;
         pointer-events: none !important;
     }}
     </style>
     """, unsafe_allow_html=True)
     
-    # Генерируем ID для кнопки
-    button_id = f"custom_button_{st.session_state.get('button_counter', 0)}"
-    
-    # Создаем кастомную HTML кнопку в оранжевом цвете и добавляем обработчик кликов
+    # Создаем свою HTML-кнопку с оранжевым фоном и JavaScript
     button_html = f"""
-    <div style="margin-top: 20px;">
+    <div style="margin-top: 20px; margin-bottom: 20px;">
         <button 
-            id="{button_id}"
-            type="button"
+            id="{unique_id}" 
             style="
-                background-color: #ff7a2f !important; 
-                color: white !important; 
-                border: none !important; 
-                border-radius: 8px !important; 
-                font-size: 24px !important; 
-                font-weight: 700 !important; 
-                padding: 16px 24px !important; 
-                cursor: pointer !important; 
-                width: 100% !important; 
-                height: 80px !important; 
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important; 
-                transition: all 0.3s !important;
-                display: inline-block !important;
-                text-align: center !important;
+                background-color: #ff7a2f; 
+                color: white; 
+                border: none; 
+                border-radius: 8px; 
+                font-size: 24px; 
+                font-weight: 700; 
+                padding: 16px 24px; 
+                cursor: pointer; 
+                width: 100%; 
+                height: 80px; 
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+                transition: all 0.3s;
+                display: inline-block;
+                text-align: center;
             "
         >{label}</button>
     </div>
     
     <script>
         (function() {{
-            var button = document.getElementById("{button_id}");
-            if (button) {{
-                button.addEventListener("click", function() {{
-                    // Находим скрытую кнопку Streamlit
-                    var streamlitButtons = Array.from(document.querySelectorAll('div[data-testid="stButton"] button'));
-                    for (var i = 0; i < streamlitButtons.length; i++) {{
-                        if (streamlitButtons[i].textContent.includes("{label}")) {{
-                            streamlitButtons[i].click();
-                            break;
-                        }}
-                    }}
+            // Находим нашу оранжевую кнопку
+            var orangeButton = document.getElementById('{unique_id}');
+            
+            // Находим скрытую кнопку Streamlit
+            var hiddenButton = document.querySelector('button[key="{unique_id}"]');
+            
+            if (orangeButton && hiddenButton) {{
+                // Добавляем обработчик клика
+                orangeButton.addEventListener('click', function() {{
+                    hiddenButton.click();
                 }});
                 
                 // Добавляем эффекты при наведении
-                button.addEventListener("mouseover", function() {{
-                    this.style.backgroundColor = "#e06a20 !important";
-                    this.style.boxShadow = "0 6px 8px rgba(0, 0, 0, 0.15) !important";
+                orangeButton.addEventListener('mouseover', function() {{
+                    this.style.backgroundColor = '#e06a20';
+                    this.style.boxShadow = '0 6px 8px rgba(0, 0, 0, 0.15)';
                 }});
                 
-                button.addEventListener("mouseout", function() {{
-                    this.style.backgroundColor = "#ff7a2f !important";
-                    this.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1) !important";
+                orangeButton.addEventListener('mouseout', function() {{
+                    this.style.backgroundColor = '#ff7a2f';
+                    this.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
                 }});
             }}
         }})();
     </script>
     """
+    
     st.markdown(button_html, unsafe_allow_html=True)
     
-    # Увеличиваем счетчик для обхода кэширования
-    if 'button_counter' not in st.session_state:
-        st.session_state.button_counter = 0
-    else:
-        st.session_state.button_counter += 1
-    
-    return button_clicked
+    return clicked
