@@ -1610,10 +1610,11 @@ def render_results(results):
 def scroll_to_results():
     """
     Добавляет JavaScript-код для автоматического скролла к результатам
+    с увеличенной задержкой и улучшенной логикой обнаружения результатов
     """
     st.markdown("""
     <script>
-        function scrollToResults() {
+        function waitForResults() {
             // Ищем элемент с заголовком "Результаты расчета"
             const headers = document.querySelectorAll('h2, div.stMarkdown h2');
             let resultsElement = null;
@@ -1627,14 +1628,33 @@ def scroll_to_results():
             
             if (resultsElement) {
                 console.log('Found results header, scrolling to it...');
-                resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Проверяем если элемент уже виден на странице
+                const rect = resultsElement.getBoundingClientRect();
+                const isVisible = (
+                    rect.top >= 0 &&
+                    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight)
+                );
+                
+                // Скроллим только если элемент не виден
+                if (!isVisible) {
+                    resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                return true;
             } else {
-                console.log('Results header not found');
+                console.log('Results header not found, retrying...');
+                return false;
             }
         }
         
-        // Запускаем с задержкой чтобы дать странице время на рендеринг
-        setTimeout(scrollToResults, 500);
+        function attemptScroll() {
+            if (!waitForResults()) {
+                // Если результаты не найдены, пробуем еще раз через 500мс
+                setTimeout(attemptScroll, 500);
+            }
+        }
+        
+        // Начинаем попытки с большей задержкой для полной загрузки страницы
+        setTimeout(attemptScroll, 1500);
     </script>
     """, unsafe_allow_html=True)
 
