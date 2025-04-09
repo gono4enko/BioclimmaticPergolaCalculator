@@ -285,6 +285,13 @@ def generate_commercial_offer(pergola_data, user_data=None):
             • Долговечные материалы<br/>
             • Простота управления
             </div>
+            <div style='margin-bottom: 15px;'>
+            <strong>Технические характеристики:</strong><br/>
+            • Алюминиевый профиль: экструдированный алюминий с порошковым покрытием (322х260 мм)<br/>
+            • Размеры: 164x164 мм, используется 7 различных типов алюминиевых профилей<br/>
+            • Система автоматизации: приводной механизм Bansbach easylift (IP65),<br/>
+            дополнительно TANDEM привод доступен опционально
+            </div>
             </div>
             """
         
@@ -322,40 +329,31 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 max_width_mm = 160
                 max_width_px = int(max_width_mm * 300 / 25.4)  # Преобразуем мм в пиксели при 300 DPI
                 
-                # Вычисляем новый размер с сохранением пропорций
-                ratio = min(max_width_px / width, 1.0)
-                new_width = int(width * ratio)
-                new_height = int(height * ratio)
+                # Вычисляем максимальную ширину для изображения в формате PDF
+                max_width_pdf = 170  # Максимальная ширина в мм
                 
-                # Масштабируем изображение
-                if ratio < 1.0:
-                    resized_img = original_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                    
-                    # Сохраняем обработанное изображение
-                    img_name = os.path.basename(image_path)
-                    processed_image_path = f"processed_images/resized_{img_name}"
-                    resized_img.save(processed_image_path)
-                    
-                    print(f"Исходные размеры изображения: {width}x{height}")
-                    print(f"Новые размеры изображения: {new_width}x{new_height} пикселей")
-                    
-                    # Если изображение слишком велико для текущей страницы, добавляем новую
-                    if pdf.get_y() + (new_height * 25.4 / 300) + 20 > pdf.page_break_trigger:
-                        pdf.add_page()
-                    
-                    # Центрируем изображение
-                    pdf.ln(10)
-                    pdf.image(processed_image_path, x=(210 - 2*20 - new_width * 25.4 / 300) / 2 + 20, w=new_width * 25.4 / 300)
-                    print(f"Добавляем измененное изображение в PDF: {processed_image_path}")
-                else:
-                    # Если изображение слишком велико для текущей страницы, добавляем новую
-                    if pdf.get_y() + (height * 25.4 / 300) + 20 > pdf.page_break_trigger:
-                        pdf.add_page()
-                    
-                    # Центрируем изображение
-                    pdf.ln(10)
-                    pdf.image(image_path, x=(210 - 2*20 - width * 25.4 / 300) / 2 + 20, w=width * 25.4 / 300)
-                    print(f"Добавляем оригинальное изображение в PDF: {image_path}")
+                # Добавляем новую страницу, если изображение слишком велико для текущей
+                if pdf.get_y() > pdf.page_break_trigger - 100:
+                    pdf.add_page()
+                
+                # Центрируем изображение и устанавливаем правильную ширину
+                pdf.ln(10)
+                
+                # Сохраняем пропорции изображения
+                img_width_mm = min(max_width_pdf, 170)  # Ограничиваем максимальную ширину
+                
+                # Отладочная информация
+                print(f"Исходные размеры изображения: {width}x{height}")
+                print(f"Добавляем изображение с шириной: {img_width_mm} мм")
+                
+                # Добавляем изображение с сохранением пропорций
+                pdf.image(
+                    image_path, 
+                    x=(210 - img_width_mm) / 2,  # Центрируем по горизонтали
+                    w=img_width_mm,  # Устанавливаем ширину
+                    h=0  # Высота 0 означает автоматическое сохранение пропорций
+                )
+                print(f"Добавляем изображение в PDF: {image_path}")
             except Exception as e:
                 print(f"Ошибка при обработке изображения: {str(e)}")
         
@@ -403,17 +401,17 @@ def generate_commercial_offer(pergola_data, user_data=None):
             simple_pdf = FPDF()
             simple_pdf.add_page()
             simple_pdf.set_font('Arial', 'B', 14)
-            simple_pdf.cell(0, 10, "Pergola Calculator", 0, 1, 'C')
+            simple_pdf.cell(0, 10, "Калькулятор пергол", 0, 1, 'C')
             simple_pdf.set_font('Arial', '', 12)
-            simple_pdf.cell(0, 10, f"Model: {p_type}", 0, 1)
-            simple_pdf.cell(0, 10, f"Dimensions: {p_width}x{p_length}m", 0, 1)
-            simple_pdf.cell(0, 10, f"Total cost: {p_cost:,.2f} rub", 0, 1)
+            simple_pdf.cell(0, 10, f"Модель: {p_type}", 0, 1)
+            simple_pdf.cell(0, 10, f"Размеры: {p_width}x{p_length}м", 0, 1)
+            simple_pdf.cell(0, 10, f"Общая стоимость: {p_cost:,.2f} руб", 0, 1)
             
             # Добавляем заметку о проблеме
             simple_pdf.ln(10)
             simple_pdf.set_font('Arial', 'I', 10)
-            simple_pdf.cell(0, 10, "Error generating PDF with Russian text.", 0, 1)
-            simple_pdf.cell(0, 10, "This is a simplified version with basic information.", 0, 1)
+            simple_pdf.cell(0, 10, "Произошла ошибка при создании полного PDF с описанием.", 0, 1)
+            simple_pdf.cell(0, 10, "Это упрощенная версия с основной информацией.", 0, 1)
             
             # Сохраняем упрощенный PDF в дефолтную директорию
             backup_filename = f"generated_pdf/KP_Pergola_simple_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
