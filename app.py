@@ -667,6 +667,23 @@ def main():
             background-color: #ff7a2f !important;
             color: #ffffff !important;
         }}
+        
+        /* Уменьшаем отступы слева и справа для рабочей области */
+        section[data-testid="stSidebar"] {{
+            min-width: 20px !important;
+            width: 20px !important;
+            flex: none !important;
+        }}
+        .block-container {{
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+            max-width: 85rem !important;
+            padding-top: 1rem !important;
+        }}
+        section[data-testid="stSidebar"] > div {{
+            visibility: hidden !important;
+            width: 20px !important;
+        }}
     </style>
     """, unsafe_allow_html=True)
     
