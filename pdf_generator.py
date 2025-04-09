@@ -23,52 +23,80 @@ os.makedirs("generated_pdf", exist_ok=True)
 # Необходимо установить и зарегистрировать шрифт с поддержкой кириллицы
 import os.path
 
+# Создаем директорию для шрифтов, если не существует
+os.makedirs("fonts", exist_ok=True)
+
 # Проверяем доступные шрифты
 font_paths = [
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",  # Для Linux
-    "/usr/share/fonts/TTF/DejaVuSans.ttf",  # Для некоторых дистрибутивов Linux
-    "C:/Windows/Fonts/Arial.ttf",  # Для Windows
-    "/Library/Fonts/Arial Unicode.ttf",  # Для MacOS
-    "arial.ttf",  # Относительный путь
-    "DejaVuSans.ttf",  # Относительный путь
+    "/usr/share/fonts/TTF/DejaVuSans.ttf",              # Для некоторых дистрибутивов Linux
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",  # Liberation Sans
+    "/usr/share/fonts/truetype/freefont/FreeSans.ttf",  # FreeSans
+    "C:/Windows/Fonts/Arial.ttf",                      # Для Windows
+    "/Library/Fonts/Arial Unicode.ttf",                # Для MacOS
+    "arial.ttf",                                       # Относительный путь
+    "DejaVuSans.ttf",                                  # Относительный путь
 ]
 
+# Регистрируем основной шрифт и жирный вариант
 font_found = False
 for font_path in font_paths:
     if os.path.exists(font_path):
-        # Регистрируем шрифт с поддержкой кириллицы
-        pdfmetrics.registerFont(TTFont('CustomFont', font_path))
-        # Устанавливаем флаг, что шрифт найден
-        font_found = True
-        print(f"Найден шрифт с поддержкой кириллицы: {font_path}")
-        break
-
-# Если ни один шрифт не найден, выводим предупреждение
-if not font_found:
-    print("Внимание: Не найден шрифт с поддержкой кириллицы!")
-    print("PDF будет создан, но возможны проблемы с отображением кириллических символов.")
-    
-    # Попробуем создать базовый шрифт для кириллицы
-    try:
-        # Создаем директорию для шрифтов, если не существует
-        os.makedirs("fonts", exist_ok=True)
-        
-        # Попробуем скопировать системный шрифт
+        # Копируем шрифт в локальную директорию для надежности
         import shutil
-        for system_font in ["/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/TTF/DejaVuSans.ttf"]:
-            if os.path.exists(system_font):
-                shutil.copy(system_font, "fonts/DejaVuSans.ttf")
-                pdfmetrics.registerFont(TTFont('CustomFont', "fonts/DejaVuSans.ttf"))
-                font_found = True
-                print(f"Скопирован системный шрифт для кириллицы: {system_font}")
-                break
-    except Exception as e:
-        print(f"Ошибка при копировании шрифта: {str(e)}")
-        
-# Если всё еще не найден шрифт, то используем Helvetica (но с предупреждением)
+        local_font_path = "fonts/main_font.ttf"
+        try:
+            shutil.copy(font_path, local_font_path)
+            # Регистрируем шрифт с поддержкой кириллицы
+            pdfmetrics.registerFont(TTFont('CustomFont', local_font_path))
+            # Регистрируем шрифт как семейство для поддержки жирного и наклонного начертания
+            pdfmetrics.registerFontFamily(
+                'CustomFont',
+                normal='CustomFont',
+                bold='CustomFont',
+                italic='CustomFont',
+                boldItalic='CustomFont'
+            )
+            font_found = True
+            print(f"Зарегистрирован шрифт с поддержкой кириллицы из: {font_path}")
+            break
+        except Exception as e:
+            print(f"Ошибка при копировании/регистрации шрифта {font_path}: {str(e)}")
+
+# Если шрифт не найден, пробуем зарегистрировать непосредственно системный шрифт
 if not font_found:
-    print("Используется шрифт Helvetica по умолчанию (проблемы с кириллицей)")
+    for font_path in font_paths:
+        if os.path.exists(font_path):
+            try:
+                pdfmetrics.registerFont(TTFont('CustomFont', font_path))
+                pdfmetrics.registerFontFamily(
+                    'CustomFont',
+                    normal='CustomFont',
+                    bold='CustomFont',
+                    italic='CustomFont',
+                    boldItalic='CustomFont'
+                )
+                font_found = True
+                print(f"Зарегистрирован системный шрифт: {font_path}")
+                break
+            except Exception as e:
+                print(f"Ошибка при регистрации шрифта {font_path}: {str(e)}")
+
+# Если всё еще не найден шрифт, выводим предупреждение
+if not font_found:
+    print("ВНИМАНИЕ: Не найден подходящий шрифт с поддержкой кириллицы!")
+    print("Будет использован запасной вариант, но возможны проблемы с отображением.")
+    
+    # Создаем фиктивный шрифт в качестве запасного варианта
+    from reportlab.pdfbase.pdfmetrics import registerFontFamily
     pdfmetrics.registerFont(TTFont('CustomFont', "Helvetica"))
+    pdfmetrics.registerFontFamily(
+        'CustomFont',
+        normal='Helvetica',
+        bold='Helvetica-Bold',
+        italic='Helvetica-Oblique',
+        boldItalic='Helvetica-BoldOblique'
+    )
 
 def generate_commercial_offer(pergola_data, user_data=None):
     """
@@ -166,6 +194,16 @@ def generate_commercial_offer(pergola_data, user_data=None):
         fontSize=9,
         alignment=1,  # по центру
         textColor=colors.gray
+    ))
+    
+    # Добавляем стиль для подзаголовков 4 уровня
+    styles.add(ParagraphStyle(
+        name='Heading4', 
+        parent=styles['Heading3'],
+        fontName='CustomFont', 
+        fontSize=11,
+        alignment=0,  # по левому краю
+        textColor=colors.black
     ))
     
     # Список элементов, которые будут добавлены в PDF
@@ -348,60 +386,99 @@ def generate_commercial_offer(pergola_data, user_data=None):
     # Получаем описание перголы
     pergola_description = pergola_data.get('description', '')
     
+    # Выводим для отладки
+    print(f"Длина HTML-описания: {len(pergola_description)} символов")
+    
     if pergola_description:
         # Улучшенная обработка HTML для корректного отображения всего текста
         import re
         from bs4 import BeautifulSoup
         
+        # Добавляем серию заголовков о типах пергол для диагностики
+        elements.append(Paragraph(f"Тип перголы: {pergola_data.get('pergola_type', 'Не указан')}", styles['Heading3']))
+        
+        # Используем комбинированный подход для максимальной надежности
         try:
-            # Используем BeautifulSoup для обработки HTML (если доступен)
-            # Это более надежный способ парсинга HTML
-            soup = BeautifulSoup(pergola_description, 'html.parser')
-            
-            # Добавляем заголовки перед каждым h2 или h3-элементом
-            headers = soup.find_all(['h2', 'h3'])
-            for header in headers:
-                header_text = header.get_text().strip()
-                if header_text:
-                    elements.append(Paragraph(header_text, styles['Heading3']))
-                    elements.append(Spacer(1, 3*mm))
-            
-            # Добавляем все параграфы
-            paragraphs = soup.find_all('p')
-            for p in paragraphs:
-                paragraph_text = p.get_text().strip()
-                if paragraph_text:
-                    elements.append(Paragraph(paragraph_text, styles['Normal']))
-                    elements.append(Spacer(1, 3*mm))
-                    
-        except (ImportError, Exception) as e:
-            # Если BeautifulSoup недоступен или произошла ошибка, используем регулярные выражения
-            print(f"Ошибка при парсинге HTML с BeautifulSoup: {str(e)}")
-            
-            # В первую очередь выделяем заголовки
-            headers = re.findall(r'<h[23][^>]*>(.*?)</h[23]>', pergola_description)
-            for header in headers:
-                header_text = re.sub(r'<.*?>', '', header).strip()
-                if header_text:
-                    elements.append(Paragraph(header_text, styles['Heading3']))
-                    elements.append(Spacer(1, 3*mm))
-                    
-            # Затем выделяем параграфы
-            paragraphs = re.findall(r'<p[^>]*>(.*?)</p>', pergola_description)
-            for p in paragraphs:
-                paragraph_text = re.sub(r'<.*?>', '', p).strip()
-                if paragraph_text:
-                    elements.append(Paragraph(paragraph_text, styles['Normal']))
-                    elements.append(Spacer(1, 3*mm))
-            
-            # Если ничего не найдено, используем старый метод - разделение по тегам
-            if not paragraphs and not headers:
-                paragraphs = re.split(r'</?(?:p|div|h[1-6])[^>]*>', pergola_description)
+            # Проверка и предварительная обработка HTML
+            if not pergola_description.strip().startswith('<'):
+                # Если это не HTML, просто добавляем как текст
+                paragraphs = pergola_description.split('\n')
                 for p in paragraphs:
-                    p = re.sub(r'<.*?>', '', p).strip()
-                    if p:
-                        elements.append(Paragraph(p, styles['Normal']))
+                    if p.strip():
+                        elements.append(Paragraph(p.strip(), styles['Normal']))
                         elements.append(Spacer(1, 3*mm))
+            else:
+                # Это HTML, используем BeautifulSoup
+                soup = BeautifulSoup(pergola_description, 'html.parser')
+                print(f"HTML-структура: {soup.prettify()[:200]}...")  # Печатаем начало структуры для диагностики
+                
+                # Извлекаем текст из всех заголовков (h1-h6)
+                all_headers = []
+                for i in range(1, 7):
+                    headers = soup.find_all(f'h{i}')
+                    for header in headers:
+                        header_text = header.get_text().strip()
+                        if header_text:
+                            all_headers.append((i, header_text))  # Сохраняем уровень и текст
+                
+                # Извлекаем все блоки параграфов
+                all_paragraphs = []
+                paragraphs = soup.find_all(['p', 'div', 'span', 'li'])
+                for p in paragraphs:
+                    # Проверяем, что это не внутри заголовка
+                    if not p.find_parent(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+                        paragraph_text = p.get_text().strip()
+                        if paragraph_text:
+                            all_paragraphs.append(paragraph_text)
+                
+                # Выводим для отладки результаты парсинга
+                print(f"Найдено заголовков: {len(all_headers)}")
+                print(f"Найдено параграфов: {len(all_paragraphs)}")
+                
+                # Добавляем заголовки и параграфы в PDF
+                if all_headers:
+                    for level, header_text in all_headers:
+                        style_name = 'Heading3' if level <= 3 else 'Heading4'
+                        elements.append(Paragraph(header_text, styles[style_name]))
+                        elements.append(Spacer(1, 3*mm))
+                
+                if all_paragraphs:
+                    for paragraph_text in all_paragraphs:
+                        elements.append(Paragraph(paragraph_text, styles['Normal']))
+                        elements.append(Spacer(1, 3*mm))
+                        
+                # Если ничего не найдено, пробуем разобрать весь текст
+                if not all_headers and not all_paragraphs:
+                    full_text = soup.get_text().strip()
+                    paragraphs = full_text.split('\n')
+                    for p in paragraphs:
+                        if p.strip():
+                            elements.append(Paragraph(p.strip(), styles['Normal']))
+                            elements.append(Spacer(1, 3*mm))
+                
+        except Exception as e:
+            # Если произошла ошибка, используем простой метод разбора текста
+            print(f"Ошибка при парсинге HTML: {str(e)}")
+            
+            # Просто разделяем текст по абзацам и добавляем каждый абзац
+            try:
+                # Удаляем все HTML-теги
+                text_only = re.sub(r'<.*?>', ' ', pergola_description)
+                # Нормализуем пробелы
+                text_only = re.sub(r'\s+', ' ', text_only).strip()
+                # Разбиваем на абзацы по точке или двойным пробелам
+                paragraphs = re.split(r'\.(?:\s{2,}|\n+)', text_only)
+                
+                for p in paragraphs:
+                    if p.strip():
+                        elements.append(Paragraph(p.strip() + '.', styles['Normal']))
+                        elements.append(Spacer(1, 3*mm))
+            except Exception as e2:
+                # В случае полного отказа, просто добавляем весь текст как есть
+                print(f"Ошибка при простом парсинге: {str(e2)}")
+                elements.append(Paragraph(pergola_description[:1000], styles['Normal']))
+                if len(pergola_description) > 1000:
+                    elements.append(Paragraph("...(текст слишком длинный)", styles['Normal']))
     else:
         elements.append(Paragraph("Описание перголы отсутствует", styles['Normal']))
     
@@ -419,13 +496,25 @@ def generate_commercial_offer(pergola_data, user_data=None):
             
             # Рассчитываем размеры с сохранением пропорций
             # Ограничиваем по ширине страницы (17 см), высота рассчитывается пропорционально
-            max_width = 17*cm
-            width = min(max_width, img_width * 0.5)  # масштабирование для повышения качества
-            scale = width / img_width
-            height = img_height * scale
+            max_width = 16*cm  # Немного уменьшим максимальную ширину
+            
+            # Важно: сначала вычисляем соотношение сторон
+            aspect_ratio = img_height / float(img_width)
+            
+            # Устанавливаем ширину изображения
+            width = max_width
+            
+            # Вычисляем высоту с учетом соотношения сторон
+            height = width * aspect_ratio
+            
+            print(f"Размеры изображения: {img_width}x{img_height}, соотношение сторон: {aspect_ratio}")
+            print(f"Размеры в PDF: {width/cm}x{height/cm} см")
             
             # Добавляем изображение с сохранением пропорций
-            img = Image(pergola_image, width=width, height=height)
+            # Используем явно указанные width и height для гарантии сохранения пропорций
+            img = Image(pergola_image)
+            img.drawWidth = width
+            img.drawHeight = height
             elements.append(img)
         except Exception as e:
             # Если не удалось обработать изображение через PIL, используем стандартный подход
