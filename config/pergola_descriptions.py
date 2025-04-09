@@ -204,6 +204,16 @@ def get_bioclimatic_install_description():
         str: HTML-описание вариантов установки и вертикальных систем
     """
     return BIOCLIMATIC_INSTALL_DESCRIPTION
+    
+def get_lamella_engineering_description():
+    """
+    Возвращает техническое описание ламелей и их поведения при нагрузках
+    Только для пергол серий B500 и B700, не применяется для серии B600
+    
+    Returns:
+        str: HTML-описание технических характеристик ламелей
+    """
+    return LAMELLA_ENGINEERING_DESCRIPTION
 
 def get_pergola_images(pergola_type):
     """
@@ -545,3 +555,127 @@ PERGOLA_IMAGES["INSTALL_SYSTEM"] = [
 
 # Подпись к изображению вариантов установки
 PERGOLA_IMAGE_CAPTIONS["INSTALL_SYSTEM"] = "Варианты установки и вертикальные системы"
+
+# Описание технических характеристик ламелей и их поведения при нагрузках
+LAMELLA_ENGINEERING_DESCRIPTION = """
+<div style='padding: 0 20px;'>
+<h3 style='font-size: 1.2rem; margin-top: 30px; text-align: center;'>Инженерный взгляд на биоклиматические перголы: как ламели выдерживают снег, ливни и сохраняют тепло</h3>
+<p style='margin-bottom: 15px; font-style: italic; text-align: center;'>(Технические секреты, которые делают ваш комфорт непогрешимым)</p>
+
+<div style='margin-bottom: 20px;'>
+<h4 style='font-size: 1.1rem; margin-top: 20px;'>Прогиб ламелей: где точность встречает надежность</h4>
+<p style='margin-bottom: 15px;'>Ламели — это «скелет» перголы, и их прочность определяет, как конструкция поведет себя под нагрузками. Мы протестировали каждую модель в экстремальных условиях. Вот что важно знать:</p>
+<ul style='margin-bottom: 10px; padding-left: 20px;'>
+    <li><strong>Ламель 250×53 NEW</strong>
+        <ul style='padding-left: 20px;'>
+            <li>Масса: 4,684 кг/м | Шаг: 250 мм</li>
+            <li>Прогиб под нагрузкой:
+                <ul style='padding-left: 20px;'>
+                    <li>Рабочая (масса ламели + 50%): 12 мм при ширине 4,5 м.</li>
+                    <li>Снеговая (50 кг/м²): 30 мм при ширине 4,5 м.</li>
+                </ul>
+            </li>
+            <li>Макс. снеговая нагрузка: 50 кг/м² (эквивалент 40-50 см свежего снега).</li>
+        </ul>
+    </li>
+    <li><strong>Ламель 200×56 NEW</strong>
+        <ul style='padding-left: 20px;'>
+            <li>Масса: 4,375 кг/м | Шаг: 200 мм</li>
+            <li>Прогиб под нагрузкой:
+                <ul style='padding-left: 20px;'>
+                    <li>Рабочая: 10 мм при ширине 5,0 м.</li>
+                    <li>Снеговая: 22 мм при ширине 5,0 м.</li>
+                </ul>
+            </li>
+            <li>Макс. снеговая нагрузка: 70 кг/м² (до 60 см снега).</li>
+        </ul>
+    </li>
+</ul>
+<p style='margin-bottom: 10px;'>Почему это важно? Минимальный прогиб сохраняет геометрию крыши даже в экстремальных условиях. Для сравнения: у конкурентов аналогичные ламели прогибаются на 50-70 мм под теми же нагрузками.</p>
+</div>
+
+<div style='margin-bottom: 20px;'>
+<h4 style='font-size: 1.1rem; margin-top: 20px;'>Герметичность: когда внутри сухо, даже если снаружи потоп</h4>
+<p style='margin-bottom: 15px;'>Алюминиевые ламели перголы — это не просто «крыша», а герметичный кокон. Вот как мы этого добиваемся:</p>
+<ol style='margin-bottom: 10px; padding-left: 20px;'>
+    <li><strong>Двойное уплотнение EPDM:</strong>
+        <ul style='padding-left: 20px;'>
+            <li>Уплотнители между ламелями и в лотках выдерживают давление водяного столба до 600 Па (ливень интенсивностью 100 мм/час).</li>
+            <li>Для сравнения: стандартные системы держат только 300-400 Па.</li>
+        </ul>
+    </li>
+    <li><strong>Наклон ламелей + дренажные каналы:</strong> Вода стекает в лотки, не задерживаясь на поверхности. Даже при сильном ветре капли не просачиваются через стыки.</li>
+    <li><strong>Тест на герметичность:</strong> Мы заливаем крышу перголы водой под давлением 600 Па в течение 1 часа. Результат: 0 протечек.</li>
+</ol>
+</div>
+
+<div style='margin-bottom: 20px;'>
+<h4 style='font-size: 1.1rem; margin-top: 20px;'>Теплоизоляция: почему под перголой тепло зимой и прохладно летом</h4>
+<ul style='margin-bottom: 10px; padding-left: 20px;'>
+    <li><strong>Терморазрыв в профиле:</strong> Алюминиевые ламели с изолирующими вставками из нейлона снижают теплопотери на 40%.</li>
+    <li><strong>Эффект «воздушной подушки»:</strong> При закрытых ламелях между ними образуется прослойка воздуха, которая работает как естественный изолятор.</li>
+    <li><strong>Температурный комфорт:</strong>
+        <ul style='padding-left: 20px;'>
+            <li>Зимой: под перголой на 5-7°C теплее, чем снаружи.</li>
+            <li>Летом: на 10-12°C прохладнее благодаря тени и вентиляции.</li>
+        </ul>
+    </li>
+</ul>
+</div>
+
+<div style='margin-bottom: 20px;'>
+<h4 style='font-size: 1.1rem; margin-top: 20px;'>Сравнительная таблица: какая ламель подходит вам?</h4>
+<table style='width: 100%; border-collapse: collapse; margin-bottom: 15px;'>
+    <tr>
+        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Параметр</th>
+        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Ламель 250×53 NEW</th>
+        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Ламель 200×56 NEW</th>
+    </tr>
+    <tr>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Снеговая нагрузка</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>50 кг/м²</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>70 кг/м²</td>
+    </tr>
+    <tr>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Прогиб под снегом</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>30 мм (4,5 м)</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>22 мм (5,0 м)</td>
+    </tr>
+    <tr>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Шаг ламелей</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>250 мм</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>200 мм (плотнее защита)</td>
+    </tr>
+    <tr>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Ветровая стойкость</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>До 25 м/с</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>До 30 м/с</td>
+    </tr>
+    <tr>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Идеальный сценарий</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Умеренный климат</td>
+        <td style='border: 1px solid #ddd; padding: 8px;'>Северные регионы</td>
+    </tr>
+</table>
+</div>
+
+<div style='margin-bottom: 20px;'>
+<h4 style='font-size: 1.1rem; margin-top: 20px;'>Почему это выгодно?</h4>
+<ul style='margin-bottom: 10px; padding-left: 20px;'>
+    <li><strong>Экономия на отоплении/кондиционировании:</strong> Терморазрыв и герметичность снижают затраты на энергию.</li>
+    <li><strong>Гарантия 10 лет:</strong> На ламели и уплотнители — потому что мы уверены в каждом миллиметре.</li>
+    <li><strong>Адаптивность:</strong> Комбинируйте ламели с остеклением или ZIP-экранами для полного контроля над климатом.</li>
+</ul>
+</div>
+
+<p style='margin-bottom: 15px; font-weight: bold;'>Финал: Биоклиматическая пергола — это не «навес», а инженерная система, которая считает каждую каплю дождя и снежинку. Выбирайте ламели, которые работают как швейцарские часы — тихо, точно, без компромиссов.</p>
+</div>
+"""
+
+# Изображение для технических характеристик ламелей
+PERGOLA_IMAGES["LAMELLA_ENGINEERING"] = [
+    "attached_assets/aluminum_slats.png"
+]
+
+# Подпись к изображению технических характеристик ламелей
+PERGOLA_IMAGE_CAPTIONS["LAMELLA_ENGINEERING"] = "Технические характеристики ламелей для пергол B500 и B700"
