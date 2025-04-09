@@ -423,27 +423,34 @@ def render_options_form():
     
     /* Заменяем радиокнопки на галочки */
     div[data-testid="stVerticalBlock"] div[role="radiogroup"] input[type="radio"] {
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        width: 20px;
-        height: 20px;
-        border: 2px solid #3f6daa;
-        border-radius: 4px;
-        outline: none;
-        position: relative;
-        margin-right: 10px;
-        vertical-align: middle;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        width: 20px !important;
+        height: 20px !important;
+        border: 2px solid #3f6daa !important;
+        border-radius: 4px !important;
+        outline: none !important;
+        position: relative !important;
+        margin-right: 10px !important;
+        vertical-align: middle !important;
+        background-color: white !important;
+        cursor: pointer !important;
     }
     
     div[data-testid="stVerticalBlock"] div[role="radiogroup"] input[type="radio"]:checked::before {
-        content: "✓";
-        position: absolute;
-        color: #3f6daa;
-        font-size: 18px;
-        font-weight: bold;
-        top: -2px;
-        left: 2px;
+        content: "✓" !important;
+        position: absolute !important;
+        color: #3f6daa !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+        top: -2px !important;
+        left: 2px !important;
+    }
+    
+    /* Скрываем стандартные круглые радиокнопки */
+    div[data-testid="stVerticalBlock"] div[role="radiogroup"] input[type="radio"] + div {
+        display: none !important;
     }
     
     /* Расположение текста рядом с галочкой на одном уровне */

@@ -163,7 +163,7 @@ def render_dimensions_form():
     
     # Ширина
     with row_cols[0]:
-        st.markdown('<div style="font-weight:500; margin-bottom:5px; font-size:1rem; color: #FFFFFF !important;">Ширина</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-weight:500; margin-bottom:5px; font-size:1rem; text-align:center; color: #FFFFFF !important;">Ширина</div>', unsafe_allow_html=True)
         col1, col2 = st.columns([4, 1])
         with col1:
             width = st.number_input(
@@ -176,12 +176,20 @@ def render_dimensions_form():
                 key="width_input",
                 label_visibility="collapsed"
             )
+            # Добавляем CSS для центрирования текста в поле ввода
+            st.markdown("""
+            <style>
+            div[data-testid="stNumberInput"] input {
+                text-align: center !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
         with col2:
             st.markdown('<div style="padding-top:8px; font-size:0.9rem;">м</div>', unsafe_allow_html=True)
     
     # Вынос (длина)
     with row_cols[1]:
-        st.markdown('<div style="font-weight:500; margin-bottom:5px; font-size:1rem; color: #FFFFFF !important;">Вынос</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-weight:500; margin-bottom:5px; font-size:1rem; text-align:center; color: #FFFFFF !important;">Вынос</div>', unsafe_allow_html=True)
         col1, col2 = st.columns([4, 1])
         with col1:
             length = st.number_input(
@@ -199,7 +207,7 @@ def render_dimensions_form():
     
     # Высота (фиксированная)
     with row_cols[2]:
-        st.markdown('<div style="font-weight:500; margin-bottom:5px; font-size:1rem; color: #FFFFFF !important;">Высота (фикс.)</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-weight:500; margin-bottom:5px; font-size:1rem; text-align:center; color: #FFFFFF !important;">Высота (фикс.)</div>', unsafe_allow_html=True)
         col1, col2 = st.columns([4, 1])
         with col1:
             st.text_input(
@@ -209,6 +217,14 @@ def render_dimensions_form():
                 key="height_input",
                 label_visibility="collapsed"
             )
+            # Добавляем CSS для центрирования текста в поле ввода
+            st.markdown("""
+            <style>
+            div[data-testid="stTextInput"] input {
+                text-align: center !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
         with col2:
             st.markdown('<div style="padding-top:8px; font-size:0.9rem;">м</div>', unsafe_allow_html=True)
     
