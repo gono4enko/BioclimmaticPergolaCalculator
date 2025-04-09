@@ -1025,7 +1025,63 @@ def render_results(results):
     # Используем встроенные компоненты Streamlit для отображения таблицы
     import pandas as pd
     df_items = pd.DataFrame(items_data, columns=["Наименование", "Стоимость"])
-    st.table(df_items)
+    
+    # Настраиваем ширину колонок, чтобы цены не переносились на новую строку
+    # Используем HTML для создания таблицы с фиксированными размерами колонок
+    st.markdown(
+        """
+        <style>
+        .price-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .price-table th, .price-table td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .price-table th {
+            background-color: #f1f1f1;
+            font-weight: bold;
+        }
+        .price-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .price-table tr:last-child {
+            font-weight: bold;
+            background-color: #f0f7ff;
+        }
+        .price-column {
+            width: 200px;
+            text-align: right;
+            white-space: nowrap;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        </style>
+        
+        <table class="price-table">
+            <tr>
+                <th>Наименование</th>
+                <th class="price-column">Стоимость</th>
+            </tr>
+        """, unsafe_allow_html=True
+    )
+    
+    # Формируем строки таблицы
+    for i, row in enumerate(items_data):
+        row_class = "price-row-last" if i == len(items_data) - 1 else ""
+        st.markdown(
+            f"""
+            <tr class="{row_class}">
+                <td>{row[0]}</td>
+                <td class="price-column">{row[1]}</td>
+            </tr>
+            """, unsafe_allow_html=True
+        )
+    
+    # Закрываем таблицу
+    st.markdown("</table>", unsafe_allow_html=True)
     
     # Добавляем разделитель
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
