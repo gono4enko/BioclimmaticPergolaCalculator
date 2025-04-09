@@ -22,10 +22,12 @@ class PDF(FPDF):
     def __init__(self):
         # Используем конкретные значения из перечисления литералов
         super().__init__(orientation='P', unit='mm', format='A4')
-        # Используем встроенные шрифты FPDF
-        # Arial уже включен по умолчанию и поддерживает кириллицу
-        # Устанавливаем мета-информацию PDF
-        self.set_title("Коммерческое предложение")
+        
+        # Подключаем поддержку UTF-8
+        self.core_fonts_encoding = "utf-8"
+        
+        # Устанавливаем мета-информацию PDF (только латиница)
+        self.set_title("Commercial Offer")
         self.set_author("Pergola Calculator")
         self.set_creator("Pergola Calculator")
         
@@ -39,23 +41,23 @@ class PDF(FPDF):
     def header(self):
         """Создает верхний колонтитул на каждой странице"""
         self.page_count += 1
-        # Добавляем синюю плашку с текстом "Компания «Комфортный дом»"
+        # Добавляем синюю плашку с текстом 
         self.set_fill_color(63, 109, 170)  # Синий цвет #3f6daa
         self.set_text_color(255, 255, 255)  # Белый текст
         self.set_font("Arial", "B", 14)
-        self.cell(0, 15, "Компания «Комфортный дом»", 0, 1, "C", fill=True)
+        self.cell(0, 15, "Comfortable Home Company", 0, 1, "C", fill=True)
         
         # Номер страницы
         self.set_text_color(0, 0, 0)  # Черный текст
         self.set_font("Arial", "", 10)
-        self.cell(0, 5, f"{self.page_count} из 4", 0, 1, "L")
+        self.cell(0, 5, f"Page {self.page_count} of 4", 0, 1, "L")
         
     def footer(self):
         """Создает нижний колонтитул на каждой странице"""
         self.set_y(-15)  # 15 мм от нижнего края
         self.set_font("Arial", "I", 8)
         self.set_text_color(128, 128, 128)  # Серый текст
-        self.cell(0, 10, "© 2025 Комфортный дом | Все права защищены", 0, 0, "C")
+        self.cell(0, 10, "© 2025 Comfortable Home | All rights reserved", 0, 0, "C")
         
     def chapter_title(self, title):
         """Добавляет заголовок раздела"""
@@ -136,37 +138,37 @@ def generate_commercial_offer(pergola_data, user_data=None):
     
     # Устанавливаем информацию о текущей дате
     pdf.set_font('Arial', '', 10)
-    pdf.cell(0, 5, f"г. Москва, {current_date}", 0, 1, "L")
+    pdf.cell(0, 5, f"Moscow, {current_date}", 0, 1, "L")
     
     # Добавляем номер коммерческого предложения
     pdf.ln(5)
-    pdf.cell(0, 5, f"№ {timestamp[:8]}", 0, 1, "L")
+    pdf.cell(0, 5, f"No. {timestamp[:8]}", 0, 1, "L")
     
     # Добавляем заголовок коммерческого предложения
     pdf.ln(10)
     pdf.set_font('Arial', 'B', 16)
-    pdf.cell(0, 10, "КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", 0, 1, "C")
+    pdf.cell(0, 10, "COMMERCIAL OFFER", 0, 1, "C")
     pdf.set_font('Arial', '', 14)
-    pdf.cell(0, 10, "на поставку и монтаж биоклиматической перголы", 0, 1, "C")
+    pdf.cell(0, 10, "for the supply and installation of a bioclimatic pergola", 0, 1, "C")
     
     # Добавляем информацию о клиенте, если она доступна
     if user_data:
         pdf.ln(5)
-        pdf.chapter_title("Информация о клиенте:")
+        pdf.chapter_title("Client Information:")
         
         pdf.set_font('Arial', '', 10)
         if user_data.get('name'):
-            pdf.cell(0, 7, f"Имя: {user_data['name']}", 0, 1)
+            pdf.cell(0, 7, f"Name: {user_data['name']}", 0, 1)
         
         if user_data.get('phone'):
-            pdf.cell(0, 7, f"Телефон: {user_data['phone']}", 0, 1)
+            pdf.cell(0, 7, f"Phone: {user_data['phone']}", 0, 1)
         
         if user_data.get('email'):
             pdf.cell(0, 7, f"Email: {user_data['email']}", 0, 1)
     
     # Добавляем информацию о выбранной конфигурации перголы
     pdf.ln(10)
-    pdf.chapter_title("Параметры перголы:")
+    pdf.chapter_title("Pergola Parameters:")
     
     # Извлекаем данные о перголе из словаря
     pergola_type = pergola_data.get('pergola_type', '')
@@ -176,36 +178,36 @@ def generate_commercial_offer(pergola_data, user_data=None):
     modules = pergola_data.get('modules', 1)
     
     # Создаем таблицу с основными параметрами перголы
-    headers = ["Параметр", "Значение"]
+    headers = ["Parameter", "Value"]
     widths = [80, 80]  # Ширина колонок в мм
     
     pdf.table_header(headers, widths)
     
-    pdf.table_row(["Модель перголы", pergola_type], widths)
-    pdf.table_row(["Ширина", f"{width} м"], widths)
-    pdf.table_row(["Вынос (длина)", f"{length} м"], widths)
-    pdf.table_row(["Тип ламелей", lamella_type], widths)
-    pdf.table_row(["Количество модулей", str(modules)], widths)
+    pdf.table_row(["Pergola model", pergola_type], widths)
+    pdf.table_row(["Width", f"{width} m"], widths)
+    pdf.table_row(["Length", f"{length} m"], widths)
+    pdf.table_row(["Lamella type", lamella_type], widths)
+    pdf.table_row(["Modules count", str(modules)], widths)
     
     # Если есть опции, добавляем их в таблицу
     options = pergola_data.get('options', {})
     if options:
         if 'lighting_type' in options and options['lighting_type'] != 'none':
-            pdf.table_row(["Тип освещения", options['lighting_type']], widths)
+            pdf.table_row(["Lighting type", options['lighting_type']], widths)
         if options.get('installation', False):
-            pdf.table_row(["Установка", "Включена"], widths)
+            pdf.table_row(["Installation", "Included"], widths)
         if options.get('delivery', False):
-            pdf.table_row(["Доставка", "Включена"], widths)
+            pdf.table_row(["Delivery", "Included"], widths)
     
     # Добавляем спецификацию перголы
     pdf.ln(10)
-    pdf.chapter_title("Спецификация перголы:")
+    pdf.chapter_title("Pergola Specification:")
     
     # Получаем данные о спецификации
     specification = pergola_data.get('specification', [])
     
     if specification:
-        headers = ["№", "Наименование", "Количество"]
+        headers = ["#", "Description", "Quantity"]
         widths = [15, 120, 25]  # Ширина колонок в мм
         
         pdf.table_header(headers, widths)
@@ -214,18 +216,18 @@ def generate_commercial_offer(pergola_data, user_data=None):
             pdf.table_row([str(i), item['name'], str(item['quantity'])], widths, aligns=["C", "L", "C"])
     else:
         pdf.set_font('Arial', '', 10)
-        pdf.cell(0, 7, "Данные о спецификации отсутствуют", 0, 1)
+        pdf.cell(0, 7, "No specification data available", 0, 1)
     
     # Добавляем информацию о стоимости
     pdf.ln(10)
-    pdf.chapter_title("Стоимость:")
+    pdf.chapter_title("Price Information:")
     
     # Получаем данные о стоимости
     cost_items = pergola_data.get('cost_items', [])
     total_cost = pergola_data.get('total_cost', 0)
     
     if cost_items:
-        headers = ["№", "Наименование", "Стоимость (₽)"]
+        headers = ["#", "Item", "Price (₽)"]
         widths = [15, 120, 25]  # Ширина колонок в мм
         
         pdf.table_header(headers, widths)
@@ -241,15 +243,15 @@ def generate_commercial_offer(pergola_data, user_data=None):
         total_price_str = f"{total_cost:,.2f}".replace(',', ' ')
         
         pdf.cell(15, 8, "", 1, 0, "C", fill=True)
-        pdf.cell(120, 8, "ИТОГО:", 1, 0, "R", fill=True)
+        pdf.cell(120, 8, "TOTAL:", 1, 0, "R", fill=True)
         pdf.cell(25, 8, total_price_str, 1, 1, "R", fill=True)
     else:
         pdf.set_font('Arial', '', 10)
-        pdf.cell(0, 7, "Данные о стоимости отсутствуют", 0, 1)
+        pdf.cell(0, 7, "No pricing data available", 0, 1)
     
     # Добавляем описание перголы
     pdf.add_page()
-    pdf.chapter_title("Описание перголы:")
+    pdf.chapter_title("Pergola Description:")
     
     # Получаем описание перголы
     pergola_description = pergola_data.get('description', '')
@@ -260,23 +262,23 @@ def generate_commercial_offer(pergola_data, user_data=None):
     
     # Если описание отсутствует или пустое, добавляем базовое описание
     if not pergola_description or pergola_description == "<p>Описание для данного типа перголы отсутствует.</p>":
-        pergola_type = pergola_data.get('pergola_type', 'биоклиматическая')
+        pergola_type = pergola_data.get('pergola_type', 'bioclimatic')
         print(f"Добавляем базовое описание для перголы типа {pergola_type}")
         
         pergola_description = f"""
         <div style='padding: 0 20px;'>
-        <h3 style='font-size: 1.2rem; margin-top: 20px; text-align: center;'>Пергола {pergola_type}</h3>
+        <h3 style='font-size: 1.2rem; margin-top: 20px; text-align: center;'>Pergola {pergola_type}</h3>
         <p style='margin-bottom: 15px;'>
-        Современная биоклиматическая пергола с автоматическим управлением. 
-        Изготовлена из высококачественного алюминия с порошковым покрытием.
+        Modern bioclimatic pergola with automatic control. 
+        Made of high-quality aluminum with powder coating.
         </p>
         <div style='margin-bottom: 15px;'>
-        <strong>Преимущества:</strong><br/>
-        • Защита от осадков и солнца<br/>
-        • Регулируемое положение ламелей<br/>
-        • Встроенная система отвода воды<br/>
-        • Долговечные материалы<br/>
-        • Простота управления
+        <strong>Benefits:</strong><br/>
+        • Protection from precipitation and sun<br/>
+        • Adjustable slat position<br/>
+        • Built-in water drainage system<br/>
+        • Durable materials<br/>
+        • Ease of use
         </div>
         </div>
         """
@@ -302,9 +304,9 @@ def generate_commercial_offer(pergola_data, user_data=None):
                     pdf.multi_cell(0, 6, chunk)
             pdf.ln(3)
     except Exception as e:
-        print(f"Ошибка при обработке HTML-описания: {str(e)}")
+        print(f"Error processing HTML description: {str(e)}")
         pdf.set_font('Arial', '', 10)
-        pdf.cell(0, 7, "Ошибка при обработке описания перголы", 0, 1)
+        pdf.cell(0, 7, "Error processing pergola description", 0, 1)
     
     # Добавляем изображение перголы, если оно есть
     image_path = pergola_data.get('image_path')
@@ -332,8 +334,8 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 processed_image_path = f"processed_images/resized_{img_name}"
                 resized_img.save(processed_image_path)
                 
-                print(f"Исходные размеры изображения: {width}x{height}")
-                print(f"Новые размеры изображения: {new_width}x{new_height} пикселей")
+                print(f"Original image dimensions: {width}x{height}")
+                print(f"New image dimensions: {new_width}x{new_height} pixels")
                 
                 # Если изображение слишком велико для текущей страницы, добавляем новую
                 if pdf.get_y() + (new_height * 25.4 / 300) + 20 > pdf.page_break_trigger:
@@ -342,7 +344,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 # Центрируем изображение
                 pdf.ln(10)
                 pdf.image(processed_image_path, x=(210 - 2*20 - new_width * 25.4 / 300) / 2 + 20, w=new_width * 25.4 / 300)
-                print(f"Добавляем измененное изображение в PDF: {processed_image_path}")
+                print(f"Adding resized image to PDF: {processed_image_path}")
             else:
                 # Если изображение слишком велико для текущей страницы, добавляем новую
                 if pdf.get_y() + (height * 25.4 / 300) + 20 > pdf.page_break_trigger:
@@ -351,23 +353,23 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 # Центрируем изображение
                 pdf.ln(10)
                 pdf.image(image_path, x=(210 - 2*20 - width * 25.4 / 300) / 2 + 20, w=width * 25.4 / 300)
-                print(f"Добавляем оригинальное изображение в PDF: {image_path}")
+                print(f"Adding original image to PDF: {image_path}")
         except Exception as e:
-            print(f"Ошибка при обработке изображения: {str(e)}")
+            print(f"Error processing image: {str(e)}")
     
     # Добавляем контактную информацию
     pdf.add_page()
-    pdf.chapter_title("Контактная информация:")
+    pdf.chapter_title("Contact Information:")
     
     pdf.set_font('Arial', '', 11)
-    pdf.multi_cell(0, 6, "Для получения дополнительной информации или оформления заказа, пожалуйста, свяжитесь с нами:")
+    pdf.multi_cell(0, 6, "For additional information or to place an order, please contact us:")
     pdf.ln(5)
     
     contact_info = [
-        "Телефон: +7 (495) 123-45-67",
+        "Phone: +7 (495) 123-45-67",
         "Email: info@komfortnyj-dom.ru",
-        "Веб-сайт: www.komfortnyj-dom.ru",
-        "Адрес: г. Москва, ул. Примерная, д. 123"
+        "Website: www.komfortnyj-dom.ru",
+        "Address: Moscow, Example St., 123"
     ]
     
     for info in contact_info:
@@ -375,29 +377,42 @@ def generate_commercial_offer(pergola_data, user_data=None):
     
     # Сохраняем PDF с поддержкой UTF-8
     try:
-        # Пробуем сохранить с использованием модифицированного метода для кириллицы
+        # Создаем директорию для сохранения PDF
         os.makedirs(os.path.dirname(pdf_filename), exist_ok=True)
         
-        # Используем прямой доступ к строке для замены кириллических символов
+        # В FPDF встроенный метод output с dest='F' и кодировкой по умолчанию latin-1
+        # Поскольку у нас кириллица, нам нужно создать полностью новый PDF без
+        # русских символов, а затем добавить текстовую информацию транслитом
+        
+        # Try to save full PDF first
         pdf.output(pdf_filename, 'F')
-        print(f"PDF успешно создан: {pdf_filename}")
+        print(f"PDF successfully created: {pdf_filename}")
     except Exception as e:
-        print(f"Ошибка при сохранении PDF: {str(e)}")
+        print(f"Error saving PDF: {str(e)}")
         
         try:
-            # Пробуем упрощенный вариант с минимальной информацией
+            # Create a new PDF with simplified content
+            # We use transliteration for Russian text
             simple_pdf = FPDF()
             simple_pdf.add_page()
-            simple_pdf.set_font('Arial', '', 12)
+            simple_pdf.set_font('Arial', 'B', 14)
             simple_pdf.cell(0, 10, "Pergola Calculator", 0, 1, 'C')
+            simple_pdf.set_font('Arial', '', 12)
             simple_pdf.cell(0, 10, f"Model: {pergola_type}", 0, 1)
             simple_pdf.cell(0, 10, f"Dimensions: {width}x{length}m", 0, 1)
             simple_pdf.cell(0, 10, f"Total cost: {total_cost:,.2f} rub", 0, 1)
             
+            # Add a note about the Russian version
+            simple_pdf.ln(10)
+            simple_pdf.set_font('Arial', 'I', 10)
+            simple_pdf.cell(0, 10, "Russian version contains errors due to encoding problems.", 0, 1)
+            simple_pdf.cell(0, 10, "Check the website for correct information.", 0, 1)
+            
+            # Save simplified PDF
             simple_pdf.output(pdf_filename, 'F')
-            print(f"Упрощенный PDF создан: {pdf_filename}")
+            print(f"Simplified PDF created: {pdf_filename}")
         except Exception as e2:
-            print(f"Ошибка при сохранении упрощенного PDF: {str(e2)}")
+            print(f"Error saving simplified PDF: {str(e2)}")
             pdf_filename = None
     
     return pdf_filename
