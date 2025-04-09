@@ -130,70 +130,50 @@ class PDF(FPDF):
         # Для каждой ячейки проверяем, помещается ли текст при текущем размере шрифта
         for i, cell in enumerate(data):
             cell_text = str(cell)
-            font_size = 10  # Начальный размер шрифта
             
-            # Если это ячейка с ценой (обычно последняя), используем меньший шрифт сразу
-            if i == len(data) - 1 and "₽" in cell_text:
+            # Определяем начальный размер шрифта в зависимости от типа данных
+            if i == len(data) - 1 and ("₽" in cell_text or "руб" in cell_text):
+                # Для ячеек с ценами сразу используем меньший размер
+                font_size = 8
+                
+                # Если это цена свыше миллиона или имеет много символов, начинаем с еще меньшего размера
+                if len(cell_text.strip()) > 10:  # Для длинных цен
+                    font_size = 7
+                if len(cell_text.strip()) > 14:  # Для очень длинных цен
+                    font_size = 6
+            elif i == 0 and len(cell_text) < 3:
+                # Для номеров строк используем стандартный размер
+                font_size = 10
+            elif "Итого" in cell_text or "ИТОГО" in cell_text:
+                # Для итоговой строки используем чуть больший шрифт
+                font_size = 9
+            else:
+                # Для основного текста
                 font_size = 9
             
             # Цикл уменьшения шрифта, пока текст не поместится
-            while font_size >= 7:  # Минимальный размер шрифта 7
+            # Разрешаем уменьшать шрифт до 5 для длинных цен
+            min_font_size = 5 if ("₽" in cell_text or "руб" in cell_text) else 7
+            
+            while font_size >= min_font_size:
                 # FPDF принимает только целые числа для размера шрифта
                 self.set_font("DejaVu", "", int(font_size))
                 text_width = self.get_string_width(cell_text)
                 
-                # Если текст помещается в ячейку (с небольшим отступом), выходим из цикла
-                if text_width <= widths[i] - 3:
+                # Используем разные отступы в зависимости от типа ячейки
+                padding = 2 if i == len(data) - 1 else 3  # Для цен меньший отступ
+                
+                # Если текст помещается в ячейку с учетом отступа, выходим из цикла
+                if text_width <= widths[i] - padding:
                     break
                 
                 # Уменьшаем размер шрифта
-                font_size -= 1  # Уменьшаем на целое число
+                font_size -= 1  # Уменьшаем размер шрифта на 1 пункт
             
             # Выводим ячейку с адаптированным размером шрифта
             self.cell(widths[i], row_height, cell_text, 1, 0, aligns[i])
         
         self.ln()
-
-
-def generate_commercial_offer(pergola_data, user_data=None):
-    """
-    Генерирует коммерческое предложение в формате PDF на основе 
-    данных о перголе, полученных из калькулятора.
-    
-    Args:
-        pergola_data (dict): Словарь с данными о перголе, ее размерах, конфигурации и стоимости
-        user_data (dict, optional): Словарь с данными пользователя (имя, телефон и т.д.)
-        
-    Returns:
-        str: Путь к сгенерированному PDF-файлу
-    """
-    try:
-        # Очищаем временные файлы обработанных изображений
-        for file in os.listdir("processed_images"):
-            if file.startswith("resized_"):
-                try:
-                    os.remove(os.path.join("processed_images", file))
-                except:
-                    pass
-        
-        # Создаем уникальное имя файла на основе текущей даты и времени
-        now = datetime.now()
-        timestamp = now.strftime("%Y%m%d_%H%M%S")
-        
-        # Форматируем текущую дату для отображения в документе
-        current_date = now.strftime("%d.%m.%Y")
-        
-        # Определяем путь для сохранения файла
-        if user_data and user_data.get('phone'):
-            # Если есть телефон, используем его в имени файла (без специальных символов)
-            phone = ''.join(filter(str.isdigit, user_data['phone']))
-            pdf_filename = f"generated_pdf/KP_Pergola_{phone}_{timestamp}.pdf"
-        else:
-            pdf_filename = f"generated_pdf/KP_Pergola_{timestamp}.pdf"
-        
-        # Создаем экземпляр PDF с поддержкой кириллицы
-        pdf = PDF()
-        
         # Добавляем первую страницу
         pdf.add_page()
         
@@ -921,6 +901,490 @@ def generate_commercial_offer(pergola_data, user_data=None):
             simple_pdf.cell(0, 7, "Телефон: +7 (495) 123-45-67", 0, 1)
             simple_pdf.cell(0, 7, "Email: info@komfortnyj-dom.ru", 0, 1)
             simple_pdf.cell(0, 7, "Веб-сайт: www.komfortnyj-dom.ru", 0, 1)
+            
+            # Сохраняем упрощенный PDF в дефолтную директорию
+            backup_filename = f"generated_pdf/KP_Pergola_simple_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            os.makedirs(os.path.dirname(backup_filename), exist_ok=True)
+            simple_pdf.output(backup_filename)
+            print(f"Упрощенный PDF создан: {backup_filename}")
+            
+            return backup_filename
+            
+        except Exception as e2:
+            print(f"Ошибка при создании упрощенного PDF: {str(e2)}")
+            return None
+
+
+def generate_commercial_offer(pergola_data, user_data=None):
+    """
+    Генерирует коммерческое предложение в формате PDF на основе 
+    данных о перголе, полученных из калькулятора.
+    
+    Args:
+        pergola_data (dict): Словарь с данными о перголе, ее размерах, конфигурации и стоимости
+        user_data (dict, optional): Словарь с данными пользователя (имя, телефон и т.д.)
+        
+    Returns:
+        str: Путь к сгенерированному PDF-файлу
+    """
+    try:
+        # Очищаем временные файлы обработанных изображений
+        for file in os.listdir("processed_images"):
+            if file.startswith("proc_"):
+                try:
+                    os.remove(os.path.join("processed_images", file))
+                except:
+                    pass
+        
+        # Создаем уникальное имя файла на основе текущей даты и времени
+        now = datetime.now()
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
+        
+        # Форматируем текущую дату для отображения в документе
+        current_date = now.strftime("%d.%m.%Y")
+        
+        # Определяем путь для сохранения файла
+        if user_data and user_data.get('phone'):
+            # Если есть телефон, используем его в имени файла (без специальных символов)
+            phone = ''.join(filter(str.isdigit, user_data['phone']))
+            pdf_filename = f"generated_pdf/KP_Pergola_{phone}_{timestamp}.pdf"
+        else:
+            pdf_filename = f"generated_pdf/KP_Pergola_{timestamp}.pdf"
+        
+        # Создаем экземпляр PDF с поддержкой кириллицы
+        pdf = PDF()
+        
+        # Добавляем первую страницу
+        pdf.add_page()
+        
+        # Устанавливаем информацию о текущей дате
+        pdf.set_font('DejaVu', '', 10)
+        pdf.cell(0, 5, f"Москва, {current_date}", 0, 1, "L")
+        
+        # Добавляем номер коммерческого предложения
+        pdf.ln(5)
+        pdf.cell(0, 5, f"№ {timestamp[:8]}", 0, 1, "L")
+        
+        # Добавляем заголовок коммерческого предложения
+        pdf.ln(10)
+        pdf.set_font('DejaVu', 'B', 16)
+        pdf.cell(0, 10, "КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", 0, 1, "C")
+        pdf.set_font('DejaVu', '', 14)
+        pdf.cell(0, 10, "на поставку и монтаж биоклиматической перголы", 0, 1, "C")
+        
+        # Добавляем информацию о клиенте, если она доступна
+        if user_data:
+            pdf.ln(5)
+            pdf.chapter_title("Информация о клиенте:")
+            
+            pdf.set_font('DejaVu', '', 10)
+            if user_data.get('name'):
+                pdf.cell(0, 7, f"Имя: {user_data['name']}", 0, 1)
+            
+            if user_data.get('phone'):
+                pdf.cell(0, 7, f"Телефон: {user_data['phone']}", 0, 1)
+            
+            if user_data.get('email'):
+                pdf.cell(0, 7, f"Email: {user_data['email']}", 0, 1)
+        
+        # Добавляем информацию о выбранной конфигурации перголы
+        pdf.ln(10)
+        pdf.chapter_title("Параметры перголы:")
+        
+        # Извлекаем данные о перголе из словаря
+        pergola_type = pergola_data.get('pergola_type', '')
+        width = pergola_data.get('width', 0)
+        length = pergola_data.get('length', 0)
+        lamella_type = pergola_data.get('lamella_type', '')
+        modules = pergola_data.get('modules', 1)
+        
+        # Создаем таблицу с основными параметрами перголы
+        headers = ["Параметр", "Значение"]
+        widths = [80, 80]  # Ширина колонок в мм
+        
+        pdf.table_header(headers, widths)
+        
+        pdf.table_row(["Модель перголы", pergola_type], widths)
+        pdf.table_row(["Ширина", f"{width} м"], widths)
+        pdf.table_row(["Вынос (длина)", f"{length} м"], widths)
+        pdf.table_row(["Тип ламелей", lamella_type], widths)
+        pdf.table_row(["Количество модулей", str(modules)], widths)
+        
+        # Если есть опции, добавляем их в таблицу
+        options = pergola_data.get('options', {})
+        if options:
+            if 'lighting_type' in options and options['lighting_type'] != 'none':
+                pdf.table_row(["Тип освещения", options['lighting_type']], widths)
+            if options.get('installation', False):
+                pdf.table_row(["Монтаж", "Включен"], widths)
+            if options.get('delivery', False):
+                pdf.table_row(["Доставка", "Включена"], widths)
+        
+        # Добавляем спецификацию перголы
+        pdf.ln(10)
+        pdf.chapter_title("Спецификация перголы:")
+        
+        # Получаем данные о спецификации
+        specification = pergola_data.get('specification', [])
+        
+        if specification:
+            headers = ["№", "Наименование", "Кол-во"]
+            widths = [10, 145, 15]  # Ширина колонок в мм
+            
+            pdf.table_header(headers, widths)
+            
+            for i, item in enumerate(specification, 1):
+                pdf.table_row([str(i), item['name'], str(item['quantity'])], widths, aligns=["C", "L", "C"])
+        else:
+            pdf.set_font('DejaVu', '', 10)
+            pdf.cell(0, 7, "Данные о спецификации отсутствуют", 0, 1)
+        
+        # Добавляем информацию о стоимости
+        pdf.ln(10)
+        pdf.chapter_title("Информация о стоимости:")
+        
+        # Получаем данные о стоимости
+        cost_items = pergola_data.get('cost_items', [])
+        total_cost = pergola_data.get('total_cost', 0)
+        
+        if cost_items:
+            headers = ["№", "Наименование", "Стоимость"]
+            widths = [10, 83, 67]  # Изменены ширины колонок для лучшего размещения длинных цен
+            
+            pdf.table_header(headers, widths)
+            
+            for i, item in enumerate(cost_items, 1):
+                # Форматируем цену с полным отображением
+                price_value = int(item['price'])  # Убираем копейки для упрощения
+                
+                # Форматируем с разделением разрядов и добавляем символ рубля
+                if price_value >= 1000000:
+                    # Для миллионов: 1 000 000 ₽
+                    price_str = f"{price_value:,d}".replace(',', ' ') + " ₽"
+                elif price_value >= 1000:
+                    # Для тысяч: 100 000 ₽
+                    price_str = f"{price_value:,d}".replace(',', ' ') + " ₽"
+                else:
+                    # Для сотен: 100 ₽
+                    price_str = f"{price_value} ₽"
+                
+                # Используем уменьшенную высоту строки (6 мм вместо 8 мм)
+                # Меняем выравнивание с R (правого) на L (левое) для соответствия таблице спецификации
+                pdf.table_row([str(i), item['name'], price_str], widths, aligns=["C", "L", "L"], row_height=6)
+                
+            # Добавляем итоговую строку
+            pdf.set_fill_color(211, 211, 211)  # Светло-серый цвет
+            pdf.set_font('DejaVu', 'B', 11)  # Увеличиваем шрифт для итоговой суммы
+            pdf.set_text_color(0, 0, 0)  # Черный текст
+            
+            # Форматируем итоговую цену
+            total_price_value = int(total_cost)
+            if total_price_value >= 1000000:
+                # Для миллионов форматируем как "1 234 567 ₽"
+                total_price_str = f"{total_price_value:,d}".replace(',', ' ') + " ₽"
+            else:
+                # Для других значений так же
+                total_price_str = f"{total_price_value:,d}".replace(',', ' ') + " ₽"
+            
+            pdf.cell(10, 10, "", 1, 0, "C", fill=True)
+            pdf.cell(83, 10, "ИТОГО:", 1, 0, "R", fill=True)
+            pdf.cell(67, 10, total_price_str, 1, 1, "L", fill=True)
+            
+            # Убрали дублирование итоговой суммы, чтобы не повторяться
+        else:
+            pdf.set_font('DejaVu', '', 10)
+            pdf.cell(0, 7, "Данные о стоимости отсутствуют", 0, 1)
+        
+        # Добавляем описание перголы и дополнительные разделы
+        pdf.add_page()
+        pdf.chapter_title("Описание перголы:")
+        
+        # Собираем все типы описаний
+        descriptions = []
+        
+        # Основное описание перголы
+        pergola_description = pergola_data.get('description', '')
+        pergola_type = pergola_data.get('pergola_type', 'биоклиматическая')
+        if pergola_description:
+            descriptions.append(pergola_description)
+            
+        # Дополнительные описания
+        modular_description = pergola_data.get('modular_description', '')
+        if modular_description:
+            descriptions.append(modular_description)
+            
+        drainage_description = pergola_data.get('drainage_description', '')
+        if drainage_description:
+            descriptions.append(drainage_description)
+        
+        if len(descriptions) == 0:
+            # Если описания отсутствуют, добавляем стандартное описание
+            descriptions.append(f"""
+            <div>
+                <p>Пергола {pergola_type} — современная биоклиматическая пергола с автоматическим управлением. 
+                Изготовлена из высококачественного алюминия с порошковой покраской.</p>
+                
+                <p><strong>Преимущества:</strong><br/>
+                • Защита от осадков и солнца<br/>
+                • Регулируемое положение ламелей<br/>
+                • Встроенная система водоотведения<br/>
+                • Долговечные материалы<br/>
+                • Простота использования</p>
+            </div>
+            """)
+        
+        # Проходим по всем описаниям и преобразуем HTML в текст
+        section_index = 0
+        for description_html in descriptions:
+            section_index += 1
+            
+            # Пропускаем пустые описания
+            if not description_html or description_html == "<p>Описание для данного типа перголы отсутствует.</p>":
+                continue
+                
+            # Добавляем разделительную линию между разными описаниями, если это не первое описание
+            if section_index > 1:
+                pdf.ln(5)
+            
+            try:
+                # Преобразуем HTML в текст с помощью BeautifulSoup
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(description_html, 'html.parser')
+                
+                # Обрабатываем заголовки - делаем их крупнее и жирным шрифтом
+                for heading in soup.find_all(['h1', 'h2', 'h3']):
+                    heading_text = heading.get_text().strip()
+                    
+                    # Устанавливаем размер шрифта в зависимости от уровня заголовка
+                    font_size = 14 if heading.name == 'h1' else 12 if heading.name == 'h2' else 11
+                    pdf.set_font('DejaVu', 'B', font_size)
+                    
+                    # Добавляем отступ перед заголовком
+                    pdf.ln(2) if section_index > 1 and heading == soup.find(['h1', 'h2', 'h3']) else pdf.ln(5)
+                    
+                    # Выводим заголовок 
+                    pdf.cell(0, 8, heading_text, 0, 1, 'C' if heading.name == 'h1' else 'L')
+                    pdf.ln(2)
+                    
+                    # Удаляем заголовок из супа, чтобы не дублировать его
+                    heading.extract()
+                
+                # Обрабатываем абзацы текста
+                for paragraph in soup.find_all('p'):
+                    paragraph_text = paragraph.get_text().strip()
+                    if paragraph_text:
+                        pdf.set_font('DejaVu', '', 10)
+                        
+                        # Разбиваем длинные абзацы на части, чтобы избежать проблем с Unicode
+                        # в многострочном тексте и обеспечить корректное отображение
+                        chunk_size = const_chunk_size = 180  # Начальный размер чанка (символов)
+                        
+                        # Если абзац короткий, выводим его целиком
+                        if len(paragraph_text) <= chunk_size:
+                            pdf.multi_cell(0, 5, paragraph_text)
+                            pdf.ln(2)  # Небольшой отступ между абзацами
+                        else:
+                            # Разбиваем на части и выводим по одной
+                            paragraph_parts = []
+                            current_pos = 0
+                            
+                            while current_pos < len(paragraph_text):
+                                # Адаптивный размер чанка
+                                if current_pos + chunk_size >= len(paragraph_text):
+                                    # Последний кусок текста - берем до конца
+                                    paragraph_parts.append(paragraph_text[current_pos:])
+                                    break
+                                else:
+                                    # Ищем последний пробел перед chunk_size, чтобы не разрывать слова
+                                    end_pos = current_pos + chunk_size
+                                    while end_pos > current_pos and paragraph_text[end_pos] != ' ':
+                                        end_pos -= 1
+                                    
+                                    # Если пробела нет, используем chunk_size как есть
+                                    if end_pos == current_pos:
+                                        end_pos = current_pos + chunk_size
+                                    
+                                    paragraph_parts.append(paragraph_text[current_pos:end_pos])
+                                    current_pos = end_pos + 1
+                            
+                            # Выводим разбитый на части абзац
+                            for part in paragraph_parts:
+                                if part.strip():  # Пропускаем пустые строки
+                                    pdf.multi_cell(0, 5, part.strip())
+                            
+                            pdf.ln(2)  # Отступ после абзаца
+                
+                # Обрабатываем списки
+                for ul in soup.find_all('ul'):
+                    pdf.ln(2)
+                    
+                    for li in ul.find_all('li'):
+                        li_text = li.get_text().strip()
+                        if li_text:
+                            pdf.set_font('DejaVu', '', 10)
+                            # Добавляем маркер списка
+                            pdf.multi_cell(0, 5, f"• {li_text}")
+                    
+                    pdf.ln(2)
+                
+                # Обрабатываем жирный текст для совместимости с HTML
+                pdf.set_font('DejaVu', '', 10)
+                for bold in soup.find_all(['strong', 'b']):
+                    if bold.parent.name not in ['h1', 'h2', 'h3', 'p', 'li']:
+                        bold_text = bold.get_text().strip()
+                        if bold_text:
+                            pdf.set_font('DejaVu', 'B', 10)
+                            pdf.multi_cell(0, 5, bold_text)
+                            pdf.set_font('DejaVu', '', 10)
+                
+                # Добавляем отступ после раздела
+                pdf.ln(2)
+                
+            except Exception as e:
+                print(f"Ошибка при обработке HTML-описания (раздел {section_index}): {str(e)}")
+                pdf.set_font('DejaVu', '', 10)
+                pdf.multi_cell(0, 5, "Ошибка при обработке описания перголы.")
+                
+        # Добавляем все необходимые изображения
+        image_paths = pergola_data.get('images', [])
+        image_caption = pergola_data.get('image_caption', 'Изображение перголы')
+        
+        if image_paths and isinstance(image_paths, list) and len(image_paths) > 0:
+            pdf.add_page()
+            pdf.chapter_title("Изображения:")
+            
+            for i, img_path in enumerate(image_paths):
+                if os.path.exists(img_path):
+                    try:
+                        # Обрабатываем изображение перед добавлением для сохранения пропорций
+                        original_img = Image.open(img_path)
+                        width, height = original_img.size
+                        
+                        # Определяем максимальную ширину для изображения (160 мм, учитывая поля)
+                        max_width_mm = 160
+                        
+                        # Вычисляем отношение сторон
+                        aspect_ratio = height / width
+                        
+                        # Рассчитываем размеры с сохранением пропорций
+                        img_width_mm = max_width_mm
+                        img_height_mm = img_width_mm * aspect_ratio
+                        
+                        # Отладочная информация
+                        print(f"Изображение {i+1}: {img_path}")
+                        print(f"Исходные размеры изображения: {width}x{height}")
+                        print(f"Отношение сторон: {aspect_ratio:.2f}")
+                        print(f"Размеры для PDF: {img_width_mm:.1f}x{img_height_mm:.1f} мм")
+                        
+                        # Проверяем, поместится ли изображение на текущей странице
+                        # (учитываем текущую позицию и высоту изображения + запас 20 мм)
+                        available_space = 297 - pdf.get_y() - 20  # 297 мм - высота страницы A4
+                        
+                        # Если изображение не поместится на текущей странице, создаем новую
+                        if img_height_mm + 20 > available_space:
+                            pdf.add_page()
+                        
+                        # Добавляем изображение с подписью
+                        if i > 0:
+                            pdf.ln(15)  # Отступ между изображениями
+                            
+                        # Формируем подпись с номером изображения, если их несколько
+                        if len(image_paths) > 1:
+                            caption = f"{image_caption} ({i+1}/{len(image_paths)})"
+                        else:
+                            caption = image_caption
+                            
+                        pdf.set_font('DejaVu', 'B', 11)
+                        pdf.cell(0, 8, caption, 0, 1, "C")
+                        pdf.ln(5)
+                        
+                        # Вставляем изображение с явным указанием ширины и высоты
+                        # для гарантии сохранения пропорций
+                        pdf.image(
+                            img_path,
+                            x=(210 - img_width_mm) / 2,  # центрируем
+                            y=pdf.get_y(),  # текущая позиция Y
+                            w=img_width_mm,  # ширина
+                            h=img_height_mm  # высота, рассчитанная с сохранением пропорций
+                        )
+                        print(f"Добавлено изображение в PDF: {img_path}")
+                    except Exception as e:
+                        print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
+                else:
+                    print(f"Изображение не найдено: {img_path}")
+        
+        # Добавляем контактную информацию - проверяем, может ли она поместиться на текущей странице
+        # Примерный размер для контактной информации (6 строк по 7 мм + заголовок и отступы)
+        contact_info_height = 60
+        
+        # Проверяем, поместится ли контактная информация на текущей странице
+        if 297 - pdf.get_y() < contact_info_height:
+            pdf.add_page()
+        else:
+            pdf.ln(15)  # Добавляем отступ перед контактной информацией
+            
+        pdf.chapter_title("Контактная информация:")
+        
+        pdf.set_font('DejaVu', '', 10)  # Уменьшаем размер шрифта для экономии места
+        pdf.multi_cell(0, 5, "Для получения дополнительной информации или оформления заказа, пожалуйста, свяжитесь с нами:")
+        pdf.ln(3)
+        
+        contact_info = [
+            "Телефон: +7 (495) 123-45-67",
+            "Email: info@komfortnyj-dom.ru",
+            "Веб-сайт: www.komfortnyj-dom.ru",
+            "Адрес: г. Москва, ул. Примерная, д. 123"
+        ]
+        
+        for info in contact_info:
+            pdf.cell(0, 6, info, 0, 1)  # Уменьшаем высоту строк с 7 до 6 мм
+        
+        # Создаем директорию для сохранения PDF
+        os.makedirs(os.path.dirname(pdf_filename), exist_ok=True)
+        
+        # Сохраняем PDF
+        pdf.output(pdf_filename)
+        print(f"PDF успешно создан: {pdf_filename}")
+        
+        return pdf_filename
+        
+    except Exception as e:
+        print(f"Ошибка при создании PDF: {str(e)}")
+        
+        try:
+            # Создаем упрощенный PDF без кириллицы в случае ошибки
+            from fpdf import FPDF
+            
+            # Получаем данные из словаря
+            p_type = pergola_data.get('pergola_type', 'пергола') if pergola_data else 'пергола'
+            p_width = pergola_data.get('width', 0) if pergola_data else 0
+            p_length = pergola_data.get('length', 0) if pergola_data else 0
+            p_cost = pergola_data.get('total_cost', 0) if pergola_data else 0
+            
+            # Создаем простой PDF без кириллицы
+            simple_pdf = FPDF()
+            simple_pdf.add_page()
+            simple_pdf.set_font('Arial', 'B', 14)
+            simple_pdf.cell(0, 10, "Pergola Calculator", 0, 1, 'C')
+            simple_pdf.set_font('Arial', '', 12)
+            simple_pdf.cell(0, 10, f"Model: {p_type}", 0, 1)
+            simple_pdf.cell(0, 10, f"Dimensions: {p_width}x{p_length} m", 0, 1)
+            simple_pdf.cell(0, 10, f"Total cost: {p_cost:,.2f} RUB", 0, 1)
+            
+            # Добавляем примечание о проблеме с кириллицей
+            simple_pdf.ln(10)
+            simple_pdf.set_font('Arial', 'I', 10)
+            simple_pdf.cell(0, 10, "Oshibka pri sozdanii PDF s podderzhkoj kirillicy.", 0, 1)
+            simple_pdf.cell(0, 10, "Pozhalujsta, obraschaites k menedzheru dlya poluchenija pravilnoj versii.", 0, 1)
+            
+            # Добавляем контактную информацию без кириллицы
+            simple_pdf.ln(10)
+            simple_pdf.set_font('Arial', 'B', 12)
+            simple_pdf.cell(0, 10, "Contact Info:", 0, 1)
+            simple_pdf.set_font('Arial', '', 10)
+            simple_pdf.cell(0, 7, "Telefon: +7 (495) 123-45-67", 0, 1)
+            simple_pdf.cell(0, 7, "Email: info@komfortnyj-dom.ru", 0, 1)
+            simple_pdf.cell(0, 7, "Veb-sajt: www.komfortnyj-dom.ru", 0, 1)
             
             # Сохраняем упрощенный PDF в дефолтную директорию
             backup_filename = f"generated_pdf/KP_Pergola_simple_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"

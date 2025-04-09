@@ -1,0 +1,62 @@
+    def table_row(self, data, widths, aligns=None, row_height=7):
+        """
+        Добавляет строку в таблицу с адаптивным размером шрифта
+        
+        Args:
+            data (list): Данные для ячеек
+            widths (list): Ширина каждой ячейки
+            aligns (list, optional): Выравнивание для каждой ячейки (L, C, R)
+            row_height (int, optional): Высота строки в мм
+        """
+        if aligns is None:
+            aligns = ["L"] * len(data)
+        
+        self.set_text_color(0, 0, 0)  # Черный текст
+        
+        # Для каждой ячейки проверяем, помещается ли текст при текущем размере шрифта
+        for i, cell in enumerate(data):
+            cell_text = str(cell)
+            
+            # Определяем начальный размер шрифта в зависимости от типа данных
+            if i == len(data) - 1 and ("₽" in cell_text or "руб" in cell_text):
+                # Для ячеек с ценами сразу используем меньший размер
+                font_size = 8
+                
+                # Если это цена свыше миллиона или имеет много символов, начинаем с еще меньшего размера
+                if len(cell_text.strip()) > 10:  # Для длинных цен
+                    font_size = 7
+                if len(cell_text.strip()) > 14:  # Для очень длинных цен
+                    font_size = 6
+            elif i == 0 and len(cell_text) < 3:
+                # Для номеров строк используем стандартный размер
+                font_size = 10
+            elif "Итого" in cell_text or "ИТОГО" in cell_text:
+                # Для итоговой строки используем чуть больший шрифт
+                font_size = 9
+            else:
+                # Для основного текста
+                font_size = 9
+            
+            # Цикл уменьшения шрифта, пока текст не поместится
+            # Разрешаем уменьшать шрифт до 5 для длинных цен
+            min_font_size = 5 if ("₽" in cell_text or "руб" in cell_text) else 7
+            
+            while font_size >= min_font_size:
+                # FPDF принимает только целые числа для размера шрифта
+                self.set_font("DejaVu", "", int(font_size))
+                text_width = self.get_string_width(cell_text)
+                
+                # Используем разные отступы в зависимости от типа ячейки
+                padding = 2 if i == len(data) - 1 else 3  # Для цен меньший отступ
+                
+                # Если текст помещается в ячейку с учетом отступа, выходим из цикла
+                if text_width <= widths[i] - padding:
+                    break
+                
+                # Уменьшаем размер шрифта
+                font_size -= 1  # Уменьшаем размер шрифта на 1 пункт
+            
+            # Выводим ячейку с адаптированным размером шрифта
+            self.cell(widths[i], row_height, cell_text, 1, 0, aligns[i])
+        
+        self.ln()

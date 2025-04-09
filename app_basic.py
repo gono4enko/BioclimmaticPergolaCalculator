@@ -9,7 +9,7 @@ import math
 import csv
 import time
 from datetime import datetime
-from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
+from pdf_generator_fpdf import generate_commercial_offer, format_pergola_data_for_pdf
 from config.pergola_descriptions import (
     get_pergola_description,
     get_modular_system_description,
@@ -1190,19 +1190,8 @@ def render_results(results):
     
     # Функция для форматирования цены в бухгалтерском стиле
     def format_price(price):
-        # Всегда используем сокращенный формат для мобильной версии
-        price_in_thousands = price / 1000
-        if price >= 1000000:
-            price_in_millions = price / 1000000
-            # Округляем до 1 знака после запятой для миллионов
-            return "{:.1f}M₽".format(price_in_millions)
-        # Для сотен тысяч используем формат с K
-        if price >= 100000:
-            return "{:.0f}K₽".format(price_in_thousands)
-        # Для десятков тысяч тоже используем формат с K, но с 1 знаком после запятой
-        if price >= 10000:
-            return "{:.1f}K₽".format(price_in_thousands)
-        # Для маленьких чисел используем обычный формат с разделителями
+        # Всегда используем полный формат для цен
+        # Форматируем с разделителями разрядов
         return "{:,.0f}₽".format(price).replace(",", " ")
     
     # Базовая стоимость перголы - всегда первой строкой
