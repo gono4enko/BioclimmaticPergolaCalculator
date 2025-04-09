@@ -25,7 +25,9 @@ LAMELLA_TYPES = {
     "B500-25NEW": "Ламели 250 мм (стандарт)",
     "B700-20NEW": "Ламели 200 мм (усиленные)",
     "B700-25NEW": "Ламели 250 мм (стандарт)",
-    "B600": "PIR-панель"
+    "B600-PIR": "PIR сэндвич-панель",
+    "lamella-200": "Ламели 200 мм (усиленные)",
+    "lamella-250": "Ламели 250 мм (стандарт)"
 }
 
 # Устанавливаем заголовок страницы
@@ -63,9 +65,14 @@ table td {
     color: #000000;
 }
 
-/* Для выравнивания цен по правому краю */
-table td:nth-child(2) {
+/* Для выравнивания только цен в таблице стоимости по правому краю */
+.cost-table td:nth-child(2) {
     text-align: right !important;
+}
+
+/* Для выравнивания всех остальных таблиц по левому краю */
+table td {
+    text-align: left !important;
 }
 
 /* Стилизация кнопки расчета */
@@ -160,24 +167,95 @@ def perform_calculation(dimensions, options):
     else:
         modules = 4
     
-    # Базовая цена в зависимости от типа перголы и размера
-    # Упрощенная формула для демонстрации
-    base_prices = {
-        "B500NEW": 7500,
-        "B700NEW": 8500,
-        "B600": 6500
-    }
-    base_price = base_prices.get(pergola_type, 7000)
+    # Определяем тип ламелей по коду
+    # Для B500NEW и B700NEW преобразуем упрощенные коды в коды из прайса
+    real_lamella_type = lamella_type
+    if pergola_type == "B500NEW":
+        if lamella_type == "lamella-200":
+            real_lamella_type = "B500-20NEW"
+        elif lamella_type == "lamella-250":
+            real_lamella_type = "B500-25NEW"
+    elif pergola_type == "B700NEW":
+        if lamella_type == "lamella-200":
+            real_lamella_type = "B700-20NEW"
+        elif lamella_type == "lamella-250":
+            real_lamella_type = "B700-25NEW"
     
-    # Коэффициент размера (упрощенно)
-    size_factor = width_m * length_m / 10
+    # Получаем базовую цену из прайса в зависимости от типа перголы, ширины и длины
+    # Это более точный метод, чем просто использовать коэффициент
+    # Данные цен получены из прайс-листов (упрощенная реализация)
+    pergola_cost = 0
     
-    # Рассчитываем базовую стоимость перголы
-    pergola_cost = base_price * size_factor
+    # Получаем цену из соответствующего прайса
+    if pergola_type == "B500NEW":
+        if "20" in real_lamella_type:
+            # Для B500-20NEW
+            if width_m <= 3.0 and length_m <= 2.45:
+                pergola_cost = 6245
+            elif width_m <= 3.5 and length_m <= 2.45:
+                pergola_cost = 6810
+            elif width_m <= 4.0 and length_m <= 2.45:
+                pergola_cost = 7375
+            elif width_m <= 3.0 and length_m <= 3.25:
+                pergola_cost = 7487
+            else:
+                # Для других размеров используем приближенную формулу
+                pergola_cost = 6245 * (width_m * length_m) / (3.0 * 2.45)
+        else:
+            # Для B500-25NEW
+            if width_m <= 3.0 and length_m <= 2.45:
+                pergola_cost = 6557
+            elif width_m <= 3.5 and length_m <= 2.45:
+                pergola_cost = 7151
+            elif width_m <= 4.0 and length_m <= 2.45:
+                pergola_cost = 7744
+            elif width_m <= 3.0 and length_m <= 3.25:
+                pergola_cost = 7861
+            else:
+                # Для других размеров используем приближенную формулу
+                pergola_cost = 6557 * (width_m * length_m) / (3.0 * 2.45)
     
-    # Учитываем тип ламелей
-    if "25" in lamella_type:
-        pergola_cost *= 1.15  # Надбавка 15% для ламелей 250 мм
+    elif pergola_type == "B700NEW":
+        if "20" in real_lamella_type:
+            # Для B700-20NEW
+            if width_m <= 3.0 and length_m <= 2.45:
+                pergola_cost = 6878
+            elif width_m <= 3.5 and length_m <= 2.45:
+                pergola_cost = 7451
+            elif width_m <= 4.0 and length_m <= 2.45:
+                pergola_cost = 8023
+            elif width_m <= 3.0 and length_m <= 3.25:
+                pergola_cost = 8179
+            else:
+                # Для других размеров используем приближенную формулу
+                pergola_cost = 6878 * (width_m * length_m) / (3.0 * 2.45)
+        else:
+            # Для B700-25NEW
+            if width_m <= 3.0 and length_m <= 2.45:
+                pergola_cost = 7222
+            elif width_m <= 3.5 and length_m <= 2.45:
+                pergola_cost = 7824
+            elif width_m <= 4.0 and length_m <= 2.45:
+                pergola_cost = 8424
+            elif width_m <= 3.0 and length_m <= 3.25:
+                pergola_cost = 8588
+            else:
+                # Для других размеров используем приближенную формулу
+                pergola_cost = 7222 * (width_m * length_m) / (3.0 * 2.45)
+    
+    elif pergola_type == "B600":
+        # Для B600
+        if width_m <= 2.5 and length_m <= 2.5:
+            pergola_cost = 4500
+        elif width_m <= 3.0 and length_m <= 2.5:
+            pergola_cost = 4866
+        elif width_m <= 3.5 and length_m <= 2.5:
+            pergola_cost = 5232
+        elif width_m <= 2.5 and length_m <= 3.0:
+            pergola_cost = 4678
+        else:
+            # Для других размеров используем приближенную формулу
+            pergola_cost = 4500 * (width_m * length_m) / (2.5 * 2.5)
     
     # Учитываем тип подсветки
     lighting_cost = 0
@@ -185,24 +263,42 @@ def perform_calculation(dimensions, options):
     
     if lighting_type == "white":
         perimeter = 2 * (width_m + length_m)  # Периметр перголы
-        lighting_cost = 20 * perimeter + 300 * modules  # 20€/м ленты + 300€ за блок управления на модуль
+        led_price_per_meter = 18  # Цена за метр белой ленты
+        controller_price = 250  # Цена за один блок управления
+        
+        # На каждый модуль один блок управления
+        lighting_cost = led_price_per_meter * perimeter + controller_price
+        
+        # Добавляем только один блок управления LED на всю перголу
         lighting_components = [
             f"LED лента белая - {perimeter:.2f} м",
-            f"Блок управления Somfy RTS Dimmer - {modules} шт."
+            "Блок управления освещением Somfy RTS - 1 шт."
         ]
     elif lighting_type == "rgb":
         perimeter = 2 * (width_m + length_m)
-        lighting_cost = 30 * perimeter + 300 * modules  # 30€/м RGB ленты + 300€ за блок управления на модуль
+        led_price_per_meter = 25  # Цена за метр RGB ленты
+        controller_price = 280  # Цена за один блок управления RGB
+        
+        # На каждый модуль один блок управления
+        lighting_cost = led_price_per_meter * perimeter + controller_price
+        
+        # Добавляем только один блок управления LED на всю перголу
         lighting_components = [
             f"RGB лента - {perimeter:.2f} м",
-            f"Блок управления Somfy RTS Dimmer - {modules} шт."
+            "Блок управления RGB освещением Somfy RTS - 1 шт."
         ]
     elif lighting_type == "rgbw":
         perimeter = 2 * (width_m + length_m)
-        lighting_cost = 40 * perimeter + 300 * modules  # 40€/м RGBW ленты + 300€ за блок управления на модуль
+        led_price_per_meter = 38  # Цена за метр RGBW ленты
+        controller_price = 320  # Цена за один блок управления RGBW
+        
+        # На каждый модуль один блок управления
+        lighting_cost = led_price_per_meter * perimeter + controller_price
+        
+        # Добавляем только один блок управления LED на всю перголу
         lighting_components = [
             f"RGBW лента - {perimeter:.2f} м",
-            f"Блок управления Somfy RTS Dimmer - {modules} шт."
+            "Блок управления RGBW освещением Somfy RTS - 1 шт."
         ]
     
     # Определяем тип автоматизации и стоимость в зависимости от типа перголы и размеров
@@ -215,8 +311,7 @@ def perform_calculation(dimensions, options):
             automation_components = [
                 "Привод Bansbach easyE-lift-50 Tandem - 1 шт.",
                 "Блок управления Bansbach - 1 шт.",
-                "Приемник - 1 шт.",
-                "Пульт ДУ Simu 1K - 1 шт."
+                "Пульт ДУ Somfy Situo 1 io Pure II - 1 шт."
             ]
         else:
             automation_type = "Bansbach T1"
@@ -224,8 +319,7 @@ def perform_calculation(dimensions, options):
             automation_components = [
                 "Привод Bansbach easyE-lift-50 - 1 шт.",
                 "Блок управления Bansbach - 1 шт.",
-                "Приемник - 1 шт.",
-                "Пульт ДУ Simu 1K - 1 шт."
+                "Пульт ДУ Somfy Situo 1 io Pure II - 1 шт."
             ]
     elif pergola_type == "B700NEW":
         # Для B700NEW используем привод Somfy
@@ -233,32 +327,27 @@ def perform_calculation(dimensions, options):
             automation_type = "Somfy M2 TANDEM"
             automation_cost = 1000  # Усиленный привод Somfy M2 TANDEM
             automation_components = [
-                "Привод Somfy M2 TANDEM - 1 шт.",
-                "Блок управления для двух двигателей - 1 шт.",
-                "Приемник - 1 шт.",
-                "Пульт ДУ Simu 1K - 1 шт."
+                "Привод Somfy Altus RTS 120/12 - 2 шт.",
+                "Блок управления Somfy для двух двигателей - 1 шт.",
+                "Пульт ДУ Somfy Situo 1 io Pure II - 1 шт."
             ]
         else:
             automation_type = "Somfy M1"
-            automation_cost = 300  # Стандартный привод Somfy M1
+            automation_cost = 680  # Стандартный привод Somfy M1
             automation_components = [
-                "Привод Somfy M1 - 1 шт.",
-                "Блок управления - 1 шт.",
-                "Приемник - 1 шт.",
-                "Пульт ДУ Simu 1K - 1 шт."
+                "Привод Somfy Altus RTS 120/12 - 1 шт.",
+                "Блок управления Somfy - 1 шт.",
+                "Пульт ДУ Somfy Situo 1 io Pure II - 1 шт."
             ]
     else:
         # Для B600 и других типов
-        automation_type = "Стандартный привод"
-        automation_cost = 500
+        automation_type = "Стандартный привод для PIR-панелей"
+        automation_cost = 580
         automation_components = [
-            "Стандартный привод - 1 шт.",
+            "Стандартный привод для PIR-панелей - 1 шт.",
             "Блок управления - 1 шт.",
-            "Пульт ДУ Simu 1K - 1 шт."
+            "Пульт ДУ Somfy Situo 1 io Pure II - 1 шт."
         ]
-    
-    # Добавляем стоимость пульта ДУ (25 евро за Simu 1K)
-    automation_cost += 25
     
     # Учитываем установку
     installation_cost = 0
@@ -268,18 +357,26 @@ def perform_calculation(dimensions, options):
     # Итоговая стоимость
     total_cost = pergola_cost + lighting_cost + automation_cost + installation_cost
     
+    # Округляем все цены до целых чисел
+    pergola_cost = round(pergola_cost)
+    lighting_cost = round(lighting_cost)
+    automation_cost = round(automation_cost)
+    installation_cost = round(installation_cost)
+    total_cost = round(total_cost)
+    
     # Формируем результат
     results = {
-        "total_cost": round(total_cost, 0),
+        "total_cost": total_cost,
         "details": {
-            "pergola_cost": round(pergola_cost, 0),
+            "pergola_cost": pergola_cost,
             "pergola_type": pergola_type,
-            "lighting_cost": round(lighting_cost, 0),
+            "real_lamella_type": real_lamella_type,
+            "lighting_cost": lighting_cost,
             "lighting_components": lighting_components,
-            "automation_cost": round(automation_cost, 0),
+            "automation_cost": automation_cost,
             "automation_type": automation_type,
             "automation_components": automation_components,
-            "installation_cost": round(installation_cost, 0),
+            "installation_cost": installation_cost,
             "modules": modules
         },
         "dimensions": {
@@ -328,21 +425,22 @@ def main():
             st.caption(PERGOLA_TYPE_DESCRIPTIONS[pergola_type])
         
     with col2:
-        # Выбор типа ламелей (зависит от типа перголы)
+        # Выбор типа ламелей (только для B500NEW и B700NEW)
         st.subheader("Тип ламелей")
-        # Получаем доступные типы ламелей для выбранной перголы
-        available_lamella_types = [k for k in LAMELLA_TYPES.keys() if k.startswith(pergola_type[:-3])]
         
-        # Если нет доступных типов ламелей, используем значение по умолчанию
-        if not available_lamella_types:
-            available_lamella_types = ["Standard"]
-        
-        lamella_type = st.radio(
-            "Выберите тип ламелей",
-            options=available_lamella_types,
-            format_func=lambda x: LAMELLA_TYPES.get(x, x),
-            key="lamella_type"
-        )
+        # Для B600 не показываем выбор ламелей, так как там PIR-панели
+        if pergola_type == "B600":
+            lamella_type = "B600-PIR"
+            st.info("Для перголы B600 используются PIR сэндвич-панели (фиксированная крыша).")
+        else:
+            # Для B500NEW и B700NEW показываем только 2 варианта ламелей
+            lamella_options = ["lamella-200", "lamella-250"]
+            lamella_type = st.radio(
+                "Выберите тип ламелей",
+                options=lamella_options,
+                format_func=lambda x: LAMELLA_TYPES.get(x, x),
+                key="lamella_type"
+            )
         
         # Определяем шаг ламелей (извлекаем из названия типа)
         lamella_step = 200
@@ -477,9 +575,11 @@ def main():
         # Итоговая стоимость
         cost_items.append(["**Итоговая стоимость**", f"**{results['total_cost']:.0f}**"])
         
-        # Создаем DataFrame для стоимости
+        # Создаем DataFrame для стоимости и добавляем CSS класс для правильного выравнивания
         cost_df = pd.DataFrame(cost_items, columns=["Компонент", "Стоимость, €"])
+        st.markdown('<div class="cost-table">', unsafe_allow_html=True)
         st.table(cost_df)
+        st.markdown('</div>', unsafe_allow_html=True)
         
         # Добавляем примечание о том, что все цены указаны в евро
         st.caption("Все цены указаны в евро. Цены на перголы зависят от выбранных размеров и опций.")
