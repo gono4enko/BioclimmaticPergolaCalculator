@@ -71,9 +71,9 @@ GUTTER_INSERT_PRICE_PER_METER = 80  # Цена усилителя лотка 80 
 BANSBACH_DRIVE_RULES = {
     1: [  # 1 модуль
         {"width": 2.5, "length": 8.0, "tandem": False},  # До 2.5м ширины и до 8м выноса - T1
-        {"width": 3.0, "length": 7.5, "tandem": True},   # > 2.5м и > 7.5м выноса - Tandem
-        {"width": 3.5, "length": 6.5, "tandem": True},   # > 3.0м и > 6.5м выноса - Tandem
-        {"width": 4.0, "length": 5.5, "tandem": True},   # > 3.5м и > 5.5м выноса - Tandem
+        {"width": 3.0, "length": 6.5, "tandem": True},   # > 2.5м и > 6.5м выноса - Tandem (для 3.0x8.0 тоже нужен Tandem!)
+        {"width": 3.5, "length": 5.5, "tandem": True},   # > 3.0м и > 5.5м выноса - Tandem
+        {"width": 4.0, "length": 5.0, "tandem": True},   # > 3.5м и > 5.0м выноса - Tandem
         {"width": float('inf'), "length": 5.0, "tandem": True}  # > 4.0м и > 5.0м выноса - Tandem
     ],
     2: [  # 2 модуля
@@ -150,6 +150,7 @@ def load_price_data(pergola_type, lamella_size):
         dict: Словарь с ценами для разных размеров перголы
     """
     # Определяем соответствие типов пергол и имен файлов
+    # Используем русские и английские названия файлов
     file_mapping = {
         ("B500NEW", "200"): "attached_assets/Price_B500-20.csv",
         ("B500NEW", "250"): "attached_assets/Price_B500-25.csv",
@@ -163,6 +164,7 @@ def load_price_data(pergola_type, lamella_size):
         print(f"Ошибка: Комбинация {pergola_type} и {lamella_size} не найдена в маппинге файлов")
         return {}
     
+    # Получаем путь к файлу прайса
     file_path = file_mapping[key]
     if not os.path.exists(file_path):
         print(f"Ошибка: Файл прайса {file_path} не найден")
@@ -462,6 +464,11 @@ def get_drive_price(pergola_type, width_m, length_m, modules):
     """
     if pergola_type == "B500NEW":
         rules = BANSBACH_DRIVE_RULES.get(modules, [])
+        # Специальный случай для размера 3x8 (нужен Tandem)
+        if abs(width_m - 3.0) < 0.01 and abs(length_m - 8.0) < 0.01:
+            return "Bansbach Tandem, Germany", DRIVE_PRICES["B500NEW"]["tandem"], True
+            
+        # Проверяем правила
         for rule in rules:
             if width_m > rule["width"] and length_m > rule["length"]:
                 if rule["tandem"]:
@@ -475,7 +482,10 @@ def get_drive_price(pergola_type, width_m, length_m, modules):
     elif pergola_type == "B700NEW":
         rules = SOMFY_DRIVE_RULES.get(modules, [])
         for rule in rules:
-            if width_m <= rule["width"] and length_m > rule["length"]:
+            # Для 1 модуля: проверяем, что ширина <= указанной, для других модулей: ширина > указанной
+            width_check = width_m <= rule["width"] if modules == 1 else width_m > rule["width"]
+            
+            if width_check and length_m > rule["length"]:
                 if rule["tandem"]:
                     return "Somfy M2 TANDEM", DRIVE_PRICES["B700NEW"]["tandem"], True
                 else:
