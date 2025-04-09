@@ -791,10 +791,11 @@ def render_results(results):
     base_price = results["base_price"]
     total_price = results["total_price"]
     
-    # Показываем отладочную информацию в сайдбаре для проверки
-    with st.sidebar:
-        st.markdown("### Отладочная информация")
-        st.json(results["debug"])
+    # Отладочная информация только в режиме разработки
+    if 'debug_mode' in st.session_state and st.session_state['debug_mode']:
+        with st.sidebar:
+            st.markdown("### Отладочная информация")
+            st.json(results["debug"])
     
     # Заголовок результатов
     st.markdown(f"""
@@ -865,29 +866,31 @@ def render_results(results):
     
     # Создаем HTML таблицу вручную для большего контроля над форматированием
     html_table = """
-    <table style="width:100%; border-collapse: collapse; margin-bottom: 20px;">
+    <table style="width:100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #ddd;">
         <thead>
             <tr>
-                <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Наименование</th>
-                <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Стоимость</th>
+                <th style="text-align:left; padding:10px; border-bottom:1px solid #ddd; background-color:#f5f5f5;">Наименование</th>
+                <th style="text-align:right; padding:10px; border-bottom:1px solid #ddd; background-color:#f5f5f5;">Стоимость</th>
             </tr>
         </thead>
         <tbody>
     """
     
-    for item in items_data[:-1]:  # Все кроме последней строки (итого)
+    # Чередуем цвет строк для улучшения читаемости
+    for i, item in enumerate(items_data[:-1]):  # Все кроме последней строки (итого)
+        bg_color = "#f9f9f9" if i % 2 == 0 else "white"
         html_table += f"""
-        <tr>
-            <td style="text-align:left; padding:8px; border-bottom:1px solid #eee;">{item[0]}</td>
-            <td style="text-align:right; padding:8px; border-bottom:1px solid #eee;">{item[1]}</td>
+        <tr style="background-color: {bg_color};">
+            <td style="text-align:left; padding:10px; border-bottom:1px solid #eee;">{item[0]}</td>
+            <td style="text-align:right; padding:10px; border-bottom:1px solid #eee;">{item[1]}</td>
         </tr>
         """
     
-    # Последняя строка (Итого) выделяется жирным
+    # Последняя строка (Итого) выделяется жирным и другим фоном
     html_table += f"""
-        <tr>
-            <td style="text-align:left; padding:8px; font-weight:bold;">{items_data[-1][0]}</td>
-            <td style="text-align:right; padding:8px; font-weight:bold;">{items_data[-1][1]}</td>
+        <tr style="background-color: #e8f4fc;">
+            <td style="text-align:left; padding:10px; font-weight:bold; border-top:2px solid #ddd;">{items_data[-1][0]}</td>
+            <td style="text-align:right; padding:10px; font-weight:bold; border-top:2px solid #ddd;">{items_data[-1][1]}</td>
         </tr>
     </tbody>
     </table>
