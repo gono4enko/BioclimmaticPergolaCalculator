@@ -592,7 +592,7 @@ def perform_calculation(dimensions, options):
             }
             
             results["items"].append({
-                "name": f"{drive_name} (для {drive_count} модулей)",
+                "name": f"Привод {drive_name} (для {drive_count} модулей)",
                 "price": total_drive_price
             })
             
