@@ -151,11 +151,11 @@ def load_price_data(pergola_type, lamella_size):
     """
     # Определяем соответствие типов пергол и имен файлов
     file_mapping = {
-        ("B500NEW", "200"): "attached_assets/Прайс_В500-20.csv",
-        ("B500NEW", "250"): "attached_assets/Прайс_В500-25.csv",
-        ("B700NEW", "200"): "attached_assets/Прайс_B700-20.csv",
-        ("B700NEW", "250"): "attached_assets/Прайс_B700-25.csv",
-        ("B600", "PIR"): "attached_assets/Прайс_В600_PIR.csv"
+        ("B500NEW", "200"): "attached_assets/Price_B500-20.csv",
+        ("B500NEW", "250"): "attached_assets/Price_B500-25.csv",
+        ("B700NEW", "200"): "attached_assets/Price_B700-20.csv",
+        ("B700NEW", "250"): "attached_assets/Price_B700-25.csv",
+        ("B600", "PIR"): "attached_assets/Price_B600_PIR.csv"
     }
     
     key = (pergola_type, lamella_size)
@@ -785,16 +785,69 @@ def render_results(results):
     
     # Создаем таблицу стоимости
     items_data = []
-    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м", f"{base_price:.2f} €"])
     
+    # Базовая стоимость перголы - всегда первой строкой
+    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м ({modules} модуль)", f"{base_price:.2f} €"])
+    
+    # Привод и автоматика - второй строкой, если есть
+    if pergola_type in ["B500NEW", "B700NEW"]:
+        for item in results["items"]:
+            if "Привод" in item["name"] or "привод" in item["name"]:
+                items_data.append([item["name"], f"{item['price']:.2f} €"])
+    
+    # Пульт ДУ - третьей строкой, если есть
+    if pergola_type in ["B500NEW", "B700NEW"]:
+        for item in results["items"]:
+            if "Пульт" in item["name"] or "пульт" in item["name"]:
+                items_data.append([item["name"], f"{item['price']:.2f} €"])
+    
+    # Освещение - четвертой строкой, если есть
     for item in results["items"]:
-        items_data.append([item["name"], f"{item['price']:.2f} €"])
+        if "освещен" in item["name"].lower() or "лента" in item["name"].lower():
+            items_data.append([item["name"], f"{item['price']:.2f} €"])
     
+    # Дополнительные опции - усилитель лотка и колонны
+    for item in results["items"]:
+        if "Усилитель" in item["name"] or "усилитель" in item["name"]:
+            items_data.append([item["name"], f"{item['price']:.2f} €"])
+        
+        if "колон" in item["name"].lower():
+            items_data.append([item["name"], f"{item['price']:.2f} €"])
+    
+    # Итоговая строка
     items_data.append(["<b>Итого</b>", f"<b>{total_price:.2f} €</b>"])
     
-    # Преобразуем данные в DataFrame и отображаем
-    items_df = pd.DataFrame(items_data, columns=["Наименование", "Стоимость"])
-    st.write(items_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+    # Создаем HTML таблицу вручную для большего контроля над форматированием
+    html_table = """
+    <table style="width:100%; border-collapse: collapse; margin-bottom: 20px;">
+        <thead>
+            <tr>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Наименование</th>
+                <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Стоимость</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
+    
+    for item in items_data[:-1]:  # Все кроме последней строки (итого)
+        html_table += f"""
+        <tr>
+            <td style="text-align:left; padding:8px; border-bottom:1px solid #eee;">{item[0]}</td>
+            <td style="text-align:right; padding:8px; border-bottom:1px solid #eee;">{item[1]}</td>
+        </tr>
+        """
+    
+    # Последняя строка (Итого) выделяется жирным
+    html_table += f"""
+        <tr>
+            <td style="text-align:left; padding:8px; font-weight:bold;">{items_data[-1][0]}</td>
+            <td style="text-align:right; padding:8px; font-weight:bold;">{items_data[-1][1]}</td>
+        </tr>
+    </tbody>
+    </table>
+    """
+    
+    st.markdown(html_table, unsafe_allow_html=True)
     
     # Добавляем разделитель
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
