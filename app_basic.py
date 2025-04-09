@@ -418,7 +418,7 @@ def perform_calculation(dimensions, options):
         length_m = float(dimensions.get("length", 0))
         pergola_type = options.get("pergola_type", "")
         lamella_type = options.get("lamella_type", "")
-        modules = int(options.get("modules", 1))
+        modules = get_modules_by_width(width_m)  # Автоматически определяем модули по ширине
         lighting_options = options.get("lighting", [])
         
         # Определяем размер ламели в миллиметрах
@@ -654,6 +654,23 @@ def perform_calculation(dimensions, options):
         print(error_msg)
         return {"error": error_msg}
 
+def get_modules_by_width(width):
+    """
+    Определяет количество модулей в зависимости от ширины перголы
+    
+    Args:
+        width (float): Ширина перголы в метрах
+        
+    Returns:
+        int: Количество модулей
+    """
+    if width <= 4.5:
+        return 1  # Для ширины до 4.5м - 1 модуль
+    elif width <= 9.0:
+        return 2  # Для ширины 5-9м - 2 модуля
+    else:
+        return 3  # Для ширины 9.5м и более - 3 модуля
+
 def render_dimensions_form():
     """
     Отображает форму для ввода размеров перголы
@@ -687,17 +704,12 @@ def render_dimensions_form():
             help="Глубина (вынос) перголы в метрах (2.0 - 8.0 м)"
         )
     
-    # Количество модулей (только если ширина > 5 метров)
-    modules = 1
-    if width > 5.0:
-        st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
-        modules_options = [1, 2, 3]
-        modules = st.select_slider(
-            "Количество модулей",
-            options=modules_options,
-            value=2 if width > 10.0 else 1,
-            help="При ширине более 5 метров пергола может быть разделена на модули"
-        )
+    # Определяем количество модулей автоматически
+    modules = get_modules_by_width(width)
+    
+    # Показываем информацию о модулях (только для отображения)
+    if modules > 1:
+        st.info(f"При ширине {width:.2f} м будет автоматически использовано {modules} модуля")
     
     return {
         "width": width,
@@ -753,12 +765,11 @@ def render_options_form():
         if st.checkbox("RGB светодиодная лента", value=False):
             lighting_options.append("rgb_led")
     
-    # Возвращаем выбранные опции
+    # Возвращаем выбранные опции (не включаем модули, т.к. они рассчитываются автоматически)
     return {
         "pergola_type": pergola_type,
         "lamella_type": lamella_type,
-        "lighting": lighting_options,
-        "modules": st.session_state.get("dimensions", {}).get("modules", 1)  # Берем из session_state
+        "lighting": lighting_options
     }
 
 def render_results(results):
