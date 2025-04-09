@@ -960,6 +960,7 @@ def render_dimensions_form():
     Returns:
         dict: Словарь с введенными размерами
     """
+    st.markdown("<div style='width: 90%; margin: 0 auto; padding-left: 25px; padding-right: 25px;'>", unsafe_allow_html=True)
     st.markdown("<h2 class='section-header'>Размеры перголы</h2>", unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
@@ -1006,6 +1007,11 @@ def render_options_form():
     Returns:
         dict: Словарь с выбранными опциями
     """
+    # Закрываем div-контейнер формы размеров
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Открываем новый div-контейнер для формы параметров
+    st.markdown("<div style='width: 90%; margin: 0 auto; padding-left: 25px; padding-right: 25px;'>", unsafe_allow_html=True)
     st.markdown("<h2 class='section-header'>Параметры перголы</h2>", unsafe_allow_html=True)
     
     # Тип перголы
@@ -1729,6 +1735,11 @@ def main():
     
     # Получаем опции перголы
     options = render_options_form()
+    # Закрываем div-контейнер формы параметров
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Открываем новый div-контейнер для кнопки расчета с отступами
+    st.markdown("<div style='width: 90%; margin: 0 auto; padding-left: 25px; padding-right: 25px;'>", unsafe_allow_html=True)
     
     # Кнопка для расчета с улучшенным стилем
     if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
