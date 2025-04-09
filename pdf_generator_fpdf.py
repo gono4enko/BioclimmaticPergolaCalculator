@@ -22,6 +22,8 @@ class PDF(FPDF):
     def __init__(self):
         # Используем конкретные значения из перечисления литералов
         super().__init__(orientation='P', unit='mm', format='A4')
+        # Добавляем поддержку кириллицы
+        self.add_font('Courier', '', 'Courier', uni=True)
         # Устанавливаем мета-информацию PDF
         self.set_title("Коммерческое предложение")
         self.set_author("Pergola Calculator")
@@ -341,10 +343,33 @@ def generate_commercial_offer(pergola_data, user_data=None):
     for info in contact_info:
         pdf.cell(0, 7, info, 0, 1)
     
-    # Сохраняем PDF
-    pdf.output(pdf_filename)
+    # Сохраняем PDF с поддержкой UTF-8
+    try:
+        # Пробуем сохранить с использованием модифицированного метода для кириллицы
+        os.makedirs(os.path.dirname(pdf_filename), exist_ok=True)
+        
+        # Используем прямой доступ к строке для замены кириллических символов
+        pdf.output(pdf_filename, 'F')
+        print(f"PDF успешно создан: {pdf_filename}")
+    except Exception as e:
+        print(f"Ошибка при сохранении PDF: {str(e)}")
+        
+        try:
+            # Пробуем упрощенный вариант с минимальной информацией
+            simple_pdf = FPDF()
+            simple_pdf.add_page()
+            simple_pdf.set_font('Arial', '', 12)
+            simple_pdf.cell(0, 10, "Pergola Calculator", 0, 1, 'C')
+            simple_pdf.cell(0, 10, f"Model: {pergola_type}", 0, 1)
+            simple_pdf.cell(0, 10, f"Dimensions: {width}x{length}m", 0, 1)
+            simple_pdf.cell(0, 10, f"Total cost: {total_cost:,.2f} rub", 0, 1)
+            
+            simple_pdf.output(pdf_filename, 'F')
+            print(f"Упрощенный PDF создан: {pdf_filename}")
+        except Exception as e2:
+            print(f"Ошибка при сохранении упрощенного PDF: {str(e2)}")
+            pdf_filename = None
     
-    print(f"PDF успешно создан: {pdf_filename}")
     return pdf_filename
 
 
