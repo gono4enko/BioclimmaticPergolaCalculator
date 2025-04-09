@@ -82,15 +82,16 @@ def main():
     <style>
     /* Переменные CSS для управления цветами */
     :root {
-        --button-bg: #0066cc;
+        --button-bg: #3f6daa;
         --button-text: #FFFFFF;  
         --text-color: #000000;
-        --highlight: #0066cc;
-        --highlight-hover: #0055BB;
-        --selected-bg: #0066cc;
+        --highlight: #3f6daa;
+        --highlight-hover: #34598e;
+        --selected-bg: #3f6daa;
         --selected-text: #FFFFFF;
         --unselected-bg: #FFFFFF;
         --unselected-text: #000000;
+        --accent-color: #ff9c00;
     }
     
     /* Глобальные стили для кнопки расчета - управление размером */
@@ -174,17 +175,18 @@ def main():
         --text-color: #333333;
         --label-color: #333333;
         --border-color: #dddddd;
-        --highlight-color: #0066cc;
-        --highlight-bg: #e6f2ff;
-        --highlight-hover: #0055aa;
+        --highlight-color: #3f6daa;
+        --highlight-bg: #e6f0fa;
+        --highlight-hover: #34598e;
         --card-bg: #f8f9fa;
         --card-border: #eeeeee;
-        --button-bg: #0066cc;
+        --button-bg: #3f6daa;
         --button-text: white;
         --tile-bg: white;
         --tile-border: #dddddd;
-        --header-color: #0066cc;
+        --header-color: #3f6daa;
         --section-border: #eeeeee;
+        --accent-color: #ff9c00;
     }
     
     /* Стили для темной темы */
@@ -286,15 +288,15 @@ def main():
     }
     
     .tile-button:hover {
-        border-color: #0066cc !important; /* Синяя рамка при наведении */
-        box-shadow: 0 2px 5px rgba(0, 0, 102, 0.1);
+        border-color: #3f6daa !important; /* Синяя рамка при наведении */
+        box-shadow: 0 2px 5px rgba(63, 109, 170, 0.1);
     }
     
     /* Выбранная плитка БЕЗ синего индикатора */
     .tile-button.selected {
         background-color: #FFFFFF !important; /* Белый фон */
-        border-color: #0066cc !important; /* Только синяя рамка */
-        box-shadow: 0 2px 5px rgba(0, 0, 102, 0.1);
+        border-color: #3f6daa !important; /* Только синяя рамка */
+        box-shadow: 0 2px 5px rgba(63, 109, 170, 0.1);
     }
     
     /* УБРАН синий индикатор внизу плитки */
@@ -302,7 +304,7 @@ def main():
     .tile-title {
         font-weight: 600;
         font-size: 1.1rem;
-        color: #0066cc !important; /* Всегда синий цвет */
+        color: #3f6daa !important; /* Основной цвет сайта */
         margin-bottom: 5px;
     }
     
