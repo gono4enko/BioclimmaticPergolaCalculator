@@ -1312,14 +1312,17 @@ def render_results(results):
             </div>
             """, unsafe_allow_html=True)
             
-            # Добавляем изображение
+            # Добавляем изображение - приоритет на новое изображение IMG_1001.jpeg
             try:
+                # Обновленное изображение B500 - выбираем его первым
                 st.image("attached_assets/IMG_1001.jpeg", caption="Пергола B500 с поворотными ламелями", use_container_width=True)
             except Exception as e:
                 try:
+                    # Запасной вариант с PNG файлом
                     st.image("attached_assets/b500_rotation.png", caption="Пергола B500 с поворотными ламелями", use_container_width=True)
                 except Exception as e2:
                     try:
+                        # Скриншот как самый последний вариант
                         st.image("attached_assets/Снимок экрана 2025-04-09 в 13.57.24.png", caption="Пример расчета перголы B500", use_container_width=True)
                     except Exception as e3:
                         st.warning(f"Не удалось загрузить изображение: {e3}")
@@ -1672,7 +1675,7 @@ def main():
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v3.0</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v3.1</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Создаем директории, если они не существуют
