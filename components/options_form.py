@@ -400,8 +400,7 @@ def render_options_form():
         format_func=lambda x: lighting_labels.get(x, x),
         index=lighting_options_full.index(selected_lighting) if selected_lighting in lighting_options_full else 0,
         key="lighting_radio",
-        horizontal=False,  # Вертикальное расположение
-        label_visibility="visible"
+        horizontal=False  # Вертикальное расположение
     )
     
     # Добавляем CSS-стили для увеличения вертикального отступа между опциями
