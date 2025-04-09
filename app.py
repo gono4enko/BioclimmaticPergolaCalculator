@@ -741,13 +741,21 @@ def main():
         }
         /* Стиль для кнопки при наведении */
         div[data-testid="stButton"] > button[kind="primary"]:hover,
-        div[data-testid="stButton"] > button:hover,
+        div[data-testid="stButton"] > button[data-testid="baseButton-primary"]:hover,
         button[data-testid="baseButton-primary"]:hover,
-        .element-container div[data-testid="stButton"] button:hover,
-        .stButton > button:hover {
+        .element-container div[data-testid="stButton"] button[data-testid="baseButton-primary"]:hover,
+        .stButton > button[data-testid="baseButton-primary"]:hover {
             background-color: #e86c29 !important; /* Темнее оранжевый при наведении */
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
             transform: translateY(-2px) !important;
+        }
+        /* Стиль для обычных кнопок при наведении */
+        div[data-testid="stButton"] > button:not([data-testid="baseButton-primary"]):hover,
+        button:not([data-testid="baseButton-primary"]):hover,
+        .element-container div[data-testid="stButton"] button:not([data-testid="baseButton-primary"]):hover,
+        .stButton > button:not([data-testid="baseButton-primary"]):hover {
+            background-color: #f5f5f5 !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
         }
         
         /* Стили для полей ввода и меток - абсолютный белый цвет в темном режиме */
