@@ -4,6 +4,10 @@
 """
 import streamlit as st
 import pandas as pd
+import os
+import math
+import csv
+
 # Используем прямое определение структур данных для упрощения
 # Типы пергол
 PERGOLA_TYPES = {
@@ -37,856 +41,883 @@ MAX_DIMENSIONS = {
     "B600": {"width": 13.5, "length": 8.0}
 }
 
-# Устанавливаем заголовок страницы
-st.set_page_config(
-    page_title="Калькулятор пергол", 
-    page_icon="🏠",
-    initial_sidebar_state="collapsed"
-)
-
-# Базовые стили
-st.markdown("""
-<style>
-/* Устанавливаем белый фон для всей страницы */
-.stApp {
-    background-color: white;
+# Правила для добавления дополнительных колонн в зависимости от размера выноса
+ADDITIONAL_COLUMNS_RULES = {
+    "B500NEW": {
+        "250": 6.5,  # Для ламелей 250мм - если вынос > 6.5м, нужны доп. колонны
+        "200": 6.85  # Для ламелей 200мм - если вынос > 6.85м, нужны доп. колонны
+    },
+    "B700NEW": {
+        "250": 6.5,  # Для ламелей 250мм - если вынос > 6.5м, нужны доп. колонны
+        "200": 6.85  # Для ламелей 200мм - если вынос > 6.85м, нужны доп. колонны
+    },
+    "B600": {
+        "PIR": 6.5   # Для PIR панелей - если вынос > 6.5м, нужны доп. колонны
+    }
 }
 
-/* Стилизация таблиц */
-table {
-    width: 100%;
-    font-size: 0.9rem;
+# Стоимость дополнительных колонн в зависимости от количества модулей
+COLUMNS_PRICES = {
+    1: 653,  # 1 модуль - 2 колонны - 653 евро
+    2: 980,  # 2 модуля - 3 колонны - 980 евро
+    3: 1306  # 3 модуля - 4 колонны - 1306 евро
 }
 
-table th {
-    text-align: left !important;
-    padding: 8px 10px;
-    background-color: #f1f1f1;
-    color: #000000;
-    font-weight: 500;
+# Усилитель лотка добавляется автоматически при выносе > 6.5м
+GUTTER_INSERT_THRESHOLD = 6.5
+GUTTER_INSERT_PRICE = 150  # Цена усилителя лотка
+
+# Правила для выбора привода Bansbach для B500NEW
+BANSBACH_DRIVE_RULES = {
+    1: [  # 1 модуль
+        {"width": 2.5, "length": 8.0, "tandem": False},  # До 2.5м ширины и до 8м выноса - T1
+        {"width": 3.0, "length": 7.5, "tandem": True},   # > 2.5м и > 7.5м выноса - Tandem
+        {"width": 3.5, "length": 6.5, "tandem": True},   # > 3.0м и > 6.5м выноса - Tandem
+        {"width": 4.0, "length": 5.5, "tandem": True},   # > 3.5м и > 5.5м выноса - Tandem
+        {"width": float('inf'), "length": 5.0, "tandem": True}  # > 4.0м и > 5.0м выноса - Tandem
+    ],
+    2: [  # 2 модуля
+        {"width": 5.0, "length": 8.0, "tandem": False},  # До 5м ширины и до 8м выноса - T1
+        {"width": 6.0, "length": 7.5, "tandem": True},   # > 5м и > 7.5м выноса - Tandem
+        {"width": 7.0, "length": 6.5, "tandem": True},   # > 6м и > 6.5м выноса - Tandem
+        {"width": 8.0, "length": 5.5, "tandem": True},   # > 7м и > 5.5м выноса - Tandem
+        {"width": float('inf'), "length": 5.0, "tandem": True}  # > 8м и > 5.0м выноса - Tandem
+    ],
+    3: [  # 3 модуля
+        {"width": 7.5, "length": 8.0, "tandem": False},  # До 7.5м ширины и до 8м выноса - T1
+        {"width": 9.0, "length": 7.5, "tandem": True},   # > 7.5м и > 7.5м выноса - Tandem
+        {"width": 10.5, "length": 6.5, "tandem": True},  # > 9м и > 6.5м выноса - Tandem
+        {"width": 12.0, "length": 5.5, "tandem": True},  # > 10.5м и > 5.5м выноса - Tandem
+        {"width": float('inf'), "length": 5.0, "tandem": True}  # > 12м и > 5.0м выноса - Tandem
+    ]
 }
 
-table td {
-    padding: 8px 10px;
-    border-bottom: 1px solid #eee;
-    color: #000000;
+# Правила для выбора привода Somfy для B700NEW
+SOMFY_DRIVE_RULES = {
+    1: [  # 1 модуль
+        {"width": 3.0, "length": 7.0, "tandem": True},   # до 3м ширины и > 7м выноса - Tandem
+        {"width": 3.5, "length": 6.0, "tandem": True},   # до 3.5м ширины и > 6м выноса - Tandem
+        {"width": float('inf'), "length": float('inf'), "tandem": False}  # По умолчанию - M1
+    ],
+    2: [  # 2 модуля
+        {"width": 6.0, "length": 7.0, "tandem": True},   # > 6м ширины и > 7м выноса - Tandem
+        {"width": 7.0, "length": 6.0, "tandem": True},   # > 7м ширины и > 6м выноса - Tandem
+        {"width": float('inf'), "length": float('inf'), "tandem": False}  # По умолчанию - M1
+    ],
+    3: [  # 3 модуля
+        {"width": 9.0, "length": 7.0, "tandem": True},   # > 9м ширины и > 7м выноса - Tandem
+        {"width": 10.5, "length": 6.0, "tandem": True},  # > 10.5м ширины и > 6м выноса - Tandem
+        {"width": float('inf'), "length": float('inf'), "tandem": False}  # По умолчанию - M1
+    ]
 }
 
-/* Для выравнивания только цен в таблице стоимости по правому краю */
-.cost-table td:nth-child(2) {
-    text-align: right !important;
+# Цены на приводы
+DRIVE_PRICES = {
+    "B500NEW": {
+        "standard": 700,     # Bansbach T1 - 700 евро
+        "tandem": 1250       # Bansbach Tandem - 1250 евро
+    },
+    "B700NEW": {
+        "standard": 300,     # Somfy M1 - 300 евро
+        "tandem": 1000       # Somfy M2 TANDEM - 1000 евро
+    }
 }
 
-/* Для выравнивания всех остальных таблиц по левому краю */
-table td {
-    text-align: left !important;
+# Пульты дистанционного управления
+REMOTE_CONTROL_TYPES = {
+    1: {"name": "Simu 1K", "price": 25},    # 1 канал - 25 евро
+    5: {"name": "Simu 5K", "price": 40},    # 5 каналов - 40 евро
+    15: {"name": "Simu 15K", "price": 90}   # 15 каналов - 90 евро
 }
 
-/* Стилизация кнопки расчета */
-.stButton>button {
-    background-color: #ff7a2f !important;
-    color: white !important;
-    font-weight: bold !important;
-    border: none !important;
-    padding: 0.5rem 1rem !important;
-    font-size: 1.2rem !important;
-    border-radius: 0.5rem !important;
-    cursor: pointer !important;
-    width: 100% !important;
-    margin-top: 1rem !important;
-    margin-bottom: 1rem !important;
+# Освещение
+LIGHTING_PRICES = {
+    "controller": 300,       # Блок управления Somfy RTS Dimmer - 300 евро
+    "white_led": 20,         # Сверхъяркая LED лента - 20 евро/м
+    "rgb_led": 20            # Сверхъяркая RGB лента - 20 евро/м
 }
 
-/* Скрытие голубой заливки */
-.stRadio > div[role="radiogroup"] label {
-    background-color: white !important;
-}
-
-/* Заголовки результатов расчета */
-h2 {
-    color: #3f6daa !important;
-    font-size: 1.75rem !important;
-    font-weight: bold !important;
-    margin-top: 1.5rem !important;
-    margin-bottom: 1rem !important;
-}
-
-h3 {
-    color: #3f6daa !important;
-    font-size: 1.4rem !important;
-    font-weight: bold !important;
-    margin-top: 1.2rem !important;
-    margin-bottom: 0.7rem !important;
-}
-
-h4 {
-    color: #333333 !important;
-    font-size: 1.1rem !important;
-    font-weight: bold !important;
-    margin-top: 1rem !important;
-    margin-bottom: 0.5rem !important;
-}
-
-/* Убираем лишние отступы */
-div.block-container {
-    padding-top: 2rem;
-    max-width: 1000px;
-    padding-bottom: 2rem;
-}
-
-/* Убираем отступы в радио-кнопках */
-.stRadio > div {
-    margin-bottom: 0.3rem !important;
-}
-
-/* Стили для примечаний */
-.caption {
-    font-size: 0.8rem !important;
-    color: #666666 !important;
-    margin-top: 0.3rem !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# Функция для выполнения расчета
-def perform_calculation(dimensions, options):
-    """Выполнить расчет стоимости перголы"""
-    width_m = dimensions["width"]
-    length_m = dimensions["length"]
-    height_m = dimensions["height"]
-    pergola_type = options["pergola_type"]
-    lamella_type = options["lamella_type"]
-    lighting_type = options["lighting_type"]
-    installation = options.get("installation", "no_install")
+# Функция для загрузки данных о ценах из CSV файлов
+def load_price_data(pergola_type, lamella_size):
+    """
+    Загружает данные о ценах из соответствующего CSV файла
     
-    # Преобразуем размеры в мм для некоторых расчетов
-    width_mm = width_m * 1000
-    length_mm = length_m * 1000
-    
-    # Рассчитываем количество модулей в зависимости от ширины и типа перголы
-    # Согласно прайсам B500-20, B500-25, B700-25
-    if pergola_type == "B500NEW" or pergola_type == "B700NEW":
-        if width_m <= 4.5:
-            modules = 1
-        elif width_m <= 9.0:  # В прайсах до 9.0 идет 2 модуля
-            modules = 2
-        elif width_m <= 13.5:  # В прайсах до 13.5 идет 3 модуля
-            modules = 3
-        else:
-            modules = 4
-    else:
-        # Для B600 используем данные из прайса B600 PIR
-        if width_m <= 4.5:
-            modules = 1
-        elif width_m <= 9.0:  # В прайсе до 9.0 идет 2 модуля
-            modules = 2
-        else:
-            modules = 3
-    
-    # Определяем тип ламелей по коду
-    # Для B500NEW и B700NEW преобразуем упрощенные коды в коды из прайса
-    real_lamella_type = lamella_type
-    if pergola_type == "B500NEW":
-        if lamella_type == "lamella-200":
-            real_lamella_type = "B500-20NEW"
-        elif lamella_type == "lamella-250":
-            real_lamella_type = "B500-25NEW"
-    elif pergola_type == "B700NEW":
-        if lamella_type == "lamella-200":
-            real_lamella_type = "B700-20NEW"
-        elif lamella_type == "lamella-250":
-            real_lamella_type = "B700-25NEW"
-    
-    # Получаем базовую цену из прайса в зависимости от типа перголы, ширины и длины
-    # Это более точный метод, чем просто использовать коэффициент
-    # Данные цен получены из прайс-листов (упрощенная реализация)
-    pergola_cost = 0
-    
-    # Получаем цену из соответствующего прайса
-    if pergola_type == "B500NEW":
-        if "20" in real_lamella_type:
-            # Для B500-20NEW
-            # Ищем ближайшие значения из прайса (B500-20)
-            # Ширина (м): 3.0, 3.5, 4.0, 4.5, 6.0, 7.0, 8.0, 9.0, 10.0, 9.0, 10.5, 12.0, 13.5, 15.0
-            # Вынос (м): 2.45, 2.85, 3.25, 3.65, 4.05, 4.45, 4.85, 5.25, 5.65, 6.05, 6.45, 6.85, 7.25, 7.65, 8.05
-            
-            # Базовые цены из прайса
-            if width_m <= 3.0 and length_m <= 2.45:
-                pergola_cost = 6245
-            elif width_m <= 3.5 and length_m <= 2.45:
-                pergola_cost = 6810
-            elif width_m <= 4.0 and length_m <= 2.45:
-                pergola_cost = 7375
-            elif width_m <= 4.5 and length_m <= 2.45:
-                pergola_cost = 7940
-            elif width_m <= 3.0 and length_m <= 2.85:
-                pergola_cost = 6866
-            elif width_m <= 3.0 and length_m <= 3.25:
-                pergola_cost = 7487
-            elif width_m <= 3.0 and length_m <= 3.65:
-                pergola_cost = 8108
-            elif width_m <= 3.0 and length_m <= 4.05:
-                pergola_cost = 8729
-            else:
-                # Для других размеров по-прежнему используем приближенную формулу
-                pergola_cost = 6245 * (width_m * length_m) / (3.0 * 2.45)
-        else:
-            # Для B500-25NEW
-            # Ищем ближайшие значения из прайса (B500-25)
-            # Ширина (м): 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 7.0, 8.0, 9.0, 7.5, 9.0, 10.5, 12.0, 13.5
-            # Вынос (м): 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0
-            
-            # Базовые цены из прайса B500-25
-            if width_m <= 2.5 and length_m <= 2.5:
-                pergola_cost = 5431
-            elif width_m <= 3.0 and length_m <= 2.5:
-                pergola_cost = 5945
-            elif width_m <= 3.5 and length_m <= 2.5:
-                pergola_cost = 6460
-            elif width_m <= 4.0 and length_m <= 2.5:
-                pergola_cost = 6974
-            elif width_m <= 4.5 and length_m <= 2.5:
-                pergola_cost = 7488
-            elif width_m <= 3.0 and length_m <= 3.0:
-                pergola_cost = 6638
-            elif width_m <= 3.0 and length_m <= 3.5:
-                pergola_cost = 7330
-            elif width_m <= 3.0 and length_m <= 4.0:
-                pergola_cost = 8022
-            elif width_m <= 3.0 and length_m <= 4.5:
-                pergola_cost = 8714
-            elif width_m <= 3.0 and length_m <= 5.0:
-                pergola_cost = 9406
-            else:
-                # Для других размеров используем приближенную формулу
-                pergola_cost = 5431 * (width_m * length_m) / (2.5 * 2.5)
-    
-    elif pergola_type == "B700NEW":
-        if "20" in real_lamella_type:
-            # Для B700-20NEW
-            # Ищем ближайшие значения из прайса (B700-20)
-            # Ширина (м): 3.0, 3.5, 4.0, 4.5, 6.0, 7.0, 8.0, 9.0, 10.0, 9.0, 10.5, 12.0, 13.5, 15.0
-            # Вынос (м): 2.45, 2.85, 3.25, 3.65, 4.05, 4.45, 4.85, 5.25, 5.65, 6.05, 6.45, 6.85, 7.25
-            
-            # Базовые цены из прайса B700-20
-            if width_m <= 3.0 and length_m <= 2.45:
-                pergola_cost = 6878
-            elif width_m <= 3.5 and length_m <= 2.45:
-                pergola_cost = 7451
-            elif width_m <= 4.0 and length_m <= 2.45:
-                pergola_cost = 8023
-            elif width_m <= 4.5 and length_m <= 2.45:
-                pergola_cost = 8596
-            elif width_m <= 3.0 and length_m <= 2.85:
-                pergola_cost = 7529
-            elif width_m <= 3.0 and length_m <= 3.25:
-                pergola_cost = 8179
-            elif width_m <= 3.0 and length_m <= 3.65:
-                pergola_cost = 8830
-            elif width_m <= 3.0 and length_m <= 4.05:
-                pergola_cost = 9480
-            elif width_m <= 3.0 and length_m <= 4.45:
-                pergola_cost = 10130
-            elif width_m <= 3.0 and length_m <= 4.85:
-                pergola_cost = 10781
-            else:
-                # Для других размеров используем приближенную формулу
-                pergola_cost = 6878 * (width_m * length_m) / (3.0 * 2.45)
-        else:
-            # Для B700-25NEW
-            # Ищем ближайшие значения из прайса (B700-25)
-            # Ширина (м): 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 7.0, 8.0, 9.0, 7.5, 9.0, 10.5, 12.0, 13.5
-            # Вынос (м): 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0
-            
-            # Базовые цены из прайса B700-25
-            if width_m <= 2.5 and length_m <= 2.5:
-                pergola_cost = 6048
-            elif width_m <= 3.0 and length_m <= 2.5:
-                pergola_cost = 6570
-            elif width_m <= 3.5 and length_m <= 2.5:
-                pergola_cost = 7092
-            elif width_m <= 4.0 and length_m <= 2.5:
-                pergola_cost = 7613
-            elif width_m <= 4.5 and length_m <= 2.5:
-                pergola_cost = 8135
-            elif width_m <= 3.0 and length_m <= 3.0:
-                pergola_cost = 7297
-            elif width_m <= 3.0 and length_m <= 3.5:
-                pergola_cost = 8023
-            elif width_m <= 3.0 and length_m <= 4.0:
-                pergola_cost = 8750
-            elif width_m <= 3.0 and length_m <= 4.5:
-                pergola_cost = 9476
-            elif width_m <= 3.0 and length_m <= 5.0:
-                pergola_cost = 10203
-            else:
-                # Для других размеров используем приближенную формулу
-                pergola_cost = 6048 * (width_m * length_m) / (2.5 * 2.5)
-    
-    elif pergola_type == "B600":
-        # Для B600 (PIR панели)
-        # Используем данные из прайса В600_PIR
-        # Ширина (м): 2.5, 3.0, 3.5, 4.0, 4.5, 6.0, 7.0, 8.0, 9.0, 10.5, 12.0, 13.5
-        # Вынос (м): 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0
+    Args:
+        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
+        lamella_size (str): Размер ламели (200, 250, PIR)
         
-        # Базовые цены из прайса B600 PIR
-        if width_m <= 2.5 and length_m <= 2.5:
-            pergola_cost = 4500
-        elif width_m <= 3.0 and length_m <= 2.5:
-            pergola_cost = 4866
-        elif width_m <= 3.5 and length_m <= 2.5:
-            pergola_cost = 5232
-        elif width_m <= 4.0 and length_m <= 2.5:
-            pergola_cost = 5599
-        elif width_m <= 4.5 and length_m <= 2.5:
-            pergola_cost = 5965
-        elif width_m <= 2.5 and length_m <= 3.0:
-            pergola_cost = 4678
-        elif width_m <= 3.0 and length_m <= 3.0:
-            pergola_cost = 5045
-        elif width_m <= 3.5 and length_m <= 3.0:
-            pergola_cost = 5411
-        elif width_m <= 4.0 and length_m <= 3.0:
-            pergola_cost = 5777
-        elif width_m <= 4.5 and length_m <= 3.0:
-            pergola_cost = 6144
-        elif width_m <= 2.5 and length_m <= 3.5:
-            pergola_cost = 5230
-        elif width_m <= 3.0 and length_m <= 3.5:
-            pergola_cost = 5659
-        elif width_m <= 3.5 and length_m <= 3.5:
-            pergola_cost = 6087
-        else:
-            # Для других размеров используем приближенную формулу
-            pergola_cost = 4500 * (width_m * length_m) / (2.5 * 2.5)
-    
-    # Учитываем тип подсветки
-    lighting_cost = 0
-    lighting_components = []
-    
-    if lighting_type == "white":
-        # Расчет периметра подсветки согласно инструкции
-        if modules == 1:
-            # Для одного модуля - просто периметр
-            perimeter = 2 * (width_m + length_m)
-        else:
-            # Для нескольких модулей считаем периметр для каждого модуля
-            module_width = width_m / modules
-            perimeter = modules * 2 * (module_width + length_m)
-            
-        led_price_per_meter = 20  # Цена за метр сверхъяркой LED ленты согласно инструкции
-        controller_price = 300  # Блок управления Somfy RTS Dimmer согласно инструкции
-        
-        lighting_cost = led_price_per_meter * perimeter + controller_price
-        
-        # Добавляем только один блок управления LED на всю перголу
-        lighting_components = [
-            f"Сверхъяркая LED лента белая - {perimeter:.2f} м",
-            "Блок управления освещением Somfy RTS Dimmer - 1 шт."
-        ]
-    elif lighting_type == "rgb":
-        # Расчет периметра подсветки согласно инструкции
-        if modules == 1:
-            # Для одного модуля - просто периметр
-            perimeter = 2 * (width_m + length_m)
-        else:
-            # Для нескольких модулей считаем периметр для каждого модуля
-            module_width = width_m / modules
-            perimeter = modules * 2 * (module_width + length_m)
-            
-        led_price_per_meter = 20  # Цена за метр сверхъяркой RGB ленты согласно инструкции
-        controller_price = 300  # Блок управления Somfy RTS Dimmer согласно инструкции
-        
-        lighting_cost = led_price_per_meter * perimeter + controller_price
-        
-        # Добавляем только один блок управления LED на всю перголу
-        lighting_components = [
-            f"Сверхъяркая RGB лента - {perimeter:.2f} м",
-            "Блок управления освещением Somfy RTS Dimmer - 1 шт."
-        ]
-    elif lighting_type == "rgbw":
-        # Расчет периметра подсветки согласно инструкции
-        if modules == 1:
-            # Для одного модуля - просто периметр
-            perimeter = 2 * (width_m + length_m)
-        else:
-            # Для нескольких модулей считаем периметр для каждого модуля
-            module_width = width_m / modules
-            perimeter = modules * 2 * (module_width + length_m)
-            
-        # Для RGBW используем обе ленты - и LED, и RGB согласно инструкции
-        led_price_per_meter = 20 + 20  # Сумма цен за метр LED и RGB ленты
-        controller_price = 300  # Блок управления Somfy RTS Dimmer согласно инструкции
-        
-        lighting_cost = led_price_per_meter * perimeter + controller_price
-        
-        # Добавляем обе ленты и один блок управления
-        lighting_components = [
-            f"Сверхъяркая LED лента белая - {perimeter:.2f} м",
-            f"Сверхъяркая RGB лента - {perimeter:.2f} м",
-            "Блок управления освещением Somfy RTS Dimmer - 1 шт."
-        ]
-    
-    # Проверяем нужны ли дополнительные колонны
-    additional_columns = False
-    additional_columns_cost = 0
-    additional_columns_components = []
-    
-    # По правилам из инструкции
-    if pergola_type == "B500NEW":
-        if "250" in real_lamella_type and length_m > 6.5:
-            additional_columns = True
-        elif "200" in real_lamella_type and length_m > 6.85:
-            additional_columns = True
-    elif pergola_type == "B700NEW":
-        if "250" in real_lamella_type and length_m > 6.5:
-            additional_columns = True
-        elif "200" in real_lamella_type and length_m > 6.85:
-            additional_columns = True
-    elif pergola_type == "B600" and length_m > 6.5:
-        additional_columns = True
-        
-    # Отладочная информация для проверки
-    st.sidebar.write(f"Тип перголы: {pergola_type}")
-    st.sidebar.write(f"Вынос: {length_m} м")
-    st.sidebar.write(f"Требуются доп. колонны: {additional_columns}")
-    st.sidebar.write(f"Тип ламелей: {real_lamella_type}")
-        
-    # Добавляем стоимость дополнительных колонн
-    if additional_columns:
-        if modules == 1:
-            additional_columns_cost = 653  # 2 колонны
-            additional_columns_components = [
-                "Усилитель лотка для большого выноса - 1 шт.",
-                "Дополнительные колонны - 2 шт."
-            ]
-        elif modules == 2:
-            additional_columns_cost = 980  # 3 колонны
-            additional_columns_components = [
-                "Усилитель лотка для большого выноса - 1 шт.",
-                "Дополнительные колонны - 3 шт."
-            ]
-        elif modules >= 3:
-            additional_columns_cost = 1306  # 4 колонны
-            additional_columns_components = [
-                "Усилитель лотка для большого выноса - 1 шт.",
-                "Дополнительные колонны - 4 шт."
-            ]
-    
-    # Определяем тип автоматизации и стоимость в зависимости от типа перголы и размеров
-    automation_components = []
-    
-    if pergola_type == "B500NEW":
-        # Для B500NEW используем привод Bansbach по правилам из инструкции
-        
-        # Проверка критериев для использования Bansbach Tandem
-        need_tandem = False
-        
-        # Если 1 модуль
-        if modules == 1:
-            if width_m <= 2.5 and length_m > 8.0:
-                need_tandem = True
-            elif width_m > 2.5 and length_m > 7.5:
-                need_tandem = True
-            elif width_m > 3.0 and length_m > 6.5:
-                need_tandem = True
-            elif width_m > 3.5 and length_m > 5.5:
-                need_tandem = True
-            elif width_m > 4.0 and length_m > 5.0:
-                need_tandem = True
-        # Если 2 модуля
-        elif modules == 2:
-            if width_m > 5.0 and length_m > 7.5:
-                need_tandem = True
-            elif width_m > 6.0 and length_m > 6.5:
-                need_tandem = True
-            elif width_m > 7.0 and length_m > 5.5:
-                need_tandem = True
-            elif width_m > 8.0 and length_m > 5.0:
-                need_tandem = True
-        # Если 3 модуля
-        elif modules == 3:
-            if width_m > 7.5 and length_m > 7.5:
-                need_tandem = True
-            elif width_m > 9.0 and length_m > 6.5:
-                need_tandem = True
-            elif width_m > 10.5 and length_m > 5.5:
-                need_tandem = True
-            elif width_m > 12.0 and length_m > 5.0:
-                need_tandem = True
-        
-        if need_tandem:
-            automation_type = "Bansbach Tandem"
-            automation_cost = 1250  # Усиленный привод Bansbach Tandem
-            automation_components = [
-                "Двигатель easyE-lift-50 Bansbach - 2 шт.",
-                "Блок управления для 2-х двигателей + блок питания - 1 шт.",
-                "Приемник - 1 шт."
-            ]
-        else:
-            automation_type = "Bansbach T1"
-            automation_cost = 700  # Стандартный привод Bansbach T1
-            automation_components = [
-                "Двигатель easyE-lift-50 Bansbach - 1 шт.",
-                "Блок управления для 1-го двигателя + блок питания - 1 шт.",
-                "Приемник - 1 шт."
-            ]
-    
-    elif pergola_type == "B700NEW":
-        # Для B700NEW используем привод Somfy по правилам из инструкции
-        
-        # Проверка критериев для использования Somfy M2 TANDEM
-        need_tandem = False
-        
-        # Если 1 модуль
-        if modules == 1:
-            if width_m <= 3.0 and length_m > 7.0:
-                need_tandem = True
-            elif width_m <= 3.5 and length_m > 6.0:
-                need_tandem = True
-        # Если 2 модуля
-        elif modules == 2:
-            if width_m > 6.0 and length_m > 7.0:
-                need_tandem = True
-            elif width_m > 7.0 and length_m > 6.0:
-                need_tandem = True
-        
-        if need_tandem:
-            automation_type = "Somfy M2 TANDEM"
-            automation_cost = 1000  # Усиленный привод Somfy M2 TANDEM
-            automation_components = [
-                "Привод Somfy Altus RTS 120/12 - 2 шт.",
-                "Блок управления Somfy для двух двигателей - 1 шт."
-            ]
-        else:
-            automation_type = "Somfy M1"
-            automation_cost = 300  # Стандартный привод Somfy M1 согласно инструкции
-            automation_components = [
-                "Привод Somfy Altus RTS 120/12 - 1 шт.",
-                "Блок управления Somfy - 1 шт."
-            ]
-    
-    else:
-        # Для B600 и других типов
-        automation_type = "Стандартный привод для PIR-панелей"
-        automation_cost = 580
-        automation_components = [
-            "Стандартный привод для PIR-панелей - 1 шт.",
-            "Блок управления - 1 шт."
-        ]
-    
-    # Определяем какой пульт нужен в зависимости от количества устройств
-    # Считаем количество устройств: привод + освещение (если есть)
-    num_devices = 1  # Минимум привод
-    
-    # Если есть освещение, добавляем еще устройство
-    if lighting_type != "none":
-        num_devices += 1
-    
-    # Выбираем пульт на основе количества устройств
-    if num_devices <= 1:
-        remote_type = "Simu 1K"
-        remote_cost = 25
-        automation_components.append(f"Пульт {remote_type} (1 канал) - 1 шт.")
-    elif num_devices <= 5:
-        remote_type = "Simu 5K"
-        remote_cost = 40
-        automation_components.append(f"Пульт {remote_type} (5 каналов) - 1 шт.")
-    else:
-        remote_type = "Simu 15K"
-        remote_cost = 90
-        automation_components.append(f"Пульт {remote_type} (15 каналов) - 1 шт.")
-    
-    # Добавляем стоимость пульта к стоимости автоматики
-    automation_cost += remote_cost
-    
-    # Добавляем стоимость дополнительных колонн отдельно
-    additional_columns_cost_for_results = 0
-    additional_columns_components_for_results = []
-    
-    if additional_columns:
-        # ВАЖНО: Сохраняем значения для результатов
-        additional_columns_cost_for_results = additional_columns_cost
-        additional_columns_components_for_results = additional_columns_components.copy()
-        
-        # Отладочная информация
-        st.sidebar.write(f"Доп. колонны стоимость: {additional_columns_cost}")
-        st.sidebar.write(f"Доп. колонны компоненты: {additional_columns_components}")
-        
-        # Добавляем к общей стоимости автоматически
-        st.sidebar.write("Доп. колонны добавлены к результатам")
-    
-    # Учитываем установку
-    installation_cost = 0
-    if installation == "with_install":
-        installation_cost = pergola_cost * 0.15  # 15% от стоимости перголы
-    
-    # Итоговая стоимость
-    # Добавляем стоимость дополнительных колонн к общей стоимости
-    total_cost = pergola_cost + lighting_cost + automation_cost + additional_columns_cost_for_results + installation_cost
-    
-    # Отладочная информация перед округлением
-    st.sidebar.write("======= Стоимость (до округления) =======")
-    st.sidebar.write(f"Базовая цена перголы: {pergola_cost}")
-    st.sidebar.write(f"Освещение: {lighting_cost}")
-    st.sidebar.write(f"Автоматизация: {automation_cost}")
-    st.sidebar.write(f"Дополнительные колонны: {additional_columns_cost_for_results}")
-    st.sidebar.write(f"Установка: {installation_cost}")
-    st.sidebar.write(f"Итого: {total_cost}")
-    
-    # Округляем все цены до целых чисел
-    pergola_cost = round(pergola_cost)
-    lighting_cost = round(lighting_cost)
-    automation_cost = round(automation_cost)
-    additional_columns_cost_for_results = round(additional_columns_cost_for_results)
-    installation_cost = round(installation_cost)
-    total_cost = round(total_cost)
-    
-    # Формируем результат
-    results = {
-        "total_cost": total_cost,
-        "details": {
-            "pergola_cost": pergola_cost,
-            "pergola_type": pergola_type,
-            "real_lamella_type": real_lamella_type,
-            "lighting_cost": lighting_cost,
-            "lighting_components": lighting_components,
-            "automation_cost": automation_cost,
-            "automation_type": automation_type,
-            "automation_components": automation_components,
-            "installation_cost": installation_cost,
-            "modules": modules,
-            "additional_columns_cost": additional_columns_cost_for_results,
-            "additional_columns_components": additional_columns_components_for_results
-        },
-        "dimensions": {
-            "width_m": width_m,
-            "length_m": length_m,
-            "height_m": height_m
-        }
+    Returns:
+        dict: Словарь с ценами для разных размеров перголы
+    """
+    # Определяем соответствие типов пергол и имен файлов
+    file_mapping = {
+        ("B500NEW", "200"): "attached_assets/Прайс_В500-20.csv",
+        ("B500NEW", "250"): "attached_assets/Прайс_В500-25.csv",
+        ("B700NEW", "200"): "attached_assets/Прайс_B700-20.csv",
+        ("B700NEW", "250"): "attached_assets/Прайс_B700-25.csv",
+        ("B600", "PIR"): "attached_assets/Прайс_В600_PIR.csv"
     }
     
-    return results
+    key = (pergola_type, lamella_size)
+    if key not in file_mapping:
+        return {}
+    
+    file_path = file_mapping[key]
+    if not os.path.exists(file_path):
+        return {}
+    
+    prices = {}
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            header = next(reader)
+            
+            # Предполагаем, что первая колонка - это значения длины/выноса
+            length_values = [float(val.replace(',', '.')) for val in header[1:] if val.strip()]
+            
+            for row in reader:
+                if not row or len(row) <= 1:
+                    continue
+                
+                try:
+                    width = float(row[0].replace(',', '.'))
+                    for i, price_str in enumerate(row[1:]):
+                        if i < len(length_values) and price_str.strip():
+                            length = length_values[i]
+                            price = float(price_str.replace('.', '').replace(',', '.'))
+                            if width not in prices:
+                                prices[width] = {}
+                            prices[width][length] = price
+                except (ValueError, IndexError):
+                    continue
+        
+        return prices
+    except Exception as e:
+        print(f"Ошибка загрузки прайс-листа {file_path}: {str(e)}")
+        return {}
 
-def main():
-    """Основная функция приложения"""
+def calculate_lighting_perimeter(width_m, length_m, modules=1):
+    """
+    Расчет периметра подсветки по правилам.
+    Для 1 модуля - просто периметр.
+    Для нескольких модулей - сумма периметров всех модулей.
     
-    # Заголовок и описание
-    st.title("Калькулятор пергол")
-    st.markdown("Рассчитайте стоимость перголы с учетом размеров и опций")
+    Args:
+        width_m (float): Ширина перголы в метрах
+        length_m (float): Вынос перголы в метрах
+        modules (int): Количество модулей
+        
+    Returns:
+        float: Длина периметра для светодиодной ленты
+    """
+    if modules <= 1:
+        return 2 * (width_m + length_m)
     
-    # Используем колонки для компактного отображения
+    # Для многомодульных пергол
+    module_width = width_m / modules
+    module_perimeter = 2 * (module_width + length_m)
+    return module_perimeter * modules
+
+def adjust_length_for_lamella_size(length_m, lamella_size_mm):
+    """
+    Корректирует размер выноса перголы до ближайшего целого числа ламелей
+    
+    Args:
+        length_m (float): Вынос перголы в метрах
+        lamella_size_mm (int): Размер ламели в миллиметрах (200 или 250)
+        
+    Returns:
+        float: Скорректированный размер выноса перголы
+    """
+    lamella_size_m = lamella_size_mm / 1000  # Перевод из мм в метры
+    num_lamellas = length_m / lamella_size_m
+    
+    # Округляем до ближайшего целого числа ламелей в большую сторону
+    num_lamellas_rounded = math.ceil(num_lamellas)
+    
+    # Вычисляем скорректированную длину
+    adjusted_length = num_lamellas_rounded * lamella_size_m
+    
+    return adjusted_length
+
+def get_base_price(pergola_type, lamella_size, width_m, length_m):
+    """
+    Получает базовую стоимость перголы из прайс-листа,
+    выбирая ближайшую большую стоимость, если точное значение не найдено
+    
+    Args:
+        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
+        lamella_size (str): Размер ламели (200, 250, PIR)
+        width_m (float): Ширина перголы в метрах
+        length_m (float): Вынос перголы в метрах
+        
+    Returns:
+        float: Базовая стоимость перголы
+    """
+    prices = load_price_data(pergola_type, lamella_size)
+    if not prices:
+        raise ValueError(f"Не удалось загрузить данные о ценах для {pergola_type} с ламелями {lamella_size}")
+    
+    # Находим ближайшие большие значения для ширины и длины
+    available_widths = sorted(prices.keys())
+    available_lengths = set()
+    for width_data in prices.values():
+        available_lengths.update(width_data.keys())
+    available_lengths = sorted(available_lengths)
+    
+    # Находим ближайшую большую ширину
+    nearest_width = next((w for w in available_widths if w >= width_m), max(available_widths))
+    
+    # Находим ближайшую большую длину
+    nearest_length = next((l for l in available_lengths if l >= length_m), max(available_lengths))
+    
+    # Получаем цену
+    if nearest_width in prices and nearest_length in prices[nearest_width]:
+        return prices[nearest_width][nearest_length]
+    
+    # Если точная комбинация не найдена, ищем наиболее близкую
+    best_price = None
+    for width in available_widths:
+        for length in available_lengths:
+            if width >= width_m and length >= length_m:
+                price = prices[width].get(length)
+                if price is not None and (best_price is None or price < best_price):
+                    best_price = price
+    
+    if best_price is None:
+        raise ValueError(f"Не удалось найти подходящую цену для перголы {pergola_type} размером {width_m}x{length_m}")
+    
+    return best_price
+
+def needs_additional_columns(pergola_type, lamella_size, length_m):
+    """
+    Проверяет, нужны ли дополнительные колонны
+    
+    Args:
+        pergola_type (str): Тип перголы
+        lamella_size (str): Размер ламели
+        length_m (float): Вынос перголы в метрах
+        
+    Returns:
+        bool: True если нужны дополнительные колонны
+    """
+    threshold = ADDITIONAL_COLUMNS_RULES.get(pergola_type, {}).get(lamella_size)
+    if threshold is None:
+        return False
+    
+    return length_m > threshold
+
+def needs_gutter_insert(length_m):
+    """
+    Проверяет, нужен ли усилитель лотка
+    
+    Args:
+        length_m (float): Вынос перголы в метрах
+        
+    Returns:
+        bool: True если нужен усилитель лотка
+    """
+    return length_m > GUTTER_INSERT_THRESHOLD
+
+def get_drive_price(pergola_type, width_m, length_m, modules):
+    """
+    Определяет тип и стоимость привода для перголы
+    
+    Args:
+        pergola_type (str): Тип перголы
+        width_m (float): Ширина перголы в метрах
+        length_m (float): Вынос перголы в метрах
+        modules (int): Количество модулей
+        
+    Returns:
+        tuple: (название привода, цена привода, нужен ли танем-привод)
+    """
+    if pergola_type == "B500NEW":
+        rules = BANSBACH_DRIVE_RULES.get(modules, [])
+        for rule in rules:
+            if width_m > rule["width"] and length_m > rule["length"]:
+                if rule["tandem"]:
+                    return "Bansbach Tandem, Germany", DRIVE_PRICES["B500NEW"]["tandem"], True
+                else:
+                    return "Bansbach Т1, Germany", DRIVE_PRICES["B500NEW"]["standard"], False
+        
+        # По умолчанию - стандартный привод
+        return "Bansbach Т1, Germany", DRIVE_PRICES["B500NEW"]["standard"], False
+    
+    elif pergola_type == "B700NEW":
+        rules = SOMFY_DRIVE_RULES.get(modules, [])
+        for rule in rules:
+            if width_m <= rule["width"] and length_m > rule["length"]:
+                if rule["tandem"]:
+                    return "Somfy M2 TANDEM", DRIVE_PRICES["B700NEW"]["tandem"], True
+                else:
+                    return "Somfy M1", DRIVE_PRICES["B700NEW"]["standard"], False
+        
+        # По умолчанию - стандартный привод
+        return "Somfy M1", DRIVE_PRICES["B700NEW"]["standard"], False
+    
+    return "", 0, False
+
+def get_remote_control(devices_count):
+    """
+    Определяет тип и стоимость пульта управления
+    
+    Args:
+        devices_count (int): Количество устройств для управления
+        
+    Returns:
+        tuple: (название пульта, цена пульта)
+    """
+    if devices_count <= 1:
+        return "Simu 1K", REMOTE_CONTROL_TYPES[1]["price"]
+    elif devices_count <= 5:
+        return "Simu 5K", REMOTE_CONTROL_TYPES[5]["price"]
+    else:
+        return "Simu 15K", REMOTE_CONTROL_TYPES[15]["price"]
+
+def perform_calculation(dimensions, options):
+    """Выполнить расчет стоимости перголы"""
+    try:
+        # Извлекаем данные из ввода пользователя
+        width_m = float(dimensions.get("width", 0))
+        length_m = float(dimensions.get("length", 0))
+        pergola_type = options.get("pergola_type", "")
+        lamella_type = options.get("lamella_type", "")
+        modules = int(options.get("modules", 1))
+        lighting_options = options.get("lighting", [])
+        
+        # Определяем размер ламели в миллиметрах
+        lamella_size = "PIR" if "PIR" in lamella_type else ("200" if "200" in lamella_type else "250")
+        
+        # Корректируем размер выноса в соответствии с размером ламелей для B500NEW и B700NEW
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            lamella_size_mm = 200 if lamella_size == "200" else 250
+            length_m = adjust_length_for_lamella_size(length_m, lamella_size_mm)
+        
+        # Определяем базовую стоимость перголы из прайс-листа
+        base_price = get_base_price(pergola_type, lamella_size, width_m, length_m)
+        
+        # Инициализируем результаты расчета
+        results = {
+            "dimensions": {
+                "width": width_m,
+                "length": length_m,
+                "modules": modules
+            },
+            "options": {
+                "pergola_type": pergola_type,
+                "lamella_type": lamella_type,
+                "lighting": lighting_options
+            },
+            "base_price": base_price,
+            "items": [],
+            "total_price": base_price
+        }
+        
+        # Проверяем, нужны ли дополнительные колонны
+        need_columns = needs_additional_columns(pergola_type, lamella_size, length_m)
+        if need_columns:
+            columns_price = COLUMNS_PRICES.get(modules, 0)
+            results["additional_columns"] = {
+                "required": True,
+                "count": modules + 1,  # Количество колонн зависит от модулей
+                "price": columns_price
+            }
+            results["items"].append({
+                "name": f"Дополнительные колонны ({modules + 1} шт.)",
+                "price": columns_price
+            })
+            results["total_price"] += columns_price
+        else:
+            results["additional_columns"] = {"required": False}
+        
+        # Проверяем, нужен ли усилитель лотка
+        need_gutter = needs_gutter_insert(length_m)
+        if need_gutter:
+            results["gutter_insert"] = {
+                "required": True,
+                "price": GUTTER_INSERT_PRICE
+            }
+            results["items"].append({
+                "name": "Усилитель лотка",
+                "price": GUTTER_INSERT_PRICE
+            })
+            results["total_price"] += GUTTER_INSERT_PRICE
+        else:
+            results["gutter_insert"] = {"required": False}
+        
+        # Определяем тип и стоимость привода
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            drive_name, drive_price, is_tandem = get_drive_price(pergola_type, width_m, length_m, modules)
+            drive_count = modules  # Один привод на каждый модуль
+            total_drive_price = drive_price * drive_count
+            
+            results["drive"] = {
+                "name": drive_name,
+                "count": drive_count,
+                "is_tandem": is_tandem,
+                "price": drive_price,
+                "total_price": total_drive_price
+            }
+            
+            results["items"].append({
+                "name": f"{drive_name} (для {drive_count} модулей)",
+                "price": total_drive_price
+            })
+            
+            results["total_price"] += total_drive_price
+            
+            # Количество устройств для пульта ДУ (привод + освещение)
+            devices_count = drive_count
+            if "white_led" in lighting_options or "rgb_led" in lighting_options:
+                devices_count += 1  # Добавляем блок управления освещением
+            
+            # Определяем тип и стоимость пульта ДУ
+            remote_name, remote_price = get_remote_control(devices_count)
+            
+            results["remote_control"] = {
+                "name": remote_name,
+                "devices_count": devices_count,
+                "price": remote_price
+            }
+            
+            results["items"].append({
+                "name": f"Пульт ДУ {remote_name} ({devices_count} каналов)",
+                "price": remote_price
+            })
+            
+            results["total_price"] += remote_price
+        
+        # Расчет стоимости освещения
+        has_lighting = "white_led" in lighting_options or "rgb_led" in lighting_options
+        if has_lighting:
+            lighting_perimeter = calculate_lighting_perimeter(width_m, length_m, modules)
+            
+            lighting_cost = 0
+            led_types = []
+            
+            # Блок управления освещением
+            if has_lighting:
+                lighting_cost += LIGHTING_PRICES["controller"]
+                results["items"].append({
+                    "name": "Блок управления освещением Somfy RTS Dimmer",
+                    "price": LIGHTING_PRICES["controller"]
+                })
+            
+            # Белая светодиодная лента
+            if "white_led" in lighting_options:
+                white_led_cost = LIGHTING_PRICES["white_led"] * lighting_perimeter
+                lighting_cost += white_led_cost
+                led_types.append("белая")
+                results["items"].append({
+                    "name": f"Светодиодная лента белая ({lighting_perimeter:.2f} м)",
+                    "price": white_led_cost
+                })
+            
+            # RGB светодиодная лента
+            if "rgb_led" in lighting_options:
+                rgb_led_cost = LIGHTING_PRICES["rgb_led"] * lighting_perimeter
+                lighting_cost += rgb_led_cost
+                led_types.append("RGB")
+                results["items"].append({
+                    "name": f"Светодиодная лента RGB ({lighting_perimeter:.2f} м)",
+                    "price": rgb_led_cost
+                })
+            
+            results["lighting"] = {
+                "types": led_types,
+                "perimeter": lighting_perimeter,
+                "total_price": lighting_cost
+            }
+            
+            results["total_price"] += lighting_cost
+        
+        # Добавляем информацию о спецификации
+        specification = []
+        
+        # Дополнительные колонны и усилитель лотка (на самом верху спецификации)
+        if need_columns:
+            specification.append({
+                "name": f"Дополнительные колонны ({modules + 1} шт.)",
+                "count": 1,
+                "price": COLUMNS_PRICES.get(modules, 0)
+            })
+        
+        if need_gutter:
+            specification.append({
+                "name": "Усилитель лотка",
+                "count": 1,
+                "price": GUTTER_INSERT_PRICE
+            })
+        
+        # Основная пергола
+        specification.append({
+            "name": f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м ({modules} модуль)",
+            "count": 1,
+            "price": base_price
+        })
+        
+        # Привод
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            drive_name, drive_price, _ = get_drive_price(pergola_type, width_m, length_m, modules)
+            specification.append({
+                "name": f"Привод {drive_name}",
+                "count": modules,
+                "price": drive_price * modules
+            })
+            
+            # Пульт ДУ
+            remote_name, remote_price = get_remote_control(devices_count)
+            specification.append({
+                "name": f"Пульт ДУ {remote_name}",
+                "count": 1,
+                "price": remote_price
+            })
+        
+        # Освещение
+        if has_lighting:
+            specification.append({
+                "name": "Блок управления освещением Somfy RTS Dimmer",
+                "count": 1,
+                "price": LIGHTING_PRICES["controller"]
+            })
+            
+            if "white_led" in lighting_options:
+                specification.append({
+                    "name": f"Светодиодная лента белая",
+                    "count": f"{lighting_perimeter:.2f} м",
+                    "price": LIGHTING_PRICES["white_led"] * lighting_perimeter
+                })
+            
+            if "rgb_led" in lighting_options:
+                specification.append({
+                    "name": f"Светодиодная лента RGB",
+                    "count": f"{lighting_perimeter:.2f} м",
+                    "price": LIGHTING_PRICES["rgb_led"] * lighting_perimeter
+                })
+        
+        results["specification"] = specification
+        
+        # Округляем общую стоимость
+        results["total_price"] = round(results["total_price"], 2)
+        
+        # Отладочная информация
+        results["debug"] = {
+            "length_corrected": length_m,
+            "width": width_m,
+            "modules": modules,
+            "need_columns": need_columns,
+            "need_gutter": need_gutter,
+            "pergola_type": pergola_type,
+            "lamella_size": lamella_size
+        }
+        
+        return results
+    
+    except Exception as e:
+        error_msg = f"Ошибка при расчете: {str(e)}"
+        print(error_msg)
+        return {"error": error_msg}
+
+def render_dimensions_form():
+    """
+    Отображает форму для ввода размеров перголы
+    
+    Returns:
+        dict: Словарь с введенными размерами
+    """
+    st.markdown("<h2 class='section-header'>Размеры перголы</h2>", unsafe_allow_html=True)
+    
     col1, col2 = st.columns(2)
     
     with col1:
-        # Форма для ввода размеров перголы
-        st.subheader("Размеры перголы")
-        
-        # Для ограничения размеров в зависимости от типа перголы
-        pergola_type_key = st.session_state.get('pergola_type', 'B500NEW')
-        max_width = MAX_DIMENSIONS.get(pergola_type_key, {}).get('width', 15.0)
-        max_length = MAX_DIMENSIONS.get(pergola_type_key, {}).get('length', 10.0)
-        
-        width = st.number_input("Ширина (м)", min_value=1.0, max_value=max_width, value=3.0, step=0.5)
-        length = st.number_input("Вынос (м)", min_value=1.0, max_value=max_length, value=4.0, step=0.5)
-        
-        # Сохраняем размеры (высота фиксированная - 3.0 м)
-        dimensions = {
-            "width": width,
-            "length": length,
-            "height": 3.0
-        }
-        
-        # Выбор типа перголы
-        st.subheader("Тип перголы")
-        pergola_type = st.radio(
-            "Выберите тип перголы",
-            options=list(PERGOLA_TYPES.keys()),
-            format_func=lambda x: PERGOLA_TYPES.get(x, x),
-            key="pergola_type"
-        )
-        
-        # Показываем описание выбранного типа перголы
-        if pergola_type in PERGOLA_TYPE_DESCRIPTIONS:
-            st.caption(PERGOLA_TYPE_DESCRIPTIONS[pergola_type])
-        
-    with col2:
-        # Выбор типа ламелей (только для B500NEW и B700NEW)
-        st.subheader("Тип ламелей")
-        
-        # Для B600 не показываем выбор ламелей, так как там PIR-панели
-        if pergola_type == "B600":
-            lamella_type = "B600-PIR"
-            st.info("Для перголы B600 используются PIR сэндвич-панели (фиксированная крыша).")
-        else:
-            # Для B500NEW и B700NEW показываем только 2 варианта ламелей
-            lamella_options = ["lamella-200", "lamella-250"]
-            lamella_type = st.radio(
-                "Выберите тип ламелей",
-                options=lamella_options,
-                format_func=lambda x: LAMELLA_TYPES.get(x, x),
-                key="lamella_type"
-            )
-        
-        # Определяем шаг ламелей (извлекаем из названия типа)
-        lamella_step = 200
-        if "25" in lamella_type:
-            lamella_step = 250
-        
-        # Выбор типа подсветки
-        st.subheader("Подсветка (LED по периметру)")
-        lighting_options = ["none", "white", "rgb", "rgbw"]
-        lighting_labels = {
-            "none": "Без подсветки",
-            "white": "Белая (5000K)",
-            "rgb": "RGB",
-            "rgbw": "RGBW"
-        }
-        lighting_descriptions = {
-            "none": "Без подсветки (светодиодная лента не устанавливается)",
-            "white": "Белая подсветка по периметру перголы (5000K)",
-            "rgb": "RGB подсветка с изменением цвета и яркости",
-            "rgbw": "RGBW подсветка с полным управлением цветовой температурой"
-        }
-        
-        lighting_type = st.radio(
-            "Выберите тип подсветки",
-            options=lighting_options,
-            format_func=lambda x: f"{lighting_labels.get(x, x)} - {lighting_descriptions.get(x, '')}",
-            key="lighting_type"
-        )
-        
-        # Выбор установки
-        st.subheader("Установка")
-        install_options = ["no_install", "with_install"]
-        install_labels = {
-            "no_install": "Без установки",
-            "with_install": "С установкой"
-        }
-        install_descriptions = {
-            "no_install": "Только оборудование, без монтажа",
-            "with_install": "Полный комплекс: оборудование + монтаж"
-        }
-        
-        installation = st.radio(
-            "Выберите вариант установки",
-            options=install_options,
-            format_func=lambda x: f"{install_labels.get(x, x)} - {install_descriptions.get(x, '')}",
-            key="installation"
+        width = st.number_input(
+            "Ширина (м)",
+            min_value=2.0,
+            max_value=15.0,
+            value=3.0,
+            step=0.5,
+            format="%.2f",
+            help="Ширина перголы в метрах (2.0 - 15.0 м)"
         )
     
-    # Собираем все опции
-    options = {
+    with col2:
+        length = st.number_input(
+            "Вынос (м)",
+            min_value=2.0,
+            max_value=8.0,
+            value=4.0,
+            step=0.5,
+            format="%.2f",
+            help="Глубина (вынос) перголы в метрах (2.0 - 8.0 м)"
+        )
+    
+    # Количество модулей (только если ширина > 5 метров)
+    modules = 1
+    if width > 5.0:
+        st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+        modules_options = [1, 2, 3]
+        modules = st.select_slider(
+            "Количество модулей",
+            options=modules_options,
+            value=2 if width > 10.0 else 1,
+            help="При ширине более 5 метров пергола может быть разделена на модули"
+        )
+    
+    return {
+        "width": width,
+        "length": length,
+        "modules": modules
+    }
+
+def render_options_form():
+    """
+    Отображает форму для выбора опций перголы в плиточном дизайне
+    
+    Returns:
+        dict: Словарь с выбранными опциями
+    """
+    st.markdown("<h2 class='section-header'>Параметры перголы</h2>", unsafe_allow_html=True)
+    
+    # Тип перголы
+    pergola_type = st.radio(
+        "Выберите тип перголы",
+        options=list(PERGOLA_TYPES.keys()),
+        format_func=lambda x: PERGOLA_TYPES.get(x, x),
+        horizontal=True
+    )
+    
+    # Тип ламелей - зависит от выбранного типа перголы
+    lamella_options = []
+    if pergola_type == "B500NEW":
+        lamella_options = ["B500-20NEW", "B500-25NEW"]
+    elif pergola_type == "B700NEW":
+        lamella_options = ["B700-20NEW", "B700-25NEW"]
+    elif pergola_type == "B600":
+        lamella_options = ["B600-PIR"]
+    
+    lamella_type = st.radio(
+        "Выберите тип ламелей",
+        options=lamella_options,
+        format_func=lambda x: LAMELLA_TYPES.get(x, x),
+        horizontal=True
+    )
+    
+    # Освещение
+    st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+    st.markdown("<p style='font-weight: 500;'>Освещение</p>", unsafe_allow_html=True)
+    
+    lighting_options = []
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.checkbox("Белая светодиодная лента", value=False):
+            lighting_options.append("white_led")
+    
+    with col2:
+        if st.checkbox("RGB светодиодная лента", value=False):
+            lighting_options.append("rgb_led")
+    
+    # Возвращаем выбранные опции
+    return {
         "pergola_type": pergola_type,
         "lamella_type": lamella_type,
-        "lamella_step": lamella_step,
-        "lighting_type": lighting_type,
-        "installation": installation
+        "lighting": lighting_options,
+        "modules": st.session_state.get("dimensions", {}).get("modules", 1)  # Берем из session_state
     }
+
+def render_results(results):
+    """
+    Отображает результаты расчета стоимости перголы
     
-    # Кнопка расчета
-    st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
-    calc_button = st.button("Рассчитать стоимость", type="primary")
+    Args:
+        results (dict): Словарь с результатами расчета
+    """
+    if "error" in results:
+        st.error(f"Ошибка при расчете: {results['error']}")
+        return
     
-    # Если кнопка нажата, выполняем расчет
-    if calc_button:
+    # Основная информация о перголе
+    pergola_type = results["options"]["pergola_type"]
+    width = results["dimensions"]["width"]
+    length = results["dimensions"]["length"]
+    modules = results["dimensions"]["modules"]
+    base_price = results["base_price"]
+    total_price = results["total_price"]
+    
+    # Показываем отладочную информацию в сайдбаре для проверки
+    with st.sidebar:
+        st.markdown("### Отладочная информация")
+        st.json(results["debug"])
+    
+    # Заголовок результатов
+    st.markdown(f"""
+    <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
+        <h2 style='margin-top: 0; color: #0066cc; font-size: 1.4rem;'>Результаты расчета</h2>
+        <p style='font-size: 1.1rem; margin-bottom: 5px;'>
+            <strong>Пергола:</strong> {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м
+        </p>
+        <p style='font-size: 1.1rem; margin-bottom: 5px;'>
+            <strong>Количество модулей:</strong> {modules}
+        </p>
+        <p style='font-size: 1.2rem; color: #0066cc;'>
+            <strong>Итоговая стоимость:</strong> {total_price:.2f} €
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Отображаем спецификацию перголы
+    if "specification" in results:
+        st.markdown("<h3 style='font-size: 1.2rem; margin-top: 0;'>Спецификация перголы</h3>", unsafe_allow_html=True)
+        
+        # Создаем таблицу спецификации
+        spec_data = []
+        for item in results["specification"]:
+            spec_data.append([item["name"], item["count"], f"{item['price']:.2f} €"])
+        
+        # Преобразуем данные в DataFrame и отображаем
+        import pandas as pd
+        spec_df = pd.DataFrame(spec_data, columns=["Наименование", "Количество", "Стоимость"])
+        st.dataframe(spec_df, use_container_width=True, hide_index=True)
+    
+    # Отображаем таблицу стоимости
+    st.markdown("<h3 style='font-size: 1.2rem; margin-top: 20px;'>Стоимость</h3>", unsafe_allow_html=True)
+    
+    # Создаем таблицу стоимости
+    items_data = []
+    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м", f"{base_price:.2f} €"])
+    
+    for item in results["items"]:
+        items_data.append([item["name"], f"{item['price']:.2f} €"])
+    
+    items_data.append(["<b>Итого</b>", f"<b>{total_price:.2f} €</b>"])
+    
+    # Преобразуем данные в DataFrame и отображаем
+    items_df = pd.DataFrame(items_data, columns=["Наименование", "Стоимость"])
+    st.write(items_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+    
+    # Добавляем разделитель
+    st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
+
+def scroll_to_results():
+    """
+    Добавляет JavaScript-код для автоматического скролла к результатам
+    """
+    st.markdown("""
+    <script>
+        function scrollToResults() {
+            const resultsElement = document.querySelector('h2:contains("Результаты расчета")');
+            if (resultsElement) {
+                resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+        // Запускаем с небольшой задержкой
+        setTimeout(scrollToResults, 300);
+    </script>
+    """, unsafe_allow_html=True)
+
+def main():
+    """Основная функция приложения"""
+    # Настраиваем страницу
+    st.set_page_config(
+        page_title="Калькулятор пергол DecoLife",
+        page_icon="🏠",
+        layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
+    )
+    
+    # Задаем стили для компактного и читаемого интерфейса по новому дизайну
+    st.markdown("""
+    <style>
+    .block-container {
+        max-width: 800px;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        margin: 0 auto;
+    }
+    /* Глобальные стили для улучшения читаемости */
+    .stApp, .stApp p, .stApp div {
+        font-size: 1rem;
+        font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    /* Заголовки секций */
+    .section-header {
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #eee;
+    }
+    /* Таблицы */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
+    }
+    th, td {
+        padding: 8px 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    /* Адаптивность для мобильных устройств */
+    @media (max-width: 768px) {
+        .block-container {
+            max-width: 100%;
+            padding: 0.5rem;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Заголовок калькулятора - крупный и четкий
+    st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 1.8rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в евро (€)</p>", unsafe_allow_html=True)
+    
+    # Получаем размеры перголы
+    dimensions = render_dimensions_form()
+    
+    # Сохраняем размеры в session_state
+    st.session_state.dimensions = dimensions
+    
+    # Получаем опции перголы
+    options = render_options_form()
+    
+    # Кнопка для расчета с улучшенным стилем
+    if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
         with st.spinner("Выполняется расчет..."):
             # Проверяем, что у нас есть данные для расчета
             if dimensions and options:
                 # Выполняем расчет
                 results = perform_calculation(dimensions, options)
                 
-                # Сохраняем результаты в состоянии сессии
+                # Сохраняем результаты и опции в состоянии сессии
                 st.session_state.results = results
+                st.session_state.options = options
+                
+                # Перезагружаем страницу для отображения результатов
+                st.rerun()
     
-    # Отображаем результаты расчета, если они есть
-    if "results" in st.session_state:
-        results = st.session_state.results
-        
-        st.markdown("---")
-        st.markdown("## Результаты расчета")
-        
-        # Отображаем спецификацию перголы
-        st.markdown("### Спецификация перголы")
-        
-        # Проверяем, есть ли дополнительные колонны и отображаем их сразу вверху
-        if results['details']['additional_columns_cost'] > 0 and results['details']['additional_columns_components']:
-            st.markdown("#### Дополнительные компоненты (автоматически подобраны)")
-            additional_columns = [[comp] for comp in results['details']['additional_columns_components']]
-            additional_columns_df = pd.DataFrame(additional_columns, columns=["Наименование"])
-            st.table(additional_columns_df)
-        
-        # Основные характеристики перголы
-        basic_specs = [
-            ["Тип перголы", PERGOLA_TYPES.get(options["pergola_type"], options["pergola_type"])],
-            ["Тип ламелей", LAMELLA_TYPES.get(options["lamella_type"], options["lamella_type"])],
-            ["Ширина", f"{results['dimensions']['width_m']} м"],
-            ["Вынос", f"{results['dimensions']['length_m']} м"],
-            ["Высота", f"{results['dimensions']['height_m']} м"],
-            ["Количество модулей", f"{results['details']['modules']}"]
-        ]
-        
-        # Добавляем информацию об автоматизации
-        basic_specs.append(["Автоматизация", results["details"]["automation_type"]])
-        
-        # Добавляем информацию о количестве ламелей (для пергол с ламелями)
-        if options["pergola_type"] != "B600":
-            # Расчет количества ламелей
-            lamella_size_m = options["lamella_step"] / 1000  # переводим в метры
-            num_lamellas = int(results["dimensions"]["length_m"] / lamella_size_m) + (1 if (results["dimensions"]["length_m"] % lamella_size_m) > 0 else 0)
-            basic_specs.append(["Количество ламелей", f"{num_lamellas} шт."])
-        
-        # Создаем DataFrame для базовой спецификации
-        spec_df = pd.DataFrame(basic_specs, columns=["Параметр", "Значение"])
-        st.table(spec_df)
-        
-        # Если есть подсветка, выводим ее компоненты
-        if options["lighting_type"] != "none" and results['details']['lighting_components']:
-            st.markdown("#### Компоненты подсветки")
-            lighting_components = [[comp] for comp in results['details']['lighting_components']]
-            lighting_df = pd.DataFrame(lighting_components, columns=["Наименование"])
-            st.table(lighting_df)
-        
-        # Выводим компоненты автоматизации
-        st.markdown("#### Компоненты автоматизации")
-        automation_components = [[comp] for comp in results['details']['automation_components']]
-        automation_df = pd.DataFrame(automation_components, columns=["Наименование"])
-        st.table(automation_df)
-        
-        # Отображаем стоимость
-        st.markdown("### Стоимость")
-        
-        # Информация о стоимости
-        cost_items = []
-        cost_items.append(["Базовая стоимость перголы", f"{results['details']['pergola_cost']:.0f}"])
-        
-        # Добавляем информацию о стоимости автоматизации
-        if results['details']['automation_cost'] > 0:
-            cost_items.append(["Система автоматизации", f"{results['details']['automation_cost']:.0f}"])
-        
-        # Добавляем информацию о стоимости освещения
-        if results['details']['lighting_cost'] > 0:
-            cost_items.append(["Светодиодная подсветка", f"{results['details']['lighting_cost']:.0f}"])
-        
-        # Добавляем информацию о дополнительных колоннах, если они есть
-        if results['details']['additional_columns_cost'] > 0 and results['details']['additional_columns_components']:
-            cost_items.append(["Усилитель лотка и дополнительные колонны", f"{results['details']['additional_columns_cost']:.0f}"])
-        
-        # Добавляем информацию о стоимости установки
-        if results['details']['installation_cost'] > 0:
-            cost_items.append(["Установка", f"{results['details']['installation_cost']:.0f}"])
-        
-        # Итоговая стоимость
-        cost_items.append(["**Итоговая стоимость**", f"**{results['total_cost']:.0f}**"])
-        
-        # Создаем DataFrame для стоимости и добавляем CSS класс для правильного выравнивания
-        cost_df = pd.DataFrame(cost_items, columns=["Компонент", "Стоимость, €"])
-        st.markdown('<div class="cost-table">', unsafe_allow_html=True)
-        st.table(cost_df)
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Добавляем примечание о том, что все цены указаны в евро
-        st.caption("Все цены указаны в евро. Цены на перголы зависят от выбранных размеров и опций.")
+    # Добавляем разделитель (компактный)
+    st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+    
+    # Отображаем результаты расчета под формами ввода
+    if 'results' in st.session_state:
+        # Показываем общий результат и детальную информацию
+        render_results(st.session_state.results)
+    
+    # Добавляем информацию о версии внизу страницы (компактно)
+    st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 DecoLife | Калькулятор пергол v1.0</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
+    # Создаем директории, если они не существуют
+    os.makedirs("logs", exist_ok=True)
+    os.makedirs("data", exist_ok=True)
+    os.makedirs("data/price_tables", exist_ok=True)
+    
+    # Запускаем приложение
     main()
