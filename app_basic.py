@@ -50,7 +50,7 @@ table {
 }
 
 table th {
-    text-align: left;
+    text-align: left !important;
     padding: 8px 10px;
     background-color: #f1f1f1;
     color: #000000;
@@ -63,8 +63,13 @@ table td {
     color: #000000;
 }
 
+/* Для выравнивания цен по правому краю */
+table td:nth-child(2) {
+    text-align: right !important;
+}
+
 /* Стилизация кнопки расчета */
-.calculate-btn {
+.stButton>button {
     background-color: #ff7a2f !important;
     color: white !important;
     font-weight: bold !important;
@@ -79,8 +84,33 @@ table td {
 }
 
 /* Скрытие голубой заливки */
-.stRadio > div[role="radiogroup"] div[data-checked="true"] {
-    background-color: #FFFFFF !important;
+.stRadio > div[role="radiogroup"] label {
+    background-color: white !important;
+}
+
+/* Заголовки результатов расчета */
+h2 {
+    color: #3f6daa !important;
+    font-size: 1.75rem !important;
+    font-weight: bold !important;
+    margin-top: 1.5rem !important;
+    margin-bottom: 1rem !important;
+}
+
+h3 {
+    color: #3f6daa !important;
+    font-size: 1.4rem !important;
+    font-weight: bold !important;
+    margin-top: 1.2rem !important;
+    margin-bottom: 0.7rem !important;
+}
+
+h4 {
+    color: #333333 !important;
+    font-size: 1.1rem !important;
+    font-weight: bold !important;
+    margin-top: 1rem !important;
+    margin-bottom: 0.5rem !important;
 }
 
 /* Убираем лишние отступы */
@@ -89,19 +119,49 @@ div.block-container {
     max-width: 1000px;
     padding-bottom: 2rem;
 }
+
+/* Убираем отступы в радио-кнопках */
+.stRadio > div {
+    margin-bottom: 0.3rem !important;
+}
+
+/* Стили для примечаний */
+.caption {
+    font-size: 0.8rem !important;
+    color: #666666 !important;
+    margin-top: 0.3rem !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # Функция для выполнения расчета
 def perform_calculation(dimensions, options):
     """Выполнить расчет стоимости перголы"""
-    # Заглушка для базовой версии - используем фиксированную цену 
-    # для демонстрации работы приложения
     width_m = dimensions["width"]
     length_m = dimensions["length"]
+    height_m = dimensions["height"]
     pergola_type = options["pergola_type"]
+    lamella_type = options["lamella_type"]
+    lighting_type = options["lighting_type"]
+    installation = options.get("installation", "no_install")
     
-    # Базовая цена в зависимости от типа перголы
+    # Преобразуем размеры в мм для некоторых расчетов
+    width_mm = width_m * 1000
+    length_mm = length_m * 1000
+    
+    # Рассчитываем количество модулей в зависимости от ширины
+    # Максимальная ширина модуля около 3.375 метра
+    if width_m <= 3.375:
+        modules = 1
+    elif width_m <= 6.75:
+        modules = 2
+    elif width_m <= 10.125:
+        modules = 3
+    else:
+        modules = 4
+    
+    # Базовая цена в зависимости от типа перголы и размера
+    # Упрощенная формула для демонстрации
     base_prices = {
         "B500NEW": 7500,
         "B700NEW": 8500,
@@ -109,53 +169,123 @@ def perform_calculation(dimensions, options):
     }
     base_price = base_prices.get(pergola_type, 7000)
     
-    # Коэффициент размера
+    # Коэффициент размера (упрощенно)
     size_factor = width_m * length_m / 10
     
     # Рассчитываем базовую стоимость перголы
     pergola_cost = base_price * size_factor
     
     # Учитываем тип ламелей
-    lamella_type = options["lamella_type"]
     if "25" in lamella_type:
         pergola_cost *= 1.15  # Надбавка 15% для ламелей 250 мм
     
     # Учитываем тип подсветки
-    lighting_type = options["lighting_type"]
     lighting_cost = 0
+    lighting_components = []
+    
     if lighting_type == "white":
-        lighting_cost = 500 * (width_m + length_m) * 2  # Периметр перголы
+        perimeter = 2 * (width_m + length_m)  # Периметр перголы
+        lighting_cost = 20 * perimeter + 300 * modules  # 20€/м ленты + 300€ за блок управления на модуль
+        lighting_components = [
+            f"LED лента белая - {perimeter:.2f} м",
+            f"Блок управления Somfy RTS Dimmer - {modules} шт."
+        ]
     elif lighting_type == "rgb":
-        lighting_cost = 750 * (width_m + length_m) * 2
+        perimeter = 2 * (width_m + length_m)
+        lighting_cost = 30 * perimeter + 300 * modules  # 30€/м RGB ленты + 300€ за блок управления на модуль
+        lighting_components = [
+            f"RGB лента - {perimeter:.2f} м",
+            f"Блок управления Somfy RTS Dimmer - {modules} шт."
+        ]
     elif lighting_type == "rgbw":
-        lighting_cost = 1000 * (width_m + length_m) * 2
+        perimeter = 2 * (width_m + length_m)
+        lighting_cost = 40 * perimeter + 300 * modules  # 40€/м RGBW ленты + 300€ за блок управления на модуль
+        lighting_components = [
+            f"RGBW лента - {perimeter:.2f} м",
+            f"Блок управления Somfy RTS Dimmer - {modules} шт."
+        ]
+    
+    # Определяем тип автоматизации и стоимость в зависимости от типа перголы и размеров
+    automation_components = []
+    if pergola_type == "B500NEW":
+        # Для B500NEW используем привод Bansbach
+        if width_m > 3.5 and length_m > 5.5:
+            automation_type = "Bansbach Tandem"
+            automation_cost = 1250  # Усиленный привод Bansbach Tandem
+            automation_components = [
+                "Привод Bansbach easyE-lift-50 Tandem - 1 шт.",
+                "Блок управления Bansbach - 1 шт.",
+                "Приемник - 1 шт.",
+                "Пульт ДУ Simu 1K - 1 шт."
+            ]
+        else:
+            automation_type = "Bansbach T1"
+            automation_cost = 700  # Стандартный привод Bansbach T1
+            automation_components = [
+                "Привод Bansbach easyE-lift-50 - 1 шт.",
+                "Блок управления Bansbach - 1 шт.",
+                "Приемник - 1 шт.",
+                "Пульт ДУ Simu 1K - 1 шт."
+            ]
+    elif pergola_type == "B700NEW":
+        # Для B700NEW используем привод Somfy
+        if width_m > 3.5 and length_m > 6.0:
+            automation_type = "Somfy M2 TANDEM"
+            automation_cost = 1000  # Усиленный привод Somfy M2 TANDEM
+            automation_components = [
+                "Привод Somfy M2 TANDEM - 1 шт.",
+                "Блок управления для двух двигателей - 1 шт.",
+                "Приемник - 1 шт.",
+                "Пульт ДУ Simu 1K - 1 шт."
+            ]
+        else:
+            automation_type = "Somfy M1"
+            automation_cost = 300  # Стандартный привод Somfy M1
+            automation_components = [
+                "Привод Somfy M1 - 1 шт.",
+                "Блок управления - 1 шт.",
+                "Приемник - 1 шт.",
+                "Пульт ДУ Simu 1K - 1 шт."
+            ]
+    else:
+        # Для B600 и других типов
+        automation_type = "Стандартный привод"
+        automation_cost = 500
+        automation_components = [
+            "Стандартный привод - 1 шт.",
+            "Блок управления - 1 шт.",
+            "Пульт ДУ Simu 1K - 1 шт."
+        ]
+    
+    # Добавляем стоимость пульта ДУ (25 евро за Simu 1K)
+    automation_cost += 25
     
     # Учитываем установку
     installation_cost = 0
-    if options.get("installation") == "with_install":
+    if installation == "with_install":
         installation_cost = pergola_cost * 0.15  # 15% от стоимости перголы
     
-    # Автоматизация определяется типом перголы и размерами
-    automation_type = "Стандартный привод"
-    automation_cost = pergola_cost * 0.1  # 10% от стоимости перголы
-    
     # Итоговая стоимость
-    total_cost = pergola_cost + lighting_cost + installation_cost + automation_cost
+    total_cost = pergola_cost + lighting_cost + automation_cost + installation_cost
     
     # Формируем результат
     results = {
         "total_cost": round(total_cost, 0),
         "details": {
             "pergola_cost": round(pergola_cost, 0),
+            "pergola_type": pergola_type,
             "lighting_cost": round(lighting_cost, 0),
+            "lighting_components": lighting_components,
             "automation_cost": round(automation_cost, 0),
+            "automation_type": automation_type,
+            "automation_components": automation_components,
             "installation_cost": round(installation_cost, 0),
-            "automation_type": automation_type
+            "modules": modules
         },
         "dimensions": {
             "width_m": width_m,
             "length_m": length_m,
-            "height_m": dimensions["height"]
+            "height_m": height_m
         }
     }
     
@@ -291,57 +421,69 @@ def main():
         results = st.session_state.results
         
         st.markdown("---")
-        st.subheader("Результаты расчета")
+        st.markdown("## Результаты расчета")
         
         # Отображаем спецификацию перголы
         st.markdown("### Спецификация перголы")
         
-        # Создаем DataFrame для спецификации
-        spec_data = {
-            "Параметр": [
-                "Тип перголы", 
-                "Тип ламелей", 
-                "Ширина", 
-                "Вынос",
-                "Высота",
-                "Тип подсветки",
-                "Автоматизация"
-            ],
-            "Значение": [
-                PERGOLA_TYPES.get(options["pergola_type"], options["pergola_type"]),
-                LAMELLA_TYPES.get(options["lamella_type"], options["lamella_type"]),
-                f"{results['dimensions']['width_m']} м",
-                f"{results['dimensions']['length_m']} м",
-                f"{results['dimensions']['height_m']} м",
-                lighting_labels.get(options["lighting_type"], options["lighting_type"]),
-                results["details"]["automation_type"]
-            ]
-        }
-        spec_df = pd.DataFrame(spec_data)
+        # Основные характеристики перголы
+        basic_specs = [
+            ["Тип перголы", PERGOLA_TYPES.get(options["pergola_type"], options["pergola_type"])],
+            ["Тип ламелей", LAMELLA_TYPES.get(options["lamella_type"], options["lamella_type"])],
+            ["Ширина", f"{results['dimensions']['width_m']} м"],
+            ["Вынос", f"{results['dimensions']['length_m']} м"],
+            ["Высота", f"{results['dimensions']['height_m']} м"],
+            ["Количество модулей", f"{results['details']['modules']}"]
+        ]
+        
+        # Добавляем информацию об автоматизации
+        basic_specs.append(["Автоматизация", results["details"]["automation_type"]])
+        
+        # Создаем DataFrame для базовой спецификации
+        spec_df = pd.DataFrame(basic_specs, columns=["Параметр", "Значение"])
         st.table(spec_df)
+        
+        # Если есть подсветка, выводим ее компоненты
+        if options["lighting_type"] != "none" and results['details']['lighting_components']:
+            st.markdown("#### Компоненты подсветки")
+            lighting_components = [[comp] for comp in results['details']['lighting_components']]
+            lighting_df = pd.DataFrame(lighting_components, columns=["Наименование"])
+            st.table(lighting_df)
+        
+        # Выводим компоненты автоматизации
+        st.markdown("#### Компоненты автоматизации")
+        automation_components = [[comp] for comp in results['details']['automation_components']]
+        automation_df = pd.DataFrame(automation_components, columns=["Наименование"])
+        st.table(automation_df)
         
         # Отображаем стоимость
         st.markdown("### Стоимость")
         
+        # Информация о стоимости
+        cost_items = []
+        cost_items.append(["Базовая стоимость перголы", f"{results['details']['pergola_cost']:.0f}"])
+        
+        # Добавляем информацию о стоимости автоматизации
+        if results['details']['automation_cost'] > 0:
+            cost_items.append(["Система автоматизации", f"{results['details']['automation_cost']:.0f}"])
+        
+        # Добавляем информацию о стоимости освещения
+        if results['details']['lighting_cost'] > 0:
+            cost_items.append(["Светодиодная подсветка", f"{results['details']['lighting_cost']:.0f}"])
+        
+        # Добавляем информацию о стоимости установки
+        if results['details']['installation_cost'] > 0:
+            cost_items.append(["Установка", f"{results['details']['installation_cost']:.0f}"])
+        
+        # Итоговая стоимость
+        cost_items.append(["**Итоговая стоимость**", f"**{results['total_cost']:.0f}**"])
+        
         # Создаем DataFrame для стоимости
-        cost_data = {
-            "Компонент": [
-                "Базовая стоимость перголы",
-                "Система автоматизации",
-                "Светодиодная подсветка",
-                "Установка",
-                "**Итоговая стоимость**"
-            ],
-            "Сумма, €": [
-                f"{results['details']['pergola_cost']:.0f}",
-                f"{results['details']['automation_cost']:.0f}",
-                f"{results['details']['lighting_cost']:.0f}",
-                f"{results['details']['installation_cost']:.0f}",
-                f"**{results['total_cost']:.0f}**"
-            ]
-        }
-        cost_df = pd.DataFrame(cost_data)
+        cost_df = pd.DataFrame(cost_items, columns=["Компонент", "Стоимость, €"])
         st.table(cost_df)
+        
+        # Добавляем примечание о том, что все цены указаны в евро
+        st.caption("Все цены указаны в евро. Цены на перголы зависят от выбранных размеров и опций.")
 
 if __name__ == "__main__":
     main()
