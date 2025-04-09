@@ -362,6 +362,7 @@ Bansbach — это не «автоматика». Это ваш личный м
 
 # Изображение привода Bansbach
 PERGOLA_IMAGES["BANSBACH"] = [
+    "attached_assets/lineardrive.jpeg",
     "attached_assets/IMG_1022.png"
 ]
 
