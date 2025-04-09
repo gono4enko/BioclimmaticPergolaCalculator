@@ -175,10 +175,10 @@ def perform_calculation(dimensions, options):
         else:
             modules = 4
     else:
-        # Для B600 и других типов используем упрощенную формулу
-        if width_m <= 4.0:
+        # Для B600 используем данные из прайса B600 PIR
+        if width_m <= 4.5:
             modules = 1
-        elif width_m <= 8.0:
+        elif width_m <= 9.0:  # В прайсе до 9.0 идет 2 модуля
             modules = 2
         else:
             modules = 3
@@ -324,15 +324,38 @@ def perform_calculation(dimensions, options):
                 pergola_cost = 6048 * (width_m * length_m) / (2.5 * 2.5)
     
     elif pergola_type == "B600":
-        # Для B600
+        # Для B600 (PIR панели)
+        # Используем данные из прайса В600_PIR
+        # Ширина (м): 2.5, 3.0, 3.5, 4.0, 4.5, 6.0, 7.0, 8.0, 9.0, 10.5, 12.0, 13.5
+        # Вынос (м): 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0
+        
+        # Базовые цены из прайса B600 PIR
         if width_m <= 2.5 and length_m <= 2.5:
             pergola_cost = 4500
         elif width_m <= 3.0 and length_m <= 2.5:
             pergola_cost = 4866
         elif width_m <= 3.5 and length_m <= 2.5:
             pergola_cost = 5232
+        elif width_m <= 4.0 and length_m <= 2.5:
+            pergola_cost = 5599
+        elif width_m <= 4.5 and length_m <= 2.5:
+            pergola_cost = 5965
         elif width_m <= 2.5 and length_m <= 3.0:
             pergola_cost = 4678
+        elif width_m <= 3.0 and length_m <= 3.0:
+            pergola_cost = 5045
+        elif width_m <= 3.5 and length_m <= 3.0:
+            pergola_cost = 5411
+        elif width_m <= 4.0 and length_m <= 3.0:
+            pergola_cost = 5777
+        elif width_m <= 4.5 and length_m <= 3.0:
+            pergola_cost = 6144
+        elif width_m <= 2.5 and length_m <= 3.5:
+            pergola_cost = 5230
+        elif width_m <= 3.0 and length_m <= 3.5:
+            pergola_cost = 5659
+        elif width_m <= 3.5 and length_m <= 3.5:
+            pergola_cost = 6087
         else:
             # Для других размеров используем приближенную формулу
             pergola_cost = 4500 * (width_m * length_m) / (2.5 * 2.5)
