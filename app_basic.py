@@ -1124,7 +1124,7 @@ def render_results(results):
     
     # Отображаем спецификацию перголы
     if "specification" in results:
-        st.markdown("<h3 style='font-size: 1.1rem; margin-top: 0; margin-bottom: 10px;'>Спецификация перголы</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 1.1rem; margin-top: 0; margin-bottom: 10px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
         
         # Создаем таблицу спецификации
         spec_data = []
@@ -1164,7 +1164,7 @@ def render_results(results):
         """, unsafe_allow_html=True)
     
     # Отображаем таблицу стоимости
-    st.markdown("<h3 style='font-size: 1.1rem; margin-top: 15px; margin-bottom: 10px;'>Стоимость</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 1.1rem; margin-top: 15px; margin-bottom: 10px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
     
     # Создаем таблицу стоимости
     items_data = []
