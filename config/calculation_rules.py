@@ -28,7 +28,7 @@ MODULE_RULES = {
 MAX_DIMENSIONS = {
     "B500NEW": {"width": 15.0, "length": 8.0},
     "B700NEW": {"width": 15.0, "length": 7.25},
-    "B600": {"width": 10.0, "length": 6.0}
+    "B600": {"width": 13.5, "length": 8.0}
 }
 
 # Правила расчета дополнительных колонн
