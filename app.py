@@ -597,9 +597,14 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Заголовок калькулятора - крупный и четкий в цветах pergolamarket.ru
-    st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 1.8rem; font-weight: 600; color: #3f6daa;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem; color: #111111;'>Введите размеры и параметры перголы для расчета стоимости в евро (€)</p>", unsafe_allow_html=True)
+    # Заголовок калькулятора - крупный и четкий с элементами дизайна pergolamarket.ru
+    st.markdown("""
+    <div style="text-align: center; padding: 15px; margin-bottom: 20px;">
+        <h1 style="font-size: 1.8rem; font-weight: 600; color: #3f6daa; margin-bottom: 5px;">Калькулятор стоимости перголы</h1>
+        <div style="height: 3px; width: 100px; background-color: #ff9c00; margin: 10px auto;"></div>
+        <p style="font-size: 1rem; color: #111111;">Введите размеры и параметры перголы для расчета стоимости в евро (€)</p>
+    </div>
+    """, unsafe_allow_html=True)
     dimensions = render_dimensions_form()
     
     # Используем только стандартную форму опций
@@ -757,7 +762,13 @@ def main():
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid var(--border-color);'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #3f6daa;'>© 2025 DecoLife | Калькулятор пергол v1.0</div>", unsafe_allow_html=True)
+    # Копирайт в стиле pergolamarket.ru с цветами
+    st.markdown("""
+    <div style="text-align: center; margin-top: 5px; margin-bottom: 5px;">
+        <div style="font-size: 0.7rem; color: #3f6daa;">© 2025 DecoLife | Калькулятор пергол v1.0</div>
+        <div style="height: 2px; width: 40px; background-color: #ff9c00; margin: 5px auto;"></div>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Добавляем анимацию нажатия кнопки
     add_button_animation()

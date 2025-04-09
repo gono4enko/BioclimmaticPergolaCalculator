@@ -164,11 +164,13 @@ def render_results(results):
     }
     
     /* Основные стили */
+    /* Стили для заголовка результатов в стиле pergolamarket.ru */
     .result-heading {
         font-size: 20px;
         font-weight: bold;
         margin: 20px 0 15px 0;
         text-align: center;
+        color: #3f6daa !important;
         font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
@@ -185,7 +187,7 @@ def render_results(results):
     
     .spec-table th {
         padding: 12px 15px;
-        background-color: #4a75e2;
+        background-color: #3f6daa;  /* Синий цвет pergolamarket.ru */
         color: white;
         text-align: left;
         font-weight: bold;
@@ -250,16 +252,21 @@ def render_results(results):
     </style>
     """, unsafe_allow_html=True)
     
-    # Отображаем заголовок результатов по центру
-    st.markdown('<div style="text-align: center;"><h3 class="result-heading">Результаты расчета</h3></div>', unsafe_allow_html=True)
+    # Отображаем заголовок результатов по центру в стиле pergolamarket.ru
+    st.markdown("""
+    <div style="text-align: center; margin-top: 20px; margin-bottom: 20px;">
+        <h3 style="font-size: 1.5rem; font-weight: 600; color: #3f6daa; margin-bottom: 5px;">Результаты расчета</h3>
+        <div style="height: 2px; width: 80px; background-color: #ff9c00; margin: 5px auto;"></div>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Создаем две колонки для таблиц
     col1, col2 = st.columns(2)
     
     with col1:
-        # Таблица "Спецификация перголы"
+        # Таблица "Спецификация перголы" в стиле pergolamarket.ru
         st.markdown("""
-        <div style="background-color: #4a75e2; color: white; padding: 10px 15px; border-radius: 5px 5px 0 0; font-weight: bold;">
+        <div style="background-color: #3f6daa; color: white; padding: 10px 15px; border-radius: 5px 5px 0 0; font-weight: bold;">
             Спецификация перголы
         </div>
         """, unsafe_allow_html=True)
@@ -315,9 +322,9 @@ def render_results(results):
         """, unsafe_allow_html=True)
     
     with col2:
-        # Таблица "Стоимость"
+        # Таблица "Стоимость" в стиле pergolamarket.ru
         st.markdown("""
-        <div style="background-color: #4a75e2; color: white; padding: 10px 15px; border-radius: 5px 5px 0 0; font-weight: bold;">
+        <div style="background-color: #3f6daa; color: white; padding: 10px 15px; border-radius: 5px 5px 0 0; font-weight: bold;">
             Стоимость
         </div>
         """, unsafe_allow_html=True)
