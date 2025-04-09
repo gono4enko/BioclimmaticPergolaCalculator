@@ -151,20 +151,24 @@ def load_price_data(pergola_type, lamella_size):
     """
     # Определяем соответствие типов пергол и имен файлов
     file_mapping = {
-        ("B500NEW", "200"): "attached_assets/Price_B500-20.csv",
-        ("B500NEW", "250"): "attached_assets/Price_B500-25.csv",
-        ("B700NEW", "200"): "attached_assets/Price_B700-20.csv",
-        ("B700NEW", "250"): "attached_assets/Price_B700-25.csv",
-        ("B600", "PIR"): "attached_assets/Price_B600_PIR.csv"
+        ("B500NEW", "200"): "attached_assets/Прайс_В500-20.csv",
+        ("B500NEW", "250"): "attached_assets/Прайс_В500-25.csv",
+        ("B700NEW", "200"): "attached_assets/Прайс_B700-20.csv",
+        ("B700NEW", "250"): "attached_assets/Прайс_B700-25.csv",
+        ("B600", "PIR"): "attached_assets/Прайс_В600_PIR.csv"
     }
     
     key = (pergola_type, lamella_size)
     if key not in file_mapping:
+        print(f"Ошибка: Комбинация {pergola_type} и {lamella_size} не найдена в маппинге файлов")
         return {}
     
     file_path = file_mapping[key]
     if not os.path.exists(file_path):
+        print(f"Ошибка: Файл прайса {file_path} не найден")
         return {}
+    
+    print(f"Загрузка прайс-листа из файла: {file_path}")
     
     prices = {}
     try:
@@ -176,6 +180,8 @@ def load_price_data(pergola_type, lamella_size):
             else:
                 delimiter = ','
             
+            print(f"Обнаружен разделитель: '{delimiter}'")
+            
             # Перематываем файл в начало
             file.seek(0)
             
@@ -183,10 +189,13 @@ def load_price_data(pergola_type, lamella_size):
             
             # Пропускаем первую строку (если она содержит информацию о модулях)
             first_row = next(reader)
-            if "модуль" in ' '.join(first_row):
+            if "модуль" in ' '.join(first_row).lower():
+                print("Обнаружена строка с информацией о модулях, пропускаем")
                 header = next(reader)  # Берем следующую строку как заголовок
             else:
                 header = first_row  # Если первая строка не о модулях, она и есть заголовок
+            
+            print(f"Заголовок: {header}")
             
             # Извлекаем значения длины из заголовка
             length_values = []
@@ -194,9 +203,13 @@ def load_price_data(pergola_type, lamella_size):
                 if val.strip():
                     try:
                         # Обрабатываем разные форматы чисел
-                        length_values.append(float(val.replace(',', '.').strip()))
+                        cleaned_val = val.replace(',', '.').strip()
+                        length_values.append(float(cleaned_val))
                     except ValueError:
+                        print(f"Предупреждение: Не удалось преобразовать '{val}' в число")
                         continue  # Пропускаем, если не удалось преобразовать в число
+            
+            print(f"Значения длины из заголовка: {length_values}")
             
             # Обрабатываем строки с данными
             for row in reader:
@@ -217,14 +230,23 @@ def load_price_data(pergola_type, lamella_size):
                             length = length_values[i]
                             try:
                                 # Преобразуем строку цены в число
-                                price = float(price_str.replace(' ', '').replace('.', '').replace(',', '.'))
+                                # Убираем пробелы и меняем запятую на точку для десятичных чисел
+                                price = float(price_str.replace(' ', '').replace(',', '.'))
                                 if width not in prices:
                                     prices[width] = {}
                                 prices[width][length] = price
                             except ValueError:
+                                print(f"Предупреждение: Не удалось преобразовать '{price_str}' в цену")
                                 continue  # Пропускаем, если не удалось преобразовать в число
-                except (ValueError, IndexError):
+                except (ValueError, IndexError) as e:
+                    print(f"Ошибка при обработке строки {row}: {str(e)}")
                     continue
+        
+        print(f"Загружено {len(prices)} значений ширины с ценами")
+        
+        # Выводим загруженные данные для отладки
+        for width in sorted(prices.keys())[:3]:  # Показываем только 3 первых значения для краткости
+            print(f"Ширина {width} м: {prices[width]}")
         
         return prices
     except Exception as e:
@@ -309,12 +331,9 @@ def get_base_price(pergola_type, lamella_size, width_m, length_m):
     # Находим ближайшую большую длину
     nearest_length = next((l for l in available_lengths if l >= length_m), max(available_lengths))
     
-    # Если это B600 с длиной 8м, особая обработка - из-за особенностей прайса
-    if pergola_type == "B600" and length_m == 8.0:
-        # Для B600 с выносом 8м и шириной 3м точное значение в прайсе - 9573 евро
-        if width_m == 3.0:
-            print(f"Обнаружена точная цена для B600 PIR 3x8м: 9573 евро")
-            return 9573.0
+    # Логирование доступных размеров для отладки
+    print(f"Доступные ширины: {available_widths}")
+    print(f"Доступные длины: {available_lengths}")
     
     # Ищем точную цену по найденным ближайшим размерам
     if nearest_width in prices and nearest_length in prices[nearest_width]:
@@ -879,41 +898,12 @@ def render_results(results):
             items_data.append([item["name"], f"{item['price']:.2f} €"])
     
     # Итоговая строка
-    items_data.append(["<b>Итого</b>", f"<b>{total_price:.2f} €</b>"])
+    items_data.append(["Итого", f"{total_price:.2f} €"])
     
-    # Создаем HTML таблицу вручную для большего контроля над форматированием
-    html_table = """
-    <table style="width:100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #ddd;">
-        <thead>
-            <tr>
-                <th style="text-align:left; padding:10px; border-bottom:1px solid #ddd; background-color:#f5f5f5;">Наименование</th>
-                <th style="text-align:right; padding:10px; border-bottom:1px solid #ddd; background-color:#f5f5f5;">Стоимость</th>
-            </tr>
-        </thead>
-        <tbody>
-    """
-    
-    # Чередуем цвет строк для улучшения читаемости
-    for i, item in enumerate(items_data[:-1]):  # Все кроме последней строки (итого)
-        bg_color = "#f9f9f9" if i % 2 == 0 else "white"
-        html_table += f"""
-        <tr style="background-color: {bg_color};">
-            <td style="text-align:left; padding:10px; border-bottom:1px solid #eee;">{item[0]}</td>
-            <td style="text-align:right; padding:10px; border-bottom:1px solid #eee;">{item[1]}</td>
-        </tr>
-        """
-    
-    # Последняя строка (Итого) выделяется жирным и другим фоном
-    html_table += f"""
-        <tr style="background-color: #e8f4fc;">
-            <td style="text-align:left; padding:10px; font-weight:bold; border-top:2px solid #ddd;">{items_data[-1][0]}</td>
-            <td style="text-align:right; padding:10px; font-weight:bold; border-top:2px solid #ddd;">{items_data[-1][1]}</td>
-        </tr>
-    </tbody>
-    </table>
-    """
-    
-    st.markdown(html_table, unsafe_allow_html=True)
+    # Используем встроенные компоненты Streamlit для отображения таблицы
+    import pandas as pd
+    df_items = pd.DataFrame(items_data, columns=["Наименование", "Стоимость"])
+    st.table(df_items)
     
     # Добавляем разделитель
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
