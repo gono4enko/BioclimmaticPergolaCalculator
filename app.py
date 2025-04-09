@@ -597,6 +597,39 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
+    # Добавляем скрипт для принудительного обновления страницы без кэша
+    # Создадим хард-ресет кэша для стилей с уникальным идентификатором
+    import uuid
+    cache_bust_id = str(uuid.uuid4())
+    
+    st.markdown(f"""
+    <style data-cache-bust="{cache_bust_id}">
+        /* Принудительное применение стилей pergolamarket.ru */
+        body {{
+            --st-color-primary: #3f6daa !important;
+            --st-color-secondary: #ff9c00 !important;
+        }}
+        
+        h1, h2, h3, h4, h5, .stButton > button[data-testid="baseButton-primary"] {{
+            color: #FFFFFF !important;
+            background-color: #3f6daa !important;
+        }}
+        
+        .section-header {{
+            color: #3f6daa !important;
+            border-color: #3f6daa !important;
+        }}
+        
+        /* Дополнительные стили */
+        .accent-line {{
+            background-color: #ff9c00 !important;
+            height: 3px;
+            width: 100px;
+            margin: 5px auto;
+        }}
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Заголовок калькулятора - крупный и четкий с элементами дизайна pergolamarket.ru
     st.markdown("""
     <div style="text-align: center; padding: 15px; margin-bottom: 20px;">

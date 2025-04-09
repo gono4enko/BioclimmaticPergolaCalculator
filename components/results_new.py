@@ -256,7 +256,7 @@ def render_results(results):
     st.markdown("""
     <div style="text-align: center; margin-top: 20px; margin-bottom: 20px;">
         <h3 style="font-size: 1.5rem; font-weight: 600; color: #3f6daa; margin-bottom: 5px;">Результаты расчета</h3>
-        <div style="height: 2px; width: 80px; background-color: #ff9c00; margin: 5px auto;"></div>
+        <div style="height: 3px; width: 100px; background-color: #ff9c00; margin: 10px auto;"></div>
     </div>
     """, unsafe_allow_html=True)
     
