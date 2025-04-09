@@ -1141,10 +1141,10 @@ def render_results(results):
             /* Специальные стили для таблицы спецификации - ключ {spec_table_key} */
             div[data-testid="stDataFrame"] {{
                 margin: 0 auto !important;
-                max-width: 95% !important;
-                width: 95% !important;
-                padding-left: 15px !important;
-                padding-right: 15px !important;
+                max-width: 90% !important;
+                width: 90% !important;
+                padding-left: 25px !important;
+                padding-right: 25px !important;
             }}
             
             div[data-testid="stDataFrame"] > div {{
@@ -1329,10 +1329,10 @@ def render_results(results):
         div[data-testid="stDataFrame"] {{
             margin: 0 auto !important;
             padding: 0 !important;
-            width: 95% !important;
-            max-width: 95% !important;
-            padding-left: 15px !important;
-            padding-right: 15px !important;
+            width: 90% !important;
+            max-width: 90% !important;
+            padding-left: 25px !important;
+            padding-right: 25px !important;
         }}
         
         div[data-testid="stDataFrame"] > div {{
