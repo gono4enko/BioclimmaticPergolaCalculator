@@ -331,24 +331,31 @@ def get_base_price(pergola_type, lamella_size, width_m, length_m):
     print(f"Доступные ширины: {available_widths}")
     print(f"Доступные длины: {available_lengths}")
     
-    # Особый случай для B500NEW с ламелями 250мм и размером 3.0×4.0м
-    if pergola_type == "B500NEW" and lamella_size == "250" and width_m == 3.0 and length_m == 4.0:
-        return 8022.0  # Явно указываем цену из прайса
+    # В CSV файле цены указаны в формате "вынос (строка) x ширина (столбец)"
+    # Но в калькуляторе параметры указаны как "ширина x вынос" 
+    # Поэтому меняем местами параметры при поиске цены
+    width_orig, length_orig = width_m, length_m
     
     # Находим точный размер или ближайший больший размер
-    # Ищем точное совпадение по ширине
-    if width_m in available_widths:
-        width_match = width_m
+    # В CSV файле цены указаны в формате "вынос (строка) x ширина (столбец)"
+    # Но в калькуляторе параметры указаны как "ширина x вынос"
+    # Поэтому для поиска в прайсе меняем местами ширину и вынос
+    lookup_width = length_m  # Используем длину как ширину в прайсе
+    lookup_length = width_m  # Используем ширину как длину в прайсе
+    
+    # Ищем точное совпадение по ширине (в прайсе это вынос)
+    if lookup_width in available_widths:
+        width_match = lookup_width
     else:
         # Если точного совпадения нет, ищем ближайшую большую ширину
-        width_match = next((w for w in available_widths if w > width_m), max(available_widths))
+        width_match = next((w for w in available_widths if w > lookup_width), max(available_widths))
     
-    # Ищем точное совпадение по длине
-    if length_m in available_lengths:
-        length_match = length_m
+    # Ищем точное совпадение по длине (в прайсе это ширина)
+    if lookup_length in available_lengths:
+        length_match = lookup_length
     else:
         # Если точного совпадения нет, ищем ближайшую большую длину
-        length_match = next((l for l in available_lengths if l > length_m), max(available_lengths))
+        length_match = next((l for l in available_lengths if l > lookup_length), max(available_lengths))
     
     # Проверяем, есть ли цена для найденной комбинации ширины и длины
     if width_match in prices and length_match in prices[width_match]:
@@ -363,9 +370,9 @@ def get_base_price(pergola_type, lamella_size, width_m, length_m):
     min_length = None
     
     for width in available_widths:
-        if width >= width_m:
+        if width >= lookup_width:  # Используем lookup_width вместо width_m
             for length in available_lengths:
-                if length >= length_m:
+                if length >= lookup_length:  # Используем lookup_length вместо length_m
                     if width in prices and length in prices[width]:
                         price = prices[width][length]
                         if min_price is None or price < min_price:
