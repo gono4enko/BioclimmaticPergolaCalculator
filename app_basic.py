@@ -8,8 +8,6 @@ import os
 import math
 import csv
 import time
-from datetime import datetime
-from pdf_generator_fpdf import generate_commercial_offer, format_pergola_data_for_pdf
 from config.pergola_descriptions import (
     get_pergola_description,
     get_modular_system_description,
@@ -17,6 +15,7 @@ from config.pergola_descriptions import (
     get_bansbach_description,
     get_bioclimatic_install_description,
     get_lamella_engineering_description,
+    get_somfy_description,
     get_pergola_images,
     get_pergola_image_caption
 )
@@ -556,12 +555,8 @@ def get_remote_control(devices_count):
         return "Simu 1K", REMOTE_CONTROL_TYPES[1]["price"]
     elif devices_count <= 5:
         return "Simu 5K", REMOTE_CONTROL_TYPES[5]["price"]
-    elif devices_count <= 15:
-        return "Simu 15K", REMOTE_CONTROL_TYPES[15]["price"]
     else:
-        # Для очень большого количества устройств подбираем несколько пультов
-        # или возвращаем самый мощный доступный пульт
-        return "Simu 15K + Somfy TaHoma", REMOTE_CONTROL_TYPES[15]["price"] + 350  # Цена TaHoma примерно 350 евро
+        return "Simu 15K", REMOTE_CONTROL_TYPES[15]["price"]
 
 def perform_calculation(dimensions, options):
     """Выполнить расчет стоимости перголы"""
@@ -666,9 +661,7 @@ def perform_calculation(dimensions, options):
             # Количество устройств для пульта ДУ (привод + освещение)
             devices_count = drive_count
             if "white_led" in lighting_options or "rgb_led" in lighting_options:
-                # Каждый модуль требует свой блок управления освещением,
-                # поэтому добавляем количество устройств равное количеству модулей
-                devices_count += modules
+                devices_count += 1  # Добавляем блок управления освещением
             
             # Определяем тип и стоимость пульта ДУ
             remote_name, remote_price = get_remote_control(devices_count)
@@ -833,8 +826,8 @@ def perform_calculation(dimensions, options):
             # Если уже есть пульт от привода перголы (B500/B700), выбираем пульт с большим числом каналов
             # Если перголы B600 без привода, добавляем пульт для освещения
             if pergola_type in ["B500NEW", "B700NEW"]:
-                # Здесь не обновляем devices_count, т.к. он был уже посчитан ранее.
-                # Выбор пульта учитывает и приводы, и блоки управления светом.
+                # Обновляем devices_count для выбора пульта с большим числом каналов
+                devices_count += lighting_devices_count
                 
                 # Обновляем информацию о пульте в спецификации
                 for i, item in enumerate(specification):
@@ -1196,8 +1189,19 @@ def render_results(results):
     
     # Функция для форматирования цены в бухгалтерском стиле
     def format_price(price):
-        # Всегда используем полный формат для цен
-        # Форматируем с разделителями разрядов
+        # Всегда используем сокращенный формат для мобильной версии
+        price_in_thousands = price / 1000
+        if price >= 1000000:
+            price_in_millions = price / 1000000
+            # Округляем до 1 знака после запятой для миллионов
+            return "{:.1f}M₽".format(price_in_millions)
+        # Для сотен тысяч используем формат с K
+        if price >= 100000:
+            return "{:.0f}K₽".format(price_in_thousands)
+        # Для десятков тысяч тоже используем формат с K, но с 1 знаком после запятой
+        if price >= 10000:
+            return "{:.1f}K₽".format(price_in_thousands)
+        # Для маленьких чисел используем обычный формат с разделителями
         return "{:,.0f}₽".format(price).replace(",", " ")
     
     # Базовая стоимость перголы - всегда первой строкой
@@ -1279,70 +1283,32 @@ def render_results(results):
     </div>
     """, unsafe_allow_html=True)
     
-    # Добавляем кнопку для генерации коммерческого предложения после таблицы стоимости
-    st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
-    st.markdown("<h3 style='font-size: 1.1rem; margin-top: 15px; margin-bottom: 15px; text-align: center;'>Коммерческое предложение</h3>", unsafe_allow_html=True)
-    
-    # Создаем контейнер для кнопки с центрированием
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("Сформировать КП после расчета", key="top_button", type="primary", use_container_width=True):
-            with st.spinner("Формирование коммерческого предложения..."):
-                try:
-                    # Получаем описание перголы для добавления в КП
-                    pergola_description = get_pergola_description(pergola_type).replace('<h2', '<h3').replace('</h2>', '</h3>')
-                    
-                    # Форматируем данные для создания PDF
-                    pdf_data = format_pergola_data_for_pdf(
-                        results=results,
-                        options=results["options"],
-                        dimensions=results["dimensions"],
-                        pergola_description=pergola_description
-                    )
-                    
-                    # Генерируем PDF
-                    pdf_path = generate_commercial_offer(pdf_data)
-                    
-                    # Отображаем ссылку на скачивание
-                    st.success(f"Коммерческое предложение успешно сформировано!")
-                    
-                    # Добавляем кнопку для скачивания
-                    with open(pdf_path, "rb") as pdf_file:
-                        st.download_button(
-                            label="Скачать коммерческое предложение (PDF)", 
-                            data=pdf_file, 
-                            file_name=os.path.basename(pdf_path), 
-                            mime="application/pdf",
-                            use_container_width=True
-                        )
-                except Exception as e:
-                    st.error(f"Ошибка при формировании коммерческого предложения: {str(e)}")
-                    if st.session_state.get('debug_mode', False):
-                        st.exception(e)
-    
     # Добавляем разделитель
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
     
-    # Отображаем информацию о типе перголы и изображение при каждом расчете
-    # Отображаем информацию о выбранном типе перголы с использованием модуля описаний
-    if pergola_type in ["B500NEW", "B700NEW", "B600"]:
-        # Используем описание из модуля конфигурации
-        description_html = get_pergola_description(pergola_type)
-        st.markdown(description_html, unsafe_allow_html=True)
+    # Добавляем информацию о типе перголы и изображение только один раз в сессии
+    if not st.session_state.get('description_shown', False):
+        # Устанавливаем флаг, что описание уже было показано в этой сессии
+        st.session_state.description_shown = True
         
-        # Отображаем изображения с использованием списка из конфигурации
-        images = get_pergola_images(pergola_type)
-        caption = get_pergola_image_caption(pergola_type)
-        
-        if images:
-            # Пробуем загрузить изображения по очереди, пока не найдем рабочее
-            for img_path in images:
-                try:
-                    display_image_with_padding(img_path, caption=caption)
-                    break  # Прерываем цикл, если изображение успешно загружено
-                except Exception as e:
-                    print(f"Не удалось загрузить изображение {img_path}: {str(e)}")
-                    continue  # Пробуем следующее изображение
+        # Отображаем информацию о выбранном типе перголы с использованием модуля описаний
+        if pergola_type in ["B500NEW", "B700NEW", "B600"]:
+            # Используем описание из модуля конфигурации
+            description_html = get_pergola_description(pergola_type)
+            st.markdown(description_html, unsafe_allow_html=True)
+            
+            # Отображаем изображения с использованием списка из конфигурации
+            images = get_pergola_images(pergola_type)
+            caption = get_pergola_image_caption(pergola_type)
+            
+            if images:
+                # Пробуем загрузить изображения по очереди, пока не найдем рабочее
+                for img_path in images:
+                    try:
+                        display_image_with_padding(img_path, caption=caption)
+                        break  # Прерываем цикл, если изображение успешно загружено
+                    except Exception as e:
+                        continue  # Пробуем следующее изображение
                 else:
                     st.warning(f"Не удалось загрузить изображение для {pergola_type}")
             
@@ -1458,48 +1424,6 @@ def render_results(results):
                             continue
                     else:
                         st.warning(f"Не удалось загрузить изображение технических характеристик ламелей")
-    
-    # Добавляем кнопку для генерации коммерческого предложения
-    st.markdown("<hr style='margin-top: 30px; margin-bottom: 30px;'>", unsafe_allow_html=True)
-    st.markdown("<h3 style='font-size: 1.1rem; margin-top: 15px; margin-bottom: 15px; text-align: center;'>Коммерческое предложение</h3>", unsafe_allow_html=True)
-    
-    # Создаем контейнер для кнопки с центрированием
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("Сформировать коммерческое предложение", type="primary", use_container_width=True):
-            with st.spinner("Формирование коммерческого предложения..."):
-                try:
-                    # Получаем описание перголы для добавления в КП
-                    print(f"Генерируем КП для перголы типа: {pergola_type}")
-                    pergola_description = get_pergola_description(pergola_type).replace('<h2', '<h3').replace('</h2>', '</h3>')
-                    
-                    # Форматируем данные для создания PDF
-                    pdf_data = format_pergola_data_for_pdf(
-                        results=results,
-                        options=results["options"],
-                        dimensions=results["dimensions"],
-                        pergola_description=pergola_description
-                    )
-                    
-                    # Генерируем PDF
-                    pdf_path = generate_commercial_offer(pdf_data)
-                    
-                    # Отображаем ссылку на скачивание
-                    st.success(f"Коммерческое предложение успешно сформировано!")
-                    
-                    # Добавляем кнопку для скачивания
-                    with open(pdf_path, "rb") as pdf_file:
-                        st.download_button(
-                            label="Скачать коммерческое предложение (PDF)", 
-                            data=pdf_file, 
-                            file_name=os.path.basename(pdf_path), 
-                            mime="application/pdf",
-                            use_container_width=True
-                        )
-                except Exception as e:
-                    st.error(f"Ошибка при формировании коммерческого предложения: {str(e)}")
-                    if st.session_state.get('debug_mode', False):
-                        st.exception(e)
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
@@ -1759,7 +1683,8 @@ def main():
                 # Добавляем флаг, что нужно прокрутить к результатам
                 st.session_state.scroll_to_results = True
                 
-                # Удалено: Не используется больше сбрасывание флага описания
+                # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
+                st.session_state.description_shown = False
                 
                 # Перезагружаем страницу для отображения результатов
                 st.rerun()
@@ -1792,7 +1717,7 @@ def main():
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v3.6</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v3.5</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Создаем директории, если они не существуют
