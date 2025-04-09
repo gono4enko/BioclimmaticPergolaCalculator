@@ -13,6 +13,7 @@ from config.pergola_descriptions import (
     get_modular_system_description,
     get_drainage_system_description,
     get_bansbach_description,
+    get_bioclimatic_install_description,
     get_pergola_images,
     get_pergola_image_caption
 )
@@ -1384,6 +1385,24 @@ def render_results(results):
                             continue
                     else:
                         st.warning(f"Не удалось загрузить изображение привода Somfy")
+            
+            # Добавляем описание вариантов установки и вертикальных систем для всех типов пергол
+            bioclimatic_install_description = get_bioclimatic_install_description()
+            st.markdown(bioclimatic_install_description, unsafe_allow_html=True)
+            
+            # Отображаем изображение вариантов установки
+            install_system_images = get_pergola_images("INSTALL_SYSTEM")
+            install_system_caption = get_pergola_image_caption("INSTALL_SYSTEM")
+            
+            if install_system_images:
+                for img_path in install_system_images:
+                    try:
+                        st.image(img_path, caption=install_system_caption, use_container_width=True)
+                        break
+                    except Exception as e:
+                        continue
+                else:
+                    st.warning(f"Не удалось загрузить изображение вариантов установки")
 
 def scroll_to_results():
     """
