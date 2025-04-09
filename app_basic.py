@@ -9,7 +9,7 @@ import math
 import csv
 import time
 from datetime import datetime
-from pdf_generator_improved import generate_commercial_offer, format_pergola_data_for_pdf
+from pdf_generator_fpdf import generate_commercial_offer, format_pergola_data_for_pdf
 from config.pergola_descriptions import (
     get_pergola_description,
     get_modular_system_description,
