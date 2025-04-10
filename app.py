@@ -1123,11 +1123,7 @@ def render_results(results):
     euro_rate = EURO_RATE
     total_price = results["total_price"]
     
-    # Отладочная информация только в режиме разработки
-    if 'debug_mode' in st.session_state and st.session_state['debug_mode']:
-        with st.sidebar:
-            st.markdown("### Отладочная информация")
-            st.json(results["debug"])
+    # Убрано отображение отладочной информации
     
     # Получаем информацию о ламелях
     lamella_type = results["options"]["lamella_type"]
@@ -1874,9 +1870,6 @@ def main():
     
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    
-    # Режим отладки включен для поиска проблем с изображениями
-    st.session_state.debug_mode = True
         
     # Отображаем кнопку для скролла к результатам (если есть результаты)
     if 'results' in st.session_state:
