@@ -1202,7 +1202,7 @@ def render_results(results):
         """, unsafe_allow_html=True)
     
     # Отображаем таблицу стоимости
-    st.markdown("<h3 style='font-size: 2.915rem; font-weight: 700; color: #0066cc; margin-top: 15px; margin-bottom: 15px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 3.2rem; font-weight: 700; color: #0066cc; margin-top: 20px; margin-bottom: 10px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
     
     # Создаем таблицу стоимости
     items_data = []
@@ -1280,8 +1280,8 @@ def render_results(results):
     
     # Добавляем заголовки
     html_table += '<tr>'
-    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">Наименование</th>'
-    html_table += '<th style="text-align:right; padding:8px 15px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">Стоимость</th>'
+    html_table += '<th style="text-align:left; padding:8px; background-color:#f0f5ff; border-bottom:2px solid #0066cc; width:70%; font-size:1.1rem; font-weight:600; overflow:hidden; text-overflow:ellipsis;">Наименование</th>'
+    html_table += '<th style="text-align:right; padding:8px 15px; background-color:#f0f5ff; border-bottom:2px solid #0066cc; width:30%; font-size:1.1rem; font-weight:600; overflow:hidden; text-overflow:ellipsis;">Стоимость</th>'
     html_table += '</tr>'
     
     # Добавляем строки с данными
@@ -1492,26 +1492,47 @@ def display_formatted_description(description_text):
             width: 100%;
         }
         .description-container h3 {
-            font-size: 2.2rem;
-            margin-top: 25px;
-            margin-bottom: 20px;
+            font-size: 2.5rem;
+            margin-top: 20px;
+            margin-bottom: 10px;
             color: #0066cc;
-            font-weight: 600;
+            font-weight: 700;
+            text-align: center;
         }
         .description-container h4 {
             font-size: 1.8rem;
-            margin-top: 20px;
-            margin-bottom: 15px;
+            margin-top: 15px;
+            margin-bottom: 8px;
             color: #0066cc;
-            font-weight: 500;
+            font-weight: 600;
         }
         .description-container p {
-            margin-bottom: 10px;
-            line-height: 1.5;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            font-size: 1rem !important;
         }
         .description-container ul {
             margin-left: 20px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+            margin-top: 5px;
+        }
+        .description-container li {
+            margin-bottom: 5px;
+            font-size: 1rem !important;
+            line-height: 1.4;
+        }
+        .description-container table {
+            margin-top: 8px;
+            margin-bottom: 8px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .description-container table td, 
+        .description-container table th {
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            font-size: 1rem !important;
+            line-height: 1.3;
         }
         .description-container strong {
             font-weight: 600;
