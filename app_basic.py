@@ -1470,14 +1470,54 @@ def display_formatted_description(description_text):
             border-radius: 5px;
             margin-bottom: 20px;
         }
+        /* Дополнительные стили для HTML элементов */
+        .description-container h3, .description-container h4 {
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+        .description-container ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        .description-container p {
+            margin-bottom: 10px;
+        }
+        .description-container div {
+            margin-bottom: 10px;
+        }
         </style>
         """, unsafe_allow_html=True)
         st.session_state.description_style_added = True
     
-    # Используем col.markdown для безопасного отображения HTML внутри контейнера
-    container = st.container()
-    with container:
-        st.markdown(f'<div class="description-container">{description_text}</div>', unsafe_allow_html=True)
+    # Применяем метод компонентов HTML для гарантированного рендеринга HTML
+    import streamlit.components.v1 as components
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }}
+        .description-container {{
+            width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: #ffffff;
+            border-radius: 5px;
+        }}
+        </style>
+    </head>
+    <body>
+        <div class="description-container">{description_text}</div>
+    </body>
+    </html>
+    """
+    
+    # Используем статичный компонент без scrolling и с автоматической высотой
+    components.html(html_content, height=None, scrolling=False)
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
