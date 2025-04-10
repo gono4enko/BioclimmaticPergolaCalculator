@@ -1142,7 +1142,7 @@ def render_results(results):
     formatted_price = "{:,.0f}".format(rub_total).replace(",", " ")
     st.markdown(f"""
     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
-        <h2 style='margin-top: 0; color: #0066cc; font-size: 3.168rem; font-weight: 700; text-align: center;'>Результаты расчета</h2>
+        <h2 style='margin-top: 0; color: #0066cc; font-size: 3.5rem; font-weight: 700; text-align: center; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 2px solid #e5eeff;'>Результаты расчета</h2>
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Пергола:</strong> {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м
         </p>
@@ -1160,7 +1160,7 @@ def render_results(results):
     
     # Отображаем спецификацию перголы
     if "specification" in results:
-        st.markdown("<h3 style='font-size: 2.915rem; font-weight: 700; color: #0066cc; margin-top: 0; margin-bottom: 15px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 3.0rem; font-weight: 700; color: #0066cc; margin-top: 10px; margin-bottom: 20px; text-align: center; padding-bottom: 5px; border-bottom: 2px solid #e5eeff;'>Спецификация перголы</h3>", unsafe_allow_html=True)
         
         # Создаем таблицу спецификации
         spec_data = []
@@ -1179,15 +1179,15 @@ def render_results(results):
         
         # Добавляем заголовки
         html_table += '<tr>'
-        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">Наименование</th>'
-        html_table += '<th style="text-align:right; padding:8px 15px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">Количество</th>'
+        html_table += '<th style="text-align:left; padding:8px; background-color:#f0f5ff; border-bottom:2px solid #0066cc; width:70%; font-size:1.1rem; font-weight:600; overflow:hidden; text-overflow:ellipsis;">Наименование</th>'
+        html_table += '<th style="text-align:right; padding:8px 15px; background-color:#f0f5ff; border-bottom:2px solid #0066cc; width:30%; font-size:1.1rem; font-weight:600; overflow:hidden; text-overflow:ellipsis;">Количество</th>'
         html_table += '</tr>'
         
         # Добавляем строки с данными
         for item in spec_data:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; font-size:0.9rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #eee; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #e5eeff; font-size:1rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #e5eeff; font-size:1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
             html_table += '</tr>'
         
         html_table += '</table>'
@@ -1288,14 +1288,14 @@ def render_results(results):
     for i, item in enumerate(items_data):
         # Особое форматирование для строки "Итого"
         if i == len(items_data) - 1:
-            html_table += '<tr style="background-color:#e0f0ff;">'
-            html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.344rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:10px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.153rem; color:#0066cc; overflow:visible; max-width:100%; width:auto;">{item[1]}</td>'
+            html_table += '<tr style="background-color:#e8f2ff;">'
+            html_table += f'<td style="text-align:left; padding:12px 5px; border-bottom:2px solid #0066cc; font-weight:700; font-size:1.4rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:12px 5px; border-bottom:2px solid #0066cc; font-weight:700; font-size:1.5rem; color:#0066cc; overflow:visible; max-width:100%; width:auto;">{item[1]}</td>'
             html_table += '</tr>'
         else:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; font-size:0.9rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #eee; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #e5eeff; font-size:1rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #e5eeff; font-size:1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
             html_table += '</tr>'
     
     html_table += '</table>'
