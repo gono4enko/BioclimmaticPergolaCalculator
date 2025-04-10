@@ -926,7 +926,7 @@ def perform_calculation(dimensions, options):
         # Округляем общую стоимость
         results["total_price"] = round(results["total_price"], 2)
         
-        # Отладочная информация
+        # Техническая информация для вывода в результатах
         results["debug"] = {
             "length_corrected": length_m,
             "width": width_m,
@@ -1320,29 +1320,17 @@ def render_results(results):
             caption = get_pergola_image_caption(pergola_type)
             
             if images:
-                # Отладочная информация
-                if st.session_state.get('debug_mode', False):
-                    st.write(f"Попытка загрузить изображения для типа: {pergola_type}")
-                    st.write(f"Список путей к изображениям: {images}")
-                
                 # Пробуем загрузить изображения по очереди, пока не найдем рабочее
                 for img_path in images:
                     try:
-                        if st.session_state.get('debug_mode', False):
-                            st.write(f"Пробуем загрузить: {img_path}")
-                        
                         # Проверяем, существует ли файл
                         import os
                         if not os.path.exists(img_path):
-                            if st.session_state.get('debug_mode', False):
-                                st.error(f"Файл не найден: {img_path}")
                             continue
                             
                         display_image_with_padding(img_path, caption=caption)
                         break  # Прерываем цикл, если изображение успешно загружено
                     except Exception as e:
-                        if st.session_state.get('debug_mode', False):
-                            st.error(f"Ошибка при загрузке {img_path}: {str(e)}")
                         continue  # Пробуем следующее изображение
                 else:
                     st.warning(f"Не удалось загрузить изображение для {pergola_type}")
@@ -1357,27 +1345,17 @@ def render_results(results):
             modular_caption = get_pergola_image_caption("MODULAR")
             
             if modular_images:
-                # Отладочная информация
-                if st.session_state.get('debug_mode', False):
-                    st.write(f"Попытка загрузить изображения модульной системы: {modular_images}")
-                
+                # Пробуем загрузить изображения по очереди, пока не найдем рабочее
                 for img_path in modular_images:
                     try:
-                        if st.session_state.get('debug_mode', False):
-                            st.write(f"Пробуем загрузить: {img_path}")
-                        
                         # Проверяем, существует ли файл
                         import os
                         if not os.path.exists(img_path):
-                            if st.session_state.get('debug_mode', False):
-                                st.error(f"Файл не найден: {img_path}")
                             continue
                         
                         display_image_with_padding(img_path, caption=modular_caption)
                         break
                     except Exception as e:
-                        if st.session_state.get('debug_mode', False):
-                            st.error(f"Ошибка при загрузке {img_path}: {str(e)}")
                         continue
                 else:
                     st.warning(f"Не удалось загрузить изображение модульной системы")
@@ -1596,10 +1574,6 @@ def display_image_with_padding(image_path, caption=None, padding_percent=5):
         caption (str, optional): Подпись к изображению
         padding_percent (int, optional): Процент отступа от ширины контейнера (по умолчанию 5%)
     """
-    # Добавляем информацию для отладки
-    if st.session_state.get('debug_mode', False):
-        st.text(f"Попытка загрузить изображение: {image_path}")
-        
     # Создаем контейнер с отступами для изображения
     container = st.container()
     with container:
@@ -1619,9 +1593,6 @@ def display_image_with_padding(image_path, caption=None, padding_percent=5):
         # Проверяем существование файла
         import os
         if not os.path.exists(image_path):
-            # Выводим сообщение об ошибке в режиме отладки
-            if st.session_state.get('debug_mode', False):
-                st.error(f"Файл не найден: {image_path}")
             raise FileNotFoundError(f"Изображение не найдено: {image_path}")
             
         # Отображаем изображение
