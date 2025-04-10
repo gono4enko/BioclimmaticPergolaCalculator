@@ -1017,7 +1017,7 @@ def perform_calculation(dimensions, options):
         # Основная пергола
         specification.append({
             "name": f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м с {lamella_info}{lamellas_count_text}",
-            "count": f"{modules} {'модуль' if modules == 1 else 'модуля' if modules < 5 else 'модулей'}",
+            "count": f"{modules} {'модуль' if modules == 1 else 'модуля' if 2 <= modules <= 4 else 'модулей'}",
             "price": ""
         })
         
@@ -1263,7 +1263,7 @@ def render_dimensions_form():
     # Показываем информацию о модулях (только для отображения)
     if modules > 1:
         # Правильное склонение для модулей
-        modules_suffix = "модуля" if modules < 5 else "модулей"
+        modules_suffix = "модуля" if 2 <= modules <= 4 else "модулей"
         st.info(f"При размере {width:.2f}×{length:.2f} м будет автоматически использовано {modules} {modules_suffix}")
     
     return {
@@ -1534,7 +1534,9 @@ def render_results(results):
     
     # Базовая стоимость перголы - всегда первой строкой
     rub_base_price = base_price * euro_rate
-    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} модуль)", format_price(rub_base_price)])
+    # Правильное склонение для модулей
+    modules_suffix = "модуль" if modules == 1 else "модуля" if 2 <= modules <= 4 else "модулей"
+    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} {modules_suffix})", format_price(rub_base_price)])
     
     # Привод и автоматика - второй строкой, если есть
     if pergola_type in ["B500NEW", "B700NEW"]:
