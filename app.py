@@ -9,6 +9,7 @@ import math
 import csv
 import time
 from datetime import datetime
+from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
 
 # Константы для наценок на доставку и установку
 DELIVERY_MARKUP_PERCENT = 8  # Процент наценки на доставку (8%)
