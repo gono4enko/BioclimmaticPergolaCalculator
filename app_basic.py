@@ -1452,17 +1452,16 @@ def render_results(results):
 
 def display_formatted_description(description_text):
     """
-    Отображает форматированное описание в стилизованном контейнере
-    с КОРРЕКТНОЙ ОБРАБОТКОЙ HTML-тегов.
+    Отображает форматированное описание в стилизованном контейнере,
+    избегая проблем с видимостью HTML-тегов.
     
     Args:
         description_text (str): HTML-текст с описанием
     """
-    # Определяем CSS стили только один раз
+    # Создаем стиль для описания один раз при первом вызове
     if 'description_style_added' not in st.session_state:
         st.markdown("""
         <style>
-        /* Основной контейнер для описания */
         .description-container {
             width: 95%;
             margin: 0 auto;
@@ -1470,89 +1469,15 @@ def display_formatted_description(description_text):
             background-color: #ffffff;
             border-radius: 5px;
             margin-bottom: 20px;
-            overflow: auto;
-        }
-        
-        /* Заголовки в описании */
-        .description-container h1, .description-container h2, 
-        .description-container h3, .description-container h4, 
-        .description-container h5, .description-container h6 {
-            color: #0066cc;
-            margin-top: 1em;
-            margin-bottom: 0.5em;
-            font-weight: 600;
-        }
-        
-        /* Параграфы в описании */
-        .description-container p {
-            margin-bottom: 1em;
-            line-height: 1.6;
-        }
-        
-        /* Списки в описании */
-        .description-container ul, .description-container ol {
-            margin-left: 1em;
-            margin-bottom: 1em;
-            padding-left: 1em;
-        }
-        
-        .description-container li {
-            margin-bottom: 0.5em;
-            line-height: 1.6;
-        }
-        
-        /* Таблицы в описании */
-        .description-container table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 1em;
-        }
-        
-        .description-container th, .description-container td {
-            padding: 0.5em;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-        
-        .description-container th {
-            background-color: #f2f2f2;
-            font-weight: 600;
-        }
-        
-        /* Жирный текст и акценты */
-        .description-container strong, .description-container b {
-            font-weight: 600;
-        }
-        
-        /* Секции */
-        .description-container section {
-            margin-bottom: 1em;
-        }
-        
-        /* Вложенные списки */
-        .description-container ul ul, 
-        .description-container ol ol,
-        .description-container ul ol,
-        .description-container ol ul {
-            margin-top: 0.5em;
         }
         </style>
         """, unsafe_allow_html=True)
         st.session_state.description_style_added = True
     
-    # Используем компонент streamlit.components.v1.html для правильного отображения HTML
-    # Это важно для избегания проблем с отображением тегов
-    from streamlit.components.v1 import html
-    
-    # Оборачиваем HTML-контент в контейнер с нашими стилями
-    html_content = f"""
-    <div class="description-container">
-      {description_text}
-    </div>
-    """
-    
-    # Отображаем HTML-контент без экранирования тегов
-    html(html_content, height=None, scrolling=True)
+    # Используем col.markdown для безопасного отображения HTML внутри контейнера
+    container = st.container()
+    with container:
+        st.markdown(f'<div class="description-container">{description_text}</div>', unsafe_allow_html=True)
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
