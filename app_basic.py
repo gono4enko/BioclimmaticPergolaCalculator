@@ -1200,7 +1200,7 @@ def render_results(results):
         """, unsafe_allow_html=True)
     
     # Отображаем таблицу стоимости
-    st.markdown("<h3 style='font-size: 1.8rem; color: #0066cc; margin-top: 15px; margin-bottom: 10px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 15px; margin-bottom: 15px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
     
     # Создаем таблицу стоимости
     items_data = []
