@@ -1498,19 +1498,8 @@ def render_results(results):
     
     # Функция для форматирования цены в бухгалтерском стиле
     def format_price(price):
-        # Всегда используем сокращенный формат для мобильной версии
-        price_in_thousands = price / 1000
-        if price >= 1000000:
-            price_in_millions = price / 1000000
-            # Округляем до 1 знака после запятой для миллионов
-            return "{:.1f} M₽".format(price_in_millions)
-        # Для сотен тысяч используем формат с K
-        if price >= 100000:
-            return "{:.0f} K₽".format(price_in_thousands)
-        # Для десятков тысяч тоже используем формат с K, но с 1 знаком после запятой
-        if price >= 10000:
-            return "{:.1f} K₽".format(price_in_thousands)
-        # Для маленьких чисел используем обычный формат с разделителями
+        # Всегда используем полный формат без сокращений
+        # Форматируем с пробелами между тысячами и символом валюты
         return "{:,.0f} ₽".format(price).replace(",", " ")
     
     # Базовая стоимость перголы - всегда первой строкой
@@ -1565,8 +1554,8 @@ def render_results(results):
     
     # Добавляем заголовки
     html_table += '<tr>'
-    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:60%;">Наименование</th>'
-    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:40%;">Стоимость</th>'
+    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:65%;">Наименование</th>'
+    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:35%;">Стоимость</th>'
     html_table += '</tr>'
     
     # Добавляем строки с данными
@@ -1579,8 +1568,8 @@ def render_results(results):
             html_table += '</tr>'
         else:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #eee; min-width:120px; white-space:nowrap;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.95rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #eee; min-width:150px; white-space:nowrap; font-size:0.95rem;">{item[1]}</td>'
             html_table += '</tr>'
     
     html_table += '</table>'
