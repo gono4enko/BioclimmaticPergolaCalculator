@@ -1138,7 +1138,7 @@ def render_results(results):
     formatted_price = "{:,.0f}".format(rub_total).replace(",", " ")
     st.markdown(f"""
     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
-        <h2 style='margin-top: 0; color: #0066cc; font-size: 2.2rem; font-weight: 600; text-align: center;'>Результаты расчета</h2>
+        <h2 style='margin-top: 0; color: #0066cc; font-size: 3.2rem; font-weight: 700; text-align: center; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 2px solid #e5eeff;'>Результаты расчета</h2>
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Пергола:</strong> {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м
         </p>
@@ -1156,7 +1156,7 @@ def render_results(results):
     
     # Отображаем спецификацию перголы
     if "specification" in results:
-        st.markdown("<h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 0; margin-bottom: 15px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 2.5rem; font-weight: 700; color: #0066cc; margin-top: 10px; margin-bottom: 15px; text-align: center; padding-bottom: 5px; border-bottom: 2px solid #e5eeff;'>Спецификация перголы</h3>", unsafe_allow_html=True)
         
         # Создаем таблицу спецификации
         spec_data = []
@@ -1196,7 +1196,7 @@ def render_results(results):
         """, unsafe_allow_html=True)
     
     # Отображаем таблицу стоимости
-    st.markdown("<h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 15px; margin-bottom: 15px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 2.5rem; font-weight: 700; color: #0066cc; margin-top: 15px; margin-bottom: 15px; text-align: center; padding-bottom: 5px; border-bottom: 2px solid #e5eeff;'>Стоимость</h3>", unsafe_allow_html=True)
     
     # Создаем таблицу стоимости
     items_data = []
@@ -1283,8 +1283,8 @@ def render_results(results):
         # Особое форматирование для строки "Итого"
         if i == len(items_data) - 1:
             html_table += '<tr style="background-color:#e0f0ff;">'
-            html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.2rem;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:10px 10px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; color:#0066cc;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:12px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.35rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:12px 10px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.5rem; color:#0066cc;">{item[1]}</td>'
             html_table += '</tr>'
         else:
             html_table += '<tr>'
