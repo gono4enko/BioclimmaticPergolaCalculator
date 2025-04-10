@@ -1,0 +1,37 @@
+/* Custom styles for the Pergola Calculator */
+
+/* Main heading styles */
+h2:contains("Результаты расчета") {
+    font-size: 3.168rem !important; 
+    font-weight: 700 !important;
+    color: #0066cc !important;
+    text-align: center !important;
+}
+
+/* Section headings */
+h3:contains("Спецификация перголы"), 
+h3:contains("Стоимость") {
+    font-size: 2.915rem !important;
+    font-weight: 700 !important;
+    color: #0066cc !important;
+    text-align: center !important;
+}
+
+/* "Итого" styles in the table */
+.st-emotion-cache-1y4p8pa table tr:last-child td:first-child {
+    font-size: 1.344rem !important;
+    font-weight: bold !important;
+}
+
+/* Total price in the table */
+.st-emotion-cache-1y4p8pa table tr:last-child td:last-child {
+    font-size: 1.153rem !important;
+    font-weight: bold !important;
+    color: #0066cc !important;
+}
+
+/* Adjust final price display */
+.st-emotion-cache-10trblm div:contains("Итоговая стоимость") span {
+    font-size: 1.5rem !important;
+    color: #0066cc !important;
+}

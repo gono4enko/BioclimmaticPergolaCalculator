@@ -1888,6 +1888,11 @@ def main():
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
     
+    # Применяем пользовательские стили из файла CSS
+    with open('.streamlit/custom_styles.css') as f:
+        custom_css = f.read()
+        st.markdown(f'<style>{custom_css}</style>', unsafe_allow_html=True)
+    
     # Задаем стили для компактного и читаемого интерфейса по новому дизайну
     st.markdown("""
     <style>
