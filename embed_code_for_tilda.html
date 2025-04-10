@@ -1,67 +1,68 @@
-<!-- Скрипт для размещения калькулятора пергол в блоке T123 на Tilda -->
-<div id="pergola-calculator-container" style="width:100%; height:850px;">
+<!-- Код для встраивания калькулятора пергол на сайт Tilda -->
+<!-- Поместите этот код в блок T123 в качестве HTML/CSS кода -->
+
+<!-- CSS для установки 100% высоты и ширины iframe -->
+<style>
+    .pergola-calculator-container {
+        width: 100%;
+        height: 100vh;
+        min-height: 900px;
+        position: relative;
+        overflow: hidden;
+        margin: 0 auto;
+        padding: 0;
+        border: none;
+    }
+    
+    .pergola-calculator-frame {
+        width: 100%;
+        height: 100%;
+        border: none;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+    
+    @media (max-width: 768px) {
+        .pergola-calculator-container {
+            height: 120vh;
+            min-height: 1200px;
+        }
+    }
+</style>
+
+<!-- Контейнер и iframe для калькулятора -->
+<div class="pergola-calculator-container">
     <iframe 
-        id="pergola-calculator-frame" 
-        src="https://YOUR-REPLIT-URL.replit.app" 
-        style="width:100%; height:100%; border:none; overflow:hidden;" 
-        allow="fullscreen"
-        scrolling="yes">
-    </iframe>
+        class="pergola-calculator-frame"
+        src="https://pergola-calculator.replit.app" 
+        title="Калькулятор стоимости пергол"
+        allow="clipboard-read; clipboard-write"
+        loading="lazy"
+    ></iframe>
 </div>
 
+<!-- JavaScript для обработки сообщений от iframe -->
 <script>
-    // Адаптивная высота iframe для разных устройств
-    document.addEventListener('DOMContentLoaded', function() {
-        function adjustIframeHeight() {
-            var iframe = document.getElementById('pergola-calculator-frame');
-            var container = document.getElementById('pergola-calculator-container');
-            
-            // Определяем высоту на основе ширины экрана
-            if (window.innerWidth < 768) {
-                // Мобильные устройства
-                container.style.height = '1100px';
-            } else if (window.innerWidth < 992) {
-                // Планшеты
-                container.style.height = '950px';
-            } else {
-                // Настольные компьютеры
-                container.style.height = '850px';
-            }
-        }
-        
-        // Вызываем функцию при загрузке и при изменении размера экрана
-        adjustIframeHeight();
-        window.addEventListener('resize', adjustIframeHeight);
-    });
-    
-    // Обеспечение передачи сообщений между iframe и родительской страницей
     window.addEventListener('message', function(event) {
-        // Убедитесь, что сообщения приходят только от вашего приложения
-        if (event.origin !== 'https://YOUR-REPLIT-URL.replit.app') return;
-        
-        // Обработка сообщений от калькулятора
-        // Например, прокрутка к результатам или изменение высоты
-        if (event.data === 'scroll_to_results') {
-            var iframe = document.getElementById('pergola-calculator-frame');
-            iframe.contentWindow.postMessage('scroll_to_results', '*');
-        }
-        
-        // Можно добавить другие типы сообщений при необходимости
-        if (event.data.type === 'resize') {
-            document.getElementById('pergola-calculator-container').style.height = event.data.height + 'px';
+        // Проверяем, что источник сообщения - наш калькулятор
+        if (event.origin === 'https://pergola-calculator.replit.app') {
+            // Если отправлены данные о высоте
+            if (event.data && event.data.height) {
+                // Устанавливаем высоту iframe динамически
+                var iframe = document.querySelector('.pergola-calculator-frame');
+                iframe.style.height = event.data.height + 'px';
+                
+                // Устанавливаем высоту контейнера
+                var container = document.querySelector('.pergola-calculator-container');
+                container.style.height = event.data.height + 'px';
+            }
+            
+            // Если отправлены данные о расчете (можно использовать для отслеживания)
+            if (event.data && event.data.calculation) {
+                // Тут можно добавить код для отслеживания (например, отправку в GTM)
+                console.log('Calculation completed:', event.data.calculation);
+            }
         }
     });
 </script>
-
-<!-- ИНСТРУКЦИИ ПО УСТАНОВКЕ:
-
-1. Создайте блок HTML-кода (T123) на Tilda
-2. Замените "YOUR-REPLIT-URL.replit.app" на фактический URL вашего приложения Replit
-3. Вставьте этот код в блок T123
-4. Сохраните и опубликуйте изменения на Tilda
-
-Примечание: Если нужно, можно настроить стили контейнера для лучшей интеграции с дизайном Tilda.
-Например, добавить отступы: 
-style="width:100%; height:850px; padding: 20px 0;"
-
--->

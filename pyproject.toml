@@ -1,14 +1,27 @@
-[project]
-name = "repl-nix-workspace"
-version = "0.1.0"
-description = "Add your description here"
-requires-python = ">=3.11"
-dependencies = [
-    "beautifulsoup4>=4.13.3",
-    "fpdf>=1.7.2",
-    "pandas>=2.2.3",
-    "pillow>=11.1.0",
-    "reportlab>=4.3.1",
-    "streamlit>=1.44.1",
-    "trafilatura>=2.0.0",
-]
+[tool.poetry]
+name = "pergola-calculator"
+version = "4.2.2"
+description = "Калькулятор стоимости пергол различных типов и конфигураций"
+authors = ["Decolife Admin"]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.12"
+streamlit = "^1.31.0"
+pandas = "^2.2.0"
+pillow = "^10.1.0"
+reportlab = "^4.0.7"
+fpdf = "^1.7.2"
+beautifulsoup4 = "^4.12.2"
+trafilatura = "^1.6.1"
+st-annotated-text = "^4.0.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.4.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"

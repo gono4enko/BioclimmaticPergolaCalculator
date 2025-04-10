@@ -2,10 +2,26 @@
 headless = true
 address = "0.0.0.0"
 port = 5000
+enableCORS = false
+enableXsrfProtection = true
+maxUploadSize = 100
+maxMessageSize = 200
 
 [theme]
-primaryColor = "#1E88E5"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F8F8F8"
-textColor = "#262730"
+primaryColor = "#0066cc"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f8f8f8"
+textColor = "#333333"
 font = "sans serif"
+
+[logger]
+level = "info"
+
+[browser]
+gatherUsageStats = false
+serverAddress = "localhost"
+serverPort = 5000
+
+[runner]
+magicEnabled = true
+fastReruns = true
