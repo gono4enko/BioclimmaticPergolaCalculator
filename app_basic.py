@@ -1184,9 +1184,15 @@ def render_results(results):
     # Получаем информацию о ламелях
     lamella_info = LAMELLA_TYPES.get(results["options"]["lamella_type"], results["options"]["lamella_type"])
     lamellas_count = results["debug"].get("lamellas_count", 0)
-    lamellas_info = f" с {lamella_info}"
-    if lamellas_count > 0 and pergola_type in ["B500NEW", "B700NEW"]:
-        lamellas_info += f", {lamellas_count} ламелей"
+    lamellas_info = ""
+    
+    # Формируем описание ламелей для таблицы стоимости
+    if pergola_type in ["B500NEW", "B700NEW"]:
+        lamellas_info = f". {lamella_info}"
+        if lamellas_count > 0:
+            lamellas_info += f", Количество ламелей - {lamellas_count} шт."
+    elif pergola_type == "B600":
+        lamellas_info = f". {lamella_info}"
     
     # Функция для форматирования цены в бухгалтерском стиле
     def format_price(price):
@@ -1207,7 +1213,7 @@ def render_results(results):
     
     # Базовая стоимость перголы - всегда первой строкой
     rub_base_price = base_price * euro_rate
-    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} модуль)", format_price(rub_base_price)])
+    items_data.append([f"Пергола серии {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} модуль)", format_price(rub_base_price)])
     
     # Привод и автоматика - второй строкой, если есть
     if pergola_type in ["B500NEW", "B700NEW"]:
