@@ -1142,7 +1142,7 @@ def render_results(results):
     formatted_price = "{:,.0f}".format(rub_total).replace(",", " ")
     st.markdown(f"""
     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
-        <h2 style='margin-top: 0; color: #0066cc; font-size: 1.4rem; text-align: center;'>Результаты расчета</h2>
+        <h2 style='margin-top: 0; color: #0066cc; font-size: 1.8rem; text-align: center;'>Результаты расчета</h2>
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Пергола:</strong> {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м
         </p>
@@ -1160,7 +1160,7 @@ def render_results(results):
     
     # Отображаем спецификацию перголы
     if "specification" in results:
-        st.markdown("<h3 style='font-size: 1.4rem; color: #0066cc; margin-top: 0; margin-bottom: 10px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 1.8rem; color: #0066cc; margin-top: 0; margin-bottom: 10px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
         
         # Создаем таблицу спецификации
         spec_data = []
@@ -1200,7 +1200,7 @@ def render_results(results):
         """, unsafe_allow_html=True)
     
     # Отображаем таблицу стоимости
-    st.markdown("<h3 style='font-size: 1.4rem; color: #0066cc; margin-top: 15px; margin-bottom: 10px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 1.8rem; color: #0066cc; margin-top: 15px; margin-bottom: 10px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
     
     # Создаем таблицу стоимости
     items_data = []
@@ -1477,13 +1477,13 @@ def display_formatted_description(description_text):
             width: 100%;
         }
         .description-container h3 {
-            font-size: 1.3rem;
+            font-size: 1.8rem;
             margin-top: 20px;
             margin-bottom: 15px;
             color: #333;
         }
         .description-container h4 {
-            font-size: 1.1rem;
+            font-size: 1.5rem;
             margin-top: 15px;
             margin-bottom: 10px;
             color: #444;
@@ -1791,7 +1791,7 @@ def main():
     """, unsafe_allow_html=True)
     
     # Заголовок калькулятора - крупный и четкий
-    st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 1.8rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 2.2rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
     # Получаем размеры перголы
