@@ -1142,7 +1142,7 @@ def render_results(results):
     formatted_price = "{:,.0f}".format(rub_total).replace(",", " ")
     st.markdown(f"""
     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
-        <h2 style='margin-top: 0; color: #0066cc; font-size: 1.8rem; text-align: center;'>Результаты расчета</h2>
+        <h2 style='margin-top: 0; color: #0066cc; font-size: 2.2rem; font-weight: 600; text-align: center;'>Результаты расчета</h2>
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Пергола:</strong> {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м
         </p>
@@ -1160,7 +1160,7 @@ def render_results(results):
     
     # Отображаем спецификацию перголы
     if "specification" in results:
-        st.markdown("<h3 style='font-size: 1.8rem; color: #0066cc; margin-top: 0; margin-bottom: 10px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 0; margin-bottom: 15px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
         
         # Создаем таблицу спецификации
         spec_data = []
@@ -1510,16 +1510,18 @@ def display_formatted_description(description_text):
             width: 100%;
         }
         .description-container h3 {
+            font-size: 2.2rem;
+            margin-top: 25px;
+            margin-bottom: 20px;
+            color: #0066cc;
+            font-weight: 600;
+        }
+        .description-container h4 {
             font-size: 1.8rem;
             margin-top: 20px;
             margin-bottom: 15px;
-            color: #333;
-        }
-        .description-container h4 {
-            font-size: 1.5rem;
-            margin-top: 15px;
-            margin-bottom: 10px;
-            color: #444;
+            color: #0066cc;
+            font-weight: 500;
         }
         .description-container p {
             margin-bottom: 10px;
@@ -1769,12 +1771,12 @@ def main():
     
     /* Заголовки секций */
     .section-header {
-        font-size: 1.2rem;
-        font-weight: 500;
-        color: #333;
-        margin-bottom: 10px;
-        padding-bottom: 5px;
-        border-bottom: 1px solid #eee;
+        font-size: 2.0rem;
+        font-weight: 600;
+        color: #0066cc;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e0e0e0;
     }
     
     /* Таблицы */
