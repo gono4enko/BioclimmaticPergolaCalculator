@@ -1286,7 +1286,7 @@ def render_results(results):
         if i == len(items_data) - 1:
             html_table += '<tr style="background-color:#e0f0ff;">'
             html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:10px 15px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; color:#0066cc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
+            html_table += f'<td style="text-align:right; padding:10px 15px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:clamp(0.9rem, 5vw, 1.2rem); color:#0066cc; white-space:normal; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
             html_table += '</tr>'
         else:
             html_table += '<tr>'
@@ -2072,6 +2072,13 @@ def main():
         td:first-child {
             font-size: 0.85rem !important; /* Уменьшаем шрифт в первой колонке */
             line-height: 1.2 !important; /* Компактнее строки */
+        }
+        
+        /* Специальные стили для строки "Итого" на мобильных устройствах */
+        tr[style*="background-color:#e0f0ff"] td:last-child {
+            font-size: 0.9rem !important; /* Еще меньше шрифт для итоговой суммы */
+            word-break: break-word !important; /* Разрешаем разрыв слов в любом месте */
+            padding-right: 5px !important; /* Уменьшаем отступ справа */
         }
         
         /* Уменьшаем размер шрифта в элементах форм */
