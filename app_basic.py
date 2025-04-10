@@ -754,13 +754,13 @@ def perform_calculation(dimensions, options):
         lamella_info = ""
         if pergola_type in ["B500NEW", "B700NEW"]:
             lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type)
-            lamellas_count_text = f", {lamellas_count} ламелей" if 'lamellas_count' in locals() else ""
+            lamellas_count_text = f", Количество ламелей - {lamellas_count} шт." if 'lamellas_count' in locals() else ""
         else:
             lamellas_count_text = ""
                 
         # Основная пергола
         specification.append({
-            "name": f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м с {lamella_info}{lamellas_count_text}",
+            "name": f"Пергола серии {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м. {lamella_info}{lamellas_count_text}",
             "count": f"{modules} модуль",
             "price": ""
         })
