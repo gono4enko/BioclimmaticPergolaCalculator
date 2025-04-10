@@ -2015,18 +2015,20 @@ def main():
             padding: 0.25rem !important;
         }
         
-        /* Уменьшаем отступы на мобильных */
+        /* Устанавливаем нормальные отступы на мобильных */
         div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
         div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect,
         div.stMarkdown h2, div.stMarkdown p, div.stMarkdown hr {
-            width: 98% !important;
-            padding-left: 2px !important;
-            padding-right: 2px !important;
+            width: 95% !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+            margin-top: 3px !important;
+            margin-bottom: 3px !important;
         }
         
         .stButton {
-            padding-left: 2px !important;
-            padding-right: 2px !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
         }
         
         /* Убираем горизонтальный скролл на мобильных */
