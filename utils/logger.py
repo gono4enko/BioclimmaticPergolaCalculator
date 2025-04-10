@@ -1,55 +1,51 @@
 """
-Модуль для настройки логирования
+Модуль для настройки логирования в приложении
 """
 import os
-import json
 import logging
 import datetime
 
-# Форматтер для логов
-LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+# Создаем директорию для логов, если она не существует
+os.makedirs('logs', exist_ok=True)
 
-# Путь к директории логов
-LOG_DIR = 'logs'
-
-def setup_logger(log_file=None):
+def setup_logger(name=None, level=logging.INFO):
     """
-    Настраивает логирование для приложения
+    Настраивает логгер с указанным именем и уровнем логирования
     
     Args:
-        log_file (str, optional): Путь к файлу лога. По умолчанию None.
+        name (str, optional): Имя логгера
+        level (int, optional): Уровень логирования
         
     Returns:
         logging.Logger: Настроенный логгер
     """
-    # Создаем директорию для логов, если она не существует
-    if not os.path.exists(LOG_DIR):
-        os.makedirs(LOG_DIR)
+    # Если имя не указано, используем корневой логгер
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
     
-    # Если файл лога не указан, создаем файл с датой и временем
-    if log_file is None:
-        now = datetime.datetime.now()
-        log_file = os.path.join(LOG_DIR, f'calculator_{now.strftime("%Y%m%d_%H%M%S")}.log')
+    # Проверяем, есть ли уже обработчики у этого логгера
+    if not logger.handlers:
+        # Создаем обработчик для вывода в файл
+        log_file = f"logs/{datetime.datetime.now().strftime('%Y-%m-%d')}.log"
+        file_handler = logging.FileHandler(log_file, encoding='utf-8')
+        
+        # Создаем форматтер для логов
+        formatter = logging.Formatter(
+            '%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        
+        # Назначаем форматтер обработчику
+        file_handler.setFormatter(formatter)
+        
+        # Добавляем обработчик к логгеру
+        logger.addHandler(file_handler)
+        
+        # Также добавим обработчик для вывода в консоль
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
     
-    # Настраиваем корневой логгер
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    
-    # Очищаем существующие обработчики
-    for handler in logger.handlers[:]:
-        logger.removeHandler(handler)
-    
-    # Добавляем обработчик для вывода в файл
-    file_handler = logging.FileHandler(log_file, encoding='utf-8')
-    file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
-    logger.addHandler(file_handler)
-    
-    # Добавляем обработчик для вывода в консоль
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(logging.Formatter(LOG_FORMAT))
-    logger.addHandler(console_handler)
-    
-    logger.info(f"Логирование настроено в файл: {log_file}")
     return logger
 
 def log_user_action(action, details=None):
@@ -57,46 +53,35 @@ def log_user_action(action, details=None):
     Логирует действие пользователя
     
     Args:
-        action (str): Описание действия
-        details (dict, optional): Детали действия. По умолчанию None.
+        action (str): Название действия
+        details (dict, optional): Дополнительные детали о действии
     """
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger('user_actions')
     
     if details:
-        try:
-            details_str = json.dumps(details, ensure_ascii=False)
-            logger.info(f"Действие пользователя: {action}, детали: {details_str}")
-        except Exception as e:
-            logger.warning(f"Не удалось сериализовать детали действия: {str(e)}")
-            logger.info(f"Действие пользователя: {action}")
+        logger.info(f"USER ACTION: {action} - {details}")
     else:
-        logger.info(f"Действие пользователя: {action}")
+        logger.info(f"USER ACTION: {action}")
 
-def log_calculation(dimensions, options, result=None, error=None):
+def log_calculation(dimensions, options, results):
     """
-    Логирует процесс расчета
+    Логирует расчет стоимости перголы
     
     Args:
         dimensions (dict): Размеры перголы
-        options (dict): Выбранные опции
-        result (dict, optional): Результат расчета. По умолчанию None.
-        error (str, optional): Сообщение об ошибке. По умолчанию None.
+        options (dict): Опции перголы
+        results (dict): Результаты расчета
     """
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger('calculations')
     
-    try:
-        # Логируем входные данные
-        dimensions_str = json.dumps(dimensions, ensure_ascii=False)
-        options_str = json.dumps(options, ensure_ascii=False)
-        
-        logger.info(f"Расчет стоимости перголы, размеры: {dimensions_str}, опции: {options_str}")
-        
-        # Логируем результат или ошибку
-        if error:
-            logger.error(f"Ошибка расчета: {error}")
-        elif result:
-            result_str = json.dumps(result, ensure_ascii=False)
-            logger.info(f"Результат расчета: {result_str}")
-        
-    except Exception as e:
-        logger.warning(f"Не удалось записать лог расчета: {str(e)}")
+    # Краткий результат для лога
+    if results.get('success', False):
+        price_eur = results.get('total_price_eur', 0)
+        price_rub = results.get('total_price_rub', 0)
+        logger.info(f"CALCULATION: {dimensions} + {options} = {price_eur}€ / {price_rub}₽")
+    else:
+        error = results.get('error_message', 'Unknown error')
+        logger.error(f"CALCULATION FAILED: {dimensions} + {options} - {error}")
+
+# Настройка корневого логгера при импорте модуля
+root_logger = setup_logger()

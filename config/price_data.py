@@ -3,165 +3,10 @@
 
 Этот файл содержит данные о ценах из официальных прайс-листов для пергол B500NEW, B700NEW и B600.
 """
+import logging
 
-# Прайс-лист для B500NEW с ламелями 200 мм (B500-20)
-B500_20_PRICES = {
-    # Ширина (м) -> Вынос (м) -> Цена (€)
-    3.0: {
-        2.45: 6245,
-        2.85: 6866,
-        3.25: 7487,
-        3.65: 8108,
-        4.05: 8729,
-        4.45: 9350,
-        4.85: 9971,
-        5.25: 10592,
-        5.65: 11213,
-        6.05: 11834,
-        6.45: 12455,
-        6.85: 13076,
-        7.25: 13697,
-    },
-    3.5: {
-        2.45: 6810,
-    },
-    4.0: {
-        2.45: 7375,
-    },
-    4.5: {
-        2.45: 7940,
-    },
-    # Можно добавить больше данных из прайса по мере необходимости
-}
-
-# Прайс-лист для B500NEW с ламелями 250 мм (B500-25)
-B500_25_PRICES = {
-    # Ширина (м) -> Вынос (м) -> Цена (€)
-    2.5: {
-        2.5: 5431,
-    },
-    3.0: {
-        2.5: 5945,
-        3.0: 6638,
-        3.5: 7330,
-        4.0: 8022,
-        4.5: 8714,
-        5.0: 9406,
-    },
-    3.5: {
-        2.5: 6460,
-    },
-    4.0: {
-        2.5: 6974,
-    },
-    4.5: {
-        2.5: 7488,
-    },
-    # Можно добавить больше данных из прайса по мере необходимости
-}
-
-# Прайс-лист для B700NEW с ламелями 200 мм (B700-20)
-B700_20_PRICES = {
-    # Ширина (м) -> Вынос (м) -> Цена (€)
-    3.0: {
-        2.45: 6878,
-        2.85: 7529,
-        3.25: 8179,
-        3.65: 8830,
-        4.05: 9480,
-        4.45: 10130,
-        4.85: 10781,
-        5.25: 11431,
-        5.65: 12082,
-        6.05: 12732,
-        6.45: 13382,
-        6.85: 14033,
-        7.25: 15276,
-    },
-    3.5: {
-        2.45: 7451,
-    },
-    4.0: {
-        2.45: 8023,
-    },
-    4.5: {
-        2.45: 8596,
-    },
-    # Модули 2 и 3 можно добавить из прайса по мере необходимости
-}
-
-# Прайс-лист для B700NEW с ламелями 250 мм (B700-25)
-B700_25_PRICES = {
-    # Ширина (м) -> Вынос (м) -> Цена (€)
-    2.5: {
-        2.5: 6048,
-    },
-    3.0: {
-        2.5: 6570,
-        3.0: 7297,
-        3.5: 8023,
-        4.0: 8750,
-        4.5: 9476,
-        5.0: 10203,
-    },
-    3.5: {
-        2.5: 7092,
-    },
-    4.0: {
-        2.5: 7613,
-    },
-    4.5: {
-        2.5: 8135,
-    },
-    # Можно добавить больше данных из прайса по мере необходимости
-}
-
-# Прайс-лист для B600 PIR
-B600_PIR_PRICES = {
-    # Ширина (м) -> Вынос (м) -> Цена (€)
-    2.5: {
-        2.5: 4500,
-        3.0: 4678,
-        3.5: 5230,
-        4.0: 5409,
-        4.5: 5960,
-        5.0: 6139,
-        5.5: 6690,
-        6.0: 6869,
-        6.5: 7420,
-        7.0: 8164,
-        7.5: 8715,
-        8.0: 8894,
-    },
-    3.0: {
-        2.5: 4866,
-        3.0: 5045,
-        3.5: 5659,
-        4.0: 5837,
-        4.5: 6451,
-        5.0: 6630,
-        5.5: 7244,
-        6.0: 7423,
-        6.5: 8036,
-        7.0: 8780,
-        7.5: 9394,
-        8.0: 9573,
-    },
-    3.5: {
-        2.5: 5232,
-        3.0: 5411,
-        3.5: 6087,
-    },
-    4.0: {
-        2.5: 5599,
-        3.0: 5777,
-    },
-    4.5: {
-        2.5: 5965,
-        3.0: 6144,
-    },
-    # Модули 2 и 3 можно добавить из прайса по мере необходимости
-}
+# Настройка логгера
+logger = logging.getLogger(__name__)
 
 # Соответствие типов пергол и файлов с ценами
 PERGOLA_PRICE_FILES = {
@@ -193,64 +38,70 @@ SOMFY_PRICES = {
     "M3": 900,    # Тройной привод для очень больших пергол
 }
 
-def get_pergola_price(pergola_type, lamella_type, width_m, length_m):
+# Граничные условия для использования тандем-привода Bansbach
+BANSBACH_TANDEM_CONDITIONS = {
+    "min_width": 7.0,  # Минимальная ширина в метрах
+    "min_length": 5.0  # Минимальный вынос в метрах
+}
+
+# Цены на светодиодную подсветку
+LIGHTING_PRICES = {
+    "LED": 120,    # Цена за метр
+    "RGB": 180,    # Цена за метр для RGB-подсветки
+    "PSU": 50      # Стоимость блока питания
+}
+
+# Дополнительные опции
+ADDITIONAL_OPTIONS_PRICES = {
+    "gutter_insert": 40,    # Цена за метр водостока
+    "water_drain": 120,     # Цена за дренажную систему
+    "remote_control": 80,   # Цена за пульт дистанционного управления
+    "sensors": 150,         # Цена за датчики (дождь, ветер)
+    "vertical_screens": 250  # Цена за вертикальные экраны (за кв. метр)
+}
+
+# Цены на дополнительные колонны
+ADDITIONAL_COLUMNS_PRICES = {
+    "standard": 200,     # Стандартная колонна
+    "reinforced": 350,   # Усиленная колонна
+    "decorative": 450    # Декоративная колонна
+}
+
+# Пороговые значения для дополнительных колонн
+ADDITIONAL_COLUMNS_THRESHOLDS = {
+    "B500NEW": 6.0,      # Минимальная длина в метрах для B500
+    "B700NEW": 7.0,      # Минимальная длина в метрах для B700
+    "B600": 5.5          # Минимальная длина в метрах для B600
+}
+
+def get_option_price(option_name, quantity=1):
     """
-    Получает базовую цену перголы из соответствующего прайс-листа
+    Возвращает стоимость опции на основе её названия и количества
     
     Args:
-        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
-        lamella_type (str): Тип ламелей (lamella-200, lamella-250, B600-PIR)
-        width_m (float): Ширина перголы в метрах
-        length_m (float): Вынос перголы в метрах
+        option_name (str): Название опции
+        quantity (float): Количество (метры, штуки и т.д.)
         
     Returns:
-        float: Базовая цена перголы
+        float: Стоимость опции
     """
-    # Выбираем нужный прайс-лист
-    if pergola_type == "B500NEW":
-        if "200" in lamella_type:
-            price_list = B500_20_PRICES
-            base_price = 6245
-            base_width = 3.0
-            base_length = 2.45
+    try:
+        # Проверяем наличие опции в каждом из словарей с ценами
+        if option_name in LIGHTING_PRICES:
+            price = LIGHTING_PRICES[option_name] * quantity
+        elif option_name in ADDITIONAL_OPTIONS_PRICES:
+            price = ADDITIONAL_OPTIONS_PRICES[option_name] * quantity
+        elif option_name in ADDITIONAL_COLUMNS_PRICES:
+            price = ADDITIONAL_COLUMNS_PRICES[option_name] * quantity
+        elif option_name in BANSBACH_PRICES:
+            price = BANSBACH_PRICES[option_name] * quantity
+        elif option_name in SOMFY_PRICES:
+            price = SOMFY_PRICES[option_name] * quantity
         else:
-            price_list = B500_25_PRICES
-            base_price = 5431
-            base_width = 2.5
-            base_length = 2.5
-    elif pergola_type == "B700NEW":
-        if "200" in lamella_type:
-            price_list = B700_20_PRICES
-            base_price = 6878
-            base_width = 3.0
-            base_length = 2.45
-        else:
-            price_list = B700_25_PRICES
-            base_price = 6048
-            base_width = 2.5
-            base_length = 2.5
-    else:  # B600
-        price_list = B600_PIR_PRICES
-        base_price = 4500
-        base_width = 2.5
-        base_length = 2.5
-
-    # Ищем точное совпадение в прайс-листе
-    if width_m in price_list and length_m in price_list[width_m]:
-        return price_list[width_m][length_m]
-    
-    # Ищем ближайшую цену с точным значением ширины
-    if width_m in price_list:
-        # Находим ближайший больший вынос
-        closest_length = None
-        for available_length in sorted(price_list[width_m].keys()):
-            if available_length >= length_m:
-                closest_length = available_length
-                break
-        
-        if closest_length:
-            return price_list[width_m][closest_length]
-    
-    # Если точного совпадения нет, используем приближенную формулу 
-    # (площадь * базовая цена / базовая площадь)
-    return base_price * (width_m * length_m) / (base_width * base_length)
+            logger.warning(f"Неизвестная опция: {option_name}")
+            price = 0
+            
+        return price
+    except Exception as e:
+        logger.error(f"Ошибка при расчете стоимости опции {option_name}: {str(e)}")
+        return 0
