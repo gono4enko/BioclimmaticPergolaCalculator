@@ -1527,7 +1527,7 @@ def display_formatted_description(description_text):
         st.markdown("""
         <style>
         .description-container {
-            width: 95%;
+            width: 100%;
             margin: 0 auto;
             padding: 20px;
             background-color: #ffffff;
@@ -1606,8 +1606,12 @@ def display_formatted_description(description_text):
         # 5. Удаляем двойные пробелы для надежности
         formatted_text = re.sub(r'\s{2,}', ' ', formatted_text)
         
-        # 6. Обрамляем весь текст в div-контейнер для изоляции стилей
-        final_html = f'<div class="description-container">{formatted_text}</div>'
+        # 6. Обрамляем весь текст в div-контейнер для изоляции стилей и добавляем контейнер с отступами
+        final_html = f"""
+        <div style="width:95%; margin:0 auto; padding-left:25px; padding-right:25px;">
+            <div class="description-container">{formatted_text}</div>
+        </div>
+        """
         
         # Используем контейнер для изоляции стилей и предотвращения конфликтов
         container = st.container()
