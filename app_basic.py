@@ -1492,9 +1492,11 @@ def render_results(results):
     # Получаем информацию о ламелях
     lamella_info = LAMELLA_TYPES.get(results["options"]["lamella_type"], results["options"]["lamella_type"])
     lamellas_count = results["debug"].get("lamellas_count", 0)
-    lamellas_info = f" с {lamella_info}"
+    lamellas_info = f" с ламелью {lamella_info.replace('ламели ', '')}"
     if lamellas_count > 0 and pergola_type in ["B500NEW", "B700NEW"]:
-        lamellas_info += f", {lamellas_count} ламелей"
+        # Корректное склонение в зависимости от числа ламелей (четное/нечетное)
+        lamellas_suffix = "ламель" if lamellas_count % 2 != 0 else "ламелей"
+        lamellas_info += f", {lamellas_count} {lamellas_suffix}"
     
     # Функция для форматирования цены в бухгалтерском стиле
     def format_price(price):
