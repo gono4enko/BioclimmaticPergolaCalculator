@@ -264,36 +264,36 @@ def get_lamella_engineering_description(pergola_type=None):
     обеспечивая управление микроклиматом и защиту от осадков.
     </p>
     
-    <div style='margin-bottom: 15px;'>
+    <section style='margin-bottom: 15px;'>
     <strong>Характеристики ламелей 200 мм:</strong><br/>
     • Размер: 200×56 мм<br/>
     • Масса: 4,375 кг/м<br/>
     • Угол поворота: 112° для В500, угол сдвига 107° для В700<br/>
     • Материал: алюминиевый сплав 6063 с защитным анодированием<br/>
     • Толщина стенки: 3 мм
-    </div>
+    </section>
     
-    <div style='margin-bottom: 15px;'>
+    <section style='margin-bottom: 15px;'>
     <strong>Характеристики ламелей 250 мм:</strong><br/>
     • Размер: 250×53 мм для B500, 250×46 мм для B700<br/>
     • Масса: 4,684 кг/м для B500, 4,144 кг/м для B700<br/>
     • Угол поворота: 105° для В500, угол сдвига 107° для В700<br/>
     • Материал: алюминиевый сплав 6063 с защитным анодированием<br/>
     • Толщина стенки: 3 мм
-    </div>
+    </section>
     
-    <div style='margin-bottom: 15px;'>
+    <section style='margin-bottom: 15px;'>
     <strong>Преимущества новой серии ламелей:</strong><br/>
     • Улучшенная герметичность благодаря двойным уплотнителям EPDM<br/>
     • Повышенная ветровая устойчивость (до 120 км/ч)<br/>
     • Жесткость на изгиб в 2 раза выше стандартных решений<br/>
     • Бесшумная работа за счет резиновых демпферов в точках контакта
-    </div>
+    </section>
     """
 # Описание системы водоотведения для пергол
 DRAINAGE_SYSTEM_DESCRIPTION = """
 <h3 style='font-size: 1.2rem; margin-top: 30px; text-align: center;'>Интегрированный лоток-невидимка: где эстетика встречает функциональность</h3>
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <p style='margin-bottom: 10px;'><strong>Конструкция:</strong> Водосточный лоток встроен прямо в несущую балку перголы — никаких висящих желобов!</p>
 <ul style='margin-bottom: 10px; padding-left: 20px;'>
     <li><strong>2 варианта под любые нагрузки:</strong>
@@ -304,9 +304,9 @@ DRAINAGE_SYSTEM_DESCRIPTION = """
     </li>
 </ul>
 <p style='margin-bottom: 10px;'><strong>Почему это прорыв?</strong> Ребра жесткости и двойные стенки из анодированного алюминия (толщина 3 мм) делают систему в 3 раза прочнее стандартных аналогов.</p>
-</div>
+</section>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <h4 style='font-size: 1.1rem; margin-top: 20px;'>Умные колонны: вода исчезает, как по волшебству</h4>
 <p style='margin-bottom: 10px;'><strong>Технические детали:</strong></p>
 <ul style='margin-bottom: 10px; padding-left: 20px;'>
@@ -314,9 +314,9 @@ DRAINAGE_SYSTEM_DESCRIPTION = """
     <li>Скрытый дренаж: Вода уходит через внутренний канал колонны прямо в ливневку — никаких луж у основания.</li>
     <li>Абсолютная герметичность: Соединение лотка и колонны фиксируется 7 усиленными анкерами + EPDM-уплотнители (как в автомобилях премиум-класса).</li>
 </ul>
-</div>
+</section>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <h4 style='font-size: 1.1rem; margin-top: 20px;'>Преимущества, которые оценят даже скептики</h4>
 <ul style='margin-bottom: 10px; padding-left: 20px;'>
     <li><strong>«Антиливень»:</strong> Система справляется с экстремальными осадками — 50 мм/час (сравните с обычными желобами, которые переполняются уже при 20 мм/час).</li>
@@ -329,9 +329,9 @@ DRAINAGE_SYSTEM_DESCRIPTION = """
     </li>
     <li><strong>Модульность:</strong> Лотки и колонны можно наращивать бесконечно — система масштабируется под террасы, рестораны.</li>
 </ul>
-</div>
+</section>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <h4 style='font-size: 1.1rem; margin-top: 20px;'>Почему конкуренты не дотягивают?</h4>
 <table style='width: 100%; border-collapse: collapse; margin-bottom: 15px;'>
     <tr>
@@ -360,16 +360,16 @@ DRAINAGE_SYSTEM_DESCRIPTION = """
         <td style='border: 1px solid #ddd; padding: 8px;'>Висящие трубы и желоба</td>
     </tr>
 </table>
-</div>
+</section>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <h4 style='font-size: 1.1rem; margin-top: 20px;'>Для кого это?</h4>
 <ul style='margin-bottom: 10px; padding-left: 20px;'>
     <li><strong>Частные клиенты:</strong> Хотят сохранить дизайн участка без компромиссов в функциональности.</li>
     <li><strong>Бизнес:</strong> Кафе, отели, ТРЦ — где лужи у перголы = потеря репутации.</li>
     <li><strong>Архитекторы:</strong> Ищут систему, которую не придется маскировать в проектах.</li>
 </ul>
-</div>
+</section>
 
 <p style='margin-bottom: 15px; font-weight: bold;'>Водосточная система Decolife — это не «декор» и не «опция». Это обязательный стандарт для тех, кто строит на века. Выбирайте инженерию, которая не подведет в самый ответственный момент — когда над головой бушует дождь, а под ногами должно быть сухо.</p>
 """
