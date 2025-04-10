@@ -14,27 +14,27 @@ B500_DESCRIPTION = """
 Подходит для зон отдыха, террас, бассейнов.
 </p>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <strong>Ламели:</strong><br/>
 250x53 мм (NEW): Угол поворота 105°, шаг 250 мм, масса 4,684 кг/м.<br/>
 200x56 мм (NEW): Угол поворота 112°, шаг 200 мм, масса 4,375 кг/м.
-</div>
+</section>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <strong>Преимущества:</strong><br/>
 • Высокая герметичность благодаря двойному уплотнению.<br/>
 • Интегрированная дренажная система с лотком 164x260 мм.<br/>
 • Быстрый монтаж (до 4 часов на модуль).<br/>
 • LED/RGB подсветка по периметру (опция).<br/>
 • Максимальный пролет до 8 м.
-</div>
+</section>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <strong>Узлы:</strong><br/>
 • Несущая балка: Алюминиевая конструкция с двойным сливным лотком (322x260 мм).<br/>
 • Колонна: 164x164 мм, усиленная 7 анкерами для устойчивости.<br/>
 • Система вращения: Немецкий двигатель Bansbach easylift (IP65), синхронизация TANDEM для больших конструкций.
-</div>
+</section>
 """
 
 # Описание перголы B700NEW
@@ -44,25 +44,25 @@ B700_DESCRIPTION = """
 Пергола с ламелями, сдвигающимися в горизонтальной плоскости. Идеальна для больших пространств и экстремальных ветровых нагрузок.
 </p>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <strong>Ламели:</strong><br/>
 250x46 мм: Сдвиг с углом 107°, шаг 250 мм, масса 4,144 кг/м.<br/>
 200x56 мм (NEW): Сдвиг с углом 107°, шаг 200 мм, масса 4,375 кг/м.
-</div>
+</section>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <strong>Преимущества:</strong><br/>
 • Высокая ветровая устойчивость (до 50 кг/м² снеговой нагрузки).<br/>
 • Французские двигатели Somfy с защитой IP65.<br/>
 • Возможность интеграции с панорамным остеклением.
-</div>
+</section>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <strong>Узлы:</strong><br/>
 • Несущая балка: Двойной лоток 322x260 мм для отвода воды.<br/>
 • Колонна: Усиленная конструкция с дренажными отверстиями.<br/>
 • Система сдвига: Замок Roof-Lock для герметичности.
-</div>
+</section>
 """
 
 # Описание перголы B600
@@ -72,25 +72,25 @@ B600_DESCRIPTION = """
 Пергола с неподвижными сэндвич-панелями PIR. Оптимальна для северных регионов с высокими снеговыми нагрузками.
 </p>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <strong>Характеристики:</strong><br/>
 • Панели PIR: Толщина 100 мм, замок Rolf-Lock, RAL 9003/7024.<br/>
 • Максимальный пролет: До 8 м.
-</div>
+</section>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <strong>Преимущества:</strong><br/>
 • Снеговая нагрузка до 100 кг/м².<br/>
 • Термоизоляция и защита от шума.<br/>
 • Экологичность и устойчивость к УФ-излучению.
-</div>
+</section>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <strong>Узлы:</strong><br/>
 • Сэндвич-панели: Трехслойная конструкция с пенополиизоциануратом.<br/>
 • Колонна: 164x164 мм с жестким креплением.<br/>
 • Дренаж: Интегрированный лоток по периметру.
-</div>
+</section>
 """
 
 # Описание модульной системы - для всех типов пергол
@@ -228,7 +228,7 @@ def get_bioclimatic_install_description():
     обеспечивающей максимальную надежность и долговечность конструкции.
     </p>
     
-    <div style='margin-bottom: 15px;'>
+    <section style='margin-bottom: 15px;'>
     <strong>Этапы монтажа:</strong><br/>
     • Подготовка и разметка фундамента или монтажной поверхности<br/>
     • Монтаж основных колонн и боковых направляющих<br/>
@@ -236,15 +236,15 @@ def get_bioclimatic_install_description():
     • Монтаж ламелей и системы управления<br/>
     • Настройка и тестирование автоматики<br/>
     • Финальная отделка и герметизация соединений
-    </div>
+    </section>
     
-    <div style='margin-bottom: 15px;'>
+    <section style='margin-bottom: 15px;'>
     <strong>Преимущества технологии:</strong><br/>
     • Срок монтажа от 1 до 3 дней в зависимости от размера<br/>
     • Отсутствие "мокрых" процессов на участке<br/>
     • Возможность монтажа в любое время года<br/>
     • Минимальные требования к поверхности (0,5 градуса уклона)
-    </div>
+    </section>
     """
     
 def get_lamella_engineering_description(pergola_type=None):
@@ -404,16 +404,16 @@ BANSBACH_DESCRIPTION = """
 <h3 style='font-size: 1.2rem; margin-top: 30px; text-align: center;'>Bansbach: Автоматика для перголы B500 — как в Boeing, только у вас во дворе</h3>
 <p style='margin-bottom: 15px; font-style: italic; text-align: center;'>(Потому что управление крышей должно быть таким же надежным, как полет на высоте 10 000 метров)</p>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <h4 style='font-size: 1.1rem; margin-top: 20px;'>Почему Bansbach — это «ум» вашей перголы?</h4>
 <p style='margin-bottom: 10px;'><strong>Мощность авиационного уровня:</strong><br>
 Двигатели Bansbach созданы для экстремальных нагрузок — 4500 Нм крутящего момента. Это как поставить турбину Boeing 737 на вашу перголу. Закрылки (ламели) двигаются плавно даже при ветре 20 м/с.</p>
 
 <p style='margin-bottom: 10px;'><strong>Ресурс на поколения:</strong><br>
 100 000 циклов открытия/закрытия — хватит, чтобы 27 лет каждый день встречать дождь и солнце.</p>
-</div>
+</section>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <h4 style='font-size: 1.1rem; margin-top: 20px;'>Как это работает?</h4>
 <p style='margin-bottom: 10px;'><strong>Дистанционное управление:</strong><br>
 Пульт, смартфон или голосовой помощник — закрывайте крышу с дивана, из машины или с другого конца света.</p>
@@ -423,9 +423,9 @@ BANSBACH_DESCRIPTION = """
 
 <p style='margin-bottom: 10px;'><strong>Простота, которую оценит даже ребенок:</strong><br>
 Никаких ремней, тросов или ручных рычагов. Вся механика спрятана внутри балок — только гладкий алюминий и тихая работа.</p>
-</div>
+</section>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <h4 style='font-size: 1.1rem; margin-top: 20px;'>5 причин выбрать Bansbach для B500:</h4>
 <ul style='margin-bottom: 10px; padding-left: 20px;'>
     <li><strong>Сделано в Германии:</strong><br>
@@ -439,16 +439,16 @@ BANSBACH_DESCRIPTION = """
     <li><strong>Гарантия 5 лет:</strong><br>
 Потому что мы знаем: это навсегда.</li>
 </ul>
-</div>
+</section>
 
-<div style='margin-bottom: 15px;'>
+<section style='margin-bottom: 15px;'>
 <h4 style='font-size: 1.1rem; margin-top: 20px;'>Для кого?</h4>
 <ul style='margin-bottom: 10px; padding-left: 20px;'>
     <li><strong>Перфекционисты:</strong> Кто хочет, чтобы техника слушалась с первого касания.</li>
     <li><strong>Семейные дома:</strong> Когда нужно за секунду спасти пикник от внезапного дождя.</li>
     <li><strong>Бизнес:</strong> Рестораны, отели — где гость не должен ждать, пока персонал побежит закрывать крышу.</li>
 </ul>
-</div>
+</section>
 
 <p style='margin-bottom: 15px; font-weight: bold;'>Финал:<br>
 Bansbach — это не «автоматика». Это ваш личный метеоролог, инженер и охранник в одном флаконе. Немецкая надежность, которая не просит второго шанса — потому что не ошибается в первый раз.</p>
@@ -467,24 +467,24 @@ PERGOLA_DESCRIPTIONS["SOMFY"] = """
 <h3 style='text-align: center; margin-bottom: 20px; font-size: 1.4rem;'>Somfy для перголы B700: французская элегантность, которая работает вместо вас</h3>
 <p style='text-align: center; margin-bottom: 15px; font-style: italic;'>(Потому что управление перголой должно быть таким же изысканным, как бокал бордо)</p>
 
-<div style='margin-bottom: 20px;'>
+<section style='margin-bottom: 20px;'>
 <h4 style='font-size: 1.1rem;'>Somfy: автоматика, которая не знает слова «сломается»</h4>
 <ul style='margin-bottom: 10px; padding-left: 20px;'>
     <li><strong>Мощь в простоте:</strong> Двигатели Somfy — это 160 Нм крутящего момента в компактном корпусе. Закрывают ламели даже под напором шквального ветра, словно Шарль де Голль ведет их в бой.</li>
     <li><strong>Ресурс «на века»:</strong> 50 000 циклов — хватит, чтобы 30 лет встречать рассветы и дожди без единой поломки.</li>
 </ul>
-</div>
+</section>
 
-<div style='margin-bottom: 20px;'>
+<section style='margin-bottom: 20px;'>
 <h4 style='font-size: 1.1rem;'>Как это делает вашу жизнь идеальной?</h4>
 <ol style='margin-bottom: 10px; padding-left: 20px;'>
     <li><strong>Дистанционное управление — как волшебная палочка:</strong> Пульт, приложение в смартфоне или интеграция с умным домом. Закройте перголу, не вставая с шезлонга — даже если вы в Париже, а она — в вашем саду.</li>
     <li><strong>Умнее самой природы:</strong> Климатические датчики следят за погодой 24/7. Первые капли дождя? Система Somfy закрывает ламели за 15 секунд. Ваши подушки, книги и бокалы остаются сухими — вы даже не успеете сказать «Oh là là!».</li>
     <li><strong>Простота, которой позавидует даже багет:</strong> Никаких сложных механизмов. Всё спрятано внутри балок — только чистые линии и тихая работа (шум — 40 дБ, как шепот влюбленных под Эйфелевой башней).</li>
 </ol>
-</div>
+</section>
 
-<div style='margin-bottom: 20px;'>
+<section style='margin-bottom: 20px;'>
 <h4 style='font-size: 1.1rem;'>5 причин, почему Somfy — эталон для B700:</h4>
 <ol style='margin-bottom: 10px; padding-left: 20px;'>
     <li><strong>Сделано во Франции:</strong> Точность, проверенная десятилетиями. Технологии, которые покорили Европу — теперь и в вашем дворе.</li>
@@ -493,16 +493,16 @@ PERGOLA_DESCRIPTIONS["SOMFY"] = """
     <li><strong>Гарантия 10 лет:</strong> Потому что французы не признают компромиссов.</li>
     <li><strong>Эстетика «невидимки»:</strong> Никаких коробок или проводов — только лаконичный дизайн, достойный парижских бутиков.</li>
 </ol>
-</div>
+</section>
 
-<div style='margin-bottom: 20px;'>
+<section style='margin-bottom: 20px;'>
 <h4 style='font-size: 1.1rem;'>Для кого?</h4>
 <ul style='margin-bottom: 10px; padding-left: 20px;'>
     <li><strong>Ценители роскоши:</strong> Кто хочет, чтобы технологии служили незаметно, но безупречно.</li>
     <li><strong>Владельцы ресторанов:</strong> Гости не должны видеть, как персонал бежит закрывать перголу — она сделает это сама.</li>
     <li><strong>Семьи с детьми:</strong> Когда нужно за секунды спасти пикник от внезапного ливня, пока дети смеются, а не плачут.</li>
 </ul>
-</div>
+</section>
 
 <p style='margin-bottom: 15px; font-weight: bold;'>Финал: Somfy — это не просто автоматика. Это ваш личный французский дворецкий, который предупредит капризы погоды раньше, чем вы о них подумаете. Выбирайте элегантность, которая не просит второго шанса — потому что не ошибется в первый раз.</p>
 
