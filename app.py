@@ -1110,6 +1110,9 @@ def render_results(results):
     # Создаем якорь для скролла с ID 
     st.markdown('<div id="results" name="results"></div>', unsafe_allow_html=True)
     
+    # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
+    send_page_height_to_parent()
+    
     if "error" in results:
         st.error(f"Ошибка при расчете: {results['error']}")
         return
@@ -1647,8 +1650,9 @@ def display_formatted_description(description_text):
         formatted_text = re.sub(r'\s{2,}', ' ', formatted_text)
         
         # 6. Обрамляем весь текст в div-контейнер для изоляции стилей и добавляем контейнер с отступами
+        # Уменьшаем отступ справа для более компактного вида
         final_html = f"""
-        <div style="width:98%; margin:0 auto; padding-left:15px; padding-right:15px;">
+        <div style="width:98%; margin:0 auto; padding-left:15px; padding-right:5px;">
             <div class="description-container">{formatted_text}</div>
         </div>
         """
@@ -1699,6 +1703,105 @@ def display_image_with_padding(image_path, caption=None, padding_percent=5):
         # Отображаем изображение
         # Вместо параметра use_container_width=True используем width=None для занятия всей ширины
         st.image(image_path, caption=caption, width=None)
+
+def send_page_height_to_parent():
+    """
+    Добавляет JavaScript для отправки высоты страницы родительскому окну.
+    Используется для адаптивного изменения высоты iframe после расчета.
+    """
+    st.markdown("""
+    <script>
+        // Функция для отправки высоты страницы родительскому окну
+        function sendPageHeightToParent() {
+            try {
+                // Получаем высоту всего документа
+                const pageHeight = Math.max(
+                    document.body.scrollHeight,
+                    document.body.offsetHeight,
+                    document.documentElement.clientHeight,
+                    document.documentElement.scrollHeight,
+                    document.documentElement.offsetHeight
+                );
+                
+                // Добавляем немного отступа для надежности
+                const heightWithPadding = pageHeight + 100;
+                
+                // Отправляем сообщение родительскому окну
+                window.parent.postMessage({
+                    height: heightWithPadding,
+                    needsScroll: true,
+                    timestamp: Date.now()
+                }, '*');  // '*' - отправляем всем возможным родителям для надежности
+                
+                console.log('Sent page height to parent:', heightWithPadding);
+                
+                // Повторяем отправку через короткое время, чтобы убедиться, что высота корректна
+                setTimeout(function() {
+                    const updatedHeight = Math.max(
+                        document.body.scrollHeight,
+                        document.body.offsetHeight,
+                        document.documentElement.clientHeight,
+                        document.documentElement.scrollHeight,
+                        document.documentElement.offsetHeight
+                    ) + 100;
+                    
+                    window.parent.postMessage({
+                        height: updatedHeight,
+                        needsScroll: true,
+                        timestamp: Date.now() + 1
+                    }, '*');
+                    
+                    console.log('Updated page height sent to parent:', updatedHeight);
+                }, 500);
+                
+                // Еще одна отправка через 1 секунду для надежности
+                setTimeout(function() {
+                    const finalHeight = Math.max(
+                        document.body.scrollHeight,
+                        document.body.offsetHeight,
+                        document.documentElement.clientHeight,
+                        document.documentElement.scrollHeight,
+                        document.documentElement.offsetHeight
+                    ) + 150;
+                    
+                    window.parent.postMessage({
+                        height: finalHeight,
+                        needsScroll: true,
+                        timestamp: Date.now() + 2
+                    }, '*');
+                    
+                    console.log('Final page height sent to parent:', finalHeight);
+                }, 1000);
+            } catch(e) {
+                console.error('Error sending page height to parent:', e);
+            }
+        }
+        
+        // Прослушиваем сообщения от родительского окна
+        window.addEventListener('message', function(event) {
+            // Проверяем, запрашивает ли родитель высоту страницы
+            if (event.data && event.data.type === 'REQUEST_HEIGHT') {
+                sendPageHeightToParent();
+            }
+        });
+        
+        // Отправляем высоту при загрузке страницы
+        window.addEventListener('load', function() {
+            setTimeout(sendPageHeightToParent, 500);
+        });
+        
+        // Отправляем высоту при изменении размера окна
+        window.addEventListener('resize', function() {
+            setTimeout(sendPageHeightToParent, 200);
+        });
+        
+        // Выполняем отправку сразу после загрузки скрипта
+        setTimeout(sendPageHeightToParent, 300);
+        
+        // Повторно отправляем высоту через 2 секунды для надежности
+        setTimeout(sendPageHeightToParent, 2000);
+    </script>
+    """, unsafe_allow_html=True)
 
 def scroll_to_results():
     """
