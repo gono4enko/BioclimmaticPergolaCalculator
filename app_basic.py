@@ -1470,6 +1470,25 @@ def display_formatted_description(description_text):
             border-radius: 5px;
             margin-bottom: 20px;
         }
+        .description-container section {
+            margin-bottom: 15px;
+        }
+        .description-container h3 {
+            font-size: 1.2rem;
+            margin-top: 30px;
+            text-align: center;
+        }
+        .description-container h4 {
+            font-size: 1.1rem;
+            margin-top: 20px;
+        }
+        .description-container ul, .description-container ol {
+            margin-bottom: 10px;
+            padding-left: 20px;
+        }
+        .description-container p {
+            margin-bottom: 15px;
+        }
         </style>
         """, unsafe_allow_html=True)
         st.session_state.description_style_added = True
