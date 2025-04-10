@@ -135,6 +135,25 @@ PERGOLA_IMAGES = {
     ],
     "MODULAR": [
         "attached_assets/Модульная система пергол.jpeg"
+    ],
+    "DRAINAGE": [
+        "attached_assets/Система водоотведения.jpeg",
+        "attached_assets/Снимок экрана 2025-04-09 в 18.55.21.png"
+    ],
+    "INSTALL_SYSTEM": [
+        "attached_assets/install_design_system.png",
+        "attached_assets/Instal and design Sistem.png"
+    ],
+    "LAMELLA_ENGINEERING": [
+        "attached_assets/aluminum_slats.png",
+        "attached_assets/aluminum slats.png"
+    ],
+    "BANSBACH": [
+        "attached_assets/Lin gate.jpg",
+        "attached_assets/Линейный привод.jpeg"
+    ],
+    "SOMFY": [
+        "attached_assets/Somfy Pergola.jpeg"
     ]
 }
 
@@ -145,7 +164,10 @@ PERGOLA_IMAGE_CAPTIONS = {
     "B600": "Пергола B600 с PIR-панелями",
     "MODULAR": "Принцип модульной системы пергол",
     "INSTALL_SYSTEM": "Система установки и проектирования пергол",
-    "LAMELLA_ENGINEERING": "Технические характеристики ламелей"
+    "LAMELLA_ENGINEERING": "Технические характеристики ламелей",
+    "DRAINAGE": "Система водоотведения Decolife", 
+    "BANSBACH": "Линейный привод Bansbach для пергол В500",
+    "SOMFY": "Автоматика Somfy для пергол B700"
 }
 
 def get_pergola_description(pergola_type):
