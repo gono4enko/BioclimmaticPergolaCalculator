@@ -1677,6 +1677,40 @@ def scroll_to_results():
     </script>
     """, unsafe_allow_html=True)
 
+def add_iframe_resizer():
+    """
+    Добавляет JavaScript для отправки высоты страницы родительскому окну
+    при использовании приложения внутри iframe на сайте Тильда
+    """
+    st.markdown("""
+    <script>
+        // Функция для отправки высоты iframe родительскому окну
+        function sendHeightToParent() {
+            const height = document.body.scrollHeight;
+            window.parent.postMessage(height, "*");
+            console.log('Sent height to parent:', height);
+        }
+
+        // Отправляем высоту при загрузке
+        window.addEventListener("load", sendHeightToParent);
+        
+        // Отправляем высоту при изменении размера окна
+        window.addEventListener("resize", sendHeightToParent);
+        
+        // Отправляем высоту с интервалом (для обновлений контента)
+        setInterval(sendHeightToParent, 1000);
+        
+        // Отправляем высоту при изменении DOM
+        const observer = new MutationObserver(sendHeightToParent);
+        observer.observe(document.body, { 
+            childList: true, 
+            subtree: true,
+            attributes: true,
+            characterData: true 
+        });
+    </script>
+    """, unsafe_allow_html=True)
+
 def main():
     """Основная функция приложения"""
     # Настраиваем страницу
@@ -1864,7 +1898,10 @@ def main():
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.3.0</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.3.1</div>", unsafe_allow_html=True)
+    
+    # Добавляем JavaScript для отправки высоты iframe родительскому окну (для Тильды)
+    add_iframe_resizer()
 
 if __name__ == "__main__":
     # Создаем директории, если они не существуют

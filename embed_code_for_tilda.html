@@ -1,68 +1,43 @@
 <!-- Код для встраивания калькулятора пергол на сайт Tilda -->
 <!-- Поместите этот код в блок T123 в качестве HTML/CSS кода -->
 
-<!-- CSS для установки 100% высоты и ширины iframe -->
-<style>
-    .pergola-calculator-container {
-        width: 100%;
-        height: 100vh;
-        min-height: 900px;
-        position: relative;
-        overflow: hidden;
-        margin: 0 auto;
-        padding: 0;
-        border: none;
-    }
-    
-    .pergola-calculator-frame {
-        width: 100%;
-        height: 100%;
-        border: none;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-    }
-    
-    @media (max-width: 768px) {
-        .pergola-calculator-container {
-            height: 120vh;
-            min-height: 1200px;
-        }
-    }
-</style>
+<!-- Версия 2.0 - Улучшенная прокрутка с автоматической адаптацией высоты -->
 
 <!-- Контейнер и iframe для калькулятора -->
-<div class="pergola-calculator-container">
-    <iframe 
-        class="pergola-calculator-frame"
-        src="https://pergola-calculator.replit.app" 
-        title="Калькулятор стоимости пергол"
-        allow="clipboard-read; clipboard-write"
-        loading="lazy"
-    ></iframe>
-</div>
+<iframe 
+    id="biocalc" 
+    src="https://bioclimmatic-pergola-calculator-gono4enko.replit.app/" 
+    width="100%" 
+    style="border:none;" 
+    scrolling="no"
+    title="Калькулятор стоимости пергол"
+    allow="clipboard-read; clipboard-write"
+></iframe>
 
-<!-- JavaScript для обработки сообщений от iframe -->
+<!-- JavaScript для автоматической подстройки высоты iframe -->
 <script>
-    window.addEventListener('message', function(event) {
-        // Проверяем, что источник сообщения - наш калькулятор
-        if (event.origin === 'https://pergola-calculator.replit.app') {
-            // Если отправлены данные о высоте
-            if (event.data && event.data.height) {
-                // Устанавливаем высоту iframe динамически
-                var iframe = document.querySelector('.pergola-calculator-frame');
-                iframe.style.height = event.data.height + 'px';
-                
-                // Устанавливаем высоту контейнера
-                var container = document.querySelector('.pergola-calculator-container');
-                container.style.height = event.data.height + 'px';
-            }
-            
-            // Если отправлены данные о расчете (можно использовать для отслеживания)
-            if (event.data && event.data.calculation) {
-                // Тут можно добавить код для отслеживания (например, отправку в GTM)
-                console.log('Calculation completed:', event.data.calculation);
-            }
-        }
-    });
+  window.addEventListener("message", function(event) {
+    if (event.origin.startsWith("https://bioclimmatic-pergola-calculator-gono4enko.replit.app")) {
+      // Если получили число - это высота iframe
+      if (typeof event.data === 'number') {
+        var iframe = document.getElementById("biocalc");
+        // Добавляем небольшой запас (20px) для избежания двойной прокрутки
+        iframe.style.height = (event.data + 20) + "px";
+        console.log("Установлена новая высота iframe:", event.data + "px");
+      }
+    }
+  }, false);
+  
+  // Устанавливаем начальную высоту, достаточную для первой загрузки
+  document.getElementById("biocalc").style.height = "800px";
 </script>
+
+<!-- CSS для стилизации (опционально) -->
+<style>
+  #biocalc {
+    max-width: 100%;
+    margin: 0 auto;
+    display: block;
+    transition: height 0.3s ease; /* Плавное изменение высоты */
+  }
+</style>
