@@ -1529,7 +1529,7 @@ def display_formatted_description(description_text):
         .description-container {
             width: 100%;
             margin: 0 auto;
-            padding: 10px;
+            padding: 10px 20px; /* Увеличиваем отступ слева и справа */
             background-color: #ffffff;
             border-radius: 5px;
             margin-bottom: 10px;
@@ -1644,9 +1644,9 @@ def display_formatted_description(description_text):
         # 5. Удаляем двойные пробелы для надежности
         formatted_text = re.sub(r'\s{2,}', ' ', formatted_text)
         
-        # 6. Обрамляем весь текст в div-контейнер для изоляции стилей и добавляем контейнер с небольшими отступами
+        # 6. Обрамляем весь текст в div-контейнер для изоляции стилей и добавляем контейнер с отступами
         final_html = f"""
-        <div style="width:98%; margin:0 auto; padding-left:10px; padding-right:10px;">
+        <div style="width:98%; margin:0 auto; padding-left:15px; padding-right:15px;">
             <div class="description-container">{formatted_text}</div>
         </div>
         """
@@ -1963,7 +1963,7 @@ def main():
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.3.2</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.3.3</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Создаем директории, если они не существуют
