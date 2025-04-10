@@ -9,11 +9,6 @@ import math
 import csv
 import time
 from datetime import datetime
-from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
-
-# Константы для наценок на доставку и установку
-DELIVERY_MARKUP_PERCENT = 8  # Процент наценки на доставку (8%)
-INSTALLATION_MARKUP_PERCENT = 10  # Процент наценки на установку (10%)
 
 def get_plural_form(number, one, two, five):
     """
@@ -109,10 +104,11 @@ GUTTER_INSERT_THRESHOLD = 6.5
 GUTTER_INSERT_PRICE_PER_METER = 80  # Цена усилителя лотка 80 евро за погонный метр
 
 # Наценки за доставку и установку (в процентах от базовой стоимости)
-# Курс евро в рублях и наценки
+DELIVERY_MARKUP_PERCENT = 10  # 10% наценка за доставку (добавляется автоматически)
+INSTALLATION_MARKUP_PERCENT = 10  # 10% наценка за установку (опционально)
+
+# Курс евро в рублях
 EURO_RATE = 110  # 1 евро = 110 рублей
-DELIVERY_MARKUP_PERCENT = 8  # Наценка за доставку 8%
-INSTALLATION_MARKUP_PERCENT = 10  # Наценка за установку 10%
 
 # Правила для выбора привода Bansbach для B500NEW
 BANSBACH_DRIVE_RULES = {
@@ -882,10 +878,10 @@ def perform_calculation(dimensions, options):
         # Базовая стоимость (без наценок)
         base_total_price = results["total_price"]
         
-        # Добавляем наценку за доставку (добавляется автоматически)
-        delivery_price = round(base_total_price * DELIVERY_MARKUP_PERCENT / 100, 2)
+        # Добавляем наценку за доставку (10% автоматически)
+        delivery_price = round(base_total_price * 0.1, 2)
         results["delivery"] = {
-            "percentage": DELIVERY_MARKUP_PERCENT,
+            "percentage": 10,
             "price": delivery_price
         }
         results["items"].append({
@@ -894,12 +890,12 @@ def perform_calculation(dimensions, options):
         })
         results["total_price"] += delivery_price
         
-        # Добавляем наценку за установку (если выбрана опция)
+        # Добавляем наценку за установку (10%, если выбрана опция)
         if installation:
-            installation_price = round(base_total_price * INSTALLATION_MARKUP_PERCENT / 100, 2)
+            installation_price = round(base_total_price * 0.1, 2)
             results["installation"] = {
                 "selected": True,
-                "percentage": INSTALLATION_MARKUP_PERCENT,
+                "percentage": 10,
                 "price": installation_price
             }
             results["items"].append({
@@ -1142,7 +1138,7 @@ def render_results(results):
     formatted_price = "{:,.0f}".format(rub_total).replace(",", " ")
     st.markdown(f"""
     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
-        <h2 style='margin-top: 0; color: #0066cc; font-size: 3.5rem; font-weight: 700; text-align: center; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 2px solid #e5eeff;'>Результаты расчета</h2>
+        <h2 style='margin-top: 0; color: #0066cc; font-size: 2.2rem; font-weight: 600; text-align: center;'>Результаты расчета</h2>
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Пергола:</strong> {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м
         </p>
@@ -1160,7 +1156,7 @@ def render_results(results):
     
     # Отображаем спецификацию перголы
     if "specification" in results:
-        st.markdown("<h3 style='font-size: 3.0rem; font-weight: 700; color: #0066cc; margin-top: 10px; margin-bottom: 20px; text-align: center; padding-bottom: 5px; border-bottom: 2px solid #e5eeff;'>Спецификация перголы</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 0; margin-bottom: 15px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
         
         # Создаем таблицу спецификации
         spec_data = []
@@ -1175,34 +1171,32 @@ def render_results(results):
         spec_table_key = "spec_table_" + str(hash(str(spec_data)))
         
         # Создаем HTML-таблицу напрямую для обхода проблем с шириной
-        html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px; table-layout:fixed;">'
+        html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px;">'
         
         # Добавляем заголовки
         html_table += '<tr>'
-        html_table += '<th style="text-align:left; padding:8px; background-color:#f0f5ff; border-bottom:2px solid #0066cc; width:70%; font-size:1.1rem; font-weight:600; overflow:hidden; text-overflow:ellipsis;">Наименование</th>'
-        html_table += '<th style="text-align:right; padding:8px 15px; background-color:#f0f5ff; border-bottom:2px solid #0066cc; width:30%; font-size:1.1rem; font-weight:600; overflow:hidden; text-overflow:ellipsis;">Количество</th>'
+        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem;">Наименование</th>'
+        html_table += '<th style="text-align:center; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem;">Количество</th>'
         html_table += '</tr>'
         
         # Добавляем строки с данными
         for item in spec_data:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #e5eeff; font-size:1rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #e5eeff; font-size:1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:center; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[1]}</td>'
             html_table += '</tr>'
         
         html_table += '</table>'
         
         # Выводим HTML-таблицу напрямую через markdown
         st.markdown(f"""
-        <div style="width:100%; margin:0 auto;">
-            <div style="width:98%; margin:0 auto;">
-                {html_table}
-            </div>
+        <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
+            {html_table}
         </div>
         """, unsafe_allow_html=True)
     
     # Отображаем таблицу стоимости
-    st.markdown("<h3 style='font-size: 3.2rem; font-weight: 700; color: #0066cc; margin-top: 20px; margin-bottom: 10px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 15px; margin-bottom: 15px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
     
     # Создаем таблицу стоимости
     items_data = []
@@ -1276,36 +1270,34 @@ def render_results(results):
     items_data.append(["Итого", format_price(rub_total)])
     
     # Создаем HTML-таблицу напрямую для обхода проблем с шириной
-    html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px; table-layout:fixed;">'
+    html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px;">'
     
     # Добавляем заголовки
     html_table += '<tr>'
-    html_table += '<th style="text-align:left; padding:8px; background-color:#f0f5ff; border-bottom:2px solid #0066cc; width:70%; font-size:1.1rem; font-weight:600; overflow:hidden; text-overflow:ellipsis;">Наименование</th>'
-    html_table += '<th style="text-align:right; padding:8px 15px; background-color:#f0f5ff; border-bottom:2px solid #0066cc; width:30%; font-size:1.1rem; font-weight:600; overflow:hidden; text-overflow:ellipsis;">Стоимость</th>'
+    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem;">Наименование</th>'
+    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem;">Стоимость</th>'
     html_table += '</tr>'
     
     # Добавляем строки с данными
     for i, item in enumerate(items_data):
         # Особое форматирование для строки "Итого"
         if i == len(items_data) - 1:
-            html_table += '<tr style="background-color:#e8f2ff;">'
-            html_table += f'<td style="text-align:left; padding:12px 5px; border-bottom:2px solid #0066cc; font-weight:700; font-size:1.4rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:12px 5px; border-bottom:2px solid #0066cc; font-weight:700; font-size:1.5rem; color:#0066cc; overflow:visible; max-width:100%; width:auto;">{item[1]}</td>'
+            html_table += '<tr style="background-color:#e0f0ff;">'
+            html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.2rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:10px 10px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; color:#0066cc;">{item[1]}</td>'
             html_table += '</tr>'
         else:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #e5eeff; font-size:1rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #e5eeff; font-size:1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem;">{item[1]}</td>'
             html_table += '</tr>'
     
     html_table += '</table>'
     
     # Выводим HTML-таблицу напрямую через markdown
     st.markdown(f"""
-    <div style="width:100%; margin:0 auto;">
-        <div style="width:98%; margin:0 auto;">
-            {html_table}
-        </div>
+    <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
+        {html_table}
     </div>
     """, unsafe_allow_html=True)
     
@@ -1478,9 +1470,9 @@ def display_formatted_description(description_text):
         st.markdown("""
         <style>
         .description-container {
-            width: 98%;
+            width: 95%;
             margin: 0 auto;
-            padding: 15px;
+            padding: 20px;
             background-color: #ffffff;
             border-radius: 5px;
             margin-bottom: 20px;
@@ -1492,47 +1484,26 @@ def display_formatted_description(description_text):
             width: 100%;
         }
         .description-container h3 {
-            font-size: 2.5rem;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            color: #0066cc;
-            font-weight: 700;
-            text-align: center;
-        }
-        .description-container h4 {
-            font-size: 1.8rem;
-            margin-top: 15px;
-            margin-bottom: 8px;
+            font-size: 2.2rem;
+            margin-top: 25px;
+            margin-bottom: 20px;
             color: #0066cc;
             font-weight: 600;
         }
+        .description-container h4 {
+            font-size: 1.8rem;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            color: #0066cc;
+            font-weight: 500;
+        }
         .description-container p {
-            margin-bottom: 8px;
-            line-height: 1.4;
-            font-size: 1rem !important;
+            margin-bottom: 10px;
+            line-height: 1.5;
         }
         .description-container ul {
             margin-left: 20px;
-            margin-bottom: 10px;
-            margin-top: 5px;
-        }
-        .description-container li {
-            margin-bottom: 5px;
-            font-size: 1rem !important;
-            line-height: 1.4;
-        }
-        .description-container table {
-            margin-top: 8px;
-            margin-bottom: 8px;
-            border-collapse: collapse;
-            width: 100%;
-        }
-        .description-container table td, 
-        .description-container table th {
-            padding: 6px 8px;
-            border: 1px solid #ddd;
-            font-size: 1rem !important;
-            line-height: 1.3;
+            margin-bottom: 15px;
         }
         .description-container strong {
             font-weight: 600;
@@ -1706,201 +1677,6 @@ def scroll_to_results():
     </script>
     """, unsafe_allow_html=True)
 
-def add_iframe_resizer():
-    """
-    Добавляет JavaScript для отправки высоты страницы родительскому окну
-    при использовании приложения внутри iframe на сайте Тильда.
-    Улучшенная версия с более надежной передачей данных и добавлением отступов.
-    """
-    st.markdown("""
-    <script>
-        // Определяем, находимся ли мы в iframe
-        function detectIframe() {
-            try {
-                // Если window.self !== window.top, значит мы в iframe
-                const isInIframe = window.self !== window.top;
-                if (isInIframe) {
-                    // Добавляем класс к body для применения специальных стилей
-                    document.body.classList.add('in-iframe');
-                    document.body.classList.add('embedded');
-                    
-                    // Добавляем отступы к основному контейнеру контента
-                    const containers = document.querySelectorAll('.block-container');
-                    containers.forEach(container => {
-                        container.classList.add('iframe-mode');
-                    });
-                    
-                    console.log('Detected iframe mode, applied special styles');
-                }
-                return isInIframe;
-            } catch (e) {
-                // Если возникла ошибка, вероятно это связано с cross-origin ограничениями
-                // Предполагаем, что мы в iframe
-                document.body.classList.add('in-iframe');
-                document.body.classList.add('embedded');
-                console.log('Assuming iframe mode due to error:', e);
-                return true;
-            }
-        }
-        
-        // Функция для отправки высоты iframe родительскому окну
-        function sendHeightToParent() {
-            // Получаем все элементы со всем содержимым
-            const allElements = document.querySelectorAll('*');
-            let maxPosition = 0;
-            
-            // Проходим по всем элементам и находим самый нижний
-            allElements.forEach(element => {
-                const elementBottom = element.getBoundingClientRect().bottom + window.scrollY;
-                maxPosition = Math.max(maxPosition, elementBottom);
-            });
-            
-            // Получаем полную высоту документа (используем максимальную из вычисленных)
-            const docHeight = Math.max(
-                maxPosition,
-                document.body.scrollHeight,
-                document.body.offsetHeight,
-                document.documentElement.clientHeight,
-                document.documentElement.scrollHeight,
-                document.documentElement.offsetHeight
-            );
-            
-            // Добавляем небольшой запас внизу
-            const finalHeight = docHeight + 50;
-            
-            // Получаем высоту окна просмотра
-            const viewportHeight = window.innerHeight;
-            
-            // Определяем, нужна ли прокрутка
-            const needsScroll = docHeight > viewportHeight;
-            
-            // Отправляем высоту и информацию о необходимости прокрутки
-            const message = {
-                height: finalHeight,
-                needsScroll: needsScroll,
-                timestamp: Date.now()
-            };
-            
-            // Отправляем структурированное сообщение родительскому окну
-            window.parent.postMessage(message, "*");
-            console.log('Sent height data to parent:', message);
-            
-            // Применяем высоту напрямую к HTML и BODY для обеспечения полного отображения
-            document.documentElement.style.minHeight = finalHeight + 'px';
-            document.body.style.minHeight = finalHeight + 'px';
-        }
-
-        // Функция для отслеживания изменений в высоте контента
-        function monitorContentHeight() {
-            let lastHeight = 0;
-            
-            function checkHeight() {
-                const currentHeight = document.body.scrollHeight;
-                
-                // Проверяем, изменилась ли высота
-                if (Math.abs(currentHeight - lastHeight) > 10) {  // Допуск на небольшие изменения
-                    lastHeight = currentHeight;
-                    sendHeightToParent();
-                }
-            }
-            
-            // Проверяем высоту каждые 500 мс
-            return setInterval(checkHeight, 500);
-        }
-        
-        // Функция для добавления дополнительных отступов на мобильных устройствах
-        function addMobilePadding() {
-            // Проверяем, мобильное ли это устройство
-            const isMobile = window.innerWidth <= 768;
-            
-            if (isMobile) {
-                // Находим все контейнеры контента
-                const mainContainers = document.querySelectorAll('.main .block-container');
-                mainContainers.forEach(container => {
-                    container.style.paddingLeft = '15px';
-                    container.style.paddingRight = '15px';
-                });
-                
-                // Находим все элементы ввода и добавляем отступы
-                const inputs = document.querySelectorAll('input, select, textarea');
-                inputs.forEach(input => {
-                    const parent = input.parentElement;
-                    if (parent) {
-                        parent.style.marginLeft = '5px';
-                        parent.style.marginRight = '5px';
-                    }
-                });
-                
-                console.log('Applied mobile padding');
-            }
-        }
-
-        // При загрузке страницы
-        window.addEventListener("load", function() {
-            // Определяем, находимся ли мы в iframe
-            const isInIframe = detectIframe();
-            
-            // Добавляем отступы для мобильных устройств
-            addMobilePadding();
-            
-            // Если мы в iframe, настраиваем отправку высоты
-            if (isInIframe) {
-                // Даем время для полной отрисовки и применения стилей
-                setTimeout(sendHeightToParent, 300);
-                // И еще раз для надежности
-                setTimeout(sendHeightToParent, 1000);
-                
-                // Запускаем мониторинг высоты
-                const heightMonitor = monitorContentHeight();
-                
-                // Отправляем высоту при изменении размера окна
-                window.addEventListener("resize", function() {
-                    // Отправляем сразу и с небольшой задержкой
-                    sendHeightToParent();
-                    setTimeout(sendHeightToParent, 300);
-                    
-                    // Перепроверяем и обновляем отступы
-                    addMobilePadding();
-                });
-                
-                // Отслеживаем изменения DOM для немедленной реакции на новый контент
-                const observer = new MutationObserver(function(mutations) {
-                    // Ждем момента, когда DOM обновится полностью
-                    setTimeout(sendHeightToParent, 100);
-                });
-                
-                // Наблюдаем за всеми изменениями в документе
-                observer.observe(document.body, { 
-                    childList: true, 
-                    subtree: true,
-                    attributes: true,
-                    characterData: true 
-                });
-                
-                // Отправляем высоту при клике, так как могут открываться новые элементы
-                document.addEventListener("click", function() {
-                    // Малая задержка, чтобы дать время элементам развернуться
-                    setTimeout(sendHeightToParent, 300);
-                });
-                
-                // Запускаем первоначальную отправку высоты
-                sendHeightToParent();
-            }
-        });
-        
-        // Обработчик сообщений от родительского окна
-        window.addEventListener("message", function(event) {
-            // Обрабатываем только структурированные сообщения
-            if (typeof event.data === 'object' && event.data !== null) {
-                // Если получили запрос высоты
-                if (event.data.type === "REQUEST_HEIGHT") {
-                    sendHeightToParent();
-                }
-            }
-        });
-    </script>
-    """, unsafe_allow_html=True)
-
 def main():
     """Основная функция приложения"""
     # Настраиваем страницу
@@ -1910,22 +1686,9 @@ def main():
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
     
-    # Добавляем код Яндекс.Метрики на страницу
-    add_yandex_metrika()
-    
-    # Применяем пользовательские стили из файла CSS
-    with open('.streamlit/custom_styles.css') as f:
-        custom_css = f.read()
-        st.markdown(f'<style>{custom_css}</style>', unsafe_allow_html=True)
-    
     # Задаем стили для компактного и читаемого интерфейса по новому дизайну
     st.markdown("""
     <style>
-    /* Детектирование iframe для добавления специальных стилей */
-    .iframe-mode {
-        padding: 0 15px !important; /* Добавляем отступы в режиме iframe */
-    }
-    
     /* Глобальный контейнер */
     .block-container {
         max-width: 800px;
@@ -1934,64 +1697,37 @@ def main():
         margin: 0 auto;
     }
     
-    /* Добавляем отступы к основному контейнеру в режиме iframe */
-    body.embedded .main > .block-container,
-    body.in-iframe .main > .block-container {
-        padding-left: 15px !important;
-        padding-right: 15px !important;
-    }
-    
     /* Применяем отступы ко ВСЕМ формам ввода */
     div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
     div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect {
-        width: 96% !important;
+        width: 90% !important;
         margin: 0 auto !important;
-        padding-left: 15px !important;
-        padding-right: 15px !important;
+        padding-left: 25px !important;
+        padding-right: 25px !important;
     }
     
     /* Отступы для секций заголовков */
     div.stMarkdown h2 {
-        width: 96% !important;
+        width: 90% !important;
         margin: 0 auto !important;
-        padding-left: 15px !important;
-        padding-right: 15px !important;
+        padding-left: 25px !important;
+        padding-right: 25px !important;
     }
     
     /* Отступы для текстовых параграфов */
     div.stMarkdown p {
-        width: 96% !important;
+        width: 90% !important;
         margin: 0 auto !important;
-        padding-left: 15px !important;
-        padding-right: 15px !important;
+        padding-left: 25px !important;
+        padding-right: 25px !important;
     }
     
     /* Отступы для горизонтальных разделителей */
     div.stMarkdown hr {
-        width: 96% !important;
+        width: 90% !important;
         margin: 0 auto !important;
         margin-top: 10px !important;
         margin-bottom: 10px !important;
-    }
-    
-    /* Стили для iframe режима */
-    body.in-iframe {
-        min-height: 100vh !important;
-        height: auto !important;
-        overflow: visible !important;
-    }
-    
-    /* Отключаем скроллбар внутри iframe */
-    body.in-iframe .stApp {
-        height: auto !important;
-        overflow: visible !important;
-        min-height: 100vh !important;
-    }
-    
-    /* Исправляем отображение на полную высоту */
-    body.in-iframe main {
-        height: auto !important;
-        overflow: visible !important;
     }
     
     /* Глобальные стили для улучшения читаемости */
@@ -2015,29 +1751,12 @@ def main():
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 1rem;
-        table-layout: fixed; /* Фиксированная разметка таблицы */
     }
     
     th, td {
         padding: 8px 12px;
         text-align: left;
         border-bottom: 1px solid #ddd;
-        overflow: hidden; /* Скрываем переполнение */
-        text-overflow: ellipsis; /* Показываем многоточие при переполнении */
-    }
-    
-    /* Задаем ширину колонок */
-    th:first-child, td:first-child {
-        width: 65%; /* Большая ширина для первой колонки с наименованием */
-        white-space: normal; /* Разрешаем перенос строк в первой колонке */
-        word-wrap: break-word; /* Разрешаем перенос слов */
-        hyphens: auto; /* Автоматическая расстановка переносов */
-    }
-    
-    th:last-child, td:last-child {
-        width: 35%; /* Меньшая ширина для колонки с числами */
-        text-align: right; /* Выравнивание цифр по правому краю */
-        white-space: nowrap; /* Для чисел не переносим строки */
     }
     
     th {
@@ -2045,38 +1764,20 @@ def main():
         font-weight: 600;
     }
     
-    /* Контейнер для таблицы - убираем прокрутку, заставляем помещаться */
-    .table-container {
-        width: 100%;
-        margin-bottom: 1rem;
-    }
-    
     /* Адаптивность для мобильных устройств */
     @media (max-width: 768px) {
-        /* Основной контейнер - добавляем боковые отступы */
         .block-container {
             max-width: 100%;
             padding: 0.25rem !important;
-            padding-left: 12px !important;
-            padding-right: 12px !important;
         }
         
-        /* Специальные отступы для iframe-режима */
-        body.embedded .main .block-container,
-        body.in-iframe .main .block-container {
-            padding-left: 15px !important;
-            padding-right: 15px !important;
-        }
-        
-        /* Уменьшаем отступы на мобильных, но оставляем минимальные боковые */
+        /* Уменьшаем отступы на мобильных */
         div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
         div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect,
         div.stMarkdown h2, div.stMarkdown p, div.stMarkdown hr {
             width: 95% !important;
             padding-left: 10px !important;
             padding-right: 10px !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
         }
         
         .stButton {
@@ -2091,39 +1792,6 @@ def main():
             overflow-x: hidden !important;
         }
         
-        /* Адаптивные таблицы для мобильных устройств */
-        table {
-            width: 100% !important;
-            max-width: 100% !important;
-            font-size: 0.85rem !important; /* Уменьшаем размер шрифта в таблице */
-        }
-        
-        th, td {
-            padding: 6px 8px !important; /* Уменьшаем отступы в ячейках */
-        }
-        
-        td:first-child {
-            font-size: 0.85rem !important; /* Уменьшаем шрифт в первой колонке */
-            line-height: 1.2 !important; /* Компактнее строки */
-        }
-        
-        /* Специальные стили для строки "Итого" на мобильных устройствах */
-        tr[style*="background-color:#e0f0ff"] td:last-child {
-            font-size: 1.4rem !important; /* Увеличиваем размер итоговой суммы */
-            word-break: break-all !important; /* Разрешаем разрыв слов в любом месте */
-            padding-right: 5px !important; /* Уменьшаем отступ справа */
-            text-align: right !important; /* Принудительное выравнивание по правому краю */
-            overflow: visible !important; /* Не обрезаем текст */
-            white-space: normal !important; /* Разрешаем перенос текста */
-            max-width: none !important; /* Без ограничений по ширине */
-            width: auto !important; /* Автоматическая ширина */
-        }
-        /* Сохраняем нормальный размер шрифта для "Итого" в левом столбце */
-        tr[style*="background-color:#e0f0ff"] td:first-child {
-            font-size: 1.3rem !important; /* Увеличиваем размер текста "Итого" */
-            font-weight: bold !important;
-        }
-        
         /* Уменьшаем размер шрифта в элементах форм */
         .stSelectbox, .stRadio, .stCheckbox {
             font-size: 0.85rem !important;
@@ -2133,18 +1801,12 @@ def main():
         .stApp, .stApp p, .stApp div, .stMarkdown {
             font-size: 0.9rem !important;
         }
-        
-        /* Принудительные отступы внутри селекторов */
-        .stSelectbox > div, .stRadio > div, .stCheckbox > div {
-            margin-left: 5px !important; 
-            margin-right: 5px !important;
-        }
     }
     </style>
     """, unsafe_allow_html=True)
     
     # Заголовок калькулятора - крупный и четкий
-    st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 2.88rem; font-weight: 700; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 2.2rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
     # Получаем размеры перголы
@@ -2196,21 +1858,13 @@ def main():
         
         # Если нужна прокрутка к результатам, добавляем JS код
         if st.session_state.get('scroll_to_results', False):
-            # Прокручиваем к результатам
             scroll_to_results()
-            
-            # Отправляем событие успешного расчета в Яндекс.Метрику
-            send_calc_success_event()
-            
             # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
             st.session_state.scroll_to_results = False
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.3.1</div>", unsafe_allow_html=True)
-    
-    # Добавляем JavaScript для отправки высоты iframe родительскому окну (для Тильды)
-    add_iframe_resizer()
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.3.0</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Создаем директории, если они не существуют
