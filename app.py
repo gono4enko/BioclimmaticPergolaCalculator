@@ -1922,8 +1922,10 @@ def main():
     div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect {
         width: 95% !important;
         margin: 0 auto !important;
-        padding-left: 15px !important;
-        padding-right: 15px !important;
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
     }
     
     /* Отступы для секций заголовков */
@@ -1953,6 +1955,7 @@ def main():
         margin-left: 0px !important;
         margin-right: 0px !important;
         width: 100% !important;
+        background-color: rgba(240, 240, 240, 0.2) !important; /* Немного выделяем параграфы для отладки */
     }
     
     /* Отступы для списков в статьях */
