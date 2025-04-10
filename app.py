@@ -1191,7 +1191,7 @@ def render_results(results):
         # Выводим HTML-таблицу напрямую через markdown в контейнере с горизонтальной прокруткой
         st.markdown(f"""
         <div style="width:100%; overflow-x:auto; margin:0 auto;">
-            <div style="width:95%; min-width:600px; margin:0 auto;">
+            <div style="width:98%; min-width:600px; margin:0 auto;">
                 {html_table}
             </div>
         </div>
@@ -1299,7 +1299,7 @@ def render_results(results):
     # Выводим HTML-таблицу напрямую через markdown в контейнере с горизонтальной прокруткой
     st.markdown(f"""
     <div style="width:100%; overflow-x:auto; margin:0 auto;">
-        <div style="width:95%; min-width:600px; margin:0 auto;">
+        <div style="width:98%; min-width:600px; margin:0 auto;">
             {html_table}
         </div>
     </div>
@@ -1474,9 +1474,9 @@ def display_formatted_description(description_text):
         st.markdown("""
         <style>
         .description-container {
-            width: 95%;
+            width: 98%;
             margin: 0 auto;
-            padding: 20px;
+            padding: 15px;
             background-color: #ffffff;
             border-radius: 5px;
             margin-bottom: 20px;
@@ -1720,14 +1720,28 @@ def add_iframe_resizer():
         
         // Функция для отправки высоты iframe родительскому окну
         function sendHeightToParent() {
-            // Получаем полную высоту документа
+            // Получаем все элементы со всем содержимым
+            const allElements = document.querySelectorAll('*');
+            let maxPosition = 0;
+            
+            // Проходим по всем элементам и находим самый нижний
+            allElements.forEach(element => {
+                const elementBottom = element.getBoundingClientRect().bottom + window.scrollY;
+                maxPosition = Math.max(maxPosition, elementBottom);
+            });
+            
+            // Получаем полную высоту документа (используем максимальную из вычисленных)
             const docHeight = Math.max(
+                maxPosition,
                 document.body.scrollHeight,
                 document.body.offsetHeight,
                 document.documentElement.clientHeight,
                 document.documentElement.scrollHeight,
                 document.documentElement.offsetHeight
             );
+            
+            // Добавляем небольшой запас внизу
+            const finalHeight = docHeight + 50;
             
             // Получаем высоту окна просмотра
             const viewportHeight = window.innerHeight;
@@ -1737,7 +1751,7 @@ def add_iframe_resizer():
             
             // Отправляем высоту и информацию о необходимости прокрутки
             const message = {
-                height: docHeight,
+                height: finalHeight,
                 needsScroll: needsScroll,
                 timestamp: Date.now()
             };
@@ -1745,6 +1759,10 @@ def add_iframe_resizer():
             // Отправляем структурированное сообщение родительскому окну
             window.parent.postMessage(message, "*");
             console.log('Sent height data to parent:', message);
+            
+            // Применяем высоту напрямую к HTML и BODY для обеспечения полного отображения
+            document.documentElement.style.minHeight = finalHeight + 'px';
+            document.body.style.minHeight = finalHeight + 'px';
         }
 
         // Функция для отслеживания изменений в высоте контента
@@ -1893,34 +1911,54 @@ def main():
     /* Применяем отступы ко ВСЕМ формам ввода */
     div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
     div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect {
-        width: 90% !important;
+        width: 96% !important;
         margin: 0 auto !important;
-        padding-left: 25px !important;
-        padding-right: 25px !important;
+        padding-left: 15px !important;
+        padding-right: 15px !important;
     }
     
     /* Отступы для секций заголовков */
     div.stMarkdown h2 {
-        width: 90% !important;
+        width: 96% !important;
         margin: 0 auto !important;
-        padding-left: 25px !important;
-        padding-right: 25px !important;
+        padding-left: 15px !important;
+        padding-right: 15px !important;
     }
     
     /* Отступы для текстовых параграфов */
     div.stMarkdown p {
-        width: 90% !important;
+        width: 96% !important;
         margin: 0 auto !important;
-        padding-left: 25px !important;
-        padding-right: 25px !important;
+        padding-left: 15px !important;
+        padding-right: 15px !important;
     }
     
     /* Отступы для горизонтальных разделителей */
     div.stMarkdown hr {
-        width: 90% !important;
+        width: 96% !important;
         margin: 0 auto !important;
         margin-top: 10px !important;
         margin-bottom: 10px !important;
+    }
+    
+    /* Стили для iframe режима */
+    body.in-iframe {
+        min-height: 100vh !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    
+    /* Отключаем скроллбар внутри iframe */
+    body.in-iframe .stApp {
+        height: auto !important;
+        overflow: visible !important;
+        min-height: 100vh !important;
+    }
+    
+    /* Исправляем отображение на полную высоту */
+    body.in-iframe main {
+        height: auto !important;
+        overflow: visible !important;
     }
     
     /* Глобальные стили для улучшения читаемости */
