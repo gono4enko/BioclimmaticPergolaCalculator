@@ -1004,8 +1004,9 @@ def perform_calculation(dimensions, options):
         lamella_info = ""
         if pergola_type in ["B500NEW", "B700NEW"]:
             lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type).lower()
-            # Корректное склонение в зависимости от числа ламелей (четное/нечетное)
-            lamellas_suffix = "ламель" if lamellas_count % 2 != 0 else "ламелей"
+            # Корректное склонение в зависимости от числа ламелей (правила русского языка)
+            # 1 ламель, 2-4 ламели, 5-20 ламелей, 21 ламель, 22-24 ламели и т.д.
+            lamellas_suffix = "ламель" if lamellas_count % 10 == 1 and lamellas_count % 100 != 11 else "ламели" if 2 <= lamellas_count % 10 <= 4 and (lamellas_count % 100 < 10 or lamellas_count % 100 >= 20) else "ламелей"
             lamellas_count_text = f", {lamellas_count} {lamellas_suffix}" if 'lamellas_count' in locals() else ""
         else:
             lamellas_count_text = ""
@@ -1522,8 +1523,8 @@ def render_results(results):
     lamellas_count = results["debug"].get("lamellas_count", 0)
     lamellas_info = f" с ламелью {lamella_info.replace('ламели ', '')}"
     if lamellas_count > 0 and pergola_type in ["B500NEW", "B700NEW"]:
-        # Корректное склонение в зависимости от числа ламелей (четное/нечетное)
-        lamellas_suffix = "ламель" if lamellas_count % 2 != 0 else "ламелей"
+        # Корректное склонение в зависимости от числа ламелей (правила русского языка)
+        lamellas_suffix = "ламель" if lamellas_count % 10 == 1 and lamellas_count % 100 != 11 else "ламели" if 2 <= lamellas_count % 10 <= 4 and (lamellas_count % 100 < 10 or lamellas_count % 100 >= 20) else "ламелей"
         lamellas_info += f", {lamellas_count} {lamellas_suffix}"
     
     # Функция для форматирования цены в бухгалтерском стиле
