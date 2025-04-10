@@ -9,6 +9,29 @@ import math
 import csv
 import time
 from datetime import datetime
+
+def get_plural_form(number, one, two, five):
+    """
+    Возвращает правильную форму существительного для числительного по правилам русского языка.
+    
+    Args:
+        number (int): Число, для которого нужно подобрать форму
+        one (str): Форма для 1 (номинатив единственного числа)
+        two (str): Форма для 2-4 (генитив единственного числа)
+        five (str): Форма для 5-20 (генитив множественного числа)
+        
+    Returns:
+        str: Правильная форма слова
+    """
+    n = abs(number) % 100
+    if n >= 11 and n <= 19:
+        return five
+    n = n % 10
+    if n == 1:
+        return one
+    if n >= 2 and n <= 4:
+        return two
+    return five
 from pdf_generator_fpdf import generate_commercial_offer, format_pergola_data_for_pdf
 from config.pergola_descriptions import (
     get_pergola_description,
