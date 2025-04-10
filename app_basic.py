@@ -1463,22 +1463,22 @@ def render_results(results):
         
         # Добавляем заголовки
         html_table += '<tr>'
-        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%;">Наименование</th>'
-        html_table += '<th style="text-align:center; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%;">Количество</th>'
+        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:65%;">Наименование</th>'
+        html_table += '<th style="text-align:center; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:35%;">Количество</th>'
         html_table += '</tr>'
         
         # Добавляем строки с данными
         for item in spec_data:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[0]}</td>'
-            html_table += f'<td style="text-align:center; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.95rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:center; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.95rem;">{item[1]}</td>'
             html_table += '</tr>'
         
         html_table += '</table>'
         
-        # Выводим HTML-таблицу напрямую через markdown
+        # Выводим HTML-таблицу напрямую через markdown с теми же отступами, как у таблицы стоимости
         st.markdown(f"""
-        <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
+        <div style="width:95%; margin:0 auto; padding-left:15px; padding-right:15px;">
             {html_table}
         </div>
         """, unsafe_allow_html=True)
