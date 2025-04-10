@@ -110,16 +110,58 @@
 
 <!-- JavaScript для автоматической подстройки высоты iframe -->
 <script>
-  // Функция для получения сообщений от iframe
+  // Хранилище для последней полученной высоты
+  let lastReceivedHeight = 0;
+  let heightUpdateTime = 0;
+  let iframeScrollTimeout = null;
+  
+  // Функция для плавного изменения высоты iframe
+  function smoothlySetIframeHeight(newHeight, iframe) {
+    // Если новая высота отличается существенно, применяем ее
+    if (Math.abs(newHeight - lastReceivedHeight) > 20) {
+      console.log("Применяем новую высоту:", newHeight);
+      
+      // Добавляем отступ для предотвращения скролла
+      const heightWithPadding = newHeight + 50;
+      
+      // Применяем высоту с плавной анимацией
+      iframe.style.height = heightWithPadding + "px";
+      lastReceivedHeight = newHeight;
+    }
+  }
+  
+  // Получаем сообщения от iframe
   window.addEventListener("message", function(event) {
     // Проверяем, что сообщение от нашего калькулятора
     if (event.origin.startsWith("https://bioclimmatic-pergola-calculator-gono4enko.replit.app")) {
-      // Если получили число - это высота iframe
-      if (typeof event.data === 'number') {
-        // Добавляем дополнительные 30px для предотвращения скроллинга
-        const newHeight = event.data + 30;
-        document.getElementById("pergola-calculator").style.height = newHeight + "px";
-        console.log("Установлена новая высота iframe:", newHeight + "px");
+      const iframe = document.getElementById("pergola-calculator");
+      
+      // Обработка структурированного сообщения (объект)
+      if (typeof event.data === 'object' && event.data !== null && 'height' in event.data) {
+        // Получаем информацию из сообщения
+        const receivedHeight = event.data.height;
+        const needsScroll = event.data.needsScroll;
+        const timestamp = event.data.timestamp || Date.now();
+        
+        // Предотвращаем обработку устаревших сообщений
+        if (timestamp < heightUpdateTime) {
+          console.log("Игнорируем устаревшее сообщение о высоте");
+          return;
+        }
+        
+        // Обновляем время последнего обновления
+        heightUpdateTime = timestamp;
+        
+        // Применяем новую высоту
+        smoothlySetIframeHeight(receivedHeight, iframe);
+        
+        console.log("Получены данные о высоте:", event.data);
+      } 
+      // Для совместимости со старым кодом, который отправляет просто число
+      else if (typeof event.data === 'number') {
+        const receivedHeight = event.data;
+        smoothlySetIframeHeight(receivedHeight, iframe);
+        console.log("Получено числовое значение высоты:", receivedHeight);
       }
     }
   });
@@ -151,13 +193,88 @@
       iframe.style.marginLeft = "-" + containerPadding + "px";
       iframe.style.marginRight = "-" + containerPadding + "px";
     }
+    
+    // Запрашиваем текущую высоту у iframe
+    try {
+      // Отправляем сообщение iframe с запросом высоты
+      iframe.contentWindow.postMessage({
+        type: "REQUEST_HEIGHT",
+        timestamp: Date.now()
+      }, "https://bioclimmatic-pergola-calculator-gono4enko.replit.app");
+      console.log("Отправлен запрос высоты");
+    } catch (e) {
+      console.log("Не удалось отправить запрос высоты:", e);
+    }
   }
   
-  // Вызываем функцию при загрузке страницы
-  window.addEventListener("load", adjustIframeOnResize);
+  // Функция для периодической проверки размеров iframe
+  function setupHeightMonitoring() {
+    // Каждые 2 секунды проверяем, нужно ли обновить высоту
+    const monitorInterval = setInterval(function() {
+      try {
+        const iframe = document.getElementById("pergola-calculator");
+        
+        // Если iframe загружен, запрашиваем текущую высоту
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage({
+            type: "REQUEST_HEIGHT",
+            timestamp: Date.now()
+          }, "https://bioclimmatic-pergola-calculator-gono4enko.replit.app");
+        }
+      } catch (e) {
+        console.log("Ошибка мониторинга высоты:", e);
+      }
+    }, 2000);
+    
+    return monitorInterval;
+  }
   
-  // И при изменении размера окна
-  window.addEventListener("resize", adjustIframeOnResize);
+  // Функция для установки обработчиков событий прокрутки
+  function setupScrollHandlers() {
+    // При прокрутке отправляем сообщение iframe
+    window.addEventListener("scroll", function() {
+      // Используем throttling для уменьшения числа событий
+      if (iframeScrollTimeout) return;
+      
+      iframeScrollTimeout = setTimeout(function() {
+        try {
+          const iframe = document.getElementById("pergola-calculator");
+          const scrollPosition = window.scrollY;
+          
+          // Отправляем информацию о прокрутке родительского окна
+          iframe.contentWindow.postMessage({
+            type: "PARENT_SCROLL",
+            scrollY: scrollPosition,
+            timestamp: Date.now()
+          }, "https://bioclimmatic-pergola-calculator-gono4enko.replit.app");
+          
+          iframeScrollTimeout = null;
+        } catch (e) {
+          console.log("Ошибка отправки события прокрутки:", e);
+          iframeScrollTimeout = null;
+        }
+      }, 100);
+    });
+  }
+  
+  // Запускаем все обработчики при загрузке страницы
+  window.addEventListener("load", function() {
+    // Настраиваем iframe под размер устройства
+    adjustIframeOnResize();
+    
+    // Запускаем мониторинг высоты
+    const heightMonitor = setupHeightMonitoring();
+    
+    // Настраиваем обработчики прокрутки
+    setupScrollHandlers();
+    
+    // Настраиваем обработчик изменения размера окна
+    window.addEventListener("resize", function() {
+      // Используем debouncing для предотвращения слишком частых вызовов
+      clearTimeout(window.resizeTimeout);
+      window.resizeTimeout = setTimeout(adjustIframeOnResize, 200);
+    });
+  });
   
   // Устанавливаем начальную высоту
   document.getElementById("pergola-calculator").style.height = 

@@ -1680,34 +1680,98 @@ def scroll_to_results():
 def add_iframe_resizer():
     """
     Добавляет JavaScript для отправки высоты страницы родительскому окну
-    при использовании приложения внутри iframe на сайте Тильда
+    при использовании приложения внутри iframe на сайте Тильда.
+    Улучшенная версия с более надежной передачей данных.
     """
     st.markdown("""
     <script>
         // Функция для отправки высоты iframe родительскому окну
         function sendHeightToParent() {
-            const height = document.body.scrollHeight;
-            window.parent.postMessage(height, "*");
-            console.log('Sent height to parent:', height);
+            // Получаем полную высоту документа
+            const docHeight = Math.max(
+                document.body.scrollHeight,
+                document.body.offsetHeight,
+                document.documentElement.clientHeight,
+                document.documentElement.scrollHeight,
+                document.documentElement.offsetHeight
+            );
+            
+            // Получаем высоту окна просмотра
+            const viewportHeight = window.innerHeight;
+            
+            // Определяем, нужна ли прокрутка
+            const needsScroll = docHeight > viewportHeight;
+            
+            // Отправляем высоту и информацию о необходимости прокрутки
+            const message = {
+                height: docHeight,
+                needsScroll: needsScroll,
+                timestamp: Date.now()
+            };
+            
+            // Отправляем структурированное сообщение родительскому окну
+            window.parent.postMessage(message, "*");
+            console.log('Sent height data to parent:', message);
+        }
+
+        // Функция для отслеживания изменений в высоте контента
+        function monitorContentHeight() {
+            let lastHeight = 0;
+            
+            function checkHeight() {
+                const currentHeight = document.body.scrollHeight;
+                
+                // Проверяем, изменилась ли высота
+                if (Math.abs(currentHeight - lastHeight) > 10) {  // Допуск на небольшие изменения
+                    lastHeight = currentHeight;
+                    sendHeightToParent();
+                }
+            }
+            
+            // Проверяем высоту каждые 500 мс
+            return setInterval(checkHeight, 500);
         }
 
         // Отправляем высоту при загрузке
-        window.addEventListener("load", sendHeightToParent);
+        window.addEventListener("load", function() {
+            // Даем время для полной отрисовки
+            setTimeout(sendHeightToParent, 300);
+            // И еще раз для надежности
+            setTimeout(sendHeightToParent, 1000);
+        });
         
         // Отправляем высоту при изменении размера окна
-        window.addEventListener("resize", sendHeightToParent);
+        window.addEventListener("resize", function() {
+            // Отправляем сразу и с небольшой задержкой для надежности
+            sendHeightToParent();
+            setTimeout(sendHeightToParent, 300);
+        });
         
-        // Отправляем высоту с интервалом (для обновлений контента)
-        setInterval(sendHeightToParent, 1000);
+        // Запускаем мониторинг высоты контента
+        const heightMonitor = monitorContentHeight();
         
-        // Отправляем высоту при изменении DOM
-        const observer = new MutationObserver(sendHeightToParent);
+        // Отслеживаем изменения DOM для немедленной реакции на новый контент
+        const observer = new MutationObserver(function(mutations) {
+            // Ждем момента, когда DOM обновится полностью
+            setTimeout(sendHeightToParent, 100);
+        });
+        
+        // Наблюдаем за всеми изменениями в документе
         observer.observe(document.body, { 
             childList: true, 
             subtree: true,
             attributes: true,
             characterData: true 
         });
+        
+        // Отправляем высоту при клике, так как могут открываться новые элементы
+        document.addEventListener("click", function() {
+            // Малая задержка, чтобы дать время элементам развернуться
+            setTimeout(sendHeightToParent, 300);
+        });
+        
+        // Запускаем первоначальную отправку высоты
+        sendHeightToParent();
     </script>
     """, unsafe_allow_html=True)
 
