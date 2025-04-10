@@ -685,7 +685,8 @@ def perform_calculation(dimensions, options):
             # Количество устройств для пульта ДУ (привод + освещение)
             devices_count = drive_count
             if "white_led" in lighting_options or "rgb_led" in lighting_options:
-                devices_count += 1  # Добавляем блок управления освещением
+                # Добавляем блоки управления освещением - по одному на каждый модуль
+                devices_count += modules  # Каждый модуль требует отдельного канала для освещения
             
             # Определяем тип и стоимость пульта ДУ
             remote_name, remote_price = get_remote_control(devices_count)
