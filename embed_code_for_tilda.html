@@ -1,43 +1,121 @@
 <!-- Код для встраивания калькулятора пергол на сайт Tilda -->
-<!-- Поместите этот код в блок T123 в качестве HTML/CSS кода -->
+<!-- Версия 3.0 - Адаптивный дизайн для мобильных устройств, улучшенная прокрутка и автоматическая высота -->
 
-<!-- Версия 2.0 - Улучшенная прокрутка с автоматической адаптацией высоты -->
-
-<!-- Контейнер и iframe для калькулятора -->
-<iframe 
-    id="biocalc" 
+<!-- Внешний контейнер для задания размеров и позиционирования -->
+<div class="pergola-calculator-wrapper">
+  <!-- iframe с калькулятором -->
+  <iframe 
+    id="pergola-calculator" 
     src="https://bioclimmatic-pergola-calculator-gono4enko.replit.app/" 
-    width="100%" 
-    style="border:none;" 
     scrolling="no"
     title="Калькулятор стоимости пергол"
     allow="clipboard-read; clipboard-write"
-></iframe>
+  ></iframe>
+</div>
 
-<!-- JavaScript для автоматической подстройки высоты iframe -->
-<script>
-  window.addEventListener("message", function(event) {
-    if (event.origin.startsWith("https://bioclimmatic-pergola-calculator-gono4enko.replit.app")) {
-      // Если получили число - это высота iframe
-      if (typeof event.data === 'number') {
-        var iframe = document.getElementById("biocalc");
-        // Добавляем небольшой запас (20px) для избежания двойной прокрутки
-        iframe.style.height = (event.data + 20) + "px";
-        console.log("Установлена новая высота iframe:", event.data + "px");
-      }
-    }
-  }, false);
-  
-  // Устанавливаем начальную высоту, достаточную для первой загрузки
-  document.getElementById("biocalc").style.height = "800px";
-</script>
-
-<!-- CSS для стилизации (опционально) -->
+<!-- Стили для адаптивного дизайна -->
 <style>
-  #biocalc {
-    max-width: 100%;
+  /* Контейнер для калькулятора */
+  .pergola-calculator-wrapper {
+    width: 100%;
+    max-width: 1200px; /* Максимальная ширина на широких экранах */
     margin: 0 auto;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 0;
+  }
+  
+  /* Стили для iframe */
+  #pergola-calculator {
+    width: 100%;
+    min-height: 800px; /* Начальная минимальная высота */
+    border: none;
+    margin: 0;
+    padding: 0;
     display: block;
     transition: height 0.3s ease; /* Плавное изменение высоты */
   }
+  
+  /* Стили для мобильных устройств */
+  @media (max-width: 768px) {
+    .pergola-calculator-wrapper {
+      width: 100%;
+      padding: 0;
+    }
+    
+    #pergola-calculator {
+      min-height: 1000px; /* Увеличенная начальная высота для мобильных */
+      width: 100vw; /* Растягиваем на всю ширину экрана */
+      max-width: none; /* Отключаем ограничение ширины */
+      margin-left: -10px; /* Компенсируем отступы родительского контейнера */
+      margin-right: -10px;
+    }
+  }
+  
+  /* Специальные стили для iPhone и других устройств с высоким DPI */
+  @media screen and (-webkit-min-device-pixel-ratio: 2), 
+         screen and (min-resolution: 192dpi) {
+    #pergola-calculator {
+      width: 100vw; /* Используем viewport width для полного заполнения */
+      max-width: none;
+      margin-left: -10px;
+      margin-right: -10px;
+    }
+  }
 </style>
+
+<!-- JavaScript для автоматической подстройки высоты iframe -->
+<script>
+  // Функция для получения сообщений от iframe
+  window.addEventListener("message", function(event) {
+    // Проверяем, что сообщение от нашего калькулятора
+    if (event.origin.startsWith("https://bioclimmatic-pergola-calculator-gono4enko.replit.app")) {
+      // Если получили число - это высота iframe
+      if (typeof event.data === 'number') {
+        // Добавляем дополнительные 30px для предотвращения скроллинга
+        const newHeight = event.data + 30;
+        document.getElementById("pergola-calculator").style.height = newHeight + "px";
+        console.log("Установлена новая высота iframe:", newHeight + "px");
+      }
+    }
+  });
+  
+  // Функция для обработки изменения размера окна
+  function adjustIframeOnResize() {
+    // Получаем текущую ширину окна
+    const windowWidth = window.innerWidth;
+    const iframe = document.getElementById("pergola-calculator");
+    
+    // Устанавливаем начальную высоту в зависимости от ширины устройства
+    if (windowWidth <= 768) {
+      iframe.style.minHeight = "1000px"; // Больше высоты для мобильных
+    } else {
+      iframe.style.minHeight = "800px"; // Стандартная высота для десктопов
+    }
+    
+    // Сбрасываем отрицательные margin на больших экранах
+    if (windowWidth > 768) {
+      iframe.style.marginLeft = "0";
+      iframe.style.marginRight = "0";
+      iframe.style.width = "100%";
+    } else {
+      // Применяем отрицательные margin на мобильных для растягивания на всю ширину
+      iframe.style.width = "100vw";
+      
+      // Определяем родительский padding для компенсации
+      const containerPadding = 10; // Стандартный padding в блоках Tilda
+      iframe.style.marginLeft = "-" + containerPadding + "px";
+      iframe.style.marginRight = "-" + containerPadding + "px";
+    }
+  }
+  
+  // Вызываем функцию при загрузке страницы
+  window.addEventListener("load", adjustIframeOnResize);
+  
+  // И при изменении размера окна
+  window.addEventListener("resize", adjustIframeOnResize);
+  
+  // Устанавливаем начальную высоту
+  document.getElementById("pergola-calculator").style.height = 
+    (window.innerWidth <= 768) ? "1000px" : "800px";
+</script>
