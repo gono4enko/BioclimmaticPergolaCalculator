@@ -1194,7 +1194,7 @@ def render_results(results):
         
         # Выводим HTML-таблицу напрямую через markdown
         st.markdown(f"""
-        <div style="width:95%; margin:0 auto; padding-left:10px; padding-right:10px;">
+        <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
             {html_table}
         </div>
         """, unsafe_allow_html=True)
@@ -1287,8 +1287,8 @@ def render_results(results):
         # Особое форматирование для строки "Итого"
         if i == len(items_data) - 1:
             html_table += '<tr style="background-color:#e0f0ff;">'
-            html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1rem;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:10px 10px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:0.9rem; color:#0066cc;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.2rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:10px 10px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; color:#0066cc;">{item[1]}</td>'
             html_table += '</tr>'
         else:
             html_table += '<tr>'
@@ -1300,7 +1300,7 @@ def render_results(results):
     
     # Выводим HTML-таблицу напрямую через markdown
     st.markdown(f"""
-    <div style="width:95%; margin:0 auto; padding-left:10px; padding-right:10px;">
+    <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
         {html_table}
     </div>
     """, unsafe_allow_html=True)
@@ -1470,67 +1470,14 @@ def display_formatted_description(description_text):
             border-radius: 5px;
             margin-bottom: 20px;
         }
-        .description-container section {
-            margin-bottom: 15px;
-        }
-        .description-container h3 {
-            font-size: 1.2rem;
-            margin-top: 30px;
-            text-align: center;
-        }
-        .description-container h4 {
-            font-size: 1.1rem;
-            margin-top: 20px;
-        }
-        .description-container ul, .description-container ol {
-            margin-bottom: 10px;
-            padding-left: 20px;
-        }
-        .description-container p {
-            margin-bottom: 15px;
-        }
-        /* Дополнительные стили для вложенных элементов */
-        .description-container ul li, .description-container ol li {
-            margin-bottom: 6px;
-        }
-        .description-container ul ul, .description-container ol ol, 
-        .description-container ul ol, .description-container ol ul {
-            margin-top: 6px;
-        }
-        /* Стили для таблиц */
-        .description-container table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-            margin-top: 10px;
-        }
-        .description-container th, .description-container td {
-            padding: 8px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-        .description-container th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
         </style>
         """, unsafe_allow_html=True)
         st.session_state.description_style_added = True
     
-    # Избавляемся от лишних отступов в HTML-коде, которые могут мешать правильному отображению
-    description_text = description_text.strip()
-    
-    # Используем div с классом для безопасного отображения HTML
-    html_output = f"""
-    <div class="description-container">
-        {description_text}
-    </div>
-    """
-    
-    # Отображаем HTML в контейнере
+    # Используем col.markdown для безопасного отображения HTML внутри контейнера
     container = st.container()
     with container:
-        st.markdown(html_output, unsafe_allow_html=True)
+        st.markdown(f'<div class="description-container">{description_text}</div>', unsafe_allow_html=True)
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
@@ -1828,7 +1775,7 @@ def main():
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.1</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v3.9</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Создаем директории, если они не существуют
