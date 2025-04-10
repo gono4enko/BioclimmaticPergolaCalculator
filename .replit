@@ -17,10 +17,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "BasicServer"
+args = "MinimalApp"
 
 [[workflows.workflow]]
-name = "BasicServer"
+name = "MinimalApp"
 author = "agent"
 
 [workflows.workflow.metadata]
@@ -31,7 +31,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run app_basic.py --server.port 5000 --logger.level debug"
+args = "streamlit run minimal_app.py --server.port 5000 --logger.level debug"
 waitForPort = 5000
 
 [[ports]]
