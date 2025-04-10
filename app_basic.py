@@ -1627,7 +1627,8 @@ def display_image_with_padding(image_path, caption=None, padding_percent=5):
             raise FileNotFoundError(f"Изображение не найдено: {image_path}")
             
         # Отображаем изображение
-        st.image(image_path, caption=caption, use_container_width=True)
+        # Вместо параметра use_container_width=True используем width=None для занятия всей ширины
+        st.image(image_path, caption=caption, width=None)
 
 def scroll_to_results():
     """
