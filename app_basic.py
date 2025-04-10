@@ -1194,7 +1194,7 @@ def render_results(results):
         
         # Выводим HTML-таблицу напрямую через markdown
         st.markdown(f"""
-        <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
+        <div style="width:95%; margin:0 auto; padding-left:10px; padding-right:10px;">
             {html_table}
         </div>
         """, unsafe_allow_html=True)
@@ -1300,7 +1300,7 @@ def render_results(results):
     
     # Выводим HTML-таблицу напрямую через markdown
     st.markdown(f"""
-    <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
+    <div style="width:95%; margin:0 auto; padding-left:10px; padding-right:10px;">
         {html_table}
     </div>
     """, unsafe_allow_html=True)
