@@ -4,6 +4,8 @@
 """
 import streamlit as st
 import pandas as pd
+# Импортируем функции для работы с Яндекс.Метрикой
+from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
 import os
 import math
 import csv
@@ -1785,6 +1787,9 @@ def main():
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
     
+    # Добавляем код счетчика Яндекс.Метрики
+    add_yandex_metrika()
+    
     # Задаем стили для компактного и читаемого интерфейса по новому дизайну
     st.markdown("""
     <style>
@@ -1934,6 +1939,9 @@ def main():
                 
                 # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
                 st.session_state.description_shown = False
+                
+                # Отправляем событие успешного расчета в Яндекс.Метрику
+                send_calc_success_event()
                 
                 # Перезагружаем страницу для отображения результатов
                 st.rerun()
