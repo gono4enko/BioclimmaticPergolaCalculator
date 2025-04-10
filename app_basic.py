@@ -1318,7 +1318,7 @@ def render_results(results):
             # Используем описание из модуля конфигурации
             description_html = get_pergola_description(pergola_type)
             st.markdown(f"""
-            <div style="width:90%; margin:0 auto; padding-left:40px; padding-right:40px;">
+            <div style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
                 {description_html}
             </div>
             """, unsafe_allow_html=True)
@@ -1342,7 +1342,7 @@ def render_results(results):
             # Отображаем описание модульной системы из модуля конфигурации
             modular_description = get_modular_system_description()
             st.markdown(f"""
-            <div style="width:90%; margin:0 auto; padding-left:40px; padding-right:40px;">
+            <div style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
                 {modular_description}
             </div>
             """, unsafe_allow_html=True)
@@ -1365,7 +1365,7 @@ def render_results(results):
             # Отображаем описание системы водоотведения из модуля конфигурации
             drainage_description = get_drainage_system_description()
             st.markdown(f"""
-            <div style="width:90%; margin:0 auto; padding-left:40px; padding-right:40px;">
+            <div style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
                 {drainage_description}
             </div>
             """, unsafe_allow_html=True)
@@ -1388,7 +1388,7 @@ def render_results(results):
             if pergola_type == "B500NEW":
                 bansbach_description = get_bansbach_description()
                 st.markdown(f"""
-                <div style="width:90%; margin:0 auto; padding-left:40px; padding-right:40px;">
+                <div style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
                     {bansbach_description}
                 </div>
                 """, unsafe_allow_html=True)
@@ -1411,7 +1411,7 @@ def render_results(results):
             if pergola_type == "B700NEW":
                 somfy_description = get_pergola_description("SOMFY")
                 st.markdown(f"""
-                <div style="width:90%; margin:0 auto; padding-left:40px; padding-right:40px;">
+                <div style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
                     {somfy_description}
                 </div>
                 """, unsafe_allow_html=True)
@@ -1433,7 +1433,7 @@ def render_results(results):
             # Добавляем описание вариантов установки и вертикальных систем для всех типов пергол
             bioclimatic_install_description = get_bioclimatic_install_description()
             st.markdown(f"""
-            <div style="width:90%; margin:0 auto; padding-left:40px; padding-right:40px;">
+            <div style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
                 {bioclimatic_install_description}
             </div>
             """, unsafe_allow_html=True)
@@ -1456,7 +1456,7 @@ def render_results(results):
             if pergola_type in ["B500NEW", "B700NEW"]:
                 lamella_engineering_description = get_lamella_engineering_description()
                 st.markdown(f"""
-                <div style="width:90%; margin:0 auto; padding-left:40px; padding-right:40px;">
+                <div style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
                     {lamella_engineering_description}
                 </div>
                 """, unsafe_allow_html=True)
