@@ -1003,12 +1003,16 @@ def perform_calculation(dimensions, options):
         # Определяем тип ламелей и их количество
         lamella_info = ""
         if pergola_type in ["B500NEW", "B700NEW"]:
-            lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type)
+            lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type).lower()
             # Корректное склонение в зависимости от числа ламелей (четное/нечетное)
             lamellas_suffix = "ламель" if lamellas_count % 2 != 0 else "ламелей"
             lamellas_count_text = f", {lamellas_count} {lamellas_suffix}" if 'lamellas_count' in locals() else ""
         else:
             lamellas_count_text = ""
+                
+        # Корректируем текст для описания ламелей в единственном числе
+        if "ламели" in lamella_info.lower():
+            lamella_info = lamella_info.replace("Ламели", "ламелью").replace("ламели", "ламелью")
                 
         # Основная пергола
         specification.append({
@@ -1026,9 +1030,11 @@ def perform_calculation(dimensions, options):
             })
         
         if gutter_needed:
+            # Правильное склонение для "лоток"
+            gutter_suffix = "лоток" if gutters_count % 10 == 1 and gutters_count % 100 != 11 else "лотка" if 2 <= gutters_count % 10 <= 4 and (gutters_count % 100 < 10 or gutters_count % 100 >= 20) else "лотков"
             specification.append({
                 "name": "Усилитель лотка",
-                "count": f"{total_gutter_length:.2f} м ({gutters_count} лотка)",
+                "count": f"{total_gutter_length:.2f} м ({gutters_count} {gutter_suffix})",
                 "price": ""
             })
         
