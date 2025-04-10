@@ -1317,11 +1317,7 @@ def render_results(results):
         if pergola_type in ["B500NEW", "B700NEW", "B600"]:
             # Используем описание из модуля конфигурации
             description_html = get_pergola_description(pergola_type)
-            st.markdown(f"""
-            <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
-                {description_html}
-            </section>
-            """, unsafe_allow_html=True)
+            display_formatted_description(description_html)
             
             # Отображаем изображения с использованием списка из конфигурации
             images = get_pergola_images(pergola_type)
@@ -1341,11 +1337,7 @@ def render_results(results):
             # Добавляем информацию о масштабируемости для всех типов пергол
             # Отображаем описание модульной системы из модуля конфигурации
             modular_description = get_modular_system_description()
-            st.markdown(f"""
-            <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
-                {modular_description}
-            </section>
-            """, unsafe_allow_html=True)
+            display_formatted_description(modular_description)
             
             # Отображаем изображение модульной системы
             modular_images = get_pergola_images("MODULAR")
@@ -1364,11 +1356,7 @@ def render_results(results):
             # Добавляем информацию о системе водоотведения для всех типов пергол
             # Отображаем описание системы водоотведения из модуля конфигурации
             drainage_description = get_drainage_system_description()
-            st.markdown(f"""
-            <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
-                {drainage_description}
-            </section>
-            """, unsafe_allow_html=True)
+            display_formatted_description(drainage_description)
             
             # Отображаем изображение системы водоотведения
             drainage_images = get_pergola_images("DRAINAGE")
@@ -1478,6 +1466,35 @@ def render_results(results):
     # Добавляем отступ в конце страницы
     st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
 
+def display_formatted_description(description_text):
+    """
+    Отображает форматированное описание в стилизованном контейнере,
+    избегая проблем с видимостью HTML-тегов.
+    
+    Args:
+        description_text (str): HTML-текст с описанием
+    """
+    # Создаем стиль для описания один раз при первом вызове
+    if 'description_style_added' not in st.session_state:
+        st.markdown("""
+        <style>
+        .description-container {
+            width: 95%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        st.session_state.description_style_added = True
+    
+    # Используем col.markdown для безопасного отображения HTML внутри контейнера
+    container = st.container()
+    with container:
+        st.markdown(f'<div class="description-container">{description_text}</div>', unsafe_allow_html=True)
+
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
     Отображает изображение с отступами по краям и подписью.
@@ -1488,19 +1505,23 @@ def display_image_with_padding(image_path, caption=None, padding_percent=5):
         padding_percent (int, optional): Процент отступа от ширины контейнера (по умолчанию 5%)
     """
     # Создаем контейнер с отступами для изображения
-    st.markdown(f"""
-    <style>
-    .image-container {{
-        padding-left: {padding_percent}%;
-        padding-right: {padding_percent}%;
-        margin-bottom: 20px;
-    }}
-    </style>
-    <div class="image-container"></div>
-    """, unsafe_allow_html=True)
-    
-    # Отображаем изображение внутри контейнера с отступами
-    st.image(image_path, caption=caption, use_container_width=True)
+    container = st.container()
+    with container:
+        # Применяем стиль для изображения
+        if 'image_style_added' not in st.session_state:
+            st.markdown(f"""
+            <style>
+            .image-container {{
+                width: {100 - 2*padding_percent}%;
+                margin: 0 auto;
+                margin-bottom: 20px;
+            }}
+            </style>
+            """, unsafe_allow_html=True)
+            st.session_state.image_style_added = True
+            
+        # Отображаем изображение
+        st.image(image_path, caption=caption, use_container_width=True)
 
 def scroll_to_results():
     """
