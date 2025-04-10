@@ -1,27 +1,30 @@
+# Конфигурация Streamlit для запуска приложения
+# Этот файл содержит настройки внешнего вида и поведения приложения
+
 [server]
 headless = true
+enableCORS = true
+enableXsrfProtection = true
 address = "0.0.0.0"
 port = 5000
-enableCORS = false
-enableXsrfProtection = true
-maxUploadSize = 100
-maxMessageSize = 200
-
-[theme]
-primaryColor = "#0066cc"
-backgroundColor = "#ffffff"
-secondaryBackgroundColor = "#f8f8f8"
-textColor = "#333333"
-font = "sans serif"
-
-[logger]
-level = "info"
 
 [browser]
 gatherUsageStats = false
 serverAddress = "localhost"
 serverPort = 5000
 
+[theme]
+# Фирменные цвета для приложения
+primaryColor = "#004B9A"  # Синий
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+font = "sans serif"
+
 [runner]
+# Настройки для повышения производительности
 magicEnabled = true
 fastReruns = true
+
+[logger]
+level = "info"
