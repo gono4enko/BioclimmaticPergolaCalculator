@@ -1404,41 +1404,43 @@ def render_results(results):
     </div>
     """, unsafe_allow_html=True)
     
-    # Добавляем кнопку для генерации PDF
-    pdf_col1, pdf_col2 = st.columns([4, 2])
-    
-    with pdf_col1:
-        st.markdown("<p style='margin-top: 15px;'>Создайте коммерческое предложение для вашего клиента:</p>", 
-                    unsafe_allow_html=True)
-    
-    with pdf_col2:
-        if st.button("Создать коммерческое предложение", key="create_pdf_btn"):
-            with st.spinner("Генерация PDF, пожалуйста подождите..."):
-                try:
-                    # Получаем описание перголы из конфигурации
-                    pergola_description = get_pergola_description(pergola_type)
-                    
-                    # Форматируем данные для PDF
-                    pergola_data = format_pergola_data_for_pdf(
-                        results=results,
-                        options=results["options"],
-                        dimensions=results["dimensions"],
-                        pergola_description=pergola_description
-                    )
-                    
-                    # Создаем PDF и получаем путь к файлу
-                    pdf_path = generate_commercial_offer(pergola_data)
-                    
-                    if pdf_path:
-                        # Создаем и отображаем ссылку для скачивания PDF
-                        pdf_download_link = create_pdf_download_link(pdf_path)
-                        st.markdown(f"<div style='text-align: center;'>{pdf_download_link}</div>", unsafe_allow_html=True)
-                        st.success("Коммерческое предложение успешно создано!")
-                    else:
-                        st.error("Не удалось создать PDF. Проверьте логи сервера.")
-                except Exception as e:
-                    st.error(f"Ошибка при создании PDF: {str(e)}")
-                    st.info("Проверьте наличие шрифтов в папке fonts/ и права доступа к директории generated_pdf/")
+    # Кнопки PDF временно скрыты 
+    # (функциональность будет настроена позже)
+    if False:  # Условие, при котором код не будет выполняться
+        pdf_col1, pdf_col2 = st.columns([4, 2])
+        
+        with pdf_col1:
+            st.markdown("<p style='margin-top: 15px;'>Создайте коммерческое предложение для вашего клиента:</p>", 
+                        unsafe_allow_html=True)
+        
+        with pdf_col2:
+            if st.button("Создать коммерческое предложение", key="create_pdf_btn"):
+                with st.spinner("Генерация PDF, пожалуйста подождите..."):
+                    try:
+                        # Получаем описание перголы из конфигурации
+                        pergola_description = get_pergola_description(pergola_type)
+                        
+                        # Форматируем данные для PDF
+                        pergola_data = format_pergola_data_for_pdf(
+                            results=results,
+                            options=results["options"],
+                            dimensions=results["dimensions"],
+                            pergola_description=pergola_description
+                        )
+                        
+                        # Создаем PDF и получаем путь к файлу
+                        pdf_path = generate_commercial_offer(pergola_data)
+                        
+                        if pdf_path:
+                            # Создаем и отображаем ссылку для скачивания PDF
+                            pdf_download_link = create_pdf_download_link(pdf_path)
+                            st.markdown(f"<div style='text-align: center;'>{pdf_download_link}</div>", unsafe_allow_html=True)
+                            st.success("Коммерческое предложение успешно создано!")
+                        else:
+                            st.error("Не удалось создать PDF. Проверьте логи сервера.")
+                    except Exception as e:
+                        st.error(f"Ошибка при создании PDF: {str(e)}")
+                        st.info("Проверьте наличие шрифтов в папке fonts/ и права доступа к директории generated_pdf/")
     
     # Отображаем спецификацию перголы
     if "specification" in results:
@@ -1602,7 +1604,12 @@ def render_results(results):
         if pergola_type in ["B500NEW", "B700NEW", "B600"]:
             # Используем описание из модуля конфигурации
             description_html = get_pergola_description(pergola_type)
-            st.markdown(description_html, unsafe_allow_html=True)
+            # Оборачиваем описание в div с фиксированными отступами
+            st.markdown(f"""
+            <div style="padding: 0 25px; margin: 0 auto; max-width: 95%;">
+                {description_html}
+            </div>
+            """, unsafe_allow_html=True)
             
             # Отображаем изображения с использованием списка из конфигурации
             images = get_pergola_images(pergola_type)
@@ -1622,7 +1629,12 @@ def render_results(results):
             # Добавляем информацию о масштабируемости для всех типов пергол
             # Отображаем описание модульной системы из модуля конфигурации
             modular_description = get_modular_system_description()
-            st.markdown(modular_description, unsafe_allow_html=True)
+            # Оборачиваем описание в div с фиксированными отступами
+            st.markdown(f"""
+            <div style="padding: 0 25px; margin: 0 auto; max-width: 95%;">
+                {modular_description}
+            </div>
+            """, unsafe_allow_html=True)
             
             # Отображаем изображение модульной системы
             modular_images = get_pergola_images("MODULAR")
@@ -1641,7 +1653,12 @@ def render_results(results):
             # Добавляем информацию о системе водоотведения для всех типов пергол
             # Отображаем описание системы водоотведения из модуля конфигурации
             drainage_description = get_drainage_system_description()
-            st.markdown(drainage_description, unsafe_allow_html=True)
+            # Оборачиваем описание в div с фиксированными отступами
+            st.markdown(f"""
+            <div style="padding: 0 25px; margin: 0 auto; max-width: 95%;">
+                {drainage_description}
+            </div>
+            """, unsafe_allow_html=True)
             
             # Отображаем изображение системы водоотведения
             drainage_images = get_pergola_images("DRAINAGE")
@@ -1660,7 +1677,12 @@ def render_results(results):
             # Добавляем информацию о приводе Bansbach только для пергол B500NEW
             if pergola_type == "B500NEW":
                 bansbach_description = get_bansbach_description()
-                st.markdown(bansbach_description, unsafe_allow_html=True)
+                # Оборачиваем описание в div с фиксированными отступами
+                st.markdown(f"""
+                <div style="padding: 0 25px; margin: 0 auto; max-width: 95%;">
+                    {bansbach_description}
+                </div>
+                """, unsafe_allow_html=True)
                 
                 # Отображаем изображение привода Bansbach
                 bansbach_images = get_pergola_images("BANSBACH")
@@ -1679,7 +1701,12 @@ def render_results(results):
             # Добавляем информацию о приводе Somfy только для пергол B700NEW
             if pergola_type == "B700NEW":
                 somfy_description = get_pergola_description("SOMFY")
-                st.markdown(somfy_description, unsafe_allow_html=True)
+                # Оборачиваем описание в div с фиксированными отступами
+                st.markdown(f"""
+                <div style="padding: 0 25px; margin: 0 auto; max-width: 95%;">
+                    {somfy_description}
+                </div>
+                """, unsafe_allow_html=True)
                 
                 # Отображаем изображение привода Somfy
                 somfy_images = get_pergola_images("SOMFY")
