@@ -1,19 +1,6 @@
 """
 Калькулятор стоимости пергол - базовая версия без сложных стилей и модификаций
 Максимально простой подход с использованием стандартных компонентов Streamlit
-
-Версия 3.7 (стабильная)
-Последнее обновление: 10.04.2025
-
-ИНСТРУКЦИИ ПО ОБСЛУЖИВАНИЮ:
-- Всегда вести себя как профессионал при внесении изменений
-- Достигать результатов максимально быстро и эффективно
-- Не нарушать существующую логику работы приложения
-- Сохранять единый стиль форматирования для всех элементов
-- Сохранять оригинальное содержание текстов и документации
-- Приоритизировать оптимизацию UI для лучшей читаемости и удобства пользователей
-- При оптимизации таблиц обеспечивать полную видимость числовых значений
-- Ценить время пользователя и стремиться к максимальной производительности
 """
 import streamlit as st
 import pandas as pd
@@ -21,233 +8,18 @@ import os
 import math
 import csv
 import time
-import tempfile
-import base64
-from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
+from datetime import datetime
+from pdf_generator_fpdf import generate_commercial_offer, format_pergola_data_for_pdf
 from config.pergola_descriptions import (
     get_pergola_description,
     get_modular_system_description,
     get_drainage_system_description,
     get_bansbach_description,
+    get_bioclimatic_install_description,
+    get_lamella_engineering_description,
     get_pergola_images,
     get_pergola_image_caption
 )
-
-# Создадим отсутствующие функции для совместимости
-def get_bioclimatic_install_description():
-    return """
-    <h3 style='font-size: 1.2rem; margin-top: 30px; text-align: center;'>Биоклиматические перголы: идеальный симбиоз стиля, функциональности и свободы выбора</h3>
-    <p style='margin-bottom: 15px; font-style: italic; text-align: center;'>
-    (Как превратить любое пространство в зону комфорта, защищенную от капризов природы)
-    </p>
-    
-    <div style='margin-bottom: 15px;'>
-    <h4 style='font-size: 1.1rem; margin-top: 20px;'>Варианты установки: от сада до небоскреба</h4>
-    <p style='margin-bottom: 10px;'>Биоклиматическая пергола — это не просто навес, а архитектурный элемент, который адаптируется под ваши потребности. Выберите свой сценарий:</p>
-    <ol style='margin-bottom: 10px; padding-left: 20px;'>
-        <li><strong>Отдельностоящая</strong> Идеальна для садов, бассейнов, открытых террас. Создает островок уюта в центре ландшафта.
-            <ul style='padding-left: 20px;'>
-                <li>Пример: Пергола над зоной барбекю, где дождь не прервет вечеринку, а солнце не испортит стейки.</li>
-            </ul>
-        </li>
-        <li><strong>Пристенная</strong> Продлевает жилое пространство дома. Замените скучный козырек на элегантную террасу с видом на сад.
-            <ul style='padding-left: 20px;'>
-                <li>Фишка: Интеграция с фасадным остеклением — стирает границы между домом и природой.</li>
-            </ul>
-        </li>
-        <li><strong>Подвесная</strong> Для сложных проектов: над внутренними двориками, между этажами или как часть промзоны.
-            <ul style='padding-left: 20px;'>
-                <li>Технология: Алюминиевые балки выдерживают вес снега и ветровые нагрузки до 70 кг/м².</li>
-            </ul>
-        </li>
-        <li><strong>Интегрированная</strong> Станьте автором уникального дизайна! Комбинируйте перголу с беседками, зимними садами, зонами СПА.
-            <ul style='padding-left: 20px;'>
-                <li>Для вдохновения: Пергола-трансформер, которая днем — навес у бассейна, а вечером — кинотеатр под звездами.</li>
-            </ul>
-        </li>
-    </ol>
-    </div>
-    
-    <div style='margin-bottom: 15px;'>
-    <h4 style='font-size: 1.1rem; margin-top: 20px;'>Вертикальные системы остекления: когда стены становятся умными</h4>
-    <p style='margin-bottom: 10px;'>Защитите пространство от ветра, дождя и солнца, не жертвуя светом и видами.</p>
-    <ol style='margin-bottom: 10px; padding-left: 20px;'>
-        <li><strong>Гильотинное остекление W-серия</strong>
-            <ul style='padding-left: 20px;'>
-                <li>Как работает: Стеклянные панели поднимаются вертикально, как окна-гильотины.</li>
-                <li>Плюсы:
-                    <ul style='padding-left: 20px;'>
-                        <li>Максимальная герметичность.</li>
-                        <li>Выбор: энергоэффективные стеклопакеты толщиной 28мм или закаленное стекло толщиной до 10 мм.</li>
-                    </ul>
-                </li>
-                <li>Для кого: Рестораны с панорамным видом, дома в горах, где важно сохранить тепло.</li>
-            </ul>
-        </li>
-        <li><strong>Раздвижное остекление S-серия</strong>
-            <ul style='padding-left: 20px;'>
-                <li>Как работает: Панели сдвигаются вбок, превращая перголу в открытую веранду за 30 секунд.</li>
-                <li>Плюсы:
-                    <ul style='padding-left: 20px;'>
-                        <li>Бесшумные направляющие.</li>
-                        <li>Возможность объединить до 6 панелей в одну систему.</li>
-                    </ul>
-                </li>
-                <li>Для кого: Летние кафе, квартиры с выходом на террасу, частные дома с террасами либо веранды.</li>
-            </ul>
-        </li>
-        <li><strong>Подъемный ZIP / Screen</strong>
-            <ul style='padding-left: 20px;'>
-                <li>Как работает: Прочное полотно из акриловой ткани в виде экрана поднимаются по направляющим, создавая тень и защиту от ветра.</li>
-                <li>Плюсы:
-                    <ul style='padding-left: 20px;'>
-                        <li>Солнцезащитные полотна с системой автоматизации.</li>
-                        <li>Управление через приложение: регулируйте прозрачность в зависимости от солнца.</li>
-                    </ul>
-                </li>
-                <li>Для кого: Дома у моря, детские площадки под перголой.</li>
-            </ul>
-        </li>
-    </ol>
-    </div>
-    
-    <div style='margin-bottom: 15px;'>
-    <h4 style='font-size: 1.1rem; margin-top: 20px;'>Почему это выгодно?</h4>
-    <ul style='margin-bottom: 10px; padding-left: 20px;'>
-        <li>Адаптивность: Одно решение для дождя, снега, ветра и палящего солнца.</li>
-        <li>Дизайн-трансформер: Меняйте конфигурацию остекления и солнцезащиты хоть каждый день.</li>
-        <li>Европейская надежность: Автоматика Bansbach и Somfy (до 50 000 циклов!) работают даже в экстремальных условиях.</li>
-    </ul>
-    </div>
-    
-    <div style='margin-bottom: 25px;'>
-        <p style='margin-bottom: 15px; font-weight: bold;'>Вы готовы выйти за рамки стандартов? Биоклиматическая пергола — это не «навес», а ваш личный климатический контролер. Оставьте заявку, и наши инженеры создадут проект, где каждая деталь будет работать на ваш комфорт.</p>
-        <div style="margin: 20px auto; text-align: center;">
-            <img src="attached_assets/install_design_system.png" style="max-width: 100%; height: auto;" alt="Система установки и проектирования пергол">
-        </div>
-    </div>
-    """
-
-def get_lamella_engineering_description(pergola_type=None):
-    return """
-    <div style='padding: 0 20px;'>
-    <h3 style='font-size: 1.2rem; margin-top: 20px; text-align: center;'>Инженерный взгляд на биоклиматические перголы: как ламели выдерживают снег, ливни и сохраняют тепло</h3>
-    <p style='margin-bottom: 15px; font-style: italic; text-align: center;'>
-    (Технические секреты, которые делают ваш комфорт непогрешимым)
-    </p>
-    
-    <div style='margin-bottom: 15px;'>
-    <h4 style='font-size: 1.1rem; margin-top: 20px;'>Прогиб ламелей: где точность встречает надежность</h4>
-    <p style='margin-bottom: 10px;'>Ламели — это «скелет» перголы, и их прочность определяет, как конструкция поведет себя под нагрузками. Мы протестировали каждую модель в экстремальных условиях. Вот что важно знать:</p>
-    
-    <p style='margin-bottom: 10px;'><strong>Ламель 250×53 NEW</strong></p>
-    <ul style='margin-bottom: 10px; padding-left: 20px;'>
-        <li>Масса: 4,684 кг/м | Шаг: 250 мм</li>
-        <li>Прогиб под нагрузкой:
-            <ul style='padding-left: 20px;'>
-                <li>Рабочая (масса ламели + 50%): 12 мм при ширине 4,5 м.</li>
-                <li>Снеговая (50 кг/м²): 30 мм при ширине 4,5 м.</li>
-            </ul>
-        </li>
-        <li>Макс. снеговая нагрузка: 50 кг/м² (эквивалент 40-50 см свежего снега).</li>
-    </ul>
-    
-    <p style='margin-bottom: 10px;'><strong>Ламель 200×56 NEW</strong></p>
-    <ul style='margin-bottom: 10px; padding-left: 20px;'>
-        <li>Масса: 4,375 кг/м | Шаг: 200 мм</li>
-        <li>Прогиб под нагрузкой:
-            <ul style='padding-left: 20px;'>
-                <li>Рабочая: 10 мм при ширине 5,0 м.</li>
-                <li>Снеговая: 22 мм при ширине 5,0 м.</li>
-            </ul>
-        </li>
-        <li>Макс. снеговая нагрузка: 70 кг/м² (до 60 см снега).</li>
-    </ul>
-    
-    <p style='margin-bottom: 10px;'>Почему это важно? Минимальный прогиб сохраняет геометрию крыши даже в экстремальных условиях. Для сравнения: у конкурентов аналогичные ламели прогибаются на 50-70 мм под теми же нагрузками.</p>
-    </div>
-    
-    <div style='margin-bottom: 15px;'>
-    <h4 style='font-size: 1.1rem; margin-top: 20px;'>Герметичность: когда внутри сухо, даже если снаружи потоп</h4>
-    <p style='margin-bottom: 10px;'>Алюминиевые ламели перголы — это не просто «крыша», а герметичный кокон. Вот как мы этого добиваемся:</p>
-    <ol style='margin-bottom: 10px; padding-left: 20px;'>
-        <li><strong>Двойное уплотнение EPDM:</strong>
-            <ul style='padding-left: 20px;'>
-                <li>Уплотнители между ламелями и в лотках выдерживают давление водяного столба до 600 Па (ливень интенсивностью 100 мм/час).</li>
-                <li>Для сравнения: стандартные системы держат только 300-400 Па.</li>
-            </ul>
-        </li>
-        <li><strong>Наклон ламелей + дренажные каналы:</strong> Вода стекает в лотки, не задерживаясь на поверхности. Даже при сильном ветре капли не просачиваются через стыки.</li>
-        <li><strong>Тест на герметичность:</strong> Мы заливаем крышу перголы водой под давлением 600 Па в течение 1 часа. Результат: 0 протечек.</li>
-    </ol>
-    </div>
-    
-    <div style='margin-bottom: 15px;'>
-    <h4 style='font-size: 1.1rem; margin-top: 20px;'>Теплоизоляция: почему под перголой тепло зимой и прохладно летом</h4>
-    <ul style='margin-bottom: 10px; padding-left: 20px;'>
-        <li><strong>Терморазрыв в профиле:</strong> Алюминиевые ламели с изолирующими вставками из нейлона снижают теплопотери на 40%.</li>
-        <li><strong>Эффект «воздушной подушки»:</strong> При закрытых ламелях между ними образуется прослойка воздуха, которая работает как естественный изолятор.</li>
-        <li><strong>Температурный комфорт:</strong>
-            <ul style='padding-left: 20px;'>
-                <li>Зимой: под перголой на 5-7°C теплее, чем снаружи.</li>
-                <li>Летом: на 10-12°C прохладнее благодаря тени и вентиляции.</li>
-            </ul>
-        </li>
-    </ul>
-    </div>
-    
-    <div style='margin-bottom: 15px;'>
-    <h4 style='font-size: 1.1rem; margin-top: 20px;'>Сравнительная таблица: какая ламель подходит вам?</h4>
-    <table style='width: 100%; border-collapse: collapse; margin-bottom: 15px;'>
-        <tr>
-            <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Параметр</th>
-            <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Ламель 250×53 NEW</th>
-            <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Ламель 200×56 NEW</th>
-        </tr>
-        <tr>
-            <td style='border: 1px solid #ddd; padding: 8px;'>Снеговая нагрузка</td>
-            <td style='border: 1px solid #ddd; padding: 8px;'>50 кг/м²</td>
-            <td style='border: 1px solid #ddd; padding: 8px;'>70 кг/м²</td>
-        </tr>
-        <tr>
-            <td style='border: 1px solid #ddd; padding: 8px;'>Прогиб под снегом</td>
-            <td style='border: 1px solid #ddd; padding: 8px;'>30 мм (4,5 м)</td>
-            <td style='border: 1px solid #ddd; padding: 8px;'>22 мм (5,0 м)</td>
-        </tr>
-        <tr>
-            <td style='border: 1px solid #ddd; padding: 8px;'>Шаг ламелей</td>
-            <td style='border: 1px solid #ddd; padding: 8px;'>250 мм</td>
-            <td style='border: 1px solid #ddd; padding: 8px;'>200 мм (плотнее защита)</td>
-        </tr>
-        <tr>
-            <td style='border: 1px solid #ddd; padding: 8px;'>Ветровая стойкость</td>
-            <td style='border: 1px solid #ddd; padding: 8px;'>До 25 м/с</td>
-            <td style='border: 1px solid #ddd; padding: 8px;'>До 30 м/с</td>
-        </tr>
-        <tr>
-            <td style='border: 1px solid #ddd; padding: 8px;'>Идеальный сценарий</td>
-            <td style='border: 1px solid #ddd; padding: 8px;'>Умеренный климат</td>
-            <td style='border: 1px solid #ddd; padding: 8px;'>Северные регионы</td>
-        </tr>
-    </table>
-    </div>
-    
-    <div style='margin-bottom: 15px;'>
-    <h4 style='font-size: 1.1rem; margin-top: 20px;'>Почему это выгодно?</h4>
-    <ul style='margin-bottom: 10px; padding-left: 20px;'>
-        <li><strong>Экономия на отоплении/кондиционировании:</strong> Терморазрыв и герметичность снижают затраты на энергию.</li>
-        <li><strong>Гарантия 10 лет:</strong> На ламели и уплотнители — потому что мы уверены в каждом миллиметре.</li>
-        <li><strong>Адаптивность:</strong> Комбинируйте ламели с остеклением или ZIP-экранами для полного контроля над климатом.</li>
-    </ul>
-    </div>
-    
-    <div style='margin-bottom: 25px;'>
-        <p style='margin-bottom: 15px; font-weight: bold;'>Финал: Биоклиматическая пергола — это не «навес», а инженерная система, которая считает каждую каплю дождя и снежинку. Выбирайте ламели, которые работают как швейцарские часы — тихо, точно, без компромиссов.</p>
-        <div style="margin: 20px auto; text-align: center;">
-            <img src="attached_assets/aluminum slats.png" style="max-width: 100%; height: auto;" alt="Алюминиевые ламели для пергол">
-        </div>
-    </div>
-    """
 
 # Используем прямое определение структур данных для упрощения
 # Типы пергол
@@ -370,24 +142,6 @@ DRIVE_PRICES = {
         "tandem": 1000       # Somfy M2 TANDEM - 1000 евро
     }
 }
-
-# Функция для правильного склонения слова "канал"
-def get_channel_suffix(count):
-    """
-    Возвращает правильное склонение слова "канал" в зависимости от числа
-    
-    Args:
-        count (int): Количество каналов
-    
-    Returns:
-        str: Правильное склонение слова "канал" ("канал", "канала", "каналов")
-    """
-    if count % 10 == 1 and count % 100 != 11:
-        return "канал"
-    elif 2 <= count % 10 <= 4 and (count % 100 < 10 or count % 100 >= 20):
-        return "канала"
-    else:
-        return "каналов"
 
 # Пульты дистанционного управления
 REMOTE_CONTROL_TYPES = {
@@ -790,12 +544,7 @@ def get_drive_price(pergola_type, width_m, length_m, modules):
 
 def get_remote_control(devices_count):
     """
-    Определяет тип и стоимость пульта управления на основе количества управляемых устройств.
-    Выбор происходит по следующим правилам:
-    - Если устройств 1, выбирается одноканальный пульт Simu 1K
-    - Если устройств 2-3, выбирается пятиканальный пульт Simu 5K
-    - Если устройств 4-5, выбирается пятиканальный пульт Simu 5K
-    - Если устройств более 5, выбирается пятнадцатиканальный пульт Simu 15K
+    Определяет тип и стоимость пульта управления
     
     Args:
         devices_count (int): Количество устройств для управления
@@ -803,12 +552,12 @@ def get_remote_control(devices_count):
     Returns:
         tuple: (название пульта, цена пульта)
     """
-    if devices_count == 1:
-        return REMOTE_CONTROL_TYPES[1]["name"], REMOTE_CONTROL_TYPES[1]["price"]
-    elif 2 <= devices_count <= 5:
-        return REMOTE_CONTROL_TYPES[5]["name"], REMOTE_CONTROL_TYPES[5]["price"]
+    if devices_count <= 1:
+        return "Simu 1K", REMOTE_CONTROL_TYPES[1]["price"]
+    elif devices_count <= 5:
+        return "Simu 5K", REMOTE_CONTROL_TYPES[5]["price"]
     else:
-        return REMOTE_CONTROL_TYPES[15]["name"], REMOTE_CONTROL_TYPES[15]["price"]
+        return "Simu 15K", REMOTE_CONTROL_TYPES[15]["price"]
 
 def perform_calculation(dimensions, options):
     """Выполнить расчет стоимости перголы"""
@@ -925,7 +674,7 @@ def perform_calculation(dimensions, options):
             }
             
             results["items"].append({
-                "name": f"Пульт ДУ {remote_name} ({devices_count} {get_channel_suffix(devices_count)})",
+                "name": f"Пульт ДУ {remote_name} ({devices_count} каналов)",
                 "price": remote_price
             })
             
@@ -940,14 +689,15 @@ def perform_calculation(dimensions, options):
             led_types = []
             
             # Блок управления освещением - по 1 блоку на каждый модуль
-            # Количество блоков управления зависит от количества модулей
-            controllers_count = modules
-            total_controller_price = LIGHTING_PRICES["controller"] * controllers_count
-            lighting_cost += total_controller_price
-            results["items"].append({
-                "name": f"Блок управления освещением Somfy RTS Dimmer ({controllers_count} шт.)",
-                "price": total_controller_price
-            })
+            if has_lighting:
+                # Количество блоков управления зависит от количества модулей
+                controllers_count = modules
+                total_controller_price = LIGHTING_PRICES["controller"] * controllers_count
+                lighting_cost += total_controller_price
+                results["items"].append({
+                    "name": f"Блок управления освещением Somfy RTS Dimmer ({controllers_count} шт.)",
+                    "price": total_controller_price
+                })
             
             # Белая светодиодная лента
             if "white_led" in lighting_options:
@@ -983,7 +733,7 @@ def perform_calculation(dimensions, options):
                 }
                 
                 results["items"].append({
-                    "name": f"Пульт ДУ {remote_name} для освещения ({lighting_devices_count} {get_channel_suffix(lighting_devices_count)})",
+                    "name": f"Пульт ДУ {remote_name} для освещения ({lighting_devices_count} каналов)",
                     "price": remote_price
                 })
                 
@@ -1003,34 +753,15 @@ def perform_calculation(dimensions, options):
         # Определяем тип ламелей и их количество
         lamella_info = ""
         if pergola_type in ["B500NEW", "B700NEW"]:
-            lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type).lower()
-            # Корректное склонение в зависимости от числа ламелей (правила русского языка)
-            # 1 ламель, 2-4 ламели, 5-20 ламелей, 21 ламель, 22-24 ламели и т.д.
-            lamellas_suffix = "ламель" if lamellas_count % 10 == 1 and lamellas_count % 100 != 11 else "ламели" if 2 <= lamellas_count % 10 <= 4 and (lamellas_count % 100 < 10 or lamellas_count % 100 >= 20) else "ламелей"
-            lamellas_count_text = f", {lamellas_count} {lamellas_suffix}" if 'lamellas_count' in locals() else ""
+            lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type)
+            lamellas_count_text = f", {lamellas_count} ламелей" if 'lamellas_count' in locals() else ""
         else:
             lamellas_count_text = ""
                 
-        # Получаем тип ламелей и название
-        cleaned_lamella_info = lamella_info
-        if "ламели" in lamella_info.lower():
-            # Убираем слово "Ламели" или "ламели" из строки, но сохраняем размер
-            cleaned_lamella_info = lamella_info.replace("Ламели ", "").replace("ламели ", "")
-        
-        # Для типа B500NEW - это поворотные ламели, для B700NEW - сдвижные, для B600 - сэндвич панели
-        if pergola_type == "B500NEW":
-            pergola_with_lamellas = f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м, с поворотными ламелями {cleaned_lamella_info}{lamellas_count_text}"
-        elif pergola_type == "B700NEW":
-            pergola_with_lamellas = f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м, с сдвижными ламелями {cleaned_lamella_info}{lamellas_count_text}"
-        elif pergola_type == "B600":
-            pergola_with_lamellas = f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м, с сэндвич панелями {cleaned_lamella_info}{lamellas_count_text}"
-        else:
-            pergola_with_lamellas = f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м, с ламелью {cleaned_lamella_info}{lamellas_count_text}"
-        
         # Основная пергола
         specification.append({
-            "name": pergola_with_lamellas,
-            "count": f"{modules} {'модуль' if modules == 1 else 'модуля' if 2 <= modules <= 4 else 'модулей'}",
+            "name": f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м с {lamella_info}{lamellas_count_text}",
+            "count": f"{modules} модуль",
             "price": ""
         })
         
@@ -1043,11 +774,9 @@ def perform_calculation(dimensions, options):
             })
         
         if gutter_needed:
-            # Правильное склонение для "лоток"
-            gutter_suffix = "лоток" if gutters_count % 10 == 1 and gutters_count % 100 != 11 else "лотка" if 2 <= gutters_count % 10 <= 4 and (gutters_count % 100 < 10 or gutters_count % 100 >= 20) else "лотков"
             specification.append({
                 "name": "Усилитель лотка",
-                "count": f"{total_gutter_length:.2f} м ({gutters_count} {gutter_suffix})",
+                "count": f"{total_gutter_length:.2f} м ({gutters_count} лотка)",
                 "price": ""
             })
         
@@ -1116,7 +845,7 @@ def perform_calculation(dimensions, options):
                 remote_name, _ = get_remote_control(lighting_devices_count)
                 specification.append({
                     "name": f"Пульт ДУ {remote_name} для освещения",
-                    "count": f"1 шт. ({lighting_devices_count} {get_channel_suffix(lighting_devices_count)})",
+                    "count": f"1 шт. ({lighting_devices_count} каналов)",
                     "price": ""
                 })
         
@@ -1275,9 +1004,7 @@ def render_dimensions_form():
     
     # Показываем информацию о модулях (только для отображения)
     if modules > 1:
-        # Правильное склонение для модулей
-        modules_suffix = "модуля" if 2 <= modules <= 4 else "модулей"
-        st.info(f"При размере {width:.2f}×{length:.2f} м будет автоматически использовано {modules} {modules_suffix}")
+        st.info(f"При размере {width:.2f}×{length:.2f} м будет автоматически использовано {modules} модуля")
     
     return {
         "width": width,
@@ -1347,44 +1074,6 @@ def render_options_form():
         "installation": installation
     }
 
-def create_pdf_download_link(pdf_path, link_text="Скачать коммерческое предложение в PDF"):
-    """
-    Создает HTML-ссылку для скачивания сгенерированного PDF-файла
-    
-    Args:
-        pdf_path (str): Путь к PDF-файлу
-        link_text (str): Текст ссылки
-        
-    Returns:
-        str: HTML-код ссылки для скачивания
-    """
-    with open(pdf_path, "rb") as file:
-        pdf_data = file.read()
-    
-    # Кодируем данные PDF в base64
-    b64_pdf = base64.b64encode(pdf_data).decode('utf-8')
-    
-    # Создаем ссылку для скачивания
-    # Используем чистый HTML вместо st.download_button для большей гибкости стиля
-    download_filename = os.path.basename(pdf_path)
-    href = f"""
-    <a href="data:application/octet-stream;base64,{b64_pdf}" 
-       download="{download_filename}" 
-       style="display: inline-block; 
-              background-color: #4CAF50; 
-              color: white; 
-              padding: 10px 20px; 
-              text-align: center; 
-              text-decoration: none; 
-              font-size: 16px; 
-              margin: 15px 0; 
-              border-radius: 4px;">
-        <i class="fas fa-file-pdf"></i> {link_text}
-    </a>
-    """
-    
-    return href
-
 def render_results(results):
     """
     Отображает результаты расчета стоимости перголы
@@ -1445,44 +1134,6 @@ def render_results(results):
     </div>
     """, unsafe_allow_html=True)
     
-    # Кнопки PDF временно скрыты 
-    # (функциональность будет настроена позже)
-    if False:  # Условие, при котором код не будет выполняться
-        pdf_col1, pdf_col2 = st.columns([4, 2])
-        
-        with pdf_col1:
-            st.markdown("<p style='margin-top: 15px;'>Создайте коммерческое предложение для вашего клиента:</p>", 
-                        unsafe_allow_html=True)
-        
-        with pdf_col2:
-            if st.button("Создать коммерческое предложение", key="create_pdf_btn"):
-                with st.spinner("Генерация PDF, пожалуйста подождите..."):
-                    try:
-                        # Получаем описание перголы из конфигурации
-                        pergola_description = get_pergola_description(pergola_type)
-                        
-                        # Форматируем данные для PDF
-                        pergola_data = format_pergola_data_for_pdf(
-                            results=results,
-                            options=results["options"],
-                            dimensions=results["dimensions"],
-                            pergola_description=pergola_description
-                        )
-                        
-                        # Создаем PDF и получаем путь к файлу
-                        pdf_path = generate_commercial_offer(pergola_data)
-                        
-                        if pdf_path:
-                            # Создаем и отображаем ссылку для скачивания PDF
-                            pdf_download_link = create_pdf_download_link(pdf_path)
-                            st.markdown(f"<div style='text-align: center;'>{pdf_download_link}</div>", unsafe_allow_html=True)
-                            st.success("Коммерческое предложение успешно создано!")
-                        else:
-                            st.error("Не удалось создать PDF. Проверьте логи сервера.")
-                    except Exception as e:
-                        st.error(f"Ошибка при создании PDF: {str(e)}")
-                        st.info("Проверьте наличие шрифтов в папке fonts/ и права доступа к директории generated_pdf/")
-    
     # Отображаем спецификацию перголы
     if "specification" in results:
         st.markdown("<h3 style='font-size: 1.1rem; margin-top: 0; margin-bottom: 10px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
@@ -1504,22 +1155,22 @@ def render_results(results):
         
         # Добавляем заголовки
         html_table += '<tr>'
-        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:65%;">Наименование</th>'
-        html_table += '<th style="text-align:center; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:35%;">Количество</th>'
+        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%;">Наименование</th>'
+        html_table += '<th style="text-align:center; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%;">Количество</th>'
         html_table += '</tr>'
         
         # Добавляем строки с данными
         for item in spec_data:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.95rem;">{item[0]}</td>'
-            html_table += f'<td style="text-align:center; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.95rem;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[0]}</td>'
+            html_table += f'<td style="text-align:center; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[1]}</td>'
             html_table += '</tr>'
         
         html_table += '</table>'
         
-        # Выводим HTML-таблицу напрямую через markdown с теми же отступами, как у таблицы стоимости
+        # Выводим HTML-таблицу напрямую через markdown
         st.markdown(f"""
-        <div style="width:95%; margin:0 auto; padding-left:15px; padding-right:15px;">
+        <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
             {html_table}
         </div>
         """, unsafe_allow_html=True)
@@ -1533,38 +1184,30 @@ def render_results(results):
     # Получаем информацию о ламелях
     lamella_info = LAMELLA_TYPES.get(results["options"]["lamella_type"], results["options"]["lamella_type"])
     lamellas_count = results["debug"].get("lamellas_count", 0)
-    # Формируем информацию о ламелях
-    # Удаляем лишние слова "ламели", "Ламели" из типа ламелей
-    cleaned_lamella_info = lamella_info
-    if "ламели" in cleaned_lamella_info.lower():
-        cleaned_lamella_info = cleaned_lamella_info.replace("Ламели ", "").replace("ламели ", "")
-        
-    # Составляем итоговую информацию о ламелях
-    # Добавляем запятую после размера перголы и правильное описание типа ламелей
-    if pergola_type == "B500NEW":
-        lamellas_info = f", с поворотными ламелями {cleaned_lamella_info}"
-    elif pergola_type == "B700NEW":
-        lamellas_info = f", с сдвижными ламелями {cleaned_lamella_info}"
-    elif pergola_type == "B600":
-        lamellas_info = f", с сэндвич панелями {cleaned_lamella_info}"
-    else:
-        lamellas_info = f", с ламелью {cleaned_lamella_info}"
+    lamellas_info = f" с {lamella_info}"
     if lamellas_count > 0 and pergola_type in ["B500NEW", "B700NEW"]:
-        # Корректное склонение в зависимости от числа ламелей (правила русского языка)
-        lamellas_suffix = "ламель" if lamellas_count % 10 == 1 and lamellas_count % 100 != 11 else "ламели" if 2 <= lamellas_count % 10 <= 4 and (lamellas_count % 100 < 10 or lamellas_count % 100 >= 20) else "ламелей"
-        lamellas_info += f", {lamellas_count} {lamellas_suffix}"
+        lamellas_info += f", {lamellas_count} ламелей"
     
     # Функция для форматирования цены в бухгалтерском стиле
     def format_price(price):
-        # Всегда используем полный формат без сокращений
-        # Форматируем с пробелами между тысячами и символом валюты
-        return "{:,.0f} ₽".format(price).replace(",", " ")
+        # Всегда используем сокращенный формат для мобильной версии
+        price_in_thousands = price / 1000
+        if price >= 1000000:
+            price_in_millions = price / 1000000
+            # Округляем до 1 знака после запятой для миллионов
+            return "{:.1f}M₽".format(price_in_millions)
+        # Для сотен тысяч используем формат с K
+        if price >= 100000:
+            return "{:.0f}K₽".format(price_in_thousands)
+        # Для десятков тысяч тоже используем формат с K, но с 1 знаком после запятой
+        if price >= 10000:
+            return "{:.1f}K₽".format(price_in_thousands)
+        # Для маленьких чисел используем обычный формат с разделителями
+        return "{:,.0f}₽".format(price).replace(",", " ")
     
     # Базовая стоимость перголы - всегда первой строкой
     rub_base_price = base_price * euro_rate
-    # Правильное склонение для модулей
-    modules_suffix = "модуль" if modules == 1 else "модуля" if 2 <= modules <= 4 else "модулей"
-    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} {modules_suffix})", format_price(rub_base_price)])
+    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} модуль)", format_price(rub_base_price)])
     
     # Привод и автоматика - второй строкой, если есть
     if pergola_type in ["B500NEW", "B700NEW"]:
@@ -1614,8 +1257,8 @@ def render_results(results):
     
     # Добавляем заголовки
     html_table += '<tr>'
-    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:65%;">Наименование</th>'
-    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:35%;">Стоимость</th>'
+    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%;">Наименование</th>'
+    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%;">Стоимость</th>'
     html_table += '</tr>'
     
     # Добавляем строки с данными
@@ -1624,22 +1267,63 @@ def render_results(results):
         if i == len(items_data) - 1:
             html_table += '<tr style="background-color:#e0f0ff;">'
             html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.2rem;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:10px 15px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; color:#0066cc; min-width:120px; white-space:nowrap;">{item[1]}</td>'
+            html_table += f'<td style="text-align:right; padding:10px 10px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; color:#0066cc;">{item[1]}</td>'
             html_table += '</tr>'
         else:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.95rem;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #eee; min-width:150px; white-space:nowrap; font-size:0.95rem;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee;">{item[1]}</td>'
             html_table += '</tr>'
     
     html_table += '</table>'
     
     # Выводим HTML-таблицу напрямую через markdown
     st.markdown(f"""
-    <div style="width:95%; margin:0 auto; padding-left:15px; padding-right:15px;">
+    <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
         {html_table}
     </div>
     """, unsafe_allow_html=True)
+    
+    # Добавляем кнопку для генерации коммерческого предложения после таблицы стоимости
+    st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 1.1rem; margin-top: 15px; margin-bottom: 15px; text-align: center;'>Коммерческое предложение</h3>", unsafe_allow_html=True)
+    
+    # Создаем контейнер для кнопки с центрированием
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("Сформировать КП после расчета", key="top_button", type="primary", use_container_width=True):
+            with st.spinner("Формирование коммерческого предложения..."):
+                try:
+                    # Получаем описание перголы для добавления в КП
+                    pergola_description = get_pergola_description(pergola_type).replace('<h2', '<h3').replace('</h2>', '</h3>')
+                    
+                    # Форматируем данные для создания PDF
+                    pdf_data = format_pergola_data_for_pdf(
+                        results=results,
+                        options=results["options"],
+                        dimensions=results["dimensions"],
+                        pergola_description=pergola_description
+                    )
+                    
+                    # Генерируем PDF
+                    pdf_path = generate_commercial_offer(pdf_data)
+                    
+                    # Отображаем ссылку на скачивание
+                    st.success(f"Коммерческое предложение успешно сформировано!")
+                    
+                    # Добавляем кнопку для скачивания
+                    with open(pdf_path, "rb") as pdf_file:
+                        st.download_button(
+                            label="Скачать коммерческое предложение (PDF)", 
+                            data=pdf_file, 
+                            file_name=os.path.basename(pdf_path), 
+                            mime="application/pdf",
+                            use_container_width=True
+                        )
+                except Exception as e:
+                    st.error(f"Ошибка при формировании коммерческого предложения: {str(e)}")
+                    if st.session_state.get('debug_mode', False):
+                        st.exception(e)
     
     # Добавляем разделитель
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
@@ -1653,12 +1337,7 @@ def render_results(results):
         if pergola_type in ["B500NEW", "B700NEW", "B600"]:
             # Используем описание из модуля конфигурации
             description_html = get_pergola_description(pergola_type)
-            # Оборачиваем описание в div с уменьшенными отступами
-            st.markdown(f"""
-            <div style="padding: 0 10px; margin: 0 auto; max-width: 98%;">
-                {description_html}
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(description_html, unsafe_allow_html=True)
             
             # Отображаем изображения с использованием списка из конфигурации
             images = get_pergola_images(pergola_type)
@@ -1678,12 +1357,7 @@ def render_results(results):
             # Добавляем информацию о масштабируемости для всех типов пергол
             # Отображаем описание модульной системы из модуля конфигурации
             modular_description = get_modular_system_description()
-            # Оборачиваем описание в div с уменьшенными отступами
-            st.markdown(f"""
-            <div style="padding: 0 10px; margin: 0 auto; max-width: 98%;">
-                {modular_description}
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(modular_description, unsafe_allow_html=True)
             
             # Отображаем изображение модульной системы
             modular_images = get_pergola_images("MODULAR")
@@ -1702,12 +1376,7 @@ def render_results(results):
             # Добавляем информацию о системе водоотведения для всех типов пергол
             # Отображаем описание системы водоотведения из модуля конфигурации
             drainage_description = get_drainage_system_description()
-            # Оборачиваем описание в div с уменьшенными отступами
-            st.markdown(f"""
-            <div style="padding: 0 10px; margin: 0 auto; max-width: 98%;">
-                {drainage_description}
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(drainage_description, unsafe_allow_html=True)
             
             # Отображаем изображение системы водоотведения
             drainage_images = get_pergola_images("DRAINAGE")
@@ -1726,12 +1395,7 @@ def render_results(results):
             # Добавляем информацию о приводе Bansbach только для пергол B500NEW
             if pergola_type == "B500NEW":
                 bansbach_description = get_bansbach_description()
-                # Оборачиваем описание в div с уменьшенными отступами
-                st.markdown(f"""
-                <div style="padding: 0 10px; margin: 0 auto; max-width: 98%;">
-                    {bansbach_description}
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(bansbach_description, unsafe_allow_html=True)
                 
                 # Отображаем изображение привода Bansbach
                 bansbach_images = get_pergola_images("BANSBACH")
@@ -1750,12 +1414,7 @@ def render_results(results):
             # Добавляем информацию о приводе Somfy только для пергол B700NEW
             if pergola_type == "B700NEW":
                 somfy_description = get_pergola_description("SOMFY")
-                # Оборачиваем описание в div с уменьшенными отступами
-                st.markdown(f"""
-                <div style="padding: 0 10px; margin: 0 auto; max-width: 98%;">
-                    {somfy_description}
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(somfy_description, unsafe_allow_html=True)
                 
                 # Отображаем изображение привода Somfy
                 somfy_images = get_pergola_images("SOMFY")
@@ -1772,54 +1431,8 @@ def render_results(results):
                         st.warning(f"Не удалось загрузить изображение привода Somfy")
             
             # Добавляем описание вариантов установки и вертикальных систем для всех типов пергол
-            bioclimatic_install_description_html = """
-            <div style='padding: 0 10px; margin-bottom: 0px;'>
-            <h3 style='font-size: 1.2rem; margin-top: 20px; text-align: center;'>Биоклиматическая пергола: когда установка начинается с проектирования</h3>
-            <p style='margin-bottom: 15px; font-style: italic; text-align: center;'>
-            (Тонкости монтажа, о которых не расскажет обычный продавец)
-            </p>
-            
-            <div style='margin-bottom: 15px;'>
-            <h4 style='font-size: 1.1rem; margin-top: 20px;'>Интеграция перголы в существующую архитектуру: нет ограничений</h4>
-            <p style='margin-bottom: 10px;'>Биоклиматическая пергола «растёт» вместе с вашими потребностями и может быть смонтирована четырьмя разными способами:</p>
-            
-            <ol style='margin-bottom: 10px; padding-left: 20px;'>
-                <li><strong>Отдельно стоящая конструкция</strong> идеальна для открытых пространств: летних площадок и террас. Даже без фундамента — на специальных утяжелителях.</li>
-                <li><strong>Примыкание к стене</strong> экономит пространство и создаёт плавный переход между домом и садом. Даже для стеклянного фасада найдутся решения.</li>
-                <li><strong>Встраивание в проем</strong> создаёт крышу для балконов верхних этажей или защищает окна от перегрева. Можно интегрировать даже в скошенную кровлю.</li>
-                <li><strong>Навес в труднодоступной зоне</strong> со специальными решениями высотного монтажа. Бригада промышленных альпинистов справится с любой задачей.</li>
-            </ol>
-            </div>
-            
-            <div style='margin-bottom: 15px;'>
-            <h4 style='font-size: 1.1rem; margin-top: 20px;'>Климатические системы: пять уровней комфорта</h4>
-            <p style='margin-bottom: 10px;'>Пергола уже давно не просто «крыша над головой». Это модульная система с адаптивными опциями:</p>
-            
-            <ul style='margin-bottom: 10px; padding-left: 20px;'>
-                <li><strong>Базовая система:</strong> Ламели, которыми вы управляете по таймеру, датчикам или вручную.</li>
-                <li><strong>Дождевая защита:</strong> Встроенные лотки отводят до 80 л/м² осадков, а сама система автоматически закрывается при первых каплях.</li>
-                <li><strong>Тепловой контроль:</strong> Светодиодные инфракрасные обогреватели на магнитных креплениях с регулировкой до +50°C.</li>
-                <li><strong>Ветрозащита:</strong> ZIP-экраны с тканью Ferrari задерживают до 92% солнечных лучей и выдерживают порывы до 60 км/ч.</li>
-                <li><strong>Управление микроклиматом:</strong> Ламели создают эффект Вентури, когда нужно проветрить, не допуская сквозняков.</li>
-            </ul>
-            </div>
-            
-            <div style='margin-bottom: 15px;'>
-            <h4 style='font-size: 1.1rem; margin-top: 20px;'>Автоматика: технологии, которые работают за вас</h4>
-            <p style='margin-bottom: 10px;'>Для управления перголой не нужны инструкции толщиной с роман:</p>
-            
-            <ul style='margin-bottom: 10px; padding-left: 20px;'>
-                <li>Единый пульт Somfy или Simu управляет всеми элементами: от ламелей до света.</li>
-                <li>Датчики дождя, ветра, снега и температуры автоматически адаптируют пергольную систему к погоде.</li>
-                <li>Умный дом: интеграция с Apple HomeKit, Google Home, Яндекс и даже с Алисой.</li>
-                <li>Европейская надежность: Автоматика Bansbach и Somfy (до 50 000 циклов!) работают даже в экстремальных условиях.</li>
-            </ul>
-            </div>
-            
-            <p style='margin-bottom: 15px; font-weight: bold;'>Вы готовы выйти за рамки стандартов? Биоклиматическая пергола — это не «навес», а ваш личный климатический контролер. Оставьте заявку, и наши инженеры создадут проект, где каждая деталь будет работать на ваш комфорт.</p>
-            </div>
-            """
-            st.markdown(bioclimatic_install_description_html, unsafe_allow_html=True)
+            bioclimatic_install_description = get_bioclimatic_install_description()
+            st.markdown(bioclimatic_install_description, unsafe_allow_html=True)
             
             # Отображаем изображение вариантов установки
             install_system_images = get_pergola_images("INSTALL_SYSTEM")
@@ -1828,7 +1441,7 @@ def render_results(results):
             if install_system_images:
                 for img_path in install_system_images:
                     try:
-                        st.image(img_path, caption=install_system_caption, use_container_width=True)
+                        display_image_with_padding(img_path, caption=install_system_caption)
                         break
                     except Exception as e:
                         continue
@@ -1837,122 +1450,8 @@ def render_results(results):
             
             # Добавляем техническое описание ламелей только для пергол B500 и B700, не для B600
             if pergola_type in ["B500NEW", "B700NEW"]:
-                lamella_engineering_description_html = """
-                <div style='padding: 0 10px; margin-bottom: 0px;'>
-                <h3 style='font-size: 1.2rem; margin-top: 20px; text-align: center;'>Инженерный взгляд на биоклиматические перголы: как ламели выдерживают снег, ливни и сохраняют тепло</h3>
-                <p style='margin-bottom: 15px; font-style: italic; text-align: center;'>
-                (Технические секреты, которые делают ваш комфорт непогрешимым)
-                </p>
-                
-                <div style='margin-bottom: 15px;'>
-                <h4 style='font-size: 1.1rem; margin-top: 20px;'>Прогиб ламелей: где точность встречает надежность</h4>
-                <p style='margin-bottom: 10px;'>Ламели — это «скелет» перголы, и их прочность определяет, как конструкция поведет себя под нагрузками. Мы протестировали каждую модель в экстремальных условиях. Вот что важно знать:</p>
-                
-                <p style='margin-bottom: 10px;'><strong>Ламель 250×53 NEW</strong></p>
-                <ul style='margin-bottom: 10px; padding-left: 20px;'>
-                    <li>Масса: 4,684 кг/м | Шаг: 250 мм</li>
-                    <li>Прогиб под нагрузкой:
-                        <ul style='padding-left: 20px;'>
-                            <li>Рабочая (масса ламели + 50%): 12 мм при ширине 4,5 м.</li>
-                            <li>Снеговая (50 кг/м²): 30 мм при ширине 4,5 м.</li>
-                        </ul>
-                    </li>
-                    <li>Макс. снеговая нагрузка: 50 кг/м² (эквивалент 40-50 см свежего снега).</li>
-                </ul>
-                
-                <p style='margin-bottom: 10px;'><strong>Ламель 200×56 NEW</strong></p>
-                <ul style='margin-bottom: 10px; padding-left: 20px;'>
-                    <li>Масса: 4,375 кг/м | Шаг: 200 мм</li>
-                    <li>Прогиб под нагрузкой:
-                        <ul style='padding-left: 20px;'>
-                            <li>Рабочая: 10 мм при ширине 5,0 м.</li>
-                            <li>Снеговая: 22 мм при ширине 5,0 м.</li>
-                        </ul>
-                    </li>
-                    <li>Макс. снеговая нагрузка: 70 кг/м² (до 60 см снега).</li>
-                </ul>
-                
-                <p style='margin-bottom: 10px;'>Почему это важно? Минимальный прогиб сохраняет геометрию крыши даже в экстремальных условиях. Для сравнения: у конкурентов аналогичные ламели прогибаются на 50-70 мм под теми же нагрузками.</p>
-                </div>
-                
-                <div style='margin-bottom: 15px;'>
-                <h4 style='font-size: 1.1rem; margin-top: 20px;'>Герметичность: когда внутри сухо, даже если снаружи потоп</h4>
-                <p style='margin-bottom: 10px;'>Алюминиевые ламели перголы — это не просто «крыша», а герметичный кокон. Вот как мы этого добиваемся:</p>
-                <ol style='margin-bottom: 10px; padding-left: 20px;'>
-                    <li><strong>Двойное уплотнение EPDM:</strong>
-                        <ul style='padding-left: 20px;'>
-                            <li>Уплотнители между ламелями и в лотках выдерживают давление водяного столба до 600 Па (ливень интенсивностью 100 мм/час).</li>
-                            <li>Для сравнения: стандартные системы держат только 300-400 Па.</li>
-                        </ul>
-                    </li>
-                    <li><strong>Наклон ламелей + дренажные каналы:</strong> Вода стекает в лотки, не задерживаясь на поверхности. Даже при сильном ветре капли не просачиваются через стыки.</li>
-                    <li><strong>Тест на герметичность:</strong> Мы заливаем крышу перголы водой под давлением 600 Па в течение 1 часа. Результат: 0 протечек.</li>
-                </ol>
-                </div>
-                
-                <div style='margin-bottom: 15px;'>
-                <h4 style='font-size: 1.1rem; margin-top: 20px;'>Теплоизоляция: почему под перголой тепло зимой и прохладно летом</h4>
-                <ul style='margin-bottom: 10px; padding-left: 20px;'>
-                    <li><strong>Терморазрыв в профиле:</strong> Алюминиевые ламели с изолирующими вставками из нейлона снижают теплопотери на 40%.</li>
-                    <li><strong>Эффект «воздушной подушки»:</strong> При закрытых ламелях между ними образуется прослойка воздуха, которая работает как естественный изолятор.</li>
-                    <li><strong>Температурный комфорт:</strong>
-                        <ul style='padding-left: 20px;'>
-                            <li>Зимой: под перголой на 5-7°C теплее, чем снаружи.</li>
-                            <li>Летом: на 10-12°C прохладнее благодаря тени и вентиляции.</li>
-                        </ul>
-                    </li>
-                </ul>
-                </div>
-                
-                <div style='margin-bottom: 15px;'>
-                <h4 style='font-size: 1.1rem; margin-top: 20px;'>Сравнительная таблица: какая ламель подходит вам?</h4>
-                <table style='width: 100%; border-collapse: collapse; margin-bottom: 15px;'>
-                    <tr>
-                        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Параметр</th>
-                        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Ламель 250×53 NEW</th>
-                        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Ламель 200×56 NEW</th>
-                    </tr>
-                    <tr>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>Снеговая нагрузка</td>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>50 кг/м²</td>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>70 кг/м²</td>
-                    </tr>
-                    <tr>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>Прогиб под снегом</td>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>30 мм (4,5 м)</td>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>22 мм (5,0 м)</td>
-                    </tr>
-                    <tr>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>Шаг ламелей</td>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>250 мм</td>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>200 мм (плотнее защита)</td>
-                    </tr>
-                    <tr>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>Ветровая стойкость</td>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>До 25 м/с</td>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>До 30 м/с</td>
-                    </tr>
-                    <tr>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>Идеальный сценарий</td>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>Умеренный климат</td>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>Северные регионы</td>
-                    </tr>
-                </table>
-                </div>
-                
-                <div style='margin-bottom: 15px;'>
-                <h4 style='font-size: 1.1rem; margin-top: 20px;'>Почему это выгодно?</h4>
-                <ul style='margin-bottom: 10px; padding-left: 20px;'>
-                    <li><strong>Экономия на отоплении/кондиционировании:</strong> Терморазрыв и герметичность снижают затраты на энергию.</li>
-                    <li><strong>Гарантия 10 лет:</strong> На ламели и уплотнители — потому что мы уверены в каждом миллиметре.</li>
-                    <li><strong>Адаптивность:</strong> Комбинируйте ламели с остеклением или ZIP-экранами для полного контроля над климатом.</li>
-                </ul>
-                </div>
-                
-                <p style='margin-bottom: 15px; font-weight: bold;'>Финал: Биоклиматическая пергола — это не «навес», а инженерная система, которая считает каждую каплю дождя и снежинку. Выбирайте ламели, которые работают как швейцарские часы — тихо, точно, без компромиссов.</p>
-                </div>
-                """
-                st.markdown(lamella_engineering_description_html, unsafe_allow_html=True)
+                lamella_engineering_description = get_lamella_engineering_description()
+                st.markdown(lamella_engineering_description, unsafe_allow_html=True)
                 
                 # Отображаем изображение технических характеристик ламелей
                 lamella_engineering_images = get_pergola_images("LAMELLA_ENGINEERING")
@@ -1961,12 +1460,53 @@ def render_results(results):
                 if lamella_engineering_images:
                     for img_path in lamella_engineering_images:
                         try:
-                            st.image(img_path, caption=lamella_engineering_caption, use_container_width=True)
+                            display_image_with_padding(img_path, caption=lamella_engineering_caption)
                             break
                         except Exception as e:
                             continue
                     else:
                         st.warning(f"Не удалось загрузить изображение технических характеристик ламелей")
+    
+    # Добавляем кнопку для генерации коммерческого предложения
+    st.markdown("<hr style='margin-top: 30px; margin-bottom: 30px;'>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 1.1rem; margin-top: 15px; margin-bottom: 15px; text-align: center;'>Коммерческое предложение</h3>", unsafe_allow_html=True)
+    
+    # Создаем контейнер для кнопки с центрированием
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("Сформировать коммерческое предложение", type="primary", use_container_width=True):
+            with st.spinner("Формирование коммерческого предложения..."):
+                try:
+                    # Получаем описание перголы для добавления в КП
+                    pergola_description = get_pergola_description(pergola_type).replace('<h2', '<h3').replace('</h2>', '</h3>')
+                    
+                    # Форматируем данные для создания PDF
+                    pdf_data = format_pergola_data_for_pdf(
+                        results=results,
+                        options=results["options"],
+                        dimensions=results["dimensions"],
+                        pergola_description=pergola_description
+                    )
+                    
+                    # Генерируем PDF
+                    pdf_path = generate_commercial_offer(pdf_data)
+                    
+                    # Отображаем ссылку на скачивание
+                    st.success(f"Коммерческое предложение успешно сформировано!")
+                    
+                    # Добавляем кнопку для скачивания
+                    with open(pdf_path, "rb") as pdf_file:
+                        st.download_button(
+                            label="Скачать коммерческое предложение (PDF)", 
+                            data=pdf_file, 
+                            file_name=os.path.basename(pdf_path), 
+                            mime="application/pdf",
+                            use_container_width=True
+                        )
+                except Exception as e:
+                    st.error(f"Ошибка при формировании коммерческого предложения: {str(e)}")
+                    if st.session_state.get('debug_mode', False):
+                        st.exception(e)
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
@@ -2072,19 +1612,12 @@ def scroll_to_results():
 
 def main():
     """Основная функция приложения"""
-    try:
-        # Настраиваем страницу
-        st.set_page_config(
-            page_title="Калькулятор пергол DecoLife",
-            page_icon="🏠",
-            layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
-        )
-    except Exception as e:
-        # Обработка ошибок инициализации
-        print(f"Критическая ошибка при инициализации: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return
+    # Настраиваем страницу
+    st.set_page_config(
+        page_title="Калькулятор пергол DecoLife",
+        page_icon="🏠",
+        layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
+    )
     
     # Задаем стили для компактного и читаемого интерфейса по новому дизайну
     st.markdown("""
@@ -2267,24 +1800,13 @@ def main():
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v3.5</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v3.6</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
-    try:
-        # Создаем директории, если они не существуют
-        os.makedirs("logs", exist_ok=True)
-        os.makedirs("data", exist_ok=True)
-        os.makedirs("data/price_tables", exist_ok=True)
-        
-        # Запускаем приложение
-        main()
-    except Exception as e:
-        # Обработка критических ошибок
-        print(f"Критическая ошибка в главном блоке: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        
-        # Отображаем ошибку пользователю
-        import streamlit as st
-        st.error("Произошла критическая ошибка. Пожалуйста, обновите страницу или свяжитесь с администратором.")
-        st.error(f"Детали ошибки: {str(e)}")
+    # Создаем директории, если они не существуют
+    os.makedirs("logs", exist_ok=True)
+    os.makedirs("data", exist_ok=True)
+    os.makedirs("data/price_tables", exist_ok=True)
+    
+    # Запускаем приложение
+    main()
