@@ -1284,8 +1284,14 @@ def render_results(results):
         if i == len(items_data) - 1:
             html_table += '<tr style="background-color:#e0f0ff;">'
             # Добавляем адаптивный CSS-класс для строки "Итого"
-            html_table += f'<td style="text-align:left; padding:12px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:12px 10px; border-bottom:2px solid #3f6daa; font-weight:bold; color:#0066cc;" class="responsive-total">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
+            
+            # Применяем специальный класс для значения "Итого" с переносом строки для общей ширины
+            html_table += f"""
+            <td style="text-align:right; padding:8px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; color:#0066cc; white-space:nowrap;" class="responsive-total">
+                <div style="display:inline-block; width:100%;">{item[1]}</div>
+            </td>
+            """
             html_table += '</tr>'
         else:
             html_table += '<tr>'
@@ -1301,24 +1307,45 @@ def render_results(results):
     /* Базовый размер для строки Итого на больших экранах */
     .responsive-total {
         font-size: 1.5rem !important;
+        white-space: nowrap !important;
     }
     
     /* Медиа-запросы для адаптивности */
     @media screen and (max-width: 992px) {
         .responsive-total {
-            font-size: 1.3rem !important;
+            font-size: 1.2rem !important;
         }
     }
     
     @media screen and (max-width: 768px) {
         .responsive-total {
-            font-size: 1.1rem !important;
+            font-size: 1.0rem !important;
         }
     }
     
     @media screen and (max-width: 576px) {
         .responsive-total {
-            font-size: 0.95rem !important;
+            font-size: 0.85rem !important;
+        }
+    }
+    
+    /* Дополнительные стили для мобильной версии таблицы */
+    @media screen and (max-width: 480px) {
+        .responsive-total {
+            font-size: 0.75rem !important;
+        }
+        
+        /* Уменьшаем размер шрифта во всей таблице для мобильных устройств */
+        table th, table td {
+            font-size: 0.85rem !important;
+            padding: 6px 4px !important;
+        }
+        
+        /* Уменьшаем отступы в таблице */
+        table {
+            width: 100% !important;
+            margin: 0 !important;
+            table-layout: fixed !important;
         }
     }
     </style>
