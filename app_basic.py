@@ -1489,14 +1489,48 @@ def display_formatted_description(description_text):
         .description-container p {
             margin-bottom: 15px;
         }
+        /* Дополнительные стили для вложенных элементов */
+        .description-container ul li, .description-container ol li {
+            margin-bottom: 6px;
+        }
+        .description-container ul ul, .description-container ol ol, 
+        .description-container ul ol, .description-container ol ul {
+            margin-top: 6px;
+        }
+        /* Стили для таблиц */
+        .description-container table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+        .description-container th, .description-container td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .description-container th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
         </style>
         """, unsafe_allow_html=True)
         st.session_state.description_style_added = True
     
-    # Используем col.markdown для безопасного отображения HTML внутри контейнера
+    # Избавляемся от лишних отступов в HTML-коде, которые могут мешать правильному отображению
+    description_text = description_text.strip()
+    
+    # Используем div с классом для безопасного отображения HTML
+    html_output = f"""
+    <div class="description-container">
+        {description_text}
+    </div>
+    """
+    
+    # Отображаем HTML в контейнере
     container = st.container()
     with container:
-        st.markdown(f'<div class="description-container">{description_text}</div>', unsafe_allow_html=True)
+        st.markdown(html_output, unsafe_allow_html=True)
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
