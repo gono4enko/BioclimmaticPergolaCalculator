@@ -1938,19 +1938,41 @@ def main():
     /* Таблицы */
     table {
         width: 100%;
+        min-width: 600px; /* Минимальная ширина таблицы */
         border-collapse: collapse;
         margin-bottom: 1rem;
+        table-layout: fixed; /* Фиксированная разметка таблицы */
     }
     
     th, td {
         padding: 8px 12px;
         text-align: left;
         border-bottom: 1px solid #ddd;
+        white-space: nowrap; /* Запрещаем перенос строк в ячейках */
+        overflow: hidden; /* Скрываем переполнение */
+        text-overflow: ellipsis; /* Показываем многоточие при переполнении */
+    }
+    
+    /* Задаем ширину колонок */
+    th:first-child, td:first-child {
+        width: 65%; /* Большая ширина для первой колонки с наименованием */
+    }
+    
+    th:last-child, td:last-child {
+        width: 35%; /* Меньшая ширина для колонки с числами */
+        text-align: right; /* Выравнивание цифр по правому краю */
     }
     
     th {
         background-color: #f8f9fa;
         font-weight: 600;
+    }
+    
+    /* Контейнер для прокрутки таблицы по горизонтали на узких экранах */
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+        margin-bottom: 1rem;
     }
     
     /* Адаптивность для мобильных устройств */
