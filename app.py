@@ -2076,15 +2076,18 @@ def main():
         
         /* Специальные стили для строки "Итого" на мобильных устройствах */
         tr[style*="background-color:#e0f0ff"] td:last-child {
-            font-size: 1.0rem !important; /* Сохраняем нормальный размер для итоговой суммы */
+            font-size: 1.4rem !important; /* Увеличиваем размер итоговой суммы */
             word-break: break-all !important; /* Разрешаем разрыв слов в любом месте */
             padding-right: 5px !important; /* Уменьшаем отступ справа */
             text-align: right !important; /* Принудительное выравнивание по правому краю */
-            width: 30% !important; /* Фиксированная ширина */
+            overflow: visible !important; /* Не обрезаем текст */
+            white-space: normal !important; /* Разрешаем перенос текста */
+            max-width: none !important; /* Без ограничений по ширине */
+            width: auto !important; /* Автоматическая ширина */
         }
         /* Сохраняем нормальный размер шрифта для "Итого" в левом столбце */
         tr[style*="background-color:#e0f0ff"] td:first-child {
-            font-size: 1.0rem !important;
+            font-size: 1.3rem !important; /* Увеличиваем размер текста "Итого" */
             font-weight: bold !important;
         }
         
