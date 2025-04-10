@@ -1318,9 +1318,9 @@ def render_results(results):
             # Используем описание из модуля конфигурации
             description_html = get_pergola_description(pergola_type)
             st.markdown(f"""
-            <div style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
+            <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
                 {description_html}
-            </div>
+            </section>
             """, unsafe_allow_html=True)
             
             # Отображаем изображения с использованием списка из конфигурации
@@ -1342,9 +1342,9 @@ def render_results(results):
             # Отображаем описание модульной системы из модуля конфигурации
             modular_description = get_modular_system_description()
             st.markdown(f"""
-            <div style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
+            <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
                 {modular_description}
-            </div>
+            </section>
             """, unsafe_allow_html=True)
             
             # Отображаем изображение модульной системы
@@ -1365,9 +1365,9 @@ def render_results(results):
             # Отображаем описание системы водоотведения из модуля конфигурации
             drainage_description = get_drainage_system_description()
             st.markdown(f"""
-            <div style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
+            <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
                 {drainage_description}
-            </div>
+            </section>
             """, unsafe_allow_html=True)
             
             # Отображаем изображение системы водоотведения
