@@ -1283,8 +1283,9 @@ def render_results(results):
         # Особое форматирование для строки "Итого"
         if i == len(items_data) - 1:
             html_table += '<tr style="background-color:#e0f0ff;">'
-            html_table += f'<td style="text-align:left; padding:12px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.35rem;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:12px 10px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.5rem; color:#0066cc;">{item[1]}</td>'
+            # Добавляем адаптивный CSS-класс для строки "Итого"
+            html_table += f'<td style="text-align:left; padding:12px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:12px 10px; border-bottom:2px solid #3f6daa; font-weight:bold; color:#0066cc;" class="responsive-total">{item[1]}</td>'
             html_table += '</tr>'
         else:
             html_table += '<tr>'
@@ -1293,6 +1294,35 @@ def render_results(results):
             html_table += '</tr>'
     
     html_table += '</table>'
+    
+    # Добавляем CSS для адаптивного шрифта строки "Итого"
+    st.markdown("""
+    <style>
+    /* Базовый размер для строки Итого на больших экранах */
+    .responsive-total {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Медиа-запросы для адаптивности */
+    @media screen and (max-width: 992px) {
+        .responsive-total {
+            font-size: 1.3rem !important;
+        }
+    }
+    
+    @media screen and (max-width: 768px) {
+        .responsive-total {
+            font-size: 1.1rem !important;
+        }
+    }
+    
+    @media screen and (max-width: 576px) {
+        .responsive-total {
+            font-size: 0.95rem !important;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
     
     # Выводим HTML-таблицу напрямую через markdown
     st.markdown(f"""
@@ -1484,14 +1514,14 @@ def display_formatted_description(description_text):
             width: 100%;
         }
         .description-container h3 {
-            font-size: 2.2rem;
+            font-size: 2.86rem; /* Увеличено на 30% от 2.2rem */
             margin-top: 25px;
             margin-bottom: 20px;
             color: #0066cc;
             font-weight: 600;
         }
         .description-container h4 {
-            font-size: 1.8rem;
+            font-size: 2.34rem; /* Увеличено на 30% от 1.8rem */
             margin-top: 20px;
             margin-bottom: 15px;
             color: #0066cc;
