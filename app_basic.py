@@ -1324,12 +1324,29 @@ def render_results(results):
             caption = get_pergola_image_caption(pergola_type)
             
             if images:
+                # Отладочная информация
+                if st.session_state.get('debug_mode', False):
+                    st.write(f"Попытка загрузить изображения для типа: {pergola_type}")
+                    st.write(f"Список путей к изображениям: {images}")
+                
                 # Пробуем загрузить изображения по очереди, пока не найдем рабочее
                 for img_path in images:
                     try:
+                        if st.session_state.get('debug_mode', False):
+                            st.write(f"Пробуем загрузить: {img_path}")
+                        
+                        # Проверяем, существует ли файл
+                        import os
+                        if not os.path.exists(img_path):
+                            if st.session_state.get('debug_mode', False):
+                                st.error(f"Файл не найден: {img_path}")
+                            continue
+                            
                         display_image_with_padding(img_path, caption=caption)
                         break  # Прерываем цикл, если изображение успешно загружено
                     except Exception as e:
+                        if st.session_state.get('debug_mode', False):
+                            st.error(f"Ошибка при загрузке {img_path}: {str(e)}")
                         continue  # Пробуем следующее изображение
                 else:
                     st.warning(f"Не удалось загрузить изображение для {pergola_type}")
@@ -1344,11 +1361,27 @@ def render_results(results):
             modular_caption = get_pergola_image_caption("MODULAR")
             
             if modular_images:
+                # Отладочная информация
+                if st.session_state.get('debug_mode', False):
+                    st.write(f"Попытка загрузить изображения модульной системы: {modular_images}")
+                
                 for img_path in modular_images:
                     try:
+                        if st.session_state.get('debug_mode', False):
+                            st.write(f"Пробуем загрузить: {img_path}")
+                        
+                        # Проверяем, существует ли файл
+                        import os
+                        if not os.path.exists(img_path):
+                            if st.session_state.get('debug_mode', False):
+                                st.error(f"Файл не найден: {img_path}")
+                            continue
+                        
                         display_image_with_padding(img_path, caption=modular_caption)
                         break
                     except Exception as e:
+                        if st.session_state.get('debug_mode', False):
+                            st.error(f"Ошибка при загрузке {img_path}: {str(e)}")
                         continue
                 else:
                     st.warning(f"Не удалось загрузить изображение модульной системы")
