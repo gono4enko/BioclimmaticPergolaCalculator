@@ -1452,13 +1452,13 @@ def render_results(results):
 
 def display_formatted_description(description_text):
     """
-    Отображает форматированное описание в стилизованном контейнере,
-    избегая проблем с видимостью HTML-тегов.
+    Отображает форматированное описание в стилизованном контейнере
+    с КОРРЕКТНОЙ ОБРАБОТКОЙ HTML-тегов.
     
     Args:
         description_text (str): HTML-текст с описанием
     """
-    # Создаем полный набор CSS стилей для всех элементов описания
+    # Определяем CSS стили только один раз
     if 'description_style_added' not in st.session_state:
         st.markdown("""
         <style>
@@ -1524,6 +1524,11 @@ def display_formatted_description(description_text):
             font-weight: 600;
         }
         
+        /* Секции */
+        .description-container section {
+            margin-bottom: 1em;
+        }
+        
         /* Вложенные списки */
         .description-container ul ul, 
         .description-container ol ol,
@@ -1535,45 +1540,19 @@ def display_formatted_description(description_text):
         """, unsafe_allow_html=True)
         st.session_state.description_style_added = True
     
-    # Создаем временный файл для HTML
-    import tempfile
-    with tempfile.NamedTemporaryFile(suffix='.html', delete=False, mode='w', encoding='utf-8') as f:
-        # Пишем полный HTML документ
-        f.write(f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Описание</title>
-            <style>
-                body {{ font-family: Arial, sans-serif; margin: 0; padding: 0; }}
-                .container {{ padding: 10px; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                {description_text}
-            </div>
-        </body>
-        </html>
-        """)
-        temp_path = f.name
+    # Используем компонент streamlit.components.v1.html для правильного отображения HTML
+    # Это важно для избегания проблем с отображением тегов
+    from streamlit.components.v1 import html
     
-    # Читаем HTML из файла
-    with open(temp_path, 'r', encoding='utf-8') as f:
-        html_content = f.read()
+    # Оборачиваем HTML-контент в контейнер с нашими стилями
+    html_content = f"""
+    <div class="description-container">
+      {description_text}
+    </div>
+    """
     
-    # Используем markdown для отображения HTML в контейнере
-    container = st.container()
-    with container:
-        st.markdown(f'<div class="description-container">{description_text}</div>', unsafe_allow_html=True)
-    
-    # Удаляем временный файл
-    import os
-    try:
-        os.unlink(temp_path)
-    except:
-        pass
+    # Отображаем HTML-контент без экранирования тегов
+    html(html_content, height=None, scrolling=True)
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
