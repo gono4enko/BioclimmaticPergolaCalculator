@@ -1921,7 +1921,7 @@ def main():
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.3.0</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.3.2</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Создаем директории, если они не существуют
