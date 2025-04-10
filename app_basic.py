@@ -2072,12 +2072,19 @@ def scroll_to_results():
 
 def main():
     """Основная функция приложения"""
-    # Настраиваем страницу
-    st.set_page_config(
-        page_title="Калькулятор пергол DecoLife",
-        page_icon="🏠",
-        layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
-    )
+    try:
+        # Настраиваем страницу
+        st.set_page_config(
+            page_title="Калькулятор пергол DecoLife",
+            page_icon="🏠",
+            layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
+        )
+    except Exception as e:
+        # Обработка ошибок инициализации
+        print(f"Критическая ошибка при инициализации: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return
     
     # Задаем стили для компактного и читаемого интерфейса по новому дизайну
     st.markdown("""
@@ -2263,10 +2270,21 @@ def main():
     st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v3.5</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
-    # Создаем директории, если они не существуют
-    os.makedirs("logs", exist_ok=True)
-    os.makedirs("data", exist_ok=True)
-    os.makedirs("data/price_tables", exist_ok=True)
-    
-    # Запускаем приложение
-    main()
+    try:
+        # Создаем директории, если они не существуют
+        os.makedirs("logs", exist_ok=True)
+        os.makedirs("data", exist_ok=True)
+        os.makedirs("data/price_tables", exist_ok=True)
+        
+        # Запускаем приложение
+        main()
+    except Exception as e:
+        # Обработка критических ошибок
+        print(f"Критическая ошибка в главном блоке: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        # Отображаем ошибку пользователю
+        import streamlit as st
+        st.error("Произошла критическая ошибка. Пожалуйста, обновите страницу или свяжитесь с администратором.")
+        st.error(f"Детали ошибки: {str(e)}")
