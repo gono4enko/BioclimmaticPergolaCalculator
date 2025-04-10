@@ -1470,14 +1470,23 @@ def display_formatted_description(description_text):
             border-radius: 5px;
             margin-bottom: 20px;
         }
+        /* Добавляем стиль для тега section, чтобы он отображался как блок без проблем */
+        section, div.section {
+            display: block;
+            margin-bottom: 15px;
+        }
         </style>
         """, unsafe_allow_html=True)
         st.session_state.description_style_added = True
     
-    # Используем col.markdown для безопасного отображения HTML внутри контейнера
+    # Заменяем тег <section> на <div class="section">, который Streamlit корректно обрабатывает
+    # Это решение основано на предыдущем опыте работы с проблемными тегами
+    formatted_text = description_text.replace("<section>", "<div class='section'>").replace("</section>", "</div>")
+    
+    # Используем markdown для отображения HTML внутри контейнера
     container = st.container()
     with container:
-        st.markdown(f'<div class="description-container">{description_text}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="description-container">{formatted_text}</div>', unsafe_allow_html=True)
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
