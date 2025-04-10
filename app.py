@@ -1922,6 +1922,8 @@ def main():
     div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect {
         width: 95% !important;
         margin: 0 auto !important;
+        padding-left: 15px !important;
+        padding-right: 15px !important;
     }
     
     /* Отступы для секций заголовков */
