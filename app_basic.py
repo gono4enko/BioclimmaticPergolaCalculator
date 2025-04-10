@@ -1458,10 +1458,11 @@ def display_formatted_description(description_text):
     Args:
         description_text (str): HTML-текст с описанием
     """
-    # Создаем стиль для описания один раз при первом вызове
+    # Создаем полный набор CSS стилей для всех элементов описания
     if 'description_style_added' not in st.session_state:
         st.markdown("""
         <style>
+        /* Основной контейнер для описания */
         .description-container {
             width: 95%;
             margin: 0 auto;
@@ -1469,15 +1470,110 @@ def display_formatted_description(description_text):
             background-color: #ffffff;
             border-radius: 5px;
             margin-bottom: 20px;
+            overflow: auto;
+        }
+        
+        /* Заголовки в описании */
+        .description-container h1, .description-container h2, 
+        .description-container h3, .description-container h4, 
+        .description-container h5, .description-container h6 {
+            color: #0066cc;
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+            font-weight: 600;
+        }
+        
+        /* Параграфы в описании */
+        .description-container p {
+            margin-bottom: 1em;
+            line-height: 1.6;
+        }
+        
+        /* Списки в описании */
+        .description-container ul, .description-container ol {
+            margin-left: 1em;
+            margin-bottom: 1em;
+            padding-left: 1em;
+        }
+        
+        .description-container li {
+            margin-bottom: 0.5em;
+            line-height: 1.6;
+        }
+        
+        /* Таблицы в описании */
+        .description-container table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1em;
+        }
+        
+        .description-container th, .description-container td {
+            padding: 0.5em;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        .description-container th {
+            background-color: #f2f2f2;
+            font-weight: 600;
+        }
+        
+        /* Жирный текст и акценты */
+        .description-container strong, .description-container b {
+            font-weight: 600;
+        }
+        
+        /* Вложенные списки */
+        .description-container ul ul, 
+        .description-container ol ol,
+        .description-container ul ol,
+        .description-container ol ul {
+            margin-top: 0.5em;
         }
         </style>
         """, unsafe_allow_html=True)
         st.session_state.description_style_added = True
     
-    # Используем col.markdown для безопасного отображения HTML внутри контейнера
+    # Создаем временный файл для HTML
+    import tempfile
+    with tempfile.NamedTemporaryFile(suffix='.html', delete=False, mode='w', encoding='utf-8') as f:
+        # Пишем полный HTML документ
+        f.write(f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Описание</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 0; padding: 0; }}
+                .container {{ padding: 10px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                {description_text}
+            </div>
+        </body>
+        </html>
+        """)
+        temp_path = f.name
+    
+    # Читаем HTML из файла
+    with open(temp_path, 'r', encoding='utf-8') as f:
+        html_content = f.read()
+    
+    # Используем markdown для отображения HTML в контейнере
     container = st.container()
     with container:
         st.markdown(f'<div class="description-container">{description_text}</div>', unsafe_allow_html=True)
+    
+    # Удаляем временный файл
+    import os
+    try:
+        os.unlink(temp_path)
+    except:
+        pass
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
