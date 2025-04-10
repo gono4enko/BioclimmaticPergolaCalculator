@@ -1375,11 +1375,7 @@ def render_results(results):
             # Добавляем информацию о приводе Bansbach только для пергол B500NEW
             if pergola_type == "B500NEW":
                 bansbach_description = get_bansbach_description()
-                st.markdown(f"""
-                <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
-                    {bansbach_description}
-                </section>
-                """, unsafe_allow_html=True)
+                display_formatted_description(bansbach_description)
                 
                 # Отображаем изображение привода Bansbach
                 bansbach_images = get_pergola_images("BANSBACH")
@@ -1398,11 +1394,7 @@ def render_results(results):
             # Добавляем информацию о приводе Somfy только для пергол B700NEW
             if pergola_type == "B700NEW":
                 somfy_description = get_pergola_description("SOMFY")
-                st.markdown(f"""
-                <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
-                    {somfy_description}
-                </section>
-                """, unsafe_allow_html=True)
+                display_formatted_description(somfy_description)
                 
                 # Отображаем изображение привода Somfy
                 somfy_images = get_pergola_images("SOMFY")
@@ -1420,11 +1412,7 @@ def render_results(results):
             
             # Добавляем описание вариантов установки и вертикальных систем для всех типов пергол
             bioclimatic_install_description = get_bioclimatic_install_description()
-            st.markdown(f"""
-            <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
-                {bioclimatic_install_description}
-            </section>
-            """, unsafe_allow_html=True)
+            display_formatted_description(bioclimatic_install_description)
             
             # Отображаем изображение вариантов установки
             install_system_images = get_pergola_images("INSTALL_SYSTEM")
@@ -1443,11 +1431,7 @@ def render_results(results):
             # Добавляем техническое описание ламелей только для пергол B500 и B700, не для B600
             if pergola_type in ["B500NEW", "B700NEW"]:
                 lamella_engineering_description = get_lamella_engineering_description()
-                st.markdown(f"""
-                <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
-                    {lamella_engineering_description}
-                </section>
-                """, unsafe_allow_html=True)
+                display_formatted_description(lamella_engineering_description)
                 
                 # Отображаем изображение технических характеристик ламелей
                 lamella_engineering_images = get_pergola_images("LAMELLA_ENGINEERING")
