@@ -46,7 +46,7 @@ LIGHTING_TYPES["led_rgb"]["name"] = "Комбинированное LED + RGB о
 LIGHTING_TYPES["led_rgb"]["description"] = "Позволяет выбрать между белым и цветным освещением"
 
 # Настраиваем логирование
-logger = setup_logger()
+logger = setup_logger('pergola_app', 'logs/app_frontend.log')
 
 def perform_calculation(dimensions, options):
     """Выполнить расчет стоимости перголы"""

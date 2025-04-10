@@ -66,7 +66,7 @@ def log_calculation(dimensions, options, results=None, error=None):
             app_logger.info(f"Базовая стоимость: {results.get('base_price', 0)} евро")
             app_logger.info(f"Общая стоимость: {results.get('total_price', 0)} евро")
 
-def log_user_interaction(action, details=None):
+def log_user_action(action, details=None):
     """
     Записывает в лог информацию о действиях пользователя
     
@@ -78,3 +78,14 @@ def log_user_interaction(action, details=None):
     if details:
         log_str += f", детали: {details}"
     app_logger.info(log_str)
+
+def log_user_interaction(action, details=None):
+    """
+    Устаревшая функция для обратной совместимости.
+    Использует log_user_action для логирования действий пользователя.
+    
+    Args:
+        action (str): Действие пользователя
+        details (dict, optional): Дополнительная информация о действии
+    """
+    log_user_action(action, details)

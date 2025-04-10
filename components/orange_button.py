@@ -70,4 +70,17 @@ def create_orange_button(label, key=None, help=None, on_click=None):
     """, unsafe_allow_html=True)
     
     # Создаем скрытую кнопку для обработки события
-    return st.button("Нажмите для расчета", key=f"orange-button-click-{key}", on_click=on_click, help=help, label_visibility="collapsed")
+    # Параметр label_visibility был удален, т.к. он не поддерживается в текущей версии Streamlit
+    # Вместо этого используем CSS для скрытия кнопки
+    st.markdown("""
+        <style>
+        div[data-testid="stButton"] button[kind="secondary"] {
+            visibility: hidden;
+            height: 0;
+            padding: 0;
+            min-height: 0 !important;
+            margin: 0;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    return st.button("Нажмите для расчета", key=f"orange-button-click-{key}", on_click=on_click, help=help)
