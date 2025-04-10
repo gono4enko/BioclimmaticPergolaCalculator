@@ -1534,7 +1534,7 @@ def display_formatted_description(description_text):
         .description-container {
             width: 100%;
             margin: 0 auto;
-            padding: 10px 20px; /* Увеличиваем отступ слева и справа */
+            padding: 5px 5px; /* Минимальные отступы слева и справа */
             background-color: #ffffff;
             border-radius: 5px;
             margin-bottom: 10px;
@@ -1652,7 +1652,7 @@ def display_formatted_description(description_text):
         # 6. Обрамляем весь текст в div-контейнер для изоляции стилей и добавляем контейнер с отступами
         # Уменьшаем отступ справа для более компактного вида
         final_html = f"""
-        <div style="width:98%; margin:0 auto; padding-left:15px; padding-right:5px;">
+        <div style="width:100%; margin:0 auto; padding-left:0px; padding-right:0px;">
             <div class="description-container">{formatted_text}</div>
         </div>
         """
