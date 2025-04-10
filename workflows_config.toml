@@ -1,0 +1,9 @@
+# Конфигурация воркфлоу для Replit
+
+[[command]]
+name = "BasicServer"
+command = "streamlit run app_basic.py --server.port 5000 --logger.level debug"
+
+[[command]]
+name = "MainServer"
+command = "streamlit run app.py --server.port 5000 --logger.level debug"

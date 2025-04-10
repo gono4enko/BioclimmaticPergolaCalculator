@@ -19,6 +19,10 @@ author = "agent"
 task = "workflow.run"
 args = "BasicServer"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "MainServer"
+
 [[workflows.workflow]]
 name = "BasicServer"
 author = "agent"
@@ -32,6 +36,21 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run app_basic.py --server.port 5000 --logger.level debug"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "MainServer"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run app.py --server.port 5000 --logger.level debug"
 waitForPort = 5000
 
 [[ports]]
