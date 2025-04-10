@@ -1504,27 +1504,49 @@ def display_formatted_description(description_text):
         st.session_state.description_style_added = True
     
     try:
-        # Более надежная обработка HTML - преобразуем все проблемные теги
-        # Пошаговое преобразование HTML для корректного отображения
-        formatted_text = description_text
+        # Предварительная обработка для устранения проблем с форматированием
         
-        # 1. Заменяем все экземпляры <section> на <div class="section">
-        formatted_text = formatted_text.replace("<section>", "<div class='section'>")
+        # 1. Удаляем отступы в начале строк, которые создают проблемы с HTML
+        import re
+        # Определяем, есть ли отступы в начале описания, что характерно для проблемных статей
+        lines = description_text.split('\n')
+        cleaned_lines = []
+        
+        # Проверяем каждую строку и удаляем лишние пробелы в начале
+        for line in lines:
+            # Если строка начинается с пробелов и содержит HTML-тег
+            if line.strip() and line.strip()[0] == '<':
+                # Удаляем все пробелы перед HTML-тегом
+                cleaned_lines.append(line.strip())
+            else:
+                # Оставляем пустые строки или неструктурированный текст как есть
+                cleaned_lines.append(line)
+        
+        # Собираем очищенный текст обратно
+        clean_text = '\n'.join(cleaned_lines)
+        
+        # 2. Заменяем все экземпляры <section> на <div class="section">
+        formatted_text = clean_text.replace("<section>", "<div class='section'>")
         formatted_text = formatted_text.replace("</section>", "</div>")
         
-        # 2. Для надежности заменяем еще и вариации с пробелами или атрибутами
-        import re
+        # 3. Для надежности заменяем еще и вариации с пробелами или атрибутами
         formatted_text = re.sub(r'<section\s+[^>]*>', '<div class="section">', formatted_text)
         
-        # 3. Проверяем финальный результат на любые оставшиеся <section> теги
+        # 4. Проверяем финальный результат на любые оставшиеся <section> теги
         if "<section" in formatted_text:
             # Если остались, применяем более радикальную замену
             formatted_text = re.sub(r'<section.*?>', '<div class="section">', formatted_text)
         
-        # Используем контейнер для изоляции стилей
+        # 5. Удаляем двойные пробелы для надежности
+        formatted_text = re.sub(r'\s{2,}', ' ', formatted_text)
+        
+        # 6. Обрамляем весь текст в div-контейнер для изоляции стилей
+        final_html = f'<div class="description-container">{formatted_text}</div>'
+        
+        # Используем контейнер для изоляции стилей и предотвращения конфликтов
         container = st.container()
         with container:
-            st.markdown(f'<div class="description-container">{formatted_text}</div>', unsafe_allow_html=True)
+            st.markdown(final_html, unsafe_allow_html=True)
     
     except Exception as e:
         # В случае ошибки показываем сообщение и используем безопасный метод отображения
