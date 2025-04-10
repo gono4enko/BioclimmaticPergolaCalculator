@@ -697,7 +697,7 @@ def perform_calculation(dimensions, options):
             }
             
             results["items"].append({
-                "name": f"Пульт ДУ {remote_name} ({devices_count} каналов)",
+                "name": f"Пульт ДУ {remote_name} ({devices_count} {get_plural_form(devices_count, 'канал', 'канала', 'каналов')})",
                 "price": remote_price
             })
             
@@ -756,7 +756,7 @@ def perform_calculation(dimensions, options):
                 }
                 
                 results["items"].append({
-                    "name": f"Пульт ДУ {remote_name} для освещения ({lighting_devices_count} каналов)",
+                    "name": f"Пульт ДУ {remote_name} для освещения ({lighting_devices_count} {get_plural_form(lighting_devices_count, 'канал', 'канала', 'каналов')})",
                     "price": remote_price
                 })
                 
