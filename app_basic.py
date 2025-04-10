@@ -1470,23 +1470,69 @@ def display_formatted_description(description_text):
             border-radius: 5px;
             margin-bottom: 20px;
         }
-        /* Добавляем стиль для тега section, чтобы он отображался как блок без проблем */
-        section, div.section {
+        /* Стили для корректного отображения разных HTML элементов */
+        .section, section {
             display: block;
             margin-bottom: 15px;
+            width: 100%;
+        }
+        .description-container h3 {
+            font-size: 1.3rem;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .description-container h4 {
+            font-size: 1.1rem;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            color: #444;
+        }
+        .description-container p {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        .description-container ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        .description-container strong {
+            font-weight: 600;
         }
         </style>
         """, unsafe_allow_html=True)
         st.session_state.description_style_added = True
     
-    # Заменяем тег <section> на <div class="section">, который Streamlit корректно обрабатывает
-    # Это решение основано на предыдущем опыте работы с проблемными тегами
-    formatted_text = description_text.replace("<section>", "<div class='section'>").replace("</section>", "</div>")
+    try:
+        # Более надежная обработка HTML - преобразуем все проблемные теги
+        # Пошаговое преобразование HTML для корректного отображения
+        formatted_text = description_text
+        
+        # 1. Заменяем все экземпляры <section> на <div class="section">
+        formatted_text = formatted_text.replace("<section>", "<div class='section'>")
+        formatted_text = formatted_text.replace("</section>", "</div>")
+        
+        # 2. Для надежности заменяем еще и вариации с пробелами или атрибутами
+        import re
+        formatted_text = re.sub(r'<section\s+[^>]*>', '<div class="section">', formatted_text)
+        
+        # 3. Проверяем финальный результат на любые оставшиеся <section> теги
+        if "<section" in formatted_text:
+            # Если остались, применяем более радикальную замену
+            formatted_text = re.sub(r'<section.*?>', '<div class="section">', formatted_text)
+        
+        # Используем контейнер для изоляции стилей
+        container = st.container()
+        with container:
+            st.markdown(f'<div class="description-container">{formatted_text}</div>', unsafe_allow_html=True)
     
-    # Используем markdown для отображения HTML внутри контейнера
-    container = st.container()
-    with container:
-        st.markdown(f'<div class="description-container">{formatted_text}</div>', unsafe_allow_html=True)
+    except Exception as e:
+        # В случае ошибки показываем сообщение и используем безопасный метод отображения
+        st.error(f"Ошибка при форматировании HTML: {str(e)}")
+        # Резервный вариант отображения с вырезанием HTML
+        import re
+        plain_text = re.sub(r'<.*?>', ' ', description_text)
+        st.write(plain_text)
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
