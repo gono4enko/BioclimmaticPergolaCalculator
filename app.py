@@ -1889,6 +1889,9 @@ def main():
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
     
+    # Добавляем код Яндекс.Метрики на страницу
+    add_yandex_metrika()
+    
     # Применяем пользовательские стили из файла CSS
     with open('.streamlit/custom_styles.css') as f:
         custom_css = f.read()
@@ -2172,7 +2175,12 @@ def main():
         
         # Если нужна прокрутка к результатам, добавляем JS код
         if st.session_state.get('scroll_to_results', False):
+            # Прокручиваем к результатам
             scroll_to_results()
+            
+            # Отправляем событие успешного расчета в Яндекс.Метрику
+            send_calc_success_event()
+            
             # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
             st.session_state.scroll_to_results = False
     
