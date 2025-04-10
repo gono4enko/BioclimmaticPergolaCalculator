@@ -1593,9 +1593,9 @@ def render_results(results):
         if pergola_type in ["B500NEW", "B700NEW", "B600"]:
             # Используем описание из модуля конфигурации
             description_html = get_pergola_description(pergola_type)
-            # Оборачиваем описание в div с фиксированными отступами
+            # Оборачиваем описание в div с уменьшенными отступами
             st.markdown(f"""
-            <div style="padding: 0 25px; margin: 0 auto; max-width: 95%;">
+            <div style="padding: 0 10px; margin: 0 auto; max-width: 98%;">
                 {description_html}
             </div>
             """, unsafe_allow_html=True)
@@ -1618,9 +1618,9 @@ def render_results(results):
             # Добавляем информацию о масштабируемости для всех типов пергол
             # Отображаем описание модульной системы из модуля конфигурации
             modular_description = get_modular_system_description()
-            # Оборачиваем описание в div с фиксированными отступами
+            # Оборачиваем описание в div с уменьшенными отступами
             st.markdown(f"""
-            <div style="padding: 0 25px; margin: 0 auto; max-width: 95%;">
+            <div style="padding: 0 10px; margin: 0 auto; max-width: 98%;">
                 {modular_description}
             </div>
             """, unsafe_allow_html=True)
@@ -1642,9 +1642,9 @@ def render_results(results):
             # Добавляем информацию о системе водоотведения для всех типов пергол
             # Отображаем описание системы водоотведения из модуля конфигурации
             drainage_description = get_drainage_system_description()
-            # Оборачиваем описание в div с фиксированными отступами
+            # Оборачиваем описание в div с уменьшенными отступами
             st.markdown(f"""
-            <div style="padding: 0 25px; margin: 0 auto; max-width: 95%;">
+            <div style="padding: 0 10px; margin: 0 auto; max-width: 98%;">
                 {drainage_description}
             </div>
             """, unsafe_allow_html=True)
@@ -1666,9 +1666,9 @@ def render_results(results):
             # Добавляем информацию о приводе Bansbach только для пергол B500NEW
             if pergola_type == "B500NEW":
                 bansbach_description = get_bansbach_description()
-                # Оборачиваем описание в div с фиксированными отступами
+                # Оборачиваем описание в div с уменьшенными отступами
                 st.markdown(f"""
-                <div style="padding: 0 25px; margin: 0 auto; max-width: 95%;">
+                <div style="padding: 0 10px; margin: 0 auto; max-width: 98%;">
                     {bansbach_description}
                 </div>
                 """, unsafe_allow_html=True)
@@ -1690,9 +1690,9 @@ def render_results(results):
             # Добавляем информацию о приводе Somfy только для пергол B700NEW
             if pergola_type == "B700NEW":
                 somfy_description = get_pergola_description("SOMFY")
-                # Оборачиваем описание в div с фиксированными отступами
+                # Оборачиваем описание в div с уменьшенными отступами
                 st.markdown(f"""
-                <div style="padding: 0 25px; margin: 0 auto; max-width: 95%;">
+                <div style="padding: 0 10px; margin: 0 auto; max-width: 98%;">
                     {somfy_description}
                 </div>
                 """, unsafe_allow_html=True)
@@ -1713,7 +1713,7 @@ def render_results(results):
             
             # Добавляем описание вариантов установки и вертикальных систем для всех типов пергол
             bioclimatic_install_description_html = """
-            <div style='padding: 0 20px; margin-bottom: 0px;'>
+            <div style='padding: 0 10px; margin-bottom: 0px;'>
             <h3 style='font-size: 1.2rem; margin-top: 20px; text-align: center;'>Биоклиматическая пергола: когда установка начинается с проектирования</h3>
             <p style='margin-bottom: 15px; font-style: italic; text-align: center;'>
             (Тонкости монтажа, о которых не расскажет обычный продавец)
@@ -1778,7 +1778,7 @@ def render_results(results):
             # Добавляем техническое описание ламелей только для пергол B500 и B700, не для B600
             if pergola_type in ["B500NEW", "B700NEW"]:
                 lamella_engineering_description_html = """
-                <div style='padding: 0 20px; margin-bottom: 0px;'>
+                <div style='padding: 0 10px; margin-bottom: 0px;'>
                 <h3 style='font-size: 1.2rem; margin-top: 20px; text-align: center;'>Инженерный взгляд на биоклиматические перголы: как ламели выдерживают снег, ливни и сохраняют тепло</h3>
                 <p style='margin-bottom: 15px; font-style: italic; text-align: center;'>
                 (Технические секреты, которые делают ваш комфорт непогрешимым)
