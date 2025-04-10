@@ -1011,9 +1011,16 @@ def perform_calculation(dimensions, options):
         else:
             lamellas_count_text = ""
                 
-        # Корректируем текст для описания ламелей в единственном числе
+        # Корректируем текст для описания типа ламелей
+        # Удаляем слово "ламели" из названия типа, чтобы избежать дублирования
         if "ламели" in lamella_info.lower():
-            lamella_info = lamella_info.replace("Ламели", "ламелью").replace("ламели", "ламелью")
+            # Убираем слово "Ламели" или "ламели" из строки, но сохраняем размер
+            lamella_info = lamella_info.lower()
+            lamella_info = lamella_info.replace("ламели ", "").replace("поворотными ламелями ", "поворотными ")
+            
+            # Если описание - это просто слово "ламели", заменяем его на "ламелью"
+            if lamella_info == "ламели":
+                lamella_info = "ламелью"
                 
         # Основная пергола
         specification.append({
@@ -1521,7 +1528,24 @@ def render_results(results):
     # Получаем информацию о ламелях
     lamella_info = LAMELLA_TYPES.get(results["options"]["lamella_type"], results["options"]["lamella_type"])
     lamellas_count = results["debug"].get("lamellas_count", 0)
-    lamellas_info = f" с ламелью {lamella_info.replace('ламели ', '')}"
+    # Формируем информацию о ламелях
+    # Удаляем лишние слова "ламели", "Ламели" из типа ламелей
+    cleaned_lamella_info = lamella_info
+    if "ламели" in cleaned_lamella_info.lower():
+        cleaned_lamella_info = cleaned_lamella_info.replace("Ламели ", "").replace("ламели ", "")
+        
+    # Для типа B500NEW - это поворотные ламели, для B700NEW - сдвижные, для B600 - сэндвич панели
+    if pergola_type == "B500NEW":
+        ламель_тип = "поворотными ламелями"
+    elif pergola_type == "B700NEW":
+        ламель_тип = "сдвижными ламелями"
+    elif pergola_type == "B600":
+        ламель_тип = "сэндвич панелями"
+    else:
+        ламель_тип = "ламелью"
+    
+    # Составляем итоговую информацию о ламелях
+    lamellas_info = f" с {ламель_тип} {cleaned_lamella_info}"
     if lamellas_count > 0 and pergola_type in ["B500NEW", "B700NEW"]:
         # Корректное склонение в зависимости от числа ламелей (правила русского языка)
         lamellas_suffix = "ламель" if lamellas_count % 10 == 1 and lamellas_count % 100 != 11 else "ламели" if 2 <= lamellas_count % 10 <= 4 and (lamellas_count % 100 < 10 or lamellas_count % 100 >= 20) else "ламелей"
