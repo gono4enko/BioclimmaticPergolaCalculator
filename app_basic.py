@@ -1142,7 +1142,7 @@ def render_results(results):
     formatted_price = "{:,.0f}".format(rub_total).replace(",", " ")
     st.markdown(f"""
     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
-        <h2 style='margin-top: 0; color: #0066cc; font-size: 1.4rem;'>Результаты расчета</h2>
+        <h2 style='margin-top: 0; color: #0066cc; font-size: 1.4rem; text-align: center;'>Результаты расчета</h2>
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Пергола:</strong> {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м
         </p>
@@ -1160,7 +1160,7 @@ def render_results(results):
     
     # Отображаем спецификацию перголы
     if "specification" in results:
-        st.markdown("<h3 style='font-size: 1rem; margin-top: 0; margin-bottom: 10px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 1.4rem; color: #0066cc; margin-top: 0; margin-bottom: 10px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
         
         # Создаем таблицу спецификации
         spec_data = []
@@ -1200,7 +1200,7 @@ def render_results(results):
         """, unsafe_allow_html=True)
     
     # Отображаем таблицу стоимости
-    st.markdown("<h3 style='font-size: 1rem; margin-top: 15px; margin-bottom: 10px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 1.4rem; color: #0066cc; margin-top: 15px; margin-bottom: 10px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
     
     # Создаем таблицу стоимости
     items_data = []
