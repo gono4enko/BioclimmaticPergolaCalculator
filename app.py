@@ -1914,34 +1914,48 @@ def main():
     /* Применяем отступы ко ВСЕМ формам ввода */
     div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
     div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect {
-        width: 90% !important;
+        width: 95% !important;
         margin: 0 auto !important;
-        padding-left: 25px !important;
-        padding-right: 25px !important;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
     }
     
     /* Отступы для секций заголовков */
     div.stMarkdown h2 {
-        width: 90% !important;
+        width: 95% !important;
         margin: 0 auto !important;
-        padding-left: 25px !important;
-        padding-right: 25px !important;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+    }
+    
+    /* Отступы для всех заголовков в статьях */
+    div.stMarkdown h1, div.stMarkdown h2, div.stMarkdown h3, div.stMarkdown h4, div.stMarkdown h5, div.stMarkdown h6 {
+        padding-left: 0px !important;
+        padding-right: 0px !important;
     }
     
     /* Отступы для текстовых параграфов */
     div.stMarkdown p {
-        width: 90% !important;
+        width: 95% !important;
         margin: 0 auto !important;
-        padding-left: 25px !important;
-        padding-right: 25px !important;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+    }
+    
+    /* Отступы для списков в статьях */
+    div.stMarkdown ul, div.stMarkdown ol {
+        width: 95% !important;
+        margin: 0 auto !important;
+        padding-left: 15px !important; /* Небольшой отступ для маркеров списка */
+        padding-right: 0px !important;
     }
     
     /* Отступы для горизонтальных разделителей */
     div.stMarkdown hr {
-        width: 90% !important;
+        width: 95% !important;
         margin: 0 auto !important;
-        margin-top: 10px !important;
-        margin-bottom: 10px !important;
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
     }
     
     /* Глобальные стили для улучшения читаемости */
@@ -1989,14 +2003,14 @@ def main():
         div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
         div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect,
         div.stMarkdown h2, div.stMarkdown p, div.stMarkdown hr {
-            width: 95% !important;
-            padding-left: 10px !important;
-            padding-right: 10px !important;
+            width: 98% !important;
+            padding-left: 2px !important;
+            padding-right: 2px !important;
         }
         
         .stButton {
-            padding-left: 10px !important;
-            padding-right: 10px !important;
+            padding-left: 2px !important;
+            padding-right: 2px !important;
         }
         
         /* Убираем горизонтальный скролл на мобильных */
