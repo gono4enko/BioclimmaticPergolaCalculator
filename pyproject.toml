@@ -5,15 +5,16 @@ description = "Калькулятор стоимости пергол разли
 authors = ["Decolife Admin"]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.12"
-streamlit = "^1.31.0"
-pandas = "^2.2.0"
-pillow = "^10.1.0"
-reportlab = "^4.0.7"
-fpdf = "^1.7.2"
-beautifulsoup4 = "^4.12.2"
-trafilatura = "^1.6.1"
-st-annotated-text = "^4.0.0"
+python = ">=3.8,<3.9.7 || >3.9.7,<3.12"
+streamlit = "1.31.0"
+pandas = "2.0.3"
+pillow = "10.1.0"
+reportlab = "4.0.7"
+fpdf = "1.7.2"
+beautifulsoup4 = "4.12.2"
+trafilatura = "1.6.1"
+st-annotated-text = "4.0.0"
+components = "^0.0.1a0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4.0"
