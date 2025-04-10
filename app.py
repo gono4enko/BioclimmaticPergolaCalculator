@@ -1529,16 +1529,24 @@ def display_formatted_description(description_text):
         .description-container {
             width: 100%;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
             background-color: #ffffff;
             border-radius: 5px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2rem; /* Увеличиваем базовый размер шрифта для всего контента */
         }
         /* Стили для корректного отображения разных HTML элементов */
         .section, section {
             display: block;
             margin-bottom: 15px;
             width: 100%;
+        }
+        .description-container h1, .description-container h2 {
+            font-size: 3.2rem; /* Увеличенный размер для h1 и h2 */
+            margin-top: 30px;
+            margin-bottom: 20px;
+            color: #0066cc;
+            font-weight: 700;
         }
         .description-container h3 {
             font-size: 2.86rem; /* Увеличено на 30% от 2.2rem */
@@ -1557,13 +1565,43 @@ def display_formatted_description(description_text):
         .description-container p {
             margin-bottom: 10px;
             line-height: 1.5;
+            font-size: 1.25rem; /* Увеличенный размер параграфов */
         }
         .description-container ul {
             margin-left: 20px;
             margin-bottom: 15px;
+            font-size: 1.25rem; /* Увеличенный размер для списков */
         }
-        .description-container strong {
+        .description-container li {
+            margin-bottom: 8px;
+        }
+        .description-container strong, .description-container b {
             font-weight: 600;
+            color: #0066cc; /* Выделяем синим цветом важный текст */
+        }
+        .description-container em, .description-container i {
+            font-style: italic;
+            color: #0066cc; /* Выделяем синим цветом важный текст */
+        }
+        /* Стили для таблиц внутри описаний */
+        .description-container table {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+        .description-container th {
+            background-color: #f0f6ff; /* Светло-синий фон для заголовков */
+            color: #0066cc;
+            font-weight: 600;
+            font-size: 1.2rem;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #c0d5f0;
+        }
+        .description-container td {
+            padding: 10px;
+            border: 1px solid #c0d5f0;
+            font-size: 1.2rem;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -1606,9 +1644,9 @@ def display_formatted_description(description_text):
         # 5. Удаляем двойные пробелы для надежности
         formatted_text = re.sub(r'\s{2,}', ' ', formatted_text)
         
-        # 6. Обрамляем весь текст в div-контейнер для изоляции стилей и добавляем контейнер с отступами
+        # 6. Обрамляем весь текст в div-контейнер для изоляции стилей и добавляем контейнер с небольшими отступами
         final_html = f"""
-        <div style="width:95%; margin:0 auto; padding-left:25px; padding-right:25px;">
+        <div style="width:98%; margin:0 auto; padding-left:10px; padding-right:10px;">
             <div class="description-container">{formatted_text}</div>
         </div>
         """
