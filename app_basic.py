@@ -1565,6 +1565,10 @@ def display_image_with_padding(image_path, caption=None, padding_percent=5):
         caption (str, optional): Подпись к изображению
         padding_percent (int, optional): Процент отступа от ширины контейнера (по умолчанию 5%)
     """
+    # Добавляем информацию для отладки
+    if st.session_state.get('debug_mode', False):
+        st.text(f"Попытка загрузить изображение: {image_path}")
+        
     # Создаем контейнер с отступами для изображения
     container = st.container()
     with container:
@@ -1580,6 +1584,14 @@ def display_image_with_padding(image_path, caption=None, padding_percent=5):
             </style>
             """, unsafe_allow_html=True)
             st.session_state.image_style_added = True
+        
+        # Проверяем существование файла
+        import os
+        if not os.path.exists(image_path):
+            # Выводим сообщение об ошибке в режиме отладки
+            if st.session_state.get('debug_mode', False):
+                st.error(f"Файл не найден: {image_path}")
+            raise FileNotFoundError(f"Изображение не найдено: {image_path}")
             
         # Отображаем изображение
         st.image(image_path, caption=caption, use_container_width=True)
@@ -1827,8 +1839,8 @@ def main():
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
     
-    # Режим отладки отключен
-    st.session_state.debug_mode = False
+    # Режим отладки включен для поиска проблем с изображениями
+    st.session_state.debug_mode = True
         
     # Отображаем кнопку для скролла к результатам (если есть результаты)
     if 'results' in st.session_state:
