@@ -885,7 +885,7 @@ def perform_calculation(dimensions, options):
             "price": delivery_price
         }
         results["items"].append({
-            "name": "Доставка (10%)",
+            "name": "Доставка",
             "price": delivery_price
         })
         results["total_price"] += delivery_price
@@ -899,7 +899,7 @@ def perform_calculation(dimensions, options):
                 "price": installation_price
             }
             results["items"].append({
-                "name": "Установка (10%)",
+                "name": "Установка",
                 "price": installation_price
             })
             results["total_price"] += installation_price
@@ -912,14 +912,14 @@ def perform_calculation(dimensions, options):
         # Обновляем итоговую стоимость в спецификации
         specification.append({
             "name": "Доставка",
-            "count": "10%",
+            "count": "1",
             "price": ""
         })
         
         if installation:
             specification.append({
                 "name": "Установка",
-                "count": "10%",
+                "count": "1",
                 "price": ""
             })
         
@@ -1088,7 +1088,7 @@ def render_options_form():
     st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
     st.markdown("<p style='font-weight: 500;'>Установка</p>", unsafe_allow_html=True)
     
-    installation = st.checkbox("С установкой (+10% к стоимости)", value=True)
+    installation = st.checkbox("С установкой", value=True)
     
     # Возвращаем выбранные опции (не включаем модули, т.к. они рассчитываются автоматически)
     return {
