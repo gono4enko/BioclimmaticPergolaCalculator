@@ -1540,6 +1540,12 @@ def display_formatted_description(description_text):
             margin-bottom: 10px;
             font-size: 1.2rem; /* Увеличиваем базовый размер шрифта для всего контента */
         }
+        
+        /* Стили только для статей внутри описания */
+        .description-container * {
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+        }
         /* Стили для корректного отображения разных HTML элементов */
         .section, section {
             display: block;
@@ -1652,7 +1658,7 @@ def display_formatted_description(description_text):
         # 6. Обрамляем весь текст в div-контейнер для изоляции стилей и добавляем контейнер с отступами
         # Уменьшаем отступ справа для более компактного вида
         final_html = f"""
-        <div style="width:100%; margin:0 auto; padding-left:0px; padding-right:0px;">
+        <div style="width:95%; margin:0 auto; padding-left:15px; padding-right:15px;">
             <div class="description-container">{formatted_text}</div>
         </div>
         """
@@ -1911,13 +1917,11 @@ def main():
         margin: 0 auto;
     }
     
-    /* Применяем отступы ко ВСЕМ формам ввода */
+    /* Применяем стандартные отступы для форм ввода */
     div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
     div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect {
         width: 95% !important;
         margin: 0 auto !important;
-        padding-left: 0px !important;
-        padding-right: 0px !important;
     }
     
     /* Отступы для секций заголовков */
@@ -1934,12 +1938,19 @@ def main():
         padding-right: 0px !important;
     }
     
-    /* Отступы для текстовых параграфов */
+    /* Отступы для текстовых параграфов (общие) */
     div.stMarkdown p {
         width: 95% !important;
         margin: 0 auto !important;
+    }
+    
+    /* Специальные отступы только для параграфов в контейнере description-container */
+    .description-container p {
         padding-left: 0px !important;
         padding-right: 0px !important;
+        margin-left: 0px !important;
+        margin-right: 0px !important;
+        width: 100% !important;
     }
     
     /* Отступы для списков в статьях */
