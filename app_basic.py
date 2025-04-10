@@ -1470,54 +1470,35 @@ def display_formatted_description(description_text):
             border-radius: 5px;
             margin-bottom: 20px;
         }
-        /* Дополнительные стили для HTML элементов */
-        .description-container h3, .description-container h4 {
+        /* Дополнительные стили для HTML элементов в описании */
+        .description-container h3 {
+            font-size: 1.2rem;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .description-container h4 {
+            font-size: 1.1rem;
             margin-top: 15px;
             margin-bottom: 10px;
         }
-        .description-container ul {
-            padding-left: 20px;
+        .description-container p {
             margin-bottom: 15px;
         }
-        .description-container p {
-            margin-bottom: 10px;
+        .description-container ul {
+            margin-bottom: 15px;
+            padding-left: 20px;
         }
-        .description-container div {
-            margin-bottom: 10px;
+        .description-container li {
+            margin-bottom: 5px;
         }
         </style>
         """, unsafe_allow_html=True)
         st.session_state.description_style_added = True
     
-    # Применяем метод компонентов HTML для гарантированного рендеринга HTML
-    import streamlit.components.v1 as components
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }}
-        .description-container {{
-            width: 100%;
-            margin: 0 auto;
-            padding: 10px;
-            background-color: #ffffff;
-            border-radius: 5px;
-        }}
-        </style>
-    </head>
-    <body>
-        <div class="description-container">{description_text}</div>
-    </body>
-    </html>
-    """
-    
-    # Используем статичный компонент без scrolling и с автоматической высотой
-    components.html(html_content, height=None, scrolling=False)
+    # Используем markdown с безопасным HTML для отображения содержимого
+    container = st.container()
+    with container:
+        st.markdown(f'<div class="description-container">{description_text}</div>', unsafe_allow_html=True)
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
