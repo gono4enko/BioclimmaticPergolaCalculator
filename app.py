@@ -1893,6 +1893,13 @@ def main():
     # Добавляем код счетчика Яндекс.Метрики
     add_yandex_metrika()
     
+    # Проверяем, нужно ли отправить событие в Яндекс.Метрику
+    if st.session_state.get('send_ya_metrika_event', False):
+        # Отправляем событие через JavaScript
+        send_calc_success_event()
+        # Сбрасываем флаг, чтобы не отправлять событие снова
+        st.session_state.send_ya_metrika_event = False
+    
     # Задаем стили для компактного и читаемого интерфейса по новому дизайну
     st.markdown("""
     <style>
@@ -2043,8 +2050,8 @@ def main():
                 # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
                 st.session_state.description_shown = False
                 
-                # Отправляем событие успешного расчета в Яндекс.Метрику
-                send_calc_success_event()
+                # Устанавливаем флаг для отправки события в Яндекс.Метрику после перезагрузки
+                st.session_state.send_ya_metrika_event = True
                 
                 # Перезагружаем страницу для отображения результатов
                 st.rerun()
