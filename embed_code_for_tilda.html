@@ -40,11 +40,14 @@
   #pergola-calculator {
     width: 100%;
     min-height: 800px; /* Начальная минимальная высота */
+    height: auto; /* Позволяет контенту определять высоту */
+    max-height: none; /* Убираем ограничение по максимальной высоте */
     border: none;
     margin: 0;
     padding: 0;
     display: block;
     transition: height 0.3s ease; /* Плавное изменение высоты */
+    overflow: hidden; /* Скрываем внутреннюю полосу прокрутки */
   }
   
   /* Стили для мобильных устройств */
@@ -138,10 +141,18 @@
       console.log("Применяем новую высоту:", newHeight);
       
       // Добавляем отступ для предотвращения скролла
-      const heightWithPadding = newHeight + 50;
+      // На ПК добавляем больше пространства для корректного отображения всего контента
+      const isDesktop = window.innerWidth > 768;
+      const heightPadding = isDesktop ? 100 : 50; // Больше отступа для десктопа
+      const heightWithPadding = newHeight + heightPadding;
       
       // Применяем высоту с плавной анимацией
       iframe.style.height = heightWithPadding + "px";
+      
+      // Убеждаемся, что iframe не имеет ограничений по максимальной высоте
+      iframe.style.maxHeight = "none";
+      
+      // Сохраняем последнюю высоту
       lastReceivedHeight = newHeight;
     }
   }
@@ -192,7 +203,8 @@
     if (windowWidth <= 768) {
       iframe.style.minHeight = "1000px"; // Больше высоты для мобильных
     } else {
-      iframe.style.minHeight = "800px"; // Стандартная высота для десктопов
+      iframe.style.minHeight = "1200px"; // Увеличенная высота для десктопов
+      iframe.style.maxHeight = "none"; // Убираем ограничение по максимальной высоте
     }
     
     // Адаптируем размеры и отступы в зависимости от размера экрана
@@ -303,7 +315,13 @@
     });
   });
   
-  // Устанавливаем начальную высоту
-  document.getElementById("pergola-calculator").style.height = 
-    (window.innerWidth <= 768) ? "1000px" : "800px";
+  // Устанавливаем начальную высоту и убеждаемся, что нет ограничений по максимальной высоте
+  const iframe = document.getElementById("pergola-calculator");
+  iframe.style.height = (window.innerWidth <= 768) ? "1000px" : "1200px"; // Увеличенная высота для ПК
+  iframe.style.maxHeight = "none"; // Убираем ограничение по максимальной высоте
+  
+  // Для десктопной версии убеждаемся, что контейнер достаточно большой
+  if (window.innerWidth > 768) {
+    iframe.style.minHeight = "1200px"; // Увеличенная минимальная высота для ПК
+  }
 </script>
