@@ -9,6 +9,29 @@ import math
 import csv
 import time
 from datetime import datetime
+
+def get_plural_form(number, one, two, five):
+    """
+    Возвращает правильную форму существительного для числительного по правилам русского языка.
+    
+    Args:
+        number (int): Число, для которого нужно подобрать форму
+        one (str): Форма для 1 (номинатив единственного числа)
+        two (str): Форма для 2-4 (генитив единственного числа)
+        five (str): Форма для 5-20 (генитив множественного числа)
+        
+    Returns:
+        str: Правильная форма слова
+    """
+    n = abs(number) % 100
+    if n >= 11 and n <= 19:
+        return five
+    n = n % 10
+    if n == 1:
+        return one
+    if n >= 2 and n <= 4:
+        return two
+    return five
 from pdf_generator_fpdf import generate_commercial_offer, format_pergola_data_for_pdf
 from config.pergola_descriptions import (
     get_pergola_description,
@@ -653,7 +676,7 @@ def perform_calculation(dimensions, options):
             }
             
             results["items"].append({
-                "name": f"Привод {drive_name} (для {drive_count} модулей)",
+                "name": f"Привод {drive_name} (для {drive_count} {get_plural_form(drive_count, 'модуль', 'модуля', 'модулей')})",
                 "price": total_drive_price
             })
             
@@ -662,7 +685,8 @@ def perform_calculation(dimensions, options):
             # Количество устройств для пульта ДУ (привод + освещение)
             devices_count = drive_count
             if "white_led" in lighting_options or "rgb_led" in lighting_options:
-                devices_count += 1  # Добавляем блок управления освещением
+                # Добавляем блоки управления освещением - по одному на каждый модуль
+                devices_count += modules  # Каждый модуль требует отдельного канала для освещения
             
             # Определяем тип и стоимость пульта ДУ
             remote_name, remote_price = get_remote_control(devices_count)
@@ -674,7 +698,7 @@ def perform_calculation(dimensions, options):
             }
             
             results["items"].append({
-                "name": f"Пульт ДУ {remote_name} ({devices_count} каналов)",
+                "name": f"Пульт ДУ {remote_name} ({devices_count} {get_plural_form(devices_count, 'канал', 'канала', 'каналов')})",
                 "price": remote_price
             })
             
@@ -733,7 +757,7 @@ def perform_calculation(dimensions, options):
                 }
                 
                 results["items"].append({
-                    "name": f"Пульт ДУ {remote_name} для освещения ({lighting_devices_count} каналов)",
+                    "name": f"Пульт ДУ {remote_name} для освещения ({lighting_devices_count} {get_plural_form(lighting_devices_count, 'канал', 'канала', 'каналов')})",
                     "price": remote_price
                 })
                 
@@ -754,14 +778,14 @@ def perform_calculation(dimensions, options):
         lamella_info = ""
         if pergola_type in ["B500NEW", "B700NEW"]:
             lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type)
-            lamellas_count_text = f", {lamellas_count} ламелей" if 'lamellas_count' in locals() else ""
+            lamellas_count_text = f", Количество ламелей - {lamellas_count} шт." if 'lamellas_count' in locals() else ""
         else:
             lamellas_count_text = ""
                 
         # Основная пергола
         specification.append({
-            "name": f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м с {lamella_info}{lamellas_count_text}",
-            "count": f"{modules} модуль",
+            "name": f"Пергола серии {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м. {lamella_info}{lamellas_count_text}",
+            "count": f"{modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}",
             "price": ""
         })
         
@@ -776,7 +800,7 @@ def perform_calculation(dimensions, options):
         if gutter_needed:
             specification.append({
                 "name": "Усилитель лотка",
-                "count": f"{total_gutter_length:.2f} м ({gutters_count} лотка)",
+                "count": f"{total_gutter_length:.2f} м ({gutters_count} {get_plural_form(gutters_count, 'лоток', 'лотка', 'лотков')})",
                 "price": ""
             })
         
@@ -845,7 +869,7 @@ def perform_calculation(dimensions, options):
                 remote_name, _ = get_remote_control(lighting_devices_count)
                 specification.append({
                     "name": f"Пульт ДУ {remote_name} для освещения",
-                    "count": f"1 шт. ({lighting_devices_count} каналов)",
+                    "count": f"1 шт. ({lighting_devices_count} {get_plural_form(lighting_devices_count, 'канал', 'канала', 'каналов')})",
                     "price": ""
                 })
         
@@ -1004,7 +1028,7 @@ def render_dimensions_form():
     
     # Показываем информацию о модулях (только для отображения)
     if modules > 1:
-        st.info(f"При размере {width:.2f}×{length:.2f} м будет автоматически использовано {modules} модуля")
+        st.info(f"При размере {width:.2f}×{length:.2f} м будет автоматически использовано {modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}")
     
     return {
         "width": width,
@@ -1126,7 +1150,7 @@ def render_results(results):
             <strong>Тип ламелей:</strong> {lamella_info}
         </p>
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
-            <strong>Количество модулей:</strong> {modules}
+            <strong>Количество модулей:</strong> {modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}
         </p>
         <div style='font-size: 1.4rem; color: #0066cc; font-weight: 700; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0; text-align: center;'>
             Итоговая стоимость: <span style='font-size: 1.5rem; color: #0066cc;'>{formatted_price} ₽</span>
@@ -1136,7 +1160,7 @@ def render_results(results):
     
     # Отображаем спецификацию перголы
     if "specification" in results:
-        st.markdown("<h3 style='font-size: 1.1rem; margin-top: 0; margin-bottom: 10px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 1rem; margin-top: 0; margin-bottom: 10px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
         
         # Создаем таблицу спецификации
         spec_data = []
@@ -1155,15 +1179,15 @@ def render_results(results):
         
         # Добавляем заголовки
         html_table += '<tr>'
-        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%;">Наименование</th>'
-        html_table += '<th style="text-align:center; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%;">Количество</th>'
+        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem;">Наименование</th>'
+        html_table += '<th style="text-align:center; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem;">Количество</th>'
         html_table += '</tr>'
         
         # Добавляем строки с данными
         for item in spec_data:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[0]}</td>'
-            html_table += f'<td style="text-align:center; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:center; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[1]}</td>'
             html_table += '</tr>'
         
         html_table += '</table>'
@@ -1176,7 +1200,7 @@ def render_results(results):
         """, unsafe_allow_html=True)
     
     # Отображаем таблицу стоимости
-    st.markdown("<h3 style='font-size: 1.1rem; margin-top: 15px; margin-bottom: 10px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 1rem; margin-top: 15px; margin-bottom: 10px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
     
     # Создаем таблицу стоимости
     items_data = []
@@ -1184,30 +1208,27 @@ def render_results(results):
     # Получаем информацию о ламелях
     lamella_info = LAMELLA_TYPES.get(results["options"]["lamella_type"], results["options"]["lamella_type"])
     lamellas_count = results["debug"].get("lamellas_count", 0)
-    lamellas_info = f" с {lamella_info}"
-    if lamellas_count > 0 and pergola_type in ["B500NEW", "B700NEW"]:
-        lamellas_info += f", {lamellas_count} ламелей"
+    lamellas_info = ""
+    
+    # Формируем описание ламелей для таблицы стоимости
+    if pergola_type in ["B500NEW", "B700NEW"]:
+        lamellas_info = f". {lamella_info}"
+        if lamellas_count > 0:
+            lamellas_info += f", Количество ламелей - {lamellas_count} шт."
+    elif pergola_type == "B600":
+        lamellas_info = f". {lamella_info}"
     
     # Функция для форматирования цены в бухгалтерском стиле
     def format_price(price):
-        # Всегда используем сокращенный формат для мобильной версии
-        price_in_thousands = price / 1000
-        if price >= 1000000:
-            price_in_millions = price / 1000000
-            # Округляем до 1 знака после запятой для миллионов
-            return "{:.1f}M₽".format(price_in_millions)
-        # Для сотен тысяч используем формат с K
-        if price >= 100000:
-            return "{:.0f}K₽".format(price_in_thousands)
-        # Для десятков тысяч тоже используем формат с K, но с 1 знаком после запятой
-        if price >= 10000:
-            return "{:.1f}K₽".format(price_in_thousands)
-        # Для маленьких чисел используем обычный формат с разделителями
+        # Округляем цену до целого числа
+        price = round(price)
+        
+        # Используем полный формат без сокращений, с пробелами в качестве разделителей тысяч
         return "{:,.0f}₽".format(price).replace(",", " ")
     
     # Базовая стоимость перголы - всегда первой строкой
     rub_base_price = base_price * euro_rate
-    items_data.append([f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} модуль)", format_price(rub_base_price)])
+    items_data.append([f"Пергола серии {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')})", format_price(rub_base_price)])
     
     # Привод и автоматика - второй строкой, если есть
     if pergola_type in ["B500NEW", "B700NEW"]:
@@ -1257,8 +1278,8 @@ def render_results(results):
     
     # Добавляем заголовки
     html_table += '<tr>'
-    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%;">Наименование</th>'
-    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%;">Стоимость</th>'
+    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem;">Наименование</th>'
+    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem;">Стоимость</th>'
     html_table += '</tr>'
     
     # Добавляем строки с данными
@@ -1271,8 +1292,8 @@ def render_results(results):
             html_table += '</tr>'
         else:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem;">{item[1]}</td>'
             html_table += '</tr>'
     
     html_table += '</table>'
@@ -1284,48 +1305,7 @@ def render_results(results):
     </div>
     """, unsafe_allow_html=True)
     
-    # Добавляем кнопку для генерации коммерческого предложения после таблицы стоимости
-    st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
-    st.markdown("<h3 style='font-size: 1.1rem; margin-top: 15px; margin-bottom: 15px; text-align: center;'>Коммерческое предложение</h3>", unsafe_allow_html=True)
-    
-    # Создаем контейнер для кнопки с центрированием
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("Сформировать КП после расчета", key="top_button", type="primary", use_container_width=True):
-            with st.spinner("Формирование коммерческого предложения..."):
-                try:
-                    # Получаем описание перголы для добавления в КП
-                    pergola_description = get_pergola_description(pergola_type).replace('<h2', '<h3').replace('</h2>', '</h3>')
-                    
-                    # Форматируем данные для создания PDF
-                    pdf_data = format_pergola_data_for_pdf(
-                        results=results,
-                        options=results["options"],
-                        dimensions=results["dimensions"],
-                        pergola_description=pergola_description
-                    )
-                    
-                    # Генерируем PDF
-                    pdf_path = generate_commercial_offer(pdf_data)
-                    
-                    # Отображаем ссылку на скачивание
-                    st.success(f"Коммерческое предложение успешно сформировано!")
-                    
-                    # Добавляем кнопку для скачивания
-                    with open(pdf_path, "rb") as pdf_file:
-                        st.download_button(
-                            label="Скачать коммерческое предложение (PDF)", 
-                            data=pdf_file, 
-                            file_name=os.path.basename(pdf_path), 
-                            mime="application/pdf",
-                            use_container_width=True
-                        )
-                except Exception as e:
-                    st.error(f"Ошибка при формировании коммерческого предложения: {str(e)}")
-                    if st.session_state.get('debug_mode', False):
-                        st.exception(e)
-    
-    # Добавляем разделитель
+    # Отображаем разделитель между таблицей стоимости и описанием перголы
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
     
     # Добавляем информацию о типе перголы и изображение только один раз в сессии
@@ -1337,7 +1317,11 @@ def render_results(results):
         if pergola_type in ["B500NEW", "B700NEW", "B600"]:
             # Используем описание из модуля конфигурации
             description_html = get_pergola_description(pergola_type)
-            st.markdown(description_html, unsafe_allow_html=True)
+            st.markdown(f"""
+            <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
+                {description_html}
+            </section>
+            """, unsafe_allow_html=True)
             
             # Отображаем изображения с использованием списка из конфигурации
             images = get_pergola_images(pergola_type)
@@ -1357,7 +1341,11 @@ def render_results(results):
             # Добавляем информацию о масштабируемости для всех типов пергол
             # Отображаем описание модульной системы из модуля конфигурации
             modular_description = get_modular_system_description()
-            st.markdown(modular_description, unsafe_allow_html=True)
+            st.markdown(f"""
+            <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
+                {modular_description}
+            </section>
+            """, unsafe_allow_html=True)
             
             # Отображаем изображение модульной системы
             modular_images = get_pergola_images("MODULAR")
@@ -1376,7 +1364,11 @@ def render_results(results):
             # Добавляем информацию о системе водоотведения для всех типов пергол
             # Отображаем описание системы водоотведения из модуля конфигурации
             drainage_description = get_drainage_system_description()
-            st.markdown(drainage_description, unsafe_allow_html=True)
+            st.markdown(f"""
+            <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
+                {drainage_description}
+            </section>
+            """, unsafe_allow_html=True)
             
             # Отображаем изображение системы водоотведения
             drainage_images = get_pergola_images("DRAINAGE")
@@ -1395,7 +1387,11 @@ def render_results(results):
             # Добавляем информацию о приводе Bansbach только для пергол B500NEW
             if pergola_type == "B500NEW":
                 bansbach_description = get_bansbach_description()
-                st.markdown(bansbach_description, unsafe_allow_html=True)
+                st.markdown(f"""
+                <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
+                    {bansbach_description}
+                </section>
+                """, unsafe_allow_html=True)
                 
                 # Отображаем изображение привода Bansbach
                 bansbach_images = get_pergola_images("BANSBACH")
@@ -1414,7 +1410,11 @@ def render_results(results):
             # Добавляем информацию о приводе Somfy только для пергол B700NEW
             if pergola_type == "B700NEW":
                 somfy_description = get_pergola_description("SOMFY")
-                st.markdown(somfy_description, unsafe_allow_html=True)
+                st.markdown(f"""
+                <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
+                    {somfy_description}
+                </section>
+                """, unsafe_allow_html=True)
                 
                 # Отображаем изображение привода Somfy
                 somfy_images = get_pergola_images("SOMFY")
@@ -1432,7 +1432,11 @@ def render_results(results):
             
             # Добавляем описание вариантов установки и вертикальных систем для всех типов пергол
             bioclimatic_install_description = get_bioclimatic_install_description()
-            st.markdown(bioclimatic_install_description, unsafe_allow_html=True)
+            st.markdown(f"""
+            <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
+                {bioclimatic_install_description}
+            </section>
+            """, unsafe_allow_html=True)
             
             # Отображаем изображение вариантов установки
             install_system_images = get_pergola_images("INSTALL_SYSTEM")
@@ -1451,7 +1455,11 @@ def render_results(results):
             # Добавляем техническое описание ламелей только для пергол B500 и B700, не для B600
             if pergola_type in ["B500NEW", "B700NEW"]:
                 lamella_engineering_description = get_lamella_engineering_description()
-                st.markdown(lamella_engineering_description, unsafe_allow_html=True)
+                st.markdown(f"""
+                <section style="width:95%; margin:0 auto; padding-left:20px; padding-right:20px;">
+                    {lamella_engineering_description}
+                </section>
+                """, unsafe_allow_html=True)
                 
                 # Отображаем изображение технических характеристик ламелей
                 lamella_engineering_images = get_pergola_images("LAMELLA_ENGINEERING")
@@ -1467,46 +1475,8 @@ def render_results(results):
                     else:
                         st.warning(f"Не удалось загрузить изображение технических характеристик ламелей")
     
-    # Добавляем кнопку для генерации коммерческого предложения
-    st.markdown("<hr style='margin-top: 30px; margin-bottom: 30px;'>", unsafe_allow_html=True)
-    st.markdown("<h3 style='font-size: 1.1rem; margin-top: 15px; margin-bottom: 15px; text-align: center;'>Коммерческое предложение</h3>", unsafe_allow_html=True)
-    
-    # Создаем контейнер для кнопки с центрированием
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("Сформировать коммерческое предложение", type="primary", use_container_width=True):
-            with st.spinner("Формирование коммерческого предложения..."):
-                try:
-                    # Получаем описание перголы для добавления в КП
-                    pergola_description = get_pergola_description(pergola_type).replace('<h2', '<h3').replace('</h2>', '</h3>')
-                    
-                    # Форматируем данные для создания PDF
-                    pdf_data = format_pergola_data_for_pdf(
-                        results=results,
-                        options=results["options"],
-                        dimensions=results["dimensions"],
-                        pergola_description=pergola_description
-                    )
-                    
-                    # Генерируем PDF
-                    pdf_path = generate_commercial_offer(pdf_data)
-                    
-                    # Отображаем ссылку на скачивание
-                    st.success(f"Коммерческое предложение успешно сформировано!")
-                    
-                    # Добавляем кнопку для скачивания
-                    with open(pdf_path, "rb") as pdf_file:
-                        st.download_button(
-                            label="Скачать коммерческое предложение (PDF)", 
-                            data=pdf_file, 
-                            file_name=os.path.basename(pdf_path), 
-                            mime="application/pdf",
-                            use_container_width=True
-                        )
-                except Exception as e:
-                    st.error(f"Ошибка при формировании коммерческого предложения: {str(e)}")
-                    if st.session_state.get('debug_mode', False):
-                        st.exception(e)
+    # Добавляем отступ в конце страницы
+    st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
@@ -1800,7 +1770,7 @@ def main():
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v3.6</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v3.9</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Создаем директории, если они не существуют
