@@ -1,9 +1,19 @@
 <!-- Код для встраивания калькулятора пергол на сайт Tilda -->
 <!-- Версия 3.0 - Адаптивный дизайн для мобильных устройств, улучшенная прокрутка и автоматическая высота -->
-<!-- Прямая ссылка на приложение: https://bioclimmatic-pergola-calculator-gono4enko.replit.app/ -->
+<!-- ПРЯМАЯ ССЫЛКА НА ПРИЛОЖЕНИЕ: https://bioclimmatic-pergola-calculator-gono4enko.replit.app/ -->
+
+<!-- Чтобы перейти напрямую к калькулятору, используйте ссылку: -->
+<!-- <a href="https://bioclimmatic-pergola-calculator-gono4enko.replit.app/" target="_blank">Открыть калькулятор в новом окне</a> -->
 
 <!-- Внешний контейнер для задания размеров и позиционирования -->
 <div class="pergola-calculator-wrapper">
+  <!-- Кнопка для прямого доступа к калькулятору (опционально) -->
+  <a href="https://bioclimmatic-pergola-calculator-gono4enko.replit.app/" 
+     target="_blank" 
+     class="direct-link-button">
+    Открыть калькулятор в новом окне
+  </a>
+  
   <!-- iframe с калькулятором -->
   <iframe 
     id="pergola-calculator" 
@@ -61,6 +71,39 @@
       max-width: none;
       margin-left: -10px;
       margin-right: -10px;
+    }
+  }
+  
+  /* Стили для кнопки прямого доступа */
+  .direct-link-button {
+    display: inline-block;
+    background-color: #0066cc;
+    color: white;
+    padding: 10px 20px;
+    margin: 10px 0;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  
+  .direct-link-button:hover {
+    background-color: #0055aa;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: translateY(-2px);
+  }
+  
+  /* Адаптивные стили для кнопки на мобильных устройствах */
+  @media (max-width: 768px) {
+    .direct-link-button {
+      display: block;
+      width: 100%;
+      max-width: 90%;
+      margin: 10px auto;
+      padding: 12px 20px;
+      font-size: 16px;
     }
   }
 </style>
