@@ -10,6 +10,10 @@ import csv
 import time
 from datetime import datetime
 
+# Константы для наценок на доставку и установку
+DELIVERY_MARKUP_PERCENT = 8  # Процент наценки на доставку (8%)
+INSTALLATION_MARKUP_PERCENT = 10  # Процент наценки на установку (10%)
+
 def get_plural_form(number, one, two, five):
     """
     Возвращает правильную форму существительного для числительного по правилам русского языка.
