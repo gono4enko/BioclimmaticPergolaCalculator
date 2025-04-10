@@ -1171,27 +1171,29 @@ def render_results(results):
         spec_table_key = "spec_table_" + str(hash(str(spec_data)))
         
         # Создаем HTML-таблицу напрямую для обхода проблем с шириной
-        html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px;">'
+        html_table = '<table style="width:100%; min-width:600px; border-collapse:collapse; margin-bottom:20px; table-layout:fixed;">'
         
         # Добавляем заголовки
         html_table += '<tr>'
-        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem;">Наименование</th>'
-        html_table += '<th style="text-align:center; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem;">Количество</th>'
+        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">Наименование</th>'
+        html_table += '<th style="text-align:right; padding:8px 15px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Количество</th>'
         html_table += '</tr>'
         
         # Добавляем строки с данными
         for item in spec_data:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
-            html_table += f'<td style="text-align:center; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #eee; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
             html_table += '</tr>'
         
         html_table += '</table>'
         
-        # Выводим HTML-таблицу напрямую через markdown
+        # Выводим HTML-таблицу напрямую через markdown в контейнере с горизонтальной прокруткой
         st.markdown(f"""
-        <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
-            {html_table}
+        <div style="width:100%; overflow-x:auto; margin:0 auto;">
+            <div style="width:95%; min-width:600px; margin:0 auto;">
+                {html_table}
+            </div>
         </div>
         """, unsafe_allow_html=True)
     
@@ -1270,12 +1272,12 @@ def render_results(results):
     items_data.append(["Итого", format_price(rub_total)])
     
     # Создаем HTML-таблицу напрямую для обхода проблем с шириной
-    html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px;">'
+    html_table = '<table style="width:100%; min-width:600px; border-collapse:collapse; margin-bottom:20px; table-layout:fixed;">'
     
     # Добавляем заголовки
     html_table += '<tr>'
-    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem;">Наименование</th>'
-    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem;">Стоимость</th>'
+    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">Наименование</th>'
+    html_table += '<th style="text-align:right; padding:8px 15px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Стоимость</th>'
     html_table += '</tr>'
     
     # Добавляем строки с данными
@@ -1283,21 +1285,23 @@ def render_results(results):
         # Особое форматирование для строки "Итого"
         if i == len(items_data) - 1:
             html_table += '<tr style="background-color:#e0f0ff;">'
-            html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.2rem;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:10px 10px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; color:#0066cc;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:10px 15px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; color:#0066cc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
             html_table += '</tr>'
         else:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #eee; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
             html_table += '</tr>'
     
     html_table += '</table>'
     
-    # Выводим HTML-таблицу напрямую через markdown
+    # Выводим HTML-таблицу напрямую через markdown в контейнере с горизонтальной прокруткой
     st.markdown(f"""
-    <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
-        {html_table}
+    <div style="width:100%; overflow-x:auto; margin:0 auto;">
+        <div style="width:95%; min-width:600px; margin:0 auto;">
+            {html_table}
+        </div>
     </div>
     """, unsafe_allow_html=True)
     
