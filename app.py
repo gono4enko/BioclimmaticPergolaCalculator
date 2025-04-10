@@ -1681,10 +1681,39 @@ def add_iframe_resizer():
     """
     Добавляет JavaScript для отправки высоты страницы родительскому окну
     при использовании приложения внутри iframe на сайте Тильда.
-    Улучшенная версия с более надежной передачей данных.
+    Улучшенная версия с более надежной передачей данных и добавлением отступов.
     """
     st.markdown("""
     <script>
+        // Определяем, находимся ли мы в iframe
+        function detectIframe() {
+            try {
+                // Если window.self !== window.top, значит мы в iframe
+                const isInIframe = window.self !== window.top;
+                if (isInIframe) {
+                    // Добавляем класс к body для применения специальных стилей
+                    document.body.classList.add('in-iframe');
+                    document.body.classList.add('embedded');
+                    
+                    // Добавляем отступы к основному контейнеру контента
+                    const containers = document.querySelectorAll('.block-container');
+                    containers.forEach(container => {
+                        container.classList.add('iframe-mode');
+                    });
+                    
+                    console.log('Detected iframe mode, applied special styles');
+                }
+                return isInIframe;
+            } catch (e) {
+                // Если возникла ошибка, вероятно это связано с cross-origin ограничениями
+                // Предполагаем, что мы в iframe
+                document.body.classList.add('in-iframe');
+                document.body.classList.add('embedded');
+                console.log('Assuming iframe mode due to error:', e);
+                return true;
+            }
+        }
+        
         // Функция для отправки высоты iframe родительскому окну
         function sendHeightToParent() {
             // Получаем полную высоту документа
@@ -1731,47 +1760,97 @@ def add_iframe_resizer():
             // Проверяем высоту каждые 500 мс
             return setInterval(checkHeight, 500);
         }
+        
+        // Функция для добавления дополнительных отступов на мобильных устройствах
+        function addMobilePadding() {
+            // Проверяем, мобильное ли это устройство
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                // Находим все контейнеры контента
+                const mainContainers = document.querySelectorAll('.main .block-container');
+                mainContainers.forEach(container => {
+                    container.style.paddingLeft = '15px';
+                    container.style.paddingRight = '15px';
+                });
+                
+                // Находим все элементы ввода и добавляем отступы
+                const inputs = document.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    const parent = input.parentElement;
+                    if (parent) {
+                        parent.style.marginLeft = '5px';
+                        parent.style.marginRight = '5px';
+                    }
+                });
+                
+                console.log('Applied mobile padding');
+            }
+        }
 
-        // Отправляем высоту при загрузке
+        // При загрузке страницы
         window.addEventListener("load", function() {
-            // Даем время для полной отрисовки
-            setTimeout(sendHeightToParent, 300);
-            // И еще раз для надежности
-            setTimeout(sendHeightToParent, 1000);
+            // Определяем, находимся ли мы в iframe
+            const isInIframe = detectIframe();
+            
+            // Добавляем отступы для мобильных устройств
+            addMobilePadding();
+            
+            // Если мы в iframe, настраиваем отправку высоты
+            if (isInIframe) {
+                // Даем время для полной отрисовки и применения стилей
+                setTimeout(sendHeightToParent, 300);
+                // И еще раз для надежности
+                setTimeout(sendHeightToParent, 1000);
+                
+                // Запускаем мониторинг высоты
+                const heightMonitor = monitorContentHeight();
+                
+                // Отправляем высоту при изменении размера окна
+                window.addEventListener("resize", function() {
+                    // Отправляем сразу и с небольшой задержкой
+                    sendHeightToParent();
+                    setTimeout(sendHeightToParent, 300);
+                    
+                    // Перепроверяем и обновляем отступы
+                    addMobilePadding();
+                });
+                
+                // Отслеживаем изменения DOM для немедленной реакции на новый контент
+                const observer = new MutationObserver(function(mutations) {
+                    // Ждем момента, когда DOM обновится полностью
+                    setTimeout(sendHeightToParent, 100);
+                });
+                
+                // Наблюдаем за всеми изменениями в документе
+                observer.observe(document.body, { 
+                    childList: true, 
+                    subtree: true,
+                    attributes: true,
+                    characterData: true 
+                });
+                
+                // Отправляем высоту при клике, так как могут открываться новые элементы
+                document.addEventListener("click", function() {
+                    // Малая задержка, чтобы дать время элементам развернуться
+                    setTimeout(sendHeightToParent, 300);
+                });
+                
+                // Запускаем первоначальную отправку высоты
+                sendHeightToParent();
+            }
         });
         
-        // Отправляем высоту при изменении размера окна
-        window.addEventListener("resize", function() {
-            // Отправляем сразу и с небольшой задержкой для надежности
-            sendHeightToParent();
-            setTimeout(sendHeightToParent, 300);
+        // Обработчик сообщений от родительского окна
+        window.addEventListener("message", function(event) {
+            // Обрабатываем только структурированные сообщения
+            if (typeof event.data === 'object' && event.data !== null) {
+                // Если получили запрос высоты
+                if (event.data.type === "REQUEST_HEIGHT") {
+                    sendHeightToParent();
+                }
+            }
         });
-        
-        // Запускаем мониторинг высоты контента
-        const heightMonitor = monitorContentHeight();
-        
-        // Отслеживаем изменения DOM для немедленной реакции на новый контент
-        const observer = new MutationObserver(function(mutations) {
-            // Ждем момента, когда DOM обновится полностью
-            setTimeout(sendHeightToParent, 100);
-        });
-        
-        // Наблюдаем за всеми изменениями в документе
-        observer.observe(document.body, { 
-            childList: true, 
-            subtree: true,
-            attributes: true,
-            characterData: true 
-        });
-        
-        // Отправляем высоту при клике, так как могут открываться новые элементы
-        document.addEventListener("click", function() {
-            // Малая задержка, чтобы дать время элементам развернуться
-            setTimeout(sendHeightToParent, 300);
-        });
-        
-        // Запускаем первоначальную отправку высоты
-        sendHeightToParent();
     </script>
     """, unsafe_allow_html=True)
 
@@ -1787,12 +1866,24 @@ def main():
     # Задаем стили для компактного и читаемого интерфейса по новому дизайну
     st.markdown("""
     <style>
+    /* Детектирование iframe для добавления специальных стилей */
+    .iframe-mode {
+        padding: 0 15px !important; /* Добавляем отступы в режиме iframe */
+    }
+    
     /* Глобальный контейнер */
     .block-container {
         max-width: 800px;
         padding-top: 1rem;
         padding-bottom: 1rem;
         margin: 0 auto;
+    }
+    
+    /* Добавляем отступы к основному контейнеру в режиме iframe */
+    body.embedded .main > .block-container,
+    body.in-iframe .main > .block-container {
+        padding-left: 15px !important;
+        padding-right: 15px !important;
     }
     
     /* Применяем отступы ко ВСЕМ формам ввода */
@@ -1864,18 +1955,30 @@ def main():
     
     /* Адаптивность для мобильных устройств */
     @media (max-width: 768px) {
+        /* Основной контейнер - добавляем боковые отступы */
         .block-container {
             max-width: 100%;
             padding: 0.25rem !important;
+            padding-left: 12px !important;
+            padding-right: 12px !important;
         }
         
-        /* Уменьшаем отступы на мобильных */
+        /* Специальные отступы для iframe-режима */
+        body.embedded .main .block-container,
+        body.in-iframe .main .block-container {
+            padding-left: 15px !important;
+            padding-right: 15px !important;
+        }
+        
+        /* Уменьшаем отступы на мобильных, но оставляем минимальные боковые */
         div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
         div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect,
         div.stMarkdown h2, div.stMarkdown p, div.stMarkdown hr {
             width: 95% !important;
             padding-left: 10px !important;
             padding-right: 10px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
         }
         
         .stButton {
@@ -1898,6 +2001,12 @@ def main():
         /* Уменьшаем размер текста везде */
         .stApp, .stApp p, .stApp div, .stMarkdown {
             font-size: 0.9rem !important;
+        }
+        
+        /* Принудительные отступы внутри селекторов */
+        .stSelectbox > div, .stRadio > div, .stCheckbox > div {
+            margin-left: 5px !important; 
+            margin-right: 5px !important;
         }
     }
     </style>

@@ -51,15 +51,17 @@
   @media (max-width: 768px) {
     .pergola-calculator-wrapper {
       width: 100%;
-      padding: 0;
+      padding: 0 5px; /* Добавляем небольшие отступы */
     }
     
     #pergola-calculator {
       min-height: 1000px; /* Увеличенная начальная высота для мобильных */
-      width: 100vw; /* Растягиваем на всю ширину экрана */
+      width: calc(100% - 10px); /* Растягиваем на всю ширину экрана минус отступы */
       max-width: none; /* Отключаем ограничение ширины */
-      margin-left: -10px; /* Компенсируем отступы родительского контейнера */
-      margin-right: -10px;
+      margin-left: 5px; /* Добавляем отступ слева */
+      margin-right: 5px; /* Добавляем отступ справа */
+      border-radius: 8px; /* Скругляем углы для эстетики */
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Добавляем легкую тень */
     }
   }
   
@@ -67,10 +69,24 @@
   @media screen and (-webkit-min-device-pixel-ratio: 2), 
          screen and (min-resolution: 192dpi) {
     #pergola-calculator {
-      width: 100vw; /* Используем viewport width для полного заполнения */
+      width: calc(100% - 10px); /* Используем ширину с отступами */
       max-width: none;
-      margin-left: -10px;
-      margin-right: -10px;
+      margin-left: 5px; /* Отступ слева */
+      margin-right: 5px; /* Отступ справа */
+      border-radius: 8px; /* Скругленные углы для лучшего вида */
+    }
+    
+    /* На очень узких экранах добавляем больше отступов */
+    @media (max-width: 375px) {
+      #pergola-calculator {
+        width: calc(100% - 16px); /* Еще больше отступов для iPhone */
+        margin-left: 8px; 
+        margin-right: 8px;
+      }
+      
+      .pergola-calculator-wrapper {
+        padding: 0 8px; /* Увеличиваем отступы контейнера */
+      }
     }
   }
   
@@ -179,19 +195,30 @@
       iframe.style.minHeight = "800px"; // Стандартная высота для десктопов
     }
     
-    // Сбрасываем отрицательные margin на больших экранах
+    // Адаптируем размеры и отступы в зависимости от размера экрана
     if (windowWidth > 768) {
+      // Десктоп: стандартные настройки
       iframe.style.marginLeft = "0";
       iframe.style.marginRight = "0";
       iframe.style.width = "100%";
-    } else {
-      // Применяем отрицательные margin на мобильных для растягивания на всю ширину
-      iframe.style.width = "100vw";
-      
-      // Определяем родительский padding для компенсации
-      const containerPadding = 10; // Стандартный padding в блоках Tilda
-      iframe.style.marginLeft = "-" + containerPadding + "px";
-      iframe.style.marginRight = "-" + containerPadding + "px";
+      iframe.style.borderRadius = "0";
+      iframe.style.boxShadow = "none";
+    } 
+    else if (windowWidth <= 375) {
+      // iPhone или маленькие мобильные: максимальные отступы
+      iframe.style.width = "calc(100% - 16px)";
+      iframe.style.marginLeft = "8px";
+      iframe.style.marginRight = "8px";
+      iframe.style.borderRadius = "8px";
+      iframe.style.boxShadow = "0 1px 3px rgba(0,0,0,0.05)";
+    }
+    else {
+      // Средние мобильные устройства
+      iframe.style.width = "calc(100% - 10px)";
+      iframe.style.marginLeft = "5px";
+      iframe.style.marginRight = "5px";
+      iframe.style.borderRadius = "8px";
+      iframe.style.boxShadow = "0 1px 3px rgba(0,0,0,0.05)";
     }
     
     // Запрашиваем текущую высоту у iframe
