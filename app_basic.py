@@ -3,7 +3,7 @@
 Максимально простой подход с использованием стандартных компонентов Streamlit
 
 Версия 3.7 (стабильная)
-Последнее обновление: 09.04.2025
+Последнее обновление: 10.04.2025
 
 ИНСТРУКЦИИ ПО ОБСЛУЖИВАНИЮ:
 - Всегда вести себя как профессионал при внесении изменений
@@ -370,6 +370,24 @@ DRIVE_PRICES = {
         "tandem": 1000       # Somfy M2 TANDEM - 1000 евро
     }
 }
+
+# Функция для правильного склонения слова "канал"
+def get_channel_suffix(count):
+    """
+    Возвращает правильное склонение слова "канал" в зависимости от числа
+    
+    Args:
+        count (int): Количество каналов
+    
+    Returns:
+        str: Правильное склонение слова "канал" ("канал", "канала", "каналов")
+    """
+    if count % 10 == 1 and count % 100 != 11:
+        return "канал"
+    elif 2 <= count % 10 <= 4 and (count % 100 < 10 or count % 100 >= 20):
+        return "канала"
+    else:
+        return "каналов"
 
 # Пульты дистанционного управления
 REMOTE_CONTROL_TYPES = {
@@ -986,14 +1004,16 @@ def perform_calculation(dimensions, options):
         lamella_info = ""
         if pergola_type in ["B500NEW", "B700NEW"]:
             lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type)
-            lamellas_count_text = f", {lamellas_count} ламелей" if 'lamellas_count' in locals() else ""
+            # Корректное склонение в зависимости от числа ламелей (четное/нечетное)
+            lamellas_suffix = "ламель" if lamellas_count % 2 != 0 else "ламелей"
+            lamellas_count_text = f", {lamellas_count} {lamellas_suffix}" if 'lamellas_count' in locals() else ""
         else:
             lamellas_count_text = ""
                 
         # Основная пергола
         specification.append({
             "name": f"Пергола {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м с {lamella_info}{lamellas_count_text}",
-            "count": f"{modules} модуль",
+            "count": f"{modules} {'модуль' if modules == 1 else 'модуля' if modules < 5 else 'модулей'}",
             "price": ""
         })
         
@@ -1077,7 +1097,7 @@ def perform_calculation(dimensions, options):
                 remote_name, _ = get_remote_control(lighting_devices_count)
                 specification.append({
                     "name": f"Пульт ДУ {remote_name} для освещения",
-                    "count": f"1 шт. ({lighting_devices_count} каналов)",
+                    "count": f"1 шт. ({lighting_devices_count} {get_channel_suffix(lighting_devices_count)})",
                     "price": ""
                 })
         
@@ -1236,7 +1256,9 @@ def render_dimensions_form():
     
     # Показываем информацию о модулях (только для отображения)
     if modules > 1:
-        st.info(f"При размере {width:.2f}×{length:.2f} м будет автоматически использовано {modules} модуля")
+        # Правильное склонение для модулей
+        modules_suffix = "модуля" if modules < 5 else "модулей"
+        st.info(f"При размере {width:.2f}×{length:.2f} м будет автоматически использовано {modules} {modules_suffix}")
     
     return {
         "width": width,
