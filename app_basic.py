@@ -1159,7 +1159,7 @@ def render_results(results):
     
     # Отображаем спецификацию перголы
     if "specification" in results:
-        st.markdown("<h3 style='font-size: 1.1rem; margin-top: 0; margin-bottom: 10px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 1rem; margin-top: 0; margin-bottom: 10px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
         
         # Создаем таблицу спецификации
         spec_data = []
@@ -1178,15 +1178,15 @@ def render_results(results):
         
         # Добавляем заголовки
         html_table += '<tr>'
-        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%;">Наименование</th>'
-        html_table += '<th style="text-align:center; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%;">Количество</th>'
+        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem;">Наименование</th>'
+        html_table += '<th style="text-align:center; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem;">Количество</th>'
         html_table += '</tr>'
         
         # Добавляем строки с данными
         for item in spec_data:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[0]}</td>'
-            html_table += f'<td style="text-align:center; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:center; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[1]}</td>'
             html_table += '</tr>'
         
         html_table += '</table>'
@@ -1199,7 +1199,7 @@ def render_results(results):
         """, unsafe_allow_html=True)
     
     # Отображаем таблицу стоимости
-    st.markdown("<h3 style='font-size: 1.1rem; margin-top: 15px; margin-bottom: 10px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 1rem; margin-top: 15px; margin-bottom: 10px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
     
     # Создаем таблицу стоимости
     items_data = []
@@ -1219,18 +1219,21 @@ def render_results(results):
     
     # Функция для форматирования цены в бухгалтерском стиле
     def format_price(price):
+        # Округляем цену до целого числа
+        price = round(price)
+        
         # Всегда используем сокращенный формат для мобильной версии
         price_in_thousands = price / 1000
         if price >= 1000000:
             price_in_millions = price / 1000000
-            # Округляем до 1 знака после запятой для миллионов
-            return "{:.1f}M₽".format(price_in_millions)
+            # Округляем до целого числа для миллионов
+            return "{:.0f}M₽".format(price_in_millions)
         # Для сотен тысяч используем формат с K
         if price >= 100000:
             return "{:.0f}K₽".format(price_in_thousands)
-        # Для десятков тысяч тоже используем формат с K, но с 1 знаком после запятой
+        # Для десятков тысяч тоже используем формат с K без десятичных знаков
         if price >= 10000:
-            return "{:.1f}K₽".format(price_in_thousands)
+            return "{:.0f}K₽".format(price_in_thousands)
         # Для маленьких чисел используем обычный формат с разделителями
         return "{:,.0f}₽".format(price).replace(",", " ")
     
@@ -1286,8 +1289,8 @@ def render_results(results):
     
     # Добавляем заголовки
     html_table += '<tr>'
-    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%;">Наименование</th>'
-    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%;">Стоимость</th>'
+    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem;">Наименование</th>'
+    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem;">Стоимость</th>'
     html_table += '</tr>'
     
     # Добавляем строки с данными
@@ -1300,8 +1303,8 @@ def render_results(results):
             html_table += '</tr>'
         else:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem;">{item[1]}</td>'
             html_table += '</tr>'
     
     html_table += '</table>'
