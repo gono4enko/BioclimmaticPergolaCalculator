@@ -104,11 +104,10 @@ GUTTER_INSERT_THRESHOLD = 6.5
 GUTTER_INSERT_PRICE_PER_METER = 80  # Цена усилителя лотка 80 евро за погонный метр
 
 # Наценки за доставку и установку (в процентах от базовой стоимости)
-DELIVERY_MARKUP_PERCENT = 8  # 8% наценка за доставку (добавляется автоматически)
-INSTALLATION_MARKUP_PERCENT = 10  # 10% наценка за установку (опционально)
-
-# Курс евро в рублях
+# Курс евро в рублях и наценки
 EURO_RATE = 110  # 1 евро = 110 рублей
+DELIVERY_MARKUP_PERCENT = 8  # Наценка за доставку 8%
+INSTALLATION_MARKUP_PERCENT = 10  # Наценка за установку 10%
 
 # Правила для выбора привода Bansbach для B500NEW
 BANSBACH_DRIVE_RULES = {
@@ -1138,7 +1137,7 @@ def render_results(results):
     formatted_price = "{:,.0f}".format(rub_total).replace(",", " ")
     st.markdown(f"""
     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
-        <h2 style='margin-top: 0; color: #0066cc; font-size: 2.88rem; font-weight: 700; text-align: center;'>Результаты расчета</h2>
+        <h2 style='margin-top: 0; color: #0066cc; font-size: 3.168rem; font-weight: 700; text-align: center;'>Результаты расчета</h2>
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Пергола:</strong> {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м
         </p>
@@ -1156,7 +1155,7 @@ def render_results(results):
     
     # Отображаем спецификацию перголы
     if "specification" in results:
-        st.markdown("<h3 style='font-size: 2.65rem; font-weight: 700; color: #0066cc; margin-top: 0; margin-bottom: 15px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-size: 2.915rem; font-weight: 700; color: #0066cc; margin-top: 0; margin-bottom: 15px; text-align: center;'>Спецификация перголы</h3>", unsafe_allow_html=True)
         
         # Создаем таблицу спецификации
         spec_data = []
@@ -1198,7 +1197,7 @@ def render_results(results):
         """, unsafe_allow_html=True)
     
     # Отображаем таблицу стоимости
-    st.markdown("<h3 style='font-size: 2.65rem; font-weight: 700; color: #0066cc; margin-top: 15px; margin-bottom: 15px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 2.915rem; font-weight: 700; color: #0066cc; margin-top: 15px; margin-bottom: 15px; text-align: center;'>Стоимость</h3>", unsafe_allow_html=True)
     
     # Создаем таблицу стоимости
     items_data = []
@@ -1285,8 +1284,8 @@ def render_results(results):
         # Особое форматирование для строки "Итого"
         if i == len(items_data) - 1:
             html_table += '<tr style="background-color:#e0f0ff;">'
-            html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.32rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:10px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.24rem; color:#0066cc; overflow:visible; max-width:100%; width:auto;">{item[1]}</td>'
+            html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.344rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:10px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.153rem; color:#0066cc; overflow:visible; max-width:100%; width:auto;">{item[1]}</td>'
             html_table += '</tr>'
         else:
             html_table += '<tr>'
