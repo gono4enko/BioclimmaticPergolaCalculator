@@ -1171,27 +1171,27 @@ def render_results(results):
         spec_table_key = "spec_table_" + str(hash(str(spec_data)))
         
         # Создаем HTML-таблицу напрямую для обхода проблем с шириной
-        html_table = '<table style="width:100%; min-width:600px; border-collapse:collapse; margin-bottom:20px; table-layout:fixed;">'
+        html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px; table-layout:fixed;">'
         
         # Добавляем заголовки
         html_table += '<tr>'
         html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">Наименование</th>'
-        html_table += '<th style="text-align:right; padding:8px 15px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Количество</th>'
+        html_table += '<th style="text-align:right; padding:8px 15px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">Количество</th>'
         html_table += '</tr>'
         
         # Добавляем строки с данными
         for item in spec_data:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; font-size:0.9rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
             html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #eee; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
             html_table += '</tr>'
         
         html_table += '</table>'
         
-        # Выводим HTML-таблицу напрямую через markdown в контейнере с горизонтальной прокруткой
+        # Выводим HTML-таблицу напрямую через markdown
         st.markdown(f"""
-        <div style="width:100%; overflow-x:auto; margin:0 auto;">
-            <div style="width:98%; min-width:600px; margin:0 auto;">
+        <div style="width:100%; margin:0 auto;">
+            <div style="width:98%; margin:0 auto;">
                 {html_table}
             </div>
         </div>
@@ -1272,12 +1272,12 @@ def render_results(results):
     items_data.append(["Итого", format_price(rub_total)])
     
     # Создаем HTML-таблицу напрямую для обхода проблем с шириной
-    html_table = '<table style="width:100%; min-width:600px; border-collapse:collapse; margin-bottom:20px; table-layout:fixed;">'
+    html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px; table-layout:fixed;">'
     
     # Добавляем заголовки
     html_table += '<tr>'
     html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">Наименование</th>'
-    html_table += '<th style="text-align:right; padding:8px 15px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Стоимость</th>'
+    html_table += '<th style="text-align:right; padding:8px 15px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">Стоимость</th>'
     html_table += '</tr>'
     
     # Добавляем строки с данными
@@ -1285,21 +1285,21 @@ def render_results(results):
         # Особое форматирование для строки "Итого"
         if i == len(items_data) - 1:
             html_table += '<tr style="background-color:#e0f0ff;">'
-            html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
+            html_table += f'<td style="text-align:left; padding:10px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
             html_table += f'<td style="text-align:right; padding:10px 15px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.2rem; color:#0066cc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
             html_table += '</tr>'
         else:
             html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; font-size:0.9rem; white-space:normal; word-wrap:break-word; hyphens:auto; overflow:hidden; text-overflow:ellipsis;">{item[0]}</td>'
             html_table += f'<td style="text-align:right; padding:8px 15px; border-bottom:1px solid #eee; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{item[1]}</td>'
             html_table += '</tr>'
     
     html_table += '</table>'
     
-    # Выводим HTML-таблицу напрямую через markdown в контейнере с горизонтальной прокруткой
+    # Выводим HTML-таблицу напрямую через markdown
     st.markdown(f"""
-    <div style="width:100%; overflow-x:auto; margin:0 auto;">
-        <div style="width:98%; min-width:600px; margin:0 auto;">
+    <div style="width:100%; margin:0 auto;">
+        <div style="width:98%; margin:0 auto;">
             {html_table}
         </div>
     </div>
@@ -1980,7 +1980,6 @@ def main():
     /* Таблицы */
     table {
         width: 100%;
-        min-width: 600px; /* Минимальная ширина таблицы */
         border-collapse: collapse;
         margin-bottom: 1rem;
         table-layout: fixed; /* Фиксированная разметка таблицы */
@@ -1990,7 +1989,6 @@ def main():
         padding: 8px 12px;
         text-align: left;
         border-bottom: 1px solid #ddd;
-        white-space: nowrap; /* Запрещаем перенос строк в ячейках */
         overflow: hidden; /* Скрываем переполнение */
         text-overflow: ellipsis; /* Показываем многоточие при переполнении */
     }
@@ -1998,11 +1996,15 @@ def main():
     /* Задаем ширину колонок */
     th:first-child, td:first-child {
         width: 65%; /* Большая ширина для первой колонки с наименованием */
+        white-space: normal; /* Разрешаем перенос строк в первой колонке */
+        word-wrap: break-word; /* Разрешаем перенос слов */
+        hyphens: auto; /* Автоматическая расстановка переносов */
     }
     
     th:last-child, td:last-child {
         width: 35%; /* Меньшая ширина для колонки с числами */
         text-align: right; /* Выравнивание цифр по правому краю */
+        white-space: nowrap; /* Для чисел не переносим строки */
     }
     
     th {
@@ -2010,10 +2012,9 @@ def main():
         font-weight: 600;
     }
     
-    /* Контейнер для прокрутки таблицы по горизонтали на узких экранах */
+    /* Контейнер для таблицы - убираем прокрутку, заставляем помещаться */
     .table-container {
         width: 100%;
-        overflow-x: auto;
         margin-bottom: 1rem;
     }
     
@@ -2055,6 +2056,22 @@ def main():
         div[data-testid="stDataFrame"] {
             width: 100% !important;
             overflow-x: hidden !important;
+        }
+        
+        /* Адаптивные таблицы для мобильных устройств */
+        table {
+            width: 100% !important;
+            max-width: 100% !important;
+            font-size: 0.85rem !important; /* Уменьшаем размер шрифта в таблице */
+        }
+        
+        th, td {
+            padding: 6px 8px !important; /* Уменьшаем отступы в ячейках */
+        }
+        
+        td:first-child {
+            font-size: 0.85rem !important; /* Уменьшаем шрифт в первой колонке */
+            line-height: 1.2 !important; /* Компактнее строки */
         }
         
         /* Уменьшаем размер шрифта в элементах форм */
