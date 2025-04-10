@@ -104,7 +104,7 @@ GUTTER_INSERT_THRESHOLD = 6.5
 GUTTER_INSERT_PRICE_PER_METER = 80  # Цена усилителя лотка 80 евро за погонный метр
 
 # Наценки за доставку и установку (в процентах от базовой стоимости)
-DELIVERY_MARKUP_PERCENT = 10  # 10% наценка за доставку (добавляется автоматически)
+DELIVERY_MARKUP_PERCENT = 8  # 8% наценка за доставку (добавляется автоматически)
 INSTALLATION_MARKUP_PERCENT = 10  # 10% наценка за установку (опционально)
 
 # Курс евро в рублях
@@ -878,10 +878,10 @@ def perform_calculation(dimensions, options):
         # Базовая стоимость (без наценок)
         base_total_price = results["total_price"]
         
-        # Добавляем наценку за доставку (10% автоматически)
-        delivery_price = round(base_total_price * 0.1, 2)
+        # Добавляем наценку за доставку (добавляется автоматически)
+        delivery_price = round(base_total_price * DELIVERY_MARKUP_PERCENT / 100, 2)
         results["delivery"] = {
-            "percentage": 10,
+            "percentage": DELIVERY_MARKUP_PERCENT,
             "price": delivery_price
         }
         results["items"].append({
@@ -890,12 +890,12 @@ def perform_calculation(dimensions, options):
         })
         results["total_price"] += delivery_price
         
-        # Добавляем наценку за установку (10%, если выбрана опция)
+        # Добавляем наценку за установку (если выбрана опция)
         if installation:
-            installation_price = round(base_total_price * 0.1, 2)
+            installation_price = round(base_total_price * INSTALLATION_MARKUP_PERCENT / 100, 2)
             results["installation"] = {
                 "selected": True,
-                "percentage": 10,
+                "percentage": INSTALLATION_MARKUP_PERCENT,
                 "price": installation_price
             }
             results["items"].append({
