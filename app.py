@@ -1075,15 +1075,28 @@ def render_options_form():
     st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
     st.markdown("<p style='font-weight: 500; margin-bottom: 5px;'>Освещение</p>", unsafe_allow_html=True)
     
+    # Добавляем CSS-стили для уменьшения отступов у чекбоксов
+    st.markdown("""
+    <style>
+    /* Уменьшаем вертикальные отступы для чекбоксов в разделе освещения */
+    [data-testid="stVerticalBlock"] > div:has(> div > div > div > label:contains("светодиодная лента")) {
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+        margin-top: -10px !important;
+        margin-bottom: -10px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     lighting_options = []
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.checkbox("Белая светодиодная лента", value=False):
+        if st.checkbox("Белая светодиодная лента", value=False, key="white_led"):
             lighting_options.append("white_led")
     
     with col2:
-        if st.checkbox("RGB светодиодная лента", value=False):
+        if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led"):
             lighting_options.append("rgb_led")
     
     # Установка
