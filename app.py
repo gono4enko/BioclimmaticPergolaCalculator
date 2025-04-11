@@ -1119,6 +1119,9 @@ def render_results(results):
     Args:
         results (dict): Словарь с результатами расчета
     """
+    # Импортируем модуль отображения акций
+    from components.promotion_display import promotions_section
+    
     # Создаем якорь для скролла с ID 
     st.markdown('<div id="results" name="results"></div>', unsafe_allow_html=True)
     
@@ -1140,7 +1143,30 @@ def render_results(results):
     euro_rate = EURO_RATE
     total_price = results["total_price"]
     
-    # Убрано отображение отладочной информации
+    # Рассчитываем общую стоимость опций для определения скидок
+    options_price = total_price - base_price
+    
+    # Отображаем акции и считаем скидку перед отображением результатов
+    st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 10px; margin-bottom: 15px;'>Акции и скидки</h3>", unsafe_allow_html=True)
+    
+    # Вызываем компонент с акциями и скидками
+    total_discount = promotions_section(
+        pergola_type=pergola_type,
+        width=width,
+        length=length,
+        base_price=base_price * euro_rate,  # Конвертируем в рубли для акций
+        options_price=options_price * euro_rate,  # Конвертируем в рубли для акций
+        options=results.get("selected_options", {})
+    )
+    
+    # Применяем скидку к общей стоимости
+    rub_total = total_price * euro_rate
+    if total_discount > 0:
+        rub_total -= total_discount
+        # Сохраняем скидку в результаты для дальнейшего использования
+        results["discount"] = total_discount
+        results["total_price_after_discount"] = rub_total
     
     # Получаем информацию о ламелях
     lamella_type = results["options"]["lamella_type"]
@@ -1149,8 +1175,6 @@ def render_results(results):
     # Получаем количество ламелей
     lamellas_count = results["debug"].get("lamellas_count", 0)
     
-    # Заголовок результатов
-    rub_total = total_price * euro_rate
     # Форматируем цену в бухгалтерском стиле с разделителями тысяч
     formatted_price = "{:,.0f}".format(rub_total).replace(",", " ")
     st.markdown(f"""
