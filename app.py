@@ -999,7 +999,7 @@ def render_dimensions_form():
     Returns:
         dict: Словарь с введенными размерами
     """
-    st.markdown("<h2 class='section-header' style='text-align: center;'>Размеры перголы</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Размеры перголы</h2>", unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
@@ -1028,9 +1028,11 @@ def render_dimensions_form():
     # Определяем количество модулей автоматически по обоим параметрам - ширине и выносу
     modules = get_modules_by_dimensions(width, length)
     
-    # Показываем информацию о модулях (только для отображения)
+    # Показываем информацию о модулях (только для отображения) с уменьшенным отступом
     if modules > 1:
-        st.info(f"При размере {width:.2f}×{length:.2f} м будет автоматически использовано {modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}")
+        st.markdown(f"""<div style="padding: 5px 10px; background-color: #e6f3ff; border-radius: 3px; font-size: 0.85rem; margin: 2px 0;">
+        При размере {width:.2f}×{length:.2f} м будет автоматически использовано {modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}
+        </div>""", unsafe_allow_html=True)
     
     return {
         "width": width,
@@ -1045,7 +1047,7 @@ def render_options_form():
     Returns:
         dict: Словарь с выбранными опциями
     """
-    st.markdown("<h2 class='section-header' style='text-align: center;'>Параметры перголы</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Параметры перголы</h2>", unsafe_allow_html=True)
     
     # Тип перголы
     pergola_type = st.radio(
@@ -1071,9 +1073,8 @@ def render_options_form():
         horizontal=True
     )
     
-    # Освещение
-    st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
-    st.markdown("<p style='font-weight: 500; margin-bottom: 5px;'>Освещение</p>", unsafe_allow_html=True)
+    # Освещение - без лишних отступов
+    st.markdown("<p style='font-weight: 500; margin-bottom: 2px; margin-top: 2px;'>Освещение</p>", unsafe_allow_html=True)
     
     lighting_options = []
     col1, col2 = st.columns(2)
@@ -1086,9 +1087,8 @@ def render_options_form():
         if st.checkbox("RGB светодиодная лента", value=False):
             lighting_options.append("rgb_led")
     
-    # Установка
-    st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
-    st.markdown("<p style='font-weight: 500;'>Установка</p>", unsafe_allow_html=True)
+    # Установка - с минимальным отступом
+    st.markdown("<p style='font-weight: 500; margin-bottom: 2px; margin-top: 2px;'>Установка</p>", unsafe_allow_html=True)
     
     installation = st.checkbox("С установкой", value=True)
     
@@ -2041,12 +2041,23 @@ def main():
         
         /* Уменьшаем размер шрифта в элементах форм */
         .stSelectbox, .stRadio, .stCheckbox {
-            font-size: 0.85rem !important;
+            font-size: 0.8rem !important;
         }
         
         /* Уменьшаем размер текста везде */
         .stApp, .stApp p, .stApp div, .stMarkdown {
-            font-size: 0.9rem !important;
+            font-size: 0.85rem !important;
+        }
+        
+        /* Делаем строки радио-кнопок и чекбоксов более компактными */
+        div.stRadio > div[data-testid="stHorizontalBlock"] {
+            gap: 0.5rem !important;
+        }
+        
+        /* Уменьшаем вертикальный размер полей ввода */
+        input, select, button {
+            padding-top: 0.25rem !important;
+            padding-bottom: 0.25rem !important;
         }
     }
     </style>
