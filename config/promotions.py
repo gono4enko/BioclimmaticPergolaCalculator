@@ -182,10 +182,12 @@ def get_applicable_promotions(
         
         # Если все условия выполнены, добавляем акцию в список применимых
         if is_applicable:
-            applicable_promotions.append({
-                "id": promo_id,
-                **promotion
-            })
+            # Проверяем, что акции с таким ID еще нет в списке
+            if not any(p.get("id") == promo_id for p in applicable_promotions):
+                applicable_promotions.append({
+                    "id": promo_id,
+                    **promotion
+                })
     
     # Сортируем акции по приоритету (от высокого к низкому)
     return sorted(applicable_promotions, key=lambda p: p.get("priority", 0), reverse=True)

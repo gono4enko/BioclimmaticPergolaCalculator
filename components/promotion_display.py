@@ -446,11 +446,11 @@ def promotions_section(pergola_type: str, width: float, length: float,
     if "promo_code_applied" in st.session_state and st.session_state.promo_code_applied:
         promo_code = st.session_state.promo_code
     
-    # Скидка активируется автоматически
-    quick_decision_activated = True
-    # Устанавливаем флаг активации скидки, если он не был установлен ранее
+    # Акция быстрого решения отключена
+    quick_decision_activated = False
+    # Эта функциональность отключена
     if "urgent_discount_activated" not in st.session_state:
-        st.session_state.urgent_discount_activated = True
+        st.session_state.urgent_discount_activated = False
     
     # Получаем список применимых акций
     applicable_promotions = promotions.get_applicable_promotions(
