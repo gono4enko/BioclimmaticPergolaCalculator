@@ -1315,16 +1315,19 @@ def render_results(results):
         discount_amount = results["discount"]
         final_price = results.get("total_price_after_discount", rub_total - discount_amount)
     
-    # Итоговая строка БЕЗ учета скидки
-    items_data.append(["Итого", format_price(rub_total)])
-    
-    # Добавляем строку со скидкой после Итого (если скидка > 0)
+    # Условие: если есть скидка > 0
     if "discount" in results and results["discount"] > 0:
+        # Итоговая строка БЕЗ учета скидки (если есть скидка)
+        items_data.append(["Итого:", format_price(rub_total)])
+        
         # Добавляем строку со скидкой (скидка отображается зеленым цветом)
-        items_data.append(["Скидка по акции", f"-{format_price(discount_amount)}"])
+        items_data.append(["Скидка по акции:", f"-{format_price(discount_amount)}"])
         
         # Добавляем строку с итоговой ценой после скидки
-        items_data.append(["Итоговая стоимость со скидкой", format_price(final_price)])
+        items_data.append(["Итоговая стоимость со скидкой:", format_price(final_price)])
+    else:
+        # Если скидки нет, показываем только итоговую строку
+        items_data.append(["Итоговая стоимость:", format_price(rub_total)])
     
     # Создаем HTML-таблицу напрямую для обхода проблем с шириной
     html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px;">'
@@ -1337,34 +1340,55 @@ def render_results(results):
     
     # Добавляем строки с данными
     for i, item in enumerate(items_data):
-        # Особое форматирование для строки "Итого"
+        # Особое форматирование для итоговой строки
         if i == len(items_data) - 1:
-            html_table += '<tr style="background-color:#e0f0ff;">'
-            # Добавляем адаптивный CSS-класс для строки "Итого"
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
+            # Проверяем, является ли это итоговая строка со скидкой или без
+            is_final_with_discount = "Итоговая стоимость со скидкой:" in item[0]
+            is_final_without_discount = "Итоговая стоимость:" in item[0] and not "со скидкой" in item[0]
             
-            # Применяем специальный класс для значения "Итого" с переносом строки для общей ширины
-            html_table += f"""
-            <td style="text-align:right; padding:8px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; color:#0066cc; white-space:nowrap;" class="responsive-total">
-                <div style="display:inline-block; width:100%;">{item[1]}</div>
-            </td>
-            """
+            if is_final_with_discount:
+                # Стиль для итоговой строки СО скидкой (зеленый)
+                html_table += '<tr style="background-color:#e0ffea;">'
+                html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #1b5e20; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
+                
+                # Применяем специальный класс для значения "Итоговая стоимость со скидкой"
+                html_table += f"""
+                <td style="text-align:right; padding:8px 5px; border-bottom:2px solid #1b5e20; font-weight:bold; color:#1b5e20; white-space:nowrap;" class="responsive-total">
+                    <div style="display:inline-block; width:100%;">{item[1]}</div>
+                </td>
+                """
+            elif is_final_without_discount:
+                # Стиль для итоговой строки БЕЗ скидки (синий)
+                html_table += '<tr style="background-color:#e0f0ff;">'
+                html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
+                
+                # Применяем специальный класс для значения "Итоговая стоимость" (без скидки)
+                html_table += f"""
+                <td style="text-align:right; padding:8px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; color:#0066cc; white-space:nowrap;" class="responsive-total">
+                    <div style="display:inline-block; width:100%;">{item[1]}</div>
+                </td>
+                """
+            else:
+                # Стиль для строки "Итого" (нейтральный серый)
+                html_table += '<tr style="background-color:#f5f5f5;">'
+                html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #cccccc; word-wrap:break-word; font-weight:bold; font-size:1.1rem; white-space:nowrap;">{item[0]}</td>'
+                
+                # Применяем специальный класс для значения "Итого" 
+                html_table += f"""
+                <td style="text-align:right; padding:8px 5px; border-bottom:1px solid #cccccc; font-weight:bold; color:#333333; white-space:nowrap;" class="responsive-total">
+                    <div style="display:inline-block; width:100%;">{item[1]}</div>
+                </td>
+                """
             html_table += '</tr>'
         else:
-            # Проверяем, является ли строка скидкой (скидки начинаются с минуса) или итоговой суммой со скидкой
-            is_discount = item[0] == "Скидка по акции" or item[1].startswith("-")
-            is_final_discounted = "Итоговая стоимость со скидкой" in item[0]
+            # Проверяем, является ли строка скидкой (скидки начинаются с минуса)
+            is_discount = item[0] == "Скидка по акции:" or item[1].startswith("-")
             
-            # Применяем специальные стили для скидок и итоговой суммы со скидкой
+            # Применяем специальные стили для скидок
             if is_discount:
                 html_table += '<tr style="background-color:#eaffea;">' # Светло-зеленый фон для скидок
                 html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem; color:#2e7d32; font-weight:500;">{item[0]}</td>'
                 html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem; color:#2e7d32; font-weight:500;">{item[1]}</td>'
-            elif is_final_discounted:
-                # Стиль для отображения итоговой стоимости со скидкой
-                html_table += '<tr style="background-color:#e0ffea;">' # Зеленый фон для итоговой строки со скидкой
-                html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:1.1rem; color:#1b5e20; font-weight:700;">{item[0]}</td>'
-                html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:1.1rem; color:#1b5e20; font-weight:700;">{item[1]}</td>'
             else:
                 html_table += '<tr>'
                 html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
