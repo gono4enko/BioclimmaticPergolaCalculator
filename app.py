@@ -1887,6 +1887,229 @@ def scroll_to_results():
     </script>
     """, unsafe_allow_html=True)
 
+def add_smart_device_adaptation():
+    """
+    Добавляет умную адаптацию для различных размеров экрана.
+    Определяет тип устройства (смартфон, планшет, ноутбук) и применяет соответствующие стили.
+    """
+    st.markdown("""
+    <script>
+        // Функция для определения типа устройства и добавления классов
+        function detectDeviceAndAddClass() {
+            const width = window.innerWidth;
+            const html = document.documentElement;
+            
+            // Удаляем предыдущие классы устройств
+            html.classList.remove('device-smartphone', 'device-tablet', 'device-laptop', 'device-desktop');
+            
+            // Добавляем соответствующий класс на основе ширины экрана
+            if (width <= 480) {
+                html.classList.add('device-smartphone');
+                console.log('Device detected: Smartphone');
+            } else if (width <= 768) {
+                html.classList.add('device-tablet');
+                console.log('Device detected: Tablet');
+            } else if (width <= 1200) {
+                html.classList.add('device-laptop');
+                console.log('Device detected: Laptop');
+            } else {
+                html.classList.add('device-desktop');
+                console.log('Device detected: Desktop');
+            }
+            
+            // Также добавляем классы для более точной настройки
+            // Вертикальная ориентация (портретная)
+            if (window.innerHeight > window.innerWidth) {
+                html.classList.add('orientation-portrait');
+                html.classList.remove('orientation-landscape');
+            } else {
+                // Горизонтальная ориентация (альбомная)
+                html.classList.add('orientation-landscape');
+                html.classList.remove('orientation-portrait');
+            }
+        }
+        
+        // Выполняем функцию при загрузке документа
+        document.addEventListener('DOMContentLoaded', detectDeviceAndAddClass);
+        
+        // Также выполняем сразу для случая, когда DOM уже загружен
+        detectDeviceAndAddClass();
+        
+        // Обновляем классы при изменении размера окна
+        window.addEventListener('resize', detectDeviceAndAddClass);
+    </script>
+    
+    <style>
+    /* Умная адаптация для различных размеров экрана */
+    
+    /* Стили для всех устройств (базовые) */
+    :root {
+        --spacing-base: 0.5rem;
+        --font-size-base: 1rem;
+        --input-padding: 0.5rem;
+        --container-padding: 1rem;
+    }
+    
+    /* Базовые улучшения для всех устройств */
+    .stApp [data-testid="stVerticalBlock"] {
+        gap: var(--spacing-base) !important;
+    }
+    
+    .stCheckbox, .stRadio {
+        line-height: 1.2 !important;
+    }
+    
+    /* Уменьшаем отступы для всех полей ввода */
+    div.stNumberInput, div.stTextInput, div.stSelectbox,
+    div.stRadio, div.stCheckbox, div.stSlider, div.stButton {
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+    
+    /* Стили для смартфонов */
+    .device-smartphone .block-container {
+        padding-top: 0.3rem !important;
+        padding-bottom: 0.3rem !important;
+        padding-left: 0.3rem !important;
+        padding-right: 0.3rem !important;
+    }
+    
+    .device-smartphone h1 {
+        font-size: 1.2rem !important;
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+    
+    .device-smartphone h2, 
+    .device-smartphone h3 {
+        font-size: 1.0rem !important;
+        margin-top: 0.3rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+    
+    .device-smartphone p, 
+    .device-smartphone li,
+    .device-smartphone label {
+        font-size: 0.75rem !important;
+        line-height: 1.1 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Сверхкомпактная форма ввода для смартфонов */
+    .device-smartphone .stRadio > div {
+        padding: 0.1rem !important;
+    }
+    
+    .device-smartphone .stRadio label {
+        padding: 0.05rem !important;
+    }
+    
+    .device-smartphone .stCheckbox > div {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    .device-smartphone .stButton > button {
+        padding: 0.25rem 0.8rem !important;
+    }
+    
+    /* Супер-компактные отступы между элементами формы */
+    .device-smartphone [data-testid="stVerticalBlock"] {
+        gap: 0.2rem !important;
+    }
+    
+    /* Оптимизация для радио-кнопок */
+    .device-smartphone .stRadio [data-testid="stHorizontalBlock"] > div {
+        min-width: auto !important;
+        margin-right: 10px !important;
+    }
+    
+    /* Оптимизация для полей ввода */
+    .device-smartphone .stNumberInput input {
+        padding: 0.2rem !important;
+        height: 1.8rem !important;
+    }
+    
+    /* Более компактный размер для заголовка страницы */
+    .device-smartphone h1[style*="text-align: center"] {
+        font-size: 1.1rem !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Уменьшение размера подзаголовка */
+    .device-smartphone p[style*="text-align: center"] {
+        font-size: 0.7rem !important;
+        margin-top: 0 !important;
+        margin-bottom: 0.1rem !important;
+    }
+    
+    /* Сверхкомпактные отступы для всех вертикальных блоков */
+    .device-smartphone [data-testid="stVerticalBlock"] > div {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Специальная оптимизация для блока подсветки на смартфонах */
+    .device-smartphone .lighting-options [data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+    }
+    
+    .device-smartphone .lighting-options .stCheckbox {
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1 !important;
+    }
+    
+    /* Оптимизация для стиля кнопки на смартфонах */
+    .device-smartphone button[data-testid="baseButton-primary"] {
+        margin-top: 0.2rem !important;
+    }
+    
+    /* Стили для планшетов */
+    .device-tablet .block-container {
+        padding-top: 0.8rem !important;
+        padding-bottom: 0.8rem !important;
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
+    }
+    
+    .device-tablet h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    .device-tablet h2,
+    .device-tablet h3 {
+        font-size: 1.2rem !important;
+    }
+    
+    .device-tablet p,
+    .device-tablet li,
+    .device-tablet label {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Стили для ноутбуков */
+    .device-laptop .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    /* Стили для настольных компьютеров */
+    .device-desktop .block-container {
+        padding-top: 1.2rem !important;
+        padding-bottom: 1.2rem !important;
+        padding-left: 1.2rem !important;
+        padding-right: 1.2rem !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 def main():
     """Основная функция приложения"""
     # Настраиваем страницу
@@ -1895,6 +2118,9 @@ def main():
         page_icon="🏠",
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
+    
+    # Добавляем умную адаптацию для различных размеров экрана
+    add_smart_device_adaptation()
     
     # Добавляем код счетчика Яндекс.Метрики
     add_yandex_metrika()
