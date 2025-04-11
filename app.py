@@ -1324,7 +1324,7 @@ def render_results(results):
         items_data.append(["Скидка по акции:", f"-{format_price(discount_amount)}"])
         
         # Добавляем строку с итоговой ценой после скидки
-        items_data.append(["Итоговая стоимость со скидкой:", format_price(final_price)])
+        items_data.append(["Итого:", format_price(final_price)])
     else:
         # Если скидки нет, показываем только итоговую строку
         items_data.append(["Итоговая стоимость:", format_price(rub_total)])
@@ -1343,8 +1343,8 @@ def render_results(results):
         # Особое форматирование для итоговой строки
         if i == len(items_data) - 1:
             # Проверяем, является ли это итоговая строка со скидкой или без
-            is_final_with_discount = "Итоговая стоимость со скидкой:" in item[0]
-            is_final_without_discount = "Итоговая стоимость:" in item[0] and not "со скидкой" in item[0]
+            is_final_with_discount = item[0] == "Итого:" and i == len(items_data) - 1
+            is_final_without_discount = "Итоговая стоимость:" in item[0]
             
             if is_final_with_discount:
                 # Стиль для итоговой строки СО скидкой (зеленый)
