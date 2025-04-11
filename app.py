@@ -1931,7 +1931,7 @@ def main():
     /* Глобальный контейнер */
     .block-container {
         max-width: 800px;
-        padding-top: 1rem;
+        padding-top: 0rem !important;
         padding-bottom: 1rem;
         margin: 0 auto;
     }
@@ -2031,18 +2031,18 @@ def main():
     @media (max-width: 768px) {
         .block-container {
             max-width: 100%;
-            padding: 0.25rem !important;
+            padding: 0rem !important;
         }
         
-        /* Устанавливаем уменьшенные отступы на мобильных */
+        /* Устанавливаем минимальные отступы на мобильных */
         div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
         div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect,
         div.stMarkdown h2, div.stMarkdown p, div.stMarkdown hr {
             width: 95% !important;
-            padding-left: 10px !important;
-            padding-right: 10px !important;
-            margin-top: 1px !important;
-            margin-bottom: 1px !important;
+            padding-left: 8px !important;
+            padding-right: 8px !important;
+            margin-top: 0px !important;
+            margin-bottom: 0px !important;
         }
         
         .stButton {
@@ -2070,9 +2070,9 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Заголовок калькулятора - более компактный
-    st.markdown("<h1 style='text-align: center; margin-top: 10px; margin-bottom: 5px; font-size: 2.0rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 0.9rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
+    # Заголовок калькулятора - максимально компактный
+    st.markdown("<h1 style='text-align: center; margin-top: 5px; margin-bottom: 2px; font-size: 1.8rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-bottom: 5px; font-size: 0.8rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
     # Получаем размеры перголы
     dimensions = render_dimensions_form()
