@@ -517,11 +517,7 @@ def promotions_section(pergola_type: str, width: float, length: float,
     if urgent_promotion:
         display_urgent_discount_panel(urgent_promotion)
     
-    # Отображаем поле для ввода промокода
-    entered_promo_code = promo_code_input()
-    if entered_promo_code and entered_promo_code != promo_code:
-        # Если пользователь ввел новый промокод, обновляем список акций
-        st.rerun()
+    # Удалена форма ввода промокода
     
     # Рассчитываем скидку на основе применимых акций
     total_discount, applied_promotions = promotions.calculate_discount(
