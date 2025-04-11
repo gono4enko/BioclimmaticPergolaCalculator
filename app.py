@@ -10,7 +10,24 @@ import os
 import math
 import csv
 import time
+import json
+import logging
 from datetime import datetime
+
+# Импортируем модуль для работы с кэшем (если он существует)
+try:
+    import cache_manager
+    CACHE_ENABLED = True
+    # Настройка логирования
+    logging.basicConfig(
+        filename='logs/pergola_cache.log',
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger('pergola_calculator')
+    logger.info("Кэширование активировано")
+except ImportError:
+    CACHE_ENABLED = False
 
 def get_plural_form(number, one, two, five):
     """
