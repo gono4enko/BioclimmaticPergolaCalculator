@@ -1971,6 +1971,16 @@ def add_smart_device_adaptation():
         line-height: 1.2 !important;
     }
     
+    /* Стили для блоков с адаптивными классами */
+    .dimensions-form {
+        margin-bottom: 0.5rem;
+    }
+    
+    .lighting-options {
+        padding: 0;
+        margin-bottom: 0.3rem;
+    }
+    
     /* Уменьшаем отступы для всех полей ввода */
     div.stNumberInput, div.stTextInput, div.stSelectbox,
     div.stRadio, div.stCheckbox, div.stSlider, div.stButton {
@@ -1984,6 +1994,18 @@ def add_smart_device_adaptation():
         padding-bottom: 0.3rem !important;
         padding-left: 0.3rem !important;
         padding-right: 0.3rem !important;
+    }
+    
+    /* Специальные стили для блоков с формой размеров на смартфонах */
+    .device-smartphone .dimensions-form {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .device-smartphone .dimensions-form [data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     .device-smartphone h1 {
