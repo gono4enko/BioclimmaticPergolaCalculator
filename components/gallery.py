@@ -1,13 +1,19 @@
 """
 Модуль для отображения галереи реализованных проектов и социальных доказательств.
 Включает в себя галерею фотографий и счетчик установленных пергол.
+Поддерживает работу с форматами JPEG, PNG и HEIC.
 """
 
 import streamlit as st
 import os
+import sys
 from PIL import Image
 import random
 from datetime import datetime
+
+# Добавляем импорт нашего конвертера HEIC
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import heic_converter
 import animations
 
 # Путь к директории с изображениями
@@ -25,6 +31,7 @@ REALIZED_PROJECTS = [
     "Somfy Pergola.jpeg",  # Пергола с автоматикой Somfy
     "Модульная система пергол.jpeg",  # Модульная система
     "IMG_5914.jpg",  # Пергола у бассейна
+    "IMG_5974.heic",  # Пергола B500 с вращающимися ламелями
 ]
 
 # Словарь с описаниями проектов
@@ -39,6 +46,7 @@ PROJECT_DESCRIPTIONS = {
     "Somfy Pergola.jpeg": "Пергола с автоматикой Somfy и датчиками погоды, 2025",
     "Модульная система пергол.jpeg": "Модульная система пергол для большой площади отдыха, 2025",
     "IMG_5914.jpg": "Премиальная пергола B700 у бассейна с зоной отдыха, Крым, 2025",
+    "IMG_5974.heic": "Пергола B500 с вращающимися ламелями и дистанционным управлением, Москва, 2025",
 }
 
 def get_installation_count():
@@ -119,7 +127,8 @@ def display_installation_counter():
 
 def load_and_resize_image(image_path, max_width=800):
     """
-    Загружает и изменяет размер изображения, сохраняя пропорции
+    Загружает и изменяет размер изображения, сохраняя пропорции.
+    Поддерживает форматы JPEG, PNG и HEIC.
     
     Args:
         image_path (str): Путь к изображению
@@ -129,6 +138,23 @@ def load_and_resize_image(image_path, max_width=800):
         PIL.Image: Изображение с измененным размером
     """
     try:
+        # Проверяем, является ли файл HEIC
+        if image_path.lower().endswith(('.heic', '.heif')):
+            # Проверяем, установлен ли конвертер
+            if heic_converter.check_heif_convert():
+                # Конвертируем HEIC в JPEG
+                jpeg_path = heic_converter.heic_to_jpeg(image_path)
+                if jpeg_path:
+                    # Обновляем путь к изображению на новый JPEG
+                    image_path = jpeg_path
+                else:
+                    st.error(f"Не удалось конвертировать HEIC файл: {image_path}")
+                    return None
+            else:
+                st.error("Не найден инструмент для конвертации HEIC. Установите пакет libheif.")
+                return None
+
+        # Открываем изображение (теперь уже в поддерживаемом формате)
         img = Image.open(image_path)
         width, height = img.size
         
