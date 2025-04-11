@@ -36,10 +36,10 @@ ACTIVE_PROMOTIONS = {
             }
         ],
         "display_badge": True,
-        "badge_text": "Весенняя скидка 5%",
+        "badge_text": "Весенняя акция 5%",
         "badge_color": "#4CAF50",  # Зеленый цвет
         "apply_to_base_price": True,  # Скидка применяется к базовой стоимости перголы
-        "apply_to_options": False,  # Не применяется к опциям
+        "apply_to_options": True,  # Применяется к опциям тоже
         "priority": 10,  # Приоритет акции (чем выше, тем важнее)
         "show_countdown": True,  # Показывать обратный отсчет
     },
