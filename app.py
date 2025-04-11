@@ -1448,16 +1448,12 @@ def render_results(results):
     for i, item in enumerate(items_data):
         # Особое форматирование для строки "Итого"
         if i == len(items_data) - 1:
-            html_table += '<tr style="background-color:#e0f0ff;">'
-            # Добавляем адаптивный CSS-класс для строки "Итого"
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
+            html_table += '<tr>'
+            # Добавляем адаптивный CSS-класс для строки "Итого", где только слово "Итого" жирное
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;"><strong>Итого</strong></td>'
             
-            # Применяем специальный класс для значения "Итого" с переносом строки для общей ширины
-            html_table += f"""
-            <td style="text-align:right; padding:8px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; color:#0066cc; white-space:nowrap;" class="responsive-total">
-                <div style="display:inline-block; width:100%;">{item[1]}</div>
-            </td>
-            """
+            # Стандартный стиль для значения суммы, как в обычных строках
+            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem;">{item[1]}</td>'
             html_table += '</tr>'
         else:
             html_table += '<tr>'
