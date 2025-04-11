@@ -1366,10 +1366,14 @@ def render_results(results):
     # Отображаем разделитель между таблицей стоимости и описанием перголы
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
     
-    # Добавляем информацию о типе перголы и изображение только один раз в сессии
-    if not st.session_state.get('description_shown', False):
-        # Устанавливаем флаг, что описание уже было показано в этой сессии
-        st.session_state.description_shown = True
+    # Добавляем информацию о типе перголы и изображение
+    # Проверяем, было ли уже показано описание для этого типа перголы
+    current_pergola_shown = st.session_state.get('pergola_type_shown', None)
+    
+    # Показываем описание, если оно еще не было показано или если изменился тип перголы
+    if current_pergola_shown != pergola_type:
+        # Сохраняем текущий тип перголы
+        st.session_state.pergola_type_shown = pergola_type
         
         # Отображаем информацию о выбранном типе перголы с использованием модуля описаний
         if pergola_type in ["B500NEW", "B700NEW", "B600"]:
@@ -1393,6 +1397,7 @@ def render_results(results):
                         display_image_with_padding(img_path, caption=caption)
                         break  # Прерываем цикл, если изображение успешно загружено
                     except Exception as e:
+                        st.error(f"Ошибка при загрузке изображения: {str(e)}")
                         continue  # Пробуем следующее изображение
                 else:
                     st.warning(f"Не удалось загрузить изображение для {pergola_type}")
