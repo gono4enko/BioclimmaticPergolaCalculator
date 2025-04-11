@@ -1,0 +1,117 @@
+{
+  "timestamp": "2025-04-11T16:54:52.989456",
+  "dimensions": {
+    "width": 6.0,
+    "length": 4.0,
+    "modules": 2
+  },
+  "options": {
+    "pergola_type": "B500NEW",
+    "lamella_type": "B500-25NEW",
+    "lighting": [],
+    "installation": true
+  },
+  "results": {
+    "dimensions": {
+      "width": 6.0,
+      "length": 4.0,
+      "modules": 2
+    },
+    "options": {
+      "pergola_type": "B500NEW",
+      "lamella_type": "B500-25NEW",
+      "lighting": [],
+      "installation": true
+    },
+    "base_price": 15471.0,
+    "items": [
+      {
+        "name": "Привод Bansbach Т1, Germany (для 2 модуля)",
+        "price": 1400
+      },
+      {
+        "name": "Пульт ДУ Simu 5K (2 канала)",
+        "price": 40
+      },
+      {
+        "name": "Доставка",
+        "price": 1691.1
+      },
+      {
+        "name": "Установка",
+        "price": 1691.1
+      }
+    ],
+    "total_price": 20293.2,
+    "additional_columns": {
+      "required": false
+    },
+    "gutter_insert": {
+      "required": false
+    },
+    "drive": {
+      "name": "Bansbach Т1, Germany",
+      "count": 2,
+      "is_tandem": false,
+      "price": 700,
+      "total_price": 1400
+    },
+    "remote_control": {
+      "name": "Simu 5K",
+      "devices_count": 2,
+      "price": 40
+    },
+    "specification": [
+      {
+        "name": "Пергола серии В500 - с поворотными ламелями 6.00×4.00 м. Ламели 250 мм (стандарт), Количество ламелей - 16 шт.",
+        "count": "2 модуля",
+        "price": ""
+      },
+      {
+        "name": "Привод Bansbach Т1, Germany",
+        "count": "2 шт.",
+        "price": ""
+      },
+      {
+        "name": "Пульт ДУ Simu 5K",
+        "count": "1 шт.",
+        "price": ""
+      },
+      {
+        "name": "Доставка",
+        "count": "1",
+        "price": ""
+      },
+      {
+        "name": "Установка",
+        "count": "1",
+        "price": ""
+      }
+    ],
+    "delivery": {
+      "percentage": 10,
+      "price": 1691.1
+    },
+    "installation": {
+      "selected": true,
+      "percentage": 10,
+      "price": 1691.1
+    },
+    "debug": {
+      "length_corrected": 4.0,
+      "width": 6.0,
+      "modules": 2,
+      "need_columns": false,
+      "need_gutter": false,
+      "pergola_type": "B500NEW",
+      "lamella_type": "B500-25NEW",
+      "lamella_size": "250",
+      "lamellas_count": 16,
+      "installation": true
+    },
+    "execution_info": {
+      "calculation_time_ms": 2.69,
+      "cached": false
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "timestamp": "2025-04-11T16:55:24.650810",
+  "dimensions": {
+    "width": 3.0,
+    "length": 4.0,
+    "modules": 1
+  },
+  "options": {
+    "pergola_type": "B600",
+    "lamella_type": "B600-PIR",
+    "lighting": [],
+    "installation": true
+  },
+  "results": {
+    "dimensions": {
+      "width": 3.0,
+      "length": 4.0,
+      "modules": 1
+    },
+    "options": {
+      "pergola_type": "B600",
+      "lamella_type": "B600-PIR",
+      "lighting": [],
+      "installation": true
+    },
+    "base_price": 5837.0,
+    "items": [
+      {
+        "name": "Доставка",
+        "price": 583.7
+      },
+      {
+        "name": "Установка",
+        "price": 583.7
+      }
+    ],
+    "total_price": 7004.4,
+    "additional_columns": {
+      "required": false
+    },
+    "gutter_insert": {
+      "required": false
+    },
+    "specification": [
+      {
+        "name": "Пергола серии В600 PIR - со стационарными панелями 3.00×4.00 м. ",
+        "count": "1 модуль",
+        "price": ""
+      },
+      {
+        "name": "Доставка",
+        "count": "1",
+        "price": ""
+      },
+      {
+        "name": "Установка",
+        "count": "1",
+        "price": ""
+      }
+    ],
+    "delivery": {
+      "percentage": 10,
+      "price": 583.7
+    },
+    "installation": {
+      "selected": true,
+      "percentage": 10,
+      "price": 583.7
+    },
+    "debug": {
+      "length_corrected": 4.0,
+      "width": 3.0,
+      "modules": 1,
+      "need_columns": false,
+      "need_gutter": false,
+      "pergola_type": "B600",
+      "lamella_type": "B600-PIR",
+      "lamella_size": "PIR",
+      "lamellas_count": 0,
+      "installation": true
+    },
+    "execution_info": {
+      "calculation_time_ms": 1.17,
+      "cached": false
+    }
+  }
+}
