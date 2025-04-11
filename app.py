@@ -1072,7 +1072,7 @@ def render_options_form():
     )
     
     # Освещение
-    st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
     
     # Определяем варианты освещения
     lighting_options_list = ["none", "white_led", "rgb_led"]
@@ -1101,7 +1101,7 @@ def render_options_form():
         lighting_options = ["rgb_led"]
     
     # Установка
-    st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
     st.markdown("<p style='font-weight: 500;'>Установка</p>", unsafe_allow_html=True)
     
     installation = st.checkbox("С установкой", value=True)
@@ -2001,11 +2001,11 @@ def main():
     
     /* Заголовки секций */
     .section-header {
-        font-size: 2.0rem;
+        font-size: 1.8rem;
         font-weight: 600;
         color: #0066cc;
-        margin-bottom: 15px;
-        padding-bottom: 8px;
+        margin-bottom: 8px;
+        padding-bottom: 5px;
         border-bottom: 1px solid #e0e0e0;
     }
     
@@ -2070,9 +2070,9 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Заголовок калькулятора - крупный и четкий
-    st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 2.2rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
+    # Заголовок калькулятора - более компактный
+    st.markdown("<h1 style='text-align: center; margin-top: 10px; margin-bottom: 5px; font-size: 2.0rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 0.9rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
     # Получаем размеры перголы
     dimensions = render_dimensions_form()
