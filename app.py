@@ -1082,12 +1082,12 @@ def render_options_form():
     # Освещение - без лишних отступов, с CSS классом для адаптивности
     st.markdown("<p style='font-weight: 500; margin-bottom: 0px; margin-top: 0px;'>Освещение</p>", unsafe_allow_html=True)
     
-    # Альтернативный подход к чекбоксам освещения с минимальными отступами
+    # Вертикальное расположение чекбоксов освещения
     st.markdown("<div class='lighting-options'>", unsafe_allow_html=True)
     
     lighting_options = []
     
-    # Стиль для плотного расположения чекбоксов
+    # Стиль для плотного расположения чекбоксов вертикально
     st.markdown("""
     <style>
     /* Убираем стандартные отступы между чекбоксами */
@@ -1095,29 +1095,26 @@ def render_options_form():
         margin-bottom: 0 !important;
         padding-bottom: 0 !important;
     }
-    /* Экстремально уменьшаем верхний отступ для второго чекбокса */
+    /* Минимальный отступ между чекбоксами */
     .second-checkbox {
-        margin-top: -35px !important;
+        margin-top: -10px !important;
         padding-top: 0 !important;
-        position: relative;
-        z-index: 10;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Создаем две колонки с более настраиваемыми стилями
+    # Располагаем чекбоксы вертикально один под другим
     st.markdown("<div class='tight-checkbox-layout'>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
     
-    with col1:
-        if st.checkbox("Белая светодиодная лента", value=False, key="white_led_checkbox", label_visibility="visible"):
-            lighting_options.append("white_led")
+    # Первый чекбокс
+    if st.checkbox("Белая светодиодная лента", value=False, key="white_led_checkbox", label_visibility="visible"):
+        lighting_options.append("white_led")
     
-    with col2:
-        st.markdown("<div class='second-checkbox'>", unsafe_allow_html=True)
-        if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_checkbox", label_visibility="visible"):
-            lighting_options.append("rgb_led")
-        st.markdown("</div>", unsafe_allow_html=True)
+    # Второй чекбокс с уменьшенным отступом
+    st.markdown("<div class='second-checkbox'>", unsafe_allow_html=True)
+    if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_checkbox", label_visibility="visible"):
+        lighting_options.append("rgb_led")
+    st.markdown("</div>", unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
     
