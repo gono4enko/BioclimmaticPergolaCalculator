@@ -44,12 +44,12 @@ ACTIVE_PROMOTIONS = {
         "show_countdown": True,  # Показывать обратный отсчет
     },
     
-    # Акция "Большая скидка на большие размеры"
+    # Акция "Скидка на большие размеры"
     "large_size_discount": {
-        "name": "Большие размеры - большие скидки",
-        "description": "Скидка 7% на перголы размером от 7×7 метров",
+        "name": "Большие размеры - дополнительная скидка",
+        "description": "Дополнительная скидка 3% на перголы размером от 7×7 метров",
         "discount_type": DISCOUNT_TYPE_PERCENTAGE,
-        "discount_value": 7,  # 7%
+        "discount_value": 3,  # 3%
         "conditions": [
             {
                 "type": CONDITION_SIZE_RANGE,
@@ -58,11 +58,12 @@ ACTIVE_PROMOTIONS = {
             }
         ],
         "display_badge": True,
-        "badge_text": "Скидка 7% на большие перголы",
+        "badge_text": "Дополнительно +3% на большие перголы",
         "badge_color": "#2196F3",  # Синий цвет
         "apply_to_base_price": True,
-        "apply_to_options": False,
+        "apply_to_options": True,   # Применяется и к опциям тоже
         "priority": 20,
+        "stackable": True,          # Суммируется с другими акциями
     }
 }
 
@@ -211,8 +212,22 @@ def calculate_discount(
     total_discount = 0
     applied_promotions = []
     
-    # Для каждой акции рассчитываем скидку
+    # Разделяем акции на суммируемые и несуммируемые
+    stackable_promotions = []
+    non_stackable_promotions = []
+    
     for promotion in applicable_promotions:
+        if promotion.get("stackable", False):
+            stackable_promotions.append(promotion)
+        else:
+            non_stackable_promotions.append(promotion)
+    
+    # Обрабатываем несуммируемые акции
+    # Применяется только самая выгодная (с наивысшим приоритетом)
+    if non_stackable_promotions:
+        # Берем акцию с самым высоким приоритетом
+        promotion = non_stackable_promotions[0]
+        
         discount_type = promotion.get("discount_type")
         discount_value = promotion.get("discount_value", 0)
         apply_to_base = promotion.get("apply_to_base_price", True)
@@ -248,6 +263,45 @@ def calculate_discount(
             # В данной версии акции бесплатных опций отключены
             discount_amount = 0
             discount_details["discount_display"] = "Бесплатно"
+        
+        # Добавляем детали скидки
+        discount_details["discount_amount"] = discount_amount
+        applied_promotions.append(discount_details)
+        
+        # Суммируем общую скидку
+        total_discount += discount_amount
+    
+    # Обрабатываем суммируемые акции (они добавляются к основной скидке)
+    for promotion in stackable_promotions:
+        discount_type = promotion.get("discount_type")
+        discount_value = promotion.get("discount_value", 0)
+        apply_to_base = promotion.get("apply_to_base_price", True)
+        apply_to_options = promotion.get("apply_to_options", False)
+        
+        discount_amount = 0
+        discount_details = {
+            "id": promotion.get("id"),
+            "name": promotion.get("name"),
+            "description": promotion.get("description"),
+            "badge_text": promotion.get("badge_text"),
+            "badge_color": promotion.get("badge_color")
+        }
+        
+        # Вычисляем сумму для скидки
+        applicable_amount = 0
+        if apply_to_base:
+            applicable_amount += base_price
+        if apply_to_options:
+            applicable_amount += options_price
+        
+        # Рассчитываем скидку в зависимости от типа
+        if discount_type == DISCOUNT_TYPE_PERCENTAGE:
+            discount_amount = applicable_amount * (discount_value / 100)
+            discount_details["discount_display"] = f"+{discount_value}%"
+        
+        elif discount_type == DISCOUNT_TYPE_FIXED:
+            discount_amount = min(discount_value, applicable_amount)  # Не больше суммы заказа
+            discount_details["discount_display"] = f"+{discount_value:,.0f} ₽"
         
         # Добавляем детали скидки
         discount_details["discount_amount"] = discount_amount
