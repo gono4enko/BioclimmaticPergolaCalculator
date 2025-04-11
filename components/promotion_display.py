@@ -47,8 +47,7 @@ def display_promo_badges(applicable_promotions: List[Dict]) -> None:
             width: 85%;
             margin-left: auto;
             margin-right: auto;
-            padding-left: 25px;
-            padding-right: 25px;
+            justify-content: center;
         }
         .promo-badge {
             display: inline-block;
@@ -165,16 +164,16 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
             width: 85%;
             margin-left: auto;
             margin-right: auto;
-            padding-left: 25px;
-            padding-right: 25px;
         }}
         .urgent-panel h4 {{
             margin: 0 0 5px 0;
             font-size: 1.1rem;
+            text-align: center;
         }}
         .urgent-panel p {{
             margin: 0 0 10px 0;
             font-size: 0.9rem;
+            text-align: center;
         }}
         .countdown {{
             font-weight: bold;
@@ -204,7 +203,7 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
         <div class="urgent-panel pulse-animation">
             <h4>{urgent_promotion.get('name', 'Весенняя акция 2025')}</h4>
             <p>{urgent_promotion.get('description', 'Скидка действует до 1 июня!')}</p>
-            <div class="countdown-container">
+            <div class="countdown-container" style="text-align: center;">
                 <span>До окончания акции: </span>
                 <span class="countdown" id="countdown">{display_text}</span>
             </div>
@@ -385,8 +384,7 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
         padding: 10px 15px;
         font-weight: bold;
         border-bottom: 1px solid #E0E0E0;
-        padding-left: 25px;
-        padding-right: 25px;
+        text-align: center;
     }
     .discount-item {
         padding: 10px 15px;
