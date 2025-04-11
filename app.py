@@ -602,8 +602,38 @@ def get_remote_control(devices_count):
         return "Simu 15K", REMOTE_CONTROL_TYPES[15]["price"]
 
 def perform_calculation(dimensions, options):
-    """Выполнить расчет стоимости перголы"""
+    """
+    Выполнить расчет стоимости перголы.
+    Поддерживает кэширование результатов для повышения производительности.
+    
+    Args:
+        dimensions (dict): Размеры перголы (ширина, вынос)
+        options (dict): Опции и конфигурация перголы
+        
+    Returns:
+        dict: Рассчитанная стоимость и спецификация перголы
+    """
+    # Проверяем, можно ли использовать кэш
+    if CACHE_ENABLED:
+        # Создаем копии входных данных для нормализации перед получением из кэша
+        dim_copy = {k: float(v) if isinstance(v, (int, float, str)) and k in ['width', 'length'] else v 
+                   for k, v in dimensions.items()}
+        opt_copy = {k: v for k, v in options.items()}
+        
+        # Пытаемся получить результат из кэша
+        cached_result = cache_manager.get_from_cache(dim_copy, opt_copy)
+        if cached_result:
+            if 'debug' in st.session_state and st.session_state.debug:
+                st.success("Результат получен из кэша!")
+            
+            # Логирование успешного использования кэша
+            logger.info(f"Кэш-попадание: {dim_copy}, {opt_copy}")
+            return cached_result
+    
     try:
+        # Сохраняем время начала расчета
+        start_time = time.time()
+        
         # Извлекаем данные из ввода пользователя
         width_m = float(dimensions.get("width", 0))
         length_m = float(dimensions.get("length", 0))
