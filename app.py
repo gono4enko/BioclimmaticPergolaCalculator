@@ -2508,9 +2508,18 @@ def main():
             # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
             st.session_state.scroll_to_results = False
     
+    # Добавляем галерею проектов и счетчик установленных пергол
+    # Разделяем содержимое после калькулятора
+    st.markdown("<hr style='margin-top: 1rem; margin-bottom: 0.5rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+    
+    # Отображаем галерею только если пользователь уже выполнил расчет
+    if 'results' in st.session_state:
+        # Добавляем галерею проектов и счетчик установленных пергол
+        display_gallery_section()
+    
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.3.5</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.3.8</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Создаем директории, если они не существуют
