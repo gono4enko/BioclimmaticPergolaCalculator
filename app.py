@@ -1074,23 +1074,23 @@ def render_options_form():
     )
     
     # Освещение - без лишних отступов
-    st.markdown("<p style='font-weight: 500; margin-bottom: 2px; margin-top: 2px;'>Освещение</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-weight: 500; margin-bottom: 0px; margin-top: 0px;'>Освещение</p>", unsafe_allow_html=True)
     
     lighting_options = []
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.checkbox("Белая светодиодная лента", value=False):
+        if st.checkbox("Белая светодиодная лента", value=False, key="white_led_checkbox", label_visibility="visible"):
             lighting_options.append("white_led")
     
     with col2:
-        if st.checkbox("RGB светодиодная лента", value=False):
+        if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_checkbox", label_visibility="visible"):
             lighting_options.append("rgb_led")
     
     # Установка - с минимальным отступом
-    st.markdown("<p style='font-weight: 500; margin-bottom: 2px; margin-top: 2px;'>Установка</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-weight: 500; margin-bottom: 0px; margin-top: 0px;'>Установка</p>", unsafe_allow_html=True)
     
-    installation = st.checkbox("С установкой", value=True)
+    installation = st.checkbox("С установкой", value=True, key="installation_checkbox", label_visibility="visible")
     
     # Возвращаем выбранные опции (не включаем модули, т.к. они рассчитываются автоматически)
     return {
@@ -2052,6 +2052,20 @@ def main():
         /* Делаем строки радио-кнопок и чекбоксов более компактными */
         div.stRadio > div[data-testid="stHorizontalBlock"] {
             gap: 0.5rem !important;
+        }
+        
+        /* Уменьшаем отступы между чекбоксами */
+        .stCheckbox {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        
+        /* Уменьшаем отступы внутри колонок */
+        div.column {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
         }
         
         /* Уменьшаем вертикальный размер полей ввода */
