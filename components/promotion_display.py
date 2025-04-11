@@ -95,7 +95,15 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
     if "urgent_discount_activated" not in st.session_state:
         st.session_state.urgent_discount_activated = False
     
-    if "urgent_discount_time" not in st.session_state:
+    # Находим дату окончания акции из условий
+    end_date = None
+    for condition in urgent_promotion.get("conditions", []):
+        if condition.get("type") == promotions.CONDITION_DATE_RANGE and "end_date" in condition:
+            end_date = condition["end_date"]
+            break
+    
+    # Если нет даты окончания, используем стандартный таймер
+    if "urgent_discount_time" not in st.session_state and not end_date:
         # Если таймер еще не запущен, устанавливаем его
         hours_limit = 24
         for condition in urgent_promotion.get("conditions", []):
@@ -109,12 +117,40 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
     if st.session_state.urgent_discount_activated:
         return True
     
+    # Получаем форматированное время до окончания акции
+    if end_date:
+        countdown_str = promotions.format_countdown_time(end_date)
+        # Разбиваем строку на компоненты (ДД:ЧЧ:ММ:СС)
+        parts = countdown_str.split(":")
+        days = int(parts[0])
+        hours = int(parts[1])
+        minutes = int(parts[2])
+        seconds = int(parts[3])
+        
+        # Вычисляем общее время в миллисекундах для JavaScript
+        total_ms = ((days * 24 + hours) * 60 + minutes) * 60 + seconds
+        total_ms = total_ms * 1000
+        
+        # Форматируем для отображения
+        if days > 0:
+            display_text = f"{days} дн. {hours:02d}:{minutes:02d}:{seconds:02d}"
+        else:
+            display_text = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    else:
+        # Используем стандартный таймер
+        remaining_time = st.session_state.urgent_discount_time - time.time()
+        hours = int(remaining_time // 3600)
+        minutes = int((remaining_time % 3600) // 60)
+        seconds = int(remaining_time % 60)
+        total_ms = int(remaining_time * 1000)
+        display_text = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    
     # Отображаем панель со срочной скидкой
     with st.container():
         st.markdown(f"""
         <style>
         .urgent-panel {{
-            background-color: {urgent_promotion.get('badge_color', '#F44336')};
+            background-color: {urgent_promotion.get('badge_color', '#4CAF50')};
             color: white;
             padding: 10px 15px;
             border-radius: 8px;
@@ -156,16 +192,16 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
         }}
         </style>
         <div class="urgent-panel pulse-animation">
-            <h4>{urgent_promotion.get('name', 'Срочная скидка')}</h4>
-            <p>{urgent_promotion.get('description', 'Активируйте скидку сейчас!')}</p>
+            <h4>{urgent_promotion.get('name', 'Весенняя акция 2025')}</h4>
+            <p>{urgent_promotion.get('description', 'Скидка действует до 1 июня!')}</p>
             <div class="countdown-container">
-                <span>До окончания: </span>
-                <span class="countdown" id="countdown">Загрузка...</span>
+                <span>До окончания акции: </span>
+                <span class="countdown" id="countdown">{display_text}</span>
             </div>
             <div style="text-align: center; margin-top: 10px;">
                 <button id="activate-discount" 
                         style="background-color: white; 
-                               color: {urgent_promotion.get('badge_color', '#F44336')}; 
+                               color: {urgent_promotion.get('badge_color', '#4CAF50')}; 
                                border: none; 
                                padding: 8px 15px; 
                                border-radius: 4px; 
@@ -177,17 +213,11 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
         </div>
         """, unsafe_allow_html=True)
         
-        # Обновляем таймер с помощью JavaScript
-        remaining_time = st.session_state.urgent_discount_time - time.time()
-        hours = int(remaining_time // 3600)
-        minutes = int((remaining_time % 3600) // 60)
-        seconds = int(remaining_time % 60)
-        
         # Обратный отсчет с помощью JavaScript
         st.markdown(f"""
         <script>
             // Устанавливаем начальное время
-            var countDownDate = new Date().getTime() + {int(remaining_time * 1000)};
+            var countDownDate = new Date().getTime() + {total_ms};
             
             // Функция для форматирования чисел с ведущим нулем
             function formatNumber(num) {{
@@ -199,14 +229,21 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
                 var now = new Date().getTime();
                 var distance = countDownDate - now;
                 
-                // Расчеты для часов, минут и секунд
-                var hours = Math.floor(distance / (1000 * 60 * 60));
+                // Расчеты для дней, часов, минут и секунд
+                var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                 var seconds = Math.floor((distance % (1000 * 60)) / 1000);
                 
                 // Отображаем результат
-                document.getElementById("countdown").innerHTML = 
-                    formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
+                var displayText = "";
+                if (days > 0) {{
+                    displayText = days + " дн. " + formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
+                }} else {{
+                    displayText = formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
+                }}
+                
+                document.getElementById("countdown").innerHTML = displayText;
                 
                 // Если время истекло
                 if (distance < 0) {{
@@ -455,18 +492,28 @@ def promotions_section(pergola_type: str, width: float, length: float,
     # Отображаем значки акций
     display_promo_badges(applicable_promotions)
     
-    # Ищем срочную скидку
+    # Ищем акцию для отображения панели с обратным отсчетом
     urgent_promotion = None
-    for promo in applicable_promotions:
-        if any(c.get("type") == promotions.CONDITION_QUICK_DECISION 
-               for c in promo.get("conditions", [])):
-            # Если есть условие срочной скидки
-            if promo.get("activation_required", False) and not quick_decision_activated:
-                # Если требуется активация и скидка еще не активирована
-                urgent_promotion = promo
-                break
     
-    # Показываем панель срочной скидки, если она есть
+    # Сначала ищем акции с обратным отсчетом до даты (весенняя акция)
+    for promo in applicable_promotions:
+        if promo.get("show_countdown", False):
+            # Если эта акция должна показывать обратный отсчет
+            urgent_promotion = promo
+            break
+    
+    # Если не нашли акцию с обратным отсчетом до даты, ищем обычную срочную акцию
+    if not urgent_promotion:
+        for promo in applicable_promotions:
+            if any(c.get("type") == promotions.CONDITION_QUICK_DECISION 
+                for c in promo.get("conditions", [])):
+                # Если есть условие срочной скидки
+                if promo.get("activation_required", False) and not quick_decision_activated:
+                    # Если требуется активация и скидка еще не активирована
+                    urgent_promotion = promo
+                    break
+    
+    # Показываем панель с обратным отсчетом (для любого типа акции)
     if urgent_promotion:
         display_urgent_discount_panel(urgent_promotion)
     
