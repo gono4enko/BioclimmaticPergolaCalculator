@@ -160,13 +160,15 @@ def animate_text(text, tag='p', css_class='fadeIn', delay=0,
         text (str): Текст для отображения
         tag (str): HTML-тег для обертки текста
         css_class (str): CSS класс для анимации
-        delay (float): Задержка анимации в секундах
+        delay (int): Задержка анимации в секундах
         additional_style (str): Дополнительные стили
         
     Returns:
         None: Отображает текст через st.markdown
     """
-    html = f'<{tag} class="{css_class}" style="animation-delay: {delay}s; {additional_style}">{text}</{tag}>'
+    # Конвертируем float в строку для корректного отображения в CSS
+    delay_str = str(delay)
+    html = f'<{tag} class="{css_class}" style="animation-delay: {delay_str}s; {additional_style}">{text}</{tag}>'
     st.markdown(html, unsafe_allow_html=True)
 
 def add_section_animation_js():

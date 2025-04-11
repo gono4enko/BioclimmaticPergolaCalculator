@@ -1117,12 +1117,21 @@ def get_modules_by_width(width):
 
 def render_dimensions_form():
     """
-    Отображает форму для ввода размеров перголы
+    Отображает форму для ввода размеров перголы с плавными анимациями
     
     Returns:
         dict: Словарь с введенными размерами
     """
-    st.markdown("<h2 class='section-header' style='text-align: center;'>Размеры перголы</h2>", unsafe_allow_html=True)
+    # Анимируем заголовок секции
+    animate_text(
+        "<h2 class='section-header' style='text-align: center;'>Размеры перголы</h2>",
+        tag="div", 
+        css_class="fadeIn",
+        delay=0
+    )
+    
+    # Добавляем небольшой разделитель с анимацией
+    add_section_separator(height=10, animation=True)
     
     col1, col2 = st.columns(2)
     
@@ -1163,12 +1172,21 @@ def render_dimensions_form():
 
 def render_options_form():
     """
-    Отображает форму для выбора опций перголы в плиточном дизайне
+    Отображает форму для выбора опций перголы в плиточном дизайне с анимациями
     
     Returns:
         dict: Словарь с выбранными опциями
     """
-    st.markdown("<h2 class='section-header' style='text-align: center;'>Параметры перголы</h2>", unsafe_allow_html=True)
+    # Анимируем заголовок секции с задержкой
+    animate_text(
+        "<h2 class='section-header' style='text-align: center;'>Параметры перголы</h2>",
+        tag="div", 
+        css_class="fadeIn",
+        delay=0
+    )
+    
+    # Добавляем небольшой разделитель с анимацией
+    add_section_separator(height=10, animation=True)
     
     # Тип перголы
     pergola_type = st.radio(
@@ -1239,7 +1257,7 @@ def render_options_form():
 
 def render_results(results):
     """
-    Отображает результаты расчета стоимости перголы
+    Отображает результаты расчета стоимости перголы с анимированным появлением
     
     Args:
         results (dict): Словарь с результатами расчета
@@ -1249,6 +1267,12 @@ def render_results(results):
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
+    
+    # Добавляем анимацию для секции результатов
+    add_section_animation_js()
+    
+    # Небольшая пауза перед началом анимаций результатов
+    st.markdown('<div style="height: 15px;"></div>', unsafe_allow_html=True)
     
     if "error" in results:
         st.error(f"Ошибка при расчете: {results['error']}")
@@ -1279,7 +1303,7 @@ def render_results(results):
     # Форматируем цену в бухгалтерском стиле с разделителями тысяч
     formatted_price = "{:,.0f}".format(rub_total).replace(",", " ")
     st.markdown(f"""
-    <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
+    <div class="fadeIn" style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; animation-delay: 0.1s;'>
         <h2 style='margin-top: 0; color: #0066cc; font-size: 3.2rem; font-weight: 700; text-align: center; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 2px solid #e5eeff;'>Результаты расчета</h2>
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Пергола:</strong> {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м
@@ -1330,9 +1354,9 @@ def render_results(results):
         
         html_table += '</table>'
         
-        # Выводим HTML-таблицу напрямую через markdown
+        # Выводим HTML-таблицу напрямую через markdown с анимацией
         st.markdown(f"""
-        <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
+        <div class="fadeIn" style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px; animation-delay: 0.2s;">
             {html_table}
         </div>
         """, unsafe_allow_html=True)
@@ -1493,9 +1517,9 @@ def render_results(results):
     </style>
     """, unsafe_allow_html=True)
     
-    # Выводим HTML-таблицу напрямую через markdown
+    # Выводим HTML-таблицу напрямую через markdown с анимацией
     st.markdown(f"""
-    <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
+    <div class="fadeIn" style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px; animation-delay: 0.3s;">
         {html_table}
     </div>
     """, unsafe_allow_html=True)
