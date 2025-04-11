@@ -1148,7 +1148,11 @@ def render_results(results):
     
     # Отображаем акции и считаем скидку перед отображением результатов
     st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
-    st.markdown("<h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 10px; margin-bottom: 15px;'>Акции и скидки</h3>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style='width:85%; margin:0 auto; padding-left:25px; padding-right:25px;'>
+        <h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 10px; margin-bottom: 15px;'>Акции и скидки</h3>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Вызываем компонент с акциями и скидками
     total_discount = promotions_section(
