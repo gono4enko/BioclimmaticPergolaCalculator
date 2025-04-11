@@ -1093,8 +1093,10 @@ def render_options_form():
             lighting_options.append("white_led")
     
     with col2:
+        st.markdown("<div style='margin-top: -10px;'>", unsafe_allow_html=True)
         if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_checkbox", label_visibility="visible"):
             lighting_options.append("rgb_led")
+        st.markdown("</div>", unsafe_allow_html=True)
     
     # Закрытие блока с классом lighting-options
     st.markdown("</div>", unsafe_allow_html=True)
