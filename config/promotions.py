@@ -64,25 +64,7 @@ ACTIVE_PROMOTIONS = {
         "priority": 20,
     },
     
-    # Акция "Бесплатная доставка"
-    "free_delivery": {
-        "name": "Бесплатная доставка",
-        "description": "Бесплатная доставка при заказе перголы стоимостью от 500 000 ₽",
-        "discount_type": DISCOUNT_TYPE_FREE_ITEM,
-        "discount_value": "delivery",  # Код опции, которая становится бесплатной
-        "conditions": [
-            {
-                "type": CONDITION_MINIMUM_PRICE,
-                "min_price": 500000,  # Минимальная стоимость заказа
-            }
-        ],
-        "display_badge": True,
-        "badge_text": "Бесплатная доставка",
-        "badge_color": "#9C27B0",  # Фиолетовый цвет
-        "apply_to_base_price": False,
-        "apply_to_options": True,
-        "priority": 5,
-    },
+
     
     # Акция быстрого решения - срочная скидка
     "urgent_discount": {
@@ -305,11 +287,8 @@ def calculate_discount(
         
         # Для бесплатных опций - логика обрабатывается отдельно
         elif discount_type == DISCOUNT_TYPE_FREE_ITEM:
-            # Здесь особая логика в зависимости от типа бесплатной опции
-            if discount_value == "delivery":
-                # Ищем стоимость доставки среди опций
-                if options_price > 0 and 'delivery' in options:
-                    discount_amount = options.get('delivery', {}).get('price', 0)
+            # В данной версии акции бесплатных опций отключены
+            discount_amount = 0
             discount_details["discount_display"] = "Бесплатно"
         
         # Добавляем детали скидки
