@@ -1073,31 +1073,32 @@ def render_options_form():
     
     # Освещение
     st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
-    st.markdown("<p style='font-weight: 500; margin-bottom: 5px;'>Освещение</p>", unsafe_allow_html=True)
     
-    # Добавляем CSS-стили для уменьшения отступов у чекбоксов
-    st.markdown("""
-    <style>
-    /* Уменьшаем вертикальные отступы для чекбоксов в разделе освещения */
-    [data-testid="stVerticalBlock"] > div:has(> div > div > div > label:contains("светодиодная лента")) {
-        padding-top: 0px !important;
-        padding-bottom: 0px !important;
-        margin-top: -10px !important;
-        margin-bottom: -10px !important;
+    # Определяем варианты освещения
+    lighting_options_list = ["none", "white_led", "rgb_led"]
+    
+    # Словарь с понятными названиями для отображения
+    lighting_labels = {
+        "none": "Без освещения",
+        "white_led": "Белая светодиодная лента",
+        "rgb_led": "RGB светодиодная лента"
     }
-    </style>
-    """, unsafe_allow_html=True)
     
+    # Используем radio вместо checkboxes для горизонтального расположения
+    lighting_choice = st.radio(
+        "Освещение",
+        options=lighting_options_list,
+        format_func=lambda x: lighting_labels.get(x, x),
+        horizontal=True,
+        index=0,  # По умолчанию "Без освещения"
+    )
+    
+    # Преобразуем выбор в список опций (для сохранения совместимости с существующим кодом)
     lighting_options = []
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.checkbox("Белая светодиодная лента", value=False, key="white_led"):
-            lighting_options.append("white_led")
-    
-    with col2:
-        if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led"):
-            lighting_options.append("rgb_led")
+    if lighting_choice == "white_led":
+        lighting_options = ["white_led"]
+    elif lighting_choice == "rgb_led":
+        lighting_options = ["rgb_led"]
     
     # Установка
     st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
