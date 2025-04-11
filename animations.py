@@ -138,7 +138,7 @@ def animated_container(content_function, animation_type='fadeIn', delay=0):
     content_function()
     st.markdown('</div>', unsafe_allow_html=True)
 
-def add_section_separator(height=30, animation=True):
+def add_section_separator(height=10, animation=True):
     """
     Добавляет разделитель между секциями с опциональной анимацией
     
