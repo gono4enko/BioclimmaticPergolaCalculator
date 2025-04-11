@@ -16,6 +16,11 @@ from datetime import datetime
 
 # Импортируем модуль для работы с кэшем (если он существует)
 try:
+    # Создаем директорию для логов, если она не существует
+    log_dir = 'logs'
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
     import cache_manager
     CACHE_ENABLED = True
     # Настройка логирования
@@ -26,8 +31,17 @@ try:
     )
     logger = logging.getLogger('pergola_calculator')
     logger.info("Кэширование активировано")
+    
+    # Проверяем на наличие устаревших кэшей при запуске
+    try:
+        cache_manager.clean_expired_cache()
+    except Exception as e:
+        logger.warning(f"Не удалось очистить устаревший кэш: {str(e)}")
 except ImportError:
     CACHE_ENABLED = False
+    # Определяем заглушку для logger, чтобы избежать ошибок
+    logger = logging.getLogger('pergola_calculator_no_cache')
+    logger.setLevel(logging.WARNING)
 
 def get_plural_form(number, one, two, five):
     """
@@ -989,10 +1003,59 @@ def perform_calculation(dimensions, options):
             "installation": installation
         }
         
+        # Расчет времени выполнения
+        if 'start_time' in locals():
+            execution_time = time.time() - start_time
+            results["execution_info"] = {
+                "calculation_time_ms": round(execution_time * 1000, 2),
+                "cached": False
+            }
+            
+            if CACHE_ENABLED:
+                logger.info(f"Расчет занял {execution_time:.4f} секунд. Сохраняем в кэш.")
+        
+        # Сохраняем результат в кэш, если кэширование включено
+        if CACHE_ENABLED:
+            try:
+                # Создаем копии входных данных для нормализации перед сохранением в кэш
+                dim_copy = {k: float(v) if isinstance(v, (int, float, str)) and k in ['width', 'length'] else v 
+                           for k, v in dimensions.items()}
+                opt_copy = {k: v for k, v in options.items()}
+                
+                # Сохраняем в кэш только если размеры стандартные или расчет занял много времени
+                should_cache = False
+                
+                # Проверяем, являются ли размеры стандартными
+                pergola_type = options.get("pergola_type", "")
+                if pergola_type in cache_manager.STANDARD_SIZES:
+                    width_m = float(dimensions.get("width", 0))
+                    length_m = float(dimensions.get("length", 0))
+                    
+                    # Проверяем наличие в списке стандартных размеров
+                    if any(abs(width_m - w) < 0.01 and abs(length_m - l) < 0.01 
+                           for w, l in cache_manager.STANDARD_SIZES[pergola_type]):
+                        should_cache = True
+                        logger.info(f"Кэшируем стандартный размер: {width_m}x{length_m}м для {pergola_type}")
+                
+                # Кэшируем также если расчет был долгим (более 0.5 секунды)
+                if 'execution_time' in locals() and execution_time > 0.5:
+                    should_cache = True
+                    logger.info(f"Кэшируем длительный расчет ({execution_time:.4f} сек)")
+                
+                if should_cache:
+                    cache_key = cache_manager.save_to_cache(dim_copy, opt_copy, results)
+                    logger.info(f"Результат сохранен в кэш с ключом: {cache_key}")
+            except Exception as cache_error:
+                # Ошибки кэширования не должны влиять на работу основного приложения
+                logger.error(f"Ошибка при кэшировании результатов: {str(cache_error)}")
+        
         return results
     
     except Exception as e:
         error_msg = f"Ошибка при расчете: {str(e)}"
+        logger.error(f"Ошибка при расчете перголы: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         print(error_msg)
         return {"error": error_msg}
 
