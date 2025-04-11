@@ -1306,8 +1306,16 @@ def render_results(results):
             rub_price = item['price'] * euro_rate
             items_data.append([item["name"], format_price(rub_price)])
     
-    # Итоговая строка - просто добавляем строку "Итого" (жирный шрифт применяется через CSS)
+    # Проверяем, есть ли скидка
     rub_total = total_price * euro_rate
+    if "discount" in results and results["discount"] > 0:
+        # Добавляем строку со скидкой (скидка отображается зеленым цветом)
+        discount_amount = results["discount"]
+        items_data.append(["Скидка по акции", f"-{format_price(discount_amount)}"])
+        # Обновляем итоговую сумму с учетом скидки
+        rub_total = results.get("total_price_after_discount", rub_total - discount_amount)
+    
+    # Итоговая строка
     items_data.append(["Итого", format_price(rub_total)])
     
     # Создаем HTML-таблицу напрямую для обхода проблем с шириной
@@ -1335,9 +1343,19 @@ def render_results(results):
             """
             html_table += '</tr>'
         else:
-            html_table += '<tr>'
-            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
-            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem;">{item[1]}</td>'
+            # Проверяем, является ли строка скидкой (скидки начинаются с минуса)
+            is_discount = item[0] == "Скидка по акции" or item[1].startswith("-")
+            
+            # Применяем специальные стили для скидок
+            if is_discount:
+                html_table += '<tr style="background-color:#eaffea;">' # Светло-зеленый фон для скидок
+                html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem; color:#2e7d32; font-weight:500;">{item[0]}</td>'
+                html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem; color:#2e7d32; font-weight:500;">{item[1]}</td>'
+            else:
+                html_table += '<tr>'
+                html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
+                html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem;">{item[1]}</td>'
+            
             html_table += '</tr>'
     
     html_table += '</table>'
