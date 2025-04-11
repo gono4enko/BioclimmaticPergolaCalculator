@@ -22,25 +22,21 @@ CONDITION_PROMO_CODE = "promo_code"  # Скидка по промокоду
 
 # Словарь со всеми активными акциями
 ACTIVE_PROMOTIONS = {
-    # Весенняя акция - 10% на перголы типа B700
+    # Весенняя акция - 5% на все перголы
     "spring_sale_2025": {
         "name": "Весенняя акция 2025",
-        "description": "Скидка 10% на все перголы B700 при заказе до конца весны",
+        "description": "Скидка 5% на все перголы при заказе до 31 мая",
         "discount_type": DISCOUNT_TYPE_PERCENTAGE,
-        "discount_value": 10,  # 10%
+        "discount_value": 5,  # 5%
         "conditions": [
             {
                 "type": CONDITION_DATE_RANGE,
                 "start_date": datetime.date(2025, 3, 1),
                 "end_date": datetime.date(2025, 5, 31)
-            },
-            {
-                "type": CONDITION_PERGOLA_TYPE,
-                "pergola_types": ["B700NEW"]
             }
         ],
         "display_badge": True,
-        "badge_text": "Весенняя скидка 10%",
+        "badge_text": "Весенняя скидка 5%",
         "badge_color": "#4CAF50",  # Зеленый цвет
         "apply_to_base_price": True,  # Скидка применяется к базовой стоимости перголы
         "apply_to_options": False,  # Не применяется к опциям
@@ -50,18 +46,18 @@ ACTIVE_PROMOTIONS = {
     # Акция "Большая скидка на большие размеры"
     "large_size_discount": {
         "name": "Большие размеры - большие скидки",
-        "description": "Скидка 15% на перголы шириной от 6 метров",
+        "description": "Скидка 7% на перголы размером от 7×7 метров",
         "discount_type": DISCOUNT_TYPE_PERCENTAGE,
-        "discount_value": 15,  # 15%
+        "discount_value": 7,  # 7%
         "conditions": [
             {
                 "type": CONDITION_SIZE_RANGE,
-                "min_width": 6.0,  # Минимальная ширина 6 метров
-                "min_length": None,  # Длина не имеет значения
+                "min_width": 7.0,  # Минимальная ширина 7 метров
+                "min_length": 7.0,  # Минимальная длина 7 метров
             }
         ],
         "display_badge": True,
-        "badge_text": "Скидка 15% на широкие перголы",
+        "badge_text": "Скидка 7% на большие перголы",
         "badge_color": "#2196F3",  # Синий цвет
         "apply_to_base_price": True,
         "apply_to_options": False,
