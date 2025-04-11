@@ -2246,8 +2246,8 @@ def main():
     """, unsafe_allow_html=True)
     
     # Заголовок калькулятора - максимально компактный
-    st.markdown("<h1 style='text-align: center; margin-top: 5px; margin-bottom: 2px; font-size: 1.8rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; margin-bottom: 5px; font-size: 0.8rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; margin-top: 0; margin-bottom: 2px; font-size: 1.8rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-top: 0; margin-bottom: 3px; font-size: 0.8rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
     # Получаем размеры перголы
     dimensions = render_dimensions_form()
