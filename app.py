@@ -1556,21 +1556,21 @@ def display_formatted_description(description_text):
             font-size: 3.2rem; /* Увеличенный размер для h1 и h2 */
             margin-top: 30px;
             margin-bottom: 20px;
-            color: #0066cc;
+            color: #333333;
             font-weight: 700;
         }
         .description-container h3 {
             font-size: 2.86rem; /* Увеличено на 30% от 2.2rem */
             margin-top: 25px;
             margin-bottom: 20px;
-            color: #0066cc;
+            color: #333333;
             font-weight: 600;
         }
         .description-container h4 {
             font-size: 2.34rem; /* Увеличено на 30% от 1.8rem */
             margin-top: 20px;
             margin-bottom: 15px;
-            color: #0066cc;
+            color: #333333;
             font-weight: 500;
         }
         .description-container p {
@@ -1588,11 +1588,11 @@ def display_formatted_description(description_text):
         }
         .description-container strong, .description-container b {
             font-weight: 600;
-            color: #0066cc; /* Выделяем синим цветом важный текст */
+            color: #333333; /* Стандартный цвет текста вместо синего */
         }
         .description-container em, .description-container i {
             font-style: italic;
-            color: #0066cc; /* Выделяем синим цветом важный текст */
+            color: #333333; /* Стандартный цвет текста вместо синего */
         }
         /* Стили для таблиц внутри описаний */
         .description-container table {
@@ -1601,17 +1601,17 @@ def display_formatted_description(description_text):
             border-collapse: collapse;
         }
         .description-container th {
-            background-color: #f0f6ff; /* Светло-синий фон для заголовков */
-            color: #0066cc;
+            background-color: #f5f5f5; /* Светло-серый фон для заголовков */
+            color: #333333;
             font-weight: 600;
             font-size: 1.2rem;
             padding: 10px;
             text-align: left;
-            border: 1px solid #c0d5f0;
+            border: 1px solid #dddddd;
         }
         .description-container td {
             padding: 10px;
-            border: 1px solid #c0d5f0;
+            border: 1px solid #dddddd;
             font-size: 1.2rem;
         }
         </style>
