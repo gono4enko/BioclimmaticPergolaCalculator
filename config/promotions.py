@@ -47,9 +47,9 @@ ACTIVE_PROMOTIONS = {
     # Акция "Скидка на большие размеры"
     "large_size_discount": {
         "name": "Большие размеры - дополнительная скидка",
-        "description": "Дополнительная скидка 3% на перголы размером от 7×7 метров",
+        "description": "Дополнительная скидка 2% на перголы размером от 7×7 метров",
         "discount_type": DISCOUNT_TYPE_PERCENTAGE,
-        "discount_value": 3,  # 3%
+        "discount_value": 2,  # 2%
         "conditions": [
             {
                 "type": CONDITION_SIZE_RANGE,
@@ -58,7 +58,7 @@ ACTIVE_PROMOTIONS = {
             }
         ],
         "display_badge": True,
-        "badge_text": "Дополнительно +3% на большие перголы",
+        "badge_text": "Дополнительно +2% на большие перголы",
         "badge_color": "#2196F3",  # Синий цвет
         "apply_to_base_price": True,
         "apply_to_options": True,   # Применяется и к опциям тоже
