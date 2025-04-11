@@ -1072,7 +1072,7 @@ def render_options_form():
     )
     
     # Освещение
-    st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 0px;'></div>", unsafe_allow_html=True)
     
     # Определяем варианты освещения
     lighting_options_list = ["none", "white_led", "rgb_led"]
@@ -1101,10 +1101,10 @@ def render_options_form():
         lighting_options = ["rgb_led"]
     
     # Установка
-    st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
-    st.markdown("<p style='font-weight: 500;'>Установка</p>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 0px;'></div>", unsafe_allow_html=True)
+    st.markdown("<p style='font-weight: 500; margin-bottom: 0px;'>Установка</p>", unsafe_allow_html=True)
     
-    installation = st.checkbox("С установкой", value=True)
+    installation = st.checkbox("С установкой", value=True, label_visibility="visible")
     
     # Возвращаем выбранные опции (не включаем модули, т.к. они рассчитываются автоматически)
     return {
