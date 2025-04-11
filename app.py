@@ -1705,13 +1705,16 @@ def display_formatted_description(description_text, animation_delay=0):
             background-color: #ffffff;
             border-radius: 5px;
             margin-bottom: 10px;
-            font-size: 1.2rem; /* Увеличиваем базовый размер шрифта для всего контента */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            font-size: 16px !important; /* Стандартный размер для всего текста */
         }
         
         /* Стили только для статей внутри описания */
         .description-container * {
             padding-left: 0px !important;
             padding-right: 0px !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            font-size: 16px !important; /* Принудительно устанавливаем все элементы на одинаковый размер */
         }
         /* Стили для корректного отображения разных HTML элементов */
         .section, section {
@@ -1720,46 +1723,54 @@ def display_formatted_description(description_text, animation_delay=0):
             width: 100%;
         }
         .description-container h1, .description-container h2 {
-            font-size: 3.2rem; /* Увеличенный размер для h1 и h2 */
+            font-size: 24px !important; /* Большой размер для заголовков h1 и h2 */
             margin-top: 30px;
             margin-bottom: 20px;
-            /* Обычный цвет текста, не синий */
+            color: #333333 !important; /* Обычный цвет текста */
             font-weight: 700;
         }
         .description-container h3 {
-            font-size: 2.86rem; /* Увеличено на 30% от 2.2rem */
+            font-size: 22px !important; /* Средний размер для заголовков h3 */
             margin-top: 25px;
             margin-bottom: 20px;
-            /* Обычный цвет текста, не синий */
+            color: #333333 !important; /* Обычный цвет текста */
             font-weight: 600;
         }
         .description-container h4 {
-            font-size: 2.34rem; /* Увеличено на 30% от 1.8rem */
+            font-size: 20px !important; /* Меньший размер для заголовков h4 */
             margin-top: 20px;
             margin-bottom: 15px;
-            /* Обычный цвет текста, не синий */
+            color: #333333 !important; /* Обычный цвет текста */
             font-weight: 500;
         }
         .description-container p {
             margin-bottom: 10px;
             line-height: 1.5;
-            font-size: 1.25rem; /* Увеличенный размер параграфов */
+            font-size: 16px !important; /* Стандартный размер для текста */
+            color: #333333 !important; /* Обычный цвет текста */
         }
         .description-container ul {
             margin-left: 20px;
             margin-bottom: 15px;
-            font-size: 1.25rem; /* Увеличенный размер для списков */
         }
         .description-container li {
             margin-bottom: 8px;
+            font-size: 16px !important; /* Стандартный размер для элементов списка */
+            color: #333333 !important; /* Обычный цвет текста */
         }
         .description-container strong, .description-container b {
             font-weight: 600;
-            /* Используем обычный цвет текста, не синий */
+            color: #333333 !important; /* Обычный цвет текста */
         }
         .description-container em, .description-container i {
             font-style: italic;
-            /* Используем обычный цвет текста, не синий */
+            color: #333333 !important; /* Обычный цвет текста */
+        }
+        /* Принудительный стиль для span элементов, которые часто используются для изменения шрифта */
+        .description-container span {
+            font-size: 16px !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            color: #333333 !important;
         }
         /* Стили для таблиц внутри описаний */
         .description-container table {
@@ -1769,17 +1780,28 @@ def display_formatted_description(description_text, animation_delay=0):
         }
         .description-container th {
             background-color: #f0f6ff; /* Светло-синий фон для заголовков */
-            /* Обычный цвет текста, не синий */
+            color: #333333 !important;
             font-weight: 600;
-            font-size: 1.2rem;
+            font-size: 16px !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
             padding: 10px;
             text-align: left;
             border: 1px solid #c0d5f0;
         }
         .description-container td {
+            color: #333333 !important;
             padding: 10px;
             border: 1px solid #c0d5f0;
-            font-size: 1.2rem;
+            font-size: 16px !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        }
+        /* Принудительный стиль для span элементов внутри таблиц */
+        .description-container table span, 
+        .description-container td span, 
+        .description-container th span {
+            font-size: 16px !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            color: #333333 !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -2132,7 +2154,6 @@ def main():
         margin-left: 0px !important;
         margin-right: 0px !important;
         width: 100% !important;
-        background-color: rgba(240, 240, 240, 0.2) !important; /* Немного выделяем параграфы для отладки */
     }
     
     /* Отступы для списков в статьях */
