@@ -1512,6 +1512,13 @@ def render_results(results):
         if pergola_type in ["B500NEW", "B700NEW", "B600"]:
             # Используем описание из модуля конфигурации
             description_html = get_pergola_description(pergola_type)
+            
+            # Добавляем дополнительное форматирование для B500, чтобы он выглядел как B700
+            if pergola_type == "B500NEW":
+                print("Применяем стилевое форматирование B500 -> B700")
+                # Стиль будет задан в CSS-классе, а не прямо в HTML
+                description_html = f'<div class="b700-style-for-b500">{description_html}</div>'
+                
             display_formatted_description(description_html)
             
             # Отображаем изображения с использованием списка из конфигурации
@@ -1667,6 +1674,30 @@ def display_formatted_description(description_text):
     """
     # Создаем стиль для описания один раз при первом вызове
     if 'description_style_added' not in st.session_state:
+        # Добавляем класс стилей специально для B500, чтобы они выглядели как B700
+        st.markdown("""
+        <style>
+        /* Стиль для B500, чтобы он выглядел как B700 */
+        .b700-style-for-b500 h3 {
+            font-size: 1.2rem !important;
+            margin-top: 20px !important;
+            text-align: center !important;
+            color: #0066cc !important;
+            font-weight: 600 !important;
+        }
+        .b700-style-for-b500 p {
+            margin-bottom: 15px !important;
+            line-height: 1.5 !important;
+        }
+        .b700-style-for-b500 section, .b700-style-for-b500 .section {
+            margin-bottom: 15px !important;
+        }
+        .b700-style-for-b500 strong {
+            font-weight: 600 !important;
+            color: #0066cc !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         st.markdown("""
         <style>
         .description-container {
