@@ -1095,10 +1095,12 @@ def render_options_form():
         margin-bottom: 0 !important;
         padding-bottom: 0 !important;
     }
-    /* Сильно уменьшаем верхний отступ для второго чекбокса */
+    /* Экстремально уменьшаем верхний отступ для второго чекбокса */
     .second-checkbox {
-        margin-top: -24px !important;
+        margin-top: -35px !important;
         padding-top: 0 !important;
+        position: relative;
+        z-index: 10;
     }
     </style>
     """, unsafe_allow_html=True)
