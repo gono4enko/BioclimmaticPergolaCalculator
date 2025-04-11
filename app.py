@@ -1130,8 +1130,8 @@ def render_dimensions_form():
         delay=0
     )
     
-    # Добавляем небольшой разделитель с анимацией
-    add_section_separator(height=10, animation=True)
+    # Добавляем минимальный разделитель с анимацией
+    add_section_separator(height=3, animation=True)
     
     col1, col2 = st.columns(2)
     
@@ -1185,8 +1185,8 @@ def render_options_form():
         delay=0
     )
     
-    # Добавляем небольшой разделитель с анимацией
-    add_section_separator(height=10, animation=True)
+    # Добавляем минимальный разделитель с анимацией
+    add_section_separator(height=3, animation=True)
     
     # Тип перголы
     pergola_type = st.radio(
@@ -1681,7 +1681,7 @@ def render_results(results):
     # Добавляем отступ в конце страницы
     st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
 
-def display_formatted_description(description_text, animation_delay=0):
+def display_formatted_description(description_text, animation_delay=0.0):
     """
     Отображает форматированное описание в стилизованном контейнере,
     избегая проблем с видимостью HTML-тегов.
@@ -2246,8 +2246,8 @@ def main():
     """, unsafe_allow_html=True)
     
     # Заголовок калькулятора - максимально компактный
-    st.markdown("<h1 style='text-align: center; margin-top: 0; margin-bottom: 2px; font-size: 1.8rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; margin-top: 0; margin-bottom: 3px; font-size: 0.8rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; margin-top: -10px; margin-bottom: 0px; font-size: 1.8rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-top: 0; margin-bottom: 1px; font-size: 0.8rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
     # Получаем размеры перголы
     dimensions = render_dimensions_form()
