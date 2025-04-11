@@ -1540,7 +1540,7 @@ def render_results(results):
         if pergola_type in ["B500NEW", "B700NEW", "B600"]:
             # Используем описание из модуля конфигурации
             description_html = get_pergola_description(pergola_type)
-            display_formatted_description(description_html)
+            display_formatted_description(description_html, animation_delay=0.4)
             
             # Отображаем изображения с использованием списка из конфигурации
             images = get_pergola_images(pergola_type)
@@ -1566,7 +1566,7 @@ def render_results(results):
             # Добавляем информацию о масштабируемости для всех типов пергол
             # Отображаем описание модульной системы из модуля конфигурации
             modular_description = get_modular_system_description()
-            display_formatted_description(modular_description)
+            display_formatted_description(modular_description, animation_delay=0.5)
             
             # Отображаем изображение модульной системы
             modular_images = get_pergola_images("MODULAR")
@@ -1591,7 +1591,7 @@ def render_results(results):
             # Добавляем информацию о системе водоотведения для всех типов пергол
             # Отображаем описание системы водоотведения из модуля конфигурации
             drainage_description = get_drainage_system_description()
-            display_formatted_description(drainage_description)
+            display_formatted_description(drainage_description, animation_delay=0.6)
             
             # Отображаем изображение системы водоотведения
             drainage_images = get_pergola_images("DRAINAGE")
@@ -1610,7 +1610,7 @@ def render_results(results):
             # Добавляем информацию о приводе Bansbach только для пергол B500NEW
             if pergola_type == "B500NEW":
                 bansbach_description = get_bansbach_description()
-                display_formatted_description(bansbach_description)
+                display_formatted_description(bansbach_description, animation_delay=0.7)
                 
                 # Отображаем изображение привода Bansbach
                 bansbach_images = get_pergola_images("BANSBACH")
@@ -1629,7 +1629,7 @@ def render_results(results):
             # Добавляем информацию о приводе Somfy только для пергол B700NEW
             if pergola_type == "B700NEW":
                 somfy_description = get_pergola_description("SOMFY")
-                display_formatted_description(somfy_description)
+                display_formatted_description(somfy_description, animation_delay=0.7)
                 
                 # Отображаем изображение привода Somfy
                 somfy_images = get_pergola_images("SOMFY")
@@ -1647,7 +1647,7 @@ def render_results(results):
             
             # Добавляем описание вариантов установки и вертикальных систем для всех типов пергол
             bioclimatic_install_description = get_bioclimatic_install_description()
-            display_formatted_description(bioclimatic_install_description)
+            display_formatted_description(bioclimatic_install_description, animation_delay=0.8)
             
             # Отображаем изображение вариантов установки
             install_system_images = get_pergola_images("INSTALL_SYSTEM")
@@ -1685,13 +1685,14 @@ def render_results(results):
     # Добавляем отступ в конце страницы
     st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
 
-def display_formatted_description(description_text):
+def display_formatted_description(description_text, animation_delay=0):
     """
     Отображает форматированное описание в стилизованном контейнере,
     избегая проблем с видимостью HTML-тегов.
     
     Args:
         description_text (str): HTML-текст с описанием
+        animation_delay (float): Задержка анимации в секундах
     """
     # Создаем стиль для описания один раз при первом вызове
     if 'description_style_added' not in st.session_state:
@@ -1821,10 +1822,11 @@ def display_formatted_description(description_text):
         # 5. Удаляем двойные пробелы для надежности
         formatted_text = re.sub(r'\s{2,}', ' ', formatted_text)
         
-        # 6. Обрамляем весь текст в div-контейнер для изоляции стилей и добавляем контейнер с отступами
+        # 6. Обрамляем весь текст в div-контейнер для изоляции стилей и добавляем анимацию
         # Уменьшаем отступ справа для более компактного вида
+        delay_str = str(animation_delay)
         final_html = f"""
-        <div style="width:95%; margin:0 auto; padding-left:15px; padding-right:15px;">
+        <div class="fadeIn" style="width:95%; margin:0 auto; padding-left:15px; padding-right:15px; animation-delay: {delay_str}s;">
             <div class="description-container">{formatted_text}</div>
         </div>
         """
