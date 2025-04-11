@@ -80,7 +80,7 @@ ACTIVE_PROMOTIONS = {
             }
         ],
         "display_badge": True,
-        "badge_text": "Срочная скидка 5% - только 24 часа!",
+        "badge_text": "Весенняя акция 5%",
         "badge_color": "#F44336",  # Красный цвет для срочности
         "apply_to_base_price": True,
         "apply_to_options": True,  # Применяется ко всему заказу

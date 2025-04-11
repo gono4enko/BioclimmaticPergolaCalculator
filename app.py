@@ -1306,22 +1306,24 @@ def render_results(results):
             rub_price = item['price'] * euro_rate
             items_data.append([item["name"], format_price(rub_price)])
     
-    # Проверяем, есть ли скидка
+    # Расчет сумм для отображения
     rub_total = total_price * euro_rate
-    if "discount" in results and results["discount"] > 0:
-        # Добавляем строку со скидкой (скидка отображается зеленым цветом)
-        discount_amount = results["discount"]
-        items_data.append(["Скидка по акции", f"-{format_price(discount_amount)}"])
-        # Обновляем итоговую сумму с учетом скидки
-        rub_total = results.get("total_price_after_discount", rub_total - discount_amount)
+    discount_amount = 0
+    final_price = rub_total
     
-    # Итоговая строка
+    if "discount" in results and results["discount"] > 0:
+        discount_amount = results["discount"]
+        final_price = results.get("total_price_after_discount", rub_total - discount_amount)
+    
+    # Итоговая строка БЕЗ учета скидки
     items_data.append(["Итого", format_price(rub_total)])
     
-    # Добавляем строку с весенней акцией до 1 июня (если скидка > 0)
+    # Добавляем строку со скидкой после Итого (если скидка > 0)
     if "discount" in results and results["discount"] > 0:
-        # Добавляем строку с ценой после скидки
-        final_price = results.get("total_price_after_discount", rub_total)
+        # Добавляем строку со скидкой (скидка отображается зеленым цветом)
+        items_data.append(["Скидка по акции", f"-{format_price(discount_amount)}"])
+        
+        # Добавляем строку с весенней акцией и ценой после скидки
         items_data.append(["Весенняя акция до 1.06.2025", format_price(final_price)])
     
     # Создаем HTML-таблицу напрямую для обхода проблем с шириной
