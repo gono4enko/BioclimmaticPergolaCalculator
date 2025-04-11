@@ -1,915 +1,2138 @@
 """
-Калькулятор стоимости пергол с поддержкой различных опций и материалов.
+Калькулятор стоимости пергол - базовая версия без сложных стилей и модификаций
+Максимально простой подход с использованием стандартных компонентов Streamlit
 """
-import os
 import streamlit as st
+import pandas as pd
+# Импортируем функции для работы с Яндекс.Метрикой
+from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
+import os
+import math
+import csv
+import time
+from datetime import datetime
 
-# Настраиваем страницу перед выполнением любых других команд Streamlit
-st.set_page_config(
-    page_title="Калькулятор пергол DecoLife",
-    page_icon="🏠",
-    layout="centered",  # Центрированный макет для более узкого интерфейса
-    initial_sidebar_state="collapsed" # Скрываем сайдбар по умолчанию
+def get_plural_form(number, one, two, five):
+    """
+    Возвращает правильную форму существительного для числительного по правилам русского языка.
+    
+    Args:
+        number (int): Число, для которого нужно подобрать форму
+        one (str): Форма для 1 (номинатив единственного числа)
+        two (str): Форма для 2-4 (генитив единственного числа)
+        five (str): Форма для 5-20 (генитив множественного числа)
+        
+    Returns:
+        str: Правильная форма слова
+    """
+    n = abs(number) % 100
+    if n >= 11 and n <= 19:
+        return five
+    n = n % 10
+    if n == 1:
+        return one
+    if n >= 2 and n <= 4:
+        return two
+    return five
+from pdf_generator_fpdf import generate_commercial_offer, format_pergola_data_for_pdf
+from config.pergola_descriptions import (
+    get_pergola_description,
+    get_modular_system_description,
+    get_drainage_system_description,
+    get_bansbach_description,
+    get_bioclimatic_install_description,
+    get_lamella_engineering_description,
+    get_pergola_images,
+    get_pergola_image_caption
 )
 
-from utils.logger import setup_logger, log_user_action, log_calculation
-from utils.calculator import calculate_pergola_cost
-from components.header import render_header
-from components.dimensions_form import render_dimensions_form
-from components.scroll_helper import scroll_to_results, add_button_animation
-from components.options_form import render_options_form
-from components.results_new import render_results
-from components.orange_button import create_orange_button
+# Используем прямое определение структур данных для упрощения
+# Типы пергол
+PERGOLA_TYPES = {
+    "B500NEW": "В500 - с поворотными ламелями",
+    "B700NEW": "В700 - с поворотно-сдвижными ламелями",
+    "B600": "В600 PIR - со стационарными панелями"
+}
 
-# Импортируем специальный модуль для решения проблемы с синей заливкой
-from force_white_background import fix_blue_tiles
+# Описания типов пергол
+PERGOLA_TYPE_DESCRIPTIONS = {
+    "B500NEW": "Современная пергола с поворотными алюминиевыми ламелями.",
+    "B700NEW": "Премиальная пергола с поворотно-сдвижными ламелями.",
+    "B600": "Пергола со стационарной крышей из PIR сэндвич-панелей."
+}
 
-# Импортируем модуль для создания компонентов без синей заливки
-try:
-    from custom_widgets import fixed_button, white_tile
-except:
-    # Если модуль не найден, создаем заглушки
-    def fixed_button(label, key=None, help=None, on_click=None, disabled=False, white_background=True):
-        return st.button(label, key=key, help=help, on_click=on_click, disabled=disabled)
+# Типы ламелей
+LAMELLA_TYPES = {
+    "B500-20NEW": "Ламели 200 мм (усиленные)",
+    "B500-25NEW": "Ламели 250 мм (стандарт)",
+    "B700-20NEW": "Ламели 200 мм (усиленные)",
+    "B700-25NEW": "Ламели 250 мм (стандарт)",
+    "B600-PIR": "PIR сэндвич-панель",
+    "lamella-200": "Ламели 200 мм (усиленные)",
+    "lamella-250": "Ламели 250 мм (стандарт)"
+}
+
+# Максимально допустимые размеры для каждого типа пергол
+MAX_DIMENSIONS = {
+    "B500NEW": {"width": 15.0, "length": 8.0},
+    "B700NEW": {"width": 15.0, "length": 7.25},
+    "B600": {"width": 13.5, "length": 8.0}
+}
+
+# Правила для добавления дополнительных колонн в зависимости от размера выноса
+ADDITIONAL_COLUMNS_RULES = {
+    "B500NEW": {
+        "250": 6.5,  # Для ламелей 250мм - если вынос > 6.5м, нужны доп. колонны
+        "200": 6.85  # Для ламелей 200мм - если вынос > 6.85м, нужны доп. колонны
+    },
+    "B700NEW": {
+        "250": 6.5,  # Для ламелей 250мм - если вынос > 6.5м, нужны доп. колонны
+        "200": 6.85  # Для ламелей 200мм - если вынос > 6.85м, нужны доп. колонны
+    },
+    "B600": {
+        "PIR": 6.5   # Для PIR панелей - если вынос > 6.5м, нужны доп. колонны
+    }
+}
+
+# Стоимость дополнительных колонн в зависимости от количества модулей
+COLUMNS_PRICES = {
+    1: 653,  # 1 модуль - 2 колонны - 653 евро
+    2: 980,  # 2 модуля - 3 колонны - 980 евро
+    3: 1306  # 3 модуля - 4 колонны - 1306 евро
+}
+
+# Усилитель лотка добавляется автоматически при выносе > 6.5м
+GUTTER_INSERT_THRESHOLD = 6.5
+GUTTER_INSERT_PRICE_PER_METER = 80  # Цена усилителя лотка 80 евро за погонный метр
+
+# Наценки за доставку и установку (в процентах от базовой стоимости)
+DELIVERY_MARKUP_PERCENT = 10  # 10% наценка за доставку (добавляется автоматически)
+INSTALLATION_MARKUP_PERCENT = 10  # 10% наценка за установку (опционально)
+
+# Курс евро в рублях
+EURO_RATE = 110  # 1 евро = 110 рублей
+
+# Правила для выбора привода Bansbach для B500NEW
+BANSBACH_DRIVE_RULES = {
+    1: [  # 1 модуль
+        {"width": 2.5, "length": 8.0, "tandem": False},  # До 2.5м ширины и до 8м выноса - T1
+        {"width": 3.0, "length": 6.5, "tandem": True},   # > 2.5м и > 6.5м выноса - Tandem (для 3.0x8.0 тоже нужен Tandem!)
+        {"width": 3.5, "length": 5.5, "tandem": True},   # > 3.0м и > 5.5м выноса - Tandem
+        {"width": 4.0, "length": 5.0, "tandem": True},   # > 3.5м и > 5.0м выноса - Tandem
+        {"width": float('inf'), "length": 5.0, "tandem": True}  # > 4.0м и > 5.0м выноса - Tandem
+    ],
+    2: [  # 2 модуля
+        {"width": 5.0, "length": 8.0, "tandem": False},  # До 5м ширины и до 8м выноса - T1
+        {"width": 6.0, "length": 7.5, "tandem": True},   # > 5м и > 7.5м выноса - Tandem
+        {"width": 7.0, "length": 6.5, "tandem": True},   # > 6м и > 6.5м выноса - Tandem
+        {"width": 8.0, "length": 5.5, "tandem": True},   # > 7м и > 5.5м выноса - Tandem
+        {"width": float('inf'), "length": 5.0, "tandem": True}  # > 8м и > 5.0м выноса - Tandem
+    ],
+    3: [  # 3 модуля
+        {"width": 7.5, "length": 8.0, "tandem": False},  # До 7.5м ширины и до 8м выноса - T1
+        {"width": 9.0, "length": 7.5, "tandem": True},   # > 7.5м и > 7.5м выноса - Tandem
+        {"width": 10.5, "length": 6.5, "tandem": True},  # > 9м и > 6.5м выноса - Tandem
+        {"width": 12.0, "length": 5.5, "tandem": True},  # > 10.5м и > 5.5м выноса - Tandem
+        {"width": float('inf'), "length": 5.0, "tandem": True}  # > 12м и > 5.0м выноса - Tandem
+    ]
+}
+
+# Правила для выбора привода Somfy для B700NEW
+SOMFY_DRIVE_RULES = {
+    1: [  # 1 модуль
+        {"width": 3.0, "length": 7.0, "tandem": True},   # до 3м ширины и > 7м выноса - Tandem
+        {"width": 3.5, "length": 6.0, "tandem": True},   # до 3.5м ширины и > 6м выноса - Tandem
+        {"width": float('inf'), "length": float('inf'), "tandem": False}  # По умолчанию - M1
+    ],
+    2: [  # 2 модуля
+        {"width": 6.0, "length": 7.0, "tandem": True},   # > 6м ширины и > 7м выноса - Tandem
+        {"width": 7.0, "length": 6.0, "tandem": True},   # > 7м ширины и > 6м выноса - Tandem
+        {"width": float('inf'), "length": float('inf'), "tandem": False}  # По умолчанию - M1
+    ],
+    3: [  # 3 модуля
+        {"width": 9.0, "length": 7.0, "tandem": True},   # > 9м ширины и > 7м выноса - Tandem
+        {"width": 10.5, "length": 6.0, "tandem": True},  # > 10.5м ширины и > 6м выноса - Tandem
+        {"width": float('inf'), "length": float('inf'), "tandem": False}  # По умолчанию - M1
+    ]
+}
+
+# Цены на приводы
+DRIVE_PRICES = {
+    "B500NEW": {
+        "standard": 700,     # Bansbach T1 - 700 евро
+        "tandem": 1250       # Bansbach Tandem - 1250 евро
+    },
+    "B700NEW": {
+        "standard": 300,     # Somfy M1 - 300 евро
+        "tandem": 1000       # Somfy M2 TANDEM - 1000 евро
+    }
+}
+
+# Пульты дистанционного управления
+REMOTE_CONTROL_TYPES = {
+    1: {"name": "Simu 1K", "price": 25},    # 1 канал - 25 евро
+    5: {"name": "Simu 5K", "price": 40},    # 5 каналов - 40 евро
+    15: {"name": "Simu 15K", "price": 90}   # 15 каналов - 90 евро
+}
+
+# Освещение
+LIGHTING_PRICES = {
+    "controller": 300,       # Блок управления Somfy RTS Dimmer - 300 евро
+    "white_led": 20,         # Сверхъяркая LED лента - 20 евро/м
+    "rgb_led": 20            # Сверхъяркая RGB лента - 20 евро/м
+}
+
+# Функция для загрузки данных о ценах из CSV файлов
+def load_price_data(pergola_type, lamella_size):
+    """
+    Загружает данные о ценах из соответствующего CSV файла
     
-    def white_tile(title, subtitle="", key=None, is_selected=False, on_click=None):
-        return st.button(f"{title}\n{subtitle}", key=key)
+    Args:
+        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
+        lamella_size (str): Размер ламели (200, 250, PIR)
+        
+    Returns:
+        dict: Словарь с ценами для разных размеров перголы
+    """
+    # Определяем соответствие типов пергол и имен файлов
+    # Ищем как русские, так и английские версии файлов
+    file_mapping = {
+        ("B500NEW", "200"): ["attached_assets/Price_B500-20.csv", "attached_assets/Прайс_В500-20.csv"],
+        ("B500NEW", "250"): ["attached_assets/Price_B500-25.csv", "attached_assets/Прайс_В500-25.csv"],
+        ("B700NEW", "200"): ["attached_assets/Price_B700-20.csv", "attached_assets/Прайс_B700-20.csv"],
+        ("B700NEW", "250"): ["attached_assets/Price_B700-25.csv", "attached_assets/Прайс_B700-25.csv"],
+        ("B600", "PIR"): ["attached_assets/Price_B600_PIR.csv", "attached_assets/Прайс_В600_PIR.csv"]
+    }
+    
+    key = (pergola_type, lamella_size)
+    if key not in file_mapping:
+        print(f"Ошибка: Комбинация {pergola_type} и {lamella_size} не найдена в маппинге файлов")
+        return {}
+    
+    # Получаем пути к файлам прайса (поддерживаем и английскую, и русскую версию)
+    file_paths = file_mapping[key]
+    
+    # Проверяем, существует ли хотя бы один из файлов
+    existing_file_path = None
+    for path in file_paths:
+        if os.path.exists(path):
+            existing_file_path = path
+            break
+    
+    if not existing_file_path:
+        print(f"Ошибка: Файлы прайса {file_paths} не найдены")
+        return {}
+    
+    # Используем найденный файл
+    file_path = existing_file_path
+    
+    print(f"Загрузка прайс-листа из файла: {file_path}")
+    
+    prices = {}
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            # Определяем разделитель CSV (точка с запятой или запятая)
+            first_line = file.readline().strip()
+            if ';' in first_line:
+                delimiter = ';'
+            else:
+                delimiter = ','
+            
+            print(f"Обнаружен разделитель: '{delimiter}'")
+            
+            # Перематываем файл в начало
+            file.seek(0)
+            
+            reader = csv.reader(file, delimiter=delimiter)
+            
+            # Пропускаем первую строку (если она содержит информацию о модулях)
+            first_row = next(reader)
+            if "модуль" in ' '.join(first_row).lower():
+                print("Обнаружена строка с информацией о модулях, пропускаем")
+                header = next(reader)  # Берем следующую строку как заголовок
+            else:
+                header = first_row  # Если первая строка не о модулях, она и есть заголовок
+            
+            print(f"Заголовок: {header}")
+            
+            # Извлекаем значения длины из заголовка
+            length_values = []
+            for val in header[1:]:  # Пропускаем первую колонку
+                if val.strip():
+                    try:
+                        # Обрабатываем разные форматы чисел
+                        cleaned_val = val.replace(',', '.').strip()
+                        length_values.append(float(cleaned_val))
+                    except ValueError:
+                        print(f"Предупреждение: Не удалось преобразовать '{val}' в число")
+                        continue  # Пропускаем, если не удалось преобразовать в число
+            
+            print(f"Значения длины из заголовка: {length_values}")
+            
+            # Обрабатываем строки с данными
+            for row in reader:
+                if not row or len(row) <= 1:
+                    continue
+                
+                try:
+                    # Получаем ширину из первой колонки
+                    width_str = row[0].strip()
+                    if not width_str:
+                        continue
+                    
+                    width = float(width_str.replace(',', '.'))
+                    
+                    # Обрабатываем цены
+                    for i, price_str in enumerate(row[1:]):
+                        if i < len(length_values) and price_str.strip():
+                            length = length_values[i]
+                            try:
+                                # Преобразуем строку цены в число
+                                # Убираем пробелы и меняем запятую на точку для десятичных чисел
+                                price = float(price_str.replace(' ', '').replace(',', '.'))
+                                if width not in prices:
+                                    prices[width] = {}
+                                prices[width][length] = price
+                            except ValueError:
+                                print(f"Предупреждение: Не удалось преобразовать '{price_str}' в цену")
+                                continue  # Пропускаем, если не удалось преобразовать в число
+                except (ValueError, IndexError) as e:
+                    print(f"Ошибка при обработке строки {row}: {str(e)}")
+                    continue
+        
+        print(f"Загружено {len(prices)} значений ширины с ценами")
+        
+        # Выводим загруженные данные для отладки
+        for width in sorted(prices.keys())[:3]:  # Показываем только 3 первых значения для краткости
+            print(f"Ширина {width} м: {prices[width]}")
+        
+        return prices
+    except Exception as e:
+        print(f"Ошибка загрузки прайс-листа {file_path}: {str(e)}")
+        return {}
 
-# Обновляем освещение напрямую в конфигурации
-from config.pergola_types import LIGHTING_TYPES
-LIGHTING_TYPES["none"]["description"] = ""  # Убираем описание для опции "Без освещения"
-LIGHTING_TYPES["led"]["name"] = "Сверхъяркая LED подсветка"
-LIGHTING_TYPES["led"]["description"] = "Яркая LED лента по периметру перголы"
-LIGHTING_TYPES["rgb"]["name"] = "Светодиодная RGB подсветка"
-LIGHTING_TYPES["rgb"]["description"] = "Яркая RGB лента со сменой цвета по периметру перголы"
-LIGHTING_TYPES["led_rgb"]["name"] = "Комбинированное LED + RGB освещение"
-LIGHTING_TYPES["led_rgb"]["description"] = "Позволяет выбрать между белым и цветным освещением"
+def calculate_lighting_perimeter(width_m, length_m, modules=1):
+    """
+    Расчет периметра подсветки по правилам.
+    Для 1 модуля - просто периметр.
+    Для нескольких модулей - сумма периметров всех модулей.
+    
+    Args:
+        width_m (float): Ширина перголы в метрах
+        length_m (float): Вынос перголы в метрах
+        modules (int): Количество модулей
+        
+    Returns:
+        float: Длина периметра для светодиодной ленты
+    """
+    if modules <= 1:
+        return 2 * (width_m + length_m)
+    
+    # Для многомодульных пергол
+    module_width = width_m / modules
+    module_perimeter = 2 * (module_width + length_m)
+    return module_perimeter * modules
 
-# Настраиваем логирование
-logger = setup_logger('pergola_app', 'logs/app_frontend.log')
+def adjust_length_for_lamella_size(length_m, lamella_size_mm):
+    """
+    Корректирует размер выноса перголы до ближайшего целого числа ламелей
+    
+    Args:
+        length_m (float): Вынос перголы в метрах
+        lamella_size_mm (int): Размер ламели в миллиметрах (200 или 250)
+        
+    Returns:
+        float: Скорректированный размер выноса перголы
+    """
+    lamella_size_m = lamella_size_mm / 1000  # Перевод из мм в метры
+    num_lamellas = length_m / lamella_size_m
+    
+    # Округляем до ближайшего целого числа ламелей в большую сторону
+    num_lamellas_rounded = math.ceil(num_lamellas)
+    
+    # Вычисляем скорректированную длину
+    adjusted_length = num_lamellas_rounded * lamella_size_m
+    
+    return adjusted_length
+
+def get_base_price(pergola_type, lamella_size, width_m, length_m):
+    """
+    Получает базовую стоимость перголы из прайс-листа, используя точное соответствие
+    шириной и длиной (выносом) из таблицы прайса
+    
+    Args:
+        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
+        lamella_size (str): Размер ламели (200, 250, PIR)
+        width_m (float): Ширина перголы в метрах
+        length_m (float): Вынос перголы в метрах
+        
+    Returns:
+        float: Базовая стоимость перголы
+    """
+    prices = load_price_data(pergola_type, lamella_size)
+    if not prices:
+        raise ValueError(f"Не удалось загрузить данные о ценах для {pergola_type} с ламелями {lamella_size}")
+    
+    # Логирование для отладки
+    print(f"Поиск цены для {pergola_type} с ламелями {lamella_size}, размер {width_m}x{length_m}м")
+    
+    # Получаем доступные размеры
+    available_widths = sorted(prices.keys())
+    available_lengths = set()
+    for width_data in prices.values():
+        available_lengths.update(width_data.keys())
+    available_lengths = sorted(available_lengths)
+    
+    # Логирование доступных размеров для отладки
+    print(f"Доступные ширины: {available_widths}")
+    print(f"Доступные длины: {available_lengths}")
+    
+    # В CSV файле цены указаны в формате "вынос (строка) x ширина (столбец)"
+    # Но в калькуляторе параметры указаны как "ширина x вынос" 
+    # Поэтому меняем местами параметры при поиске цены
+    width_orig, length_orig = width_m, length_m
+    
+    # Находим точный размер или ближайший больший размер
+    # В CSV файле цены указаны в формате "вынос (строка) x ширина (столбец)"
+    # Но в калькуляторе параметры указаны как "ширина x вынос"
+    # Поэтому для поиска в прайсе меняем местами ширину и вынос
+    lookup_width = length_m  # Используем длину как ширину в прайсе
+    lookup_length = width_m  # Используем ширину как длину в прайсе
+    
+    # Ищем точное совпадение по ширине (в прайсе это вынос)
+    if lookup_width in available_widths:
+        width_match = lookup_width
+    else:
+        # Если точного совпадения нет, ищем ближайшую большую ширину
+        width_match = next((w for w in available_widths if w > lookup_width), max(available_widths))
+    
+    # Ищем точное совпадение по длине (в прайсе это ширина)
+    if lookup_length in available_lengths:
+        length_match = lookup_length
+    else:
+        # Если точного совпадения нет, ищем ближайшую большую длину
+        length_match = next((l for l in available_lengths if l > lookup_length), max(available_lengths))
+    
+    # Проверяем, есть ли цена для найденной комбинации ширины и длины
+    if width_match in prices and length_match in prices[width_match]:
+        price = prices[width_match][length_match]
+        print(f"Найдена цена для размера {width_match}x{length_match}м: {price} евро")
+        return price
+    
+    # Если цены нет, ищем минимальную цену среди всех подходящих размеров
+    # (размеров, которые больше или равны заданным)
+    min_price = None
+    min_width = None
+    min_length = None
+    
+    for width in available_widths:
+        if width >= lookup_width:  # Используем lookup_width вместо width_m
+            for length in available_lengths:
+                if length >= lookup_length:  # Используем lookup_length вместо length_m
+                    if width in prices and length in prices[width]:
+                        price = prices[width][length]
+                        if min_price is None or price < min_price:
+                            min_price = price
+                            min_width = width
+                            min_length = length
+    
+    if min_price is None:
+        # Если не нашли ни одной подходящей цены, это ошибка
+        raise ValueError(f"Не удалось найти цену для перголы {pergola_type} с размерами {width_m}x{length_m}м")
+    
+    print(f"Найдена ближайшая цена для размера {min_width}x{min_length}м: {min_price} евро")
+    return min_price
+
+def needs_additional_columns(pergola_type, lamella_size, length_m):
+    """
+    Проверяет, нужны ли дополнительные колонны
+    
+    Args:
+        pergola_type (str): Тип перголы
+        lamella_size (str): Размер ламели
+        length_m (float): Вынос перголы в метрах
+        
+    Returns:
+        bool: True если нужны дополнительные колонны
+    """
+    threshold = ADDITIONAL_COLUMNS_RULES.get(pergola_type, {}).get(lamella_size)
+    if threshold is None:
+        return False
+    
+    return length_m > threshold
+
+def calculate_gutter_insert_price(length_m, modules):
+    """
+    Рассчитывает стоимость усилителя лотка по формуле:
+    Стоимость = цена за метр * длина выноса * количество лотков
+    
+    В перголах с 1 модулем - 2 лотка
+    В перголах с 2 модулями - 3 лотка
+    В перголах с 3 модулями - 4 лотка
+    
+    Args:
+        length_m (float): Вынос перголы в метрах
+        modules (int): Количество модулей
+    
+    Returns:
+        tuple: (нужен ли усилитель, стоимость усилителя, количество лотков, общая длина лотков)
+    """
+    # Проверяем, нужен ли усилитель лотка (вынос > 6.5м)
+    needs_insert = length_m > GUTTER_INSERT_THRESHOLD
+    
+    # Если не нужен усилитель, возвращаем нули
+    if not needs_insert:
+        return (False, 0, 0, 0)
+    
+    # Определяем количество лотков в зависимости от модулей
+    gutters_count = 0
+    if modules == 1:
+        gutters_count = 2
+    elif modules == 2:
+        gutters_count = 3
+    elif modules == 3:
+        gutters_count = 4
+    else:
+        gutters_count = modules + 1  # По умолчанию - на 1 больше чем модулей
+    
+    # Общая длина лотков = вынос * количество лотков
+    total_gutter_length = length_m * gutters_count
+    
+    # Общая стоимость = цена за метр * общая длина
+    total_price = GUTTER_INSERT_PRICE_PER_METER * total_gutter_length
+    
+    return (True, total_price, gutters_count, total_gutter_length)
+
+
+def needs_gutter_insert(length_m):
+    """
+    Проверяет, нужен ли усилитель лотка
+    
+    Args:
+        length_m (float): Вынос перголы в метрах
+        
+    Returns:
+        bool: True если нужен усилитель лотка
+    """
+    return length_m > GUTTER_INSERT_THRESHOLD
+
+def get_drive_price(pergola_type, width_m, length_m, modules):
+    """
+    Определяет тип и стоимость привода для перголы
+    
+    Args:
+        pergola_type (str): Тип перголы
+        width_m (float): Ширина перголы в метрах
+        length_m (float): Вынос перголы в метрах
+        modules (int): Количество модулей
+        
+    Returns:
+        tuple: (название привода, цена привода, нужен ли танем-привод)
+    """
+    if pergola_type == "B500NEW":
+        rules = BANSBACH_DRIVE_RULES.get(modules, [])
+        # Специальный случай для размера 3x8 (нужен Tandem)
+        if abs(width_m - 3.0) < 0.01 and abs(length_m - 8.0) < 0.01:
+            return "Bansbach Tandem, Germany", DRIVE_PRICES["B500NEW"]["tandem"], True
+            
+        # Проверяем правила
+        for rule in rules:
+            # При большом выносе (> 6м) всегда нужен Tandem, даже если ширина небольшая
+            if length_m > 6.0:
+                return "Bansbach Tandem, Germany", DRIVE_PRICES["B500NEW"]["tandem"], True
+            
+            if width_m > rule["width"] and length_m > rule["length"]:
+                if rule["tandem"]:
+                    return "Bansbach Tandem, Germany", DRIVE_PRICES["B500NEW"]["tandem"], True
+                else:
+                    return "Bansbach Т1, Germany", DRIVE_PRICES["B500NEW"]["standard"], False
+        
+        # По умолчанию - стандартный привод
+        return "Bansbach Т1, Germany", DRIVE_PRICES["B500NEW"]["standard"], False
+    
+    elif pergola_type == "B700NEW":
+        rules = SOMFY_DRIVE_RULES.get(modules, [])
+        for rule in rules:
+            # Для 1 модуля: проверяем, что ширина <= указанной, для других модулей: ширина > указанной
+            width_check = width_m <= rule["width"] if modules == 1 else width_m > rule["width"]
+            
+            if width_check and length_m > rule["length"]:
+                if rule["tandem"]:
+                    return "Somfy M2 TANDEM", DRIVE_PRICES["B700NEW"]["tandem"], True
+                else:
+                    return "Somfy M1", DRIVE_PRICES["B700NEW"]["standard"], False
+        
+        # По умолчанию - стандартный привод
+        return "Somfy M1", DRIVE_PRICES["B700NEW"]["standard"], False
+    
+    return "", 0, False
+
+def get_remote_control(devices_count):
+    """
+    Определяет тип и стоимость пульта управления
+    
+    Args:
+        devices_count (int): Количество устройств для управления
+        
+    Returns:
+        tuple: (название пульта, цена пульта)
+    """
+    if devices_count <= 1:
+        return "Simu 1K", REMOTE_CONTROL_TYPES[1]["price"]
+    elif devices_count <= 5:
+        return "Simu 5K", REMOTE_CONTROL_TYPES[5]["price"]
+    else:
+        return "Simu 15K", REMOTE_CONTROL_TYPES[15]["price"]
 
 def perform_calculation(dimensions, options):
     """Выполнить расчет стоимости перголы"""
     try:
-        # Логируем входные данные
-        log_calculation(dimensions, options)
+        # Извлекаем данные из ввода пользователя
+        width_m = float(dimensions.get("width", 0))
+        length_m = float(dimensions.get("length", 0))
+        pergola_type = options.get("pergola_type", "")
+        lamella_type = options.get("lamella_type", "")
+        modules = get_modules_by_dimensions(width_m, length_m, pergola_type)  # Автоматически определяем модули по размерам
+        lighting_options = options.get("lighting", [])
+        installation = options.get("installation", False)  # Опция установки
         
-        # Выполняем расчет
-        results = calculate_pergola_cost(dimensions, options)
+        # Определяем размер ламели в миллиметрах
+        lamella_size = "PIR" if "PIR" in lamella_type else ("200" if "200" in lamella_type else "250")
         
-        # Логируем результаты
-        if 'error' in results:
-            log_calculation(dimensions, options, error=results['error'])
+        # Корректируем размер выноса в соответствии с размером ламелей для B500NEW и B700NEW
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            lamella_size_mm = 200 if lamella_size == "200" else 250
+            original_length = length_m
+            length_m = adjust_length_for_lamella_size(length_m, lamella_size_mm)
+            # Рассчитываем количество ламелей
+            lamellas_count = math.ceil(length_m / (lamella_size_mm / 1000))
+        
+        # Определяем базовую стоимость перголы из прайс-листа
+        base_price = get_base_price(pergola_type, lamella_size, width_m, length_m)
+        
+        # Инициализируем результаты расчета
+        results = {
+            "dimensions": {
+                "width": width_m,
+                "length": length_m,
+                "modules": modules
+            },
+            "options": {
+                "pergola_type": pergola_type,
+                "lamella_type": lamella_type,
+                "lighting": lighting_options,
+                "installation": installation
+            },
+            "base_price": base_price,
+            "items": [],
+            "total_price": base_price
+        }
+        
+        # Проверяем, нужны ли дополнительные колонны
+        need_columns = needs_additional_columns(pergola_type, lamella_size, length_m)
+        if need_columns:
+            columns_price = COLUMNS_PRICES.get(modules, 0)
+            results["additional_columns"] = {
+                "required": True,
+                "count": modules + 1,  # Количество колонн зависит от модулей
+                "price": columns_price
+            }
+            results["items"].append({
+                "name": f"Дополнительные колонны ({modules + 1} шт.)",
+                "price": columns_price
+            })
+            results["total_price"] += columns_price
         else:
-            log_calculation(dimensions, options, results)
+            results["additional_columns"] = {"required": False}
+        
+        # Проверяем, нужен ли усилитель лотка и рассчитываем его стоимость
+        gutter_needed, gutter_price, gutters_count, total_gutter_length = calculate_gutter_insert_price(length_m, modules)
+        if gutter_needed:
+            results["gutter_insert"] = {
+                "required": True,
+                "gutters_count": gutters_count,
+                "length": total_gutter_length,
+                "price_per_meter": GUTTER_INSERT_PRICE_PER_METER,
+                "total_price": gutter_price
+            }
+            results["items"].append({
+                "name": f"Усилитель лотка ({gutters_count} лотка, {total_gutter_length:.2f} м)",
+                "price": gutter_price
+            })
+            results["total_price"] += gutter_price
+        else:
+            results["gutter_insert"] = {"required": False}
+        
+        # Определяем тип и стоимость привода
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            drive_name, drive_price, is_tandem = get_drive_price(pergola_type, width_m, length_m, modules)
+            drive_count = modules  # Один привод на каждый модуль
+            total_drive_price = drive_price * drive_count
+            
+            results["drive"] = {
+                "name": drive_name,
+                "count": drive_count,
+                "is_tandem": is_tandem,
+                "price": drive_price,
+                "total_price": total_drive_price
+            }
+            
+            results["items"].append({
+                "name": f"Привод {drive_name} (для {drive_count} {get_plural_form(drive_count, 'модуль', 'модуля', 'модулей')})",
+                "price": total_drive_price
+            })
+            
+            results["total_price"] += total_drive_price
+            
+            # Количество устройств для пульта ДУ (привод + освещение)
+            devices_count = drive_count
+            if "white_led" in lighting_options or "rgb_led" in lighting_options:
+                # Добавляем блоки управления освещением - по одному на каждый модуль
+                devices_count += modules  # Каждый модуль требует отдельного канала для освещения
+            
+            # Определяем тип и стоимость пульта ДУ
+            remote_name, remote_price = get_remote_control(devices_count)
+            
+            results["remote_control"] = {
+                "name": remote_name,
+                "devices_count": devices_count,
+                "price": remote_price
+            }
+            
+            results["items"].append({
+                "name": f"Пульт ДУ {remote_name} ({devices_count} {get_plural_form(devices_count, 'канал', 'канала', 'каналов')})",
+                "price": remote_price
+            })
+            
+            results["total_price"] += remote_price
+        
+        # Расчет стоимости освещения
+        has_lighting = "white_led" in lighting_options or "rgb_led" in lighting_options
+        if has_lighting:
+            lighting_perimeter = calculate_lighting_perimeter(width_m, length_m, modules)
+            
+            lighting_cost = 0
+            led_types = []
+            
+            # Блок управления освещением - по 1 блоку на каждый модуль
+            if has_lighting:
+                # Количество блоков управления зависит от количества модулей
+                controllers_count = modules
+                total_controller_price = LIGHTING_PRICES["controller"] * controllers_count
+                lighting_cost += total_controller_price
+                results["items"].append({
+                    "name": f"Блок управления освещением Somfy RTS Dimmer ({controllers_count} шт.)",
+                    "price": total_controller_price
+                })
+            
+            # Белая светодиодная лента
+            if "white_led" in lighting_options:
+                white_led_cost = LIGHTING_PRICES["white_led"] * lighting_perimeter
+                lighting_cost += white_led_cost
+                led_types.append("белая")
+                results["items"].append({
+                    "name": f"Светодиодная лента белая ({lighting_perimeter:.2f} м)",
+                    "price": white_led_cost
+                })
+            
+            # RGB светодиодная лента
+            if "rgb_led" in lighting_options:
+                rgb_led_cost = LIGHTING_PRICES["rgb_led"] * lighting_perimeter
+                lighting_cost += rgb_led_cost
+                led_types.append("RGB")
+                results["items"].append({
+                    "name": f"Светодиодная лента RGB ({lighting_perimeter:.2f} м)",
+                    "price": rgb_led_cost
+                })
+                
+            # Для B600 добавляем пульт управления освещением
+            if pergola_type == "B600":
+                # Для B600 нужен отдельный пульт для освещения
+                # Количество устройств = количество блоков освещения (по одному на каждый модуль)
+                lighting_devices_count = controllers_count  
+                remote_name, remote_price = get_remote_control(lighting_devices_count)
+                
+                results["lighting_remote"] = {
+                    "name": remote_name,
+                    "devices_count": lighting_devices_count,
+                    "price": remote_price
+                }
+                
+                results["items"].append({
+                    "name": f"Пульт ДУ {remote_name} для освещения ({lighting_devices_count} {get_plural_form(lighting_devices_count, 'канал', 'канала', 'каналов')})",
+                    "price": remote_price
+                })
+                
+                lighting_cost += remote_price
+            
+            results["lighting"] = {
+                "types": led_types,
+                "perimeter": lighting_perimeter,
+                "total_price": lighting_cost
+            }
+            
+            results["total_price"] += lighting_cost
+        
+        # Добавляем информацию о спецификации (без цен)
+        specification = []
+        
+        # Определяем тип ламелей и их количество
+        lamella_info = ""
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type)
+            lamellas_count_text = f", Количество ламелей - {lamellas_count} шт." if 'lamellas_count' in locals() else ""
+        else:
+            lamellas_count_text = ""
+                
+        # Основная пергола
+        specification.append({
+            "name": f"Пергола серии {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м. {lamella_info}{lamellas_count_text}",
+            "count": f"{modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}",
+            "price": ""
+        })
+        
+        # Дополнительные колонны и усилитель лотка
+        if need_columns:
+            specification.append({
+                "name": "Дополнительные колонны",
+                "count": f"{modules + 1} шт.",
+                "price": ""
+            })
+        
+        if gutter_needed:
+            specification.append({
+                "name": "Усилитель лотка",
+                "count": f"{total_gutter_length:.2f} м ({gutters_count} {get_plural_form(gutters_count, 'лоток', 'лотка', 'лотков')})",
+                "price": ""
+            })
+        
+        # Привод
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            drive_name, _, _ = get_drive_price(pergola_type, width_m, length_m, modules)
+            specification.append({
+                "name": f"Привод {drive_name}",
+                "count": f"{modules} шт.",
+                "price": ""
+            })
+            
+            # Пульт ДУ
+            remote_name, _ = get_remote_control(devices_count)
+            specification.append({
+                "name": f"Пульт ДУ {remote_name}",
+                "count": "1 шт.",
+                "price": ""
+            })
+        
+        # Освещение
+        if has_lighting:
+            # Добавляем блок управления освещением - по 1 блоку на каждый модуль
+            specification.append({
+                "name": "Блок управления освещением Somfy RTS Dimmer",
+                "count": f"{modules} шт.",
+                "price": ""
+            })
+            
+            # Увеличиваем счетчик устройств для определения типа пульта
+            lighting_devices_count = modules  # По 1 блоку управления на каждый модуль
+            
+            if "white_led" in lighting_options:
+                specification.append({
+                    "name": "Светодиодная лента белая",
+                    "count": f"{lighting_perimeter:.2f} м",
+                    "price": ""
+                })
+            
+            if "rgb_led" in lighting_options:
+                specification.append({
+                    "name": "Светодиодная лента RGB",
+                    "count": f"{lighting_perimeter:.2f} м",
+                    "price": ""
+                })
+            
+            # Добавляем пульт для управления освещением
+            # Если уже есть пульт от привода перголы (B500/B700), выбираем пульт с большим числом каналов
+            # Если перголы B600 без привода, добавляем пульт для освещения
+            if pergola_type in ["B500NEW", "B700NEW"]:
+                # Обновляем devices_count для выбора пульта с большим числом каналов
+                devices_count += lighting_devices_count
+                
+                # Обновляем информацию о пульте в спецификации
+                for i, item in enumerate(specification):
+                    if "Пульт ДУ" in item["name"]:
+                        remote_name, _ = get_remote_control(devices_count)
+                        specification[i] = {
+                            "name": f"Пульт ДУ {remote_name}",
+                            "count": "1 шт.",
+                            "price": ""
+                        }
+                        break
+            else:
+                # Для B600 добавляем отдельный пульт для освещения
+                remote_name, _ = get_remote_control(lighting_devices_count)
+                specification.append({
+                    "name": f"Пульт ДУ {remote_name} для освещения",
+                    "count": f"1 шт. ({lighting_devices_count} {get_plural_form(lighting_devices_count, 'канал', 'канала', 'каналов')})",
+                    "price": ""
+                })
+        
+        results["specification"] = specification
+        
+        # Базовая стоимость (без наценок)
+        base_total_price = results["total_price"]
+        
+        # Добавляем наценку за доставку (10% автоматически)
+        delivery_price = round(base_total_price * 0.1, 2)
+        results["delivery"] = {
+            "percentage": 10,
+            "price": delivery_price
+        }
+        results["items"].append({
+            "name": "Доставка",
+            "price": delivery_price
+        })
+        results["total_price"] += delivery_price
+        
+        # Добавляем наценку за установку (10%, если выбрана опция)
+        if installation:
+            installation_price = round(base_total_price * 0.1, 2)
+            results["installation"] = {
+                "selected": True,
+                "percentage": 10,
+                "price": installation_price
+            }
+            results["items"].append({
+                "name": "Установка",
+                "price": installation_price
+            })
+            results["total_price"] += installation_price
+        else:
+            results["installation"] = {
+                "selected": False,
+                "price": 0
+            }
+        
+        # Обновляем итоговую стоимость в спецификации
+        specification.append({
+            "name": "Доставка",
+            "count": "1",
+            "price": ""
+        })
+        
+        if installation:
+            specification.append({
+                "name": "Установка",
+                "count": "1",
+                "price": ""
+            })
+        
+        # Округляем общую стоимость
+        results["total_price"] = round(results["total_price"], 2)
+        
+        # Техническая информация для вывода в результатах
+        results["debug"] = {
+            "length_corrected": length_m,
+            "width": width_m,
+            "modules": modules,
+            "need_columns": need_columns,
+            "need_gutter": gutter_needed,
+            "pergola_type": pergola_type,
+            "lamella_type": lamella_type,
+            "lamella_size": lamella_size,
+            "lamellas_count": lamellas_count if 'lamellas_count' in locals() else 0,
+            "installation": installation
+        }
         
         return results
     
     except Exception as e:
         error_msg = f"Ошибка при расчете: {str(e)}"
-        logger.error(error_msg, exc_info=True)
+        print(error_msg)
         return {"error": error_msg}
 
-# Второй вызов set_page_config удаляем, т.к. он уже вызван выше
+def get_modules_by_dimensions(width, length, pergola_type=None):
+    """
+    Определяет количество модулей в зависимости от размеров перголы и ее типа.
+    Учитывает как ширину, так и вынос (длину) перголы.
+    
+    Args:
+        width (float): Ширина перголы в метрах
+        length (float): Вынос (длина) перголы в метрах
+        pergola_type (str, optional): Тип перголы
+        
+    Returns:
+        int: Количество модулей
+    """
+    # Особые правила для больших выносов
+    if length > 6.0:
+        if width <= 4.5:
+            return 2  # Для выноса > 6.0м даже при малой ширине нужно 2 модуля
+        elif width <= 9.0:
+            return 2  # Для ширины 5-9м - 2 модуля
+        else:
+            return 3  # Для ширины 9.5м и более - 3 модуля
+    
+    # Стандартные правила по ширине
+    if width <= 4.5:
+        return 1  # Для ширины до 4.5м - 1 модуль
+    elif width <= 9.0:
+        return 2  # Для ширины 5-9м - 2 модуля
+    else:
+        return 3  # Для ширины 9.5м и более - 3 модуля
+        
+def get_modules_by_width(width):
+    """
+    Устаревшая функция, оставлена для совместимости.
+    Используйте get_modules_by_dimensions вместо нее.
+    
+    Args:
+        width (float): Ширина перголы в метрах
+        
+    Returns:
+        int: Количество модулей
+    """
+    return get_modules_by_dimensions(width, 4.0)  # Используем стандартный вынос 4.0
+
+def render_dimensions_form():
+    """
+    Отображает форму для ввода размеров перголы
+    
+    Returns:
+        dict: Словарь с введенными размерами
+    """
+    st.markdown("<h2 class='section-header' style='text-align: center;'>Размеры перголы</h2>", unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        width = st.number_input(
+            "Ширина (м)",
+            min_value=2.0,
+            max_value=15.0,
+            value=3.0,
+            step=0.5,
+            format="%.2f",
+            help="Ширина перголы в метрах (2.0 - 15.0 м)"
+        )
+    
+    with col2:
+        length = st.number_input(
+            "Вынос (м)",
+            min_value=2.0,
+            max_value=8.0,
+            value=4.0,
+            step=0.5,
+            format="%.2f",
+            help="Глубина (вынос) перголы в метрах (2.0 - 8.0 м)"
+        )
+    
+    # Определяем количество модулей автоматически по обоим параметрам - ширине и выносу
+    modules = get_modules_by_dimensions(width, length)
+    
+    # Показываем информацию о модулях (только для отображения)
+    if modules > 1:
+        st.info(f"При размере {width:.2f}×{length:.2f} м будет автоматически использовано {modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}")
+    
+    return {
+        "width": width,
+        "length": length,
+        "modules": modules
+    }
+
+def render_options_form():
+    """
+    Отображает форму для выбора опций перголы в плиточном дизайне
+    
+    Returns:
+        dict: Словарь с выбранными опциями
+    """
+    st.markdown("<h2 class='section-header' style='text-align: center;'>Параметры перголы</h2>", unsafe_allow_html=True)
+    
+    # Тип перголы
+    pergola_type = st.radio(
+        "Выберите тип перголы",
+        options=list(PERGOLA_TYPES.keys()),
+        format_func=lambda x: PERGOLA_TYPES.get(x, x),
+        horizontal=True
+    )
+    
+    # Тип ламелей - зависит от выбранного типа перголы
+    lamella_options = []
+    if pergola_type == "B500NEW":
+        lamella_options = ["B500-25NEW", "B500-20NEW"]  # Стандартные 250 мм первыми
+    elif pergola_type == "B700NEW":
+        lamella_options = ["B700-25NEW", "B700-20NEW"]  # Стандартные 250 мм первыми
+    elif pergola_type == "B600":
+        lamella_options = ["B600-PIR"]
+    
+    lamella_type = st.radio(
+        "Выберите тип ламелей",
+        options=lamella_options,
+        format_func=lambda x: LAMELLA_TYPES.get(x, x),
+        horizontal=True
+    )
+    
+    # Освещение
+    st.markdown("<div style='margin-top: 0px;'></div>", unsafe_allow_html=True)
+    
+    # Определяем варианты освещения
+    lighting_options_list = ["none", "white_led", "rgb_led"]
+    
+    # Словарь с понятными названиями для отображения
+    lighting_labels = {
+        "none": "Без освещения",
+        "white_led": "Белая светодиодная лента",
+        "rgb_led": "RGB светодиодная лента"
+    }
+    
+    # Используем radio вместо checkboxes для горизонтального расположения
+    lighting_choice = st.radio(
+        "Освещение",
+        options=lighting_options_list,
+        format_func=lambda x: lighting_labels.get(x, x),
+        horizontal=True,
+        index=0,  # По умолчанию "Без освещения"
+    )
+    
+    # Преобразуем выбор в список опций (для сохранения совместимости с существующим кодом)
+    lighting_options = []
+    if lighting_choice == "white_led":
+        lighting_options = ["white_led"]
+    elif lighting_choice == "rgb_led":
+        lighting_options = ["rgb_led"]
+    
+    # Установка
+    st.markdown("<div style='margin-top: 0px;'></div>", unsafe_allow_html=True)
+    st.markdown("<p style='font-weight: 500; margin-bottom: 0px;'>Установка</p>", unsafe_allow_html=True)
+    
+    installation = st.checkbox("С установкой", value=True, label_visibility="visible")
+    
+    # Возвращаем выбранные опции (не включаем модули, т.к. они рассчитываются автоматически)
+    return {
+        "pergola_type": pergola_type,
+        "lamella_type": lamella_type,
+        "lighting": lighting_options,
+        "installation": installation
+    }
+
+def render_results(results):
+    """
+    Отображает результаты расчета стоимости перголы
+    
+    Args:
+        results (dict): Словарь с результатами расчета
+    """
+    # Создаем якорь для скролла с ID 
+    st.markdown('<div id="results" name="results"></div>', unsafe_allow_html=True)
+    
+    # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
+    send_page_height_to_parent()
+    
+    if "error" in results:
+        st.error(f"Ошибка при расчете: {results['error']}")
+        return
+    
+    # Основная информация о перголе
+    pergola_type = results["options"]["pergola_type"]
+    width = results["dimensions"]["width"]
+    length = results["dimensions"]["length"]
+    modules = results["dimensions"]["modules"]
+    base_price = results["base_price"]
+    
+    # Курс евро для конвертации цен
+    euro_rate = EURO_RATE
+    total_price = results["total_price"]
+    
+    # Убрано отображение отладочной информации
+    
+    # Получаем информацию о ламелях
+    lamella_type = results["options"]["lamella_type"]
+    lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type)
+    
+    # Получаем количество ламелей
+    lamellas_count = results["debug"].get("lamellas_count", 0)
+    
+    # Заголовок результатов
+    rub_total = total_price * euro_rate
+    # Форматируем цену в бухгалтерском стиле с разделителями тысяч
+    formatted_price = "{:,.0f}".format(rub_total).replace(",", " ")
+    st.markdown(f"""
+    <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
+        <h2 style='margin-top: 0; color: #0066cc; font-size: 3.2rem; font-weight: 700; text-align: center; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 2px solid #e5eeff;'>Результаты расчета</h2>
+        <p style='font-size: 1.1rem; margin-bottom: 5px;'>
+            <strong>Пергола:</strong> {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м
+        </p>
+        <p style='font-size: 1.1rem; margin-bottom: 5px;'>
+            <strong>Тип ламелей:</strong> {lamella_info}
+        </p>
+        <p style='font-size: 1.1rem; margin-bottom: 5px;'>
+            <strong>Количество модулей:</strong> {modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}
+        </p>
+        <div style='font-size: 1.4rem; color: #0066cc; font-weight: 700; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0; text-align: center;'>
+            Итоговая стоимость: <span style='font-size: 1.5rem; color: #0066cc;'>{formatted_price} ₽</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Отображаем спецификацию перголы
+    if "specification" in results:
+        st.markdown("<h3 style='font-size: 2.5rem; font-weight: 700; color: #0066cc; margin-top: 10px; margin-bottom: 15px; text-align: center; padding-bottom: 5px; border-bottom: 2px solid #e5eeff;'>Спецификация перголы</h3>", unsafe_allow_html=True)
+        
+        # Создаем таблицу спецификации
+        spec_data = []
+        for item in results["specification"]:
+            spec_data.append([item["name"], item["count"]])
+        
+        # Преобразуем данные в DataFrame и отображаем
+        import pandas as pd
+        spec_df = pd.DataFrame(spec_data, columns=["Наименование", "Количество"])
+        
+        # Создаем уникальный ключ для таблицы спецификации (для применения уникальных стилей)
+        spec_table_key = "spec_table_" + str(hash(str(spec_data)))
+        
+        # Создаем HTML-таблицу напрямую для обхода проблем с шириной
+        html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px;">'
+        
+        # Добавляем заголовки
+        html_table += '<tr>'
+        html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem;">Наименование</th>'
+        html_table += '<th style="text-align:center; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem;">Количество</th>'
+        html_table += '</tr>'
+        
+        # Добавляем строки с данными
+        for item in spec_data:
+            html_table += '<tr>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:center; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[1]}</td>'
+            html_table += '</tr>'
+        
+        html_table += '</table>'
+        
+        # Выводим HTML-таблицу напрямую через markdown
+        st.markdown(f"""
+        <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
+            {html_table}
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Отображаем таблицу стоимости
+    st.markdown("<h3 style='font-size: 2.5rem; font-weight: 700; color: #0066cc; margin-top: 15px; margin-bottom: 15px; text-align: center; padding-bottom: 5px; border-bottom: 2px solid #e5eeff;'>Стоимость</h3>", unsafe_allow_html=True)
+    
+    # Создаем таблицу стоимости
+    items_data = []
+    
+    # Получаем информацию о ламелях
+    lamella_info = LAMELLA_TYPES.get(results["options"]["lamella_type"], results["options"]["lamella_type"])
+    lamellas_count = results["debug"].get("lamellas_count", 0)
+    lamellas_info = ""
+    
+    # Формируем описание ламелей для таблицы стоимости
+    if pergola_type in ["B500NEW", "B700NEW"]:
+        lamellas_info = f". {lamella_info}"
+        if lamellas_count > 0:
+            lamellas_info += f", Количество ламелей - {lamellas_count} шт."
+    elif pergola_type == "B600":
+        lamellas_info = f". {lamella_info}"
+    
+    # Функция для форматирования цены в бухгалтерском стиле
+    def format_price(price):
+        # Округляем цену до целого числа
+        price = round(price)
+        
+        # Используем полный формат без сокращений, с пробелами в качестве разделителей тысяч
+        return "{:,.0f}₽".format(price).replace(",", " ")
+    
+    # Базовая стоимость перголы - всегда первой строкой
+    rub_base_price = base_price * euro_rate
+    items_data.append([f"Пергола серии {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width:.2f}×{length:.2f} м{lamellas_info} ({modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')})", format_price(rub_base_price)])
+    
+    # Привод и автоматика - второй строкой, если есть
+    if pergola_type in ["B500NEW", "B700NEW"]:
+        for item in results["items"]:
+            if "Привод" in item["name"] or "привод" in item["name"]:
+                rub_price = item['price'] * euro_rate
+                items_data.append([item["name"], format_price(rub_price)])
+    
+    # Пульт ДУ - третьей строкой, если есть (для всех типов пергол)
+    for item in results["items"]:
+        if "Пульт" in item["name"] or "пульт" in item["name"]:
+            rub_price = item['price'] * euro_rate
+            items_data.append([item["name"], format_price(rub_price)])
+    
+    # Освещение - четвертой строкой, если есть
+    for item in results["items"]:
+        if "освещен" in item["name"].lower() or "лента" in item["name"].lower():
+            rub_price = item['price'] * euro_rate
+            items_data.append([item["name"], format_price(rub_price)])
+    
+    # Дополнительные опции - усилитель лотка и колонны
+    for item in results["items"]:
+        if "Усилитель" in item["name"] or "усилитель" in item["name"]:
+            rub_price = item['price'] * euro_rate
+            items_data.append([item["name"], format_price(rub_price)])
+        
+        if "колон" in item["name"].lower():
+            rub_price = item['price'] * euro_rate
+            items_data.append([item["name"], format_price(rub_price)])
+    
+    # Доставка и установка
+    for item in results["items"]:
+        if "Доставка" in item["name"]:
+            rub_price = item['price'] * euro_rate
+            items_data.append([item["name"], format_price(rub_price)])
+            
+        if "Установка" in item["name"]:
+            rub_price = item['price'] * euro_rate
+            items_data.append([item["name"], format_price(rub_price)])
+    
+    # Итоговая строка - просто добавляем строку "Итого" (жирный шрифт применяется через CSS)
+    rub_total = total_price * euro_rate
+    items_data.append(["Итого", format_price(rub_total)])
+    
+    # Создаем HTML-таблицу напрямую для обхода проблем с шириной
+    html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px;">'
+    
+    # Добавляем заголовки
+    html_table += '<tr>'
+    html_table += '<th style="text-align:left; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:70%; font-size:0.9rem;">Наименование</th>'
+    html_table += '<th style="text-align:right; padding:8px; background-color:#f8f9fa; border-bottom:1px solid #ddd; width:30%; font-size:0.9rem;">Стоимость</th>'
+    html_table += '</tr>'
+    
+    # Добавляем строки с данными
+    for i, item in enumerate(items_data):
+        # Особое форматирование для строки "Итого"
+        if i == len(items_data) - 1:
+            html_table += '<tr style="background-color:#e0f0ff;">'
+            # Добавляем адаптивный CSS-класс для строки "Итого"
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
+            
+            # Применяем специальный класс для значения "Итого" с переносом строки для общей ширины
+            html_table += f"""
+            <td style="text-align:right; padding:8px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; color:#0066cc; white-space:nowrap;" class="responsive-total">
+                <div style="display:inline-block; width:100%;">{item[1]}</div>
+            </td>
+            """
+            html_table += '</tr>'
+        else:
+            html_table += '<tr>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem;">{item[1]}</td>'
+            html_table += '</tr>'
+    
+    html_table += '</table>'
+    
+    # Добавляем CSS для адаптивного шрифта строки "Итого"
+    st.markdown("""
+    <style>
+    /* Базовый размер для строки Итого на больших экранах */
+    .responsive-total {
+        font-size: 1.5rem !important;
+        white-space: nowrap !important;
+    }
+    
+    /* Медиа-запросы для адаптивности */
+    @media screen and (max-width: 992px) {
+        .responsive-total {
+            font-size: 1.2rem !important;
+        }
+    }
+    
+    @media screen and (max-width: 768px) {
+        .responsive-total {
+            font-size: 1.0rem !important;
+        }
+    }
+    
+    @media screen and (max-width: 576px) {
+        .responsive-total {
+            font-size: 0.85rem !important;
+        }
+    }
+    
+    /* Дополнительные стили для мобильной версии таблицы */
+    @media screen and (max-width: 480px) {
+        .responsive-total {
+            font-size: 0.75rem !important;
+        }
+        
+        /* Уменьшаем размер шрифта во всей таблице для мобильных устройств */
+        table th, table td {
+            font-size: 0.85rem !important;
+            padding: 6px 4px !important;
+        }
+        
+        /* Уменьшаем отступы в таблице */
+        table {
+            width: 100% !important;
+            margin: 0 !important;
+            table-layout: fixed !important;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Выводим HTML-таблицу напрямую через markdown
+    st.markdown(f"""
+    <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
+        {html_table}
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Отображаем разделитель между таблицей стоимости и описанием перголы
+    st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
+    
+    # Добавляем информацию о типе перголы и изображение
+    # Проверяем, было ли уже показано описание для этого типа перголы
+    current_pergola_shown = st.session_state.get('pergola_type_shown', None)
+    
+    # Показываем описание, если оно еще не было показано или если изменился тип перголы
+    if current_pergola_shown != pergola_type:
+        # Сохраняем текущий тип перголы
+        st.session_state.pergola_type_shown = pergola_type
+        
+        # Отображаем информацию о выбранном типе перголы с использованием модуля описаний
+        if pergola_type in ["B500NEW", "B700NEW", "B600"]:
+            # Используем описание из модуля конфигурации
+            description_html = get_pergola_description(pergola_type)
+            display_formatted_description(description_html)
+            
+            # Отображаем изображения с использованием списка из конфигурации
+            images = get_pergola_images(pergola_type)
+            caption = get_pergola_image_caption(pergola_type)
+            
+            if images:
+                # Пробуем загрузить изображения по очереди, пока не найдем рабочее
+                for img_path in images:
+                    try:
+                        # Проверяем, существует ли файл
+                        import os
+                        if not os.path.exists(img_path):
+                            continue
+                            
+                        display_image_with_padding(img_path, caption=caption)
+                        break  # Прерываем цикл, если изображение успешно загружено
+                    except Exception as e:
+                        st.error(f"Ошибка при загрузке изображения: {str(e)}")
+                        continue  # Пробуем следующее изображение
+                else:
+                    st.warning(f"Не удалось загрузить изображение для {pergola_type}")
+            
+            # Добавляем информацию о масштабируемости для всех типов пергол
+            # Отображаем описание модульной системы из модуля конфигурации
+            modular_description = get_modular_system_description()
+            display_formatted_description(modular_description)
+            
+            # Отображаем изображение модульной системы
+            modular_images = get_pergola_images("MODULAR")
+            modular_caption = get_pergola_image_caption("MODULAR")
+            
+            if modular_images:
+                # Пробуем загрузить изображения по очереди, пока не найдем рабочее
+                for img_path in modular_images:
+                    try:
+                        # Проверяем, существует ли файл
+                        import os
+                        if not os.path.exists(img_path):
+                            continue
+                        
+                        display_image_with_padding(img_path, caption=modular_caption)
+                        break
+                    except Exception as e:
+                        continue
+                else:
+                    st.warning(f"Не удалось загрузить изображение модульной системы")
+            
+            # Добавляем информацию о системе водоотведения для всех типов пергол
+            # Отображаем описание системы водоотведения из модуля конфигурации
+            drainage_description = get_drainage_system_description()
+            display_formatted_description(drainage_description)
+            
+            # Отображаем изображение системы водоотведения
+            drainage_images = get_pergola_images("DRAINAGE")
+            drainage_caption = get_pergola_image_caption("DRAINAGE")
+            
+            if drainage_images:
+                for img_path in drainage_images:
+                    try:
+                        display_image_with_padding(img_path, caption=drainage_caption)
+                        break
+                    except Exception as e:
+                        continue
+                else:
+                    st.warning(f"Не удалось загрузить изображение системы водоотведения")
+            
+            # Добавляем информацию о приводе Bansbach только для пергол B500NEW
+            if pergola_type == "B500NEW":
+                bansbach_description = get_bansbach_description()
+                display_formatted_description(bansbach_description)
+                
+                # Отображаем изображение привода Bansbach
+                bansbach_images = get_pergola_images("BANSBACH")
+                bansbach_caption = get_pergola_image_caption("BANSBACH")
+                
+                if bansbach_images:
+                    for img_path in bansbach_images:
+                        try:
+                            display_image_with_padding(img_path, caption=bansbach_caption)
+                            break
+                        except Exception as e:
+                            continue
+                    else:
+                        st.warning(f"Не удалось загрузить изображение привода Bansbach")
+            
+            # Добавляем информацию о приводе Somfy только для пергол B700NEW
+            if pergola_type == "B700NEW":
+                somfy_description = get_pergola_description("SOMFY")
+                display_formatted_description(somfy_description)
+                
+                # Отображаем изображение привода Somfy
+                somfy_images = get_pergola_images("SOMFY")
+                somfy_caption = get_pergola_image_caption("SOMFY")
+                
+                if somfy_images:
+                    for img_path in somfy_images:
+                        try:
+                            display_image_with_padding(img_path, caption=somfy_caption)
+                            break
+                        except Exception as e:
+                            continue
+                    else:
+                        st.warning(f"Не удалось загрузить изображение привода Somfy")
+            
+            # Добавляем описание вариантов установки и вертикальных систем для всех типов пергол
+            bioclimatic_install_description = get_bioclimatic_install_description()
+            display_formatted_description(bioclimatic_install_description)
+            
+            # Отображаем изображение вариантов установки
+            install_system_images = get_pergola_images("INSTALL_SYSTEM")
+            install_system_caption = get_pergola_image_caption("INSTALL_SYSTEM")
+            
+            if install_system_images:
+                for img_path in install_system_images:
+                    try:
+                        display_image_with_padding(img_path, caption=install_system_caption)
+                        break
+                    except Exception as e:
+                        continue
+                else:
+                    st.warning(f"Не удалось загрузить изображение вариантов установки")
+            
+            # Добавляем техническое описание ламелей только для пергол B500 и B700, не для B600
+            if pergola_type in ["B500NEW", "B700NEW"]:
+                lamella_engineering_description = get_lamella_engineering_description()
+                display_formatted_description(lamella_engineering_description)
+                
+                # Отображаем изображение технических характеристик ламелей
+                lamella_engineering_images = get_pergola_images("LAMELLA_ENGINEERING")
+                lamella_engineering_caption = get_pergola_image_caption("LAMELLA_ENGINEERING")
+                
+                if lamella_engineering_images:
+                    for img_path in lamella_engineering_images:
+                        try:
+                            display_image_with_padding(img_path, caption=lamella_engineering_caption)
+                            break
+                        except Exception as e:
+                            continue
+                    else:
+                        st.warning(f"Не удалось загрузить изображение технических характеристик ламелей")
+    
+    # Добавляем отступ в конце страницы
+    st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
+
+def display_formatted_description(description_text):
+    """
+    Отображает форматированное описание в стилизованном контейнере,
+    избегая проблем с видимостью HTML-тегов.
+    
+    Args:
+        description_text (str): HTML-текст с описанием
+    """
+    # Создаем стиль для описания один раз при первом вызове
+    if 'description_style_added' not in st.session_state:
+        st.markdown("""
+        <style>
+        .description-container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 5px 5px; /* Минимальные отступы слева и справа */
+            background-color: #ffffff;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 1.2rem; /* Увеличиваем базовый размер шрифта для всего контента */
+        }
+        
+        /* Стили только для статей внутри описания */
+        .description-container * {
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+        }
+        /* Стили для корректного отображения разных HTML элементов */
+        .section, section {
+            display: block;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        .description-container h1, .description-container h2 {
+            font-size: 3.2rem; /* Увеличенный размер для h1 и h2 */
+            margin-top: 30px;
+            margin-bottom: 20px;
+            color: #0066cc;
+            font-weight: 700;
+        }
+        .description-container h3 {
+            font-size: 2.86rem; /* Увеличено на 30% от 2.2rem */
+            margin-top: 25px;
+            margin-bottom: 20px;
+            color: #0066cc;
+            font-weight: 600;
+        }
+        .description-container h4 {
+            font-size: 2.34rem; /* Увеличено на 30% от 1.8rem */
+            margin-top: 20px;
+            margin-bottom: 15px;
+            color: #0066cc;
+            font-weight: 500;
+        }
+        .description-container p {
+            margin-bottom: 10px;
+            line-height: 1.5;
+            font-size: 1.25rem; /* Увеличенный размер параграфов */
+        }
+        .description-container ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+            font-size: 1.25rem; /* Увеличенный размер для списков */
+        }
+        .description-container li {
+            margin-bottom: 8px;
+        }
+        .description-container strong, .description-container b {
+            font-weight: 600;
+            color: #0066cc; /* Выделяем синим цветом важный текст */
+        }
+        .description-container em, .description-container i {
+            font-style: italic;
+            color: #0066cc; /* Выделяем синим цветом важный текст */
+        }
+        /* Стили для таблиц внутри описаний */
+        .description-container table {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+        .description-container th {
+            background-color: #f0f6ff; /* Светло-синий фон для заголовков */
+            color: #0066cc;
+            font-weight: 600;
+            font-size: 1.2rem;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #c0d5f0;
+        }
+        .description-container td {
+            padding: 10px;
+            border: 1px solid #c0d5f0;
+            font-size: 1.2rem;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        st.session_state.description_style_added = True
+    
+    try:
+        # Предварительная обработка для устранения проблем с форматированием
+        
+        # 1. Удаляем отступы в начале строк, которые создают проблемы с HTML
+        import re
+        # Определяем, есть ли отступы в начале описания, что характерно для проблемных статей
+        lines = description_text.split('\n')
+        cleaned_lines = []
+        
+        # Проверяем каждую строку и удаляем лишние пробелы в начале
+        for line in lines:
+            # Если строка начинается с пробелов и содержит HTML-тег
+            if line.strip() and line.strip()[0] == '<':
+                # Удаляем все пробелы перед HTML-тегом
+                cleaned_lines.append(line.strip())
+            else:
+                # Оставляем пустые строки или неструктурированный текст как есть
+                cleaned_lines.append(line)
+        
+        # Собираем очищенный текст обратно
+        clean_text = '\n'.join(cleaned_lines)
+        
+        # 2. Заменяем все экземпляры <section> на <div class="section">
+        formatted_text = clean_text.replace("<section>", "<div class='section'>")
+        formatted_text = formatted_text.replace("</section>", "</div>")
+        
+        # 3. Для надежности заменяем еще и вариации с пробелами или атрибутами
+        formatted_text = re.sub(r'<section\s+[^>]*>', '<div class="section">', formatted_text)
+        
+        # 4. Проверяем финальный результат на любые оставшиеся <section> теги
+        if "<section" in formatted_text:
+            # Если остались, применяем более радикальную замену
+            formatted_text = re.sub(r'<section.*?>', '<div class="section">', formatted_text)
+        
+        # 5. Удаляем двойные пробелы для надежности
+        formatted_text = re.sub(r'\s{2,}', ' ', formatted_text)
+        
+        # 6. Обрамляем весь текст в div-контейнер для изоляции стилей и добавляем контейнер с отступами
+        # Уменьшаем отступ справа для более компактного вида
+        final_html = f"""
+        <div style="width:95%; margin:0 auto; padding-left:15px; padding-right:15px;">
+            <div class="description-container">{formatted_text}</div>
+        </div>
+        """
+        
+        # Используем контейнер для изоляции стилей и предотвращения конфликтов
+        container = st.container()
+        with container:
+            st.markdown(final_html, unsafe_allow_html=True)
+    
+    except Exception as e:
+        # В случае ошибки показываем сообщение и используем безопасный метод отображения
+        st.error(f"Ошибка при форматировании HTML: {str(e)}")
+        # Резервный вариант отображения с вырезанием HTML
+        import re
+        plain_text = re.sub(r'<.*?>', ' ', description_text)
+        st.write(plain_text)
+
+def display_image_with_padding(image_path, caption=None, padding_percent=5):
+    """
+    Отображает изображение с отступами по краям и подписью.
+    
+    Args:
+        image_path (str): Путь к изображению
+        caption (str, optional): Подпись к изображению
+        padding_percent (int, optional): Процент отступа от ширины контейнера (по умолчанию 5%)
+    """
+    # Создаем контейнер с отступами для изображения
+    container = st.container()
+    with container:
+        # Применяем стиль для изображения
+        if 'image_style_added' not in st.session_state:
+            st.markdown(f"""
+            <style>
+            .image-container {{
+                width: {100 - 2*padding_percent}%;
+                margin: 0 auto;
+                margin-bottom: 20px;
+            }}
+            </style>
+            """, unsafe_allow_html=True)
+            st.session_state.image_style_added = True
+        
+        # Проверяем существование файла
+        import os
+        if not os.path.exists(image_path):
+            raise FileNotFoundError(f"Изображение не найдено: {image_path}")
+            
+        # Отображаем изображение
+        # Вместо параметра use_container_width=True используем width=None для занятия всей ширины
+        st.image(image_path, caption=caption, width=None)
+
+def send_page_height_to_parent():
+    """
+    Добавляет JavaScript для отправки высоты страницы родительскому окну.
+    Используется для адаптивного изменения высоты iframe после расчета.
+    """
+    st.markdown("""
+    <script>
+        // Функция для отправки высоты страницы родительскому окну
+        function sendPageHeightToParent() {
+            try {
+                // Получаем высоту всего документа
+                const pageHeight = Math.max(
+                    document.body.scrollHeight,
+                    document.body.offsetHeight,
+                    document.documentElement.clientHeight,
+                    document.documentElement.scrollHeight,
+                    document.documentElement.offsetHeight
+                );
+                
+                // Добавляем немного отступа для надежности
+                const heightWithPadding = pageHeight + 100;
+                
+                // Отправляем сообщение родительскому окну
+                window.parent.postMessage({
+                    height: heightWithPadding,
+                    needsScroll: true,
+                    timestamp: Date.now()
+                }, '*');  // '*' - отправляем всем возможным родителям для надежности
+                
+                console.log('Sent page height to parent:', heightWithPadding);
+                
+                // Повторяем отправку через короткое время, чтобы убедиться, что высота корректна
+                setTimeout(function() {
+                    const updatedHeight = Math.max(
+                        document.body.scrollHeight,
+                        document.body.offsetHeight,
+                        document.documentElement.clientHeight,
+                        document.documentElement.scrollHeight,
+                        document.documentElement.offsetHeight
+                    ) + 100;
+                    
+                    window.parent.postMessage({
+                        height: updatedHeight,
+                        needsScroll: true,
+                        timestamp: Date.now() + 1
+                    }, '*');
+                    
+                    console.log('Updated page height sent to parent:', updatedHeight);
+                }, 500);
+                
+                // Еще одна отправка через 1 секунду для надежности
+                setTimeout(function() {
+                    const finalHeight = Math.max(
+                        document.body.scrollHeight,
+                        document.body.offsetHeight,
+                        document.documentElement.clientHeight,
+                        document.documentElement.scrollHeight,
+                        document.documentElement.offsetHeight
+                    ) + 150;
+                    
+                    window.parent.postMessage({
+                        height: finalHeight,
+                        needsScroll: true,
+                        timestamp: Date.now() + 2
+                    }, '*');
+                    
+                    console.log('Final page height sent to parent:', finalHeight);
+                }, 1000);
+            } catch(e) {
+                console.error('Error sending page height to parent:', e);
+            }
+        }
+        
+        // Прослушиваем сообщения от родительского окна
+        window.addEventListener('message', function(event) {
+            // Проверяем, запрашивает ли родитель высоту страницы
+            if (event.data && event.data.type === 'REQUEST_HEIGHT') {
+                sendPageHeightToParent();
+            }
+        });
+        
+        // Отправляем высоту при загрузке страницы
+        window.addEventListener('load', function() {
+            setTimeout(sendPageHeightToParent, 500);
+        });
+        
+        // Отправляем высоту при изменении размера окна
+        window.addEventListener('resize', function() {
+            setTimeout(sendPageHeightToParent, 200);
+        });
+        
+        // Выполняем отправку сразу после загрузки скрипта
+        setTimeout(sendPageHeightToParent, 300);
+        
+        // Повторно отправляем высоту через 2 секунды для надежности
+        setTimeout(sendPageHeightToParent, 2000);
+    </script>
+    """, unsafe_allow_html=True)
+
+def scroll_to_results():
+    """
+    Добавляет JavaScript для перехода к якорю результатов при нажатии на скрытую кнопку
+    """
+    # Добавляем JavaScript для автоматического нажатия на ссылку-якорь
+    st.markdown("""
+    <script>
+        // Используем URL-хэш для скролла
+        function scrollToResults() {
+            console.log('Attempting to scroll to results...');
+            
+            // Ищем элемент с id="results"
+            const resultsElement = document.getElementById('results');
+            
+            if (resultsElement) {
+                console.log('Found results element, scrolling...');
+                
+                // Программно создаем и кликаем по ссылке на якорь
+                const scrollLink = document.createElement('a');
+                scrollLink.href = '#results';
+                scrollLink.style.display = 'none';
+                document.body.appendChild(scrollLink);
+                
+                // Прокручиваем с задержкой для надежности
+                setTimeout(() => {
+                    scrollLink.click();
+                    console.log('Clicked on results anchor link');
+                    
+                    // Удаляем ссылку после использования
+                    setTimeout(() => {
+                        document.body.removeChild(scrollLink);
+                    }, 100);
+                }, 500);
+                
+                return true;
+            }
+            
+            console.log('Results element not found');
+            
+            // Если якорь не найден, ищем заголовок или просто скроллим вниз
+            const resultsHeadings = Array.from(document.querySelectorAll('h2'))
+                .filter(h => h.textContent.includes('Результаты расчета'));
+            
+            if (resultsHeadings.length > 0) {
+                console.log('Found results heading, scrolling...');
+                const heading = resultsHeadings[0];
+                window.scrollTo({
+                    top: heading.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+                return true;
+            }
+            
+            // Крайний случай - просто скроллим на определенное расстояние вниз
+            console.log('No targets found, scrolling down as fallback');
+            window.scrollTo({
+                top: document.body.scrollHeight / 2,  // Примерно в середину страницы
+                behavior: 'smooth'
+            });
+            
+            return false;
+        }
+        
+        // Выполняем скролл после загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded, scheduling scroll');
+            setTimeout(scrollToResults, 300);
+        });
+        
+        // Также выполняем скролл сразу (для случая, когда DOM уже загружен)
+        console.log('Script loaded, scheduling immediate scroll');
+        setTimeout(scrollToResults, 500);
+        
+        // И выполняем третью попытку для надежности
+        setTimeout(scrollToResults, 1500);
+    </script>
+    """, unsafe_allow_html=True)
 
 def main():
     """Основная функция приложения"""
+    # Настраиваем страницу
+    st.set_page_config(
+        page_title="Калькулятор пергол DecoLife",
+        page_icon="🏠",
+        layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
+    )
     
-    # Применяем фикс для удаления синей заливки кнопок
-    fix_blue_tiles()
+    # Добавляем код счетчика Яндекс.Метрики
+    add_yandex_metrika()
     
-    # Добавляем CSS для увеличения кнопки сразу после загрузки страницы
-    st.markdown("""
-    <style>
-    /* Переменные CSS для управления цветами */
-    :root {
-        --button-bg: #3f6daa;
-        --button-text: #FFFFFF;  
-        --text-color: #000000;
-        --highlight: #3f6daa;
-        --highlight-hover: #34598e;
-        --selected-bg: #3f6daa;
-        --selected-text: #FFFFFF;
-        --unselected-bg: #FFFFFF;
-        --unselected-text: #000000;
-        --accent-color: #ff9c00;
-    }
-    
-    /* Глобальные стили для кнопки расчета - управление размером */
-    .stButton button {
-        font-size: 2rem !important;
-        padding: 25px 25px !important;
-        min-height: 80px !important;
-        font-weight: 700 !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Принудительно устанавливаем светлую тему, белый фон и черный текст
-    st.markdown("""
-    <style>
-    /* МАКСИМАЛЬНО АГРЕССИВНОЕ ПРИНУДИТЕЛЬНОЕ ПРИМЕНЕНИЕ СВЕТЛОЙ ТЕМЫ */
-    /* Применяем белый фон и черный текст для ВСЕХ элементов */
-    html, body, .stApp, .main, [data-testid="stAppViewContainer"],
-    .stApp.dark, [data-theme="dark"], .dark-mode {
-        color: #000000 !important;
-        background-color: #FFFFFF !important;
-    }
-    
-    /* Добавляем отступы слева и справа для калькулятора */
-    .block-container {
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
-        max-width: 1000px !important;
-        margin: 0 auto !important;
-    }
-    
-    /* Форсируем черный цвет для всех текстовых элементов */
-    h1, h2, h3, h4, h5, h6, p, span, div, label, button {
-        color: #000000 !important;
-    }
-    
-    /* Принудительно меняем все синие элементы на белые с черной границей */
-    div.row-widget.stRadio > div[role="radiogroup"] > label,
-    .st-cl, .st-bq, .st-bn, .st-bo, .st-bp, .st-dj, .st-dk, .st-bc, 
-    .css-1xarl3l, .css-1offfwp, .css-16idsys, .css-vfskoc {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-        border-color: #DDDDDD !important;
-    }
-    
-    /* Переопределение стилей кнопок (кроме основной кнопки расчета) */
-    .stButton:not(:has(button[data-testid="baseButton-primary"])) > button {
-        background-color: white !important;
-        color: black !important;
-        border: 1px solid #DDDDDD !important;
-    }
-    
-    /* Максимально уменьшаем все отступы в приложении */
-    .element-container, .stVerticalBlock, .css-ocqkz7 {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    </style>
-    <script>
-    // Принудительно устанавливаем светлую тему при загрузке страницы
-    document.addEventListener('DOMContentLoaded', function() {
-        // Устанавливаем светлую тему в localStorage
-        localStorage.setItem('userPrefersDark', false);
-        
-        // Заменяем темный класс на светлый
-        document.body.classList.add('light-mode');
-        document.body.classList.remove('dark-mode');
-        document.documentElement.setAttribute('data-theme', 'light');
-    });
-    </script>
-    """, unsafe_allow_html=True)
+    # Проверяем, нужно ли отправить событие в Яндекс.Метрику
+    if st.session_state.get('send_ya_metrika_event', False):
+        # Отправляем событие через JavaScript
+        send_calc_success_event()
+        # Сбрасываем флаг, чтобы не отправлять событие снова
+        st.session_state.send_ya_metrika_event = False
     
     # Задаем стили для компактного и читаемого интерфейса по новому дизайну
     st.markdown("""
     <style>
-    /* Базовые стили для светлой темы (по умолчанию) */
-    :root {
-        --background-color: #ffffff;
-        --text-color: #333333;
-        --label-color: #333333;
-        --border-color: #dddddd;
-        --highlight-color: #3f6daa;
-        --highlight-bg: #e6f0fa;
-        --highlight-hover: #34598e;
-        --card-bg: #f8f9fa;
-        --card-border: #eeeeee;
-        --button-bg: #3f6daa;
-        --button-text: white;
-        --tile-bg: white;
-        --tile-border: #dddddd;
-        --header-color: #3f6daa;
-        --section-border: #eeeeee;
-        --accent-color: #ff9c00;
-    }
-    
-    /* Стили для темной темы */
-    body.dark-mode {
-        --background-color: #121212;
-        --text-color: #ffffff;  /* Изменено с #e0e0e0 на #ffffff для лучшей видимости */
-        --label-color: #ffffff;
-        --border-color: #444444;
-        --highlight-color: #4d94ff;
-        --highlight-bg: #1a3d66;
-        --highlight-hover: #66a3ff;
-        --card-bg: #1e1e1e;
-        --card-border: #333333;
-        --button-bg: #1a73e8;
-        --button-text: white;
-        --tile-bg: #1e1e1e;
-        --tile-border: #444444;
-        --header-color: #4d94ff;
-        --section-border: #333333;
-    }
-    
-    /* Применяем переменные к элементам */
+    /* Глобальный контейнер */
     .block-container {
         max-width: 800px;
-        padding-top: 1rem;
+        padding-top: 0rem !important;
         padding-bottom: 1rem;
         margin: 0 auto;
+    }
+    
+    /* Применяем стандартные отступы для форм ввода - уменьшенные по вертикали */
+    div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
+    div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect {
+        width: 95% !important;
+        margin: 0 auto !important;
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+        margin-top: 2px !important;
+        margin-bottom: 2px !important;
+    }
+    
+    /* Отступы для секций заголовков */
+    div.stMarkdown h2 {
+        width: 95% !important;
+        margin: 0 auto !important;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+    }
+    
+    /* Отступы для всех заголовков в статьях */
+    div.stMarkdown h1, div.stMarkdown h2, div.stMarkdown h3, div.stMarkdown h4, div.stMarkdown h5, div.stMarkdown h6 {
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+    }
+    
+    /* Отступы для текстовых параграфов (общие) */
+    div.stMarkdown p {
+        width: 95% !important;
+        margin: 0 auto !important;
+    }
+    
+    /* Специальные отступы только для параграфов в контейнере description-container */
+    .description-container p {
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+        margin-left: 0px !important;
+        margin-right: 0px !important;
+        width: 100% !important;
+        background-color: rgba(240, 240, 240, 0.2) !important; /* Немного выделяем параграфы для отладки */
+    }
+    
+    /* Отступы для списков в статьях */
+    div.stMarkdown ul, div.stMarkdown ol {
+        width: 95% !important;
+        margin: 0 auto !important;
+        padding-left: 15px !important; /* Небольшой отступ для маркеров списка */
+        padding-right: 0px !important;
+    }
+    
+    /* Отступы для горизонтальных разделителей */
+    div.stMarkdown hr {
+        width: 95% !important;
+        margin: 0 auto !important;
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
     }
     
     /* Глобальные стили для улучшения читаемости */
     .stApp, .stApp p, .stApp div {
         font-size: 1rem;
         font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
-        color: var(--text-color);
-    }
-    
-    /* Принудительно делаем весь текст белым в темном режиме - глобально */
-    .stApp.dark div, 
-    .stApp.dark p, 
-    .stApp.dark span, 
-    .stApp.dark label, 
-    .stApp.dark .section-header, 
-    .stApp.dark .streamlit-expanderHeader,
-    .stApp.dark [data-testid="stMarkdown"] p,
-    .stApp.dark [data-testid="stText"] p,
-    .stApp.dark [data-testid="stHeader"] h1,
-    .stApp.dark [data-testid="stHeader"] h2,
-    .stApp.dark [data-testid="stHeader"] h3,
-    .stApp.dark [data-testid="stSubheader"] h1, 
-    .stApp.dark [data-testid="stSubheader"] h2, 
-    .stApp.dark [data-testid="stSubheader"] h3, 
-    .stApp.dark [data-testid="stExpander"] .streamlit-expanderHeader,
-    .stApp.dark [data-testid="stVerticalBlock"] div,
-    .stApp.dark [data-testid="stForm"] div,
-    .stApp.dark [data-testid="stFormSubmitButton"] button,
-    .stApp.dark .stHeadingContainer h1,
-    .stApp.dark .stHeadingContainer h2,
-    .stApp.dark .stHeadingContainer h3,
-    .stApp.dark .stMarkdown p,
-    .stApp.dark .stButton button,
-    .stApp.dark .stNumberInput div,
-    .stApp.dark .stTextInput div,
-    .stApp.dark .stTextArea div,
-    .dark-mode div,
-    .dark-mode p,
-    .dark-mode h1,
-    .dark-mode h2,
-    .dark-mode h3 {
-        color: #FFFFFF !important;
-    }
-    
-    /* Дополнительный селектор для любых типов заголовков с высоким приоритетом */
-    [data-theme="dark"] [data-testid*="stVerticalBlock"] div.section-header,
-    [data-theme="dark"] div.section-header,
-    .dark div.section-header {
-        color: #FFFFFF !important;
     }
     
     /* Заголовки секций */
     .section-header {
-        font-size: 1.2rem;
-        font-weight: 500;
-        color: var(--text-color);
-        margin-bottom: 10px;
-        padding-bottom: 5px;
-        border-bottom: 1px solid var(--section-border);
-    }
-    
-    /* Стили для плиточных кнопок - БЕЛЫЙ ФОН для невыбранных */
-    .tile-button {
-        background-color: #FFFFFF !important; /* Всегда белый фон */
-        border: 1px solid #dddddd !important; /* Светлая рамка */
-        border-radius: 8px;
-        padding: 15px;
-        text-align: center;
-        cursor: pointer;
-        height: 100%;
-        transition: all 0.2s;
-    }
-    
-    .tile-button:hover {
-        border-color: #3f6daa !important; /* Синяя рамка при наведении */
-        box-shadow: 0 2px 5px rgba(63, 109, 170, 0.1);
-    }
-    
-    /* Выбранная плитка БЕЗ синего индикатора */
-    .tile-button.selected {
-        background-color: #FFFFFF !important; /* Белый фон */
-        border-color: #3f6daa !important; /* Только синяя рамка */
-        box-shadow: 0 2px 5px rgba(63, 109, 170, 0.1);
-    }
-    
-    /* УБРАН синий индикатор внизу плитки */
-    
-    .tile-title {
+        font-size: 1.8rem;
         font-weight: 600;
-        font-size: 1.1rem;
-        color: #3f6daa !important; /* Основной цвет сайта */
-        margin-bottom: 5px;
+        color: #0066cc;
+        margin-bottom: 8px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #e0e0e0;
     }
     
-    .tile-desc {
-        font-size: 0.9rem;
-        color: #000000 !important; /* Всегда черный текст */
+    /* Таблицы */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
     }
     
-    /* Компактные, но читаемые поля формы */
-    div.row-widget.stNumberInput, div.row-widget.stTextInput {
-        margin-bottom: 0.8rem !important;
+    th, td {
+        padding: 8px 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
     }
     
-    /* Стили для radio и checkbox групп */
-    div.row-widget.stRadio > div {
-        flex-direction: row !important;
-        gap: 10px;
-    }
-    
-    /* Стили для основной кнопки расчета */
-    .main-button {
-        background-color: var(--button-bg);
-        color: var(--button-text);
-        font-weight: bold;
-        border-radius: 6px;
-        padding: 10px 20px;
-        font-size: 1rem;
-        border: none;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-    }
-    
-    .main-button:hover {
-        background-color: var(--highlight-hover);
+    th {
+        background-color: #f8f9fa;
+        font-weight: 600;
     }
     
     /* Адаптивность для мобильных устройств */
     @media (max-width: 768px) {
         .block-container {
             max-width: 100%;
-            padding: 0.5rem;
+            padding: 0rem !important;
         }
-        .tile-title {
-            font-size: 0.9rem;
+        
+        /* Устанавливаем минимальные отступы на мобильных */
+        div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
+        div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect,
+        div.stMarkdown h2, div.stMarkdown p, div.stMarkdown hr {
+            width: 95% !important;
+            padding-left: 8px !important;
+            padding-right: 8px !important;
+            margin-top: 0px !important;
+            margin-bottom: 0px !important;
         }
-        .tile-desc {
-            font-size: 0.8rem;
+        
+        .stButton {
+            padding-left: 10px !important;
+            padding-right: 10px !important;
         }
-    }
-    
-    /* Стили для карточек с результатами */
-    .result-card {
-        background-color: var(--card-bg);
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 15px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-    
-    .result-card-title {
-        font-weight: 600;
-        font-size: 1.1rem;
-        color: var(--text-color);
-        margin-bottom: 10px;
-        padding-bottom: 5px;
-        border-bottom: 1px solid var(--card-border);
-    }
-    
-    /* Устраняем пустые промежутки между компонентами */
-    div[data-testid="stVerticalBlock"] > div {
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-        padding-top: 0 !important;
-    }
-    
-    /* Убираем лишние границы для компактности */
-    .element-container {
-        margin-top: 0;
-        margin-bottom: 0;
-    }
-    
-    /* Уменьшаем отступы у карточек результатов */
-    .result-card {
-        margin-bottom: 0 !important;
-        margin-top: 0 !important;
-        padding: 3px 10px !important;
-    }
-    
-    /* Минимальные отступы для блока подсветки */
-    div:has(> div.section-header:contains("Подсветка")) {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    
-    /* Уменьшение интервалов между кнопками подсветки */
-    [data-testid="column"]:has([data-testid="stButton"] > button) {
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-    
-    /* Уменьшаем высоту строк в кнопках, исключая основную кнопку расчета */
-    [data-testid="stButton"]:not(:has(> button[data-testid="baseButton-primary"])) > button {
-        line-height: 1 !important;
-        padding-top: 2px !important;
-        padding-bottom: 2px !important;
-        font-size: 0.8rem !important;
-        margin-bottom: 0 !important;
-        margin-top: 0 !important;
-    }
-    
-    /* Принудительно устанавливаем минимальные отступы для блока подсветки */
-    [data-testid="stVerticalBlock"] > div:has(> [data-testid="stVerticalBlock"] > div > div > [data-testid="column"]) {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* Максимально уменьшаем отступы между вариантами освещения (всего 1-2px) */
-    [data-testid="column"] > div {
-        margin-top: 0 !important;
-        margin-bottom: 1px !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* Уменьшаем вертикальное расстояние между блоками подсветки в 5 раз */
-    [data-testid="stHorizontalBlock"] div[data-testid="column"] {
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-        padding-top: 0 !important;
-        margin-top: 0 !important;
-    }
-    
-    /* Специфично для блоков подсветки - делаем минимальный отступ */
-    [data-testid="stVerticalBlock"] div:has(> .section-header:contains("Подсветка")),
-    [data-testid="stVerticalBlock"] div:has(> .section-header:contains("Подсветка")) + div {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* ВАЖНО: ВСЕ ТЕКСТЫ ВСЕГДА ЧЕРНЫЕ - ОТКЛЮЧЕН НОЧНОЙ РЕЖИМ */
-    div, p, span, h1, h2, h3, h4, h5, h6,
-    .stApp div, .stApp p, .stApp span, 
-    .stApp h1, .stApp h2, .stApp h3, 
-    .stApp h4, .stApp h5, .stApp h6,
-    .stApp.dark div, .stApp.dark p, .stApp.dark span, 
-    .stApp.dark h1, .stApp.dark h2, .stApp.dark h3, 
-    .stApp.dark h4, .stApp.dark h5, .stApp.dark h6 {
-        color: #000000 !important;
-    }
-    
-    /* Фиксируем светлый фон */
-    body, .stApp, .stApp.dark {
-        background-color: #FFFFFF !important;
-    }
-    
-    /* Заголовки всегда на светлом фоне с черным текстом */
-    .section-header, .stApp .section-header, .stApp.dark .section-header {
-        color: #000000 !important;
-        border-bottom-color: #dddddd !important;
-        background-color: #FFFFFF !important;
-    }
-    
-    /* Удаляем синюю заливку для всех элементов, кроме основной кнопки */
-    .stButton button:not([data-testid="baseButton-primary"]),
-    .stButton button:not([data-testid="baseButton-primary"]):hover,
-    .stButton button:not([data-testid="baseButton-primary"]):active,
-    .stButton button:not([data-testid="baseButton-primary"]):focus {
-        background-color: white !important;
-        color: black !important;
-    }
-    
-    /* Удаляем синюю заливку для выбранных радиокнопок */
-    div[role="radiogroup"] label[data-baseweb="radio"] div[data-testid="stMarkdownContainer"] ~ div {
-        background-color: white !important;
-    }
-    
-    /* Принудительно делаем фон любых кнопок белым */
-    button, button:hover, button:active, button:focus,
-    .stButton > button, .stButton > button:hover, .stButton > button:active,
-    [data-baseweb="button"], [data-baseweb="button"]:hover, [data-baseweb="button"]:active {
-        background-color: white !important;
-        color: black !important;
-    }
-    
-    /* Удаляем все стили для всех кнопок Streamlit, делаем их всегда белыми */
-    [data-testid="baseButton-secondary"], 
-    [data-testid="baseButton-secondary"]:hover,
-    [data-testid="baseButton-secondary"]:active,
-    [data-testid="baseButton-secondary"]:focus {
-        background-color: white !important;
-        color: black !important;
-        border-color: #ddd !important;
-    }
-    
-    /* Исключение только для основной кнопки расчета */
-    button[data-testid="baseButton-primary"],
-    button[data-testid="baseButton-primary"]:hover,
-    button[data-testid="baseButton-primary"]:active {
-        background-color: var(--button-bg) !important;
-        color: white !important;
-    }
-    
-    /* Устанавливаем минимальный отступ между блоками формы */
-    .stMarkdown {
-        margin-bottom: 0 !important;
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* Уменьшаем отступы между блоками формы */
-    .result-card {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* Радикально уменьшаем отступы для ВСЕХ элементов страницы */
-    div[data-testid="stVerticalBlock"] h3,
-    div[data-testid="stVerticalBlock"] h2,
-    div[data-testid="stVerticalBlock"] p,
-    div[data-testid="stVerticalBlock"] div,
-    div[data-testid="stVerticalBlock"] > div,
-    div[data-testid="stVerticalBlock"] div > div {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* РАДИКАЛЬНЫЕ изменения: полное удаление отступов во всем приложении */
-    /* Принудительное удаление всех отступов для любых элементов */
-    * {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    
-    /* Принудительное удаление отступов для конкретных элементов Streamlit */
-    .element-container, 
-    div[data-testid="stVerticalBlock"],
-    div[data-testid="stHorizontalBlock"],
-    [data-testid="column"],
-    .stSelectbox, 
-    .stNumberInput,
-    .stButton,
-    .stMarkdown,
-    .stRadio,
-    .stCheckbox,
-    .stTextInput,
-    .row-widget,
-    div[role="button"] {
-        margin: 0 !important;
-        padding: 0 !important;
-        min-height: 0 !important;
-    }
-    
-    /* Принудительное удаление всех отступов и цветов для карточек */
-    [data-testid="stDecoration"], 
-    [data-testid="baseButton-secondary"] {
-        background-color: white !important;
-        box-shadow: none !important;
-        border-color: #dddddd !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    
-    /* Минимальные отступы для подзаголовков */
-    div[data-testid="stVerticalBlock"] h3 {
-        font-size: 1.0rem !important;
-        line-height: 1.0 !important;
-        margin-top: 3px !important;
-        margin-bottom: 3px !important;
-    }
-    
-    /* Убираем любые отступы для стандартных кнопок */
-    .stButton {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    .stButton > button {
-        margin: 0 !important;
-        padding: 5px !important;
-        min-height: 0 !important;
-        height: auto !important;
+        
+        /* Убираем горизонтальный скролл на мобильных */
+        div[data-testid="stTable"],
+        div[data-testid="stDataFrame"] {
+            width: 100% !important;
+            overflow-x: hidden !important;
+        }
+        
+        /* Уменьшаем размер шрифта в элементах форм */
+        .stSelectbox, .stRadio, .stCheckbox {
+            font-size: 0.85rem !important;
+        }
+        
+        /* Уменьшаем размер текста везде */
+        .stApp, .stApp p, .stApp div, .stMarkdown {
+            font-size: 0.9rem !important;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Добавляем скрипт для принудительного обновления страницы без кэша
-    # Создадим хард-ресет кэша для стилей с уникальным идентификатором
-    import uuid, time
-    cache_bust_id = f"{uuid.uuid4()}_{int(time.time())}"
+    # Заголовок калькулятора - максимально компактный
+    st.markdown("<h1 style='text-align: center; margin-top: 5px; margin-bottom: 2px; font-size: 1.8rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-bottom: 5px; font-size: 0.8rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
-    # Принудительный сброс кэша через мета-теги
-    st.markdown(f"""
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta name="cache-version" content="{cache_bust_id}">
-    """, unsafe_allow_html=True)
-    
-    # Добавляем JavaScript для принудительной перезагрузки стилей
-    st.markdown(f"""
-    <script>
-        // Принудительная перезагрузка стилей
-        (function() {{
-            // Создаем новую метку времени при каждой загрузке
-            const ts = new Date().getTime();
-            // Получаем все элементы link (CSS)
-            const links = document.getElementsByTagName('link');
-            // Добавляем timestamp к URL каждого CSS файла
-            for(let i = 0; i < links.length; i++) {{
-                if (links[i].rel === 'stylesheet') {{
-                    links[i].href = links[i].href + '?v=' + ts;
-                }}
-            }}
-            // Обновляем стили внутренних элементов
-            console.log('Обновление кэша стилей: ' + ts);
-        }})();
-    </script>
-    """, unsafe_allow_html=True)
-    
-    # Добавляем обновленные стили с принудительным версионированием
-    st.markdown(f"""
-    <style data-cache-bust="{cache_bust_id}">
-        /* Принудительное применение стилей pergolamarket.ru */
-        body {{
-            --st-color-primary: #3f6daa !important;
-            --st-color-secondary: #ff9c00 !important;
-        }}
-        
-        h1, h2, h3, h4, h5 {{
-            color: #FFFFFF !important;
-            background-color: #3f6daa !important;
-        }}
-        
-        .section-header {{
-            color: #000000 !important;
-            border-color: #3f6daa !important;
-            text-transform: uppercase !important;
-        }}
-        
-        /* Дополнительные стили */
-        .accent-line {{
-            background-color: #ff9c00 !important;
-            height: 3px;
-            width: 100px;
-            margin: 5px auto;
-        }}
-        
-        /* ПРИНУДИТЕЛЬНЫЙ СТИЛЬ ДЛЯ ОРАНЖЕВОЙ КНОПКИ */
-        button[kind="primary"],
-        button[data-testid="baseButton-primary"],
-        div[data-testid="stButton"] button[data-testid="baseButton-primary"],
-        .stButton > button[data-testid="baseButton-primary"] {{
-            background-color: #ff7a2f !important;
-            color: #ffffff !important;
-        }}
-        
-        /* Уменьшаем отступы слева и справа для рабочей области */
-        section[data-testid="stSidebar"] {{
-            min-width: 20px !important;
-            width: 20px !important;
-            flex: none !important;
-        }}
-        .block-container {{
-            padding-left: 2rem !important;
-            padding-right: 2rem !important;
-            max-width: 85rem !important;
-            padding-top: 1rem !important;
-        }}
-        section[data-testid="stSidebar"] > div {{
-            visibility: hidden !important;
-            width: 20px !important;
-        }}
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Заголовок калькулятора - крупный и четкий с элементами дизайна pergolamarket.ru
-    st.markdown("""
-    <div style="text-align: center; padding: 15px; margin-bottom: 20px;">
-        <h1 style="font-size: 1.8rem; font-weight: 600; color: #3f6daa; margin-bottom: 5px;">Калькулятор стоимости перголы</h1>
-        <div style="height: 3px; width: 100px; background-color: #ff9c00; margin: 10px auto;"></div>
-        <p style="font-size: 1rem; color: #111111;">Введите размеры и параметры перголы для расчета стоимости в евро (€)</p>
-    </div>
-    """, unsafe_allow_html=True)
+    # Получаем размеры перголы
     dimensions = render_dimensions_form()
     
-    # Используем только стандартную форму опций
+    # Сохраняем размеры в session_state
+    st.session_state.dimensions = dimensions
+    
+    # Получаем опции перголы
     options = render_options_form()
     
-    # Кнопка для расчета с улучшенным стилем - используем инлайн-стиль вместо CSS классов
-    _, center_col, _ = st.columns([1, 3, 1]) # Делаем кнопку шире, увеличивая относительный размер колонки
-    with center_col:
-        # Создаем стилизованную кнопку напрямую через HTML/CSS
-        st.markdown("""
-        <style>
-        /* Сбрасываем все текущие стили для primary кнопок */
-        button[data-testid="baseButton-primary"],
-        button[kind="primary"],
-        div[data-testid="stButton"] > button[data-testid="baseButton-primary"],
-        .stButton > button[data-testid="baseButton-primary"],
-        div button[data-testid="baseButton-primary"] {
-            all: initial !important;
-            font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif !important;
-            background-color: #ff7a2f !important;
-            color: #ffffff !important;
-            font-size: 2rem !important;
-            font-weight: 700 !important;
-            text-align: center !important;
-            border-radius: 8px !important;
-            padding: 25px 25px !important;
-            width: 100% !important;
-            margin-top: 25px !important;
-            margin-bottom: 25px !important;
-            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2) !important;
-            transition: all 0.2s ease !important;
-            cursor: pointer !important;
-            display: block !important;
-            box-sizing: border-box !important;
-            border: none !important;
-            line-height: 1.4 !important;
-        }
-        
-        /* Эффект при наведении */
-        button[data-testid="baseButton-primary"]:hover,
-        button[kind="primary"]:hover,
-        div[data-testid="stButton"] > button[data-testid="baseButton-primary"]:hover,
-        .stButton > button[data-testid="baseButton-primary"]:hover,
-        div button[data-testid="baseButton-primary"]:hover {
-            background-color: #e86c29 !important;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
-            transform: translateY(-2px) !important;
-        }
-        
-        /* Эффект при нажатии */
-        button[data-testid="baseButton-primary"]:active,
-        button[kind="primary"]:active,
-        div[data-testid="stButton"] > button[data-testid="baseButton-primary"]:active,
-        .stButton > button[data-testid="baseButton-primary"]:active,
-        div button[data-testid="baseButton-primary"]:active {
-            background-color: #d46225 !important;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
-            transform: translateY(1px) !important;
-        }
-        
-        /* Стили для обычных кнопок */
-        button:not([data-testid="baseButton-primary"]),
-        div[data-testid="stButton"] > button:not([data-testid="baseButton-primary"]),
-        .stButton > button:not([data-testid="baseButton-primary"]) {
-            background-color: #FFFFFF !important;
-            color: #000000 !important;
-            border: 1px solid #dddddd !important;
-            border-radius: 8px !important;
-            box-shadow: none !important;
-            transition: all 0.2s ease !important;
-        }
-        
-        /* Стиль для обычных кнопок при наведении */
-        button:not([data-testid="baseButton-primary"]):hover,
-        div[data-testid="stButton"] > button:not([data-testid="baseButton-primary"]):hover,
-        .stButton > button:not([data-testid="baseButton-primary"]):hover {
-            background-color: #f5f5f5 !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        # Добавляем глобальные стили для всего приложения
-        st.markdown("""
-        <style>
-        /* Стили для полей ввода и меток - абсолютный белый цвет в темном режиме */
-        .stTextInput label, .stNumberInput label, .stSelectbox label,
-        .stCheckbox label, .stRadio label, .stSlider label {
-            color: var(--label-color) !important;
-        }
-        
-        /* КРИТИЧНО: ОТКЛЮЧЕН ТЕМНЫЙ РЕЖИМ - ВСЕГДА БЕЛЫЙ ФОН И ЧЕРНЫЙ ТЕКСТ */
-        /* ВСЕ ВСЕГДА ЧЕРНЫМ ЦВЕТОМ (кроме специальных элементов с белым текстом, например кнопок) */
-        .stApp *, .stApp.dark *, .dark-mode * {
-            color: #000000 !important;
-        }
-        
-        /* Принудительно светлый фон для всего приложения */
-        body, .stApp, .stApp.dark, [data-theme="dark"], .dark-mode {
-            background-color: #FFFFFF !important;
-        }
-        
-        /* Принудительно черный текст для всех элементов интерфейса */
-        label, .stTextInput label, p, span, div:not(.stButton *),
-        h1, h2, h3, h4, h5, h6, .section-header, [data-testid="stMarkdown"] p,
-        .stApp label, .stApp .stTextInput label, .stApp p, .stApp span, .stApp div:not(.stButton *),
-        .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp .section-header,
-        .stApp [data-testid="stMarkdown"] p,
-        .stApp.dark label, .stApp.dark .stTextInput label, .stApp.dark p, .stApp.dark span,
-        .stApp.dark div:not(.stButton *), .stApp.dark h1, .stApp.dark h2, .stApp.dark h3,
-        .stApp.dark h4, .stApp.dark h5, .stApp.dark h6, .stApp.dark .section-header,
-        .stApp.dark [data-testid="stMarkdown"] p {
-            color: #000000 !important;
-        }
-        
-        /* Белый текст для кнопок и синего фона */
-        [data-testid="stButton"] button[data-testid="baseButton-primary"],
-        div[style*="background-color: #3f6daa"], div[style*="background-color:#3f6daa"],
-        .result-heading, div.result-heading {
-            color: #FFFFFF !important;
-        }
-        
-        /* Принудительно белый текст для всех элементов с синим фоном */
-        div[style*="background-color: #3f6daa"] *, div[style*="background-color:#3f6daa"] *,
-        .result-heading *, div.result-heading * {
-            color: #FFFFFF !important;
-        }
-        
-        /* Заголовки секций - в стиле pergolamarket.ru */
-        .section-header {
-            font-weight: bold;
-            border-bottom: 1px solid #3f6daa;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-            color: #000000 !important;
-            background-color: #FFFFFF !important;
-            text-transform: uppercase; /* Аналогично заголовку "Тип ламелей" со скриншота */
-        }
-        
-        /* Заголовки секций с высшим приоритетом - в стиле pergolamarket.ru */
-        .section-header,
-        .stApp .section-header,
-        .stApp.dark .section-header,
-        .dark-mode .section-header,
-        body.dark-mode .section-header,
-        [data-theme="dark"] .section-header {
-            color: #000000 !important;
-            border-bottom-color: #3f6daa !important;
-            background-color: #FFFFFF !important;
-            text-transform: uppercase;
-        }
-        
-        /* Делаем текст в таблицах всегда черным, независимо от режима */
-        table td, table th {
-            color: #000000 !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        # Создаем обычную кнопку Streamlit
-        # Используем специальный компонент оранжевой кнопки
-        if create_orange_button("Рассчитать стоимость"):
-            with st.spinner("Выполняется расчет..."):
-                # Проверяем, что у нас есть данные для расчета
-                if dimensions and options:
-                    # Сохраняем предыдущие результаты, если они есть
-                    if 'results' in st.session_state:
-                        st.session_state.prev_results = st.session_state.results
-                    
-                    # Выполняем расчет
-                    results = perform_calculation(dimensions, options)
-                    
-                    # Сохраняем результаты и опции в состоянии сессии
-                    st.session_state.results = results
-                    st.session_state.options = options
-                    
-                    # Логируем действие пользователя
-                    log_user_action("Выполнен расчет стоимости", {
-                        "dimensions": dimensions,
-                        "options": options
-                    })
-                    
-                    # Перезагружаем страницу для отображения результатов
-                    st.rerun()
+    # Кнопка для расчета с улучшенным стилем
+    if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
+        with st.spinner("Выполняется расчет..."):
+            # Проверяем, что у нас есть данные для расчета
+            if dimensions and options:
+                # Выполняем расчет
+                results = perform_calculation(dimensions, options)
+                
+                # Сохраняем результаты и опции в состоянии сессии
+                st.session_state.results = results
+                st.session_state.options = options
+                
+                # Добавляем флаг, что нужно прокрутить к результатам
+                st.session_state.scroll_to_results = True
+                
+                # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
+                st.session_state.description_shown = False
+                
+                # Устанавливаем флаг для отправки события в Яндекс.Метрику после перезагрузки
+                st.session_state.send_ya_metrika_event = True
+                
+                # Перезагружаем страницу для отображения результатов
+                st.rerun()
     
     # Добавляем разделитель (компактный)
-    st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; border-top: 1px solid var(--border-color);'>", unsafe_allow_html=True)
-    
-    # Отображаем результаты расчета под формами ввода
-    if 'results' in st.session_state and 'options' in st.session_state:
+    st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+        
+    # Отображаем кнопку для скролла к результатам (если есть результаты)
+    if 'results' in st.session_state:
+        # Кнопка для скролла к результатам (компактная и заметная)
+        st.markdown("""
+        <a href="#results" style="display: block; width: 90%; margin: 10px auto; padding: 10px; 
+                       background-color: #0066cc; color: white; text-align: center; 
+                       border-radius: 5px; text-decoration: none; font-weight: bold;">
+           ↓ Перейти к результатам расчета ↓
+        </a>
+        """, unsafe_allow_html=True)
+        
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
-        # Добавляем скрипт для автоматического скролла к результатам
-        scroll_to_results()
+        # Если нужна прокрутка к результатам, добавляем JS код
+        if st.session_state.get('scroll_to_results', False):
+            scroll_to_results()
+            # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
+            st.session_state.scroll_to_results = False
     
     # Добавляем информацию о версии внизу страницы (компактно)
-    st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid var(--border-color);'>", unsafe_allow_html=True)
-    # Копирайт в стиле pergolamarket.ru с цветами
-    st.markdown("""
-    <div style="text-align: center; margin-top: 5px; margin-bottom: 5px;">
-        <div style="font-size: 0.7rem; color: #3f6daa;">© 2025 DecoLife | Калькулятор пергол v1.0</div>
-        <div style="height: 2px; width: 40px; background-color: #ff9c00; margin: 5px auto;"></div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Добавляем анимацию нажатия кнопки
-    add_button_animation()
-    
-    # Логируем посещение страницы
-    if 'page_viewed' not in st.session_state:
-        log_user_action("Посещение страницы калькулятора")
-        st.session_state.page_viewed = True
+    st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.3.4</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Создаем директории, если они не существуют
