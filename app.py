@@ -12,7 +12,16 @@ import csv
 import time
 import json
 import logging
+import sys
 from datetime import datetime
+import importlib
+
+# Принудительная перезагрузка модулей с описаниями для обновления изменений
+try:
+    if 'config.pergola_descriptions' in sys.modules:
+        importlib.reload(sys.modules['config.pergola_descriptions'])
+except Exception as e:
+    pass
 
 # Импортируем модуль для работы с кэшем (если он существует)
 try:
