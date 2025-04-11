@@ -63,33 +63,7 @@ ACTIVE_PROMOTIONS = {
         "apply_to_base_price": True,
         "apply_to_options": False,
         "priority": 20,
-    },
-    
-
-    
-    # Акция быстрого решения - срочная скидка
-    "urgent_discount": {
-        "name": "Скидка за быстрое решение",
-        "description": "Дополнительная скидка 5% при оформлении заказа в течение 24 часов",
-        "discount_type": DISCOUNT_TYPE_PERCENTAGE,
-        "discount_value": 5,  # 5%
-        "conditions": [
-            {
-                "type": CONDITION_QUICK_DECISION,
-                "hours_limit": 24,  # Лимит времени в часах
-            }
-        ],
-        "display_badge": True,
-        "badge_text": "Весенняя акция 5%",
-        "badge_color": "#F44336",  # Красный цвет для срочности
-        "apply_to_base_price": True,
-        "apply_to_options": True,  # Применяется ко всему заказу
-        "priority": 30,  # Высокий приоритет
-        "activation_required": True,  # Требуется активация пользователем
-        "show_countdown": True,  # Показывать обратный отсчет
-    },
-    
-
+    }
 }
 
 # === Функции для работы с акциями ===
