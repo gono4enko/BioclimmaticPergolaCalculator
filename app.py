@@ -1936,15 +1936,15 @@ def main():
         margin: 0 auto;
     }
     
-    /* Применяем стандартные отступы для форм ввода */
+    /* Применяем стандартные отступы для форм ввода - уменьшенные по вертикали */
     div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
     div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect {
         width: 95% !important;
         margin: 0 auto !important;
         padding-left: 20px !important;
         padding-right: 20px !important;
-        margin-top: 5px !important;
-        margin-bottom: 5px !important;
+        margin-top: 2px !important;
+        margin-bottom: 2px !important;
     }
     
     /* Отступы для секций заголовков */
@@ -2034,15 +2034,15 @@ def main():
             padding: 0.25rem !important;
         }
         
-        /* Устанавливаем нормальные отступы на мобильных */
+        /* Устанавливаем уменьшенные отступы на мобильных */
         div.stNumberInput, div.stTextInput, div.stSelectbox, div.stRadio, 
         div.stCheckbox, div.stSlider, div.stButton, div.stMultiselect,
         div.stMarkdown h2, div.stMarkdown p, div.stMarkdown hr {
             width: 95% !important;
             padding-left: 10px !important;
             padding-right: 10px !important;
-            margin-top: 3px !important;
-            margin-bottom: 3px !important;
+            margin-top: 1px !important;
+            margin-bottom: 1px !important;
         }
         
         .stButton {
