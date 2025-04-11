@@ -11,6 +11,8 @@ import math
 import csv
 import time
 from datetime import datetime
+# Импортируем модуль для отображения галереи проектов
+from components.gallery import display_gallery_section
 
 def get_plural_form(number, one, two, five):
     """
