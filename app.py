@@ -1001,6 +1001,9 @@ def render_dimensions_form():
     """
     st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Размеры перголы</h2>", unsafe_allow_html=True)
     
+    # Начало блока с классом dimensions-form для умной адаптации
+    st.markdown("<div class='dimensions-form'>", unsafe_allow_html=True)
+    
     col1, col2 = st.columns(2)
     
     with col1:
@@ -1033,6 +1036,9 @@ def render_dimensions_form():
         st.markdown(f"""<div style="padding: 5px 10px; background-color: #e6f3ff; border-radius: 3px; font-size: 0.85rem; margin: 2px 0;">
         При размере {width:.2f}×{length:.2f} м будет автоматически использовано {modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}
         </div>""", unsafe_allow_html=True)
+    
+    # Закрываем блок с классом dimensions-form
+    st.markdown("</div>", unsafe_allow_html=True)
     
     return {
         "width": width,
@@ -1073,8 +1079,11 @@ def render_options_form():
         horizontal=True
     )
     
-    # Освещение - без лишних отступов
+    # Освещение - без лишних отступов, с CSS классом для адаптивности
     st.markdown("<p style='font-weight: 500; margin-bottom: 0px; margin-top: 0px;'>Освещение</p>", unsafe_allow_html=True)
+    
+    # Начало блока с классом lighting-options для умной адаптации
+    st.markdown("<div class='lighting-options'>", unsafe_allow_html=True)
     
     lighting_options = []
     col1, col2 = st.columns(2)
@@ -1086,6 +1095,9 @@ def render_options_form():
     with col2:
         if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_checkbox", label_visibility="visible"):
             lighting_options.append("rgb_led")
+    
+    # Закрытие блока с классом lighting-options
+    st.markdown("</div>", unsafe_allow_html=True)
     
     # Установка - с минимальным отступом
     st.markdown("<p style='font-weight: 500; margin-bottom: 0px; margin-top: 0px;'>Установка</p>", unsafe_allow_html=True)
