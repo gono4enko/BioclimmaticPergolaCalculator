@@ -329,9 +329,6 @@ PERGOLA_DESCRIPTIONS.update({
     "SOMFY": SOMFY_DESCRIPTION
 })
 
-# Логируем, что было загружено
-print("Загружены описания для следующих типов пергол:", list(PERGOLA_DESCRIPTIONS.keys()))
-
 def get_pergola_description(pergola_type):
     """
     Возвращает описание перголы по ее типу
