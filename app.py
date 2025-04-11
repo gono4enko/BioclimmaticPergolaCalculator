@@ -1907,6 +1907,7 @@ def main():
         st.session_state.send_ya_metrika_event = False
     
     # Задаем стили для компактного и читаемого интерфейса по новому дизайну
+    # Уменьшаем отступы между формами ввода для более компактного вида
     st.markdown("""
     <style>
     /* Глобальный контейнер */
@@ -1924,8 +1925,8 @@ def main():
         margin: 0 auto !important;
         padding-left: 20px !important;
         padding-right: 20px !important;
-        margin-top: 5px !important;
-        margin-bottom: 5px !important;
+        margin-top: 2px !important;
+        margin-bottom: 2px !important;
     }
     
     /* Отступы для секций заголовков */
@@ -2052,8 +2053,8 @@ def main():
     """, unsafe_allow_html=True)
     
     # Заголовок калькулятора - крупный и четкий
-    st.markdown("<h1 style='text-align: center; margin-top: 20px; margin-bottom: 10px; font-size: 2.2rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; margin-bottom: 20px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; margin-top: 10px; margin-bottom: 5px; font-size: 2.2rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
     # Получаем размеры перголы
     dimensions = render_dimensions_form()
@@ -2063,6 +2064,9 @@ def main():
     
     # Получаем опции перголы
     options = render_options_form()
+    
+    # Добавляем отступ перед кнопкой расчета
+    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
     
     # Кнопка для расчета с улучшенным стилем
     if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
@@ -2089,7 +2093,7 @@ def main():
                 st.rerun()
     
     # Добавляем разделитель (компактный)
-    st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin-top: 0.2rem; margin-bottom: 0.2rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
         
     # Отображаем кнопку для скролла к результатам (если есть результаты)
     if 'results' in st.session_state:
