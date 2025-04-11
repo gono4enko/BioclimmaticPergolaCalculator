@@ -1694,7 +1694,7 @@ def display_formatted_description(description_text):
             font-size: 3.2rem; /* Увеличенный размер для h1 и h2 */
             margin-top: 30px;
             margin-bottom: 20px;
-            color: #0066cc;
+            /* Обычный цвет текста, не синий */
             font-weight: 700;
         }
         .description-container h3 {
@@ -1708,7 +1708,7 @@ def display_formatted_description(description_text):
             font-size: 2.34rem; /* Увеличено на 30% от 1.8rem */
             margin-top: 20px;
             margin-bottom: 15px;
-            color: #0066cc;
+            /* Обычный цвет текста, не синий */
             font-weight: 500;
         }
         .description-container p {
@@ -1740,7 +1740,7 @@ def display_formatted_description(description_text):
         }
         .description-container th {
             background-color: #f0f6ff; /* Светло-синий фон для заголовков */
-            color: #0066cc;
+            /* Обычный цвет текста, не синий */
             font-weight: 600;
             font-size: 1.2rem;
             padding: 10px;
