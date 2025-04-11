@@ -25,14 +25,14 @@ ACTIVE_PROMOTIONS = {
     # Весенняя акция - 5% на все перголы
     "spring_sale_2025": {
         "name": "Весенняя акция 2025",
-        "description": "Скидка 5% на все перголы при заказе до 31 мая",
+        "description": "Скидка 5% на все перголы при заказе до 1 июня",
         "discount_type": DISCOUNT_TYPE_PERCENTAGE,
         "discount_value": 5,  # 5%
         "conditions": [
             {
                 "type": CONDITION_DATE_RANGE,
                 "start_date": datetime.date(2025, 3, 1),
-                "end_date": datetime.date(2025, 5, 31)
+                "end_date": datetime.date(2025, 6, 1)
             }
         ],
         "display_badge": True,
@@ -41,6 +41,7 @@ ACTIVE_PROMOTIONS = {
         "apply_to_base_price": True,  # Скидка применяется к базовой стоимости перголы
         "apply_to_options": False,  # Не применяется к опциям
         "priority": 10,  # Приоритет акции (чем выше, тем важнее)
+        "show_countdown": True,  # Показывать обратный отсчет
     },
     
     # Акция "Большая скидка на большие размеры"
@@ -88,26 +89,7 @@ ACTIVE_PROMOTIONS = {
         "show_countdown": True,  # Показывать обратный отсчет
     },
     
-    # Промокод на скидку
-    "promo_code_spring2025": {
-        "name": "Промокод ВЕСНА2025",
-        "description": "Скидка 7% при использовании промокода ВЕСНА2025",
-        "discount_type": DISCOUNT_TYPE_PERCENTAGE,
-        "discount_value": 7,  # 7%
-        "conditions": [
-            {
-                "type": CONDITION_PROMO_CODE,
-                "code": "ВЕСНА2025",
-            }
-        ],
-        "display_badge": False,  # Не показывать значок, только после активации
-        "badge_text": "Промокод активирован: -7%",
-        "badge_color": "#FF9800",  # Оранжевый цвет
-        "apply_to_base_price": True,
-        "apply_to_options": True,
-        "priority": 15,
-        "activation_required": True,  # Требуется ввод промокода
-    }
+
 }
 
 # === Функции для работы с акциями ===
@@ -300,16 +282,37 @@ def calculate_discount(
     
     return total_discount, applied_promotions
 
-def format_countdown_time(hours: int = 24) -> str:
+def format_countdown_time(end_date=None) -> str:
     """
-    Форматирует оставшееся время для акции с обратным отсчетом.
+    Форматирует оставшееся время до окончания акции.
     
     Args:
-        hours: Количество часов для обратного отсчета
+        end_date: Дата окончания акции, если None, используется стандартный таймер в 24 часа
         
     Returns:
-        str: Форматированная строка с оставшимся временем
+        str: Форматированная строка с оставшимся временем "DD:HH:MM:SS"
     """
-    # В реальном приложении здесь будет логика для сохранения
-    # времени начала отсчета в сессии или cookies
-    return f"{hours}:00:00"
+    import datetime
+    
+    if end_date:
+        # Рассчитываем оставшееся время до указанной даты
+        now = datetime.datetime.now()
+        target_date = datetime.datetime.combine(end_date, datetime.time.min)
+        
+        # Если дата уже прошла, возвращаем нули
+        if now >= target_date:
+            return "00:00:00:00"
+        
+        # Рассчитываем разницу во времени
+        time_delta = target_date - now
+        
+        # Рассчитываем дни, часы, минуты и секунды
+        days = time_delta.days
+        hours, remainder = divmod(time_delta.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        
+        # Форматируем строку с обратным отсчетом
+        return f"{days:02d}:{hours:02d}:{minutes:02d}:{seconds:02d}"
+    else:
+        # Для стандартного таймера (24 часа)
+        return "00:24:00:00"
