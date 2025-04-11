@@ -6,6 +6,10 @@ import streamlit as st
 import pandas as pd
 # Импортируем функции для работы с Яндекс.Метрикой
 from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
+# Импортируем функции для микроанимаций
+from animations import (add_animations_css, animate_section, animated_container, 
+                       add_section_separator, animate_text, add_smooth_transition_js,
+                       add_section_animation_js, animate_button, apply_entrance_animation)
 import os
 import math
 import csv
@@ -2036,6 +2040,15 @@ def main():
     
     # Добавляем код счетчика Яндекс.Метрики
     add_yandex_metrika()
+    
+    # Добавляем базовые CSS анимации
+    add_animations_css()
+    
+    # Добавляем плавные переходы для улучшения UX
+    add_smooth_transition_js()
+    
+    # Добавляем анимацию входа на страницу
+    apply_entrance_animation()
     
     # Проверяем, нужно ли отправить событие в Яндекс.Метрику
     if st.session_state.get('send_ya_metrika_event', False):
