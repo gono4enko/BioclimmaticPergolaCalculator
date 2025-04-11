@@ -1323,8 +1323,8 @@ def render_results(results):
         # Добавляем строку со скидкой (скидка отображается зеленым цветом)
         items_data.append(["Скидка по акции", f"-{format_price(discount_amount)}"])
         
-        # Добавляем строку с весенней акцией и ценой после скидки
-        items_data.append(["Весенняя акция до 1.06.2025", format_price(final_price)])
+        # Добавляем строку с итоговой ценой после скидки
+        items_data.append(["Итоговая стоимость со скидкой", format_price(final_price)])
     
     # Создаем HTML-таблицу напрямую для обхода проблем с шириной
     html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px;">'
@@ -1351,20 +1351,20 @@ def render_results(results):
             """
             html_table += '</tr>'
         else:
-            # Проверяем, является ли строка скидкой (скидки начинаются с минуса) или весенней акцией
+            # Проверяем, является ли строка скидкой (скидки начинаются с минуса) или итоговой суммой со скидкой
             is_discount = item[0] == "Скидка по акции" or item[1].startswith("-")
-            is_spring_promo = "Весенняя акция" in item[0]
+            is_final_discounted = "Итоговая стоимость со скидкой" in item[0]
             
-            # Применяем специальные стили для скидок и весенней акции
+            # Применяем специальные стили для скидок и итоговой суммы со скидкой
             if is_discount:
                 html_table += '<tr style="background-color:#eaffea;">' # Светло-зеленый фон для скидок
                 html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem; color:#2e7d32; font-weight:500;">{item[0]}</td>'
                 html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem; color:#2e7d32; font-weight:500;">{item[1]}</td>'
-            elif is_spring_promo:
-                # Стиль для отображения весенней акции с зеленым цветом
-                html_table += '<tr style="background-color:#e0ffea;">' # Зеленый фон для весенней акции
-                html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:1.0rem; color:#1b5e20; font-weight:600;">{item[0]}</td>'
-                html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:1.0rem; color:#1b5e20; font-weight:600;">{item[1]}</td>'
+            elif is_final_discounted:
+                # Стиль для отображения итоговой стоимости со скидкой
+                html_table += '<tr style="background-color:#e0ffea;">' # Зеленый фон для итоговой строки со скидкой
+                html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:1.1rem; color:#1b5e20; font-weight:700;">{item[0]}</td>'
+                html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:1.1rem; color:#1b5e20; font-weight:700;">{item[1]}</td>'
             else:
                 html_table += '<tr>'
                 html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
