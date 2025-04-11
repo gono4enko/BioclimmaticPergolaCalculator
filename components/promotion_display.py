@@ -44,6 +44,11 @@ def display_promo_badges(applicable_promotions: List[Dict]) -> None:
             flex-wrap: wrap;
             gap: 8px;
             margin-bottom: 12px;
+            width: 85%;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 25px;
+            padding-right: 25px;
         }
         .promo-badge {
             display: inline-block;
@@ -157,6 +162,11 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
             margin-bottom: 15px;
             position: relative;
             overflow: hidden;
+            width: 85%;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 25px;
+            padding-right: 25px;
         }}
         .urgent-panel h4 {{
             margin: 0 0 5px 0;
@@ -366,18 +376,25 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
         border: 1px solid #E0E0E0;
         border-radius: 8px;
         overflow: hidden;
+        width: 85%;
+        margin-left: auto;
+        margin-right: auto;
     }
     .discounts-header {
         background-color: #F5F5F5;
         padding: 10px 15px;
         font-weight: bold;
         border-bottom: 1px solid #E0E0E0;
+        padding-left: 25px;
+        padding-right: 25px;
     }
     .discount-item {
         padding: 10px 15px;
         border-bottom: 1px solid #E0E0E0;
         display: flex;
         justify-content: space-between;
+        padding-left: 25px;
+        padding-right: 25px;
     }
     .discount-item:last-child {
         border-bottom: none;
@@ -394,6 +411,8 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
         display: flex;
         justify-content: space-between;
         font-weight: bold;
+        padding-left: 25px;
+        padding-right: 25px;
     }
     @media (max-width: 768px) {
         .discounts-header, .discount-item, .discount-total {
