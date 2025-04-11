@@ -1666,7 +1666,7 @@ def render_results(results):
             # Добавляем техническое описание ламелей только для пергол B500 и B700, не для B600
             if pergola_type in ["B500NEW", "B700NEW"]:
                 lamella_engineering_description = get_lamella_engineering_description()
-                display_formatted_description(lamella_engineering_description)
+                display_formatted_description(lamella_engineering_description, animation_delay=0.9)
                 
                 # Отображаем изображение технических характеристик ламелей
                 lamella_engineering_images = get_pergola_images("LAMELLA_ENGINEERING")
