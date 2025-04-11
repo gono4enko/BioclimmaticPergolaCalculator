@@ -198,18 +198,7 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
                 <span>До окончания акции: </span>
                 <span class="countdown" id="countdown">{display_text}</span>
             </div>
-            <div style="text-align: center; margin-top: 10px;">
-                <button id="activate-discount" 
-                        style="background-color: white; 
-                               color: {urgent_promotion.get('badge_color', '#4CAF50')}; 
-                               border: none; 
-                               padding: 8px 15px; 
-                               border-radius: 4px; 
-                               font-weight: bold;
-                               cursor: pointer;">
-                    Активировать скидку
-                </button>
-            </div>
+            <!-- Кнопка активации скидки удалена, скидка применяется автоматически -->
         </div>
         """, unsafe_allow_html=True)
         
@@ -249,30 +238,14 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
                 if (distance < 0) {{
                     clearInterval(x);
                     document.getElementById("countdown").innerHTML = "ВРЕМЯ ИСТЕКЛО";
-                    document.getElementById("activate-discount").style.display = "none";
                 }}
             }}, 1000);
-            
-            // Обработчик клика по кнопке активации
-            document.getElementById("activate-discount").addEventListener("click", function() {{
-                // Отправляем событие активации в Streamlit
-                window.parent.postMessage({{
-                    type: "streamlit:setComponentValue",
-                    value: true
-                }}, "*");
-                
-                // Меняем текст кнопки
-                this.innerHTML = "Скидка активирована!";
-                this.disabled = true;
-                this.style.backgroundColor = "#CCCCCC";
-            }});
         </script>
         """, unsafe_allow_html=True)
         
-        # Проверяем, была ли нажата кнопка
-        if st.button("Активировать скидку", key="urgent_discount_button", type="primary"):
-            st.session_state.urgent_discount_activated = True
-            return True
+        # Устанавливаем автоматическое применение скидки
+        st.session_state.urgent_discount_activated = True
+        return True
     
     return st.session_state.urgent_discount_activated
 
@@ -473,10 +446,11 @@ def promotions_section(pergola_type: str, width: float, length: float,
     if "promo_code_applied" in st.session_state and st.session_state.promo_code_applied:
         promo_code = st.session_state.promo_code
     
-    # Проверяем активацию срочной скидки
-    quick_decision_activated = False
-    if "urgent_discount_activated" in st.session_state:
-        quick_decision_activated = st.session_state.urgent_discount_activated
+    # Скидка активируется автоматически
+    quick_decision_activated = True
+    # Устанавливаем флаг активации скидки, если он не был установлен ранее
+    if "urgent_discount_activated" not in st.session_state:
+        st.session_state.urgent_discount_activated = True
     
     # Получаем список применимых акций
     applicable_promotions = promotions.get_applicable_promotions(
