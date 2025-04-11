@@ -67,7 +67,7 @@ def display_installation_counter():
     """
     count = get_installation_count()
     
-    # Создаем контейнер с красивой анимацией и стилем
+    # Создаем контейнер с красивой анимацией и стилем, согласованным со статьями
     counter_html = f"""
     <div class="installation-counter">
         <div class="counter-number">{count}</div>
@@ -81,13 +81,13 @@ def display_installation_counter():
         padding: 20px;
         border-radius: 10px;
         text-align: center;
-        margin: 20px 0;
+        margin: 15px 20px 30px 20px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         animation: pulse 2s infinite;
     }}
     
     .counter-number {{
-        font-size: 3rem;
+        font-size: 3.2rem;
         font-weight: bold;
         margin-bottom: 5px;
     }}
@@ -100,6 +100,16 @@ def display_installation_counter():
         0% {{ transform: scale(1); }}
         50% {{ transform: scale(1.03); }}
         100% {{ transform: scale(1); }}
+    }}
+    
+    @media (max-width: 768px) {{
+        .installation-counter {{
+            margin: 10px 15px 25px 15px;
+        }}
+        
+        .counter-number {{
+            font-size: 2.8rem;
+        }}
     }}
     </style>
     """
@@ -153,7 +163,8 @@ def create_gallery_html(image_urls, captions):
             flex-wrap: wrap;
             justify-content: space-around;
             gap: 15px;
-            margin: 20px 0;
+            margin: 10px 20px 30px 20px;
+            padding: 0 10px;
         }
         
         .gallery-item {
@@ -183,7 +194,7 @@ def create_gallery_html(image_urls, captions):
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 75, 154, 0.8);
             color: white;
             padding: 10px;
             font-size: 0.9rem;
@@ -194,6 +205,11 @@ def create_gallery_html(image_urls, captions):
             .gallery-item {
                 width: 100%;
                 max-width: none;
+            }
+            
+            .gallery-container {
+                padding: 0 15px;
+                margin: 10px 15px 25px 15px;
             }
         }
         </style>
@@ -214,13 +230,7 @@ def display_projects_gallery():
     """
     Отображает галерею реализованных проектов с описаниями
     """
-    st.markdown("## Наши реализованные проекты")
-    
-    # Информационный текст перед галереей
-    animations.animate_text(
-        "Взгляните на некоторые из наших недавних проектов. Каждая пергола уникальна и создана в соответствии с потребностями и пожеланиями клиента.",
-        delay=0
-    )
+    # Заголовок и информационный текст теперь добавляются в функции display_gallery_section
     
     # Получаем полные пути к изображениям
     image_paths = []
@@ -281,11 +291,41 @@ def display_gallery_section():
     Основная функция для отображения секции с галереей и счетчиком
     """
     with st.container():
-        # Заголовок раздела
-        st.markdown("# Наши достижения и реализованные проекты")
+        # Заголовок раздела в стиле статей
+        st.markdown("""
+        <div style="padding: 15px 20px; max-width: 100%;">
+            <h1 style="font-size: 2.2rem; color: #0066cc; font-weight: 600; margin-bottom: 15px;">
+                Наши достижения и реализованные проекты
+            </h1>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Счетчик установленных пергол
         display_installation_counter()
         
-        # Галерея проектов
+        # Добавляем стиль для текста галереи как в статьях
+        st.markdown("""
+        <style>
+        .gallery-description {
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            color: #333;
+        }
+        .gallery-subtitle {
+            font-size: 1.8rem;
+            color: #0066cc;
+            font-weight: 600;
+            margin: 15px 20px;
+            padding-bottom: 10px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # Галерея проектов с правильными отступами
+        st.markdown('<h2 class="gallery-subtitle">Наши реализованные проекты</h2>', unsafe_allow_html=True)
+        st.markdown('<div class="gallery-description">Взгляните на некоторые из наших недавних проектов. Каждая пергола уникальна и создана в соответствии с потребностями и пожеланиями клиента.</div>', unsafe_allow_html=True)
+        
+        # Отображаем галерею с проектами
         display_projects_gallery()
