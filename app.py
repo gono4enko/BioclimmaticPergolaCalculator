@@ -2662,11 +2662,18 @@ def main():
     display_gallery_section()
     
     # Добавляем кнопку для прокрутки наверх с анимацией
-    st.markdown("<div style='text-align: center; margin: 2rem 0;'>", unsafe_allow_html=True)
     
     # Добавляем стили для кнопки прокрутки наверх
     st.markdown("""
     <style>
+    .scroll-top-button-container {
+        display: flex;
+        justify-content: center;
+        margin: 2rem auto;
+        width: 100%;
+        text-align: center;
+    }
+    
     .scroll-top-button {
         background-color: #0066cc;
         color: white;
@@ -2741,14 +2748,15 @@ def main():
     }
     </script>
     
-    <button onclick="scrollToTop()" class="scroll-top-button">
-        <span class="arrow-up">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z" transform="rotate(180) translate(-16, -16)"/>
-            </svg>
-        </span>
-        Вернуться к параметрам перголы
-    </button>
+    <div class="scroll-top-button-container">
+        <button onclick="scrollToTop()" class="scroll-top-button">
+            <span class="arrow-up">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z" transform="rotate(180) translate(-16, -16)"/>
+                </svg>
+            </span>
+            Вернуться к параметрам перголы
+        </button>
     </div>
     """, unsafe_allow_html=True)
     
