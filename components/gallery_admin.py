@@ -242,13 +242,17 @@ def upload_new_image(uploaded_file, images_dir, auto_include=True, check_duplica
                 os.unlink(tmp_file_path)  # Удаляем временный файл
                 
                 # Если обнаружен дубликат, просто включаем его в галерею и возвращаем
-                duplicate_filename = os.path.basename(duplicate_path)
-                
-                # Если необходимо, включаем дубликат в активные изображения
-                if auto_include:
-                    include_image(duplicate_filename)
-                
-                return True, duplicate_filename, f"Обнаружен дубликат: {duplicate_filename}"
+                if duplicate_path:
+                    duplicate_filename = os.path.basename(duplicate_path)
+                    
+                    # Если необходимо, включаем дубликат в активные изображения
+                    if auto_include:
+                        include_image(duplicate_filename)
+                    
+                    return True, duplicate_filename, f"Обнаружен дубликат: {duplicate_filename}"
+                else:
+                    # На случай если duplicate_path пустой, продолжаем загрузку
+                    pass
         
         # Обработка файла в зависимости от типа
         if file_extension.lower() in ('.heic', '.heif'):
@@ -324,10 +328,20 @@ def upload_new_image(uploaded_file, images_dir, auto_include=True, check_duplica
     except Exception as e:
         logging.error(f"Ошибка при загрузке изображения: {str(e)}")
         # Очистка временных файлов
-        if 'tmp_file_path' in locals() and os.path.exists(tmp_file_path):
-            os.unlink(tmp_file_path)
-        if 'new_file_path' in locals() and os.path.exists(new_file_path):
-            os.remove(new_file_path)
+        try:
+            # Проверяем, существуют ли переменные и файлы перед удалением
+            if 'tmp_file_path' in locals():
+                tmp_path = locals()['tmp_file_path']
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+                    
+            if 'new_file_path' in locals():
+                new_path = locals()['new_file_path']
+                if os.path.exists(new_path):
+                    os.remove(new_path)
+        except Exception as cleanup_error:
+            logging.error(f"Ошибка при очистке временных файлов: {str(cleanup_error)}")
+            
         return False, None, f"Ошибка: {str(e)}"
 
 def get_all_gallery_images(images_dir):

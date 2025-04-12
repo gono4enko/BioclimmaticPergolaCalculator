@@ -203,9 +203,9 @@ def convert_image_to_jpeg(image_path, output_dir=None, quality=90, check_duplica
         # Проверка на дубликаты
         if check_duplicates:
             is_duplicate, duplicate_path = is_duplicate_image(str(image_path), output_dir, False)
-            if is_duplicate:
+            if is_duplicate and duplicate_path:
                 logging.warning(f"Обнаружен потенциальный дубликат: {duplicate_path}")
-                if duplicate_path.lower().endswith(('.jpg', '.jpeg')):
+                if duplicate_path and duplicate_path.lower().endswith(('.jpg', '.jpeg')):
                     return duplicate_path
         
         # Конвертируем в JPEG через PIL
