@@ -172,8 +172,9 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
         }}
         .urgent-panel p {{
             margin: 0 0 10px 0;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             text-align: center;
+            font-weight: 500;
         }}
         .countdown {{
             font-weight: bold;
@@ -193,7 +194,7 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
                 font-size: 0.95rem;
             }}
             .urgent-panel p {{
-                font-size: 0.8rem;
+                font-size: 1rem;
             }}
             .countdown {{
                 font-size: 0.9rem;
