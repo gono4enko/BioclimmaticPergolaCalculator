@@ -343,17 +343,37 @@ def display_projects_gallery():
     available_images = []
     captions = []
     
-    # Фильтруем и проверяем наличие файлов
-    for img_name in REALIZED_PROJECTS:
-        # Проверяем, разрешено ли изображение через систему администрирования
-        if gallery_admin.is_image_allowed(img_name):
+    # Загружаем конфигурацию галереи
+    config = gallery_admin.load_gallery_config()
+    
+    # Если есть список явно включенных изображений, используем его
+    if config["manual_include"]:
+        # Получаем все активные изображения через функцию администрирования галереи
+        active_images = gallery_admin.get_active_gallery_images(IMAGES_DIR)
+        
+        # Проверяем наличие файлов и добавляем их в список
+        for img_name in active_images:
             img_path = os.path.join(IMAGES_DIR, img_name)
             if os.path.exists(img_path):
-                image_paths.append(img_path)
-                available_images.append(img_name)
-                # Получаем описание из словаря или используем имя файла
-                caption = PROJECT_DESCRIPTIONS.get(img_name, "Реализованный проект перголы")
-                captions.append(caption)
+                # Предотвращаем дублирование изображений
+                if img_name not in available_images:
+                    image_paths.append(img_path)
+                    available_images.append(img_name)
+                    # Получаем описание из словаря или используем имя файла
+                    caption = PROJECT_DESCRIPTIONS.get(img_name, "Реализованный проект перголы")
+                    captions.append(caption)
+    else:
+        # Если список явно включенных пуст, используем статический список
+        for img_name in REALIZED_PROJECTS:
+            # Проверяем, разрешено ли изображение через систему администрирования
+            if gallery_admin.is_image_allowed(img_name):
+                img_path = os.path.join(IMAGES_DIR, img_name)
+                if os.path.exists(img_path):
+                    image_paths.append(img_path)
+                    available_images.append(img_name)
+                    # Получаем описание из словаря или используем имя файла
+                    caption = PROJECT_DESCRIPTIONS.get(img_name, "Реализованный проект перголы")
+                    captions.append(caption)
     
     # Отображаем галерею, если есть доступные изображения
     if image_paths:
