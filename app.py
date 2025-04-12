@@ -2634,17 +2634,8 @@ def main():
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.2rem; margin-bottom: 0.2rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
         
-    # Отображаем кнопку для скролла к результатам (если есть результаты)
+    # Отображаем результаты (если они доступны)
     if 'results' in st.session_state:
-        # Кнопка для скролла к результатам (компактная и заметная)
-        st.markdown("""
-        <a href="#results" style="display: block; width: 90%; margin: 10px auto; padding: 10px; 
-                       background-color: #0066cc; color: white; text-align: center; 
-                       border-radius: 5px; text-decoration: none; font-weight: bold;">
-           ↓ Перейти к результатам расчета ↓
-        </a>
-        """, unsafe_allow_html=True)
-        
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
