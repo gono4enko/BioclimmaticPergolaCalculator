@@ -1210,7 +1210,7 @@ def render_results(results):
     
     # Добавляем заголовок "Результаты расчета" для лучшей видимости и привлечения внимания
     st.markdown("""
-    <h2 id="results-header" style="text-align: center; margin-top: 10px; margin-bottom: 15px; padding: 15px; 
+    <h2 id="results-header" class="results-header" style="text-align: center; margin-top: 10px; margin-bottom: 15px; padding: 15px; 
     background-color: #f0f7ff; border-radius: 8px; color: #0066cc; font-weight: bold; 
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">Результаты расчета</h2>
     """, unsafe_allow_html=True)
@@ -2051,112 +2051,72 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Моментальная прокрутка к результатам без задержек.
-    Использует несколько методов параллельно для максимальной надежности.
+    Упрощенная и надежная функция прокрутки к результатам.
+    Использует стандартные возможности Streamlit и минимальный JavaScript.
     """
-    import streamlit.components.v1 as components
-    
-    # Создаем невидимый HTML компонент, который мгновенно выполняет скролл
-    html_code = """
-    <script>
-    // Немедленно запускаем скролл без задержки
-    (function() {
-        // Функция для мигания заголовка после скролла
-        function blinkResultsHeader() {
-            var header = document.getElementById('results-header');
-            if (header) {
-                // Сохраняем исходный цвет
-                var originalColor = getComputedStyle(header).backgroundColor;
-                // Быстрое мигание для привлечения внимания
-                header.style.transition = 'background-color 0.15s';
-                header.style.backgroundColor = '#FFEB3B'; // Ярко-жёлтый
-                
-                setTimeout(function() {
-                    header.style.backgroundColor = '#e0f0ff'; // Голубой
-                    setTimeout(function() {
-                        header.style.backgroundColor = '#FFEB3B'; // Снова жёлтый
-                        setTimeout(function() {
-                            header.style.backgroundColor = originalColor; // Исходный цвет
-                        }, 200);
-                    }, 200);
-                }, 200);
-            }
-        }
-
-        // Находим элемент с id "results"
-        var resultsElement = document.getElementById('results');
-        
-        // МЕТОД 1: Быстрый прямой скролл
-        if (resultsElement) {
-            try {
-                // Мгновенный скролл к результатам
-                resultsElement.scrollIntoView({behavior: 'auto', block: 'start'});
-                console.log("Instant scroll to results");
-                
-                // Мигаем заголовком для привлечения внимания
-                blinkResultsHeader();
-            } catch(e) {
-                console.error("Error in scrolling method 1:", e);
-            }
-        }
-        
-        // МЕТОД 2: Прямая установка scrollTop с учетом позиции элемента
-        try {
-            if (resultsElement) {
-                var rect = resultsElement.getBoundingClientRect();
-                var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                var targetY = rect.top + scrollTop - 80; // Отступ 80px сверху
-                
-                // Мгновенно устанавливаем позицию скролла
-                window.scrollTo(0, targetY);
-                console.log("Direct scrollTo position:", targetY);
-            }
-        } catch(e) {
-            console.error("Error in scrolling method 2:", e);
-        }
-        
-        // МЕТОД 3: Использование хэша (самый быстрый способ в большинстве браузеров)
-        try {
-            window.location.hash = 'results';
-            console.log("Used hash navigation to #results");
-        } catch(e) {
-            console.error("Error in scrolling method 3:", e);
-        }
-    })();
-
-    // Короткая задержка для визуальной обратной связи
-    setTimeout(function() {
-        // Еще раз проверяем скролл через короткое время для уверенности
-        var resultsElement = document.getElementById('results');
-        if (resultsElement) {
-            resultsElement.scrollIntoView({behavior: 'auto', block: 'start'});
-        }
-    }, 100);
-    </script>
-    """
-    
-    # Используем встроенный компонент Streamlit для вставки HTML
-    # height=0 делает iframe невидимым
-    components.html(html_code, height=0)
-    
-    # Улучшенные стили для видимости и позиционирования
+    # Добавляем якорь для результатов и необходимые стили
     st.markdown("""
+    <div id="results"></div>
     <style>
-    /* Улучшаем позиционирование якоря для результатов */
+    /* Стили для якоря результатов */
     #results {
-        scroll-margin-top: 60px !important;
-        scroll-snap-align: start !important;
-        display: block !important;
-        visibility: visible !important;
-        pointer-events: none !important;
+        scroll-margin-top: 60px;
+        scroll-snap-align: start;
+        visibility: visible;
+        display: block;
+        height: 1px;
+        margin: 0;
+        padding: 0;
     }
     
-    /* Делаем заголовок результатов более заметным */
-    #results-header {
-        position: relative !important;
-        scroll-margin-top: 60px !important;
+    /* Выделение заголовка результатов для привлечения внимания */
+    .results-header {
+        background-color: #f0f8ff;
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 10px;
+        margin-bottom: 15px;
+        border-left: 4px solid #0066cc;
+        transition: background-color 0.3s ease;
+    }
+    
+    /* Анимация для заголовка результатов */
+    @keyframes highlight-header {
+        0% { background-color: #f0f8ff; }
+        50% { background-color: #d1ecff; }
+        100% { background-color: #f0f8ff; }
+    }
+    
+    .results-header-animated {
+        animation: highlight-header 1.5s ease;
     }
     </style>
+    """, unsafe_allow_html=True)
+    
+    # Добавляем простой JavaScript для прокрутки к якорю результатов
+    st.markdown("""
+    <script>
+        // Прокрутка к результатам с небольшой задержкой для надежности
+        setTimeout(function() {
+            // Находим элемент якоря
+            var resultsElement = document.getElementById('results');
+            
+            // Если элемент существует, прокручиваем к нему
+            if (resultsElement) {
+                // Плавно прокручиваем к результатам
+                resultsElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+                console.log('Scrolled to results');
+                
+                // Добавляем анимацию для заголовка результатов
+                var headers = document.getElementsByClassName('results-header');
+                if (headers.length > 0) {
+                    for (var i = 0; i < headers.length; i++) {
+                        headers[i].classList.add('results-header-animated');
+                    }
+                }
+            }
+        }, 200); // Небольшая задержка для уверенности
+    </script>
     """, unsafe_allow_html=True)
 
 def add_smart_device_adaptation():
@@ -2789,90 +2749,55 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Используем компонент Streamlit для кнопки прокрутки наверх
-    # Так как JavaScript в Streamlit имеет ограничения, используем иной подход
-    
-    # Добавляем единый блок JavaScript и CSS для кнопки "Назад к параметрам"
-    # Важно: используем только HTML-подход, без компонентов Streamlit для избежания проблем с состоянием
+    # Добавляем стили для кнопки прокрутки наверх
     st.markdown("""
     <style>
-    /* Стили для кнопки прокрутки */
-    .back-to-params-button {
-        background-color: #0066cc; 
-        color: white; 
-        border: none; 
-        border-radius: 50px; 
-        padding: 12px 25px; 
-        font-size: 16px; 
-        font-weight: 500;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
-        cursor: pointer; 
-        transition: all 0.3s ease; 
-        display: flex; 
-        align-items: center;
-        justify-content: center;
-        width: 260px;
-        max-width: 100%;
-        margin: 0 auto;
-    }
-    
-    .back-to-params-button:hover {
-        background-color: #0055aa;
-        transform: translateY(-3px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    }
-    
-    .back-to-params-button:active {
-        transform: translateY(1px);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-    
-    /* Контейнер для кнопки */
-    .button-container {
+    /* Стили для центрирования нативных кнопок Streamlit */
+    div.stButton {
         display: flex;
         justify-content: center;
-        margin: 2rem auto;
-        width: 100%;
+        margin: 1.5rem auto;
     }
     
-    /* Анимация стрелки */
-    @keyframes bounce-arrow {
-        0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-        40% {transform: translateY(-8px);}
-        60% {transform: translateY(-4px);}
+    /* Улучшенные стили для кнопки "Вернуться к параметрам" */
+    div.stButton > button:has(div:contains("Вернуться к параметрам")) {
+        background-color: #0066cc !important; 
+        color: white !important;
+        font-size: 1rem !important;
+        padding: 0.6rem 1.5rem !important;
+        min-width: 280px !important;
+        border-radius: 50px !important;
+        border: none !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+        transition: all 0.3s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
-    .arrow-icon {
-        font-size: 18px; 
-        margin-right: 8px;
-        display: inline-block;
-        animation: bounce-arrow 2s infinite;
+    /* Стили для наведения на кнопку */
+    div.stButton > button:has(div:contains("Вернуться к параметрам")):hover {
+        background-color: #0055aa !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    /* Стили для нажатия на кнопку */
+    div.stButton > button:has(div:contains("Вернуться к параметрам")):active {
+        transform: translateY(1px) !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
     }
     </style>
-    
-    <script>
-    // Функция для прокрутки страницы наверх
-    function scrollToTop() {
-        // Плавная прокрутка страницы вверх
-        window.scrollTo({top: 0, behavior: 'smooth'});
-        
-        // Отправка сообщения родительскому окну (для iframe)
-        try {
-            window.parent.postMessage({"type": "scrollToTop"}, "*");
-        } catch (e) {
-            console.log("Не удалось отправить сообщение родительскому окну");
-        }
-    }
-    </script>
-    
-    <!-- HTML-кнопка с вызовом JavaScript-функции -->
-    <div class="button-container">
-        <button onclick="scrollToTop()" class="back-to-params-button">
-            <span class="arrow-icon">⬆️</span>
-            Вернуться к параметрам перголы
-        </button>
-    </div>
     """, unsafe_allow_html=True)
+    
+    # Используем стандартный компонент Streamlit для кнопки
+    # Когда кнопка нажата, мы просто перезагружаем страницу, что прокручивает её вверх
+    if st.button("⬆️ Вернуться к параметрам перголы", key="back_to_params_button", use_container_width=False):
+        # Перезагружаем страницу с сохранением только параметров перголы, но не результатов
+        # Это вернет пользователя обратно к форме ввода
+        st.session_state.pop('results', None)
+        st.session_state.scroll_to_results = False
+        st.rerun()
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
