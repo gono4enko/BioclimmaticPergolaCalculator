@@ -1205,15 +1205,16 @@ def render_results(results):
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
     
-    # Создаем заметный якорь для скролла с ID - делаем его более заметным
-    st.markdown('<div id="results" style="position: relative; scroll-margin-top: 80px; margin-top: 10px; height: 10px;"></div>', unsafe_allow_html=True)
+    # Используем встроенные контейнеры Streamlit с ключами для обеспечения скроллинга
+    results_container = st.container(border=False, key="results_anchor_container")
     
-    # Добавляем заголовок "Результаты расчета" для лучшей видимости и привлечения внимания
-    st.markdown("""
-    <h2 id="results-header" class="results-header" style="text-align: center; margin-top: 10px; margin-bottom: 15px; padding: 15px; 
-    background-color: #f0f7ff; border-radius: 8px; color: #0066cc; font-weight: bold; 
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">Результаты расчета</h2>
-    """, unsafe_allow_html=True)
+    # Добавляем заголовок "Результаты расчета" для лучшей видимости
+    with results_container:
+        st.markdown("""
+        <h2 class="results-header" style="text-align: center; margin-top: 10px; margin-bottom: 15px; padding: 15px; 
+        background-color: #f0f7ff; border-radius: 8px; color: #0066cc; font-weight: bold; 
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">Результаты расчета</h2>
+        """, unsafe_allow_html=True)
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
@@ -2052,19 +2053,32 @@ def send_page_height_to_parent():
 def scroll_to_results():
     """
     Чистая функция для прокрутки к результатам, использующая нативный механизм Streamlit.
-    Эта функция не использует JavaScript или HTML для прокрутки.
+    Эта функция добавляет стилизацию для подсветки результатов и применяет анимацию.
     """
-    # Просто добавляем стили для заголовка результатов, чтобы он выделялся
+    # Добавляем стили для привлечения внимания к результатам
     st.markdown("""
     <style>
-    /* Выделение заголовка результатов */
+    /* Добавляем анимацию для заголовка результатов */
     .results-header {
         background-color: #f0f8ff;
-        border-radius: 5px;
-        padding: 10px;
+        border-radius: 8px;
+        padding: 15px;
         margin-top: 10px;
         margin-bottom: 15px;
         border-left: 4px solid #0066cc;
+        animation: highlight 2s ease-in-out;
+    }
+    
+    @keyframes highlight {
+        0% { background-color: #f0f7ff; box-shadow: 0 0 5px rgba(0, 102, 204, 0.3); }
+        50% { background-color: #d0e5ff; box-shadow: 0 0 15px rgba(0, 102, 204, 0.5); }
+        100% { background-color: #f0f8ff; box-shadow: 0 0 5px rgba(0, 102, 204, 0.3); }
+    }
+    
+    /* Улучшаем видимость контейнера результатов */
+    [data-testid="stVerticalBlock"] [data-key="results_anchor_container"] {
+        scroll-margin-top: 80px;
+        padding-top: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -2619,24 +2633,29 @@ def main():
                 # Устанавливаем флаг для отправки события в Яндекс.Метрику после перезагрузки
                 st.session_state.send_ya_metrika_event = True
                 
-                # Добавляем дополнительный флаг для усиленного скролла (двойная надежность)
-                st.session_state.force_scroll_to_results = True
-                
                 # Перезагружаем страницу для отображения результатов
                 st.rerun()
     
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.2rem; margin-bottom: 0.2rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
         
+    # Создаем якорь для начала формы параметров
+    form_start = st.container(key="form_start")
+    
     # Отображаем результаты (если они доступны)
     if 'results' in st.session_state:
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
-        # Если нужна прокрутка к результатам, добавляем JS код
+        # Используем нативную навигацию Streamlit - если установлен флаг scroll_to_results
         if st.session_state.get('scroll_to_results', False):
-            scroll_to_results()
-            # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
+            # Добавляем стили для заголовка через функцию scroll_to_results
+            scroll_to_results() 
+            
+            # Используем Streamlit API для того, чтобы проскроллить до элемента с id "results_anchor_container"
+            st.query_params["anchor"] = "results_anchor_container"
+            
+            # Сбрасываем флаг прокрутки
             st.session_state.scroll_to_results = False
     
     # Добавляем галерею проектов и счетчик установленных пергол
