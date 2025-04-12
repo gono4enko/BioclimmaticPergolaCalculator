@@ -1098,10 +1098,13 @@ def render_options_form():
         label_visibility="collapsed"  # Скрываем стандартный заголовок
     )
     
-    # Освещение - с минимальными отступами и вертикальным расположением чекбоксов
+    # Применяем полностью новый подход к разделу Освещение
+    # Вместо использования стандартных элементов Streamlit с чекбоксами,
+    # сделаем полностью собственную HTML-реализацию с минимальными отступами
+    
     st.markdown("""
     <style>
-    /* Стили для чекбоксов с минимальными отступами */
+    /* Общий стиль для всех заголовков секций */
     .lighting-section-header {
         font-weight: 500;
         margin-top: 8px;
@@ -1109,134 +1112,136 @@ def render_options_form():
         padding-bottom: 0px;
     }
     
-    /* Общие стили для уменьшения отступов */
-    div[data-testid="stVerticalBlock"] > div:nth-child(n) {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
+    /* Стили для собственного блока освещения */
+    .custom-lighting-section {
+        margin-top: 15px;
+        padding: 0;
     }
     
-    /* Уменьшаем отступы между чекбоксами */
-    .stCheckbox {
-        min-height: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
+    /* Стиль для компактного заголовка */
+    .custom-lighting-title {
+        font-weight: 500;
+        font-size: 1rem;
+        margin-bottom: 8px;
+        display: block;
     }
     
-    /* Уменьшаем отступы внутри чекбоксов */
-    .stCheckbox > div {
-        min-height: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
+    /* Стиль для контейнера чекбоксов с нулевыми отступами */
+    .custom-checkbox-container {
+        margin-top: 3px;
+        display: block;
     }
     
-    /* Уменьшаем отступы для всех блоков div в чекбоксах */
-    div.stCheckbox > div > div {
-        min-height: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
+    /* Стиль для элемента чекбокса */
+    .custom-checkbox {
+        display: block;
+        margin-top: 5px;
     }
     
-    /* Уменьшаем отступы для блока с лейблами */
-    div.stCheckbox > div > div > label {
-        min-height: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-    }
-    
-    /* Уменьшаем отступ второго чекбокса */
-    #rgb_led_checkbox {
-        margin-top: -12px !important;
-    }
-    
-    /* Стиль для нулевого отступа между заголовком и чекбоксами */
-    .zero-top-margin {
-        margin-top: -25px !important;
-        padding-top: 0 !important;
-    }
-    
-    /* Стиль для принудительного отсутствия отступов между элементами формы */
-    .form-element {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    
-    /* Убираем отступы у всех div после заголовка освещения */
-    .lighting-header + div,
-    .lighting-header + div > div,
-    .lighting-header + div > div > div {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-    }
-    
-    /* Стиль для первого чекбокса, чтобы он был сразу под заголовком */
-    #white_led_checkbox_container {
-        margin-top: -20px !important;
+    /* Скрываем стандартные чекбоксы, но используем их для сохранения состояния */
+    .hidden-checkbox {
+        position: absolute;
+        opacity: 0;
+        height: 0;
+        width: 0;
     }
     </style>
+    
+    <div class="custom-lighting-section">
+        <div class="custom-lighting-title">Освещение</div>
+        <div class="custom-checkbox-container" id="lighting-options">
+            <!-- Заполним содержимое через JavaScript позже -->
+        </div>
+    </div>
     """, unsafe_allow_html=True)
     
-    # Добавляем компактный заголовок "Освещение" с классом для таргетинга
-    st.markdown('<p class="lighting-section-header lighting-header">Освещение</p>', unsafe_allow_html=True)
+    # Создаем скрытые чекбоксы для хранения состояния
+    white_led = st.checkbox("", value=False, key="white_led_hidden", label_visibility="collapsed")
+    rgb_led = st.checkbox("", value=False, key="rgb_led_hidden", label_visibility="collapsed")
     
     # Инициализируем список для опций освещения
     lighting_options = []
-    
-    # Используем контейнер с принудительным отрицательным отступом сверху для всей группы чекбоксов
-    st.markdown('<div class="zero-top-margin">', unsafe_allow_html=True)
-    
-    # Контейнер для первого чекбокса с ID для таргетинга в CSS
-    st.markdown('<div id="white_led_checkbox_container" class="form-element">', unsafe_allow_html=True)
-    if st.checkbox("Белая светодиодная лента", value=False, key="white_led_checkbox", label_visibility="visible"):
+    if white_led:
         lighting_options.append("white_led")
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Контейнер для второго чекбокса с отрицательным отступом сверху
-    st.markdown('<div class="form-element" style="margin-top:-12px !important;">', unsafe_allow_html=True)
-    if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_checkbox", label_visibility="visible"):
+    if rgb_led:
         lighting_options.append("rgb_led")
-    st.markdown('</div>', unsafe_allow_html=True)
     
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Дополнительный JavaScript для уменьшения отступов после рендеринга
+    # Добавляем JavaScript для управления чекбоксами и создания кастомного интерфейса
     st.markdown("""
     <script>
-    // Функция для удаления отступов между заголовком Освещение и чекбоксами
-    function removeSpacing() {
-        // Находим заголовок "Освещение"
-        var header = document.querySelector('.lighting-header');
-        if (header) {
-            // Получаем следующий элемент после заголовка
-            var nextElement = header.parentElement.nextElementSibling;
-            if (nextElement) {
-                // Удаляем все отступы
-                nextElement.style.marginTop = '0';
-                nextElement.style.paddingTop = '0';
-                
-                // Применяем стили ко всем дочерним элементам
-                var children = nextElement.querySelectorAll('*');
-                for (var i = 0; i < children.length; i++) {
-                    children[i].style.marginTop = '0';
-                    children[i].style.paddingTop = '0';
-                }
-            }
+    // Функция для обработки клика по кастомному чекбоксу
+    function handleCustomCheckboxClick(checkboxId) {
+        // Находим соответствующий скрытый чекбокс Streamlit и кликаем по нему
+        var streamlitCheckbox = document.querySelector(`[data-testid="stCheckbox"] input[id="${checkboxId}_hidden"]`);
+        if (streamlitCheckbox) {
+            streamlitCheckbox.click();
         }
     }
     
-    // Запускаем функцию после загрузки страницы и через короткий интервал
+    // Функция для создания пользовательских чекбоксов
+    function createCustomCheckboxes() {
+        var container = document.getElementById("lighting-options");
+        if (!container) return;
+        
+        // Очищаем контейнер
+        container.innerHTML = "";
+        
+        // Добавляем первый чекбокс - белая светодиодная лента
+        var whiteCheckbox = document.createElement("div");
+        whiteCheckbox.className = "custom-checkbox";
+        
+        // Получаем состояние скрытого чекбокса
+        var whiteHiddenCheckbox = document.querySelector(`[data-testid="stCheckbox"] input[id="white_led_hidden"]`);
+        var isWhiteChecked = whiteHiddenCheckbox ? whiteHiddenCheckbox.checked : false;
+        
+        whiteCheckbox.innerHTML = `
+            <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" onchange="handleCustomCheckboxClick('white_led')" 
+                       ${isWhiteChecked ? 'checked' : ''} 
+                       style="margin-right: 8px;">
+                Белая светодиодная лента
+            </label>
+        `;
+        container.appendChild(whiteCheckbox);
+        
+        // Добавляем второй чекбокс - RGB светодиодная лента
+        var rgbCheckbox = document.createElement("div");
+        rgbCheckbox.className = "custom-checkbox";
+        
+        // Получаем состояние скрытого чекбокса
+        var rgbHiddenCheckbox = document.querySelector(`[data-testid="stCheckbox"] input[id="rgb_led_hidden"]`);
+        var isRgbChecked = rgbHiddenCheckbox ? rgbHiddenCheckbox.checked : false;
+        
+        rgbCheckbox.innerHTML = `
+            <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" onchange="handleCustomCheckboxClick('rgb_led')" 
+                       ${isRgbChecked ? 'checked' : ''} 
+                       style="margin-right: 8px;">
+                RGB светодиодная лента
+            </label>
+        `;
+        container.appendChild(rgbCheckbox);
+        
+        // Скрываем оригинальные контейнеры с чекбоксами
+        var originalCheckboxes = document.querySelectorAll(`[data-testid="stCheckbox"]`);
+        originalCheckboxes.forEach(function(checkbox) {
+            if (checkbox.querySelector('input[id$="_hidden"]')) {
+                checkbox.style.display = "none";
+            }
+        });
+    }
+    
+    // Запускаем функцию после загрузки страницы и при любых изменениях
     window.addEventListener('load', function() {
-        removeSpacing();
-        setTimeout(removeSpacing, 100);
+        createCustomCheckboxes();
+        // Регулярно проверяем изменения (для реактивности)
+        setInterval(createCustomCheckboxes, 200);
+    });
+    
+    // Обрабатываем события изменения интерфейса Streamlit
+    document.addEventListener('DOMNodeInserted', function(e) {
+        // Если добавлен элемент Streamlit, проверяем наши кастомные чекбоксы
+        setTimeout(createCustomCheckboxes, 50);
     });
     </script>
     """, unsafe_allow_html=True)
