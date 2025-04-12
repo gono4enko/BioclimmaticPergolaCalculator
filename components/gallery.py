@@ -75,8 +75,8 @@ def display_installation_counter():
     """
     count = get_installation_count()
     
-    # Добавляем отладочное сообщение
-    st.markdown("<div style='text-align: center; margin-top: 15px; margin-bottom: -15px; font-weight: bold; color: #004B9A;'>Отображение счетчика установленных пергол</div>", unsafe_allow_html=True)
+    # Добавляем пустое пространство перед счетчиком
+    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
     
     # Создаем контейнер с красивой анимацией и стилем, согласованным со статьями
     counter_html = f"""
@@ -360,16 +360,13 @@ def display_gallery_section():
         st.markdown("""
         <div style="padding: 15px 20px; max-width: 100%; text-align: center;">
             <h1 style="font-size: 2.2rem; color: #0066cc; font-weight: 600; margin-bottom: 15px; text-align: center;">
-                Наши достижения и реализованные проекты
+                Наша галерея и проекты
             </h1>
         </div>
         """, unsafe_allow_html=True)
         
         # Счетчик установленных пергол
         display_installation_counter()
-        
-        # Галерея проектов с выравниванием по центру
-        st.markdown('<h2 class="gallery-subtitle">Наши реализованные проекты</h2>', unsafe_allow_html=True)
         st.markdown('<div class="gallery-description">Взгляните на некоторые из наших недавних проектов. Каждая пергола уникальна и создана в соответствии с потребностями и пожеланиями клиента.</div>', unsafe_allow_html=True)
         
         # Отображаем галерею с проектами
