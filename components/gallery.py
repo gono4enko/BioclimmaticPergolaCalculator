@@ -15,6 +15,7 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import heic_converter
 import animations
+from components import gallery_admin
 
 # Путь к директории с изображениями
 IMAGES_DIR = "attached_assets"
@@ -288,7 +289,8 @@ def create_gallery_html(image_urls, captions):
 
 def display_projects_gallery():
     """
-    Отображает галерею реализованных проектов с описаниями
+    Отображает галерею реализованных проектов с описаниями.
+    Использует систему администрирования для фильтрации изображений.
     """
     # Заголовок и информационный текст теперь добавляются в функции display_gallery_section
     
@@ -297,15 +299,17 @@ def display_projects_gallery():
     available_images = []
     captions = []
     
-    # Проверяем наличие файлов и собираем доступные
+    # Фильтруем и проверяем наличие файлов
     for img_name in REALIZED_PROJECTS:
-        img_path = os.path.join(IMAGES_DIR, img_name)
-        if os.path.exists(img_path):
-            image_paths.append(img_path)
-            available_images.append(img_name)
-            # Получаем описание из словаря или используем имя файла
-            caption = PROJECT_DESCRIPTIONS.get(img_name, "Реализованный проект перголы")
-            captions.append(caption)
+        # Проверяем, разрешено ли изображение через систему администрирования
+        if gallery_admin.is_image_allowed(img_name):
+            img_path = os.path.join(IMAGES_DIR, img_name)
+            if os.path.exists(img_path):
+                image_paths.append(img_path)
+                available_images.append(img_name)
+                # Получаем описание из словаря или используем имя файла
+                caption = PROJECT_DESCRIPTIONS.get(img_name, "Реализованный проект перголы")
+                captions.append(caption)
     
     # Отображаем галерею, если есть доступные изображения
     if image_paths:
