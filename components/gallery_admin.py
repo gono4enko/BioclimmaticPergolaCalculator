@@ -197,88 +197,138 @@ def is_valid_image(img_path):
         logging.warning(f"Некорректное изображение {img_path}: {str(e)}")
         return False
         
-def upload_new_image(uploaded_file, images_dir, auto_include=True):
+def upload_new_image(uploaded_file, images_dir, auto_include=True, check_duplicates=True, quality=90):
     """
-    Загружает новое изображение в директорию галереи и автоматически включает его в активные
+    Загружает новое изображение в директорию галереи и автоматически включает его в активные.
+    Проверяет на дубликаты и конвертирует HEIC в JPEG.
     
     Args:
         uploaded_file: Загруженный файл из st.file_uploader
         images_dir (str): Путь к директории галереи
         auto_include (bool): Автоматически включить в активные изображения
+        check_duplicates (bool): Проверять на дубликаты перед загрузкой
+        quality (int): Качество выходного JPEG при конвертации (0-100)
         
     Returns:
-        tuple: (успешно ли загружено, имя файла)
+        tuple: (успешно ли загружено, имя файла, сообщение)
     """
     if uploaded_file is None:
-        return False, None
-        
-    # Создаем уникальное имя для файла, чтобы избежать конфликтов
-    file_extension = os.path.splitext(uploaded_file.name)[1].lower()
-    random_suffix = uuid.uuid4().hex[:8]
-    new_filename = f"{os.path.splitext(uploaded_file.name)[0]}_{random_suffix}{file_extension}"
+        return False, None, "Файл не был предоставлен"
     
-    # Полный путь к новому файлу
-    new_file_path = os.path.join(images_dir, new_filename)
-    
+    # Генерируем очищенное имя файла без специальных символов
     try:
-        # Проверяем формат файла через PIL
-        try:
-            with Image.open(uploaded_file) as img:
-                # Сохраняем временный файл для проверки
-                with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp_file:
-                    img.save(tmp_file.name)
-                    
-                    # Проверяем корректность сохраненного изображения
-                    if not is_valid_image(tmp_file.name):
-                        os.unlink(tmp_file.name)
-                        return False, None
-                        
-                    # Если все хорошо, копируем во целевую директорию
-                    shutil.copy2(tmp_file.name, new_file_path)
-                    os.unlink(tmp_file.name)
-        except UnidentifiedImageError:
-            # Если это HEIC/HEIF формат, попробуем конвертировать
-            if file_extension.lower() in ('.heic', '.heif'):
-                # Сначала сохраняем загруженный файл
-                with open(new_file_path, 'wb') as f:
-                    f.write(uploaded_file.getbuffer())
-                
-                # Проверяем доступность модуля heic_converter
-                try:
-                    import heic_converter
-                    # Конвертируем HEIC в JPEG
-                    jpeg_path = heic_converter.heic_to_jpeg(new_file_path)
-                    
-                    # Если конвертация не удалась, удаляем исходный файл
-                    if not jpeg_path or not os.path.exists(jpeg_path):
-                        if os.path.exists(new_file_path):
-                            os.remove(new_file_path)
-                        return False, None
-                        
-                    # Новый файл с расширением jpg - его имя возвращается из heic_to_jpeg
-                    new_filename = os.path.basename(jpeg_path)
-                    
-                except ImportError:
-                    # Если модуль не найден, просто удаляем файл
-                    if os.path.exists(new_file_path):
-                        os.remove(new_file_path)
-                    return False, None
-            else:
-                # Если не HEIC и не распознается PIL, отклоняем файл
-                return False, None
-                
-        # Если нужно автоматически включить в галерею
-        if auto_include:
-            include_image(new_filename)
-            
-        return True, new_filename
+        import heic_converter
+        original_filename = uploaded_file.name
+        file_extension = os.path.splitext(original_filename)[1].lower()
+        file_stem = os.path.splitext(original_filename)[0]
+        clean_stem = heic_converter.clean_filename(file_stem)
         
+        # Создаем уникальное имя для файла, чтобы избежать конфликтов
+        random_suffix = uuid.uuid4().hex[:8]
+        new_filename = f"{clean_stem}_{random_suffix}{file_extension}"
+        
+        # Полный путь к новому файлу
+        new_file_path = os.path.join(images_dir, new_filename)
+        
+        # Сохраняем загруженный файл во временный файл
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp_file:
+            tmp_file.write(uploaded_file.getbuffer())
+            tmp_file_path = tmp_file.name
+        
+        # Проверка на дубликаты на основе хеша содержимого
+        if check_duplicates:
+            is_duplicate, duplicate_path = heic_converter.is_duplicate_image(tmp_file_path, images_dir, True)
+            if is_duplicate:
+                os.unlink(tmp_file_path)  # Удаляем временный файл
+                
+                # Если обнаружен дубликат, просто включаем его в галерею и возвращаем
+                duplicate_filename = os.path.basename(duplicate_path)
+                
+                # Если необходимо, включаем дубликат в активные изображения
+                if auto_include:
+                    include_image(duplicate_filename)
+                
+                return True, duplicate_filename, f"Обнаружен дубликат: {duplicate_filename}"
+        
+        # Обработка файла в зависимости от типа
+        if file_extension.lower() in ('.heic', '.heif'):
+            # Сначала копируем временный файл в целевую директорию
+            shutil.copy2(tmp_file_path, new_file_path)
+            os.unlink(tmp_file_path)  # Удаляем временный файл
+            
+            # Конвертируем HEIC в JPEG
+            jpeg_path = heic_converter.heic_to_jpeg(new_file_path, quality=quality, check_duplicates=False)
+            
+            # Если конвертация не удалась, удаляем исходный файл
+            if not jpeg_path or not os.path.exists(jpeg_path):
+                if os.path.exists(new_file_path):
+                    os.remove(new_file_path)
+                return False, None, "Ошибка при конвертации HEIC в JPEG"
+            
+            # Получаем имя JPEG файла и удаляем оригинальный HEIC
+            jpeg_filename = os.path.basename(jpeg_path)
+            
+            # Если нужно автоматически включить в галерею
+            if auto_include:
+                include_image(jpeg_filename)
+            
+            return True, jpeg_filename, "HEIC успешно конвертирован в JPEG"
+            
+        else:
+            # Для других форматов используем универсальную функцию
+            try:
+                # Копируем временный файл в целевую директорию и проверяем на валидность
+                with Image.open(tmp_file_path) as img:
+                    # Проверка на валидность изображения
+                    try:
+                        img.verify()  # Проверка корректности данных
+                    except Exception as e:
+                        os.unlink(tmp_file_path)
+                        return False, None, f"Некорректное изображение: {str(e)}"
+                    
+                    # Если формат не JPEG/JPG, конвертируем в JPEG для унификации
+                    if file_extension.lower() not in ('.jpg', '.jpeg'):
+                        jpeg_path = heic_converter.convert_image_to_jpeg(
+                            tmp_file_path, 
+                            images_dir, 
+                            quality=quality, 
+                            check_duplicates=False
+                        )
+                        
+                        if jpeg_path:
+                            jpeg_filename = os.path.basename(jpeg_path)
+                            # Если нужно автоматически включить в галерею
+                            if auto_include:
+                                include_image(jpeg_filename)
+                            os.unlink(tmp_file_path)
+                            return True, jpeg_filename, f"Формат {file_extension} успешно конвертирован в JPEG"
+                    
+                    # Если это уже JPEG, просто копируем файл
+                    shutil.copy2(tmp_file_path, new_file_path)
+                    os.unlink(tmp_file_path)
+                    
+                    # Если нужно автоматически включить в галерею
+                    if auto_include:
+                        include_image(new_filename)
+                    
+                    return True, new_filename, "Изображение успешно загружено"
+                    
+            except UnidentifiedImageError:
+                os.unlink(tmp_file_path)
+                return False, None, f"Неподдерживаемый формат изображения: {file_extension}"
+            
+            except Exception as e:
+                os.unlink(tmp_file_path)
+                return False, None, f"Ошибка при обработке изображения: {str(e)}"
+    
     except Exception as e:
         logging.error(f"Ошибка при загрузке изображения: {str(e)}")
-        # Очистка - удаляем файл в случае ошибки
-        if os.path.exists(new_file_path):
+        # Очистка временных файлов
+        if 'tmp_file_path' in locals() and os.path.exists(tmp_file_path):
+            os.unlink(tmp_file_path)
+        if 'new_file_path' in locals() and os.path.exists(new_file_path):
             os.remove(new_file_path)
-        return False, None
+        return False, None, f"Ошибка: {str(e)}"
 
 def get_all_gallery_images(images_dir):
     """
@@ -319,34 +369,49 @@ def get_active_gallery_images(images_dir):
     all_images = get_all_gallery_images(images_dir)
     return [img for img in all_images if is_image_allowed(img)]
 
-def detect_duplicate_images(images_dir):
+def detect_duplicate_images(images_dir, check_content=True):
     """
-    Обнаруживает дубликаты изображений по размеру файла.
-    Простой подход - считаем дубликатами файлы с одинаковыми размерами.
+    Обнаруживает дубликаты изображений с использованием различных методов проверки.
     
     Args:
         images_dir (str): Путь к директории с изображениями
+        check_content (bool): Использовать хеш содержимого для поиска дубликатов
         
     Returns:
         list: Список групп дубликатов
     """
-    all_images = get_all_gallery_images(images_dir)
-    size_map = {}
+    import heic_converter
     
-    # Группируем файлы по размеру
-    for img_name in all_images:
-        img_path = os.path.join(images_dir, img_name)
-        try:
-            size = os.path.getsize(img_path)
-            if size not in size_map:
-                size_map[size] = []
-            size_map[size].append(img_name)
-        except Exception as e:
-            st.error(f"Ошибка определения размера файла {img_name}: {str(e)}")
+    # Проверяем существование директории
+    if not os.path.exists(images_dir) or not os.path.isdir(images_dir):
+        st.error(f"Директория {images_dir} не существует")
+        return []
     
-    # Отбираем только группы с дубликатами (больше 1 файла)
-    duplicates = [group for group in size_map.values() if len(group) > 1]
-    return duplicates
+    # Используем более продвинутую функцию из heic_converter
+    try:
+        duplicates = heic_converter.find_duplicates_in_directory(images_dir, check_content)
+        return duplicates
+    except Exception as e:
+        st.error(f"Ошибка при поиске дубликатов: {str(e)}")
+        
+        # Запасной вариант - проверка по размеру файла
+        all_images = get_all_gallery_images(images_dir)
+        size_map = {}
+        
+        # Группируем файлы по размеру
+        for img_name in all_images:
+            img_path = os.path.join(images_dir, img_name)
+            try:
+                size = os.path.getsize(img_path)
+                if size not in size_map:
+                    size_map[size] = []
+                size_map[size].append(img_name)
+            except Exception as e:
+                st.error(f"Ошибка определения размера файла {img_name}: {str(e)}")
+        
+        # Отбираем только группы с дубликатами (больше 1 файла)
+        duplicates = [group for group in size_map.values() if len(group) > 1]
+        return duplicates
 
 def batch_process_images(images_dir, action, image_names):
     """
@@ -432,12 +497,14 @@ def render_gallery_admin_interface(images_dir):
                     st.session_state.uploaded_images = []
                     
                     for uploaded_file in uploaded_files:
-                        success, img_name = upload_new_image(uploaded_file, images_dir, auto_publish)
+                        success, img_name, message = upload_new_image(uploaded_file, images_dir, auto_publish, check_duplicates=True, quality=90)
                         if success:
                             success_count += 1
                             st.session_state.uploaded_images.append(img_name)
+                            st.info(message) # Отображаем информационное сообщение о результате
                         else:
                             error_count += 1
+                            st.warning(message) # Отображаем предупреждение с причиной ошибки
                     
                     if success_count > 0:
                         st.success(f"Успешно загружено {success_count} изображений")
@@ -467,24 +534,95 @@ def render_gallery_admin_interface(images_dir):
                         except Exception as e:
                             st.error(f"Ошибка отображения загруженного изображения: {str(e)}")
     
-    # Обнаруживаем дубликаты
-    duplicates = detect_duplicate_images(images_dir)
+    # Секция для поиска и обработки дубликатов
+    st.header("🔍 Поиск дубликатов изображений")
     
-    if duplicates:
-        st.warning(f"Обнаружено {len(duplicates)} групп дубликатов")
-        if st.checkbox("Показать дубликаты"):
-            for i, group in enumerate(duplicates):
-                st.subheader(f"Группа дубликатов {i+1}")
-                cols = st.columns(len(group))
+    with st.expander("Инструменты обнаружения дубликатов", expanded=False):
+        st.markdown("""
+        ### Инструменты обнаружения дубликатов
+        Система может автоматически находить похожие изображения, которые могут быть дубликатами.
+        Проверка может выполняться по имени файла или по содержимому (наиболее точный метод).
+        """)
+        
+        check_content = st.checkbox("Использовать проверку по содержимому (более точная, но медленнее)", value=True)
+        
+        if st.button("Найти дубликаты", type="primary"):
+            with st.spinner("Поиск дубликатов..."):
+                # Обнаруживаем дубликаты
+                duplicates = detect_duplicate_images(images_dir, check_content=check_content)
+                st.session_state.duplicates = duplicates
                 
-                for j, img_name in enumerate(group):
-                    with cols[j]:
-                        img_path = os.path.join(images_dir, img_name)
-                        st.image(img_path, caption=img_name, width=150)
-                        if st.button(f"Исключить {img_name}"):
-                            exclude_image(img_name)
-                            st.success(f"Изображение {img_name} исключено из галереи")
+                if duplicates:
+                    st.warning(f"Обнаружено {len(duplicates)} групп дубликатов")
+                else:
+                    st.success("Дубликаты не обнаружены")
+        
+        # Если есть найденные дубликаты, показываем их
+        if 'duplicates' in st.session_state and st.session_state.duplicates:
+            duplicates = st.session_state.duplicates
+            
+            for i, group in enumerate(duplicates):
+                with st.expander(f"Группа дубликатов {i+1} ({len(group)} файлов)", expanded=False):
+                    st.subheader(f"Группа дубликатов {i+1}")
+                    
+                    # Форма группового удаления
+                    if len(group) > 1:
+                        group_message = f"Оставить только первое изображение, исключить остальные {len(group)-1}"
+                        if st.button(group_message, key=f"clean_duplicates_{i}"):
+                            keep_file = group[0]
+                            files_to_exclude = group[1:]
+                            
+                            for img_name in files_to_exclude:
+                                exclude_image(img_name)
+                            
+                            st.success(f"Оставлено изображение '{keep_file}', исключены: {', '.join(files_to_exclude)}")
                             st.rerun()
+                    
+                    # Макс. количество изображений в одной строке
+                    max_cols = min(3, len(group))
+                    for j in range(0, len(group), max_cols):
+                        cols = st.columns(max_cols)
+                        for k in range(max_cols):
+                            if j+k < len(group):
+                                img_name = group[j+k]
+                                img_path = os.path.join(images_dir, img_name)
+                                with cols[k]:
+                                    try:
+                                        st.image(img_path, caption=img_name, width=150)
+                                        
+                                        is_excluded = img_name in load_gallery_config()["excluded_images"]
+                                        status = "🚫 Исключено" if is_excluded else "✅ Активно"
+                                        
+                                        st.write(f"Статус: {status}")
+                                        
+                                        col1, col2 = st.columns(2)
+                                        with col1:
+                                            if is_excluded:
+                                                if st.button(f"📢 Опубликовать", key=f"dupl_include_{i}_{j+k}"):
+                                                    include_image(img_name)
+                                                    st.success(f"Изображение {img_name} опубликовано")
+                                                    st.rerun()
+                                            else:
+                                                if st.button(f"🚫 Исключить", key=f"dupl_exclude_{i}_{j+k}"):
+                                                    exclude_image(img_name)
+                                                    st.success(f"Изображение {img_name} исключено из галереи")
+                                                    st.rerun()
+                                        
+                                        with col2:
+                                            if st.button(f"❌ Удалить", key=f"dupl_delete_{i}_{j+k}", type="primary"):
+                                                if delete_image_permanently(img_name, images_dir):
+                                                    st.success(f"Изображение {img_name} удалено")
+                                                    st.rerun()
+                                                else:
+                                                    st.error(f"Не удалось удалить {img_name}")
+                                    except Exception as e:
+                                        st.error(f"Ошибка отображения {img_name}: {str(e)}")
+                                        if st.button(f"❌ Удалить поврежденный файл", key=f"dupl_delete_corrupt_{i}_{j+k}"):
+                                            if delete_image_permanently(img_name, images_dir):
+                                                st.success(f"Изображение {img_name} удалено")
+                                                st.rerun()
+                                            else:
+                                                st.error(f"Не удалось удалить {img_name}")
     
     # Вкладки для управления изображениями
     tab1, tab2, tab3 = st.tabs(["Все изображения", "Активные", "Исключенные"])
