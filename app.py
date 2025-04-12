@@ -1199,7 +1199,8 @@ def render_results(results):
     from components.promotion_display import promotions_section
     
     # Создаем якоря для навигации
-    create_anchor("results")
+    # Этот якорь будет использоваться для программного скролла
+    st.markdown('<div id="results" style="height:1px; margin-top:-80px; visibility:hidden;"></div>', unsafe_allow_html=True)
     
     # Добавляем стилизованный контейнер для результатов расчета с анимацией
     st.markdown("""
@@ -2354,6 +2355,61 @@ def add_smart_device_adaptation():
     </style>
     """, unsafe_allow_html=True)
 
+def add_auto_scroll_js():
+    """
+    Добавляет JavaScript для программного скроллинга к нужному элементу
+    Используется для автоматического скролла после выполнения расчета
+    """
+    st.markdown("""
+    <script>
+        function scrollToElement(elementId) {
+            console.log('Scrolling to element:', elementId);
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                return true;
+            }
+            return false;
+        }
+        
+        window.scrollToResults = function() {
+            return scrollToElement('results');
+        }
+        
+        // Функция вызывается из Python через session state
+        window.autoScrollOnLoad = function() {
+            console.log('Auto scroll on load triggered');
+            setTimeout(function() {
+                scrollToResults();
+            }, 500);
+        }
+    </script>
+    """, unsafe_allow_html=True)
+    
+    # Если есть флаг автоматического скролла, выполняем JavaScript
+    if st.session_state.get('auto_scroll_to_results', False):
+        st.markdown("""
+        <script>
+            // Запускаем автоскролл при загрузке страницы
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM loaded, running auto scroll');
+                window.autoScrollOnLoad();
+            });
+            
+            // Также пробуем запустить сразу
+            console.log('Immediate auto scroll attempt');
+            setTimeout(function() {
+                window.autoScrollOnLoad();
+            }, 300);
+        </script>
+        """, unsafe_allow_html=True)
+        
+        # Сбрасываем флаг, чтобы не скроллить при каждой перезагрузке
+        st.session_state.auto_scroll_to_results = False
+
 def main():
     """Основная функция приложения"""
     # Настраиваем страницу
@@ -2365,6 +2421,9 @@ def main():
     
     # Настраиваем стили скроллинга и навигации
     setup_streamlit_scroll()
+    
+    # Добавляем JavaScript для автоскролла
+    add_auto_scroll_js()
     
     # Добавляем умную адаптацию для различных размеров экрана
     add_smart_device_adaptation()
@@ -2582,6 +2641,9 @@ def main():
                 
                 # Добавляем флаг, что нужно прокрутить к результатам
                 st.session_state.scroll_to_results = True
+                
+                # Устанавливаем флаг для автоматического скролла к результатам
+                st.session_state.auto_scroll_to_results = True
                 
                 # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
                 st.session_state.description_shown = False
