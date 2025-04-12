@@ -1126,14 +1126,14 @@ def render_options_form():
     st.markdown("""
     <style>
     /* Строгое задание отступов для чекбоксов освещения */
-    div[data-testid="stVerticalBlock"] > div:has(label:contains("Белая светодиодная лента")) {
+    div[data-testid="stVerticalBlock"] > div:has(label:contains("LED-подсветка")) {
         margin-top: 0 !important;
         margin-bottom: 0 !important;
         padding-top: 0px !important;
         padding-bottom: 0px !important;
     }
     
-    div[data-testid="stVerticalBlock"] > div:has(label:contains("RGB светодиодная лента")) {
+    div[data-testid="stVerticalBlock"] > div:has(label:contains("RGB-подсветка")) {
         margin-top: 0 !important;
         margin-bottom: 0 !important;
         padding-top: 0px !important;
@@ -1153,21 +1153,13 @@ def render_options_form():
     # Создаем чекбоксы напрямую
     lighting_options = []
     
-    if st.checkbox("Белая светодиодная лента", value=False, key="white_led_direct"):
+    if st.checkbox("LED-подсветка", value=False, key="white_led_direct"):
         lighting_options.append("white_led")
         
-    if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_direct"):
+    if st.checkbox("RGB-подсветка", value=False, key="rgb_led_direct"):
         lighting_options.append("rgb_led")
     
-    # Преобразуем выбранные опции в нужный формат
-    lighting_options_map = []
-    if "Белая светодиодная лента" in lighting_options:
-        lighting_options_map.append("white_led")
-    if "RGB светодиодная лента" in lighting_options:
-        lighting_options_map.append("rgb_led")
-    
-    # Заменяем lighting_options на отображаемую версию
-    lighting_options = lighting_options_map
+    # Удаляем преобразование, так как теперь чекбоксы напрямую добавляют правильные значения
     
     # Прямой подход к созданию чекбокса для установки - такой же как для освещения
     st.write("Установка")
@@ -1370,7 +1362,7 @@ def render_results(results):
     
     # Освещение - четвертой строкой, если есть
     for item in results["items"]:
-        if "освещен" in item["name"].lower() or "лента" in item["name"].lower():
+        if "освещен" in item["name"].lower() or "лента" in item["name"].lower() or "LED" in item["name"] or "RGB" in item["name"]:
             rub_price = item['price'] * euro_rate
             items_data.append([item["name"], format_price(rub_price)])
     
