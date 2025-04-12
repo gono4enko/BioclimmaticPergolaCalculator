@@ -7,9 +7,13 @@
 import streamlit as st
 import os
 import sys
+import logging
 from PIL import Image
 import random
 from datetime import datetime
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Добавляем импорт нашего конвертера HEIC
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -352,28 +356,72 @@ def display_projects_gallery():
         active_images = gallery_admin.get_active_gallery_images(IMAGES_DIR)
         
         # Проверяем наличие файлов и добавляем их в список
+        processed_images = set()  # Множество для отслеживания уже обработанных изображений
         for img_name in active_images:
             img_path = os.path.join(IMAGES_DIR, img_name)
             if os.path.exists(img_path):
-                # Предотвращаем дублирование изображений
-                if img_name not in available_images:
+                # Пропускаем, если это изображение уже обработано или найден его дубликат
+                if img_name in processed_images:
+                    continue
+                    
+                # Проверяем на дубликаты по содержимому среди уже добавленных
+                add_image = True
+                for added_img in available_images:
+                    added_path = os.path.join(IMAGES_DIR, added_img)
+                    try:
+                        is_duplicate, _ = heic_converter.is_duplicate_image(img_path, added_path, by_content=True)
+                        if is_duplicate:
+                            # Нашли дубликат по содержимому, пропускаем
+                            logging.info(f"Предотвращение дублирования: {img_name} похож на {added_img}")
+                            add_image = False
+                            processed_images.add(img_name)  # Помечаем как обработанное
+                            break
+                    except Exception as e:
+                        logging.warning(f"Ошибка при проверке дубликатов: {str(e)}")
+                
+                # Добавляем изображение, если оно прошло проверку на дубликаты
+                if add_image:
                     image_paths.append(img_path)
                     available_images.append(img_name)
+                    processed_images.add(img_name)  # Помечаем как обработанное
                     # Получаем описание из словаря или используем имя файла
                     caption = PROJECT_DESCRIPTIONS.get(img_name, "Реализованный проект перголы")
                     captions.append(caption)
     else:
         # Если список явно включенных пуст, используем статический список
+        processed_images = set()  # Множество для отслеживания уже обработанных изображений
         for img_name in REALIZED_PROJECTS:
+            # Пропускаем, если это изображение уже обработано
+            if img_name in processed_images:
+                continue
+                
             # Проверяем, разрешено ли изображение через систему администрирования
-            if gallery_admin.is_image_allowed(img_name):
+            if gallery_admin.is_image_allowed(img_name, check_duplicates=True, images_dir=IMAGES_DIR):
                 img_path = os.path.join(IMAGES_DIR, img_name)
                 if os.path.exists(img_path):
-                    image_paths.append(img_path)
-                    available_images.append(img_name)
-                    # Получаем описание из словаря или используем имя файла
-                    caption = PROJECT_DESCRIPTIONS.get(img_name, "Реализованный проект перголы")
-                    captions.append(caption)
+                    # Проверяем на дубликаты среди уже добавленных
+                    add_image = True
+                    for added_img in available_images:
+                        added_path = os.path.join(IMAGES_DIR, added_img)
+                        try:
+                            is_duplicate, _ = heic_converter.is_duplicate_image(img_path, added_path, by_content=True)
+                            if is_duplicate:
+                                # Нашли дубликат по содержимому, пропускаем
+                                logging.info(f"Предотвращение дублирования: {img_name} похож на {added_img}")
+                                add_image = False
+                                processed_images.add(img_name)  # Помечаем как обработанное
+                                break
+                        except Exception as e:
+                            logging.warning(f"Ошибка при проверке дубликатов: {str(e)}")
+                    
+                    # Добавляем изображение, если оно прошло проверку на дубликаты
+                    if add_image:
+                        image_paths.append(img_path)
+                        available_images.append(img_name)
+                        processed_images.add(img_name)  # Помечаем как обработанное
+                        # Получаем описание из словаря или используем имя файла
+                        caption = PROJECT_DESCRIPTIONS.get(img_name, "Реализованный проект перголы")
+                        captions.append(caption)
     
     # Отображаем галерею, если есть доступные изображения
     if image_paths:

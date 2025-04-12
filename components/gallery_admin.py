@@ -154,12 +154,14 @@ def delete_image_permanently(image_name, images_dir):
         logging.error(f"Ошибка при удалении изображения {image_name}: {str(e)}")
         return False
 
-def is_image_allowed(image_name):
+def is_image_allowed(image_name, check_duplicates=False, images_dir=None):
     """
     Проверяет, разрешено ли отображение изображения в галерее.
     
     Args:
         image_name (str): Имя файла изображения
+        check_duplicates (bool): Проверять также содержимое файла на дубликаты
+        images_dir (str): Директория с изображениями, нужна для проверки дубликатов по содержимому
         
     Returns:
         bool: True если изображение разрешено к отображению
@@ -173,6 +175,23 @@ def is_image_allowed(image_name):
     # Если список явного включения не пуст и изображения там нет - не показываем
     if config["manual_include"] and image_name not in config["manual_include"]:
         return False
+        
+    # Проверка на дубликаты по содержимому, если это необходимо
+    if check_duplicates and images_dir:
+        import heic_converter
+        img_path = os.path.join(images_dir, image_name)
+        if os.path.exists(img_path):
+            # Получаем все активные изображения 
+            active_images = get_active_gallery_images(images_dir)
+            for active_img in active_images:
+                if active_img != image_name:  # Не сравниваем файл с самим собой
+                    active_path = os.path.join(images_dir, active_img)
+                    if os.path.exists(active_path):
+                        is_duplicate, _ = heic_converter.is_duplicate_image(img_path, active_path, by_content=True)
+                        if is_duplicate:
+                            # Нашли дубликат по содержимому среди уже активных изображений
+                            logging.info(f"Обнаружен дубликат по содержимому: {image_name} похож на {active_img}")
+                            return False
     
     # В остальных случаях показываем
     return True

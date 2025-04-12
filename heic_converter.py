@@ -46,51 +46,85 @@ def clean_filename(filename):
     cleaned = ''.join(c for c in cleaned if c in allowed_chars)
     return cleaned
 
-def is_duplicate_image(new_image_path, directory, check_content=True):
+def is_duplicate_image(first_image_path, second_path, by_content=True):
     """
-    Проверяет, является ли изображение дубликатом одного из существующих файлов
+    Проверяет, является ли одно изображение дубликатом другого.
     
     Args:
-        new_image_path (str): Путь к новому изображению
-        directory (str): Директория с существующими изображениями
-        check_content (bool): Проверять содержимое или только имя файла
+        first_image_path (str): Путь к первому изображению
+        second_path (str): Путь ко второму изображению или директории для поиска дубликатов
+        by_content (bool): Проверять содержимое или только имя файла
         
     Returns:
         tuple: (является ли дубликатом, путь к дубликату если найден)
     """
-    # Проверяем наличие файла с таким же именем
-    new_path = Path(new_image_path)
-    base_filename = new_path.stem
-    base_extension = new_path.suffix.lower()
+    # Проверяем наличие первого файла
+    first_path = Path(first_image_path)
     
-    # Проверка по имени - без учета случайного суффикса
-    normalized_name = base_filename.split('_')[0].lower()
+    # Проверка одиночного файла или каталога
+    is_directory = os.path.isdir(second_path)
     
-    # Если для проверки нужен хеш содержимого
-    if check_content and new_path.exists():
-        new_file_hash = get_image_hash(new_image_path)
-        if not new_file_hash:
+    # Получаем хеш первого файла, если нужна проверка по содержимому
+    if by_content and first_path.exists():
+        first_file_hash = get_image_hash(first_image_path)
+        if not first_file_hash:
             return False, None
     else:
-        new_file_hash = None
+        first_file_hash = None
     
-    # Проверяем все изображения в директории
-    directory = Path(directory)
-    for file_path in directory.glob("*.*"):
-        # Сначала проверяем, является ли файл изображением
-        if file_path.suffix.lower() not in ('.jpg', '.jpeg', '.png', '.heic', '.heif'):
-            continue
+    # Если второй аргумент - это путь к файлу (сравниваем два заданных файла)
+    if not is_directory:
+        second_path_obj = Path(second_path)
+        
+        # Проверка основных атрибутов
+        if not second_path_obj.exists():
+            return False, None
             
-        # Проверка по имени
-        curr_file_stem = file_path.stem.lower()
-        if normalized_name in curr_file_stem and file_path.name != new_path.name:
-            # Если имя похоже, проверяем содержимое если требуется
-            if check_content and new_file_hash:
-                curr_file_hash = get_image_hash(file_path)
-                if curr_file_hash and curr_file_hash == new_file_hash:
-                    return True, str(file_path)
+        # Проверка по имени (нормализуем имена)
+        first_filename = first_path.stem.split('_')[0].lower()
+        second_filename = second_path_obj.stem.split('_')[0].lower()
+        
+        # Если имена совпадают или имя встречается в другом файле, и это разные файлы
+        name_match = (first_filename == second_filename or 
+                    first_filename in second_filename or 
+                    second_filename in first_filename)
+                    
+        if name_match and first_path.name != second_path_obj.name:
+            # Если имена похожи и требуется проверка по содержимому
+            if by_content and first_file_hash:
+                second_file_hash = get_image_hash(second_path)
+                if second_file_hash and second_file_hash == first_file_hash:
+                    return True, str(second_path_obj)
             else:
-                return True, str(file_path)
+                # Если проверяем только по имени, и имена похожи
+                return True, str(second_path_obj)
+        
+        # Если даже по имени не совпало
+        return False, None
+    
+    # Если второй аргумент - директория, ищем дубликаты в ней
+    else:
+        base_filename = first_path.stem
+        # Проверка по имени - без учета случайного суффикса
+        normalized_name = base_filename.split('_')[0].lower()
+        
+        # Проверяем все изображения в директории
+        directory = Path(second_path)
+        for file_path in directory.glob("*.*"):
+            # Сначала проверяем, является ли файл изображением
+            if file_path.suffix.lower() not in ('.jpg', '.jpeg', '.png', '.heic', '.heif'):
+                continue
+                
+            # Проверка по имени
+            curr_file_stem = file_path.stem.lower()
+            if normalized_name in curr_file_stem and file_path.name != first_path.name:
+                # Если имя похоже, проверяем содержимое если требуется
+                if by_content and first_file_hash:
+                    curr_file_hash = get_image_hash(file_path)
+                    if curr_file_hash and curr_file_hash == first_file_hash:
+                        return True, str(file_path)
+                else:
+                    return True, str(file_path)
     
     return False, None
 
