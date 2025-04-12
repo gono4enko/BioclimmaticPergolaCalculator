@@ -1098,106 +1098,45 @@ def render_options_form():
         label_visibility="collapsed"  # Скрываем стандартный заголовок
     )
     
-    # Освещение - с очень небольшим отступом, чтобы сохранить общий дизайн
+    # Освещение - используем тот же стиль, что и для других разделов формы
     st.markdown("""
     <style>
-    /* Стили для сжатия всего блока освещения */
-    [data-testid="stVerticalBlock"] > div {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* Стили для чекбоксов с минимальными отступами */
-    .lighting-section-header {
+    /* Общий стиль заголовков разделов */
+    .section-title {
         font-weight: 500;
-        margin-top: 8px;
-        margin-bottom: 0px;
-        padding-bottom: 0px;
+        margin-bottom: 12px;
+        font-size: 1rem;
     }
     
-    /* Стиль для контейнера с чекбоксами освещения */
-    .lighting-container {
-        margin-top: -10px !important;
-    }
-    
-    /* Уменьшаем высоту чекбоксов */
+    /* Отступы чекбоксов, как у radio buttons */
     .stCheckbox > div {
-        min-height: 20px !important;
+        margin-bottom: 15px !important;
     }
     
-    /* Меньший отступ для второго чекбокса */
-    .second-checkbox {
+    /* Корректируем отступы между чекбоксами */
+    div[data-testid="stVerticalBlock"] > div.stCheckbox + div.stCheckbox {
         margin-top: -10px !important;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Добавляем заголовок "Освещение" с компактными стилями
-    st.markdown('<p class="lighting-section-header">Освещение</p>', unsafe_allow_html=True)
-
-    # Контейнер для чекбоксов с уменьшенным отступом
-    col1, col2 = st.columns([1, 1])
+    # Добавляем заголовок "Освещение" в том же стиле, что и другие заголовки
+    st.write("Освещение")
     
     # Инициализируем список для опций освещения
     lighting_options = []
     
-    # Первый чекбокс - белый светодиод (в первой колонке)
-    with col1:
-        st.markdown('<div class="lighting-container">', unsafe_allow_html=True)
-        white_led = st.checkbox("Белая светодиодная лента", value=False, key="white_led", label_visibility="visible")
-        st.markdown('</div>', unsafe_allow_html=True)
-        if white_led:
-            lighting_options.append("white_led")
+    # Размещаем чекбоксы вертикально, как радиокнопки в других секциях
+    white_led = st.checkbox("Белая светодиодная лента", value=False, key="white_led", label_visibility="visible")
+    if white_led:
+        lighting_options.append("white_led")
     
-    # Второй чекбокс - RGB светодиод (во второй колонке)
-    with col2:
-        st.markdown('<div class="lighting-container second-checkbox">', unsafe_allow_html=True)
-        rgb_led = st.checkbox("RGB светодиодная лента", value=False, key="rgb_led", label_visibility="visible")
-        st.markdown('</div>', unsafe_allow_html=True)
-        if rgb_led:
-            lighting_options.append("rgb_led")
-
-    # Дополнительный JavaScript для уменьшения отступов
-    st.markdown("""
-    <script>
-    // Функция для удаления лишних отступов
-    function compressLightingSection() {
-        // Ищем заголовок "Освещение"
-        var lightingHeader = document.querySelector('.lighting-section-header');
-        if (lightingHeader) {
-            // Находим родительский блок
-            var parentBlock = lightingHeader.closest('[data-testid="stVerticalBlock"]');
-            if (parentBlock) {
-                // Уменьшаем отступы всех дочерних элементов
-                var children = parentBlock.querySelectorAll('[data-testid="stVerticalBlock"] > div');
-                for (var i = 0; i < children.length; i++) {
-                    children[i].style.paddingTop = '0';
-                    children[i].style.paddingBottom = '0';
-                    children[i].style.marginTop = '0';
-                    children[i].style.marginBottom = '0';
-                }
-                
-                // Находим чекбокс "Белая светодиодная лента" - первый чекбокс после заголовка
-                var firstCheckbox = parentBlock.querySelector('.stCheckbox');
-                if (firstCheckbox) {
-                    var firstCheckboxParent = firstCheckbox.parentElement;
-                    if (firstCheckboxParent) {
-                        firstCheckboxParent.style.marginTop = '-10px';
-                    }
-                }
-            }
-        }
-    }
+    rgb_led = st.checkbox("RGB светодиодная лента", value=False, key="rgb_led", label_visibility="visible")
+    if rgb_led:
+        lighting_options.append("rgb_led")
     
-    // Запускаем функцию после загрузки страницы
-    window.addEventListener('load', function() {
-        setTimeout(compressLightingSection, 100);
-    });
-    </script>
-    """, unsafe_allow_html=True)
-    
-    # Установка - используем такой же заголовок, как и для освещения
-    st.markdown('<p class="lighting-section-header">Установка</p>', unsafe_allow_html=True)
+    # Установка - используем такой же стиль, как и для других разделов
+    st.write("Установка")
     
     installation = st.checkbox("С установкой", value=True, key="installation_checkbox", label_visibility="visible")
     
