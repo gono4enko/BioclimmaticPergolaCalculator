@@ -394,6 +394,9 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
         padding-left: 25px;
         padding-right: 25px;
     }
+    .discount-item:first-child {
+        margin-top: 10px;
+    }
     .discount-item:last-child {
         border-bottom: none;
     }
