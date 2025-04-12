@@ -79,8 +79,8 @@ def display_installation_counter():
     """
     count = get_installation_count()
     
-    # Добавляем небольшой отступ перед счетчиком
-    st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
+    # Нулевой отступ перед счетчиком
+    st.markdown("<div style='height: 0px;'></div>", unsafe_allow_html=True)
     
     # Создаем контейнер с красивой анимацией и стилем, согласованным со статьями
     counter_html = f"""
@@ -362,8 +362,8 @@ def display_gallery_section():
         
         # Заголовок раздела в стиле статей с выравниванием по центру
         st.markdown("""
-        <div style="padding: 15px 20px; max-width: 100%; text-align: center;">
-            <h1 style="font-size: 2.2rem; color: #0066cc; font-weight: 600; margin-bottom: 15px; text-align: center;">
+        <div style="padding: 15px 20px 0px 20px; max-width: 100%; text-align: center;">
+            <h1 style="font-size: 2.2rem; color: #0066cc; font-weight: 600; margin-bottom: 5px; text-align: center;">
                 Наша галерея и проекты
             </h1>
         </div>
