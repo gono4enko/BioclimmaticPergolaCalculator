@@ -1,15 +1,17 @@
 {
     "excluded_images": [
         "IMG_5974.heic",
-        "pergola_b500_terrace.jpg",
         "pergola_blue_led_lighting.jpg",
         "IMG_0805 3.HEIC",
         "Снимок экрана 2025-04-08 в 10.55.06.png",
         "Снимок экрана 2025-04-08 в 14.00.57.png",
         "В600 с сэндвич панелями.png",
-        "IMG_5974.jpg",
         "IMG_0805 3.jpg",
-        "pergola_multi_module_terrace.jpg"
+        "pergola_multi_module_terrace.jpg",
+        "aluminum_pergola.jpg"
     ],
-    "manual_include": []
+    "manual_include": [
+        "IMG_5974.jpg",
+        "pergola_b500_terrace.jpg"
+    ]
 }

@@ -348,6 +348,40 @@ def detect_duplicate_images(images_dir):
     duplicates = [group for group in size_map.values() if len(group) > 1]
     return duplicates
 
+def batch_process_images(images_dir, action, image_names):
+    """
+    Выполняет пакетную обработку изображений
+    
+    Args:
+        images_dir (str): Путь к директории с изображениями
+        action (str): Действие для выполнения ('include', 'exclude', 'delete')
+        image_names (list): Список имен изображений для обработки
+        
+    Returns:
+        tuple: (успешно обработано, ошибки)
+    """
+    success_count = 0
+    error_count = 0
+    
+    for img_name in image_names:
+        try:
+            if action == 'include':
+                include_image(img_name)
+                success_count += 1
+            elif action == 'exclude':
+                exclude_image(img_name)
+                success_count += 1
+            elif action == 'delete':
+                if delete_image_permanently(img_name, images_dir):
+                    success_count += 1
+                else:
+                    error_count += 1
+        except Exception as e:
+            logging.error(f"Ошибка при пакетной обработке {img_name}: {str(e)}")
+            error_count += 1
+    
+    return success_count, error_count
+
 def render_gallery_admin_interface(images_dir):
     """
     Отображает интерфейс администрирования галереи.
@@ -357,11 +391,81 @@ def render_gallery_admin_interface(images_dir):
     """
     st.title("Администрирование галереи")
     
+    # Инициализируем в сессионном стейте хранилище выбранных изображений
+    if 'selected_images' not in st.session_state:
+        st.session_state.selected_images = set()
+        
+    # Инициализируем состояние для отслеживания успешных загрузок
+    if 'uploaded_images' not in st.session_state:
+        st.session_state.uploaded_images = []
+    
     # Загружаем конфигурацию
     config = load_gallery_config()
     
     # Получаем все изображения
     all_images = get_all_gallery_images(images_dir)
+    
+    # Секция для загрузки новых изображений
+    st.header("📤 Загрузка новых изображений")
+    
+    with st.expander("Открыть форму загрузки новых изображений", expanded=False):
+        # Описание функциональности
+        st.markdown("""
+        ### Загрузите одно или несколько изображений для добавления в галерею
+        Поддерживаемые форматы: JPG, PNG, HEIC (будет конвертирован в JPEG автоматически)
+        
+        Изображения будут добавлены в галерею и автоматически опубликованы.
+        """)
+        
+        # Загрузчик файлов с поддержкой множественной загрузки
+        uploaded_files = st.file_uploader("Выберите изображения для загрузки", 
+                                            type=["jpg", "jpeg", "png", "heic", "heif"], 
+                                            accept_multiple_files=True)
+        
+        auto_publish = st.checkbox("Автоматически публиковать загруженные изображения", value=True)
+        
+        if uploaded_files:
+            if st.button("Загрузить выбранные изображения", type="primary"):
+                with st.spinner("Загрузка и обработка изображений..."):
+                    success_count = 0
+                    error_count = 0
+                    st.session_state.uploaded_images = []
+                    
+                    for uploaded_file in uploaded_files:
+                        success, img_name = upload_new_image(uploaded_file, images_dir, auto_publish)
+                        if success:
+                            success_count += 1
+                            st.session_state.uploaded_images.append(img_name)
+                        else:
+                            error_count += 1
+                    
+                    if success_count > 0:
+                        st.success(f"Успешно загружено {success_count} изображений")
+                    if error_count > 0:
+                        st.error(f"Не удалось загрузить {error_count} изображений")
+                        
+                    # Обновляем список всех изображений
+                    all_images = get_all_gallery_images(images_dir)
+                    
+                    # Добавляем небольшую задержку для корректного обновления UI
+                    import time
+                    time.sleep(0.5)
+                    st.rerun()
+        
+        # Если были успешно загруженные изображения, показываем их
+        if st.session_state.uploaded_images:
+            st.subheader("Недавно загруженные изображения")
+            
+            # Показываем загруженные изображения в сетке
+            cols = st.columns(min(3, len(st.session_state.uploaded_images)))
+            for i, img_name in enumerate(st.session_state.uploaded_images):
+                img_path = os.path.join(images_dir, img_name)
+                if os.path.exists(img_path):
+                    with cols[i % 3]:
+                        try:
+                            st.image(img_path, caption=img_name, width=150)
+                        except Exception as e:
+                            st.error(f"Ошибка отображения загруженного изображения: {str(e)}")
     
     # Обнаруживаем дубликаты
     duplicates = detect_duplicate_images(images_dir)
@@ -388,6 +492,66 @@ def render_gallery_admin_interface(images_dir):
     with tab1:
         st.subheader("Все доступные изображения")
         
+        # Функция для обработки изменения чекбокса
+        def handle_checkbox_change(img_name):
+            if img_name in st.session_state.selected_images:
+                st.session_state.selected_images.remove(img_name)
+            else:
+                st.session_state.selected_images.add(img_name)
+        
+        # Кнопки для групповых операций с выбранными изображениями
+        if all_images:
+            st.markdown("### Групповые операции")
+            st.markdown("Выберите изображения с помощью чекбоксов для группового изменения статуса")
+            
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                if st.button("Выбрать все", key="select_all_btn"):
+                    st.session_state.selected_images = set(all_images)
+                    st.rerun()
+            
+            with col2:
+                if st.button("Снять выбор", key="deselect_all_btn"):
+                    st.session_state.selected_images = set()
+                    st.rerun()
+            
+            with col3:
+                # Кнопка групповой публикации
+                if st.button("📢 Опубликовать выбранные", disabled=len(st.session_state.selected_images) == 0):
+                    success_count, error_count = batch_process_images(images_dir, 'include', list(st.session_state.selected_images))
+                    st.success(f"✅ Опубликовано {success_count} изображений")
+                    if error_count > 0:
+                        st.error(f"❌ Не удалось опубликовать {error_count} изображений")
+                    # Очищаем выбор после операции
+                    st.session_state.selected_images = set()
+                    st.rerun()
+            
+            with col4:
+                # Кнопка группового исключения
+                if st.button("🚫 Исключить выбранные", disabled=len(st.session_state.selected_images) == 0):
+                    success_count, error_count = batch_process_images(images_dir, 'exclude', list(st.session_state.selected_images))
+                    st.success(f"✅ Исключено {success_count} изображений")
+                    if error_count > 0:
+                        st.error(f"❌ Не удалось исключить {error_count} изображений")
+                    # Очищаем выбор после операции
+                    st.session_state.selected_images = set()
+                    st.rerun()
+            
+            # Кнопка группового удаления с запросом подтверждения
+            delete_confirm = st.checkbox("Подтвердить удаление выбранных изображений", key="confirm_batch_delete")
+            if st.button("❌ Удалить выбранные навсегда", 
+                        disabled=len(st.session_state.selected_images) == 0 or not delete_confirm,
+                        type="primary"):
+                success_count, error_count = batch_process_images(images_dir, 'delete', list(st.session_state.selected_images))
+                st.success(f"✅ Удалено {success_count} изображений")
+                if error_count > 0:
+                    st.error(f"❌ Не удалось удалить {error_count} изображений")
+                # Очищаем выбор после операции
+                st.session_state.selected_images = set()
+                st.rerun()
+            
+            st.markdown(f"Выбрано изображений: **{len(st.session_state.selected_images)}**")
+            
         # Разбиваем на строки с 2 колонками для лучшего отображения кнопок
         for i in range(0, len(all_images), 2):
             cols = st.columns(2)
@@ -397,11 +561,23 @@ def render_gallery_admin_interface(images_dir):
                     img_path = os.path.join(images_dir, img_name)
                     
                     with cols[j]:
-                        try:
-                            st.image(img_path, caption=img_name, width=150)
-                        except Exception as e:
-                            st.error(f"Ошибка отображения {img_name}: {str(e)}")
-                            st.warning("Рекомендуется исключить этот файл")
+                        # Добавляем чекбокс для выбора изображения
+                        is_selected = img_name in st.session_state.selected_images
+                        checkbox_key = f"cb_all_{img_name}"
+                        
+                        row_cols = st.columns([1, 9])
+                        with row_cols[0]:
+                            # Чекбокс с уникальным ключом
+                            st.checkbox("Выбрать", value=is_selected, key=checkbox_key, 
+                                       on_change=handle_checkbox_change, args=(img_name,),
+                                       label_visibility="collapsed")
+                        
+                        with row_cols[1]:
+                            try:
+                                st.image(img_path, caption=img_name, width=150)
+                            except Exception as e:
+                                st.error(f"Ошибка отображения {img_name}: {str(e)}")
+                                st.warning("Рекомендуется исключить этот файл")
                         
                         # Добавляем кнопки управления в ряд
                         button_cols = st.columns(3)
@@ -444,6 +620,45 @@ def render_gallery_admin_interface(images_dir):
         if not active_images:
             st.info("Нет активных изображений")
         else:
+            # Кнопки для групповых операций с выбранными активными изображениями
+            st.markdown("### Групповые операции")
+            st.markdown("Выберите изображения с помощью чекбоксов для группового изменения статуса")
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                if st.button("Выбрать все активные", key="select_all_active_btn"):
+                    st.session_state.selected_images = set(active_images)
+                    st.rerun()
+            
+            with col2:
+                # Кнопка группового исключения
+                if st.button("🚫 Исключить выбранные", key="batch_exclude_active_btn", 
+                           disabled=len(st.session_state.selected_images) == 0):
+                    success_count, error_count = batch_process_images(images_dir, 'exclude', list(st.session_state.selected_images))
+                    st.success(f"✅ Исключено {success_count} изображений")
+                    if error_count > 0:
+                        st.error(f"❌ Не удалось исключить {error_count} изображений")
+                    # Очищаем выбор после операции
+                    st.session_state.selected_images = set()
+                    st.rerun()
+            
+            with col3:
+                # Кнопка группового удаления с запросом подтверждения
+                delete_confirm = st.checkbox("Подтвердить удаление выбранных активных изображений", key="confirm_batch_delete_active")
+                if st.button("❌ Удалить выбранные навсегда", key="batch_delete_active_btn", 
+                          disabled=len(st.session_state.selected_images) == 0 or not delete_confirm,
+                          type="primary"):
+                    success_count, error_count = batch_process_images(images_dir, 'delete', list(st.session_state.selected_images))
+                    st.success(f"✅ Удалено {success_count} изображений")
+                    if error_count > 0:
+                        st.error(f"❌ Не удалось удалить {error_count} изображений")
+                    # Очищаем выбор после операции
+                    st.session_state.selected_images = set()
+                    st.rerun()
+            
+            st.markdown(f"Выбрано активных изображений: **{len([img for img in st.session_state.selected_images if img in active_images])}**")
+            
+            # Отображаем изображения с чекбоксами
             for i in range(0, len(active_images), 2):  # Уменьшаем до 2 колонок для более удобного размещения кнопок
                 cols = st.columns(2)
                 for j in range(2):
@@ -452,11 +667,23 @@ def render_gallery_admin_interface(images_dir):
                         img_path = os.path.join(images_dir, img_name)
                         
                         with cols[j]:
-                            try:
-                                st.image(img_path, caption=img_name, width=150)
-                            except Exception as e:
-                                st.error(f"Ошибка отображения {img_name}: {str(e)}")
-                                st.warning("Рекомендуется исключить этот файл из галереи")
+                            # Добавляем чекбокс для выбора изображения
+                            is_selected = img_name in st.session_state.selected_images
+                            checkbox_key = f"cb_active_{img_name}"
+                            
+                            row_cols = st.columns([1, 9])
+                            with row_cols[0]:
+                                # Чекбокс с уникальным ключом
+                                st.checkbox("Выбрать", value=is_selected, key=checkbox_key, 
+                                           on_change=handle_checkbox_change, args=(img_name,),
+                                           label_visibility="collapsed")
+                            
+                            with row_cols[1]:
+                                try:
+                                    st.image(img_path, caption=img_name, width=150)
+                                except Exception as e:
+                                    st.error(f"Ошибка отображения {img_name}: {str(e)}")
+                                    st.warning("Рекомендуется исключить этот файл из галереи")
                             
                             # Добавляем три кнопки управления в один ряд  
                             button_cols = st.columns(3)
@@ -489,6 +716,59 @@ def render_gallery_admin_interface(images_dir):
         if not config["excluded_images"]:
             st.info("Нет исключенных изображений")
         else:
+            # Кнопки для групповых операций с выбранными исключенными изображениями
+            st.markdown("### Групповые операции")
+            st.markdown("Выберите изображения с помощью чекбоксов для группового изменения статуса")
+            
+            excluded_files_exist = False
+            # Проверяем, существуют ли файлы хотя бы для одного исключенного изображения
+            for img_name in config["excluded_images"]:
+                img_path = os.path.join(images_dir, img_name)
+                if os.path.exists(img_path) and is_valid_image(img_path):
+                    excluded_files_exist = True
+                    break
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Выбрать все исключенные", key="select_all_excluded_btn"):
+                    # Выбираем только те исключенные файлы, которые физически существуют
+                    valid_excluded = []
+                    for img_name in config["excluded_images"]:
+                        img_path = os.path.join(images_dir, img_name)
+                        if os.path.exists(img_path) and is_valid_image(img_path):
+                            valid_excluded.append(img_name)
+                    
+                    st.session_state.selected_images = set(valid_excluded)
+                    st.rerun()
+            
+            with col2:
+                # Кнопка групповой публикации
+                if st.button("📢 Вернуть выбранные в галерею", key="batch_include_excluded_btn", 
+                           disabled=len(st.session_state.selected_images) == 0 or not excluded_files_exist):
+                    success_count, error_count = batch_process_images(images_dir, 'include', list(st.session_state.selected_images))
+                    st.success(f"✅ Возвращено в галерею {success_count} изображений")
+                    if error_count > 0:
+                        st.error(f"❌ Не удалось вернуть {error_count} изображений")
+                    # Очищаем выбор после операции
+                    st.session_state.selected_images = set()
+                    st.rerun()
+            
+            # Кнопка группового удаления с запросом подтверждения
+            delete_confirm = st.checkbox("Подтвердить удаление выбранных исключенных изображений", key="confirm_batch_delete_excluded")
+            if st.button("❌ Удалить выбранные навсегда", key="batch_delete_excluded_btn", 
+                        disabled=len(st.session_state.selected_images) == 0 or not delete_confirm or not excluded_files_exist,
+                        type="primary"):
+                success_count, error_count = batch_process_images(images_dir, 'delete', list(st.session_state.selected_images))
+                st.success(f"✅ Удалено {success_count} изображений")
+                if error_count > 0:
+                    st.error(f"❌ Не удалось удалить {error_count} изображений")
+                # Очищаем выбор после операции
+                st.session_state.selected_images = set()
+                st.rerun()
+            
+            st.markdown(f"Выбрано исключенных изображений: **{len([img for img in st.session_state.selected_images if img in config['excluded_images']])}**")
+            
+            # Отображаем изображения с чекбоксами
             for i in range(0, len(config["excluded_images"]), 2):  # Уменьшаем до 2 колонок для лучшего отображения кнопок
                 cols = st.columns(2)
                 for j in range(2):
@@ -498,34 +778,55 @@ def render_gallery_admin_interface(images_dir):
                         
                         with cols[j]:
                             if os.path.exists(img_path) and is_valid_image(img_path):
-                                try:
-                                    st.image(img_path, caption=img_name, width=150)
-                                except Exception as e:
-                                    st.error(f"Ошибка отображения {img_name}: {str(e)}")
-                                    st.warning("Рекомендуется удалить этот файл")
+                                # Добавляем чекбокс для выбора изображения
+                                is_selected = img_name in st.session_state.selected_images
+                                checkbox_key = f"cb_excluded_{img_name}"
+                                
+                                row_cols = st.columns([1, 9])
+                                with row_cols[0]:
+                                    # Чекбокс с уникальным ключом
+                                    st.checkbox("Выбрать", value=is_selected, key=checkbox_key, 
+                                               on_change=handle_checkbox_change, args=(img_name,),
+                                               label_visibility="collapsed")
+                                
+                                with row_cols[1]:
+                                    try:
+                                        st.image(img_path, caption=img_name, width=150)
+                                    except Exception as e:
+                                        st.error(f"Ошибка отображения {img_name}: {str(e)}")
+                                        st.warning("Рекомендуется удалить этот файл")
+                                
+                                # Добавляем кнопки управления в ряд
+                                button_cols = st.columns(2)
+                                with button_cols[0]:
+                                    if st.button(f"📢 Вернуть в галерею", key=f"return_{img_name}"):
+                                        include_image(img_name)
+                                        st.success(f"Изображение {img_name} возвращено в галерею")
+                                        st.rerun()
+                                
+                                with button_cols[1]:
+                                    # Добавляем кнопку для удаления
+                                    if st.button(f"❌ Удалить навсегда", key=f"delete_excluded_{img_name}", type="primary"):
+                                        # Запрашиваем подтверждение удаления
+                                        if st.checkbox(f"Подтвердить удаление {img_name}", key=f"confirm_excluded_{img_name}"):
+                                            if delete_image_permanently(img_name, images_dir):
+                                                st.success(f"Изображение {img_name} удалено навсегда (резервная копия сохранена в {images_dir}/deleted_images)")
+                                            else:
+                                                st.error(f"Не удалось удалить изображение {img_name}")
+                                            st.rerun()
                             else:
+                                # Для несуществующих или некорректных файлов не показываем чекбокс
                                 if not os.path.exists(img_path):
                                     st.error(f"Файл {img_name} не найден")
                                 else:
                                     st.error(f"Файл {img_name} поврежден или имеет неподдерживаемый формат")
-                            
-                            # Добавляем кнопки управления в ряд
-                            button_cols = st.columns(2)
-                            with button_cols[0]:
-                                if st.button(f"📢 Вернуть в галерею", key=f"return_{img_name}"):
-                                    include_image(img_name)
-                                    st.success(f"Изображение {img_name} возвращено в галерею")
-                                    st.rerun()
-                            
-                            with button_cols[1]:
-                                # Добавляем кнопку для удаления
-                                if st.button(f"❌ Удалить навсегда", key=f"delete_excluded_{img_name}", type="primary"):
-                                    # Запрашиваем подтверждение удаления
-                                    if st.checkbox(f"Подтвердить удаление {img_name}", key=f"confirm_excluded_{img_name}"):
-                                        if delete_image_permanently(img_name, images_dir):
-                                            st.success(f"Изображение {img_name} удалено навсегда (резервная копия сохранена в {images_dir}/deleted_images)")
-                                        else:
-                                            st.error(f"Не удалось удалить изображение {img_name}")
+                                
+                                # Добавляем кнопку только для удаления из списка исключенных
+                                if st.button(f"🧹 Удалить из списка исключенных", key=f"remove_from_excluded_{img_name}"):
+                                    if img_name in config["excluded_images"]:
+                                        config["excluded_images"].remove(img_name)
+                                        save_gallery_config(config)
+                                        st.success(f"Изображение {img_name} удалено из списка исключенных")
                                         st.rerun()
     
     # Секция для обработки проблемных файлов HEIC
