@@ -1984,78 +1984,127 @@ def send_page_height_to_parent():
 def scroll_to_results():
     """
     Добавляет JavaScript для перехода к якорю результатов при нажатии на скрытую кнопку
+    и показывает анимированную подсказку для пользователя
     """
     # Добавляем JavaScript для автоматического нажатия на ссылку-якорь
+    # и создания заметной анимированной подсказки
     st.markdown("""
     <script>
-        // Используем URL-хэш для скролла
+        // Более надежная и очевидная для пользователя прокрутка к результатам
         function scrollToResults() {
-            console.log('Attempting to scroll to results...');
+            console.log('Attempting to scroll to results with visual indicator...');
             
-            // Ищем элемент с id="results"
-            const resultsElement = document.getElementById('results');
+            // Создаем и добавляем в DOM мигающую стрелку-подсказку,
+            // чтобы пользователь понял, что нужно прокрутить вниз
+            const scrollIndicator = document.createElement('div');
+            scrollIndicator.innerHTML = '↓ РЕЗУЛЬТАТЫ РАСЧЕТА НИЖЕ ↓';
+            scrollIndicator.style.position = 'fixed';
+            scrollIndicator.style.bottom = '20px';
+            scrollIndicator.style.left = '50%';
+            scrollIndicator.style.transform = 'translateX(-50%)';
+            scrollIndicator.style.backgroundColor = '#0066cc';
+            scrollIndicator.style.color = 'white';
+            scrollIndicator.style.padding = '12px 20px';
+            scrollIndicator.style.borderRadius = '5px';
+            scrollIndicator.style.zIndex = '9999';
+            scrollIndicator.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
+            scrollIndicator.style.textAlign = 'center';
+            scrollIndicator.style.fontWeight = 'bold';
+            scrollIndicator.style.fontSize = '16px';
+            scrollIndicator.id = 'scroll-indicator';
             
-            if (resultsElement) {
-                console.log('Found results element, scrolling...');
+            // Добавляем стили для анимации мигания подсказки
+            const style = document.createElement('style');
+            style.innerHTML = `
+                @keyframes blink-and-bounce {
+                    0% { opacity: 0.9; transform: translateX(-50%) translateY(0); }
+                    50% { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+                    100% { opacity: 0.9; transform: translateX(-50%) translateY(0); }
+                }
+                #scroll-indicator {
+                    animation: blink-and-bounce 1.5s ease-in-out infinite;
+                    cursor: pointer;
+                }
+            `;
+            document.head.appendChild(style);
+            document.body.appendChild(scrollIndicator);
+            
+            // При клике на индикатор - скроллим к результатам
+            scrollIndicator.addEventListener('click', function() {
+                scrollToTarget();
+                // Удаляем индикатор при клике
+                document.body.removeChild(scrollIndicator);
+            });
+            
+            // Функция для прокрутки к целевому элементу
+            function scrollToTarget() {
+                // Ищем элемент с id="results"
+                const resultsElement = document.getElementById('results');
                 
-                // Программно создаем и кликаем по ссылке на якорь
-                const scrollLink = document.createElement('a');
-                scrollLink.href = '#results';
-                scrollLink.style.display = 'none';
-                document.body.appendChild(scrollLink);
-                
-                // Прокручиваем с задержкой для надежности
-                setTimeout(() => {
+                if (resultsElement) {
+                    console.log('Found results element, scrolling...');
+                    
+                    // Программно скроллим к результатам
+                    resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    // Также создаем прямой клик по якорю для надежности
+                    const scrollLink = document.createElement('a');
+                    scrollLink.href = '#results';
+                    scrollLink.style.display = 'none';
+                    document.body.appendChild(scrollLink);
                     scrollLink.click();
-                    console.log('Clicked on results anchor link');
                     
                     // Удаляем ссылку после использования
                     setTimeout(() => {
                         document.body.removeChild(scrollLink);
                     }, 100);
-                }, 500);
+                    
+                    return true;
+                }
                 
-                return true;
-            }
-            
-            console.log('Results element not found');
-            
-            // Если якорь не найден, ищем заголовок или просто скроллим вниз
-            const resultsHeadings = Array.from(document.querySelectorAll('h2'))
-                .filter(h => h.textContent.includes('Результаты расчета'));
-            
-            if (resultsHeadings.length > 0) {
-                console.log('Found results heading, scrolling...');
-                const heading = resultsHeadings[0];
+                console.log('Results element not found');
+                
+                // Если якорь не найден, ищем заголовок или просто скроллим вниз
+                const resultsHeadings = Array.from(document.querySelectorAll('h2, h3'))
+                    .filter(h => h.textContent.includes('Результаты расчета') || 
+                                 h.textContent.includes('результат'));
+                
+                if (resultsHeadings.length > 0) {
+                    console.log('Found results heading, scrolling...');
+                    const heading = resultsHeadings[0];
+                    window.scrollTo({
+                        top: heading.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                    return true;
+                }
+                
+                // Крайний случай - просто скроллим ниже
+                console.log('No targets found, scrolling down as fallback');
                 window.scrollTo({
-                    top: heading.offsetTop - 80,
+                    top: window.innerHeight,  // Примерно на высоту экрана
                     behavior: 'smooth'
                 });
-                return true;
+                
+                return false;
             }
             
-            // Крайний случай - просто скроллим на определенное расстояние вниз
-            console.log('No targets found, scrolling down as fallback');
-            window.scrollTo({
-                top: document.body.scrollHeight / 2,  // Примерно в середину страницы
-                behavior: 'smooth'
-            });
+            // Выполняем скролл сразу
+            setTimeout(scrollToTarget, 500);
             
-            return false;
+            // Удаляем индикатор через 8 секунд (или пользователь кликнет на него раньше)
+            setTimeout(() => {
+                const indicator = document.getElementById('scroll-indicator');
+                if (indicator) {
+                    document.body.removeChild(indicator);
+                }
+            }, 8000);
         }
         
-        // Выполняем скролл после загрузки DOM
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded, scheduling scroll');
-            setTimeout(scrollToResults, 300);
-        });
-        
-        // Также выполняем скролл сразу (для случая, когда DOM уже загружен)
-        console.log('Script loaded, scheduling immediate scroll');
-        setTimeout(scrollToResults, 500);
-        
-        // И выполняем третью попытку для надежности
-        setTimeout(scrollToResults, 1500);
+        // Запускаем функцию скролла сразу при загрузке скрипта
+        // и повторяем через секунду для надежности
+        setTimeout(scrollToResults, 300);
+        setTimeout(scrollToResults, 1000);
     </script>
     """, unsafe_allow_html=True)
 
