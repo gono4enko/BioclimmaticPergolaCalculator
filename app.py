@@ -1201,8 +1201,30 @@ def render_results(results):
     # Создаем заметный якорь для скролла с ID - делаем его более заметным
     st.markdown('<div id="results" name="results" style="position: relative; height: 5px;"></div>', unsafe_allow_html=True)
     
-    # Добавляем заголовок "Результаты расчета" для лучшей видимости
-    st.markdown('<h2 id="results-header" style="text-align: center; margin-top: 10px; margin-bottom: 15px; padding: 10px; background-color: #f0f7ff; border-radius: 5px; color: #0066cc;">Результаты расчета</h2>', unsafe_allow_html=True)
+    # Добавляем заголовок "Результаты расчета" для лучшей видимости с улучшенными стилями
+    st.markdown("""
+    <style>
+    /* Анимация для заголовка результатов */
+    @keyframes highlight-header {
+        0%, 100% { background-color: #f0f7ff; }
+        50% { background-color: #ffeb3b; }
+    }
+    
+    #results-header {
+        animation: highlight-header 1.5s ease-in-out 1;
+        text-align: center;
+        margin-top: 10px;
+        margin-bottom: 15px;
+        padding: 15px;
+        background-color: #f0f7ff;
+        border-radius: 8px;
+        color: #0066cc;
+        font-weight: bold;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    </style>
+    <h2 id="results-header">Результаты расчета</h2>
+    """, unsafe_allow_html=True)
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
@@ -2653,8 +2675,71 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Кнопка для расчета с улучшенным стилем
-    if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
+    # Кнопка для расчета с улучшенным стилем и гарантированным скроллом
+    # Даем кнопке уникальный ключ для отслеживания
+    calc_button = st.button("Рассчитать стоимость", type="primary", key="calc_button", use_container_width=True)
+    
+    # Добавляем JavaScript для надежного отслеживания нажатия на кнопку
+    st.markdown("""
+    <script>
+        // Отслеживаем нажатие на кнопку расчета
+        document.addEventListener('click', function(e) {
+            // Ищем кнопку по атрибутам
+            if (e.target && (e.target.innerText === 'Рассчитать стоимость' || 
+                (e.target.closest('button') && e.target.closest('button').innerText === 'Рассчитать стоимость'))) {
+                
+                console.log('Кнопка расчета нажата, сохраняем флаг');
+                
+                // Сохраняем флаг в localStorage для надежности
+                localStorage.setItem('need_scroll_to_results', 'true');
+                localStorage.setItem('scroll_timestamp', Date.now());
+            }
+        });
+        
+        // Проверяем, нужно ли выполнить скролл на основе localStorage
+        function checkAndScrollIfNeeded() {
+            const needScroll = localStorage.getItem('need_scroll_to_results');
+            const scrollTimestamp = localStorage.getItem('scroll_timestamp');
+            
+            // Если флаг есть и установлен недавно (в течение последних 5 секунд)
+            if (needScroll === 'true' && scrollTimestamp) {
+                const now = Date.now();
+                const timestamp = parseInt(scrollTimestamp);
+                
+                // Если флаг установлен не более 5 секунд назад
+                if (now - timestamp < 5000) {
+                    console.log('Обнаружен флаг автоскролла, подготовка...');
+                    
+                    // Очищаем флаг
+                    localStorage.removeItem('need_scroll_to_results');
+                    
+                    // Подождем, пока DOM обновится
+                    setTimeout(function() {
+                        // Ищем результаты по ID
+                        const resultsElement = document.getElementById('results');
+                        const resultsHeader = document.getElementById('results-header');
+                        
+                        if (resultsHeader) {
+                            console.log('Выполняем автоскролл к заголовку результатов');
+                            resultsHeader.scrollIntoView({behavior: 'smooth', block: 'start'});
+                        } else if (resultsElement) {
+                            console.log('Выполняем автоскролл к якорю результатов');
+                            resultsElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+                        }
+                    }, 1000); // Даем время на обновление DOM
+                }
+            }
+        }
+        
+        // Проверяем при загрузке страницы
+        document.addEventListener('DOMContentLoaded', checkAndScrollIfNeeded);
+        
+        // И проверяем сразу
+        checkAndScrollIfNeeded();
+    </script>
+    """, unsafe_allow_html=True)
+    
+    if calc_button:
         with st.spinner("Выполняется расчет..."):
             # Проверяем, что у нас есть данные для расчета
             if dimensions and options:
@@ -2673,6 +2758,9 @@ def main():
                 
                 # Устанавливаем флаг для отправки события в Яндекс.Метрику после перезагрузки
                 st.session_state.send_ya_metrika_event = True
+                
+                # Добавляем дополнительный флаг для усиленного скролла (двойная надежность)
+                st.session_state.force_scroll_to_results = True
                 
                 # Перезагружаем страницу для отображения результатов
                 st.rerun()
