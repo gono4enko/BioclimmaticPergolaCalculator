@@ -13,6 +13,13 @@ import time
 from datetime import datetime
 # Импортируем модуль для отображения галереи проектов
 from components.gallery import display_gallery_section
+# Импортируем модуль для управления скроллингом
+from components.scroll_manager import (
+    setup_scroll_functionality, 
+    create_scroll_target, 
+    handle_calculation_scroll,
+    auto_scroll_on_load
+)
 
 def get_plural_form(number, one, two, five):
     """
@@ -2003,67 +2010,13 @@ def send_page_height_to_parent():
     </script>
     """, unsafe_allow_html=True)
 
+# Используем функцию из нового модуля, сохраняя то же имя для совместимости
 def setup_streamlit_scroll():
     """
     Добавляет стили для навигации по якорям и переходов между секциями.
-    Использует чистый CSS и HTML без JavaScript.
+    Использует обновленную реализацию из модуля scroll_manager.
     """
-    # Стили для якорей и навигации
-    st.markdown("""
-    <style>
-    /* Стили для якорей */
-    .anchor-target {
-        display: block;
-        position: relative;
-        top: -80px;
-        visibility: hidden;
-        height: 0;
-        width: 0;
-    }
-    
-    /* Стили для кнопки навигации */
-    .nav-button {
-        background-color: #00a651;
-        color: white;
-        font-size: 1.1rem;
-        font-weight: 500;
-        padding: 12px 24px;
-        border-radius: 6px;
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        margin: 15px auto;
-        display: block;
-        width: 100%;
-        max-width: 500px;
-        text-align: center;
-        text-decoration: none;
-        transition: all 0.3s ease;
-    }
-    
-    .nav-button:hover {
-        background-color: #008c4a;
-        box-shadow: 0 3px 7px rgba(0,0,0,0.3);
-        transform: translateY(-2px);
-    }
-    
-    .nav-button:active {
-        transform: translateY(1px);
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    }
-    
-    /* Стили для результатов */
-    .results-section {
-        animation: fade-in 0.5s ease-in-out;
-        transition: all 0.5s ease;
-    }
-    
-    @keyframes fade-in {
-        0% { opacity: 0; transform: translateY(10px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    setup_scroll_functionality()
 
 def create_anchor(anchor_id):
     """
@@ -2075,7 +2028,8 @@ def create_anchor(anchor_id):
     Returns:
         None: Добавляет якорь через st.markdown
     """
-    st.markdown(f'<div id="{anchor_id}" class="anchor-target"></div>', unsafe_allow_html=True)
+    # Используем функцию из нового модуля для создания якоря скроллинга
+    create_scroll_target(anchor_id)
 
 def create_navigation_button(text, target_id, color="#00a651", margin="15px auto"):
     """
