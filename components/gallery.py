@@ -52,23 +52,19 @@ PROJECT_DESCRIPTIONS = {
 def get_installation_count():
     """
     Возвращает количество установленных пергол в текущем году,
-    используя формулу: количество недель текущего месяца - 6.
+    используя формулу: номер недели в году - 6.
     
     Returns:
         int: Количество установленных пергол
     """
     # Получаем текущую дату
     current_date = datetime.now()
-    # Определяем первый день текущего месяца
-    first_day = current_date.replace(day=1)
-    # Определяем номер недели для первого дня месяца
-    first_week = first_day.isocalendar()[1]
+    
     # Определяем номер недели для текущего дня
     current_week = current_date.isocalendar()[1]
-    # Вычисляем количество недель в текущем месяце до текущей даты
-    weeks_passed = current_week - first_week + 1
-    # Применяем формулу: количество недель текущего месяца - 6
-    pergolas_count = max(1, weeks_passed - 6)
+    
+    # Применяем формулу: номер недели в году - 6
+    pergolas_count = max(1, current_week - 6)
     
     return pergolas_count
 
