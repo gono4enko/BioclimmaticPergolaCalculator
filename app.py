@@ -2369,6 +2369,15 @@ def main():
     # Добавляем код счетчика Яндекс.Метрики
     add_yandex_metrika()
     
+    # Добавляем информацию в сайдбар
+    with st.sidebar:
+        st.title("Навигация")
+        st.write("**Основные функции:**")
+        st.page_link("app.py", label="🏡 Калькулятор пергол")
+        
+        st.write("**Тестовые инструменты:**")
+        st.page_link("pages/seasonal_promotions_test.py", label="🔄 Тест сезонных акций", help="Тестирование системы автоматической смены сезонных акций")
+    
     # Проверяем, нужно ли отправить событие в Яндекс.Метрику
     if st.session_state.get('send_ya_metrika_event', False):
         # Отправляем событие через JavaScript
