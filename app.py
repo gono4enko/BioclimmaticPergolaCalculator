@@ -2555,12 +2555,12 @@ def main():
     /* Пульсирующая анимация для привлечения внимания */
     @keyframes pulse-button {
         0% { transform: scale(1); }
-        50% { transform: scale(1.02); }
+        50% { transform: scale(1.03); }
         100% { transform: scale(1); }
     }
     
     div[data-testid="stButton"] > button[kind="primary"] {
-        animation: pulse-button 2s infinite ease-in-out;
+        animation: pulse-button 1.2s infinite ease-in-out;
     }
     </style>
     """, unsafe_allow_html=True)
