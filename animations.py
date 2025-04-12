@@ -311,6 +311,21 @@ def animate_button(button_text, key=None, animation_class="pulseAnimation"):
     Returns:
         bool: True если кнопка нажата
     """
+    # Добавляем дополнительные CSS-стили для анимации
+    st.markdown("""
+    <style>
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.03); }
+        100% { transform: scale(1); }
+    }
+    
+    .pulseAnimation {
+        animation: pulse 1.5s infinite ease-in-out;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Создаем HTML для анимированной кнопки
     button_html = f"""
     <button class="{animation_class}" 
@@ -321,11 +336,15 @@ def animate_button(button_text, key=None, animation_class="pulseAnimation"):
             border-radius: 5px;
             padding: 8px 16px;
             font-size: 16px;
+            height: 50px;
+            line-height: 30px;
             cursor: pointer;
             transition: all 0.3s ease;
             display: block;
+            width: 100%;
             margin: 0 auto;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            font-weight: bold;
         "
         onclick="document.getElementById('hidden-button-{key}').click();"
     >

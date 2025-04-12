@@ -2329,11 +2329,16 @@ def main():
     
     # Проверяем, нужно ли скроллить к результатам (если они есть и установлен флаг)
     if 'results' in st.session_state and st.session_state.get('need_scroll_to_results', False):
-        st.session_state.need_scroll_to_results = False  # Сбрасываем флаг сразу
+        # Сохраняем флаг, чтобы можно было проверить его в консоли для отладки
+        has_scroll_flag = st.session_state.need_scroll_to_results
+        # Сбрасываем флаг сразу
+        st.session_state.need_scroll_to_results = False
+        
         # Используем функцию из модуля scroll_manager для программного скролла к результатам
         auto_scroll_on_load('calculation-results')
+        
         # Показываем уведомление о прокрутке
-        st.success("Результаты расчета готовы! Прокрутка к результатам...")
+        st.success(f"Результаты расчета готовы! Прокрутка к элементу calculation-results... (was_flag={has_scroll_flag})")
     
     # Добавляем умную адаптацию для различных размеров экрана
     add_smart_device_adaptation()
