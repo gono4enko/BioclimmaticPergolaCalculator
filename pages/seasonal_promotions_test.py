@@ -1,11 +1,19 @@
 """
-Тестовый скрипт для проверки логики сезонных акций.
+Тестовая страница для проверки логики сезонных акций.
 Позволяет подтвердить правильность переключения между сезонами и работы счетчика.
 """
 import streamlit as st
 import datetime
 from config import promotions
 from components import promotion_display
+
+# Настройка страницы
+st.set_page_config(
+    page_title="Тестирование сезонных акций",
+    page_icon="🔄",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 # Заголовок приложения
 st.title("Тестирование сезонных акций")
@@ -113,6 +121,46 @@ fake_promo = {
 
 promotion_display.display_urgent_discount_panel(fake_promo)
 
+# Отображаем разные сезонные цвета
+st.subheader("Цвета сезонов")
+season_colors = {
+    "Весна (spring)": promotions.SEASON_COLORS[promotions.SEASON_SPRING],
+    "Лето (summer)": promotions.SEASON_COLORS[promotions.SEASON_SUMMER],
+    "Осень (autumn)": promotions.SEASON_COLORS[promotions.SEASON_AUTUMN],
+    "Зима (winter)": promotions.SEASON_COLORS[promotions.SEASON_WINTER]
+}
+
+for season_name, color in season_colors.items():
+    st.markdown(f"""
+    <div style="background-color: {color}; padding: 10px; color: white; border-radius: 5px; margin-bottom: 10px;">
+        {season_name}: {color}
+    </div>
+    """, unsafe_allow_html=True)
+
+# Симуляция переключения между сезонами
+st.subheader("Симуляция смены сезонов")
+selected_season = st.selectbox(
+    "Выберите сезон для симуляции:",
+    ["Текущий", "Весна", "Лето", "Осень", "Зима"]
+)
+
+if selected_season != "Текущий":
+    season_map = {
+        "Весна": promotions.SEASON_SPRING,
+        "Лето": promotions.SEASON_SUMMER,
+        "Осень": promotions.SEASON_AUTUMN,
+        "Зима": promotions.SEASON_WINTER
+    }
+    
+    selected_season_code = season_map[selected_season]
+    simulated_promo = {
+        "id": f"{selected_season_code}_sale_{datetime.date.today().year}",
+        **promotions.generate_seasonal_promotion(5)
+    }
+    
+    st.write("### Симулированная акция")
+    promotion_display.display_urgent_discount_panel(simulated_promo)
+
 # Отображаем кнопку для обновления страницы
-if st.button("Обновить страницу"):
+if st.button("Обновить страницу", type="primary"):
     st.rerun()
