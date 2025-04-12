@@ -14,6 +14,13 @@ from datetime import datetime
 # Импортируем модуль для отображения галереи проектов
 from components.gallery import display_gallery_section
 
+# Импортируем модуль защиты контента, если он существует
+try:
+    import content_protection
+    CONTENT_PROTECTION_ENABLED = True
+except ImportError:
+    CONTENT_PROTECTION_ENABLED = False
+
 def get_plural_form(number, one, two, five):
     """
     Возвращает правильную форму существительного для числительного по правилам русского языка.
@@ -2417,6 +2424,13 @@ def main():
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
     
+    # Инициализируем систему защиты контента, если она включена
+    if CONTENT_PROTECTION_ENABLED:
+        try:
+            content_protection.initialize_content_protection()
+        except Exception as e:
+            print(f"Ошибка инициализации защиты контента: {str(e)}")
+    
     # Добавляем умную адаптацию для различных размеров экрана
     add_smart_device_adaptation()
     
@@ -2431,6 +2445,11 @@ def main():
         
         st.write("**Тестовые инструменты:**")
         st.page_link("pages/seasonal_promotions_test.py", label="🔄 Тест сезонных акций", help="Тестирование системы автоматической смены сезонных акций")
+        
+        # Добавляем ссылку на административную страницу защиты контента, если она включена
+        if CONTENT_PROTECTION_ENABLED:
+            st.write("**Администрирование:**")
+            st.page_link("pages/content_protection_admin.py", label="🔒 Защита контента", help="Управление защитой контента от непреднамеренных изменений")
     
     # Проверяем, нужно ли отправить событие в Яндекс.Метрику
     if st.session_state.get('send_ya_metrika_event', False):
