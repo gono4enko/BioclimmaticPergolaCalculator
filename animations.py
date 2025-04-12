@@ -311,54 +311,58 @@ def animate_button(button_text, key=None, animation_class="pulseAnimation"):
     Returns:
         bool: True если кнопка нажата
     """
-    # Добавляем дополнительные CSS-стили для анимации
+    # Если ключ не указан, создаем уникальный ключ на основе текста кнопки
+    if key is None:
+        key = button_text.lower().replace(" ", "_")
+        
+    # Добавляем улучшенные стили пульсации для кнопки
     st.markdown("""
     <style>
+    /* Анимация пульсации для кнопки */
     @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.03); }
-        100% { transform: scale(1); }
+        0% { transform: scale(1); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); }
+        50% { transform: scale(1.03); box-shadow: 0 4px 10px rgba(0, 102, 204, 0.3); }
+        100% { transform: scale(1); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); }
     }
     
+    /* Класс пульсации для кнопки */
     .pulseAnimation {
         animation: pulse 1.5s infinite ease-in-out;
+    }
+    
+    /* Уникальный стиль для контейнера кнопки */
+    .animated-button-container {
+        width: 100%;
+        margin: 0 auto;
+        padding: 5px 0;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Создаем HTML для анимированной кнопки
-    button_html = f"""
-    <button class="{animation_class}" 
-        style="
-            background-color: #0066cc;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 8px 16px;
-            font-size: 16px;
-            height: 50px;
-            line-height: 30px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: block;
-            width: 100%;
-            margin: 0 auto;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            font-weight: bold;
-        "
-        onclick="document.getElementById('hidden-button-{key}').click();"
-    >
-        {button_text}
-    </button>
-    """
+    # Используем уникальный ID для кнопки
+    button_id = f"calc-button-{key}"
+    hidden_button_id = f"hidden-button-{key}"
     
-    # Отображаем анимированную кнопку
-    st.markdown(button_html, unsafe_allow_html=True)
+    # Создаем HTML-контейнер для анимированной кнопки
+    st.markdown(f"""
+    <div class="animated-button-container">
+        <button id="{button_id}" class="{animation_class}" 
+            style="background-color: #0066cc; color: white; border: none; border-radius: 5px; 
+                padding: 8px 16px; font-size: 16px; height: 50px; line-height: 30px; 
+                cursor: pointer; transition: all 0.3s ease; display: block; 
+                width: 100%; margin: 0 auto; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); 
+                font-weight: bold;"
+            onclick="document.getElementById('{hidden_button_id}').click();">
+            {button_text}
+        </button>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Создаем скрытую кнопку, которая будет нажиматься из HTML-кнопки
-    return st.button("Скрытая кнопка", key=f"hidden-button-{key}", 
-                     help="Это скрытая кнопка для анимированного интерфейса", 
-                     on_click=None)
+    # Создаем скрытую кнопку Streamlit, которая будет активирована через JavaScript
+    clicked = st.button("Скрытая кнопка", key=hidden_button_id, 
+                       help="Это скрытая кнопка для анимированного интерфейса")
+    
+    return clicked
 
 def apply_entrance_animation():
     """

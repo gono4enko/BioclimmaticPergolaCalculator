@@ -154,7 +154,61 @@ def auto_scroll_on_load(target_id):
     Args:
         target_id (str): ID якоря для скролла
     """
-    trigger_scroll_to(target_id)
+    # Добавляем специальный JavaScript для гарантированного скроллинга
+    # Используем более агрессивный подход с несколькими попытками скролла
+    st.markdown(
+        f"""
+        <script>
+            // Функция скролла к элементу
+            function scrollToTarget() {{
+                console.log("Attempting to scroll to {target_id}");
+                const element = document.getElementById("{target_id}");
+                if (element) {{
+                    // Прокручиваем к элементу
+                    element.scrollIntoView({{
+                        behavior: 'smooth',
+                        block: 'start'
+                    }});
+                    console.log("Found element and scrolling to {target_id}");
+                    return true;
+                }}
+                console.log("Element {target_id} not found yet");
+                return false;
+            }}
+            
+            // Запускаем первую попытку скролла через 100ms после загрузки
+            setTimeout(scrollToTarget, 100);
+            
+            // Запускаем вторую попытку скролла через 500ms
+            setTimeout(scrollToTarget, 500);
+            
+            // Запускаем третью попытку скролла через 1000ms
+            setTimeout(scrollToTarget, 1000);
+            
+            // Четвертая попытка с запасным методом
+            setTimeout(function() {{
+                if (!scrollToTarget()) {{
+                    // Если элемент не найден, пробуем запасной метод
+                    console.log("Using backup scroll method for {target_id}");
+                    
+                    // Находим элемент с якорем и скроллим к нему напрямую
+                    const elements = document.querySelectorAll('[id="{target_id}"]');
+                    if (elements.length > 0) {{
+                        const element = elements[0];
+                        const rect = element.getBoundingClientRect();
+                        const absoluteTop = rect.top + window.pageYOffset;
+                        window.scrollTo({{
+                            top: absoluteTop - 70,
+                            behavior: 'smooth'
+                        }});
+                        console.log("Used backup method to scroll to {target_id}");
+                    }}
+                }}
+            }}, 1500);
+        </script>
+        """, 
+        unsafe_allow_html=True
+    )
 
 def handle_calculation_scroll():
     """
