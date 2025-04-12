@@ -135,7 +135,7 @@ PERGOLA_IMAGES = {
         "attached_assets/Снимок экрана 2025-04-09 в 13.39.51.png"
     ],
     "MODULAR": [
-        "attached_assets/Снимок экрана 2025-04-12 в 20.59.32.png"
+        "attached_assets/Снимок экрана 2025-04-12 в 21.05.11.png"
     ],
     "DRAINAGE": [
         "attached_assets/Система водоотведения.jpeg",
