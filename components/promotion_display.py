@@ -166,13 +166,13 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
             margin-right: auto;
         }}
         .urgent-panel h4 {{
-            margin: 0 0 5px 0;
+            margin: 0 0 2px 0;
             font-size: 1.1rem;
             text-align: center;
         }}
         .urgent-panel p {{
             margin: 0 0 10px 0;
-            font-size: 1.1rem;
+            font-size: 1.25rem;
             text-align: center;
             font-weight: 500;
         }}
