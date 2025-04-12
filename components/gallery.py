@@ -345,6 +345,7 @@ def display_projects_gallery():
     # Получаем полные пути к изображениям
     image_paths = []
     available_images = []
+    image_hashes = {}  # Словарь для хранения хешей изображений для прямого сравнения
     captions = []
     
     # Загружаем конфигурацию галереи
@@ -359,12 +360,91 @@ def display_projects_gallery():
         processed_images = set()  # Множество для отслеживания уже обработанных изображений
         for img_name in active_images:
             img_path = os.path.join(IMAGES_DIR, img_name)
-            if os.path.exists(img_path):
-                # Пропускаем, если это изображение уже обработано или найден его дубликат
-                if img_name in processed_images:
-                    continue
+            if not os.path.exists(img_path):
+                continue
+                
+            # Пропускаем, если это изображение уже обработано или найден его дубликат
+            if img_name in processed_images:
+                continue
+                
+            # Получаем хеш изображения для точного сравнения
+            current_hash = heic_converter.get_image_hash(img_path)
+            if not current_hash:
+                logging.warning(f"Не удалось получить хеш для {img_name}, пропускаем")
+                continue
+                
+            # Прямое сравнение хешей с уже добавленными изображениями
+            is_duplicate = False
+            for existing_hash in image_hashes.values():
+                if current_hash == existing_hash:
+                    is_duplicate = True
+                    logging.info(f"Обнаружен точный дубликат изображения: {img_name} по хешу {current_hash}")
+                    processed_images.add(img_name)
+                    break
                     
-                # Проверяем на дубликаты по содержимому среди уже добавленных
+            if is_duplicate:
+                continue
+                
+            # Вторая проверка - на похожие изображения через прямое сравнение
+            add_image = True
+            for added_img in available_images:
+                added_path = os.path.join(IMAGES_DIR, added_img)
+                try:
+                    is_duplicate, _ = heic_converter.is_duplicate_image(img_path, added_path, by_content=True)
+                    if is_duplicate:
+                        # Нашли дубликат по содержимому, пропускаем
+                        logging.info(f"Предотвращение дублирования: {img_name} похож на {added_img}")
+                        add_image = False
+                        processed_images.add(img_name)  # Помечаем как обработанное
+                        break
+                except Exception as e:
+                    logging.warning(f"Ошибка при проверке дубликатов: {str(e)}")
+            
+            # Добавляем изображение, если оно прошло проверку на дубликаты
+            if add_image:
+                # Сохраняем хеш для последующих проверок
+                image_hashes[img_name] = current_hash
+                
+                image_paths.append(img_path)
+                available_images.append(img_name)
+                processed_images.add(img_name)  # Помечаем как обработанное
+                
+                # Получаем описание из словаря или используем имя файла
+                caption = PROJECT_DESCRIPTIONS.get(img_name, "Реализованный проект перголы")
+                captions.append(caption)
+    else:
+        # Если список явно включенных пуст, используем статический список
+        processed_images = set()  # Множество для отслеживания уже обработанных изображений
+        for img_name in REALIZED_PROJECTS:
+            img_path = os.path.join(IMAGES_DIR, img_name)
+            if not os.path.exists(img_path):
+                continue
+                
+            # Пропускаем, если это изображение уже обработано
+            if img_name in processed_images:
+                continue
+            
+            # Получаем хеш изображения для точного сравнения
+            current_hash = heic_converter.get_image_hash(img_path)
+            if not current_hash:
+                logging.warning(f"Не удалось получить хеш для {img_name}, пропускаем")
+                continue
+                
+            # Прямое сравнение хешей с уже добавленными изображениями
+            is_duplicate = False
+            for existing_hash in image_hashes.values():
+                if current_hash == existing_hash:
+                    is_duplicate = True
+                    logging.info(f"Обнаружен точный дубликат изображения: {img_name} по хешу {current_hash}")
+                    processed_images.add(img_name)
+                    break
+                    
+            if is_duplicate:
+                continue
+                
+            # Проверяем, разрешено ли изображение через систему администрирования
+            if gallery_admin.is_image_allowed(img_name, check_duplicates=True, images_dir=IMAGES_DIR):
+                # Проверяем на дубликаты среди уже добавленных
                 add_image = True
                 for added_img in available_images:
                     added_path = os.path.join(IMAGES_DIR, added_img)
@@ -381,47 +461,16 @@ def display_projects_gallery():
                 
                 # Добавляем изображение, если оно прошло проверку на дубликаты
                 if add_image:
+                    # Сохраняем хеш для последующих проверок
+                    image_hashes[img_name] = current_hash
+                    
                     image_paths.append(img_path)
                     available_images.append(img_name)
                     processed_images.add(img_name)  # Помечаем как обработанное
+                    
                     # Получаем описание из словаря или используем имя файла
                     caption = PROJECT_DESCRIPTIONS.get(img_name, "Реализованный проект перголы")
                     captions.append(caption)
-    else:
-        # Если список явно включенных пуст, используем статический список
-        processed_images = set()  # Множество для отслеживания уже обработанных изображений
-        for img_name in REALIZED_PROJECTS:
-            # Пропускаем, если это изображение уже обработано
-            if img_name in processed_images:
-                continue
-                
-            # Проверяем, разрешено ли изображение через систему администрирования
-            if gallery_admin.is_image_allowed(img_name, check_duplicates=True, images_dir=IMAGES_DIR):
-                img_path = os.path.join(IMAGES_DIR, img_name)
-                if os.path.exists(img_path):
-                    # Проверяем на дубликаты среди уже добавленных
-                    add_image = True
-                    for added_img in available_images:
-                        added_path = os.path.join(IMAGES_DIR, added_img)
-                        try:
-                            is_duplicate, _ = heic_converter.is_duplicate_image(img_path, added_path, by_content=True)
-                            if is_duplicate:
-                                # Нашли дубликат по содержимому, пропускаем
-                                logging.info(f"Предотвращение дублирования: {img_name} похож на {added_img}")
-                                add_image = False
-                                processed_images.add(img_name)  # Помечаем как обработанное
-                                break
-                        except Exception as e:
-                            logging.warning(f"Ошибка при проверке дубликатов: {str(e)}")
-                    
-                    # Добавляем изображение, если оно прошло проверку на дубликаты
-                    if add_image:
-                        image_paths.append(img_path)
-                        available_images.append(img_name)
-                        processed_images.add(img_name)  # Помечаем как обработанное
-                        # Получаем описание из словаря или используем имя файла
-                        caption = PROJECT_DESCRIPTIONS.get(img_name, "Реализованный проект перголы")
-                        captions.append(caption)
     
     # Отображаем галерею, если есть доступные изображения
     if image_paths:
