@@ -128,7 +128,10 @@ def display_installation_counter():
     """
     
     # Применяем анимацию появления через модуль animations
-    animations.animate_section(counter_html, animation_type='fadeIn', delay=0)
+    animated_html = animations.animate_section(counter_html, animation_type='fadeIn', delay=0)
+    
+    # Отображаем счетчик в интерфейсе
+    st.markdown(animated_html, unsafe_allow_html=True)
 
 def load_and_resize_image(image_path, max_width=800):
     """
@@ -318,7 +321,10 @@ def display_projects_gallery():
         
         # Создаем и отображаем HTML-галерею с анимацией
         gallery_html = create_gallery_html(image_urls, captions)
-        animations.animate_section(gallery_html, animation_type='fadeInUp', delay=0)
+        
+        # Добавляем анимацию и сразу отображаем
+        animated_gallery = animations.animate_section(gallery_html, animation_type='fadeInUp', delay=0)
+        st.markdown(animated_gallery, unsafe_allow_html=True)
     else:
         animations.animate_text("Изображения проектов временно недоступны", tag="p", delay=0)
 
