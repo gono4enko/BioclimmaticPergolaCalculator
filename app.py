@@ -1199,8 +1199,7 @@ def render_results(results):
     from components.promotion_display import promotions_section
     from components.streamlit_scroll import create_anchor
     
-    # Создаем якорь для скролла с ID 
-    st.markdown('<div id="results" name="results"></div>', unsafe_allow_html=True)
+    # Якорь больше не нужен, т.к. мы используем id на конкретном элементе
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
@@ -1984,81 +1983,15 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Добавляет JavaScript для перехода к якорю результатов при нажатии на скрытую кнопку
+    Выполняет скроллинг к секции с итоговой стоимостью, используя модуль streamlit_scroll
+    
+    Эта функция использует максимально простой подход, основанный на Python-коде,
+    без усложнения архитектуры или использования сложных JS-библиотек
     """
-    # Добавляем JavaScript для автоматического нажатия на ссылку-якорь
-    st.markdown("""
-    <script>
-        // Используем URL-хэш для скролла
-        function scrollToResults() {
-            console.log('Attempting to scroll to results...');
-            
-            // Ищем элемент с id="results"
-            const resultsElement = document.getElementById('results');
-            
-            if (resultsElement) {
-                console.log('Found results element, scrolling...');
-                
-                // Программно создаем и кликаем по ссылке на якорь
-                const scrollLink = document.createElement('a');
-                scrollLink.href = '#results';
-                scrollLink.style.display = 'none';
-                document.body.appendChild(scrollLink);
-                
-                // Прокручиваем с задержкой для надежности
-                setTimeout(() => {
-                    scrollLink.click();
-                    console.log('Clicked on results anchor link');
-                    
-                    // Удаляем ссылку после использования
-                    setTimeout(() => {
-                        document.body.removeChild(scrollLink);
-                    }, 100);
-                }, 500);
-                
-                return true;
-            }
-            
-            console.log('Results element not found');
-            
-            // Если якорь не найден, ищем заголовок или просто скроллим вниз
-            const resultsHeadings = Array.from(document.querySelectorAll('h2'))
-                .filter(h => h.textContent.includes('Результаты расчета'));
-            
-            if (resultsHeadings.length > 0) {
-                console.log('Found results heading, scrolling...');
-                const heading = resultsHeadings[0];
-                window.scrollTo({
-                    top: heading.offsetTop - 80,
-                    behavior: 'smooth'
-                });
-                return true;
-            }
-            
-            // Крайний случай - просто скроллим на определенное расстояние вниз
-            console.log('No targets found, scrolling down as fallback');
-            window.scrollTo({
-                top: document.body.scrollHeight / 2,  // Примерно в середину страницы
-                behavior: 'smooth'
-            });
-            
-            return false;
-        }
-        
-        // Выполняем скролл после загрузки DOM
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded, scheduling scroll');
-            setTimeout(scrollToResults, 300);
-        });
-        
-        // Также выполняем скролл сразу (для случая, когда DOM уже загружен)
-        console.log('Script loaded, scheduling immediate scroll');
-        setTimeout(scrollToResults, 500);
-        
-        // И выполняем третью попытку для надежности
-        setTimeout(scrollToResults, 1500);
-    </script>
-    """, unsafe_allow_html=True)
+    from components.streamlit_scroll import scroll_to_element
+    
+    # Скроллим к якорю с итоговой стоимостью
+    scroll_to_element("final_price_anchor")
 
 def add_smart_device_adaptation():
     """
@@ -2560,7 +2493,7 @@ def main():
     if 'results' in st.session_state:
         # Кнопка для скролла к результатам (компактная и заметная)
         st.markdown("""
-        <a href="#results" style="display: block; width: 90%; margin: 10px auto; padding: 10px; 
+        <a href="#final_price_anchor" style="display: block; width: 90%; margin: 10px auto; padding: 10px; 
                        background-color: #0066cc; color: white; text-align: center; 
                        border-radius: 5px; text-decoration: none; font-weight: bold;">
            ↓ Перейти к результатам расчета ↓
