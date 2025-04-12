@@ -2503,32 +2503,56 @@ def main():
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
-        # Проверяем, нужно ли скроллить к результатам
-        if st.session_state.get('need_to_scroll', False):
-            # Простейший механизм прокрутки к якорю через st.components.v1.html
-            st.components.v1.html(
-                f"""
-                <script>
-                // Выполняем прокрутку к нужному элементу
-                window.onload = function() {{
-                    // Получаем элемент
+        # НОВЫЙ ПОДХОД: используем якорь в URL
+        # При расчете будем добавлять фрагмент #final_price_anchor к URL
+        # И страница автоматически скроллит к этому якорю
+        if 'results' in st.session_state and st.session_state.get('need_to_scroll', False):
+            # Добавляем JavaScript для изменения URL через history.replaceState
+            st.markdown("""
+            <script>
+            // Функция добавления якоря к URL без перезагрузки страницы
+            function addAnchorToURL() {
+                // Получаем текущий URL
+                let currentURL = window.location.href;
+                
+                // Убираем старый якорь, если он есть
+                currentURL = currentURL.split('#')[0];
+                
+                // Добавляем якорь к URL
+                history.replaceState(null, null, currentURL + "#final_price_anchor");
+                
+                console.log("URL обновлен с якорем #final_price_anchor");
+                
+                // Пробуем вручную вызвать скроллинг к якорю
+                setTimeout(function() {
                     const target = document.getElementById('final_price_anchor');
-                    if (target) {{
-                        console.log('Найден якорь, выполняем прокрутку');
-                        // Прокручиваем к нему
-                        target.scrollIntoView({{
-                            behavior: 'smooth',
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'auto',
                             block: 'start'
-                        }});
-                    }} else {{
-                        console.log('Якорь не найден');
-                    }}
-                }};
-                </script>
-                """,
-                height=0,
-                width=0
-            )
+                        });
+                        console.log("Выполнен скролл к элементу final_price_anchor");
+                    }
+                }, 200);
+            }
+            
+            // Выполняем сразу
+            addAnchorToURL();
+            
+            // А также добавляем обработчик загрузки, чтобы точно сработало
+            window.addEventListener('load', addAnchorToURL);
+            </script>
+            """, unsafe_allow_html=True)
+            
+            # Добавляем явную кнопку для скролла к результатам
+            st.markdown("""
+            <div style="text-align: center; margin: 15px 0;">
+              <button onclick="document.getElementById('final_price_anchor').scrollIntoView({behavior: 'smooth', block: 'start'})" 
+                style="background-color: #0066cc; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                Скроллить к результатам
+              </button>
+            </div>
+            """, unsafe_allow_html=True)
             
             # Сбрасываем флаг, чтобы не делать скролл при каждом обновлении
             st.session_state.need_to_scroll = False
