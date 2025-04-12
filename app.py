@@ -1109,31 +1109,56 @@ def render_options_form():
         padding-bottom: 0px;
     }
     
-    /* Убираем стандартные отступы между чекбоксами */
-    .tight-checkbox-layout .row-widget {
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* Минимальный отступ между чекбоксами */
-    .second-checkbox {
-        margin-top: -10px !important;
+    /* Общие стили для уменьшения отступов */
+    div[data-testid="stVerticalBlock"] > div:nth-child(n) {
         padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
     }
     
-    /* Для гарантированного вертикального расположения чекбоксов */
-    /* Полностью скрываем вторую колонку */
-    .lighting-checkboxes .stHorizontalBlock > div:nth-child(2) {
-        display: none !important;
+    /* Уменьшаем отступы между чекбоксами */
+    .stCheckbox {
+        min-height: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
     }
     
-    /* Делаем первую колонку на всю ширину */
-    .lighting-checkboxes .stHorizontalBlock > div:first-child {
-        width: 100% !important;
-        flex: 1 1 100% !important;
+    /* Уменьшаем отступы внутри чекбоксов */
+    .stCheckbox > div {
+        min-height: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
     }
     
-    /* Стиль для контейнера чекбоксов */
+    /* Уменьшаем отступы для всех блоков div в чекбоксах */
+    div.stCheckbox > div > div {
+        min-height: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Уменьшаем отступы для блока с лейблами */
+    div.stCheckbox > div > div > label {
+        min-height: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Уменьшаем отступ второго чекбокса */
+    #rgb_led_checkbox {
+        margin-top: -12px !important;
+    }
+    
+    /* Стиль для контейнера чекбоксов с минимальным отступом от заголовка */
     .checkbox-container {
         margin-top: -15px !important;
     }
@@ -1144,17 +1169,22 @@ def render_options_form():
     st.markdown('<p class="lighting-section-header">Освещение</p>', unsafe_allow_html=True)
     
     # Обертка для стилизации чекбоксов
-    st.markdown('<div class="lighting-checkboxes checkbox-container">', unsafe_allow_html=True)
+    st.markdown('<div class="checkbox-container">', unsafe_allow_html=True)
     
     # Инициализируем список для опций освещения
     lighting_options = []
     
-    # Просто последовательно добавляем чекбоксы, они будут отображаться вертикально
+    # Контейнер для первого чекбокса
+    st.markdown('<div style="padding:0; margin:0;">', unsafe_allow_html=True)
     if st.checkbox("Белая светодиодная лента", value=False, key="white_led_checkbox", label_visibility="visible"):
         lighting_options.append("white_led")
+    st.markdown('</div>', unsafe_allow_html=True)
     
+    # Контейнер для второго чекбокса с ещё меньшим отступом
+    st.markdown('<div style="padding:0; margin-top:-12px;">', unsafe_allow_html=True)
     if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_checkbox", label_visibility="visible"):
         lighting_options.append("rgb_led")
+    st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
     
