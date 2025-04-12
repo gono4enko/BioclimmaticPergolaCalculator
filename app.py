@@ -1201,6 +1201,10 @@ def render_results(results):
     # Создаем якорь для скролла с ID и стилем, чтобы он был более заметен для JavaScript
     st.markdown('<div id="results" name="results" style="scroll-margin-top: 60px; min-height: 10px;"></div>', unsafe_allow_html=True)
     
+    # Дополнительный якорь для скролла к итоговой стоимости
+    total_price_anchor = '<div id="total-price" name="total-price" style="scroll-margin-top: 80px; min-height: 10px;"></div>'
+    st.markdown(total_price_anchor, unsafe_allow_html=True)
+    
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
     
@@ -1403,9 +1407,15 @@ def render_results(results):
         # Добавляем строку со скидкой (скидка отображается зеленым цветом)
         items_data.append(["Скидка по акции:", f"-{format_price(discount_amount)}"])
         
+        # Добавляем якорь для скролла именно к итоговой стоимости со скидкой перед финальной строкой
+        st.markdown('<div id="total-price" name="total-price" style="scroll-margin-top: 80px; min-height: 5px;"></div>', unsafe_allow_html=True)
+        
         # Добавляем строку с итоговой ценой после скидки
         items_data.append(["Итого:", format_price(final_price)])
     else:
+        # Якорь для итоговой стоимости без скидки
+        st.markdown('<div id="total-price" name="total-price" style="scroll-margin-top: 80px; min-height: 5px;"></div>', unsafe_allow_html=True)
+        
         # Если скидки нет, показываем только итоговую строку
         items_data.append(["Итоговая стоимость:", format_price(rub_total)])
     
@@ -1992,7 +2002,42 @@ def scroll_to_results():
         function scrollToResults() {
             console.log('Attempting to scroll to results...');
             
-            // Пытаемся найти элемент с id="results"
+            // Сначала пытаемся найти якорь для итоговой стоимости (приоритетная цель)
+            const totalPriceElement = document.getElementById('total-price');
+            
+            if (totalPriceElement) {
+                console.log('Found total-price element, scrolling directly...');
+                
+                // Прямой скролл к элементу "Итоговая стоимость" с задержкой
+                setTimeout(() => {
+                    totalPriceElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    console.log('Direct scrollIntoView to total-price executed');
+                }, 300);
+                
+                // Резервный метод через клик по ссылке
+                setTimeout(() => {
+                    console.log('Attempting backup scroll method with link to total-price...');
+                    const scrollLink = document.createElement('a');
+                    scrollLink.href = '#total-price';
+                    scrollLink.style.display = 'none';
+                    document.body.appendChild(scrollLink);
+                    
+                    scrollLink.click();
+                    console.log('Clicked on total-price anchor link');
+                    
+                    // Удаляем ссылку после использования
+                    setTimeout(() => {
+                        document.body.removeChild(scrollLink);
+                    }, 100);
+                }, 600);
+                
+                return true;
+            }
+            
+            // Если якорь для итоговой стоимости не найден, ищем основной якорь результатов
             const resultsElement = document.getElementById('results');
             
             if (resultsElement) {
@@ -2027,12 +2072,32 @@ def scroll_to_results():
                 return true;
             }
             
-            console.log('Results element not found, trying alternatives...');
+            console.log('No anchor elements found, trying to find headings...');
             
-            // Если якорь не найден, ищем заголовок
-            const resultsHeadings = Array.from(document.querySelectorAll('h2, h3'))
+            // Если ни один из якорей не найден, ищем текст "Итоговая стоимость"
+            // Поиск по содержимому таблицы стоимости - самый приоритетный вариант
+            const priceCells = Array.from(document.querySelectorAll('td'))
+                .filter(td => td.textContent.includes('Итоговая стоимость') || 
+                             td.textContent.includes('Итого'));
+                             
+            if (priceCells.length > 0) {
+                console.log('Found price cell, scrolling...');
+                const cell = priceCells[priceCells.length - 1]; // Берем последний элемент (скорее всего итоговый)
+                setTimeout(() => {
+                    cell.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    console.log('Scrolled to price cell');
+                }, 300);
+                return true;
+            }
+            
+            // Если не найдены ячейки, ищем заголовки
+            const resultsHeadings = Array.from(document.querySelectorAll('h2, h3, h4'))
                 .filter(h => h.textContent.includes('Результаты расчета') || 
-                            h.textContent.includes('Итоговая стоимость'));
+                           h.textContent.includes('Стоимость') ||
+                           h.textContent.includes('Итого'));
             
             if (resultsHeadings.length > 0) {
                 console.log('Found results heading, scrolling...');
@@ -2042,6 +2107,7 @@ def scroll_to_results():
                         behavior: 'smooth',
                         block: 'start'
                     });
+                    console.log('Scrolled to heading');
                 }, 300);
                 return true;
             }
@@ -2053,6 +2119,7 @@ def scroll_to_results():
                     top: Math.max(500, document.body.scrollHeight / 3),  // Минимум 500px или треть страницы
                     behavior: 'smooth'
                 });
+                console.log('Fallback scroll executed');
             }, 300);
             
             return false;
@@ -2068,10 +2135,20 @@ def scroll_to_results():
         // Третья попытка еще позже для надежности
         setTimeout(scrollToResults, 1500);
         
+        // Четвертая попытка после полной загрузки всего контента
+        setTimeout(scrollToResults, 2500);
+        
         // Регистрируем обработчик события DOMContentLoaded для случаев, когда скрипт загружается раньше DOM
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded, scheduling additional scroll attempt');
+            console.log('DOM fully loaded, scheduling additional scroll attempts');
             setTimeout(scrollToResults, 300);
+            setTimeout(scrollToResults, 1000);
+        });
+        
+        // Дополнительно отслеживаем полную загрузку страницы включая изображения
+        window.addEventListener('load', function() {
+            console.log('Window fully loaded (including images), final scroll attempt');
+            setTimeout(scrollToResults, 500);
         });
     </script>
     """, unsafe_allow_html=True)
