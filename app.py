@@ -1067,12 +1067,15 @@ def render_options_form():
     </style>
     """, unsafe_allow_html=True)
     
-    # Тип перголы
+    # Тип перголы - используем тот же стиль заголовка, что и для освещения
+    st.markdown('<p class="lighting-section-header">Выберите тип перголы</p>', unsafe_allow_html=True)
+    
     pergola_type = st.radio(
-        "Выберите тип перголы",
+        "",  # Пустая строка, так как заголовок добавляем отдельно
         options=list(PERGOLA_TYPES.keys()),
         format_func=lambda x: PERGOLA_TYPES.get(x, x),
-        horizontal=True
+        horizontal=True,
+        label_visibility="collapsed"  # Скрываем стандартный заголовок
     )
     
     # Тип ламелей - зависит от выбранного типа перголы
@@ -1084,11 +1087,15 @@ def render_options_form():
     elif pergola_type == "B600":
         lamella_options = ["B600-PIR"]
     
+    # Используем такой же стиль заголовка, как для освещения
+    st.markdown('<p class="lighting-section-header">Выберите тип ламелей</p>', unsafe_allow_html=True)
+    
     lamella_type = st.radio(
-        "Выберите тип ламелей",
+        "",  # Пустая строка, так как заголовок добавляем отдельно
         options=lamella_options,
         format_func=lambda x: LAMELLA_TYPES.get(x, x),
-        horizontal=True
+        horizontal=True,
+        label_visibility="collapsed"  # Скрываем стандартный заголовок
     )
     
     # Освещение - с минимальными отступами и вертикальным расположением чекбоксов
@@ -1114,16 +1121,21 @@ def render_options_form():
         padding-top: 0 !important;
     }
     
-    /* Для вертикального расположения чекбоксов в мобильной версии и на desktop */
-    @media (max-width: 1200px) {
-        .stHorizontalBlock {
-            flex-direction: column !important;
-        }
-        
-        .stHorizontalBlock > div {
-            width: 100% !important;
-            min-width: 100% !important;
-        }
+    /* Для гарантированного вертикального расположения чекбоксов */
+    /* Полностью скрываем вторую колонку */
+    .lighting-checkboxes .stHorizontalBlock > div:nth-child(2) {
+        display: none !important;
+    }
+    
+    /* Делаем первую колонку на всю ширину */
+    .lighting-checkboxes .stHorizontalBlock > div:first-child {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+    
+    /* Стиль для контейнера чекбоксов */
+    .checkbox-container {
+        margin-top: -15px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -1131,21 +1143,20 @@ def render_options_form():
     # Добавляем компактный заголовок "Освещение"
     st.markdown('<p class="lighting-section-header">Освещение</p>', unsafe_allow_html=True)
     
-    # Создаем колонки для чекбоксов (но через CSS делаем их вертикальными)
-    col1, col2 = st.columns(2)
+    # Обертка для стилизации чекбоксов
+    st.markdown('<div class="lighting-checkboxes checkbox-container">', unsafe_allow_html=True)
     
     # Инициализируем список для опций освещения
     lighting_options = []
     
-    # Первый чекбокс - в первой колонке
-    with col1:
-        if st.checkbox("Белая светодиодная лента", value=False, key="white_led_checkbox", label_visibility="visible"):
-            lighting_options.append("white_led")
+    # Просто последовательно добавляем чекбоксы, они будут отображаться вертикально
+    if st.checkbox("Белая светодиодная лента", value=False, key="white_led_checkbox", label_visibility="visible"):
+        lighting_options.append("white_led")
     
-    # Второй чекбокс во второй колонке (но через CSS они будут отображаться вертикально)
-    with col2:
-        if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_checkbox", label_visibility="visible"):
-            lighting_options.append("rgb_led")
+    if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_checkbox", label_visibility="visible"):
+        lighting_options.append("rgb_led")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Установка - используем такой же заголовок, как и для освещения
     st.markdown('<p class="lighting-section-header">Установка</p>', unsafe_allow_html=True)
