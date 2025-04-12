@@ -1986,187 +1986,164 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Добавляет JavaScript для перехода к результатам расчета и показывает
-    яркую анимированную подсказку, чтобы пользователь обратил внимание на результаты
+    Добавляет JavaScript для прямого перехода к результатам расчета после нажатия кнопки.
+    Использует специальный маркер в DOM для точного определения позиции прокрутки
+    и показывает анимированную подсказку для обращения внимания пользователя.
     """
-    # Добавляем улучшенный JavaScript для скролла с заметной визуальной индикацией
-    st.markdown("""
-    <script>
-        // Функция для скролла к результатам с визуальной индикацией
-        function scrollToResults() {
-            console.log('Attempting to scroll to results with visual indicator...');
+    # Уникальный ID для скрипта скролла (чтобы избежать дублирование)
+    import time
+    script_id = f"scroll_script_{hash(str(time.time()))}"
+    
+    # Добавляем JavaScript с прямым DOM API для надежного скролла
+    st.markdown(f"""
+    <script id="{script_id}">
+    // Определяем, запущен ли уже скрипт скролла
+    if (!window.scrollScriptRunning) {{
+        // Маркируем, что скрипт запущен
+        window.scrollScriptRunning = true;
+        console.log('Scroll script started (direct button triggered version)');
+        
+        // Функция для выполнения надежного скролла к элементу
+        function scrollToResultsNow() {{
+            console.log('Executing scroll to results now...');
             
-            // Функция для надежного скролла к результатам
-            function executeScroll() {
-                console.log('Executing scroll...');
+            // Флаг успешного скролла
+            let scrollSuccess = false;
+            
+            // Попытка 1: Ищем заголовок с ID results-header
+            const resultsHeader = document.getElementById('results-header');
+            if (resultsHeader) {{
+                console.log('Found results header element, scrolling to it...');
+                resultsHeader.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
                 
-                // Ищем элемент по ID или по заголовку
-                const resultsHeaderElement = document.getElementById('results-header');
-                const resultsElement = document.getElementById('results');
+                // Подсветка для привлечения внимания
+                resultsHeader.style.transition = 'background-color 0.5s ease';
+                resultsHeader.style.backgroundColor = '#ffeb3b';
+                resultsHeader.style.borderRadius = '5px';
                 
-                // Пробуем найти заголовок результатов напрямую
-                if (resultsHeaderElement) {
-                    console.log('Found results header, scrolling there...');
-                    
-                    // Немного задержки для обеспечения загрузки элементов
-                    setTimeout(() => {
-                        resultsHeaderElement.scrollIntoView({ 
-                            behavior: 'smooth', 
-                            block: 'start' 
-                        });
-                        
-                        // Дополнительная визуальная индикация - подсвечиваем заголовок
-                        const originalBackground = resultsHeaderElement.style.backgroundColor;
-                        resultsHeaderElement.style.transition = 'background-color 0.5s ease';
-                        resultsHeaderElement.style.backgroundColor = '#ffeb3b';
-                        
-                        setTimeout(() => {
-                            resultsHeaderElement.style.backgroundColor = originalBackground;
-                        }, 1000);
-                    }, 100);
-                    
-                    return true;
-                }
+                setTimeout(() => {{
+                    resultsHeader.style.backgroundColor = '#f0f7ff';
+                }}, 1500);
                 
-                // Пробуем резервный вариант - скролл к якорю
-                if (resultsElement) {
-                    console.log('Found results anchor, scrolling there...');
-                    
-                    // Напрямую скроллим к элементу
-                    resultsElement.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'start' 
-                    });
-                    
-                    // Также пробуем программно кликнуть по якорной ссылке
-                    window.location.hash = 'results';
-                    
-                    return true;
-                }
-                
-                // Ищем заголовки, содержащие текст "Результаты"
-                const resultsHeadings = Array.from(
-                    document.querySelectorAll('h1, h2, h3, h4, h5, h6')
-                ).filter(h => 
-                    h.innerText.includes('Результаты') || 
-                    h.innerText.includes('результаты')
+                scrollSuccess = true;
+            }}
+            
+            // Попытка 2: Ищем якорь с ID results
+            if (!scrollSuccess) {{
+                const resultsAnchor = document.getElementById('results');
+                if (resultsAnchor) {{
+                    console.log('Found results anchor, scrolling...');
+                    resultsAnchor.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+                    scrollSuccess = true;
+                }}
+            }}
+            
+            // Попытка 3: Ищем заголовок с текстом "Результаты"
+            if (!scrollSuccess) {{
+                const headings = Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6'));
+                const resultsHeading = headings.find(h => 
+                    h.textContent.includes('Результаты') || 
+                    h.textContent.includes('результаты') ||
+                    h.textContent.includes('Итог')
                 );
                 
-                if (resultsHeadings.length > 0) {
-                    console.log('Found results heading by text, scrolling...');
+                if (resultsHeading) {{
+                    console.log('Found heading with "Результаты" text, scrolling...');
+                    resultsHeading.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
                     
-                    // Берем первый найденный заголовок
-                    const heading = resultsHeadings[0];
+                    // Подсветка для привлечения внимания
+                    resultsHeading.style.transition = 'background-color 0.5s ease';
+                    resultsHeading.style.backgroundColor = '#ffeb3b';
                     
-                    // Скроллим к заголовку
-                    heading.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'start' 
-                    });
+                    setTimeout(() => {{
+                        resultsHeading.style.backgroundColor = '';
+                    }}, 1500);
                     
-                    // Подсветка заголовка для привлечения внимания
-                    const originalBackground = heading.style.backgroundColor;
-                    heading.style.transition = 'background-color 0.5s ease';
-                    heading.style.backgroundColor = '#ffeb3b';
-                    
-                    setTimeout(() => {
-                        heading.style.backgroundColor = originalBackground;
-                    }, 1000);
-                    
-                    return true;
-                }
-                
-                // Крайний вариант - просто скроллим вниз на фиксированное расстояние
-                console.log('Fallback: scrolling by fixed amount');
-                window.scrollBy({ 
-                    top: 500, 
-                    behavior: 'smooth' 
-                });
-                
-                return false;
-            }
+                    scrollSuccess = true;
+                }}
+            }}
             
-            // Создаем и показываем яркую подсказку-индикатор
-            const scrollIndicator = document.createElement('div');
-            scrollIndicator.innerHTML = '↓ РЕЗУЛЬТАТЫ РАСЧЕТА НИЖЕ ↓';
-            scrollIndicator.style.position = 'fixed';
-            scrollIndicator.style.bottom = '20px';
-            scrollIndicator.style.left = '50%';
-            scrollIndicator.style.transform = 'translateX(-50%)';
-            scrollIndicator.style.backgroundColor = '#0066cc';
-            scrollIndicator.style.color = 'white';
-            scrollIndicator.style.padding = '12px 20px';
-            scrollIndicator.style.borderRadius = '5px';
-            scrollIndicator.style.zIndex = '9999';
-            scrollIndicator.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
-            scrollIndicator.style.textAlign = 'center';
-            scrollIndicator.style.fontWeight = 'bold';
-            scrollIndicator.style.fontSize = '18px';
-            scrollIndicator.id = 'scroll-indicator';
+            // Попытка 4: Если ничего не найдено, просто скроллим вниз примерно туда, где должны быть результаты
+            if (!scrollSuccess) {{
+                console.log('No result elements found, using fallback scroll');
+                // Определяем примерное положение блока результатов (примерно 70% от высоты документа)
+                const scrollTarget = document.body.scrollHeight * 0.7;
+                window.scrollTo({{ top: scrollTarget, behavior: 'smooth' }});
+            }}
             
-            // Стили для анимации пульсации подсказки
+            // Создаем и показываем яркую плавающую подсказку со стрелкой
+            const indicator = document.createElement('div');
+            indicator.innerHTML = `<span style="font-size: 24px;">↓</span> РЕЗУЛЬТАТЫ РАСЧЕТА <span style="font-size: 24px;">↓</span>`;
+            indicator.style.position = 'fixed';
+            indicator.style.bottom = '30px';
+            indicator.style.left = '50%';
+            indicator.style.transform = 'translateX(-50%)';
+            indicator.style.backgroundColor = '#0066cc';
+            indicator.style.color = 'white';
+            indicator.style.padding = '12px 24px';
+            indicator.style.borderRadius = '30px';
+            indicator.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+            indicator.style.zIndex = '9999';
+            indicator.style.fontWeight = 'bold';
+            indicator.style.fontSize = '16px';
+            indicator.style.textAlign = 'center';
+            indicator.style.cursor = 'pointer';
+            indicator.id = 'results-indicator';
+            
+            // Добавляем анимацию подпрыгивания для привлечения внимания
             const style = document.createElement('style');
-            style.innerHTML = `
-                @keyframes bounce-attention {
-                    0%, 100% { transform: translateX(-50%) translateY(0); }
-                    50% { transform: translateX(-50%) translateY(-15px); }
-                }
+            style.textContent = `
+                @keyframes bounce-up-down {{
+                    0%, 100% {{ transform: translateX(-50%) translateY(0); }}
+                    50% {{ transform: translateX(-50%) translateY(-15px); }}
+                }}
                 
-                #scroll-indicator {
-                    animation: bounce-attention 1.2s ease-in-out infinite;
-                    cursor: pointer;
-                }
+                #results-indicator {{
+                    animation: bounce-up-down 1s ease-in-out infinite;
+                }}
             `;
-            
             document.head.appendChild(style);
-            document.body.appendChild(scrollIndicator);
             
-            // При клике на индикатор - скроллим к результатам и удаляем индикатор
-            scrollIndicator.addEventListener('click', function() {
-                executeScroll();
-                document.body.removeChild(scrollIndicator);
-            });
+            // Добавляем подсказку в DOM
+            document.body.appendChild(indicator);
             
-            // Сначала запускаем скролл
-            executeScroll();
+            // При клике на индикатор - повторяем скролл
+            indicator.addEventListener('click', function() {{
+                // Повторяем скролл при клике на индикатор
+                if (resultsHeader) {{
+                    resultsHeader.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+                }} else if (document.getElementById('results')) {{
+                    document.getElementById('results').scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+                }}
+                // Удаляем индикатор при клике
+                this.remove();
+            }});
             
-            // Автоматически удаляем индикатор через 8 секунд
-            setTimeout(() => {
-                const indicator = document.getElementById('scroll-indicator');
-                if (indicator && indicator.parentNode) {
-                    indicator.parentNode.removeChild(indicator);
-                }
-            }, 8000);
-        }
+            // Автоматически удаляем индикатор через 6 секунд
+            setTimeout(() => {{
+                const ind = document.getElementById('results-indicator');
+                if (ind && ind.parentNode) {{
+                    ind.parentNode.removeChild(ind);
+                }}
+            }}, 6000);
+            
+            // Очищаем флаг запуска скрипта через 10 секунд
+            setTimeout(() => {{
+                window.scrollScriptRunning = false;
+                // Удаляем этот скрипт из DOM для очистки
+                const scriptElement = document.getElementById('{script_id}');
+                if (scriptElement) {{
+                    scriptElement.remove();
+                }}
+            }}, 10000);
+        }}
         
-        // Запускаем скролл при загрузке страницы и повторно через 1 секунду для надежности
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, scheduling scroll');
-            setTimeout(scrollToResults, 500);
-        });
+        // Запускаем скролл с небольшой задержкой, чтобы DOM успел обновиться
+        setTimeout(scrollToResultsNow, 300);
         
-        // Также запускаем сразу для случаев, когда DOM уже загружен
-        // Используем MutationObserver для определения момента, когда результаты появятся в DOM
-        console.log('Setting up MutationObserver to detect results');
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.addedNodes.length) {
-                    // Проверяем, появился ли элемент с id="results-header"
-                    if (document.getElementById('results-header') || 
-                        document.getElementById('results')) {
-                        console.log('Results detected in DOM, triggering scroll');
-                        setTimeout(scrollToResults, 300);
-                        observer.disconnect();
-                    }
-                }
-            });
-        });
-        
-        // Наблюдаем за изменениями в DOM
-        observer.observe(document.body, { childList: true, subtree: true });
-        
-        // Дополнительно запускаем через секунду на всякий случай
-        setTimeout(scrollToResults, 1000);
+        // Повторный запуск скролла через 1 секунду для надежности (если DOM медленно рендерится)
+        setTimeout(scrollToResultsNow, 1000);
+    }}
     </script>
     """, unsafe_allow_html=True)
 
