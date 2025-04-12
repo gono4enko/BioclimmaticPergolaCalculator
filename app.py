@@ -2796,34 +2796,36 @@ def main():
     # Добавляем стили для контейнера и кнопки
     st.markdown("""
     <style>
-    .stButton.back-to-top-button {
+    div[data-testid="stButton"] {
         display: flex;
         justify-content: center;
-        margin: 2rem auto;
+        margin: 2rem auto !important;
         width: 100%;
         text-align: center;
     }
     
-    .stButton.back-to-top-button button {
-        background-color: #0066cc;
-        color: white;
-        border: none;
-        border-radius: 50px;
-        padding: 12px 25px;
-        font-size: 16px;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        margin: 0 auto;
-        height: auto;
+    div[data-testid="stButton"] > button {
+        background-color: #0066cc !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 50px !important;
+        padding: 12px 25px !important;
+        font-size: 16px !important;
+        transition: all 0.3s ease !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+        margin: 0 auto !important;
+        height: auto !important;
+        min-width: 200px !important;
+        max-width: 300px !important;
     }
     
-    .stButton.back-to-top-button button:hover {
-        background-color: #0055aa;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    div[data-testid="stButton"] > button:hover {
+        background-color: #0055aa !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3) !important;
     }
     
     @keyframes bounce {
@@ -2840,20 +2842,12 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Создаем HTML для стрелки
-    arrow_icon = """
-    <span class="arrow-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z" transform="rotate(180) translate(-16, -16)"/>
-        </svg>
-    </span>
-    """
-    
-    # Создаем кнопку с иконкой стрелки вверх
+    # Создаем кнопку без HTML-кода (используем простой текст и стиль)
     with scroll_button_container:
         scroll_col1, scroll_col2, scroll_col3 = st.columns([1, 2, 1])
         with scroll_col2:
-            if st.button(f"{arrow_icon} Вернуться к параметрам перголы", key="back_to_top_button", use_container_width=True, help="Нажмите, чтобы вернуться в начало страницы"):
+            # Добавляем кнопку с эмодзи стрелки вместо HTML-кода
+            if st.button("⬆️ Вернуться к параметрам перголы", key="back_to_top_button", use_container_width=True, help="Нажмите, чтобы вернуться в начало страницы"):
                 # Используем JavaScript для прокрутки наверх после нажатия кнопки
                 js = """
                 <script>
