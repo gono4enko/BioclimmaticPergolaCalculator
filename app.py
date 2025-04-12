@@ -1205,8 +1205,11 @@ def render_results(results):
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
     
-    # Используем встроенные контейнеры Streamlit с ключами для обеспечения скроллинга
-    results_container = st.container(border=False, key="results_anchor_container")
+    # Используем встроенные контейнеры Streamlit для обеспечения скроллинга
+    # В этой версии Streamlit параметры border и key не поддерживаются
+    results_container = st.container()
+    # Добавляем якорь для скроллинга
+    st.markdown('<div id="results_anchor_container"></div>', unsafe_allow_html=True)
     
     # Добавляем заголовок "Результаты расчета" для лучшей видимости
     with results_container:
@@ -2640,7 +2643,7 @@ def main():
     st.markdown("<hr style='margin-top: 0.2rem; margin-bottom: 0.2rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
         
     # Создаем якорь для начала формы параметров
-    form_start = st.container(key="form_start")
+    form_start = st.container()
     
     # Отображаем результаты (если они доступны)
     if 'results' in st.session_state:
@@ -2652,8 +2655,27 @@ def main():
             # Добавляем стили для заголовка через функцию scroll_to_results
             scroll_to_results() 
             
-            # Используем Streamlit API для того, чтобы проскроллить до элемента с id "results_anchor_container"
-            st.query_params["anchor"] = "results_anchor_container"
+            # Добавляем JavaScript для прокрутки к якорю результатов
+            st.markdown("""
+            <script>
+            // Функция для прокрутки к элементу с нужным id
+            function scrollToResults() {
+                var element = document.getElementById('results_anchor_container');
+                if (element) {
+                    // Прокручиваем к элементу с плавной анимацией
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+            
+            // Запускаем прокрутку после того, как DOM загрузится
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(scrollToResults, 300); // Небольшая задержка для надежности
+            });
+            
+            // На всякий случай запускаем и сразу
+            setTimeout(scrollToResults, 500);
+            </script>
+            """, unsafe_allow_html=True)
             
             # Сбрасываем флаг прокрутки
             st.session_state.scroll_to_results = False
