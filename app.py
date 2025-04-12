@@ -1198,8 +1198,32 @@ def render_results(results):
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
     
-    # Создаем якорь для скролла с ID 
-    st.markdown('<div id="results" name="results"></div>', unsafe_allow_html=True)
+    # Создаем якорь для скролла с ID и стилем для лучшей видимости
+    st.markdown('<div id="results" name="results" style="scroll-margin-top: 60px; min-height: 10px;"></div>', unsafe_allow_html=True)
+    
+    # Добавляем кнопку для скролла к результатам (скрытую)
+    st.markdown("""
+    <button id="scroll-to-results-button" onclick="scrollToResults()" style="display: none;">
+        Перейти к результатам расчета
+    </button>
+    <script>
+        // Автоматически нажимаем на кнопку скролла через 500 мс после загрузки
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                document.getElementById('scroll-to-results-button').click();
+            }, 500);
+        });
+        
+        // Также вызываем скрипт сразу и через дополнительные интервалы для надежности
+        setTimeout(function() {
+            scrollToResults();
+        }, 800);
+        
+        setTimeout(function() {
+            scrollToResults();
+        }, 1500);
+    </script>
+    """, unsafe_allow_html=True)
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
@@ -1987,81 +2011,170 @@ def send_page_height_to_parent():
     </script>
     """, unsafe_allow_html=True)
 
+def display_results_button():
+    """
+    Отображает видимую кнопку для перехода к результатам расчета.
+    Используется для удобной навигации к результатам на мобильных устройствах.
+    """
+    # CSS для стилизации кнопки
+    button_style = """
+    <style>
+    .results-button {
+        background-color: #00a651;
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 500;
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        margin: 20px auto;
+        display: block;
+        width: 80%;
+        max-width: 400px;
+        transition: all 0.3s ease;
+    }
+    
+    .results-button:hover {
+        background-color: #008c4a;
+        box-shadow: 0 3px 7px rgba(0,0,0,0.3);
+        transform: translateY(-2px);
+    }
+    
+    .results-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    </style>
+    """
+    
+    # HTML для кнопки и JavaScript обработчика
+    button_html = """
+    <button onclick="scrollToResults()" class="results-button">
+        Перейти к результатам расчета
+    </button>
+    """
+    
+    # Отображаем стили и кнопку
+    st.markdown(button_style, unsafe_allow_html=True)
+    st.markdown(button_html, unsafe_allow_html=True)
+
 def scroll_to_results():
     """
-    Добавляет JavaScript для перехода к якорю результатов при нажатии на скрытую кнопку
+    Добавляет JavaScript для перехода к якорю результатов
     """
-    # Добавляем JavaScript для автоматического нажатия на ссылку-якорь
+    # Добавляем JavaScript для скроллинга к результатам
     st.markdown("""
     <script>
-        // Используем URL-хэш для скролла
+        // Функция для скроллинга к результатам
         function scrollToResults() {
             console.log('Attempting to scroll to results...');
             
-            // Ищем элемент с id="results"
+            // Сначала пытаемся найти элемент с id="results"
             const resultsElement = document.getElementById('results');
             
             if (resultsElement) {
                 console.log('Found results element, scrolling...');
                 
-                // Программно создаем и кликаем по ссылке на якорь
-                const scrollLink = document.createElement('a');
-                scrollLink.href = '#results';
-                scrollLink.style.display = 'none';
-                document.body.appendChild(scrollLink);
+                // Метод 1: scrollIntoView
+                try {
+                    resultsElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    console.log('Used scrollIntoView');
+                } catch (error) {
+                    console.log('scrollIntoView failed:', error);
+                }
                 
-                // Прокручиваем с задержкой для надежности
-                setTimeout(() => {
-                    scrollLink.click();
-                    console.log('Clicked on results anchor link');
-                    
-                    // Удаляем ссылку после использования
+                // Метод 2: программное создание и нажатие на ссылку
+                try {
                     setTimeout(() => {
-                        document.body.removeChild(scrollLink);
-                    }, 100);
-                }, 500);
+                        const scrollLink = document.createElement('a');
+                        scrollLink.href = '#results';
+                        scrollLink.style.display = 'none';
+                        document.body.appendChild(scrollLink);
+                        scrollLink.click();
+                        console.log('Clicked on anchor link');
+                        
+                        // Удаляем ссылку после использования
+                        setTimeout(() => {
+                            document.body.removeChild(scrollLink);
+                        }, 100);
+                    }, 200);
+                } catch (error) {
+                    console.log('Anchor link click failed:', error);
+                }
                 
                 return true;
             }
             
-            console.log('Results element not found');
+            console.log('Results element not found, looking for headings');
             
-            // Если якорь не найден, ищем заголовок или просто скроллим вниз
-            const resultsHeadings = Array.from(document.querySelectorAll('h2'))
-                .filter(h => h.textContent.includes('Результаты расчета'));
+            // Метод 3: Поиск заголовка с текстом "Результаты расчета"
+            try {
+                const resultsHeadings = Array.from(document.querySelectorAll('h2, h3'))
+                    .filter(h => h.textContent.includes('Результаты расчета'));
+                
+                if (resultsHeadings.length > 0) {
+                    console.log('Found results heading, scrolling...');
+                    const heading = resultsHeadings[0];
+                    window.scrollTo({
+                        top: heading.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                    return true;
+                }
+            } catch (error) {
+                console.log('Heading search failed:', error);
+            }
             
-            if (resultsHeadings.length > 0) {
-                console.log('Found results heading, scrolling...');
-                const heading = resultsHeadings[0];
+            // Метод 4: Поиск элемента с текстом "Итоговая стоимость"
+            try {
+                const priceText = Array.from(document.querySelectorAll('div'))
+                    .filter(div => div.textContent.includes('Итоговая стоимость'));
+                
+                if (priceText.length > 0) {
+                    console.log('Found price text, scrolling...');
+                    const element = priceText[0];
+                    window.scrollTo({
+                        top: element.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                    return true;
+                }
+            } catch (error) {
+                console.log('Price text search failed:', error);
+            }
+            
+            // Метод 5: Резервный - просто скроллим на фиксированную позицию
+            console.log('No targets found, using fallback scroll');
+            try {
                 window.scrollTo({
-                    top: heading.offsetTop - 80,
+                    top: Math.max(500, document.body.scrollHeight / 3),
                     behavior: 'smooth'
                 });
-                return true;
+            } catch (error) {
+                console.log('Fallback scroll failed:', error);
+                // Крайний случай - простой скролл без анимации
+                window.scrollTo(0, 500);
             }
-            
-            // Крайний случай - просто скроллим на определенное расстояние вниз
-            console.log('No targets found, scrolling down as fallback');
-            window.scrollTo({
-                top: document.body.scrollHeight / 2,  // Примерно в середину страницы
-                behavior: 'smooth'
-            });
             
             return false;
         }
         
-        // Выполняем скролл после загрузки DOM
+        // Автоматический запуск функции скролла
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM fully loaded, scheduling scroll');
             setTimeout(scrollToResults, 300);
         });
         
-        // Также выполняем скролл сразу (для случая, когда DOM уже загружен)
+        // Также выполняем несколько попыток с разными интервалами
         console.log('Script loaded, scheduling immediate scroll');
         setTimeout(scrollToResults, 500);
-        
-        // И выполняем третью попытку для надежности
         setTimeout(scrollToResults, 1500);
+        setTimeout(scrollToResults, 2500);
     </script>
     """, unsafe_allow_html=True)
 
@@ -2575,9 +2688,14 @@ def main():
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
-        # Если нужна прокрутка к результатам, добавляем JS код
+        # Если нужна прокрутка к результатам, добавляем JS код и кнопку
         if st.session_state.get('scroll_to_results', False):
+            # Сначала добавляем скрипт для автоматического скролла
             scroll_to_results()
+            
+            # Также добавляем видимую кнопку для ручного скролла к результатам
+            display_results_button()
+            
             # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
             st.session_state.scroll_to_results = False
     
