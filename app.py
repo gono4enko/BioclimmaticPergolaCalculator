@@ -1199,9 +1199,9 @@ def render_results(results):
     from components.promotion_display import promotions_section
     
     # Создаем заметный якорь для скролла с ID - делаем его более заметным
-    st.markdown('<div id="results" name="results" style="position: relative; height: 5px; scroll-margin-top: 80px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div id="results" style="position: relative; scroll-margin-top: 80px; margin-top: 10px; height: 10px;"></div>', unsafe_allow_html=True)
     
-    # Добавляем заголовок "Результаты расчета" для лучшей видимости
+    # Добавляем заголовок "Результаты расчета" для лучшей видимости и привлечения внимания
     st.markdown("""
     <h2 id="results-header" style="text-align: center; margin-top: 10px; margin-bottom: 15px; padding: 15px; 
     background-color: #f0f7ff; border-radius: 8px; color: #0066cc; font-weight: bold; 
@@ -1990,113 +1990,62 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Самый надежный метод для скролла к результатам расчета через window.location.hash
+    Максимально простая функция для автоматической прокрутки к результатам.
+    Использует встроенную функцию Streamlit st.components.html для создания iframe с автопрокруткой.
     """
-    # Генерируем уникальный хэш-якорь для этого обновления страницы
-    import hashlib
-    import time
-    # Создаем почти уникальный якорь, добавляя временную метку
-    unique_hash = hashlib.md5(str(time.time()).encode()).hexdigest()[:8]
-
-    # Добавляем JavaScript, который добавляет хэш к элементу результатов и перемещается к нему
-    st.markdown(f"""
+    # Самое простое и надёжное решение - добавляем невидимый HTML-компонент,
+    # который выполняет скролл к элементу с id="results"
+    import streamlit.components.v1 as components
+    
+    # Создаем невидимый iframe с JavaScript для скролла
+    html_code = """
     <script>
-    // Базовая функция для получения координат элемента относительно окна
-    function getElementPosition(el) {{
-        var rect = el.getBoundingClientRect();
-        var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-        var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        return {{ top: rect.top + scrollTop, left: rect.left + scrollLeft }}
-    }}
-    
-    // Функция для надежной прокрутки к элементу
-    function forceScrollToElement(elementId) {{
-        const element = document.getElementById(elementId);
-        if (!element) return false;
-
-        // Получаем позицию элемента
-        const pos = getElementPosition(element);
-        console.log(`Прокрутка к элементу #${{elementId}}, Y-координата: ${{pos.top}}`);
-        
-        // Прокручиваем к элементу с отступом сверху
-        window.scrollTo({{
-            top: pos.top - 100, // отступ 100px сверху
-            behavior: 'smooth'
-        }});
-        
-        // Добавляем подсветку для привлечения внимания
-        const resultsHeader = document.getElementById('results-header');
-        if (resultsHeader) {{
-            resultsHeader.style.transition = 'background-color 0.5s';
-            resultsHeader.style.backgroundColor = '#ffeb3b';
-            // Мигание желтым цветом
-            setTimeout(function() {{
-                resultsHeader.style.backgroundColor = '#e0f0ff';
-                setTimeout(function() {{
-                    resultsHeader.style.backgroundColor = '#ffeb3b';
-                    setTimeout(function() {{
-                        resultsHeader.style.backgroundColor = '#f0f7ff';
-                    }}, 500);
-                }}, 500);
-            }}, 500);
-        }}
-        
-        return true;
-    }}
-    
-    // МЕТОД 1: Используем прямой скролл к якорю
-    setTimeout(function() {{
-        console.log("Пытаемся прокрутить к результатам (метод 1)");
-        forceScrollToElement('results');
-    }}, 300);
-    
-    // МЕТОД 2: Повторный скролл после небольшой задержки
-    setTimeout(function() {{
-        console.log("Пытаемся прокрутить к результатам (метод 2)");
-        forceScrollToElement('results');
-    }}, 800);
-    
-    // МЕТОД 3: Крайний метод - используем location.hash
-    setTimeout(function() {{
-        console.log("Пытаемся прокрутить к результатам (метод 3 - хэш)");
-        
-        // Устанавливаем хэш, чтобы браузер автоматически прокрутил к якорю
-        if (!forceScrollToElement('results')) {{
-            // Если предыдущие методы не сработали, используем хэш
-            window.location.hash = 'results';
+    // Дожидаемся полной загрузки страницы
+    setTimeout(function() {
+        // Находим элемент с id="results"
+        var resultsElement = parent.document.getElementById('results');
+        if (resultsElement) {
+            // Скроллим к нему с плавной анимацией
+            resultsElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+            console.log("Scrolled to results using iframe method");
             
-            // Добавляем дополнительную прокрутку с задержкой
-            setTimeout(function() {{
-                // Дополнительная корректировка положения прокрутки
-                const elResults = document.getElementById('results');
-                if (elResults) {{
-                    const pos = getElementPosition(elResults);
-                    window.scrollTo({{ top: pos.top - 100, behavior: 'auto' }});
-                }}
-            }}, 100);
-        }}
-    }}, 1500);
+            // Мигаем заголовком для привлечения внимания
+            var header = parent.document.getElementById('results-header');
+            if (header) {
+                // Исходный цвет
+                var originalColor = getComputedStyle(header).backgroundColor;
+                // Мигание для привлечения внимания
+                header.style.transition = 'background-color 0.3s';
+                header.style.backgroundColor = '#FFEB3B'; // Ярко-жёлтый
+                
+                setTimeout(function() {
+                    header.style.backgroundColor = '#e0f0ff'; // Голубой
+                    setTimeout(function() {
+                        header.style.backgroundColor = '#FFEB3B'; // Снова жёлтый
+                        setTimeout(function() {
+                            header.style.backgroundColor = originalColor; // Возвращаем исходный цвет
+                        }, 400);
+                    }, 400);
+                }, 400);
+            }
+        }
+    }, 500);
     </script>
-
-    <!-- Обновляем атрибут id элемента с уникальным хэшем -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {{
-        // Находим элемент результатов
-        const resultsElement = document.getElementById('results');
-        if (resultsElement) {{
-            // Добавляем дополнительный класс для улучшения видимости
-            resultsElement.className += " scroll-target";
-            resultsElement.style.scrollMarginTop = "100px";
-        }}
-    }});
-    </script>
+    """
     
+    # Используем встроенный компонент Streamlit для вставки HTML
+    # height=0 делает iframe невидимым
+    components.html(html_code, height=0)
+    
+    # Дополнительно добавляем CSS для улучшения видимости
+    st.markdown("""
     <style>
-    /* Стили для улучшения видимости целевого элемента */
-    .scroll-target {{
-        scroll-margin-top: 100px !important;
+    #results {
+        scroll-margin-top: 80px;
+    }
+    #results-header {
         position: relative;
-    }}
+    }
     </style>
     """, unsafe_allow_html=True)
 
