@@ -57,16 +57,8 @@ def get_installation_count():
     Returns:
         int: Количество установленных пергол
     """
-    # Получаем текущую дату
-    current_date = datetime.now()
-    
-    # Вычисляем номер недели в году (1-52/53)
-    week_number = current_date.isocalendar()[1]
-    
-    # Количество пергол = 1 + номер недели
-    count = 1 + week_number
-    
-    return count
+    # Фиксированное количество - 5 пергол
+    return 5
 
 def display_installation_counter():
     """
@@ -75,24 +67,24 @@ def display_installation_counter():
     """
     count = get_installation_count()
     
-    # Добавляем пустое пространство перед счетчиком
-    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
+    # Добавляем небольшой отступ перед счетчиком
+    st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
     
     # Создаем контейнер с красивой анимацией и стилем, согласованным со статьями
     counter_html = f"""
     <div class="installation-counter">
-        <div class="counter-number">Более {count}</div>
-        <div class="counter-label">пергол установлено в 2025 году</div>
+        <div class="counter-number">Более {count} пергол</div>
+        <div class="counter-label">установлено в 2025 году</div>
     </div>
     
     <style>
     .installation-counter {{
         background-color: #004B9A;
         color: white;
-        padding: 20px;
+        padding: 15px;
         border-radius: 10px;
         text-align: center;
-        margin: 15px 20px 30px 20px;
+        margin: 5px 20px 20px 20px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         animation: pulse 2s infinite;
         z-index: 1000;
