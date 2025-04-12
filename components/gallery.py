@@ -51,22 +51,22 @@ PROJECT_DESCRIPTIONS = {
 
 def get_installation_count():
     """
-    Возвращает количество установленных пергол в текущем году.
-    В реальном приложении здесь был бы запрос к API или базе данных.
+    Возвращает количество установленных пергол в текущем году,
+    используя формулу: 1 + количество недель текущего года на момент расчета.
     
     Returns:
         int: Количество установленных пергол
     """
-    # В рамках тестовой реализации используем датазависимую логику:
-    # базовое число + дни года для динамического роста числа
+    # Получаем текущую дату
     current_date = datetime.now()
-    day_of_year = current_date.timetuple().tm_yday
     
-    # Базовое число + прирост от дня года (примерно 1-2 перголы в день)
-    base_count = 285
-    dynamic_count = day_of_year * 1.5
+    # Вычисляем номер недели в году (1-52/53)
+    week_number = current_date.isocalendar()[1]
     
-    return int(base_count + dynamic_count)
+    # Количество пергол = 1 + номер недели
+    count = 1 + week_number
+    
+    return count
 
 def display_installation_counter():
     """
@@ -78,7 +78,7 @@ def display_installation_counter():
     # Создаем контейнер с красивой анимацией и стилем, согласованным со статьями
     counter_html = f"""
     <div class="installation-counter">
-        <div class="counter-number">{count}</div>
+        <div class="counter-number">Более {count}</div>
         <div class="counter-label">пергол установлено в 2025 году</div>
     </div>
     
