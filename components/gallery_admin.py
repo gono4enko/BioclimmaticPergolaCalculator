@@ -10,8 +10,10 @@ import sys
 import json
 import logging
 import shutil
+import tempfile
+import uuid
 from pathlib import Path
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import io
 
 # Файл с конфигурацией отображаемых изображений
@@ -194,6 +196,89 @@ def is_valid_image(img_path):
     except Exception as e:
         logging.warning(f"Некорректное изображение {img_path}: {str(e)}")
         return False
+        
+def upload_new_image(uploaded_file, images_dir, auto_include=True):
+    """
+    Загружает новое изображение в директорию галереи и автоматически включает его в активные
+    
+    Args:
+        uploaded_file: Загруженный файл из st.file_uploader
+        images_dir (str): Путь к директории галереи
+        auto_include (bool): Автоматически включить в активные изображения
+        
+    Returns:
+        tuple: (успешно ли загружено, имя файла)
+    """
+    if uploaded_file is None:
+        return False, None
+        
+    # Создаем уникальное имя для файла, чтобы избежать конфликтов
+    file_extension = os.path.splitext(uploaded_file.name)[1].lower()
+    random_suffix = uuid.uuid4().hex[:8]
+    new_filename = f"{os.path.splitext(uploaded_file.name)[0]}_{random_suffix}{file_extension}"
+    
+    # Полный путь к новому файлу
+    new_file_path = os.path.join(images_dir, new_filename)
+    
+    try:
+        # Проверяем формат файла через PIL
+        try:
+            with Image.open(uploaded_file) as img:
+                # Сохраняем временный файл для проверки
+                with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp_file:
+                    img.save(tmp_file.name)
+                    
+                    # Проверяем корректность сохраненного изображения
+                    if not is_valid_image(tmp_file.name):
+                        os.unlink(tmp_file.name)
+                        return False, None
+                        
+                    # Если все хорошо, копируем во целевую директорию
+                    shutil.copy2(tmp_file.name, new_file_path)
+                    os.unlink(tmp_file.name)
+        except UnidentifiedImageError:
+            # Если это HEIC/HEIF формат, попробуем конвертировать
+            if file_extension.lower() in ('.heic', '.heif'):
+                # Сначала сохраняем загруженный файл
+                with open(new_file_path, 'wb') as f:
+                    f.write(uploaded_file.getbuffer())
+                
+                # Проверяем доступность модуля heic_converter
+                try:
+                    import heic_converter
+                    # Конвертируем HEIC в JPEG
+                    jpeg_path = heic_converter.heic_to_jpeg(new_file_path)
+                    
+                    # Если конвертация не удалась, удаляем исходный файл
+                    if not jpeg_path or not os.path.exists(jpeg_path):
+                        if os.path.exists(new_file_path):
+                            os.remove(new_file_path)
+                        return False, None
+                        
+                    # Новый файл с расширением jpg - его имя возвращается из heic_to_jpeg
+                    new_filename = os.path.basename(jpeg_path)
+                    
+                except ImportError:
+                    # Если модуль не найден, просто удаляем файл
+                    if os.path.exists(new_file_path):
+                        os.remove(new_file_path)
+                    return False, None
+            else:
+                # Если не HEIC и не распознается PIL, отклоняем файл
+                return False, None
+                
+        # Если нужно автоматически включить в галерею
+        if auto_include:
+            include_image(new_filename)
+            
+        return True, new_filename
+        
+    except Exception as e:
+        logging.error(f"Ошибка при загрузке изображения: {str(e)}")
+        # Очистка - удаляем файл в случае ошибки
+        if os.path.exists(new_file_path):
+            os.remove(new_file_path)
+        return False, None
 
 def get_all_gallery_images(images_dir):
     """
