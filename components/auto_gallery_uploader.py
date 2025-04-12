@@ -153,7 +153,7 @@ def optimize_image(source_path, target_path=None, max_width=MAX_IMAGE_WIDTH,
         # Для HEIC файлов сначала конвертируем
         if source_path.lower().endswith(('.heic', '.heif')):
             if heic_converter.check_heif_convert():
-                jpeg_path = heic_converter.heic_to_jpeg(source_path, preserve_original=True)
+                jpeg_path = heic_converter.heic_to_jpeg(source_path, preserve_original=preserve_original)
                 if jpeg_path:
                     source_path = jpeg_path
                 else:
@@ -339,7 +339,7 @@ def process_image(source_path, add_to_gallery=True, preserve_original=True):
             logger.info(f"Файл скопирован: {source_path} -> {target_path}")
             
         # Оптимизируем изображение
-        optimize_result = optimize_image(target_path)
+        optimize_result = optimize_image(target_path, preserve_original=preserve_original)
         if not optimize_result:
             return False, None, f"Не удалось оптимизировать изображение {target_path}"
             
@@ -357,7 +357,7 @@ def process_image(source_path, add_to_gallery=True, preserve_original=True):
         logger.error(f"Ошибка при обработке изображения {source_path}: {str(e)}")
         return False, None, f"Ошибка при обработке изображения: {str(e)}"
 
-def batch_process_directory(directory_path, add_to_gallery=True, recursive=False):
+def batch_process_directory(directory_path, add_to_gallery=True, recursive=False, preserve_original=True):
     """
     Обрабатывает все изображения в указанной директории.
     
@@ -365,6 +365,7 @@ def batch_process_directory(directory_path, add_to_gallery=True, recursive=False
         directory_path (str): Путь к директории с изображениями
         add_to_gallery (bool): Добавлять ли изображения в галерею автоматически
         recursive (bool): Обрабатывать ли вложенные директории рекурсивно
+        preserve_original (bool): Сохранять исходный файл (True) или удалять (False)
         
     Returns:
         tuple: (успешно обработано, ошибки, список обработанных файлов)
@@ -386,7 +387,7 @@ def batch_process_directory(directory_path, add_to_gallery=True, recursive=False
                 file_path = os.path.join(root, filename)
                 
                 # Обрабатываем изображение
-                success, target_path, message = process_image(file_path, add_to_gallery)
+                success, target_path, message = process_image(file_path, add_to_gallery, preserve_original)
                 
                 if success:
                     success_count += 1
@@ -402,7 +403,7 @@ def batch_process_directory(directory_path, add_to_gallery=True, recursive=False
             
     return success_count, error_count, processed_files, errors
 
-def watch_directory(directory_path, interval=30, add_to_gallery=True):
+def watch_directory(directory_path, interval=30, add_to_gallery=True, preserve_original=True):
     """
     Следит за директорией и обрабатывает новые изображения.
     
@@ -410,6 +411,7 @@ def watch_directory(directory_path, interval=30, add_to_gallery=True):
         directory_path (str): Путь к директории для мониторинга
         interval (int): Интервал проверки в секундах
         add_to_gallery (bool): Добавлять ли изображения в галерею автоматически
+        preserve_original (bool): Сохранять исходный файл (True) или удалять (False)
     """
     if not os.path.exists(directory_path) or not os.path.isdir(directory_path):
         logger.error(f"Директория {directory_path} не существует")
@@ -445,7 +447,7 @@ def watch_directory(directory_path, interval=30, add_to_gallery=True):
             if new_files:
                 logger.info(f"Обнаружено {len(new_files)} новых изображений")
                 for file_path in new_files:
-                    success, target_path, message = process_image(file_path, add_to_gallery)
+                    success, target_path, message = process_image(file_path, add_to_gallery, preserve_original)
                     logger.info(message)
     except KeyboardInterrupt:
         logger.info("Мониторинг остановлен пользователем")
@@ -469,7 +471,11 @@ def render_uploader_interface():
                                         type=['jpg', 'jpeg', 'png', 'heic', 'heif'],
                                         key="single_uploader")
         
-        add_to_gallery = st.checkbox("Автоматически добавить в галерею", value=True)
+        col1, col2 = st.columns(2)
+        with col1:
+            add_to_gallery = st.checkbox("Автоматически добавить в галерею", value=True)
+        with col2:
+            preserve_original_single = st.checkbox("Сохранить оригинал", value=True, key="preserve_original_single")
         
         # Поле для описания
         custom_description = st.text_area("Описание изображения (оставьте пустым для автоматической генерации)", 
@@ -484,7 +490,8 @@ def render_uploader_interface():
                 
                 # Обрабатываем загруженный файл
                 with st.spinner("Обработка изображения..."):
-                    success, target_path, message = process_image(temp_file, add_to_gallery)
+                    preserve_original = True  # Временные файлы всегда можно удалять
+                    success, target_path, message = process_image(temp_file, add_to_gallery, preserve_original)
                     
                     if success:
                         # Если есть пользовательское описание, обновляем его
@@ -509,17 +516,19 @@ def render_uploader_interface():
         directory_path = st.text_input("Путь к директории с изображениями", 
                                      value=IMAGES_DIR, key="directory_path")
         
-        batch_options = st.columns(2)
+        batch_options = st.columns(3)
         with batch_options[0]:
             batch_add_to_gallery = st.checkbox("Добавить в галерею", value=True, key="batch_add")
         with batch_options[1]:
             recursive = st.checkbox("Рекурсивный режим", value=False, key="recursive")
+        with batch_options[2]:
+            preserve_original = st.checkbox("Сохранить оригиналы", value=True, key="preserve_original")
             
         if st.button("Начать пакетную обработку", type="primary"):
             if directory_path:
                 with st.spinner("Выполняется пакетная обработка изображений..."):
                     success_count, error_count, processed_files, errors = batch_process_directory(
-                        directory_path, batch_add_to_gallery, recursive)
+                        directory_path, batch_add_to_gallery, recursive, preserve_original)
                     
                     # Отображаем результаты
                     if success_count > 0:
