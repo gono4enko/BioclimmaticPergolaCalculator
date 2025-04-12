@@ -2321,13 +2321,14 @@ def main():
     )
     
     # Импортируем наш новый модуль для скроллинга
-    from components.simple_scroll import get_scroll_target
+    from scroll import scroll_to
     
     # Проверяем, есть ли целевая секция для скроллинга
-    # Если есть, get_scroll_target уже очистит состояние
-    target_section = get_scroll_target()
-    if target_section:
-        st.info(f"Перемещение к разделу '{target_section}'...")
+    if "scroll_target" in st.session_state:
+        target_section = st.session_state.pop("scroll_target")
+        st.info(f"Прокрутка к разделу '{target_section}'...")
+        # Выполняем скролл с JavaScript
+        scroll_to(target_section)
     
     # Добавляем CSS-анимации для всего приложения (включая анимацию для кнопок)
     from animations import add_animations_css
@@ -2538,8 +2539,8 @@ def main():
     # Импортируем функцию для создания анимированной кнопки
     from animations import animate_button
     
-    # Импортируем функцию для скроллинга из нового модуля
-    from components.simple_scroll import set_scroll_to
+    # Импортируем функцию для скроллинга из нового надежного модуля
+    from scroll import scroll_to
     
     # Кнопка для расчета с анимацией пульсации
     if animate_button("Рассчитать стоимость", key="calculate_button", animation_class="pulseAnimation"):
@@ -2556,41 +2557,38 @@ def main():
                 # Добавляем флаг для отправки события в Яндекс.Метрику после перезагрузки
                 st.session_state.send_ya_metrika_event = True
                 
-                # PYTHON-BASED SCROLLING:
-                # Используем новый, максимально простой механизм скроллинга
-                set_scroll_to("results")
+                # Устанавливаем флаг для скролла в сессии и перезапускаем приложение
+                st.session_state.scroll_target = "results"
+                st.rerun()
     
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.2rem; margin-bottom: 0.2rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
         
     # Отображаем кнопку для скролла к результатам (если есть результаты)
     if 'results' in st.session_state:
-        # Импортируем функцию для скроллинга из нового модуля
-        from components.simple_scroll import set_scroll_to
+        # Используем ту же функцию для скроллинга, что и везде
+        from scroll import scroll_to
         
-        # Кнопка для скролла к результатам через Python
+        # Кнопка для скролла к результатам через JavaScript
         if st.button("↓ Перейти к результатам расчета ↓", 
                      key="scroll_button", 
                      use_container_width=True,
                      type="primary"):
-            # Используем новый, надежный метод скроллинга
-            set_scroll_to("results")
+            # Устанавливаем флаг для скролла в сессии и перезапускаем приложение
+            st.session_state.scroll_target = "results"
+            st.rerun()
         
         # Создаем заметный маркер для начала секции результатов
         st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
         
-        # Импортируем функцию для отображения секции из нашего нового модуля
-        from components.simple_scroll import display_section
+        # Импортируем функцию для создания якоря из нового модуля
+        from scroll import create_anchor
         
-        # Определяем функцию, которая будет отображать содержимое результатов
-        def show_results():
-            # Добавляем заголовок результатов
-            st.markdown("<h2 style='text-align:center; color:#0066cc; margin-bottom:20px;'>РЕЗУЛЬТАТЫ РАСЧЕТА</h2>", unsafe_allow_html=True)
-            # Показываем общий результат и детальную информацию
-            render_results(st.session_state.results)
+        # Создаем якорь для секции результатов
+        create_anchor("results", "РЕЗУЛЬТАТЫ РАСЧЕТА")
         
-        # Отображаем секцию с результатами, используя наш новый механизм скроллинга
-        display_section("results", show_results)
+        # Показываем общий результат и детальную информацию
+        render_results(st.session_state.results)
     
     # Добавляем галерею проектов и счетчик установленных пергол
     # Разделяем содержимое после калькулятора
