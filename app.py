@@ -1198,8 +1198,8 @@ def render_results(results):
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
     
-    # Создаем якорь для скролла с ID 
-    st.markdown('<div id="results" name="results"></div>', unsafe_allow_html=True)
+    # Создаем якорь для скролла с ID и стилем, чтобы он был более заметен для JavaScript
+    st.markdown('<div id="results" name="results" style="scroll-margin-top: 60px; min-height: 10px;"></div>', unsafe_allow_html=True)
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
@@ -1992,20 +1992,29 @@ def scroll_to_results():
         function scrollToResults() {
             console.log('Attempting to scroll to results...');
             
-            // Ищем элемент с id="results"
+            // Пытаемся найти элемент с id="results"
             const resultsElement = document.getElementById('results');
             
             if (resultsElement) {
-                console.log('Found results element, scrolling...');
+                console.log('Found results element, scrolling directly...');
                 
-                // Программно создаем и кликаем по ссылке на якорь
-                const scrollLink = document.createElement('a');
-                scrollLink.href = '#results';
-                scrollLink.style.display = 'none';
-                document.body.appendChild(scrollLink);
-                
-                // Прокручиваем с задержкой для надежности
+                // Прямой скролл к элементу с задержкой
                 setTimeout(() => {
+                    resultsElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    console.log('Direct scrollIntoView executed');
+                }, 300);
+                
+                // Резервный метод через клик по ссылке
+                setTimeout(() => {
+                    console.log('Attempting backup scroll method with link...');
+                    const scrollLink = document.createElement('a');
+                    scrollLink.href = '#results';
+                    scrollLink.style.display = 'none';
+                    document.body.appendChild(scrollLink);
+                    
                     scrollLink.click();
                     console.log('Clicked on results anchor link');
                     
@@ -2013,49 +2022,57 @@ def scroll_to_results():
                     setTimeout(() => {
                         document.body.removeChild(scrollLink);
                     }, 100);
-                }, 500);
+                }, 600);
                 
                 return true;
             }
             
-            console.log('Results element not found');
+            console.log('Results element not found, trying alternatives...');
             
-            // Если якорь не найден, ищем заголовок или просто скроллим вниз
-            const resultsHeadings = Array.from(document.querySelectorAll('h2'))
-                .filter(h => h.textContent.includes('Результаты расчета'));
+            // Если якорь не найден, ищем заголовок
+            const resultsHeadings = Array.from(document.querySelectorAll('h2, h3'))
+                .filter(h => h.textContent.includes('Результаты расчета') || 
+                            h.textContent.includes('Итоговая стоимость'));
             
             if (resultsHeadings.length > 0) {
                 console.log('Found results heading, scrolling...');
                 const heading = resultsHeadings[0];
-                window.scrollTo({
-                    top: heading.offsetTop - 80,
-                    behavior: 'smooth'
-                });
+                setTimeout(() => {
+                    heading.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }, 300);
                 return true;
             }
             
             // Крайний случай - просто скроллим на определенное расстояние вниз
             console.log('No targets found, scrolling down as fallback');
-            window.scrollTo({
-                top: document.body.scrollHeight / 2,  // Примерно в середину страницы
-                behavior: 'smooth'
-            });
+            setTimeout(() => {
+                window.scrollTo({
+                    top: Math.max(500, document.body.scrollHeight / 3),  // Минимум 500px или треть страницы
+                    behavior: 'smooth'
+                });
+            }, 300);
             
             return false;
         }
         
-        // Выполняем скролл после загрузки DOM
+        // Выполняем скролл сразу после загрузки скрипта
+        console.log('Script loaded, scheduling immediate scroll');
+        setTimeout(scrollToResults, 200);
+        
+        // Вторая попытка через небольшой промежуток времени
+        setTimeout(scrollToResults, 800);
+        
+        // Третья попытка еще позже для надежности
+        setTimeout(scrollToResults, 1500);
+        
+        // Регистрируем обработчик события DOMContentLoaded для случаев, когда скрипт загружается раньше DOM
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded, scheduling scroll');
+            console.log('DOM fully loaded, scheduling additional scroll attempt');
             setTimeout(scrollToResults, 300);
         });
-        
-        // Также выполняем скролл сразу (для случая, когда DOM уже загружен)
-        console.log('Script loaded, scheduling immediate scroll');
-        setTimeout(scrollToResults, 500);
-        
-        // И выполняем третью попытку для надежности
-        setTimeout(scrollToResults, 1500);
     </script>
     """, unsafe_allow_html=True)
 
