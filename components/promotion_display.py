@@ -85,6 +85,7 @@ def display_promo_badges(applicable_promotions: List[Dict]) -> None:
 def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bool:
     """
     Отображает панель для активации срочной скидки с обратным отсчетом.
+    С автоматическим определением сезонной акции.
     
     Args:
         urgent_promotion: Информация о срочной скидке
@@ -92,6 +93,23 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
     Returns:
         bool: True если скидка активирована
     """
+    # Обновляем информацию о сезонной акции
+    current_season = promotions.get_current_season()
+    season_key = f"{current_season}_sale_{datetime.date.today().year}"
+    
+    # Проверяем, что предоставленная акция актуальна для текущего сезона
+    # Если нет, генерируем новую сезонную акцию
+    promo_id = urgent_promotion.get("id") if urgent_promotion else None
+    if not urgent_promotion or (
+        isinstance(promo_id, str) and 
+        not promo_id.startswith(current_season)
+    ):
+        # Создаем актуальную сезонную акцию
+        urgent_promotion = {
+            "id": season_key,
+            **promotions.generate_seasonal_promotion(5)
+        }
+    
     if not urgent_promotion:
         return False
     
@@ -149,12 +167,16 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
         total_ms = int(remaining_time * 1000)
         display_text = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     
+    # Получаем информацию о текущем сезоне для панели
+    season_name_ru = promotions.get_season_name_in_russian(current_season)
+    season_color = promotions.SEASON_COLORS.get(current_season, '#4CAF50')  # Зеленый цвет по умолчанию
+    
     # Отображаем панель со срочной скидкой
     with st.container():
         st.markdown(f"""
         <style>
         .urgent-panel {{
-            background-color: {urgent_promotion.get('badge_color', '#4CAF50')};
+            background-color: {urgent_promotion.get('badge_color', season_color)};
             color: white;
             padding: 10px 15px;
             border-radius: 8px;
@@ -202,8 +224,8 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
         }}
         </style>
         <div class="urgent-panel pulse-animation">
-            <h4>{urgent_promotion.get('name', 'Весенняя акция 2025')}</h4>
-            <p>{urgent_promotion.get('description', 'Скидка действует до 1 июня!')}</p>
+            <h4>{urgent_promotion.get('name', f'{season_name_ru} акция {datetime.date.today().year}')}</h4>
+            <p>{urgent_promotion.get('description', f'Скидка {urgent_promotion.get("discount_value", 5)}% до конца сезона!')}</p>
             <div class="countdown-container" style="text-align: center;">
                 <span>До окончания акции: </span>
                 <span class="countdown" id="countdown">{display_text}</span>
@@ -248,6 +270,13 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
                 if (distance < 0) {{
                     clearInterval(x);
                     document.getElementById("countdown").innerHTML = "ВРЕМЯ ИСТЕКЛО";
+                    
+                    // Перезагружаем страницу для обновления акции
+                    setTimeout(function() {{
+                        window.parent.postMessage({{
+                            type: "streamlit:componentRerun"
+                        }}, "*");
+                    }}, 5000); // Перезагрузка через 5 секунд
                 }}
             }}, 1000);
         </script>
