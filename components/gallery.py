@@ -187,10 +187,12 @@ def create_gallery_html(image_urls, captions):
         .gallery-container {
             display: flex;
             flex-wrap: wrap;
-            justify-content: space-around;
+            justify-content: center;
             gap: 15px;
-            margin: 10px 20px 30px 20px;
+            margin: 10px auto 30px auto;
             padding: 0 10px;
+            text-align: center;
+            max-width: 1200px;
         }
         
         .gallery-item {
@@ -202,6 +204,7 @@ def create_gallery_html(image_urls, captions):
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             margin-bottom: 20px;
+            display: inline-block;
         }
         
         .gallery-item:hover {
@@ -213,6 +216,7 @@ def create_gallery_html(image_urls, captions):
             width: 100%;
             height: auto;
             display: block;
+            margin: 0 auto;
         }
         
         .gallery-caption {
@@ -235,7 +239,8 @@ def create_gallery_html(image_urls, captions):
             
             .gallery-container {
                 padding: 0 15px;
-                margin: 10px 15px 25px 15px;
+                margin: 10px auto 25px auto;
+                max-width: 95%;
             }
         }
         </style>
@@ -317,10 +322,10 @@ def display_gallery_section():
     Основная функция для отображения секции с галереей и счетчиком
     """
     with st.container():
-        # Заголовок раздела в стиле статей
+        # Заголовок раздела в стиле статей с выравниванием по центру
         st.markdown("""
-        <div style="padding: 15px 20px; max-width: 100%;">
-            <h1 style="font-size: 2.2rem; color: #0066cc; font-weight: 600; margin-bottom: 15px;">
+        <div style="padding: 15px 20px; max-width: 100%; text-align: center;">
+            <h1 style="font-size: 2.2rem; color: #0066cc; font-weight: 600; margin-bottom: 15px; text-align: center;">
                 Наши достижения и реализованные проекты
             </h1>
         </div>
@@ -329,7 +334,7 @@ def display_gallery_section():
         # Счетчик установленных пергол
         display_installation_counter()
         
-        # Добавляем стиль для текста галереи как в статьях
+        # Добавляем стиль для текста галереи как в статьях с выравниванием по центру
         st.markdown("""
         <style>
         .gallery-description {
@@ -338,6 +343,7 @@ def display_gallery_section():
             font-size: 1.1rem;
             line-height: 1.5;
             color: #333;
+            text-align: center;
         }
         .gallery-subtitle {
             font-size: 1.8rem;
@@ -345,11 +351,12 @@ def display_gallery_section():
             font-weight: 600;
             margin: 15px 20px;
             padding-bottom: 10px;
+            text-align: center;
         }
         </style>
         """, unsafe_allow_html=True)
         
-        # Галерея проектов с правильными отступами
+        # Галерея проектов с выравниванием по центру
         st.markdown('<h2 class="gallery-subtitle">Наши реализованные проекты</h2>', unsafe_allow_html=True)
         st.markdown('<div class="gallery-description">Взгляните на некоторые из наших недавних проектов. Каждая пергола уникальна и создана в соответствии с потребностями и пожеланиями клиента.</div>', unsafe_allow_html=True)
         
