@@ -34,6 +34,13 @@ REALIZED_PROJECTS = [
     "IMG_5974.heic",  # Пергола B500 с вращающимися ламелями
     "pergola_b500_terrace.jpg",  # Пергола B500 с террасой
     "pergola_b500_led_lighting.jpg",  # Пергола B500 с LED подсветкой
+    "pergola_terrace_sea_view.jpg",  # Пергола с видом на море
+    "pergola_b700_poolside.jpg",  # Пергола B700 у бассейна
+    "pergola_b500_garden_view.jpg",  # Пергола B500 с видом на сад
+    "pergola_multi_module_terrace.jpg",  # Модульная пергола на террасе 
+    "pergola_panoramic_glass_walls.jpg",  # Пергола с панорамным остеклением
+    "pergola_blue_led_lighting.jpg",  # Пергола с синей LED подсветкой
+    "pergola_evening_lighting.jpg",  # Пергола с вечерним освещением
 ]
 
 # Словарь с описаниями проектов
@@ -51,6 +58,13 @@ PROJECT_DESCRIPTIONS = {
     "IMG_5974.heic": "Пергола B500 с вращающимися ламелями и дистанционным управлением, Москва, 2025",
     "pergola_b500_terrace.jpg": "Пергола B500 с открытыми ламелями для уютной террасы с деревянным настилом, 2025",
     "pergola_b500_led_lighting.jpg": "Пергола B500 с интегрированной LED подсветкой и летней кухней, вечернее освещение, 2025",
+    "pergola_terrace_sea_view.jpg": "Пергола B500 с просторной зоной отдыха и видом на море, Крым, 2025",
+    "pergola_b700_poolside.jpg": "Пергола B700 с закрытой крышей на территории частного дома с бассейном, Подмосковье, 2025",
+    "pergola_b500_garden_view.jpg": "Пергола B500 с боковыми шторами для защиты от солнца и ветра, садовая зона, 2025",
+    "pergola_multi_module_terrace.jpg": "Модульная система пергол B700 для большой террасы ресторана с зоной отдыха, 2025",
+    "pergola_panoramic_glass_walls.jpg": "Пергола B700 с панорамным раздвижным остеклением и деревянным настилом, 2025",
+    "pergola_blue_led_lighting.jpg": "Пергола B700 с RGB подсветкой (голубой цвет) у бассейна, вечернее освещение, 2025",
+    "pergola_evening_lighting.jpg": "Премиальная пергола Camargue с встроенной LED подсветкой и боковыми шторами, 2025",
 }
 
 def get_installation_count():
