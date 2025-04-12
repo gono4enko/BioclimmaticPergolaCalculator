@@ -1098,77 +1098,58 @@ def render_options_form():
         label_visibility="collapsed"  # Скрываем стандартный заголовок
     )
     
-    # Вспомогательная функция для создания группы чекбоксов в стиле радиокнопок
-    def checkbox_group(label, options, format_func=None):
-        """
-        Отображает группу чекбоксов с заголовком в стиле радио-кнопок
-        
-        Args:
-            label (str): Заголовок группы
-            options (list): Список опций для чекбоксов
-            format_func (function, optional): Функция форматирования опций
-            
-        Returns:
-            list: Список выбранных опций
-        """
-        # Добавляем заголовок в том же стиле, что и для других разделов
-        st.write(label)
-        
-        # Пустой контейнер для радиокнопок (для создания единообразного отступа)
-        st.radio("", options=[""], label_visibility="collapsed")
-        
-        # Инициализируем список выбранных опций
-        selected_options = []
-        
-        # Перебираем опции и создаем чекбоксы с тем же отступом, что у радиокнопок
-        for i, option in enumerate(options):
-            display_text = format_func(option) if format_func else option
-            
-            # CSS для размещения чекбокса на месте радиокнопки
-            st.markdown(f"""
-            <style>
-            /* Стиль для чекбокса #{i+1} в группе {label} */
-            [data-testid="stVerticalBlock"] > div:has(#checkbox_{i}) {{
-                margin-top: {-35 if i > 0 else -5}px !important;
-                margin-left: 25px !important;
-            }}
-            </style>
-            """, unsafe_allow_html=True)
-            
-            # Создаем чекбокс с уникальным ID
-            is_selected = st.checkbox(
-                display_text, 
-                value=False, 
-                key=f"checkbox_{i}", 
-                label_visibility="visible"
-            )
-            
-            if is_selected:
-                selected_options.append(option)
-        
-        return selected_options
-
-    # Создаем группу чекбоксов для освещения с отступами как у радиокнопок
+    # Глобальный CSS для заголовков разделов и выравнивания всех элементов формы
     st.markdown("""
     <style>
-    /* Принудительно удаляем радиокнопку, но оставляем её отступы для единообразия */
-    [data-testid="stRadio"]:has(input[aria-label=""]) {
-        opacity: 0 !important;
-        height: 0 !important;
-        min-height: 0 !important;
-        overflow: hidden !important;
-        margin: 0 !important;
-        padding: 0 !important;
+    /* Отступы для заголовков всех секций формы */
+    div.stMarkdown p {
+        font-weight: 500 !important;
+        margin-bottom: 10px !important;
+    }
+    
+    /* Отступы для радиокнопок и чекбоксов */
+    div.stRadio > div {
+        margin-bottom: 10px !important;
+    }
+    
+    /* Принудительный стиль для всех чекбоксов */
+    div.stCheckbox > div {
+        margin-left: 25px !important;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Теперь создаем группу чекбоксов для освещения, имитируя стиль радиокнопок
-    lighting_options = checkbox_group(
-        "Освещение", 
-        ["Белая светодиодная лента", "RGB светодиодная лента"],
-        lambda x: x
-    )
+    # Прямой подход к созданию чекбоксов для освещения с фиксированными отступами
+    st.write("Освещение")
+    
+    # Добавляем CSS для установки точных отступов как у radio buttons
+    st.markdown("""
+    <style>
+    /* Строгое задание отступов для чекбоксов освещения */
+    div[data-testid="stVerticalBlock"] > div:has(label:contains("Белая светодиодная лента")) {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 3px !important;
+        padding-bottom: 3px !important;
+    }
+    
+    div[data-testid="stVerticalBlock"] > div:has(label:contains("RGB светодиодная лента")) {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 3px !important;
+        padding-bottom: 3px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Создаем чекбоксы напрямую
+    lighting_options = []
+    
+    if st.checkbox("Белая светодиодная лента", value=False, key="white_led_direct"):
+        lighting_options.append("white_led")
+        
+    if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_direct"):
+        lighting_options.append("rgb_led")
     
     # Преобразуем выбранные опции в нужный формат
     lighting_options_map = []
@@ -1180,17 +1161,24 @@ def render_options_form():
     # Заменяем lighting_options на отображаемую версию
     lighting_options = lighting_options_map
     
-    # Теперь создаем группу чекбоксов для установки, имитируя стиль радиокнопок
-    installation_options = checkbox_group(
-        "Установка", 
-        ["С установкой"],
-        lambda x: x
-    )
+    # Прямой подход к созданию чекбокса для установки - такой же как для освещения
+    st.write("Установка")
     
-    # Опция "С установкой" по умолчанию включена
-    installation = "С установкой" in installation_options
-    if not installation_options:  # Если ничего не выбрано, значит по умолчанию установка включена
-        installation = True
+    # Добавляем CSS для чекбокса установки с теми же стилями, что у освещения
+    st.markdown("""
+    <style>
+    /* Строгое задание отступов для чекбокса установки */
+    div[data-testid="stVerticalBlock"] > div:has(label:contains("С установкой")) {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 3px !important;
+        padding-bottom: 3px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # По умолчанию установка включена
+    installation = st.checkbox("С установкой", value=True, key="installation_direct")
     
     # Возвращаем выбранные опции (не включаем модули, т.к. они рассчитываются автоматически)
     return {
