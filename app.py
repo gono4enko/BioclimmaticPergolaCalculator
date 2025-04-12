@@ -2323,6 +2323,10 @@ def main():
     # Настраиваем стили скроллинга и навигации
     setup_streamlit_scroll()
     
+    # Добавляем CSS-анимации для всего приложения (включая анимацию для кнопок)
+    from animations import add_animations_css
+    add_animations_css()
+    
     # Проверяем, нужно ли скроллить к результатам (если они есть и установлен флаг)
     if 'results' in st.session_state and st.session_state.get('need_scroll_to_results', False):
         st.session_state.need_scroll_to_results = False  # Сбрасываем флаг сразу
@@ -2533,8 +2537,11 @@ def main():
     # Добавляем отступ перед кнопкой расчета
     st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
     
-    # Кнопка для расчета с улучшенным стилем
-    if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
+    # Импортируем функцию для создания анимированной кнопки
+    from animations import animate_button
+    
+    # Кнопка для расчета с анимацией пульсации
+    if animate_button("Рассчитать стоимость", key="calculate_button", animation_class="pulseAnimation"):
         with st.spinner("Выполняется расчет..."):
             # Проверяем, что у нас есть данные для расчета
             if dimensions and options:
