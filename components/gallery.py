@@ -22,15 +22,15 @@ IMAGES_DIR = "attached_assets"
 # Список фотографий реализованных проектов
 REALIZED_PROJECTS = [
     "IMG_5914.jpg",  # Пергола у бассейна
-    "IMG_5974.heic",  # Пергола B500 с вращающимися ламелями
-    "pergola_b500_terrace.jpg",  # Пергола B500 с террасой
+    # "IMG_5974.heic",  # Пергола B500 с вращающимися ламелями - удалено по запросу
+    # "pergola_b500_terrace.jpg",  # Пергола B500 с террасой - удалено по запросу
     "pergola_b500_led_lighting.jpg",  # Пергола B500 с LED подсветкой
     "pergola_terrace_sea_view.jpg",  # Пергола с видом на море
     "pergola_b700_poolside.jpg",  # Пергола B700 у бассейна
     "pergola_b500_garden_view.jpg",  # Пергола B500 с видом на сад
     "pergola_multi_module_terrace.jpg",  # Модульная пергола на террасе 
     "pergola_panoramic_glass_walls.jpg",  # Пергола с панорамным остеклением
-    "pergola_blue_led_lighting.jpg",  # Пергола с синей LED подсветкой
+    # "pergola_blue_led_lighting.jpg",  # Пергола с синей LED подсветкой - удалено по запросу
     "pergola_evening_lighting.jpg",  # Пергола с вечерним освещением
 ]
 
