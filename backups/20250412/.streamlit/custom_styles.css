@@ -1,0 +1,121 @@
+/* Custom styles for the Pergola Calculator */
+
+/* Main heading styles */
+h2:contains("Результаты расчета") {
+    font-size: 3.2rem !important; 
+    font-weight: 700 !important;
+    color: #0066cc !important;
+    text-align: center !important;
+    margin-bottom: 10px !important;
+}
+
+/* Section headings */
+h3:contains("Спецификация перголы"), 
+h3:contains("Стоимость") {
+    font-size: 2.9rem !important;
+    font-weight: 700 !important;
+    color: #0066cc !important;
+    text-align: center !important;
+    margin-top: 15px !important;
+    margin-bottom: 8px !important;
+}
+
+/* All headings should have reduced bottom margin to reduce vertical space */
+h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 8px !important;
+}
+
+/* Reduce space between paragraphs and headings */
+p {
+    margin-top: 0 !important;
+    margin-bottom: 10px !important;
+    font-size: 1rem !important;
+}
+
+/* Table adjustments - making table more compact */
+.st-emotion-cache-1y4p8pa table {
+    margin-top: 10px !important;
+    margin-bottom: 15px !important;
+    border-spacing: 0 !important;
+    border-collapse: collapse !important;
+}
+
+/* Reduce spacing in table cells */
+.st-emotion-cache-1y4p8pa table td, 
+.st-emotion-cache-1y4p8pa table th {
+    padding: 5px 8px !important;
+    line-height: 1.2 !important;
+    font-size: 1rem !important;
+}
+
+/* "Итого" styles in the table */
+.st-emotion-cache-1y4p8pa table tr:last-child td:first-child {
+    font-size: 1.35rem !important;
+    font-weight: bold !important;
+}
+
+/* Total price in the table */
+.st-emotion-cache-1y4p8pa table tr:last-child td:last-child {
+    font-size: 1.4rem !important;
+    font-weight: bold !important;
+    color: #0066cc !important;
+}
+
+/* Adjust final price display */
+.st-emotion-cache-10trblm div:contains("Итоговая стоимость") span {
+    font-size: 1.5rem !important;
+    color: #0066cc !important;
+}
+
+/* Target all markdown text to ensure consistent sizing */
+.element-container .stMarkdown p {
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
+    margin-top: 0 !important;
+    margin-bottom: 10px !important;
+}
+
+/* Ensure description text is smaller than headers */
+.element-container .stMarkdown ul li,
+.element-container .stMarkdown ol li {
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 5px !important;
+}
+
+/* For tables in description, make them more compact */
+.element-container .stMarkdown table {
+    margin-top: 8px !important;
+    margin-bottom: 8px !important;
+    border-spacing: 0 !important;
+}
+
+.element-container .stMarkdown table td,
+.element-container .stMarkdown table th {
+    padding: 6px 8px !important;
+    font-size: 1rem !important;
+    line-height: 1.2 !important;
+}
+
+/* Add more emphasis to table headers - making them bold and slightly larger*/
+.element-container .stMarkdown table th {
+    font-weight: bold !important;
+    background-color: #f4f7fc !important;
+    font-size: 1.05rem !important;
+}
+
+/* Special style for key table headers like "Стоимость" */
+.element-container .stMarkdown h3:contains("Стоимость"),
+.element-container .stMarkdown h4:contains("Стоимость") {
+    font-size: 2.2rem !important;
+    color: #0066cc !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    margin-top: 20px !important;
+    margin-bottom: 12px !important;
+}
+
+/* Improve spacing between sections */
+.element-container {
+    margin-bottom: 10px !important;
+}
