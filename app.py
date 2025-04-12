@@ -2580,13 +2580,14 @@ def main():
         </a>
         """, unsafe_allow_html=True)
         
-        # Создаем якорь для результатов НЕПОСРЕДСТВЕННО перед отображением результатов
-        # Это важно для корректного скроллинга - якорь должен быть перед тем, что мы хотим показать
-        st.markdown("<div id='results-section-start'></div>", unsafe_allow_html=True)
-        create_anchor("calculation-results")
+        # Создаем заметный маркер для начала секции результатов
+        st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
         
-        # Добавляем явную заголовок-метку для результатов
-        st.markdown("<h2 style='margin-top: 30px; color: #0066cc;'>Результаты расчета</h2>", unsafe_allow_html=True)
+        # Импортируем функцию создания якоря из scroll_manager
+        from components.scroll_manager import create_scroll_target
+        
+        # Создаем хорошо заметный якорь для результатов с понятной меткой
+        create_scroll_target("calculation-results", label="Результаты расчета", height_px=80)
         
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)

@@ -57,7 +57,7 @@ def setup_scroll_functionality():
     </script>
     """, unsafe_allow_html=True)
 
-def create_scroll_target(target_id, label=None, height_px=50):
+def create_scroll_target(target_id, label=None, height_px=80):
     """
     Создает цель для скроллинга с поддержкой Python-механизма скроллинга.
     
@@ -66,95 +66,109 @@ def create_scroll_target(target_id, label=None, height_px=50):
         label (str, optional): Дополнительный текст для отладки
         height_px (int): Высота якоря в пикселях
     """
-    debug_label = label if label else f"Якорь для {target_id}"
-    
-    # Создаем более заметный якорь для скроллинга с отступом сверху
+    # Создаем очень простой якорь, но с явной видимостью для отладки
     st.markdown(
         f"""
-        <div id="{target_id}"
-             class="scroll-target"
-             style="display: block; height: {height_px}px; margin-top: 20px; margin-bottom: 10px; 
-                    position: relative; scroll-margin-top: 70px;">
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; 
-                      background-color: rgba(0, 102, 204, 0.1);"></div>
-            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; 
-                      background-color: rgba(0, 102, 204, 0.1);"></div>
+        <div id="{target_id}" 
+             class="streamlit-scroll-target"
+             style="position: relative; 
+                    display: block; 
+                    width: 100%; 
+                    height: {height_px}px; 
+                    border-top: 2px solid #e0e0e0;
+                    margin-top: 5px;
+                    margin-bottom: 5px;
+                    padding-top: 5px;
+                    scroll-margin-top: 100px;">
+            <span style="position: absolute; 
+                         left: 0; right: 0; 
+                         text-align: center; 
+                         font-size: 0.7rem; 
+                         color: #888;
+                         padding: 2px;
+                         user-select: none;">
+                {label if label else f"Раздел: {target_id}"}
+            </span>
         </div>
         """, 
         unsafe_allow_html=True
     )
     
-    # Выводим в лог информацию о создании якоря
-    print(f">>> Создан якорь: {target_id}")
+    # Проверяем наличие флага скроллинга именно для этого якоря
+    need_scroll = (
+        '_scroll_to_target' in st.session_state and 
+        st.session_state['_scroll_to_target'] == target_id
+    )
     
-    # Проверяем, нужно ли скроллить к этому элементу
-    if '_scroll_to' in st.session_state and st.session_state['_scroll_to'] == target_id:
-        print(f"*** ВНИМАНИЕ: Найдена цель для автоматического скролла: {target_id}")
+    if need_scroll:
+        # Очищаем флаг
+        if '_scroll_to_target' in st.session_state:
+            del st.session_state['_scroll_to_target']
         
-        # Сбрасываем флаг скроллинга после обнаружения
-        st.session_state.pop('_scroll_to')
+        print(f">>> [PYTHON_SCROLL] Активирован скроллинг к цели {target_id}")
         
-        # Добавляем дополнительные стили и JavaScript для гарантированного скролла
-        st.markdown(
-            f"""
-            <style>
-            /* Стили для активного якоря */
-            #{target_id} {{
-                scroll-margin-top: 80px !important;
-                scroll-snap-margin-top: 80px !important;
-                border-top: 3px solid #0066cc !important;
-            }}
-            </style>
-            
-            <script>
-                (function() {{
-                    // Функция для скролла
-                    function doScrollToTarget() {{
-                        try {{
-                            // Ищем элемент
-                            const targetElement = document.getElementById("{target_id}");
-                            
-                            if (targetElement) {{
-                                console.log("Скроллинг к элементу {target_id} запущен из Python");
-                                
-                                // Получаем позицию элемента
-                                const rect = targetElement.getBoundingClientRect();
-                                const absoluteElementTop = rect.top + window.pageYOffset;
-                                
-                                // Скроллим с отступом 80px от верха
-                                window.scrollTo({{
-                                    top: absoluteElementTop - 80,
-                                    behavior: 'smooth'
-                                }});
-                                console.log("Скролл к {target_id} выполнен, позиция Y:", absoluteElementTop);
-                                return true;
-                            }}
-                            
-                            console.log("Элемент {target_id} не найден при попытке скроллинга");
-                            return false;
-                        }} catch (e) {{
-                            console.error("Ошибка при скроллинге к {target_id}:", e);
+        # Создаем улучшенную функцию для гарантированного скроллинга
+        st.markdown(f"""
+        <script>
+            (function() {{
+                // Функция для надежного скроллинга
+                function reliableScrollTo(elementId) {{
+                    try {{
+                        const targetElement = document.getElementById('{target_id}');
+                        if (!targetElement) {{
+                            console.error('Элемент {target_id} не найден!');
                             return false;
                         }}
+                        
+                        // Получаем координаты элемента
+                        const rect = targetElement.getBoundingClientRect();
+                        const absoluteY = rect.top + window.pageYOffset;
+                        
+                        // Скроллим с небольшим отступом сверху
+                        window.scrollTo({{
+                            top: absoluteY - 100,
+                            behavior: 'smooth'
+                        }});
+                        
+                        console.log('ВЫПОЛНЕН СКРОЛЛ К ЭЛЕМЕНТУ {target_id}:', absoluteY);
+                        
+                        // Добавляем подсветку на время, чтобы пользователь увидел якорь
+                        targetElement.style.borderTop = '2px solid #0066cc';
+                        targetElement.style.backgroundColor = 'rgba(0, 102, 204, 0.1)';
+                        
+                        // Через 2 секунды убираем подсветку
+                        setTimeout(() => {{
+                            targetElement.style.borderTop = '2px solid #e0e0e0';
+                            targetElement.style.backgroundColor = 'transparent';
+                        }}, 2000);
+                        
+                        return true;
+                    }} catch (error) {{
+                        console.error('Ошибка при скроллинге:', error);
+                        return false;
                     }}
-                    
-                    // Запускаем с несколькими временными задержками для гарантии
-                    console.log("Запланирован скроллинг к элементу {target_id}");
-                    setTimeout(doScrollToTarget, 200);
-                    setTimeout(doScrollToTarget, 500);
-                    setTimeout(doScrollToTarget, 1000);
-                    setTimeout(doScrollToTarget, 1500);
-                }})();
-            </script>
-            """,
-            unsafe_allow_html=True
-        )
+                }}
+                
+                // Запускаем скроллинг несколько раз для надежности
+                console.log('Запланирован скроллинг к элементу {target_id}');
+                setTimeout(() => reliableScrollTo('{target_id}'), 300);
+                setTimeout(() => reliableScrollTo('{target_id}'), 700);
+                setTimeout(() => reliableScrollTo('{target_id}'), 1200);
+                setTimeout(() => reliableScrollTo('{target_id}'), 2000);
+            }})();
+        </script>
+        """, unsafe_allow_html=True)
         
-        # Выводим заметное уведомление для пользователя
-        st.success(f"Скроллинг к результатам расчета...")
-        
-        # Добавляем метку для отладки
-        st.markdown(f"<!-- Якорь {target_id} активирован для скроллинга из Python -->", unsafe_allow_html=True)
+        # Добавляем заметное уведомление
+        st.markdown(f"""
+        <div style="margin: 10px 0; padding: 10px; 
+                    background-color: rgba(0, 102, 204, 0.1); 
+                    border-left: 3px solid #0066cc; 
+                    font-weight: bold; 
+                    text-align: center;">
+            {label if label else "Результаты расчета готовы"}
+        </div>
+        """, unsafe_allow_html=True)
 
 def create_scroll_button(text, target_id, variant="primary", use_container_width=True):
     """
@@ -235,33 +249,53 @@ def auto_scroll_on_load(target_id):
         Реализует скроллинг с помощью Python-механизма,
         используя session_state для отслеживания состояния.
     """
-    # Добавляем маркер в session_state
-    st.session_state['_scroll_to'] = target_id
+    # Задаем специальный идентификатор target_id для якоря в session_state
+    st.session_state['_scroll_to_target'] = target_id
     
-    # Выводим информационное сообщение в лог для отладки
-    print(f"*** auto_scroll_on_load: Установлен флаг _scroll_to для {target_id}")
+    # Добавляем метку времени для проверки актуальности
+    st.session_state['_scroll_timestamp'] = time.time()
     
-    # Создаем минимальную JavaScript-функцию для логирования (без скролла)
-    st.markdown(
-        f"""
-        <script>
-            console.log("Python-based scroll targeting {target_id} is ready");
-        </script>
-        """, 
-        unsafe_allow_html=True
-    )
+    # Выводим специальный маркер для отладки
+    print(f">>> [AUTO_SCROLL] Включен автоматический скроллинг к якорю {target_id}")
     
-    # Добавляем отметку на странице, чтобы знать, что скролл должен сработать
-    st.markdown(
-        f"""
-        <div id="scroll-marker-{target_id}" 
-             style="position: absolute; width: 1px; height: 1px; 
-                   pointer-events: none; opacity: 0;"
-             data-target="{target_id}" data-scroll-ready="true">
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # Используем более мощный JavaScript для надежного скроллинга
+    st.markdown(f"""
+    <div id="auto-scroll-marker-{int(time.time() * 1000)}" 
+         data-target="{target_id}"
+         style="display:none;">
+    </div>
+    
+    <script>
+        // Функция для гарантированного скроллинга
+        function smoothScrollToTarget(targetId, attempts = 0) {{
+            const target = document.getElementById(targetId);
+            if (target) {{
+                console.log('Найден элемент для скроллинга:', targetId);
+                const rect = target.getBoundingClientRect();
+                const targetTop = rect.top + window.pageYOffset;
+                
+                window.scrollTo({{
+                    top: targetTop - 100,
+                    behavior: 'smooth'
+                }});
+                
+                console.log('Выполнен скролл к якорю ' + targetId + ' на позицию ' + targetTop);
+                return true;
+            }} else if (attempts < 10) {{
+                console.log('Элемент ' + targetId + ' еще не найден, повторная попытка...');
+                setTimeout(() => smoothScrollToTarget(targetId, attempts + 1), 200);
+            }} else {{
+                console.error('Не удалось найти элемент ' + targetId + ' после 10 попыток');
+            }}
+        }}
+            
+        // Запуск скроллинга с задержкой
+        console.log('Запланирован скроллинг к элементу {target_id}');
+        setTimeout(() => smoothScrollToTarget('{target_id}'), 300);
+        setTimeout(() => smoothScrollToTarget('{target_id}'), 800);
+        setTimeout(() => smoothScrollToTarget('{target_id}'), 1500);
+    </script>
+    """, unsafe_allow_html=True)
 
 def handle_calculation_scroll():
     """
