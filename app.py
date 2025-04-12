@@ -2787,51 +2787,91 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Скрипт для плавной прокрутки наверх и создаем кнопку
-    st.markdown("""
-    <script>
-    function scrollToTop() {
-        // Плавная прокрутка с использованием requestAnimationFrame для лучшей производительности
-        const duration = 800; // Продолжительность анимации в мс
-        const startingY = window.pageYOffset;
-        const startTime = performance.now();
-        
-        function step(currentTime) {
-            const elapsedTime = currentTime - startTime;
-            
-            // Используем функцию easeInOutCubic для более плавной анимации
-            if (elapsedTime < duration) {
-                const progress = 1 - (elapsedTime / duration);
-                const easedProgress = progress * progress * progress;
-                window.scrollTo(0, startingY * easedProgress);
-                requestAnimationFrame(step);
-            } else {
-                window.scrollTo(0, 0);
-            }
-        }
-        
-        requestAnimationFrame(step);
-        
-        // Добавляем событие для родительского окна (если калькулятор в iframe)
-        try {
-            window.parent.postMessage({"type": "scrollToTop"}, "*");
-        } catch (e) {
-            console.log("Не удалось отправить сообщение родительскому окну");
-        }
-    }
-    </script>
+    # Используем компонент Streamlit для кнопки прокрутки наверх
+    # Так как JavaScript в Streamlit имеет ограничения, используем иной подход
     
-    <div class="scroll-top-button-container">
-        <button onclick="scrollToTop()" class="scroll-top-button">
-            <span class="arrow-up">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z" transform="rotate(180) translate(-16, -16)"/>
-                </svg>
-            </span>
-            Вернуться к параметрам перголы
-        </button>
-    </div>
+    # Создаем контейнер для кнопки
+    scroll_button_container = st.container()
+    
+    # Добавляем стили для контейнера и кнопки
+    st.markdown("""
+    <style>
+    .stButton.back-to-top-button {
+        display: flex;
+        justify-content: center;
+        margin: 2rem auto;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .stButton.back-to-top-button button {
+        background-color: #0066cc;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 12px 25px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        margin: 0 auto;
+        height: auto;
+    }
+    
+    .stButton.back-to-top-button button:hover {
+        background-color: #0055aa;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+        40% {transform: translateY(-8px);}
+        60% {transform: translateY(-4px);}
+    }
+    
+    .arrow-icon {
+        animation: bounce 2s infinite;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    </style>
     """, unsafe_allow_html=True)
+    
+    # Создаем HTML для стрелки
+    arrow_icon = """
+    <span class="arrow-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z" transform="rotate(180) translate(-16, -16)"/>
+        </svg>
+    </span>
+    """
+    
+    # Создаем кнопку с иконкой стрелки вверх
+    with scroll_button_container:
+        scroll_col1, scroll_col2, scroll_col3 = st.columns([1, 2, 1])
+        with scroll_col2:
+            if st.button(f"{arrow_icon} Вернуться к параметрам перголы", key="back_to_top_button", use_container_width=True, help="Нажмите, чтобы вернуться в начало страницы"):
+                # Используем JavaScript для прокрутки наверх после нажатия кнопки
+                js = """
+                <script>
+                    window.scrollTo({top: 0, behavior: 'smooth'});
+                    
+                    // Отправляем сообщение родительскому окну (для iframe)
+                    try {
+                        window.parent.postMessage({"type": "scrollToTop"}, "*");
+                    } catch (e) {
+                        console.log("Не удалось отправить сообщение родительскому окну");
+                    }
+                </script>
+                """
+                st.markdown(js, unsafe_allow_html=True)
+                
+                # Добавляем редирект для обновления страницы (важно для Streamlit)
+                time.sleep(0.1)  # Небольшая задержка для выполнения скрипта
+                st.rerun()  # Перезагрузка страницы
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
