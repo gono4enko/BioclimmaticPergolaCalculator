@@ -470,7 +470,7 @@ def render_gallery_admin_interface(images_dir):
                     heic_path = os.path.join(images_dir, heic_file)
                     try:
                         # Конвертируем файл, получаем путь к новому файлу
-                        jpeg_path = heic_converter.convert_heic_to_jpeg(heic_path)
+                        jpeg_path = heic_converter.heic_to_jpeg(heic_path)
                         
                         if jpeg_path:
                             success_count += 1
