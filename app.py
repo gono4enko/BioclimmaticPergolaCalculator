@@ -2527,10 +2527,8 @@ def main():
     # Разделяем содержимое после калькулятора
     st.markdown("<hr style='margin-top: 1rem; margin-bottom: 0.5rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
     
-    # Отображаем галерею только если пользователь уже выполнил расчет
-    if 'results' in st.session_state:
-        # Добавляем галерею проектов и счетчик установленных пергол
-        display_gallery_section()
+    # Всегда отображаем галерею проектов и счетчик установленных пергол
+    display_gallery_section()
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
