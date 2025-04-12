@@ -8,7 +8,10 @@ import os
 import streamlit as st
 import sys
 import json
+import logging
 from pathlib import Path
+from PIL import Image
+import io
 
 # Файл с конфигурацией отображаемых изображений
 GALLERY_CONFIG_PATH = "config/gallery_config.json"
@@ -122,6 +125,26 @@ def is_image_allowed(image_name):
     # В остальных случаях показываем
     return True
 
+def is_valid_image(img_path):
+    """
+    Проверяет, является ли файл корректным изображением, которое можно открыть с помощью PIL.
+    
+    Args:
+        img_path (str): Путь к файлу изображения
+        
+    Returns:
+        bool: True если изображение можно открыть, False в противном случае
+    """
+    try:
+        # Пробуем открыть изображение
+        with Image.open(img_path) as img:
+            # Проверяем базовую информацию
+            img.verify()  # Проверка корректности данных изображения
+            return True
+    except Exception as e:
+        logging.warning(f"Некорректное изображение {img_path}: {str(e)}")
+        return False
+
 def get_all_gallery_images(images_dir):
     """
     Получает список всех изображений в указанной директории.
@@ -138,7 +161,11 @@ def get_all_gallery_images(images_dir):
     try:
         for file in os.listdir(images_dir):
             if file.lower().endswith(image_extensions):
-                images.append(file)
+                img_path = os.path.join(images_dir, file)
+                if is_valid_image(img_path):
+                    images.append(file)
+                else:
+                    logging.warning(f"Пропускаем некорректное изображение: {file}")
     except Exception as e:
         st.error(f"Ошибка чтения директории с изображениями: {str(e)}")
     
@@ -235,7 +262,11 @@ def render_gallery_admin_interface(images_dir):
                     img_path = os.path.join(images_dir, img_name)
                     
                     with cols[j]:
-                        st.image(img_path, caption=img_name, width=150)
+                        try:
+                            st.image(img_path, caption=img_name, width=150)
+                        except Exception as e:
+                            st.error(f"Ошибка отображения {img_name}: {str(e)}")
+                            st.warning("Рекомендуется исключить этот файл")
                         
                         # Показываем соответствующую кнопку в зависимости от статуса
                         if img_name in config["excluded_images"]:
@@ -264,7 +295,12 @@ def render_gallery_admin_interface(images_dir):
                         img_path = os.path.join(images_dir, img_name)
                         
                         with cols[j]:
-                            st.image(img_path, caption=img_name, width=150)
+                            try:
+                                st.image(img_path, caption=img_name, width=150)
+                            except Exception as e:
+                                st.error(f"Ошибка отображения {img_name}: {str(e)}")
+                                st.warning("Рекомендуется исключить этот файл из галереи")
+                                
                             if st.button(f"Исключить {img_name} из активных"):
                                 exclude_image(img_name)
                                 st.success(f"Изображение {img_name} исключено из галереи")
@@ -284,10 +320,17 @@ def render_gallery_admin_interface(images_dir):
                         img_path = os.path.join(images_dir, img_name)
                         
                         with cols[j]:
-                            if os.path.exists(img_path):
-                                st.image(img_path, caption=img_name, width=150)
+                            if os.path.exists(img_path) and is_valid_image(img_path):
+                                try:
+                                    st.image(img_path, caption=img_name, width=150)
+                                except Exception as e:
+                                    st.error(f"Ошибка отображения {img_name}: {str(e)}")
+                                    st.warning("Рекомендуется исключить этот файл из конфигурации")
                             else:
-                                st.error(f"Файл {img_name} не найден")
+                                if not os.path.exists(img_path):
+                                    st.error(f"Файл {img_name} не найден")
+                                else:
+                                    st.error(f"Файл {img_name} поврежден или имеет неподдерживаемый формат")
                                 
                             if st.button(f"Вернуть {img_name} в галерею"):
                                 include_image(img_name)
