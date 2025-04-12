@@ -2790,82 +2790,87 @@ def main():
     # Используем компонент Streamlit для кнопки прокрутки наверх
     # Так как JavaScript в Streamlit имеет ограничения, используем иной подход
     
-    # Создаем контейнер для кнопки
-    scroll_button_container = st.container()
-    
-    # Добавляем стили для контейнера и кнопки
+    # Добавляем единый блок JavaScript и CSS для кнопки "Назад к параметрам"
+    # Важно: используем только HTML-подход, без компонентов Streamlit для избежания проблем с состоянием
     st.markdown("""
     <style>
-    div[data-testid="stButton"] {
+    /* Стили для кнопки прокрутки */
+    .back-to-params-button {
+        background-color: #0066cc; 
+        color: white; 
+        border: none; 
+        border-radius: 50px; 
+        padding: 12px 25px; 
+        font-size: 16px; 
+        font-weight: 500;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+        cursor: pointer; 
+        transition: all 0.3s ease; 
+        display: flex; 
+        align-items: center;
+        justify-content: center;
+        width: 260px;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    
+    .back-to-params-button:hover {
+        background-color: #0055aa;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .back-to-params-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Контейнер для кнопки */
+    .button-container {
         display: flex;
         justify-content: center;
-        margin: 2rem auto !important;
+        margin: 2rem auto;
         width: 100%;
-        text-align: center;
     }
     
-    div[data-testid="stButton"] > button {
-        background-color: #0066cc !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 50px !important;
-        padding: 12px 25px !important;
-        font-size: 16px !important;
-        transition: all 0.3s ease !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
-        margin: 0 auto !important;
-        height: auto !important;
-        min-width: 200px !important;
-        max-width: 300px !important;
-    }
-    
-    div[data-testid="stButton"] > button:hover {
-        background-color: #0055aa !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3) !important;
-    }
-    
-    @keyframes bounce {
+    /* Анимация стрелки */
+    @keyframes bounce-arrow {
         0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
         40% {transform: translateY(-8px);}
         60% {transform: translateY(-4px);}
     }
     
     .arrow-icon {
-        animation: bounce 2s infinite;
-        display: inline-block;
+        font-size: 18px; 
         margin-right: 8px;
+        display: inline-block;
+        animation: bounce-arrow 2s infinite;
     }
     </style>
-    """, unsafe_allow_html=True)
     
-    # Создаем кнопку без HTML-кода (используем простой текст и стиль)
-    with scroll_button_container:
-        scroll_col1, scroll_col2, scroll_col3 = st.columns([1, 2, 1])
-        with scroll_col2:
-            # Добавляем кнопку с эмодзи стрелки вместо HTML-кода
-            if st.button("⬆️ Вернуться к параметрам перголы", key="back_to_top_button", use_container_width=True, help="Нажмите, чтобы вернуться в начало страницы"):
-                # Используем JavaScript для прокрутки наверх после нажатия кнопки
-                js = """
-                <script>
-                    window.scrollTo({top: 0, behavior: 'smooth'});
-                    
-                    // Отправляем сообщение родительскому окну (для iframe)
-                    try {
-                        window.parent.postMessage({"type": "scrollToTop"}, "*");
-                    } catch (e) {
-                        console.log("Не удалось отправить сообщение родительскому окну");
-                    }
-                </script>
-                """
-                st.markdown(js, unsafe_allow_html=True)
-                
-                # Добавляем редирект для обновления страницы (важно для Streamlit)
-                time.sleep(0.1)  # Небольшая задержка для выполнения скрипта
-                st.rerun()  # Перезагрузка страницы
+    <script>
+    // Функция для прокрутки страницы наверх
+    function scrollToTop() {
+        // Плавная прокрутка страницы вверх
+        window.scrollTo({top: 0, behavior: 'smooth'});
+        
+        // Отправка сообщения родительскому окну (для iframe)
+        try {
+            window.parent.postMessage({"type": "scrollToTop"}, "*");
+        } catch (e) {
+            console.log("Не удалось отправить сообщение родительскому окну");
+        }
+    }
+    </script>
+    
+    <!-- HTML-кнопка с вызовом JavaScript-функции -->
+    <div class="button-container">
+        <button onclick="scrollToTop()" class="back-to-params-button">
+            <span class="arrow-icon">⬆️</span>
+            Вернуться к параметрам перголы
+        </button>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
