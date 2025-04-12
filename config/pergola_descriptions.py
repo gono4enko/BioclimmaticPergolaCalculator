@@ -135,6 +135,7 @@ PERGOLA_IMAGES = {
         "attached_assets/Снимок экрана 2025-04-09 в 13.39.51.png"
     ],
     "MODULAR": [
+        "attached_assets/Модульная система пергол.png",
         "attached_assets/Снимок экрана 2025-04-12 в 21.09.47.png",
         "attached_assets/Снимок экрана 2025-04-12 в 21.05.11.png",
         "attached_assets/Снимок экрана 2025-04-12 в 20.59.32.png"
