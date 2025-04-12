@@ -1269,7 +1269,7 @@ def render_results(results):
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Количество модулей:</strong> {modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}
         </p>
-        <div style='font-size: 1.4rem; font-weight: 700; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0; text-align: center;' id="final_price_anchor">
+        <div style='font-size: 1.4rem; font-weight: 700; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0; text-align: center;' id="results">
             {f'Итоговая стоимость со скидкой:' if total_discount > 0 else 'Итоговая стоимость:'} <span style='font-size: 1.5rem; color: {"#1b5e20" if total_discount > 0 else "#0066cc"};'>{formatted_price} ₽</span>
         </div>
     </div>
