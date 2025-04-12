@@ -475,7 +475,9 @@ def render_uploader_interface():
         with col1:
             add_to_gallery = st.checkbox("Автоматически добавить в галерею", value=True)
         with col2:
-            preserve_original_single = st.checkbox("Сохранить оригинал", value=True, key="preserve_original_single")
+            preserve_original_single = st.checkbox("Сохранить оригинал", value=True, 
+                                               help="Если включено, исходный файл будет сохранен после обработки. Если выключено, исходный файл будет удален.", 
+                                               key="preserve_original_single")
         
         # Поле для описания
         custom_description = st.text_area("Описание изображения (оставьте пустым для автоматической генерации)", 
@@ -490,8 +492,7 @@ def render_uploader_interface():
                 
                 # Обрабатываем загруженный файл
                 with st.spinner("Обработка изображения..."):
-                    preserve_original = True  # Временные файлы всегда можно удалять
-                    success, target_path, message = process_image(temp_file, add_to_gallery, preserve_original)
+                    success, target_path, message = process_image(temp_file, add_to_gallery, preserve_original_single)
                     
                     if success:
                         # Если есть пользовательское описание, обновляем его
@@ -522,7 +523,9 @@ def render_uploader_interface():
         with batch_options[1]:
             recursive = st.checkbox("Рекурсивный режим", value=False, key="recursive")
         with batch_options[2]:
-            preserve_original = st.checkbox("Сохранить оригиналы", value=True, key="preserve_original")
+            preserve_original = st.checkbox("Сохранить оригиналы", value=True, 
+                                         help="Если включено, исходные файлы будут сохранены после обработки. Если выключено, исходные файлы будут удалены.", 
+                                         key="preserve_original")
             
         if st.button("Начать пакетную обработку", type="primary"):
             if directory_path:
