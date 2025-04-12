@@ -326,7 +326,8 @@ def display_projects_gallery():
         animated_gallery = animations.animate_section(gallery_html, animation_type='fadeInUp', delay=0)
         st.markdown(animated_gallery, unsafe_allow_html=True)
     else:
-        animations.animate_text("Изображения проектов временно недоступны", tag="p", delay=0)
+        # Изображения недоступны, отображаем сообщение с анимацией
+        animations.animate_text("Изображения проектов временно недоступны", tag="p", css_class="fadeIn", delay=0, additional_style="color: #666; font-style: italic; text-align: center;")
 
 def display_gallery_section():
     """
