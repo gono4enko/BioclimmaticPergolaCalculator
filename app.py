@@ -1198,31 +1198,21 @@ def render_results(results):
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
     
-    # Создаем якорь для скролла с ID и стилем для лучшей видимости
-    st.markdown('<div id="results" name="results" style="scroll-margin-top: 60px; min-height: 10px;"></div>', unsafe_allow_html=True)
+    # Создаем якоря для навигации
+    create_anchor("results")
     
-    # Добавляем кнопку для скролла к результатам (скрытую)
+    # Добавляем стилизованный контейнер для результатов расчета с анимацией
     st.markdown("""
-    <button id="scroll-to-results-button" onclick="scrollToResults()" style="display: none;">
-        Перейти к результатам расчета
-    </button>
-    <script>
-        // Автоматически нажимаем на кнопку скролла через 500 мс после загрузки
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                document.getElementById('scroll-to-results-button').click();
-            }, 500);
-        });
-        
-        // Также вызываем скрипт сразу и через дополнительные интервалы для надежности
-        setTimeout(function() {
-            scrollToResults();
-        }, 800);
-        
-        setTimeout(function() {
-            scrollToResults();
-        }, 1500);
-    </script>
+    <div class="results-section">
+        <style>
+        .results-section {
+            animation: fadeIn 0.7s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        </style>
     """, unsafe_allow_html=True)
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
@@ -1563,6 +1553,7 @@ def render_results(results):
     <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
         {html_table}
     </div>
+    </div><!-- Закрываем контейнер результатов для корректной анимации -->
     """, unsafe_allow_html=True)
     
     # Отображаем разделитель между таблицей стоимости и описанием перголы
@@ -2011,172 +2002,99 @@ def send_page_height_to_parent():
     </script>
     """, unsafe_allow_html=True)
 
-def display_results_button():
+def setup_streamlit_scroll():
     """
-    Отображает видимую кнопку для перехода к результатам расчета.
-    Используется для удобной навигации к результатам на мобильных устройствах.
+    Добавляет стили для навигации по якорям и переходов между секциями.
+    Использует чистый CSS и HTML без JavaScript.
     """
-    # CSS для стилизации кнопки
-    button_style = """
+    # Стили для якорей и навигации
+    st.markdown("""
     <style>
-    .results-button {
+    /* Стили для якорей */
+    .anchor-target {
+        display: block;
+        position: relative;
+        top: -80px;
+        visibility: hidden;
+        height: 0;
+        width: 0;
+    }
+    
+    /* Стили для кнопки навигации */
+    .nav-button {
         background-color: #00a651;
         color: white;
         font-size: 1.1rem;
         font-weight: 500;
-        padding: 10px 20px;
+        padding: 12px 24px;
         border-radius: 6px;
         border: none;
         cursor: pointer;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        margin: 20px auto;
+        margin: 15px auto;
         display: block;
-        width: 80%;
-        max-width: 400px;
+        width: 100%;
+        max-width: 500px;
+        text-align: center;
+        text-decoration: none;
         transition: all 0.3s ease;
     }
     
-    .results-button:hover {
+    .nav-button:hover {
         background-color: #008c4a;
         box-shadow: 0 3px 7px rgba(0,0,0,0.3);
         transform: translateY(-2px);
     }
     
-    .results-button:active {
+    .nav-button:active {
         transform: translateY(1px);
         box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
+    
+    /* Стили для результатов */
+    .results-section {
+        animation: fade-in 0.5s ease-in-out;
+        transition: all 0.5s ease;
+    }
+    
+    @keyframes fade-in {
+        0% { opacity: 0; transform: translateY(10px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
     </style>
-    """
-    
-    # HTML для кнопки и JavaScript обработчика
-    button_html = """
-    <button onclick="scrollToResults()" class="results-button">
-        Перейти к результатам расчета
-    </button>
-    """
-    
-    # Отображаем стили и кнопку
-    st.markdown(button_style, unsafe_allow_html=True)
-    st.markdown(button_html, unsafe_allow_html=True)
-
-def scroll_to_results():
-    """
-    Добавляет JavaScript для перехода к якорю результатов
-    """
-    # Добавляем JavaScript для скроллинга к результатам
-    st.markdown("""
-    <script>
-        // Функция для скроллинга к результатам
-        function scrollToResults() {
-            console.log('Attempting to scroll to results...');
-            
-            // Сначала пытаемся найти элемент с id="results"
-            const resultsElement = document.getElementById('results');
-            
-            if (resultsElement) {
-                console.log('Found results element, scrolling...');
-                
-                // Метод 1: scrollIntoView
-                try {
-                    resultsElement.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                    console.log('Used scrollIntoView');
-                } catch (error) {
-                    console.log('scrollIntoView failed:', error);
-                }
-                
-                // Метод 2: программное создание и нажатие на ссылку
-                try {
-                    setTimeout(() => {
-                        const scrollLink = document.createElement('a');
-                        scrollLink.href = '#results';
-                        scrollLink.style.display = 'none';
-                        document.body.appendChild(scrollLink);
-                        scrollLink.click();
-                        console.log('Clicked on anchor link');
-                        
-                        // Удаляем ссылку после использования
-                        setTimeout(() => {
-                            document.body.removeChild(scrollLink);
-                        }, 100);
-                    }, 200);
-                } catch (error) {
-                    console.log('Anchor link click failed:', error);
-                }
-                
-                return true;
-            }
-            
-            console.log('Results element not found, looking for headings');
-            
-            // Метод 3: Поиск заголовка с текстом "Результаты расчета"
-            try {
-                const resultsHeadings = Array.from(document.querySelectorAll('h2, h3'))
-                    .filter(h => h.textContent.includes('Результаты расчета'));
-                
-                if (resultsHeadings.length > 0) {
-                    console.log('Found results heading, scrolling...');
-                    const heading = resultsHeadings[0];
-                    window.scrollTo({
-                        top: heading.offsetTop - 80,
-                        behavior: 'smooth'
-                    });
-                    return true;
-                }
-            } catch (error) {
-                console.log('Heading search failed:', error);
-            }
-            
-            // Метод 4: Поиск элемента с текстом "Итоговая стоимость"
-            try {
-                const priceText = Array.from(document.querySelectorAll('div'))
-                    .filter(div => div.textContent.includes('Итоговая стоимость'));
-                
-                if (priceText.length > 0) {
-                    console.log('Found price text, scrolling...');
-                    const element = priceText[0];
-                    window.scrollTo({
-                        top: element.offsetTop - 100,
-                        behavior: 'smooth'
-                    });
-                    return true;
-                }
-            } catch (error) {
-                console.log('Price text search failed:', error);
-            }
-            
-            // Метод 5: Резервный - просто скроллим на фиксированную позицию
-            console.log('No targets found, using fallback scroll');
-            try {
-                window.scrollTo({
-                    top: Math.max(500, document.body.scrollHeight / 3),
-                    behavior: 'smooth'
-                });
-            } catch (error) {
-                console.log('Fallback scroll failed:', error);
-                // Крайний случай - простой скролл без анимации
-                window.scrollTo(0, 500);
-            }
-            
-            return false;
-        }
-        
-        // Автоматический запуск функции скролла
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded, scheduling scroll');
-            setTimeout(scrollToResults, 300);
-        });
-        
-        // Также выполняем несколько попыток с разными интервалами
-        console.log('Script loaded, scheduling immediate scroll');
-        setTimeout(scrollToResults, 500);
-        setTimeout(scrollToResults, 1500);
-        setTimeout(scrollToResults, 2500);
-    </script>
     """, unsafe_allow_html=True)
+
+def create_anchor(anchor_id):
+    """
+    Создает якорь для навигации.
+    
+    Args:
+        anchor_id (str): ID якоря
+        
+    Returns:
+        None: Добавляет якорь через st.markdown
+    """
+    st.markdown(f'<div id="{anchor_id}" class="anchor-target"></div>', unsafe_allow_html=True)
+
+def create_navigation_button(text, target_id, color="#00a651", margin="15px auto"):
+    """
+    Создает кнопку навигации (ссылку в виде кнопки) к указанному якорю.
+    
+    Args:
+        text (str): Текст кнопки
+        target_id (str): ID якоря, к которому будет осуществлен переход
+        color (str): Цвет кнопки в hex формате
+        margin (str): CSS-стиль для отступов
+        
+    Returns:
+        None: Добавляет кнопку через st.markdown
+    """
+    button_html = f"""
+    <a href="#{target_id}" class="nav-button" style="background-color: {color}; margin: {margin};">
+        {text}
+    </a>
+    """
+    st.markdown(button_html, unsafe_allow_html=True)
 
 def add_smart_device_adaptation():
     """
@@ -2445,6 +2363,9 @@ def main():
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
     
+    # Настраиваем стили скроллинга и навигации
+    setup_streamlit_scroll()
+    
     # Добавляем умную адаптацию для различных размеров экрана
     add_smart_device_adaptation()
     
@@ -2688,13 +2609,18 @@ def main():
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
-        # Если нужна прокрутка к результатам, добавляем JS код и кнопку
+        # Если нужна прокрутка к результатам, добавляем кнопку навигации
         if st.session_state.get('scroll_to_results', False):
-            # Сначала добавляем скрипт для автоматического скролла
-            scroll_to_results()
+            # Добавляем якорь для результатов (будет использоваться для навигации)
+            create_anchor("calculation-results")
             
-            # Также добавляем видимую кнопку для ручного скролла к результатам
-            display_results_button()
+            # Отображаем кнопку для перехода к результатам расчета
+            create_navigation_button(
+                text="Перейти к результатам расчета", 
+                target_id="results",
+                color="#00a651", 
+                margin="15px auto"
+            )
             
             # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
             st.session_state.scroll_to_results = False
