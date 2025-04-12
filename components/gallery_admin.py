@@ -9,6 +9,7 @@ import streamlit as st
 import sys
 import json
 import logging
+import shutil
 from pathlib import Path
 from PIL import Image
 import io
@@ -101,6 +102,55 @@ def include_image(image_name):
         config["manual_include"].append(image_name)
         
     save_gallery_config(config)
+
+def delete_image_permanently(image_name, images_dir):
+    """
+    Физически удаляет изображение из директории и обновляет конфигурацию.
+    
+    Args:
+        image_name (str): Имя файла изображения для удаления
+        images_dir (str): Путь к директории с изображениями
+        
+    Returns:
+        bool: True если удаление прошло успешно, False в противном случае
+    """
+    config = load_gallery_config()
+    img_path = os.path.join(images_dir, image_name)
+    
+    # Пытаемся удалить файл
+    try:
+        # Проверяем, существует ли файл
+        if os.path.exists(img_path):
+            # Создаем директорию для резервных копий если нужно
+            backup_dir = os.path.join(images_dir, "deleted_images")
+            if not os.path.exists(backup_dir):
+                os.makedirs(backup_dir)
+                
+            # Создаем резервную копию файла
+            backup_path = os.path.join(backup_dir, image_name)
+            shutil.copy2(img_path, backup_path)
+            
+            # Удаляем файл
+            os.remove(img_path)
+            
+            # Обновляем конфигурацию
+            if image_name in config["excluded_images"]:
+                config["excluded_images"].remove(image_name)
+                
+            if image_name in config["manual_include"]:
+                config["manual_include"].remove(image_name)
+                
+            save_gallery_config(config)
+            
+            logging.info(f"Изображение {image_name} было физически удалено")
+            return True
+        else:
+            logging.warning(f"Файл {image_name} не найден, не удается удалить")
+            return False
+            
+    except Exception as e:
+        logging.error(f"Ошибка при удалении изображения {image_name}: {str(e)}")
+        return False
 
 def is_image_allowed(image_name):
     """
@@ -253,10 +303,10 @@ def render_gallery_admin_interface(images_dir):
     with tab1:
         st.subheader("Все доступные изображения")
         
-        # Разбиваем на строки с 3 колонками
-        for i in range(0, len(all_images), 3):
-            cols = st.columns(3)
-            for j in range(3):
+        # Разбиваем на строки с 2 колонками для лучшего отображения кнопок
+        for i in range(0, len(all_images), 2):
+            cols = st.columns(2)
+            for j in range(2):
                 if i+j < len(all_images):
                     img_name = all_images[i+j]
                     img_path = os.path.join(images_dir, img_name)
@@ -268,17 +318,39 @@ def render_gallery_admin_interface(images_dir):
                             st.error(f"Ошибка отображения {img_name}: {str(e)}")
                             st.warning("Рекомендуется исключить этот файл")
                         
-                        # Показываем соответствующую кнопку в зависимости от статуса
-                        if img_name in config["excluded_images"]:
-                            if st.button(f"Включить {img_name}"):
-                                include_image(img_name)
-                                st.success(f"Изображение {img_name} включено в галерею")
-                                st.rerun()
-                        else:
-                            if st.button(f"Исключить {img_name}"):
-                                exclude_image(img_name)
-                                st.success(f"Изображение {img_name} исключено из галереи")
-                                st.rerun()
+                        # Добавляем кнопки управления в ряд
+                        button_cols = st.columns(3)
+                        
+                        # Первая кнопка - включить/исключить
+                        with button_cols[0]:
+                            if img_name in config["excluded_images"]:
+                                if st.button(f"📢 Опубликовать", key=f"all_include_{img_name}"):
+                                    include_image(img_name)
+                                    st.success(f"Изображение {img_name} включено в галерею")
+                                    st.rerun()
+                            else:
+                                if st.button(f"🚫 Исключить", key=f"all_exclude_{img_name}"):
+                                    exclude_image(img_name)
+                                    st.success(f"Изображение {img_name} исключено из галереи")
+                                    st.rerun()
+                        
+                        # Вторая кнопка - статус
+                        with button_cols[1]:
+                            if img_name in config["excluded_images"]:
+                                st.error("Исключено")
+                            else:
+                                st.success("Активно")
+                                
+                        # Третья кнопка - удалить навсегда
+                        with button_cols[2]:
+                            if st.button(f"❌ Удалить", key=f"all_delete_{img_name}", type="primary"):
+                                # Запрашиваем подтверждение
+                                if st.checkbox(f"Подтвердить удаление {img_name}", key=f"all_confirm_{img_name}"):
+                                    if delete_image_permanently(img_name, images_dir):
+                                        st.success(f"Изображение {img_name} удалено навсегда (резервная копия в {images_dir}/deleted_images)")
+                                    else:
+                                        st.error(f"Не удалось удалить изображение {img_name}")
+                                    st.rerun()
     
     with tab2:
         st.subheader("Активные изображения")
@@ -287,9 +359,9 @@ def render_gallery_admin_interface(images_dir):
         if not active_images:
             st.info("Нет активных изображений")
         else:
-            for i in range(0, len(active_images), 3):
-                cols = st.columns(3)
-                for j in range(3):
+            for i in range(0, len(active_images), 2):  # Уменьшаем до 2 колонок для более удобного размещения кнопок
+                cols = st.columns(2)
+                for j in range(2):
                     if i+j < len(active_images):
                         img_name = active_images[i+j]
                         img_path = os.path.join(images_dir, img_name)
@@ -300,11 +372,31 @@ def render_gallery_admin_interface(images_dir):
                             except Exception as e:
                                 st.error(f"Ошибка отображения {img_name}: {str(e)}")
                                 st.warning("Рекомендуется исключить этот файл из галереи")
-                                
-                            if st.button(f"Исключить {img_name} из активных"):
-                                exclude_image(img_name)
-                                st.success(f"Изображение {img_name} исключено из галереи")
-                                st.rerun()
+                            
+                            # Добавляем три кнопки управления в один ряд  
+                            button_cols = st.columns(3)
+                            with button_cols[0]:
+                                if st.button(f"📢 Опубликовать", key=f"publish_{img_name}"):
+                                    # Уже опубликовано, так как это активный режим, поэтому просто показываем сообщение
+                                    st.success(f"Изображение {img_name} опубликовано")
+                                    st.rerun()
+                            
+                            with button_cols[1]:
+                                if st.button(f"🚫 Исключить", key=f"exclude_{img_name}"):
+                                    exclude_image(img_name)
+                                    st.success(f"Изображение {img_name} исключено из галереи")
+                                    st.rerun()
+                            
+                            with button_cols[2]:
+                                # Добавляем предупреждающий цвет для кнопки удаления
+                                if st.button(f"❌ Удалить", key=f"delete_{img_name}", type="primary"):
+                                    # Запрашиваем подтверждение удаления
+                                    if st.checkbox(f"Подтвердить удаление {img_name}", key=f"confirm_{img_name}"):
+                                        if delete_image_permanently(img_name, images_dir):
+                                            st.success(f"Изображение {img_name} удалено навсегда (резервная копия сохранена в {images_dir}/deleted_images)")
+                                        else:
+                                            st.error(f"Не удалось удалить изображение {img_name}")
+                                        st.rerun()
     
     with tab3:
         st.subheader("Исключенные изображения")
@@ -312,9 +404,9 @@ def render_gallery_admin_interface(images_dir):
         if not config["excluded_images"]:
             st.info("Нет исключенных изображений")
         else:
-            for i in range(0, len(config["excluded_images"]), 3):
-                cols = st.columns(3)
-                for j in range(3):
+            for i in range(0, len(config["excluded_images"]), 2):  # Уменьшаем до 2 колонок для лучшего отображения кнопок
+                cols = st.columns(2)
+                for j in range(2):
                     if i+j < len(config["excluded_images"]):
                         img_name = config["excluded_images"][i+j]
                         img_path = os.path.join(images_dir, img_name)
@@ -325,19 +417,94 @@ def render_gallery_admin_interface(images_dir):
                                     st.image(img_path, caption=img_name, width=150)
                                 except Exception as e:
                                     st.error(f"Ошибка отображения {img_name}: {str(e)}")
-                                    st.warning("Рекомендуется исключить этот файл из конфигурации")
+                                    st.warning("Рекомендуется удалить этот файл")
                             else:
                                 if not os.path.exists(img_path):
                                     st.error(f"Файл {img_name} не найден")
                                 else:
                                     st.error(f"Файл {img_name} поврежден или имеет неподдерживаемый формат")
-                                
-                            if st.button(f"Вернуть {img_name} в галерею"):
-                                include_image(img_name)
-                                st.success(f"Изображение {img_name} возвращено в галерею")
-                                st.rerun()
+                            
+                            # Добавляем кнопки управления в ряд
+                            button_cols = st.columns(2)
+                            with button_cols[0]:
+                                if st.button(f"📢 Вернуть в галерею", key=f"return_{img_name}"):
+                                    include_image(img_name)
+                                    st.success(f"Изображение {img_name} возвращено в галерею")
+                                    st.rerun()
+                            
+                            with button_cols[1]:
+                                # Добавляем кнопку для удаления
+                                if st.button(f"❌ Удалить навсегда", key=f"delete_excluded_{img_name}", type="primary"):
+                                    # Запрашиваем подтверждение удаления
+                                    if st.checkbox(f"Подтвердить удаление {img_name}", key=f"confirm_excluded_{img_name}"):
+                                        if delete_image_permanently(img_name, images_dir):
+                                            st.success(f"Изображение {img_name} удалено навсегда (резервная копия сохранена в {images_dir}/deleted_images)")
+                                        else:
+                                            st.error(f"Не удалось удалить изображение {img_name}")
+                                        st.rerun()
+    
+    # Секция для обработки проблемных файлов HEIC
+    st.markdown("---")
+    st.subheader("🛠️ Обработка проблемных файлов")
+    
+    # Проверяем наличие файлов HEIC в директории
+    heic_files = []
+    for file in os.listdir(images_dir):
+        if file.lower().endswith(('.heic', '.heif')):
+            heic_files.append(file)
+    
+    if heic_files:
+        st.warning(f"Обнаружено {len(heic_files)} файлов формата HEIC/HEIF, которые могут не отображаться корректно")
+        st.info("Эти файлы можно автоматически конвертировать в JPEG для корректного отображения в галерее")
+        
+        # Кнопка для конвертации всех HEIC файлов
+        if st.button("Конвертировать все HEIC файлы в JPEG"):
+            try:
+                # Пытаемся импортировать модуль конвертера
+                import heic_converter
+                
+                success_count = 0
+                error_count = 0
+                
+                for heic_file in heic_files:
+                    heic_path = os.path.join(images_dir, heic_file)
+                    try:
+                        # Конвертируем файл, получаем путь к новому файлу
+                        jpeg_path = heic_converter.convert_heic_to_jpeg(heic_path)
+                        
+                        if jpeg_path:
+                            success_count += 1
+                            # Обновляем список исключений, если файл был исключен
+                            if heic_file in config["excluded_images"]:
+                                # Извлекаем имя файла из полного пути
+                                jpeg_filename = os.path.basename(jpeg_path)
+                                # Исключаем также и JPEG версию
+                                if jpeg_filename not in config["excluded_images"]:
+                                    config["excluded_images"].append(jpeg_filename)
+                        else:
+                            error_count += 1
+                    except Exception as e:
+                        st.error(f"Ошибка конвертации {heic_file}: {str(e)}")
+                        error_count += 1
+                
+                # Сохраняем обновленную конфигурацию
+                save_gallery_config(config)
+                
+                if success_count > 0:
+                    st.success(f"Успешно конвертировано {success_count} файлов HEIC в JPEG")
+                if error_count > 0:
+                    st.error(f"Не удалось конвертировать {error_count} файлов")
+                    
+                # Перезагружаем страницу для отображения изменений
+                st.rerun()
+                    
+            except ImportError:
+                st.error("Модуль heic_converter не найден. Убедитесь, что файл heic_converter.py существует в проекте.")
+    else:
+        st.success("Проблемных файлов HEIC/HEIF не обнаружено.")
     
     # Кнопка для сброса настроек
+    st.markdown("---")
     if st.button("Сбросить настройки галереи"):
         save_gallery_config(DEFAULT_CONFIG)
         st.success("Настройки галереи сброшены")
