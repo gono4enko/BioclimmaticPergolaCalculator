@@ -1105,7 +1105,7 @@ def render_options_form():
     .lighting-section-header {
         font-weight: 500;
         margin-top: 8px;
-        margin-bottom: 2px;
+        margin-bottom: 0px;
         padding-bottom: 0px;
     }
     
@@ -1158,35 +1158,88 @@ def render_options_form():
         margin-top: -12px !important;
     }
     
-    /* Стиль для контейнера чекбоксов с минимальным отступом от заголовка */
-    .checkbox-container {
-        margin-top: -15px !important;
+    /* Стиль для нулевого отступа между заголовком и чекбоксами */
+    .zero-top-margin {
+        margin-top: -25px !important;
+        padding-top: 0 !important;
+    }
+    
+    /* Стиль для принудительного отсутствия отступов между элементами формы */
+    .form-element {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Убираем отступы у всех div после заголовка освещения */
+    .lighting-header + div,
+    .lighting-header + div > div,
+    .lighting-header + div > div > div {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    /* Стиль для первого чекбокса, чтобы он был сразу под заголовком */
+    #white_led_checkbox_container {
+        margin-top: -20px !important;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Добавляем компактный заголовок "Освещение"
-    st.markdown('<p class="lighting-section-header">Освещение</p>', unsafe_allow_html=True)
-    
-    # Обертка для стилизации чекбоксов
-    st.markdown('<div class="checkbox-container">', unsafe_allow_html=True)
+    # Добавляем компактный заголовок "Освещение" с классом для таргетинга
+    st.markdown('<p class="lighting-section-header lighting-header">Освещение</p>', unsafe_allow_html=True)
     
     # Инициализируем список для опций освещения
     lighting_options = []
     
-    # Контейнер для первого чекбокса
-    st.markdown('<div style="padding:0; margin:0;">', unsafe_allow_html=True)
+    # Используем контейнер с принудительным отрицательным отступом сверху для всей группы чекбоксов
+    st.markdown('<div class="zero-top-margin">', unsafe_allow_html=True)
+    
+    # Контейнер для первого чекбокса с ID для таргетинга в CSS
+    st.markdown('<div id="white_led_checkbox_container" class="form-element">', unsafe_allow_html=True)
     if st.checkbox("Белая светодиодная лента", value=False, key="white_led_checkbox", label_visibility="visible"):
         lighting_options.append("white_led")
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Контейнер для второго чекбокса с ещё меньшим отступом
-    st.markdown('<div style="padding:0; margin-top:-12px;">', unsafe_allow_html=True)
+    # Контейнер для второго чекбокса с отрицательным отступом сверху
+    st.markdown('<div class="form-element" style="margin-top:-12px !important;">', unsafe_allow_html=True)
     if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_checkbox", label_visibility="visible"):
         lighting_options.append("rgb_led")
     st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Дополнительный JavaScript для уменьшения отступов после рендеринга
+    st.markdown("""
+    <script>
+    // Функция для удаления отступов между заголовком Освещение и чекбоксами
+    function removeSpacing() {
+        // Находим заголовок "Освещение"
+        var header = document.querySelector('.lighting-header');
+        if (header) {
+            // Получаем следующий элемент после заголовка
+            var nextElement = header.parentElement.nextElementSibling;
+            if (nextElement) {
+                // Удаляем все отступы
+                nextElement.style.marginTop = '0';
+                nextElement.style.paddingTop = '0';
+                
+                // Применяем стили ко всем дочерним элементам
+                var children = nextElement.querySelectorAll('*');
+                for (var i = 0; i < children.length; i++) {
+                    children[i].style.marginTop = '0';
+                    children[i].style.paddingTop = '0';
+                }
+            }
+        }
+    }
+    
+    // Запускаем функцию после загрузки страницы и через короткий интервал
+    window.addEventListener('load', function() {
+        removeSpacing();
+        setTimeout(removeSpacing, 100);
+    });
+    </script>
+    """, unsafe_allow_html=True)
     
     # Установка - используем такой же заголовок, как и для освещения
     st.markdown('<p class="lighting-section-header">Установка</p>', unsafe_allow_html=True)
