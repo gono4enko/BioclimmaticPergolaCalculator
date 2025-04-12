@@ -1990,57 +1990,114 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Простой, но надежный скролл к результатам расчета
+    Самый надежный метод для скролла к результатам расчета через window.location.hash
     """
-    # Добавляем JavaScript с простым и прямым подходом
-    st.markdown("""
+    # Генерируем уникальный хэш-якорь для этого обновления страницы
+    import hashlib
+    import time
+    # Создаем почти уникальный якорь, добавляя временную метку
+    unique_hash = hashlib.md5(str(time.time()).encode()).hexdigest()[:8]
+
+    # Добавляем JavaScript, который добавляет хэш к элементу результатов и перемещается к нему
+    st.markdown(f"""
     <script>
-    // Нам просто нужно прокрутить к якорю results. Сделаем это максимально прямо:
-    document.addEventListener('DOMContentLoaded', function() {
-        // Находим элемент с id="results"
-        const resultsElement = document.getElementById('results');
-        
-        if (resultsElement) {
-            // Прокручиваем к нему
-            console.log('Scrolling to results...');
-            resultsElement.scrollIntoView({behavior: 'smooth'});
-            
-            // Для дополнительной надежности подсветим заголовок
-            const resultsHeader = document.getElementById('results-header');
-            if (resultsHeader) {
-                resultsHeader.style.transition = 'background-color 1s';
-                resultsHeader.style.backgroundColor = '#ffeb3b';
-                
-                setTimeout(function() {
-                    resultsHeader.style.backgroundColor = '#f0f7ff';
-                }, 1500);
-            }
-        }
-    });
+    // Базовая функция для получения координат элемента относительно окна
+    function getElementPosition(el) {{
+        var rect = el.getBoundingClientRect();
+        var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        return {{ top: rect.top + scrollTop, left: rect.left + scrollLeft }}
+    }}
     
-    // Для случаев, когда DOM уже загружен к моменту выполнения скрипта
-    setTimeout(function() {
-        // Находим элемент с id="results"
-        const resultsElement = document.getElementById('results');
+    // Функция для надежной прокрутки к элементу
+    function forceScrollToElement(elementId) {{
+        const element = document.getElementById(elementId);
+        if (!element) return false;
+
+        // Получаем позицию элемента
+        const pos = getElementPosition(element);
+        console.log(`Прокрутка к элементу #${{elementId}}, Y-координата: ${{pos.top}}`);
         
-        if (resultsElement) {
-            // Прокручиваем к нему
-            console.log('Scrolling to results (delayed)...');
-            resultsElement.scrollIntoView({behavior: 'smooth'});
+        // Прокручиваем к элементу с отступом сверху
+        window.scrollTo({{
+            top: pos.top - 100, // отступ 100px сверху
+            behavior: 'smooth'
+        }});
+        
+        // Добавляем подсветку для привлечения внимания
+        const resultsHeader = document.getElementById('results-header');
+        if (resultsHeader) {{
+            resultsHeader.style.transition = 'background-color 0.5s';
+            resultsHeader.style.backgroundColor = '#ffeb3b';
+            // Мигание желтым цветом
+            setTimeout(function() {{
+                resultsHeader.style.backgroundColor = '#e0f0ff';
+                setTimeout(function() {{
+                    resultsHeader.style.backgroundColor = '#ffeb3b';
+                    setTimeout(function() {{
+                        resultsHeader.style.backgroundColor = '#f0f7ff';
+                    }}, 500);
+                }}, 500);
+            }}, 500);
+        }}
+        
+        return true;
+    }}
+    
+    // МЕТОД 1: Используем прямой скролл к якорю
+    setTimeout(function() {{
+        console.log("Пытаемся прокрутить к результатам (метод 1)");
+        forceScrollToElement('results');
+    }}, 300);
+    
+    // МЕТОД 2: Повторный скролл после небольшой задержки
+    setTimeout(function() {{
+        console.log("Пытаемся прокрутить к результатам (метод 2)");
+        forceScrollToElement('results');
+    }}, 800);
+    
+    // МЕТОД 3: Крайний метод - используем location.hash
+    setTimeout(function() {{
+        console.log("Пытаемся прокрутить к результатам (метод 3 - хэш)");
+        
+        // Устанавливаем хэш, чтобы браузер автоматически прокрутил к якорю
+        if (!forceScrollToElement('results')) {{
+            // Если предыдущие методы не сработали, используем хэш
+            window.location.hash = 'results';
             
-            // Для дополнительной надежности подсветим заголовок
-            const resultsHeader = document.getElementById('results-header');
-            if (resultsHeader) {
-                resultsHeader.style.transition = 'background-color 1s';
-                resultsHeader.style.backgroundColor = '#ffeb3b';
-                
-                setTimeout(function() {
-                    resultsHeader.style.backgroundColor = '#f0f7ff';
-                }, 1500);
-            }
-        }
-    }, 500);
+            // Добавляем дополнительную прокрутку с задержкой
+            setTimeout(function() {{
+                // Дополнительная корректировка положения прокрутки
+                const elResults = document.getElementById('results');
+                if (elResults) {{
+                    const pos = getElementPosition(elResults);
+                    window.scrollTo({{ top: pos.top - 100, behavior: 'auto' }});
+                }}
+            }}, 100);
+        }}
+    }}, 1500);
     </script>
+
+    <!-- Обновляем атрибут id элемента с уникальным хэшем -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {{
+        // Находим элемент результатов
+        const resultsElement = document.getElementById('results');
+        if (resultsElement) {{
+            // Добавляем дополнительный класс для улучшения видимости
+            resultsElement.className += " scroll-target";
+            resultsElement.style.scrollMarginTop = "100px";
+        }}
+    }});
+    </script>
+    
+    <style>
+    /* Стили для улучшения видимости целевого элемента */
+    .scroll-target {{
+        scroll-margin-top: 100px !important;
+        position: relative;
+    }}
+    </style>
     """, unsafe_allow_html=True)
 
 def add_smart_device_adaptation():
