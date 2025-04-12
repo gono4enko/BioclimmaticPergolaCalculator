@@ -882,10 +882,10 @@ def perform_calculation(dimensions, options):
         # Базовая стоимость (без наценок)
         base_total_price = results["total_price"]
         
-        # Добавляем наценку за доставку (10% автоматически)
-        delivery_price = round(base_total_price * 0.1, 2)
+        # Добавляем наценку за доставку (8% автоматически)
+        delivery_price = round(base_total_price * 0.08, 2)
         results["delivery"] = {
-            "percentage": 10,
+            "percentage": 8,
             "price": delivery_price
         }
         results["items"].append({
