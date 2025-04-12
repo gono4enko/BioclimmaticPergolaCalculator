@@ -2063,7 +2063,7 @@ def scroll_to_results():
     (function() {
         // Функция для мигания заголовка после скролла
         function blinkResultsHeader() {
-            var header = parent.document.getElementById('results-header');
+            var header = document.getElementById('results-header');
             if (header) {
                 // Сохраняем исходный цвет
                 var originalColor = getComputedStyle(header).backgroundColor;
@@ -2083,8 +2083,10 @@ def scroll_to_results():
             }
         }
 
+        // Находим элемент с id "results"
+        var resultsElement = document.getElementById('results');
+        
         // МЕТОД 1: Быстрый прямой скролл
-        var resultsElement = parent.document.getElementById('results');
         if (resultsElement) {
             try {
                 // Мгновенный скролл к результатам
@@ -2106,7 +2108,7 @@ def scroll_to_results():
                 var targetY = rect.top + scrollTop - 80; // Отступ 80px сверху
                 
                 // Мгновенно устанавливаем позицию скролла
-                parent.window.scrollTo(0, targetY);
+                window.scrollTo(0, targetY);
                 console.log("Direct scrollTo position:", targetY);
             }
         } catch(e) {
@@ -2115,7 +2117,7 @@ def scroll_to_results():
         
         // МЕТОД 3: Использование хэша (самый быстрый способ в большинстве браузеров)
         try {
-            parent.window.location.hash = 'results';
+            window.location.hash = 'results';
             console.log("Used hash navigation to #results");
         } catch(e) {
             console.error("Error in scrolling method 3:", e);
@@ -2125,7 +2127,7 @@ def scroll_to_results():
     // Короткая задержка для визуальной обратной связи
     setTimeout(function() {
         // Еще раз проверяем скролл через короткое время для уверенности
-        var resultsElement = parent.document.getElementById('results');
+        var resultsElement = document.getElementById('results');
         if (resultsElement) {
             resultsElement.scrollIntoView({behavior: 'auto', block: 'start'});
         }
