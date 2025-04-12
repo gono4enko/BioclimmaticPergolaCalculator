@@ -13,13 +13,6 @@ import time
 from datetime import datetime
 # Импортируем модуль для отображения галереи проектов
 from components.gallery import display_gallery_section
-# Импортируем модуль для управления скроллингом
-from components.scroll_manager import (
-    setup_scroll_functionality, 
-    create_scroll_target, 
-    handle_calculation_scroll,
-    auto_scroll_on_load
-)
 
 def get_plural_form(number, one, two, five):
     """
@@ -1205,23 +1198,8 @@ def render_results(results):
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
     
-    # Создаем якоря для навигации
-    # Этот якорь будет использоваться для программного скролла
-    st.markdown('<div id="results" style="height:1px; margin-top:-80px; visibility:hidden;"></div>', unsafe_allow_html=True)
-    
-    # Добавляем стилизованный контейнер для результатов расчета с анимацией
-    st.markdown("""
-    <div class="results-section">
-        <style>
-        .results-section {
-            animation: fadeIn 0.7s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    # Создаем якорь для скролла с ID 
+    st.markdown('<div id="results" name="results"></div>', unsafe_allow_html=True)
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
@@ -1425,15 +1403,9 @@ def render_results(results):
         # Добавляем строку со скидкой (скидка отображается зеленым цветом)
         items_data.append(["Скидка по акции:", f"-{format_price(discount_amount)}"])
         
-        # Добавляем якорь для скролла именно к итоговой стоимости со скидкой перед финальной строкой
-        st.markdown('<div id="total-price" name="total-price" style="scroll-margin-top: 80px; min-height: 5px;"></div>', unsafe_allow_html=True)
-        
         # Добавляем строку с итоговой ценой после скидки
         items_data.append(["Итого:", format_price(final_price)])
     else:
-        # Якорь для итоговой стоимости без скидки
-        st.markdown('<div id="total-price" name="total-price" style="scroll-margin-top: 80px; min-height: 5px;"></div>', unsafe_allow_html=True)
-        
         # Если скидки нет, показываем только итоговую строку
         items_data.append(["Итоговая стоимость:", format_price(rub_total)])
     
@@ -1561,7 +1533,6 @@ def render_results(results):
     <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
         {html_table}
     </div>
-    </div><!-- Закрываем контейнер результатов для корректной анимации -->
     """, unsafe_allow_html=True)
     
     # Отображаем разделитель между таблицей стоимости и описанием перголы
@@ -2010,46 +1981,83 @@ def send_page_height_to_parent():
     </script>
     """, unsafe_allow_html=True)
 
-# Используем функцию из нового модуля, сохраняя то же имя для совместимости
-def setup_streamlit_scroll():
+def scroll_to_results():
     """
-    Добавляет стили для навигации по якорям и переходов между секциями.
-    Использует обновленную реализацию из модуля scroll_manager.
+    Добавляет JavaScript для перехода к якорю результатов при нажатии на скрытую кнопку
     """
-    setup_scroll_functionality()
-
-def create_anchor(anchor_id):
-    """
-    Создает якорь для навигации.
-    
-    Args:
-        anchor_id (str): ID якоря
+    # Добавляем JavaScript для автоматического нажатия на ссылку-якорь
+    st.markdown("""
+    <script>
+        // Используем URL-хэш для скролла
+        function scrollToResults() {
+            console.log('Attempting to scroll to results...');
+            
+            // Ищем элемент с id="results"
+            const resultsElement = document.getElementById('results');
+            
+            if (resultsElement) {
+                console.log('Found results element, scrolling...');
+                
+                // Программно создаем и кликаем по ссылке на якорь
+                const scrollLink = document.createElement('a');
+                scrollLink.href = '#results';
+                scrollLink.style.display = 'none';
+                document.body.appendChild(scrollLink);
+                
+                // Прокручиваем с задержкой для надежности
+                setTimeout(() => {
+                    scrollLink.click();
+                    console.log('Clicked on results anchor link');
+                    
+                    // Удаляем ссылку после использования
+                    setTimeout(() => {
+                        document.body.removeChild(scrollLink);
+                    }, 100);
+                }, 500);
+                
+                return true;
+            }
+            
+            console.log('Results element not found');
+            
+            // Если якорь не найден, ищем заголовок или просто скроллим вниз
+            const resultsHeadings = Array.from(document.querySelectorAll('h2'))
+                .filter(h => h.textContent.includes('Результаты расчета'));
+            
+            if (resultsHeadings.length > 0) {
+                console.log('Found results heading, scrolling...');
+                const heading = resultsHeadings[0];
+                window.scrollTo({
+                    top: heading.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+                return true;
+            }
+            
+            // Крайний случай - просто скроллим на определенное расстояние вниз
+            console.log('No targets found, scrolling down as fallback');
+            window.scrollTo({
+                top: document.body.scrollHeight / 2,  // Примерно в середину страницы
+                behavior: 'smooth'
+            });
+            
+            return false;
+        }
         
-    Returns:
-        None: Добавляет якорь через st.markdown
-    """
-    # Используем функцию из нового модуля для создания якоря скроллинга
-    create_scroll_target(anchor_id)
-
-def create_navigation_button(text, target_id, color="#00a651", margin="15px auto"):
-    """
-    Создает кнопку навигации (ссылку в виде кнопки) к указанному якорю.
-    
-    Args:
-        text (str): Текст кнопки
-        target_id (str): ID якоря, к которому будет осуществлен переход
-        color (str): Цвет кнопки в hex формате
-        margin (str): CSS-стиль для отступов
+        // Выполняем скролл после загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded, scheduling scroll');
+            setTimeout(scrollToResults, 300);
+        });
         
-    Returns:
-        None: Добавляет кнопку через st.markdown
-    """
-    button_html = f"""
-    <a href="#{target_id}" class="nav-button" style="background-color: {color}; margin: {margin};">
-        {text}
-    </a>
-    """
-    st.markdown(button_html, unsafe_allow_html=True)
+        // Также выполняем скролл сразу (для случая, когда DOM уже загружен)
+        console.log('Script loaded, scheduling immediate scroll');
+        setTimeout(scrollToResults, 500);
+        
+        // И выполняем третью попытку для надежности
+        setTimeout(scrollToResults, 1500);
+    </script>
+    """, unsafe_allow_html=True)
 
 def add_smart_device_adaptation():
     """
@@ -2309,8 +2317,6 @@ def add_smart_device_adaptation():
     </style>
     """, unsafe_allow_html=True)
 
-# Функция JavaScript-скроллинга больше не нужна, так как мы используем подход на основе Streamlit session_state
-
 def main():
     """Основная функция приложения"""
     # Настраиваем страницу
@@ -2319,20 +2325,6 @@ def main():
         page_icon="🏠",
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
-    
-    # Импортируем наш новый модуль для скроллинга
-    from scroll import scroll_to
-    
-    # Проверяем, есть ли целевая секция для скроллинга
-    if "scroll_target" in st.session_state:
-        target_section = st.session_state.pop("scroll_target")
-        st.info(f"Прокрутка к разделу '{target_section}'...")
-        # Выполняем скролл с JavaScript
-        scroll_to(target_section)
-    
-    # Добавляем CSS-анимации для всего приложения (включая анимацию для кнопок)
-    from animations import add_animations_css
-    add_animations_css()
     
     # Добавляем умную адаптацию для различных размеров экрана
     add_smart_device_adaptation()
@@ -2536,14 +2528,8 @@ def main():
     # Добавляем отступ перед кнопкой расчета
     st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
     
-    # Импортируем функцию для создания анимированной кнопки
-    from animations import animate_button
-    
-    # Импортируем функцию для скроллинга из нового надежного модуля
-    from scroll import scroll_to
-    
-    # Кнопка для расчета с анимацией пульсации
-    if animate_button("Рассчитать стоимость", key="calculate_button", animation_class="pulseAnimation"):
+    # Кнопка для расчета с улучшенным стилем
+    if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
         with st.spinner("Выполняется расчет..."):
             # Проверяем, что у нас есть данные для расчета
             if dimensions and options:
@@ -2554,11 +2540,16 @@ def main():
                 st.session_state.results = results
                 st.session_state.options = options
                 
-                # Добавляем флаг для отправки события в Яндекс.Метрику после перезагрузки
+                # Добавляем флаг, что нужно прокрутить к результатам
+                st.session_state.scroll_to_results = True
+                
+                # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
+                st.session_state.description_shown = False
+                
+                # Устанавливаем флаг для отправки события в Яндекс.Метрику после перезагрузки
                 st.session_state.send_ya_metrika_event = True
                 
-                # Устанавливаем флаг для скролла в сессии и перезапускаем приложение
-                st.session_state.scroll_target = "results"
+                # Перезагружаем страницу для отображения результатов
                 st.rerun()
     
     # Добавляем разделитель (компактный)
@@ -2566,29 +2557,23 @@ def main():
         
     # Отображаем кнопку для скролла к результатам (если есть результаты)
     if 'results' in st.session_state:
-        # Используем ту же функцию для скроллинга, что и везде
-        from scroll import scroll_to
-        
-        # Кнопка для скролла к результатам через JavaScript
-        if st.button("↓ Перейти к результатам расчета ↓", 
-                     key="scroll_button", 
-                     use_container_width=True,
-                     type="primary"):
-            # Устанавливаем флаг для скролла в сессии и перезапускаем приложение
-            st.session_state.scroll_target = "results"
-            st.rerun()
-        
-        # Создаем заметный маркер для начала секции результатов
-        st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
-        
-        # Импортируем функцию для создания якоря из нового модуля
-        from scroll import create_anchor
-        
-        # Создаем якорь для секции результатов
-        create_anchor("results", "РЕЗУЛЬТАТЫ РАСЧЕТА")
+        # Кнопка для скролла к результатам (компактная и заметная)
+        st.markdown("""
+        <a href="#results" style="display: block; width: 90%; margin: 10px auto; padding: 10px; 
+                       background-color: #0066cc; color: white; text-align: center; 
+                       border-radius: 5px; text-decoration: none; font-weight: bold;">
+           ↓ Перейти к результатам расчета ↓
+        </a>
+        """, unsafe_allow_html=True)
         
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
+        
+        # Если нужна прокрутка к результатам, добавляем JS код
+        if st.session_state.get('scroll_to_results', False):
+            scroll_to_results()
+            # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
+            st.session_state.scroll_to_results = False
     
     # Добавляем галерею проектов и счетчик установленных пергол
     # Разделяем содержимое после калькулятора
