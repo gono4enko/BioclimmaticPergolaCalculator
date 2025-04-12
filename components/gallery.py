@@ -322,18 +322,6 @@ def display_gallery_section():
     Основная функция для отображения секции с галереей и счетчиком
     """
     with st.container():
-        # Заголовок раздела в стиле статей с выравниванием по центру
-        st.markdown("""
-        <div style="padding: 15px 20px; max-width: 100%; text-align: center;">
-            <h1 style="font-size: 2.2rem; color: #0066cc; font-weight: 600; margin-bottom: 15px; text-align: center;">
-                Наши достижения и реализованные проекты
-            </h1>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Счетчик установленных пергол
-        display_installation_counter()
-        
         # Добавляем стиль для текста галереи как в статьях с выравниванием по центру
         st.markdown("""
         <style>
@@ -355,6 +343,18 @@ def display_gallery_section():
         }
         </style>
         """, unsafe_allow_html=True)
+        
+        # Заголовок раздела в стиле статей с выравниванием по центру
+        st.markdown("""
+        <div style="padding: 15px 20px; max-width: 100%; text-align: center;">
+            <h1 style="font-size: 2.2rem; color: #0066cc; font-weight: 600; margin-bottom: 15px; text-align: center;">
+                Наши достижения и реализованные проекты
+            </h1>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Счетчик установленных пергол
+        display_installation_counter()
         
         # Галерея проектов с выравниванием по центру
         st.markdown('<h2 class="gallery-subtitle">Наши реализованные проекты</h2>', unsafe_allow_html=True)
