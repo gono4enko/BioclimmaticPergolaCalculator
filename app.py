@@ -1081,63 +1081,51 @@ def render_options_form():
         horizontal=True
     )
     
-    # Освещение - меньше отступы, аналогично разделу "Выберите тип ламелей"
-    st.radio(
-        "Освещение",
-        options=[],  # Пустой список опций, этот элемент нужен только для заголовка
-        label_visibility="visible",
-        horizontal=True,
-        disabled=True,
-        key="lighting_header"
-    )
-    
-    # Стиль для максимально компактного расположения
+    # Освещение - с минимальными отступами
     st.markdown("""
     <style>
-    /* Удаляем верхний отступ у заголовка освещения */
-    [data-testid="stRadio"][aria-label="Освещение"] {
-        margin-top: -10px !important;
-        margin-bottom: -10px !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* Скрываем пустой виджет radio у заголовка */
-    [data-testid="stRadio"][aria-label="Освещение"] .st-bq {
-        display: none !important;
+    /* Стили для чекбоксов с минимальными отступами */
+    .lighting-section-header {
+        font-weight: 500;
+        margin-top: 8px;
+        margin-bottom: 2px;
+        padding-bottom: 0px;
     }
     
     /* Убираем стандартные отступы между чекбоксами */
     .tight-checkbox-layout .row-widget {
         margin-bottom: 0 !important;
         padding-bottom: 0 !important;
-        margin-top: 0 !important; 
-        padding-top: 0 !important;
     }
     
     /* Минимальный отступ между чекбоксами */
     .second-checkbox {
-        margin-top: -12px !important;
+        margin-top: -10px !important;
         padding-top: 0 !important;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Вертикальное расположение чекбоксов освещения
-    st.markdown("<div class='lighting-options'><div class='tight-checkbox-layout'>", unsafe_allow_html=True)
+    # Добавляем компактный заголовок "Освещение"
+    st.markdown('<p class="lighting-section-header">Освещение</p>', unsafe_allow_html=True)
     
+    # Инициализируем список для опций освещения
     lighting_options = []
+    
+    # Вертикальное расположение чекбоксов освещения
+    st.markdown('<div class="tight-checkbox-layout">', unsafe_allow_html=True)
     
     # Первый чекбокс
     if st.checkbox("Белая светодиодная лента", value=False, key="white_led_checkbox", label_visibility="visible"):
         lighting_options.append("white_led")
     
     # Второй чекбокс с уменьшенным отступом
-    st.markdown("<div class='second-checkbox'>", unsafe_allow_html=True)
+    st.markdown('<div class="second-checkbox">', unsafe_allow_html=True)
     if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_checkbox", label_visibility="visible"):
         lighting_options.append("rgb_led")
     st.markdown("</div>", unsafe_allow_html=True)
     
-    st.markdown("</div></div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
     
     # Установка - с минимальным отступом
     st.markdown("<p style='font-weight: 500; margin-bottom: 0px; margin-top: 0px;'>Установка</p>", unsafe_allow_html=True)
