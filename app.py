@@ -2463,10 +2463,21 @@ def main():
     st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
     
     # Кнопка для расчета с улучшенным стилем
-    if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
+    calc_button = st.button("Рассчитать стоимость", type="primary", use_container_width=True, key="calc_button")
+    
+    # Проверяем был ли клик по кнопке расчета или есть флаг для расчета
+    if calc_button or st.session_state.get('calc_requested', False):
         with st.spinner("Выполняется расчет..."):
             # Проверяем, что у нас есть данные для расчета
             if dimensions and options:
+                # Если кнопка была нажата сейчас - устанавливаем флаг первого расчета
+                if calc_button:
+                    st.session_state.first_calc = True
+                    st.session_state.calc_requested = True
+                else:
+                    # Если это повторная загрузка после расчета, сбрасываем флаг запроса
+                    st.session_state.calc_requested = False
+                
                 # Выполняем расчет
                 results = perform_calculation(dimensions, options)
                 
@@ -2474,7 +2485,7 @@ def main():
                 st.session_state.results = results
                 st.session_state.options = options
                 
-                # Добавляем флаг, что нужно прокрутить к результатам
+                # Устанавливаем флаг для скролла к результатам
                 st.session_state.scroll_to_results = True
                 
                 # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
@@ -2503,9 +2514,48 @@ def main():
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
-        # Если нужна прокрутка к результатам, добавляем JS код
+        # Улучшенный механизм прокрутки к результатам после расчета
         if st.session_state.get('scroll_to_results', False):
+            # Создаем якорь прямо перед секцией с итоговой стоимостью
+            from components.streamlit_scroll import create_anchor
+            
+            # Создаем видимый якорь только при отладке, в продакшне делаем его невидимым
+            create_anchor("scroll_target_anchor", show_border=False)
+            
+            # Выполняем прокрутку к этому якорю И к основной секции итоговой стоимости
+            # Это обеспечивает двойное срабатывание для надежности
             scroll_to_results()
+            
+            # Увеличиваем надежность - добавляем прямой скрипт для мгновенного скролла
+            st.markdown("""
+            <script>
+            // Функция для прокрутки к целевому элементу
+            function scrollToTarget(delay) {
+                setTimeout(function() {
+                    const targetElement = document.getElementById('final_price_anchor');
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                        console.log('Скролл к final_price_anchor с задержкой ' + delay + 'мс');
+                    }
+                }, delay);
+            }
+            
+            // Немедленный скролл к результатам после загрузки страницы
+            document.addEventListener('DOMContentLoaded', function() {
+                scrollToTarget(50);
+            });
+            
+            // Серия попыток скролла с разными задержками для повышения надежности
+            scrollToTarget(100);   // Быстрый скролл
+            scrollToTarget(300);   // Скролл со средней задержкой
+            scrollToTarget(600);   // Скролл с большой задержкой 
+            scrollToTarget(1000);  // Финальная попытка скролла
+            </script>
+            """, unsafe_allow_html=True)
+            
             # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
             st.session_state.scroll_to_results = False
     
