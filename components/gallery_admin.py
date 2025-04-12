@@ -461,6 +461,34 @@ def batch_process_images(images_dir, action, image_names):
     
     return success_count, error_count
 
+def get_image_status_statistics(images_dir):
+    """
+    Получает статистику по статусу изображений (активные/исключенные)
+    
+    Args:
+        images_dir (str): Путь к директории с изображениями
+    
+    Returns:
+        dict: Словарь с количеством активных и исключенных изображений
+    """
+    all_images = get_all_gallery_images(images_dir)
+    config = load_gallery_config()
+    
+    active_count = 0
+    excluded_count = 0
+    
+    for image in all_images:
+        if image in config["excluded_images"]:
+            excluded_count += 1
+        else:
+            active_count += 1
+    
+    return {
+        "total": len(all_images),
+        "active": active_count,
+        "excluded": excluded_count
+    }
+
 def render_gallery_admin_interface(images_dir):
     """
     Отображает интерфейс администрирования галереи.
@@ -656,18 +684,60 @@ def render_gallery_admin_interface(images_dir):
             st.markdown("### Групповые операции")
             st.markdown("Выберите изображения с помощью чекбоксов для группового изменения статуса")
             
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
+            # Получаем статистику по изображениям
+            stats = get_image_status_statistics(images_dir)
+            status_cols = st.columns(3)
+            with status_cols[0]:
+                st.metric("Всего изображений", stats["total"])
+            with status_cols[1]:
+                st.metric("Активных изображений", stats["active"])
+            with status_cols[2]:
+                st.metric("Исключенных", stats["excluded"])
+                
+            # Добавляем выпадающий список с опциями для быстрого выбора
+            select_options = [
+                "Все изображения",
+                "Только активные изображения",
+                "Только исключенные изображения",
+                "Снять выделение"
+            ]
+            selection_action = st.selectbox(
+                "Быстрое выделение изображений:",
+                select_options,
+                index=0,
+                key="quick_selection"
+            )
+            
+            # Обработка выбора пользователя
+            if st.button("Применить выбор", key="apply_selection_btn"):
+                config = load_gallery_config()
+                
+                if selection_action == select_options[0]:  # Выбрать все
+                    st.session_state.selected_images = set(all_images)
+                elif selection_action == select_options[1]:  # Только активные
+                    active_images = [img for img in all_images if img not in config["excluded_images"]]
+                    st.session_state.selected_images = set(active_images)
+                elif selection_action == select_options[2]:  # Только исключенные
+                    excluded_images = [img for img in all_images if img in config["excluded_images"]]
+                    st.session_state.selected_images = set(excluded_images)
+                elif selection_action == select_options[3]:  # Снять выделение
+                    st.session_state.selected_images = set()
+                
+                st.rerun()
+            
+            # Основные кнопки действий
+            action_cols = st.columns(4)
+            with action_cols[0]:
                 if st.button("Выбрать все", key="select_all_btn"):
                     st.session_state.selected_images = set(all_images)
                     st.rerun()
             
-            with col2:
+            with action_cols[1]:
                 if st.button("Снять выбор", key="deselect_all_btn"):
                     st.session_state.selected_images = set()
                     st.rerun()
             
-            with col3:
+            with action_cols[2]:
                 # Кнопка групповой публикации
                 if st.button("📢 Опубликовать выбранные", disabled=len(st.session_state.selected_images) == 0):
                     success_count, error_count = batch_process_images(images_dir, 'include', list(st.session_state.selected_images))
@@ -678,7 +748,7 @@ def render_gallery_admin_interface(images_dir):
                     st.session_state.selected_images = set()
                     st.rerun()
             
-            with col4:
+            with action_cols[3]:
                 # Кнопка группового исключения
                 if st.button("🚫 Исключить выбранные", disabled=len(st.session_state.selected_images) == 0):
                     success_count, error_count = batch_process_images(images_dir, 'exclude', list(st.session_state.selected_images))
