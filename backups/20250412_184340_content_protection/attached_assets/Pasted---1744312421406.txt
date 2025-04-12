@@ -1,0 +1,50 @@
+Давай разберемся вот с такой проблемой/ Помоги разобраться с проблемой. Я сделал веб приложение в сервисе Replit. Приложение на питоне. Deploy на выделенном сервере Replit. На сайте Тильда я разместил Iframe. Приложение в принципе работают. Но прокрика вниз происходит очень медленно. Приходится на телефоне нескол ко раз протягивать вниз. Как будто что-то медленно загружается. Как ускорить работу приложения на сайте. Или может быть проблема в коде iframe. Вот ссылка на приложение на домене replit https://bioclimmatic-pergola-calculator-gono4enko.replit.app/
+
+Вот ссылка на мой сайт где через фрейм я разместил приложение https://pergolamarket.ru/calculator_bioclimatic_pergola
+
+
+Вот такое решение предложил чат гпт. 
+1. Проблема не в iframe как таковом
+Код вставки iframe у тебя вполне корректный:
+<iframe src="https://bioclimmatic-pergola-calculator-gono4enko.replit.app/" width="100%" height="800px" style="border:none;"></iframe>
+
+
+Но! Сам iframe встраивает внешнюю страницу, а это значит:
+* Она загружается отдельно от основного сайта Тильды.
+* Всё содержимое (JS, CSS, изображения) грузится заново внутри фрейма.
+* На мобильных iframe может плохо работать с плавной прокруткой, особенно если контент внутри тяжелый или не адаптирован.
+
+2. Основные причины тормозов
+(а) Высота iframe фиксирована
+* Сейчас у тебя height="800px". Если контент внутри больше — появляется вложенный скролл.
+* На телефонах это отвратительно работает — приходится "проталкивать" пальцем.
+Решение: Автоматически подстраивать высоту iframe под содержимое.
+
+3. Как сделать авто-высоту iframe
+Вставь в свою страницу Тильды вот такой код вместо текущего iframe:
+
+<iframe id="biocalc" src="https://bioclimmatic-pergola-calculator-gono4enko.replit.app/" width="100%" style="border:none;" scrolling="no"></iframe>
+
+<script>
+  window.addEventListener("message", function(event) {
+    if (event.origin.startsWith("https://bioclimmatic-pergola-calculator-gono4enko.replit.app")) {
+      var iframe = document.getElementById("biocalc");
+      iframe.style.height = event.data + "px";
+    }
+  }, false);
+</script>
+
+
+Теперь на стороне внутреннего калькулятора в Replit тебе нужно добавить этот код в конец body HTML-шаблона:
+<script>
+  function sendHeight() {
+    const height = document.body.scrollHeight;
+    parent.postMessage(height, "*");
+  }
+
+  window.addEventListener("load", sendHeight);
+  window.addEventListener("resize", sendHeight);
+  setInterval(sendHeight, 1000);
+</script>
+
+Это будет передавать высоту из iframe в родительский сайт, и прокрутка станет нормальной — плавной, без вложенного скролла.

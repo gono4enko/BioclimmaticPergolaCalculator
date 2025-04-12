@@ -2051,25 +2051,13 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Упрощенная и надежная функция прокрутки к результатам.
-    Использует стандартные возможности Streamlit и минимальный JavaScript.
+    Чистая функция для прокрутки к результатам, использующая нативный механизм Streamlit.
+    Эта функция не использует JavaScript или HTML для прокрутки.
     """
-    # Добавляем якорь для результатов и необходимые стили
+    # Просто добавляем стили для заголовка результатов, чтобы он выделялся
     st.markdown("""
-    <div id="results"></div>
     <style>
-    /* Стили для якоря результатов */
-    #results {
-        scroll-margin-top: 60px;
-        scroll-snap-align: start;
-        visibility: visible;
-        display: block;
-        height: 1px;
-        margin: 0;
-        padding: 0;
-    }
-    
-    /* Выделение заголовка результатов для привлечения внимания */
+    /* Выделение заголовка результатов */
     .results-header {
         background-color: #f0f8ff;
         border-radius: 5px;
@@ -2077,46 +2065,8 @@ def scroll_to_results():
         margin-top: 10px;
         margin-bottom: 15px;
         border-left: 4px solid #0066cc;
-        transition: background-color 0.3s ease;
-    }
-    
-    /* Анимация для заголовка результатов */
-    @keyframes highlight-header {
-        0% { background-color: #f0f8ff; }
-        50% { background-color: #d1ecff; }
-        100% { background-color: #f0f8ff; }
-    }
-    
-    .results-header-animated {
-        animation: highlight-header 1.5s ease;
     }
     </style>
-    """, unsafe_allow_html=True)
-    
-    # Добавляем простой JavaScript для прокрутки к якорю результатов
-    st.markdown("""
-    <script>
-        // Прокрутка к результатам с небольшой задержкой для надежности
-        setTimeout(function() {
-            // Находим элемент якоря
-            var resultsElement = document.getElementById('results');
-            
-            // Если элемент существует, прокручиваем к нему
-            if (resultsElement) {
-                // Плавно прокручиваем к результатам
-                resultsElement.scrollIntoView({behavior: 'smooth', block: 'start'});
-                console.log('Scrolled to results');
-                
-                // Добавляем анимацию для заголовка результатов
-                var headers = document.getElementsByClassName('results-header');
-                if (headers.length > 0) {
-                    for (var i = 0; i < headers.length; i++) {
-                        headers[i].classList.add('results-header-animated');
-                    }
-                }
-            }
-        }, 200); // Небольшая задержка для уверенности
-    </script>
     """, unsafe_allow_html=True)
 
 def add_smart_device_adaptation():
