@@ -1990,32 +1990,24 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Максимально простая функция для автоматической прокрутки к результатам.
-    Использует встроенную функцию Streamlit st.components.html для создания iframe с автопрокруткой.
+    Моментальная прокрутка к результатам без задержек.
+    Использует несколько методов параллельно для максимальной надежности.
     """
-    # Самое простое и надёжное решение - добавляем невидимый HTML-компонент,
-    # который выполняет скролл к элементу с id="results"
     import streamlit.components.v1 as components
     
-    # Создаем невидимый iframe с JavaScript для скролла
+    # Создаем невидимый HTML компонент, который мгновенно выполняет скролл
     html_code = """
     <script>
-    // Дожидаемся полной загрузки страницы
-    setTimeout(function() {
-        // Находим элемент с id="results"
-        var resultsElement = parent.document.getElementById('results');
-        if (resultsElement) {
-            // Скроллим к нему с плавной анимацией
-            resultsElement.scrollIntoView({behavior: 'smooth', block: 'start'});
-            console.log("Scrolled to results using iframe method");
-            
-            // Мигаем заголовком для привлечения внимания
+    // Немедленно запускаем скролл без задержки
+    (function() {
+        // Функция для мигания заголовка после скролла
+        function blinkResultsHeader() {
             var header = parent.document.getElementById('results-header');
             if (header) {
-                // Исходный цвет
+                // Сохраняем исходный цвет
                 var originalColor = getComputedStyle(header).backgroundColor;
-                // Мигание для привлечения внимания
-                header.style.transition = 'background-color 0.3s';
+                // Быстрое мигание для привлечения внимания
+                header.style.transition = 'background-color 0.15s';
                 header.style.backgroundColor = '#FFEB3B'; // Ярко-жёлтый
                 
                 setTimeout(function() {
@@ -2023,13 +2015,60 @@ def scroll_to_results():
                     setTimeout(function() {
                         header.style.backgroundColor = '#FFEB3B'; // Снова жёлтый
                         setTimeout(function() {
-                            header.style.backgroundColor = originalColor; // Возвращаем исходный цвет
-                        }, 400);
-                    }, 400);
-                }, 400);
+                            header.style.backgroundColor = originalColor; // Исходный цвет
+                        }, 200);
+                    }, 200);
+                }, 200);
             }
         }
-    }, 500);
+
+        // МЕТОД 1: Быстрый прямой скролл
+        var resultsElement = parent.document.getElementById('results');
+        if (resultsElement) {
+            try {
+                // Мгновенный скролл к результатам
+                resultsElement.scrollIntoView({behavior: 'auto', block: 'start'});
+                console.log("Instant scroll to results");
+                
+                // Мигаем заголовком для привлечения внимания
+                blinkResultsHeader();
+            } catch(e) {
+                console.error("Error in scrolling method 1:", e);
+            }
+        }
+        
+        // МЕТОД 2: Прямая установка scrollTop с учетом позиции элемента
+        try {
+            if (resultsElement) {
+                var rect = resultsElement.getBoundingClientRect();
+                var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                var targetY = rect.top + scrollTop - 80; // Отступ 80px сверху
+                
+                // Мгновенно устанавливаем позицию скролла
+                parent.window.scrollTo(0, targetY);
+                console.log("Direct scrollTo position:", targetY);
+            }
+        } catch(e) {
+            console.error("Error in scrolling method 2:", e);
+        }
+        
+        // МЕТОД 3: Использование хэша (самый быстрый способ в большинстве браузеров)
+        try {
+            parent.window.location.hash = 'results';
+            console.log("Used hash navigation to #results");
+        } catch(e) {
+            console.error("Error in scrolling method 3:", e);
+        }
+    })();
+
+    // Короткая задержка для визуальной обратной связи
+    setTimeout(function() {
+        // Еще раз проверяем скролл через короткое время для уверенности
+        var resultsElement = parent.document.getElementById('results');
+        if (resultsElement) {
+            resultsElement.scrollIntoView({behavior: 'auto', block: 'start'});
+        }
+    }, 100);
     </script>
     """
     
@@ -2037,14 +2076,22 @@ def scroll_to_results():
     # height=0 делает iframe невидимым
     components.html(html_code, height=0)
     
-    # Дополнительно добавляем CSS для улучшения видимости
+    # Улучшенные стили для видимости и позиционирования
     st.markdown("""
     <style>
+    /* Улучшаем позиционирование якоря для результатов */
     #results {
-        scroll-margin-top: 80px;
+        scroll-margin-top: 60px !important;
+        scroll-snap-align: start !important;
+        display: block !important;
+        visibility: visible !important;
+        pointer-events: none !important;
     }
+    
+    /* Делаем заголовок результатов более заметным */
     #results-header {
-        position: relative;
+        position: relative !important;
+        scroll-margin-top: 60px !important;
     }
     </style>
     """, unsafe_allow_html=True)
