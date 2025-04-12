@@ -1586,37 +1586,31 @@ def render_results(results):
             modular_caption = get_pergola_image_caption("MODULAR")
             
             if modular_images:
-                # Пробуем загрузить изображения по очереди, пока не найдем рабочее
+                image_displayed = False
                 import os
+                from PIL import Image
                 
-                # Сначала проверяем наличие файлов
-                valid_images = []
+                # Перебираем все изображения и пытаемся отобразить первое рабочее
                 for img_path in modular_images:
-                    if os.path.exists(img_path):
-                        valid_images.append(img_path)
-                
-                # Если есть действительные изображения, пытаемся их отобразить
-                if valid_images:
-                    success = False
-                    for img_path in valid_images:
-                        try:
-                            from PIL import Image
-                            # Проверяем, можно ли открыть изображение
-                            img = Image.open(img_path)
-                            img.verify()  # Проверка целостности
-                            
-                            # Отображаем изображение
-                            display_image_with_padding(img_path, caption=modular_caption)
-                            success = True
-                            break
-                        except Exception as e:
-                            print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
+                    try:
+                        # Проверяем, существует ли файл
+                        if not os.path.exists(img_path):
                             continue
-                    
-                    if not success:
-                        st.warning("Не удалось загрузить изображение модульной системы. Проверьте формат файлов.")
-                else:
-                    st.warning("Не найдены файлы изображений модульной системы в указанных путях.")
+                            
+                        # Проверяем, можно ли открыть изображение
+                        img = Image.open(img_path)
+                        img.verify()  # Быстрая проверка целостности
+                        
+                        # Если всё в порядке, отображаем
+                        st.image(img_path, caption=modular_caption, use_column_width=True)
+                        image_displayed = True
+                        break
+                    except Exception as e:
+                        print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
+                        continue
+                
+                if not image_displayed:
+                    st.warning("Не удалось загрузить изображение модульной системы")
             
             # Добавляем информацию о системе водоотведения для всех типов пергол
             # Отображаем описание системы водоотведения из модуля конфигурации
@@ -1628,14 +1622,24 @@ def render_results(results):
             drainage_caption = get_pergola_image_caption("DRAINAGE")
             
             if drainage_images:
+                image_displayed = False
+                import os
                 for img_path in drainage_images:
                     try:
-                        display_image_with_padding(img_path, caption=drainage_caption)
+                        # Проверяем, существует ли файл
+                        if not os.path.exists(img_path):
+                            continue
+                        
+                        # Отображаем изображение
+                        st.image(img_path, caption=drainage_caption, use_column_width=True)
+                        image_displayed = True
                         break
                     except Exception as e:
+                        print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
                         continue
-                else:
-                    st.warning(f"Не удалось загрузить изображение системы водоотведения")
+                
+                if not image_displayed:
+                    st.warning("Не удалось загрузить изображение системы водоотведения")
             
             # Добавляем информацию о приводе Bansbach только для пергол B500NEW
             if pergola_type == "B500NEW":
@@ -1647,14 +1651,24 @@ def render_results(results):
                 bansbach_caption = get_pergola_image_caption("BANSBACH")
                 
                 if bansbach_images:
+                    image_displayed = False
+                    import os
                     for img_path in bansbach_images:
                         try:
-                            display_image_with_padding(img_path, caption=bansbach_caption)
+                            # Проверяем, существует ли файл
+                            if not os.path.exists(img_path):
+                                continue
+                            
+                            # Отображаем изображение
+                            st.image(img_path, caption=bansbach_caption, use_column_width=True)
+                            image_displayed = True
                             break
                         except Exception as e:
+                            print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
                             continue
-                    else:
-                        st.warning(f"Не удалось загрузить изображение привода Bansbach")
+                    
+                    if not image_displayed:
+                        st.warning("Не удалось загрузить изображение привода Bansbach")
             
             # Добавляем информацию о приводе Somfy только для пергол B700NEW
             if pergola_type == "B700NEW":
@@ -1666,14 +1680,24 @@ def render_results(results):
                 somfy_caption = get_pergola_image_caption("SOMFY")
                 
                 if somfy_images:
+                    image_displayed = False
+                    import os
                     for img_path in somfy_images:
                         try:
-                            display_image_with_padding(img_path, caption=somfy_caption)
+                            # Проверяем, существует ли файл
+                            if not os.path.exists(img_path):
+                                continue
+                            
+                            # Отображаем изображение
+                            st.image(img_path, caption=somfy_caption, use_column_width=True)
+                            image_displayed = True
                             break
                         except Exception as e:
+                            print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
                             continue
-                    else:
-                        st.warning(f"Не удалось загрузить изображение привода Somfy")
+                    
+                    if not image_displayed:
+                        st.warning("Не удалось загрузить изображение привода Somfy")
             
             # Добавляем описание вариантов установки и вертикальных систем для всех типов пергол
             bioclimatic_install_description = get_bioclimatic_install_description()
@@ -1684,14 +1708,24 @@ def render_results(results):
             install_system_caption = get_pergola_image_caption("INSTALL_SYSTEM")
             
             if install_system_images:
+                image_displayed = False
+                import os
                 for img_path in install_system_images:
                     try:
-                        display_image_with_padding(img_path, caption=install_system_caption)
+                        # Проверяем, существует ли файл
+                        if not os.path.exists(img_path):
+                            continue
+                        
+                        # Отображаем изображение
+                        st.image(img_path, caption=install_system_caption, use_column_width=True)
+                        image_displayed = True
                         break
                     except Exception as e:
+                        print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
                         continue
-                else:
-                    st.warning(f"Не удалось загрузить изображение вариантов установки")
+                
+                if not image_displayed:
+                    st.warning("Не удалось загрузить изображение вариантов установки")
             
             # Добавляем техническое описание ламелей только для пергол B500 и B700, не для B600
             if pergola_type in ["B500NEW", "B700NEW"]:
@@ -1703,14 +1737,24 @@ def render_results(results):
                 lamella_engineering_caption = get_pergola_image_caption("LAMELLA_ENGINEERING")
                 
                 if lamella_engineering_images:
+                    image_displayed = False
+                    import os
                     for img_path in lamella_engineering_images:
                         try:
-                            display_image_with_padding(img_path, caption=lamella_engineering_caption)
+                            # Проверяем, существует ли файл
+                            if not os.path.exists(img_path):
+                                continue
+                            
+                            # Отображаем изображение
+                            st.image(img_path, caption=lamella_engineering_caption, use_column_width=True)
+                            image_displayed = True
                             break
                         except Exception as e:
+                            print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
                             continue
-                    else:
-                        st.warning(f"Не удалось загрузить изображение технических характеристик ламелей")
+                    
+                    if not image_displayed:
+                        st.warning("Не удалось загрузить изображение технических характеристик ламелей")
     
     # Добавляем отступ в конце страницы
     st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
