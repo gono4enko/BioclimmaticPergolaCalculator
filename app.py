@@ -2528,6 +2528,43 @@ def main():
     # Добавляем отступ перед кнопкой расчета
     st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
     
+    # Добавляем стили для улучшенной кнопки расчета
+    st.markdown("""
+    <style>
+    /* Стили для кнопки расчета - увеличенная высота и анимация */
+    div[data-testid="stButton"] > button[kind="primary"] {
+        height: 50px !important;
+        font-size: 18px !important;
+        font-weight: 500 !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    /* Анимация наведения для кнопки расчета */
+    div[data-testid="stButton"] > button[kind="primary"]:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    /* Анимация нажатия для кнопки расчета */
+    div[data-testid="stButton"] > button[kind="primary"]:active {
+        transform: translateY(1px) !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    /* Пульсирующая анимация для привлечения внимания */
+    @keyframes pulse-button {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+    
+    div[data-testid="stButton"] > button[kind="primary"] {
+        animation: pulse-button 2s infinite ease-in-out;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Кнопка для расчета с улучшенным стилем
     if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
         with st.spinner("Выполняется расчет..."):
