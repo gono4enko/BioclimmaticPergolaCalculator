@@ -1581,25 +1581,42 @@ def render_results(results):
             modular_description = get_modular_system_description()
             display_formatted_description(modular_description)
             
-            # Отображаем изображение модульной системы
+            # Отображаем изображение модульной системы с улучшенной обработкой ошибок
             modular_images = get_pergola_images("MODULAR")
             modular_caption = get_pergola_image_caption("MODULAR")
             
             if modular_images:
                 # Пробуем загрузить изображения по очереди, пока не найдем рабочее
+                import os
+                
+                # Сначала проверяем наличие файлов
+                valid_images = []
                 for img_path in modular_images:
-                    try:
-                        # Проверяем, существует ли файл
-                        import os
-                        if not os.path.exists(img_path):
+                    if os.path.exists(img_path):
+                        valid_images.append(img_path)
+                
+                # Если есть действительные изображения, пытаемся их отобразить
+                if valid_images:
+                    success = False
+                    for img_path in valid_images:
+                        try:
+                            from PIL import Image
+                            # Проверяем, можно ли открыть изображение
+                            img = Image.open(img_path)
+                            img.verify()  # Проверка целостности
+                            
+                            # Отображаем изображение
+                            display_image_with_padding(img_path, caption=modular_caption)
+                            success = True
+                            break
+                        except Exception as e:
+                            print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
                             continue
-                        
-                        display_image_with_padding(img_path, caption=modular_caption)
-                        break
-                    except Exception as e:
-                        continue
+                    
+                    if not success:
+                        st.warning("Не удалось загрузить изображение модульной системы. Проверьте формат файлов.")
                 else:
-                    st.warning(f"Не удалось загрузить изображение модульной системы")
+                    st.warning("Не найдены файлы изображений модульной системы в указанных путях.")
             
             # Добавляем информацию о системе водоотведения для всех типов пергол
             # Отображаем описание системы водоотведения из модуля конфигурации
