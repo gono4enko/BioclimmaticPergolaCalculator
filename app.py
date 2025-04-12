@@ -2320,19 +2320,22 @@ def main():
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
     
-    # Настраиваем стили скроллинга и навигации
-    # Настройка скроллинга (используя компонент scroll_manager)
+    # Импортируем модуль для чистого Python-скроллинга
+    from components.python_scroll import check_scroll_anchor
+    
+    # Проверяем необходимость скроллинга в начале приложения
+    # Это критически важно для работы скроллинга на базе Python
+    scroll_executed = check_scroll_anchor()
+    
+    if scroll_executed:
+        st.write("Выполнен автоматический скроллинг...")
+    
+    # Настраиваем стили скроллинга и навигации для обратной совместимости
     setup_streamlit_scroll()
     
     # Добавляем CSS-анимации для всего приложения (включая анимацию для кнопок)
     from animations import add_animations_css
     add_animations_css()
-    
-    # Импортируем и используем функцию для обработки скроллинга
-    from components.scroll_manager import handle_calculation_scroll
-    
-    # Обрабатываем случай автоматического скроллинга (полностью через Python)
-    scroll_triggered = handle_calculation_scroll()
     
     # Добавляем умную адаптацию для различных размеров экрана
     add_smart_device_adaptation()
@@ -2539,6 +2542,9 @@ def main():
     # Импортируем функцию для создания анимированной кнопки
     from animations import animate_button
     
+    # Импортируем функцию для скроллинга на чистом Python
+    from components.python_scroll import set_page_anchor
+    
     # Кнопка для расчета с анимацией пульсации
     if animate_button("Рассчитать стоимость", key="calculate_button", animation_class="pulseAnimation"):
         with st.spinner("Выполняется расчет..."):
@@ -2551,58 +2557,44 @@ def main():
                 st.session_state.results = results
                 st.session_state.options = options
                 
-                # Добавляем флаг, что нужно прокрутить к результатам (для ссылки)
-                st.session_state.scroll_to_results = True
-                
-                # Устанавливаем флаг для автоматического скролла к результатам (для Python-скрипта)
-                st.session_state.need_scroll_to_results = True
-                
-                # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
-                st.session_state.description_shown = False
-                
-                # Устанавливаем флаг для отправки события в Яндекс.Метрику после перезагрузки
+                # Добавляем флаг для отправки события в Яндекс.Метрику после перезагрузки
                 st.session_state.send_ya_metrika_event = True
                 
-                # Перезагружаем страницу для отображения результатов
-                st.rerun()
+                # PYTHON-BASED SCROLLING:
+                # Устанавливаем якорь для скроллинга и перезагружаем страницу
+                # Это чистое Python-решение, которое гарантированно сработает
+                set_page_anchor("calculation-results")
     
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.2rem; margin-bottom: 0.2rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
         
     # Отображаем кнопку для скролла к результатам (если есть результаты)
     if 'results' in st.session_state:
-        # Кнопка для скролла к результатам (компактная и заметная)
-        st.markdown("""
-        <a href="#calculation-results" style="display: block; width: 90%; margin: 10px auto; padding: 10px; 
-                       background-color: #0066cc; color: white; text-align: center; 
-                       border-radius: 5px; text-decoration: none; font-weight: bold;">
-           ↓ Перейти к результатам расчета ↓
-        </a>
-        """, unsafe_allow_html=True)
+        # Импортируем функцию для скроллинга на чистом Python
+        from components.python_scroll import set_page_anchor
+        
+        # Кнопка для скролла к результатам через Python
+        if st.button("↓ Перейти к результатам расчета ↓", 
+                     key="scroll_button", 
+                     use_container_width=True,
+                     type="primary"):
+            # Используем чистый Python-скроллинг
+            set_page_anchor("calculation-results")
         
         # Создаем заметный маркер для начала секции результатов
         st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
         
-        # Импортируем функцию создания якоря из scroll_manager
-        from components.scroll_manager import create_scroll_target
+        # Импортируем функцию создания якоря из нашего нового Python-модуля
+        from components.python_scroll import create_anchor_element
         
         # Создаем хорошо заметный якорь для результатов с понятной меткой
-        create_scroll_target("calculation-results", label="Результаты расчета", height_px=80)
+        create_anchor_element("calculation-results", label="РЕЗУЛЬТАТЫ РАСЧЕТА", show_border=True)
         
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
-        # Если нужна прокрутка к результатам, добавляем кнопку навигации
+        # Сбрасываем все флаги скроллинга после отображения результатов
         if st.session_state.get('scroll_to_results', False):
-            # Отображаем кнопку для перехода к результатам расчета
-            create_navigation_button(
-                text="Перейти к результатам расчета", 
-                target_id="calculation-results",
-                color="#00a651", 
-                margin="15px auto"
-            )
-            
-            # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
             st.session_state.scroll_to_results = False
     
     # Добавляем галерею проектов и счетчик установленных пергол
