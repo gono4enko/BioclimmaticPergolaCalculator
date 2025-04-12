@@ -2321,24 +2321,18 @@ def main():
     )
     
     # Настраиваем стили скроллинга и навигации
+    # Настройка скроллинга (используя компонент scroll_manager)
     setup_streamlit_scroll()
     
     # Добавляем CSS-анимации для всего приложения (включая анимацию для кнопок)
     from animations import add_animations_css
     add_animations_css()
     
-    # Проверяем, нужно ли скроллить к результатам (если они есть и установлен флаг)
-    if 'results' in st.session_state and st.session_state.get('need_scroll_to_results', False):
-        # Сохраняем флаг, чтобы можно было проверить его в консоли для отладки
-        has_scroll_flag = st.session_state.need_scroll_to_results
-        # Сбрасываем флаг сразу
-        st.session_state.need_scroll_to_results = False
-        
-        # Используем функцию из модуля scroll_manager для программного скролла к результатам
-        auto_scroll_on_load('calculation-results')
-        
-        # Показываем уведомление о прокрутке
-        st.success(f"Результаты расчета готовы! Прокрутка к элементу calculation-results... (was_flag={has_scroll_flag})")
+    # Импортируем и используем функцию для обработки скроллинга
+    from components.scroll_manager import handle_calculation_scroll
+    
+    # Обрабатываем случай автоматического скроллинга (полностью через Python)
+    scroll_triggered = handle_calculation_scroll()
     
     # Добавляем умную адаптацию для различных размеров экрана
     add_smart_device_adaptation()
@@ -2577,9 +2571,6 @@ def main():
         
     # Отображаем кнопку для скролла к результатам (если есть результаты)
     if 'results' in st.session_state:
-        # Создаем якорь для результатов (будет использоваться для навигации и программного скролла)
-        create_anchor("calculation-results")
-        
         # Кнопка для скролла к результатам (компактная и заметная)
         st.markdown("""
         <a href="#calculation-results" style="display: block; width: 90%; margin: 10px auto; padding: 10px; 
@@ -2588,6 +2579,14 @@ def main():
            ↓ Перейти к результатам расчета ↓
         </a>
         """, unsafe_allow_html=True)
+        
+        # Создаем якорь для результатов НЕПОСРЕДСТВЕННО перед отображением результатов
+        # Это важно для корректного скроллинга - якорь должен быть перед тем, что мы хотим показать
+        st.markdown("<div id='results-section-start'></div>", unsafe_allow_html=True)
+        create_anchor("calculation-results")
+        
+        # Добавляем явную заголовок-метку для результатов
+        st.markdown("<h2 style='margin-top: 30px; color: #0066cc;'>Результаты расчета</h2>", unsafe_allow_html=True)
         
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)

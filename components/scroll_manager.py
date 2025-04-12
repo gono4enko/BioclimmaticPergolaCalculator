@@ -57,7 +57,7 @@ def setup_scroll_functionality():
     </script>
     """, unsafe_allow_html=True)
 
-def create_scroll_target(target_id, label=None, height_px=20):
+def create_scroll_target(target_id, label=None, height_px=50):
     """
     Создает цель для скроллинга с поддержкой Python-механизма скроллинга.
     
@@ -66,60 +66,95 @@ def create_scroll_target(target_id, label=None, height_px=20):
         label (str, optional): Дополнительный текст для отладки
         height_px (int): Высота якоря в пикселях
     """
-    display_text = ""
-    if label:
-        display_text = f"<span style='display:none;'>{label}</span>"
+    debug_label = label if label else f"Якорь для {target_id}"
     
-    # Создаем якорь для скроллинга
+    # Создаем более заметный якорь для скроллинга с отступом сверху
     st.markdown(
-        f"""<div id="{target_id}" 
-             class="scroll-target" 
-             style="height:{height_px}px; visibility:hidden; margin-top:-60px; position:relative">
-             {display_text}
-        </div>""", 
+        f"""
+        <div id="{target_id}"
+             class="scroll-target"
+             style="display: block; height: {height_px}px; margin-top: 20px; margin-bottom: 10px; 
+                    position: relative; scroll-margin-top: 70px;">
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; 
+                      background-color: rgba(0, 102, 204, 0.1);"></div>
+            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; 
+                      background-color: rgba(0, 102, 204, 0.1);"></div>
+        </div>
+        """, 
         unsafe_allow_html=True
     )
     
-    # Проверяем, нужно ли скроллить к этому элементу сразу
+    # Выводим в лог информацию о создании якоря
+    print(f">>> Создан якорь: {target_id}")
+    
+    # Проверяем, нужно ли скроллить к этому элементу
     if '_scroll_to' in st.session_state and st.session_state['_scroll_to'] == target_id:
-        print(f"*** create_scroll_target: Найдена цель для автоматического скролла: {target_id}")
+        print(f"*** ВНИМАНИЕ: Найдена цель для автоматического скролла: {target_id}")
         
-        # Удаляем флаг скроллинга
-        del st.session_state['_scroll_to']
+        # Сбрасываем флаг скроллинга после обнаружения
+        st.session_state.pop('_scroll_to')
         
-        # Добавляем JavaScript для программного скролла
+        # Добавляем дополнительные стили и JavaScript для гарантированного скролла
         st.markdown(
             f"""
+            <style>
+            /* Стили для активного якоря */
+            #{target_id} {{
+                scroll-margin-top: 80px !important;
+                scroll-snap-margin-top: 80px !important;
+                border-top: 3px solid #0066cc !important;
+            }}
+            </style>
+            
             <script>
                 (function() {{
-                    function scrollToTarget() {{
+                    // Функция для скролла
+                    function doScrollToTarget() {{
                         try {{
-                            const element = document.getElementById("{target_id}");
-                            if (element) {{
-                                console.log("Python triggered scroll to {target_id}");
-                                element.scrollIntoView({{
-                                    behavior: 'smooth',
-                                    block: 'start'
+                            // Ищем элемент
+                            const targetElement = document.getElementById("{target_id}");
+                            
+                            if (targetElement) {{
+                                console.log("Скроллинг к элементу {target_id} запущен из Python");
+                                
+                                // Получаем позицию элемента
+                                const rect = targetElement.getBoundingClientRect();
+                                const absoluteElementTop = rect.top + window.pageYOffset;
+                                
+                                // Скроллим с отступом 80px от верха
+                                window.scrollTo({{
+                                    top: absoluteElementTop - 80,
+                                    behavior: 'smooth'
                                 }});
+                                console.log("Скролл к {target_id} выполнен, позиция Y:", absoluteElementTop);
                                 return true;
                             }}
-                            console.log("Element {target_id} not found for scrolling");
+                            
+                            console.log("Элемент {target_id} не найден при попытке скроллинга");
                             return false;
-                        }} catch(e) {{
-                            console.error("Error scrolling to {target_id}:", e);
+                        }} catch (e) {{
+                            console.error("Ошибка при скроллинге к {target_id}:", e);
                             return false;
                         }}
                     }}
                     
-                    // Попытка прокрутки с разной задержкой для надежности
-                    setTimeout(scrollToTarget, 100);
-                    setTimeout(scrollToTarget, 500);
-                    setTimeout(scrollToTarget, 1000);
+                    // Запускаем с несколькими временными задержками для гарантии
+                    console.log("Запланирован скроллинг к элементу {target_id}");
+                    setTimeout(doScrollToTarget, 200);
+                    setTimeout(doScrollToTarget, 500);
+                    setTimeout(doScrollToTarget, 1000);
+                    setTimeout(doScrollToTarget, 1500);
                 }})();
             </script>
             """,
             unsafe_allow_html=True
         )
+        
+        # Выводим заметное уведомление для пользователя
+        st.success(f"Скроллинг к результатам расчета...")
+        
+        # Добавляем метку для отладки
+        st.markdown(f"<!-- Якорь {target_id} активирован для скроллинга из Python -->", unsafe_allow_html=True)
 
 def create_scroll_button(text, target_id, variant="primary", use_container_width=True):
     """
@@ -236,11 +271,41 @@ def handle_calculation_scroll():
     Returns:
         bool: True если скролл был выполнен
     """
-    if 'results' in st.session_state and st.session_state.get('need_scroll_to_results', False):
-        # Сбрасываем флаг
+    # Проверяем наличие результатов и флага для скролла
+    has_results = 'results' in st.session_state
+    needs_scroll = st.session_state.get('need_scroll_to_results', False)
+    
+    print(f">>> handle_calculation_scroll: has_results={has_results}, needs_scroll={needs_scroll}")
+    
+    if has_results and needs_scroll:
+        # Сбрасываем флаг скролла
         st.session_state.need_scroll_to_results = False
-        # Выполняем автоматический скролл
-        auto_scroll_on_load('calculation-results')
-        return True
         
+        # Устанавливаем флаг для скролла к якорю
+        print(">>> Установка флага для скролла к результатам...")
+        
+        # Выводим отладочное сообщение
+        st.info("Выполняется автоматический скролл к результатам...")
+        
+        # Устанавливаем флаг для скролла через механизм Python
+        auto_scroll_on_load('calculation-results')
+        
+        # Сохраняем информацию, что скролл был выполнен
+        st.session_state['_scroll_performed'] = True
+        st.session_state['_scroll_timestamp'] = time.time()
+        
+        return True
+    
+    # Проверяем, был ли выполнен скролл в последние 5 секунд
+    if has_results and st.session_state.get('_scroll_performed', False):
+        # Проверяем, не истекло ли время
+        timestamp = st.session_state.get('_scroll_timestamp', 0)
+        if time.time() - timestamp < 5:  # Если прошло менее 5 секунд
+            print(">>> Повторная попытка скролла (в течение 5 сек после первой)")
+            auto_scroll_on_load('calculation-results')
+            return True
+        else:
+            # Сбрасываем флаг, если прошло более 5 секунд
+            st.session_state['_scroll_performed'] = False
+            
     return False
