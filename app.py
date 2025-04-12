@@ -1198,8 +1198,11 @@ def render_results(results):
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
     
-    # Создаем якорь для скролла с ID 
-    st.markdown('<div id="results" name="results"></div>', unsafe_allow_html=True)
+    # Создаем заметный якорь для скролла с ID - делаем его более заметным
+    st.markdown('<div id="results" name="results" style="position: relative; height: 5px;"></div>', unsafe_allow_html=True)
+    
+    # Добавляем заголовок "Результаты расчета" для лучшей видимости
+    st.markdown('<h2 id="results-header" style="text-align: center; margin-top: 10px; margin-bottom: 15px; padding: 10px; background-color: #f0f7ff; border-radius: 5px; color: #0066cc;">Результаты расчета</h2>', unsafe_allow_html=True)
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
@@ -1983,19 +1986,107 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Добавляет JavaScript для перехода к якорю результатов при нажатии на скрытую кнопку
-    и показывает анимированную подсказку для пользователя
+    Добавляет JavaScript для перехода к результатам расчета и показывает
+    яркую анимированную подсказку, чтобы пользователь обратил внимание на результаты
     """
-    # Добавляем JavaScript для автоматического нажатия на ссылку-якорь
-    # и создания заметной анимированной подсказки
+    # Добавляем улучшенный JavaScript для скролла с заметной визуальной индикацией
     st.markdown("""
     <script>
-        // Более надежная и очевидная для пользователя прокрутка к результатам
+        // Функция для скролла к результатам с визуальной индикацией
         function scrollToResults() {
             console.log('Attempting to scroll to results with visual indicator...');
             
-            // Создаем и добавляем в DOM мигающую стрелку-подсказку,
-            // чтобы пользователь понял, что нужно прокрутить вниз
+            // Функция для надежного скролла к результатам
+            function executeScroll() {
+                console.log('Executing scroll...');
+                
+                // Ищем элемент по ID или по заголовку
+                const resultsHeaderElement = document.getElementById('results-header');
+                const resultsElement = document.getElementById('results');
+                
+                // Пробуем найти заголовок результатов напрямую
+                if (resultsHeaderElement) {
+                    console.log('Found results header, scrolling there...');
+                    
+                    // Немного задержки для обеспечения загрузки элементов
+                    setTimeout(() => {
+                        resultsHeaderElement.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start' 
+                        });
+                        
+                        // Дополнительная визуальная индикация - подсвечиваем заголовок
+                        const originalBackground = resultsHeaderElement.style.backgroundColor;
+                        resultsHeaderElement.style.transition = 'background-color 0.5s ease';
+                        resultsHeaderElement.style.backgroundColor = '#ffeb3b';
+                        
+                        setTimeout(() => {
+                            resultsHeaderElement.style.backgroundColor = originalBackground;
+                        }, 1000);
+                    }, 100);
+                    
+                    return true;
+                }
+                
+                // Пробуем резервный вариант - скролл к якорю
+                if (resultsElement) {
+                    console.log('Found results anchor, scrolling there...');
+                    
+                    // Напрямую скроллим к элементу
+                    resultsElement.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                    
+                    // Также пробуем программно кликнуть по якорной ссылке
+                    window.location.hash = 'results';
+                    
+                    return true;
+                }
+                
+                // Ищем заголовки, содержащие текст "Результаты"
+                const resultsHeadings = Array.from(
+                    document.querySelectorAll('h1, h2, h3, h4, h5, h6')
+                ).filter(h => 
+                    h.innerText.includes('Результаты') || 
+                    h.innerText.includes('результаты')
+                );
+                
+                if (resultsHeadings.length > 0) {
+                    console.log('Found results heading by text, scrolling...');
+                    
+                    // Берем первый найденный заголовок
+                    const heading = resultsHeadings[0];
+                    
+                    // Скроллим к заголовку
+                    heading.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                    
+                    // Подсветка заголовка для привлечения внимания
+                    const originalBackground = heading.style.backgroundColor;
+                    heading.style.transition = 'background-color 0.5s ease';
+                    heading.style.backgroundColor = '#ffeb3b';
+                    
+                    setTimeout(() => {
+                        heading.style.backgroundColor = originalBackground;
+                    }, 1000);
+                    
+                    return true;
+                }
+                
+                // Крайний вариант - просто скроллим вниз на фиксированное расстояние
+                console.log('Fallback: scrolling by fixed amount');
+                window.scrollBy({ 
+                    top: 500, 
+                    behavior: 'smooth' 
+                });
+                
+                return false;
+            }
+            
+            // Создаем и показываем яркую подсказку-индикатор
             const scrollIndicator = document.createElement('div');
             scrollIndicator.innerHTML = '↓ РЕЗУЛЬТАТЫ РАСЧЕТА НИЖЕ ↓';
             scrollIndicator.style.position = 'fixed';
@@ -2007,103 +2098,74 @@ def scroll_to_results():
             scrollIndicator.style.padding = '12px 20px';
             scrollIndicator.style.borderRadius = '5px';
             scrollIndicator.style.zIndex = '9999';
-            scrollIndicator.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
+            scrollIndicator.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
             scrollIndicator.style.textAlign = 'center';
             scrollIndicator.style.fontWeight = 'bold';
-            scrollIndicator.style.fontSize = '16px';
+            scrollIndicator.style.fontSize = '18px';
             scrollIndicator.id = 'scroll-indicator';
             
-            // Добавляем стили для анимации мигания подсказки
+            // Стили для анимации пульсации подсказки
             const style = document.createElement('style');
             style.innerHTML = `
-                @keyframes blink-and-bounce {
-                    0% { opacity: 0.9; transform: translateX(-50%) translateY(0); }
-                    50% { opacity: 1; transform: translateX(-50%) translateY(-10px); }
-                    100% { opacity: 0.9; transform: translateX(-50%) translateY(0); }
+                @keyframes bounce-attention {
+                    0%, 100% { transform: translateX(-50%) translateY(0); }
+                    50% { transform: translateX(-50%) translateY(-15px); }
                 }
+                
                 #scroll-indicator {
-                    animation: blink-and-bounce 1.5s ease-in-out infinite;
+                    animation: bounce-attention 1.2s ease-in-out infinite;
                     cursor: pointer;
                 }
             `;
+            
             document.head.appendChild(style);
             document.body.appendChild(scrollIndicator);
             
-            // При клике на индикатор - скроллим к результатам
+            // При клике на индикатор - скроллим к результатам и удаляем индикатор
             scrollIndicator.addEventListener('click', function() {
-                scrollToTarget();
-                // Удаляем индикатор при клике
+                executeScroll();
                 document.body.removeChild(scrollIndicator);
             });
             
-            // Функция для прокрутки к целевому элементу
-            function scrollToTarget() {
-                // Ищем элемент с id="results"
-                const resultsElement = document.getElementById('results');
-                
-                if (resultsElement) {
-                    console.log('Found results element, scrolling...');
-                    
-                    // Программно скроллим к результатам
-                    resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    
-                    // Также создаем прямой клик по якорю для надежности
-                    const scrollLink = document.createElement('a');
-                    scrollLink.href = '#results';
-                    scrollLink.style.display = 'none';
-                    document.body.appendChild(scrollLink);
-                    scrollLink.click();
-                    
-                    // Удаляем ссылку после использования
-                    setTimeout(() => {
-                        document.body.removeChild(scrollLink);
-                    }, 100);
-                    
-                    return true;
-                }
-                
-                console.log('Results element not found');
-                
-                // Если якорь не найден, ищем заголовок или просто скроллим вниз
-                const resultsHeadings = Array.from(document.querySelectorAll('h2, h3'))
-                    .filter(h => h.textContent.includes('Результаты расчета') || 
-                                 h.textContent.includes('результат'));
-                
-                if (resultsHeadings.length > 0) {
-                    console.log('Found results heading, scrolling...');
-                    const heading = resultsHeadings[0];
-                    window.scrollTo({
-                        top: heading.offsetTop - 100,
-                        behavior: 'smooth'
-                    });
-                    return true;
-                }
-                
-                // Крайний случай - просто скроллим ниже
-                console.log('No targets found, scrolling down as fallback');
-                window.scrollTo({
-                    top: window.innerHeight,  // Примерно на высоту экрана
-                    behavior: 'smooth'
-                });
-                
-                return false;
-            }
+            // Сначала запускаем скролл
+            executeScroll();
             
-            // Выполняем скролл сразу
-            setTimeout(scrollToTarget, 500);
-            
-            // Удаляем индикатор через 8 секунд (или пользователь кликнет на него раньше)
+            // Автоматически удаляем индикатор через 8 секунд
             setTimeout(() => {
                 const indicator = document.getElementById('scroll-indicator');
-                if (indicator) {
-                    document.body.removeChild(indicator);
+                if (indicator && indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
                 }
             }, 8000);
         }
         
-        // Запускаем функцию скролла сразу при загрузке скрипта
-        // и повторяем через секунду для надежности
-        setTimeout(scrollToResults, 300);
+        // Запускаем скролл при загрузке страницы и повторно через 1 секунду для надежности
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, scheduling scroll');
+            setTimeout(scrollToResults, 500);
+        });
+        
+        // Также запускаем сразу для случаев, когда DOM уже загружен
+        // Используем MutationObserver для определения момента, когда результаты появятся в DOM
+        console.log('Setting up MutationObserver to detect results');
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.addedNodes.length) {
+                    // Проверяем, появился ли элемент с id="results-header"
+                    if (document.getElementById('results-header') || 
+                        document.getElementById('results')) {
+                        console.log('Results detected in DOM, triggering scroll');
+                        setTimeout(scrollToResults, 300);
+                        observer.disconnect();
+                    }
+                }
+            });
+        });
+        
+        // Наблюдаем за изменениями в DOM
+        observer.observe(document.body, { childList: true, subtree: true });
+        
+        // Дополнительно запускаем через секунду на всякий случай
         setTimeout(scrollToResults, 1000);
     </script>
     """, unsafe_allow_html=True)
