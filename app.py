@@ -2309,60 +2309,7 @@ def add_smart_device_adaptation():
     </style>
     """, unsafe_allow_html=True)
 
-def add_auto_scroll_js():
-    """
-    Добавляет JavaScript для программного скроллинга к нужному элементу
-    Используется для автоматического скролла после выполнения расчета
-    """
-    st.markdown("""
-    <script>
-        function scrollToElement(elementId) {
-            console.log('Scrolling to element:', elementId);
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-                return true;
-            }
-            return false;
-        }
-        
-        window.scrollToResults = function() {
-            return scrollToElement('results');
-        }
-        
-        // Функция вызывается из Python через session state
-        window.autoScrollOnLoad = function() {
-            console.log('Auto scroll on load triggered');
-            setTimeout(function() {
-                scrollToResults();
-            }, 500);
-        }
-    </script>
-    """, unsafe_allow_html=True)
-    
-    # Если есть флаг автоматического скролла, выполняем JavaScript
-    if st.session_state.get('auto_scroll_to_results', False):
-        st.markdown("""
-        <script>
-            // Запускаем автоскролл при загрузке страницы
-            document.addEventListener('DOMContentLoaded', function() {
-                console.log('DOM loaded, running auto scroll');
-                window.autoScrollOnLoad();
-            });
-            
-            // Также пробуем запустить сразу
-            console.log('Immediate auto scroll attempt');
-            setTimeout(function() {
-                window.autoScrollOnLoad();
-            }, 300);
-        </script>
-        """, unsafe_allow_html=True)
-        
-        # Сбрасываем флаг, чтобы не скроллить при каждой перезагрузке
-        st.session_state.auto_scroll_to_results = False
+# Функция JavaScript-скроллинга больше не нужна, так как мы используем подход на основе Streamlit session_state
 
 def main():
     """Основная функция приложения"""
@@ -2376,8 +2323,13 @@ def main():
     # Настраиваем стили скроллинга и навигации
     setup_streamlit_scroll()
     
-    # Добавляем JavaScript для автоскролла
-    add_auto_scroll_js()
+    # Проверяем, нужно ли скроллить к результатам (если они есть и установлен флаг)
+    if 'results' in st.session_state and st.session_state.get('need_scroll_to_results', False):
+        st.session_state.need_scroll_to_results = False  # Сбрасываем флаг сразу
+        # Используем функцию из модуля scroll_manager для программного скролла к результатам
+        auto_scroll_on_load('calculation-results')
+        # Показываем уведомление о прокрутке
+        st.success("Результаты расчета готовы! Прокрутка к результатам...")
     
     # Добавляем умную адаптацию для различных размеров экрана
     add_smart_device_adaptation()
@@ -2593,11 +2545,11 @@ def main():
                 st.session_state.results = results
                 st.session_state.options = options
                 
-                # Добавляем флаг, что нужно прокрутить к результатам
+                # Добавляем флаг, что нужно прокрутить к результатам (для ссылки)
                 st.session_state.scroll_to_results = True
                 
-                # Устанавливаем флаг для автоматического скролла к результатам
-                st.session_state.auto_scroll_to_results = True
+                # Устанавливаем флаг для автоматического скролла к результатам (для Python-скрипта)
+                st.session_state.need_scroll_to_results = True
                 
                 # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
                 st.session_state.description_shown = False
@@ -2613,9 +2565,12 @@ def main():
         
     # Отображаем кнопку для скролла к результатам (если есть результаты)
     if 'results' in st.session_state:
+        # Создаем якорь для результатов (будет использоваться для навигации и программного скролла)
+        create_anchor("calculation-results")
+        
         # Кнопка для скролла к результатам (компактная и заметная)
         st.markdown("""
-        <a href="#results" style="display: block; width: 90%; margin: 10px auto; padding: 10px; 
+        <a href="#calculation-results" style="display: block; width: 90%; margin: 10px auto; padding: 10px; 
                        background-color: #0066cc; color: white; text-align: center; 
                        border-radius: 5px; text-decoration: none; font-weight: bold;">
            ↓ Перейти к результатам расчета ↓
@@ -2627,13 +2582,10 @@ def main():
         
         # Если нужна прокрутка к результатам, добавляем кнопку навигации
         if st.session_state.get('scroll_to_results', False):
-            # Добавляем якорь для результатов (будет использоваться для навигации)
-            create_anchor("calculation-results")
-            
             # Отображаем кнопку для перехода к результатам расчета
             create_navigation_button(
                 text="Перейти к результатам расчета", 
-                target_id="results",
+                target_id="calculation-results",
                 color="#00a651", 
                 margin="15px auto"
             )
