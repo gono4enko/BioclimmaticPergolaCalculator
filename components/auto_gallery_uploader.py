@@ -131,7 +131,7 @@ def generate_image_description(image_name):
     return f"{base_desc} - проект реализации, {current_year}"
 
 def optimize_image(source_path, target_path=None, max_width=MAX_IMAGE_WIDTH, 
-                  max_height=MAX_IMAGE_HEIGHT, quality=JPEG_QUALITY):
+                  max_height=MAX_IMAGE_HEIGHT, quality=JPEG_QUALITY, preserve_original=True):
     """
     Оптимизирует изображение: изменяет размер и сжимает.
     
@@ -141,6 +141,7 @@ def optimize_image(source_path, target_path=None, max_width=MAX_IMAGE_WIDTH,
         max_width (int): Максимальная ширина
         max_height (int): Максимальная высота
         quality (int): Качество JPEG (0-100)
+        preserve_original (bool): Сохранять исходный файл (True) или удалять (False)
         
     Returns:
         bool: True если оптимизация успешна
@@ -275,13 +276,14 @@ def update_image_description(image_filename, description):
         logger.error(f"Ошибка добавления описания для {image_filename}: {str(e)}")
         return False
 
-def process_image(source_path, add_to_gallery=True):
+def process_image(source_path, add_to_gallery=True, preserve_original=True):
     """
     Обрабатывает изображение: оптимизирует имя, изменяет размер и добавляет в галерею.
     
     Args:
         source_path (str): Путь к исходному изображению
         add_to_gallery (bool): Добавлять ли изображение в галерею автоматически
+        preserve_original (bool): Сохранять исходный файл (True) или удалять (False)
         
     Returns:
         tuple: (успех, путь к обработанному файлу, сообщение)
@@ -302,7 +304,7 @@ def process_image(source_path, add_to_gallery=True):
         # Если это HEIC, конвертируем в JPEG
         if extension.lower() in ('.heic', '.heif'):
             if heic_converter.check_heif_convert():
-                jpeg_path = heic_converter.heic_to_jpeg(source_path, preserve_original=True)
+                jpeg_path = heic_converter.heic_to_jpeg(source_path, preserve_original=preserve_original)
                 if jpeg_path:
                     source_path = jpeg_path
                     filename = os.path.basename(jpeg_path)
