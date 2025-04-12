@@ -2062,6 +2062,19 @@ def add_smart_device_adaptation():
     <style>
     /* Умная адаптация для различных размеров экрана */
     
+    /* Предотвращение горизонтальной прокрутки на всех устройствах */
+    html, body {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden !important;
+    }
+    
+    .main, .block-container, .stApp {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden !important;
+    }
+    
     /* Стили для всех устройств (базовые) */
     :root {
         --spacing-base: 0.5rem;
@@ -2401,9 +2414,11 @@ def main():
         }
         
         /* Убираем горизонтальный скролл на мобильных */
-        div[data-testid="stTable"],
-        div[data-testid="stDataFrame"] {
+        html, body, .stApp, .main, .block-container, 
+        div.gallery-container, div[data-testid="stTable"],
+        div[data-testid="stDataFrame"], section[data-testid="stVerticalBlock"] {
             width: 100% !important;
+            max-width: 100% !important;
             overflow-x: hidden !important;
         }
         
