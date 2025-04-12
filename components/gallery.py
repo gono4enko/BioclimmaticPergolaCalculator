@@ -75,6 +75,9 @@ def display_installation_counter():
     """
     count = get_installation_count()
     
+    # Добавляем отладочное сообщение
+    st.markdown("<div style='text-align: center; margin-top: 15px; margin-bottom: -15px; font-weight: bold; color: #004B9A;'>Отображение счетчика установленных пергол</div>", unsafe_allow_html=True)
+    
     # Создаем контейнер с красивой анимацией и стилем, согласованным со статьями
     counter_html = f"""
     <div class="installation-counter">
@@ -92,16 +95,18 @@ def display_installation_counter():
         margin: 15px 20px 30px 20px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         animation: pulse 2s infinite;
+        z-index: 1000;
+        position: relative;
     }}
     
     .counter-number {{
-        font-size: 3.2rem;
+        font-size: 3.5rem;
         font-weight: bold;
         margin-bottom: 5px;
     }}
     
     .counter-label {{
-        font-size: 1.2rem;
+        font-size: 1.4rem;
     }}
     
     @keyframes pulse {{

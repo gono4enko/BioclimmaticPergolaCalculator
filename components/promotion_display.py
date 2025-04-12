@@ -430,9 +430,17 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
         discount_display = promo.get("discount_display", "")
         discount_amount = promo.get("discount_amount", 0)
         
+        # Проверяем, содержит ли имя акции символ новой строки
+        promo_name = promo.get('name', 'Скидка')
+        name_with_discount = f"{promo_name} ({discount_display})"
+        
+        # Если это акция про большие размеры, перестраиваем текст
+        if "Большие размеры" in promo_name:
+            name_with_discount = f"Большие размеры<br>дополнительная скидка ({discount_display})"
+        
         st.markdown(f"""
         <div class="discount-item">
-            <div class="discount-name">{promo.get('name', 'Скидка')} ({discount_display})</div>
+            <div class="discount-name">{name_with_discount}</div>
             <div class="discount-amount">-{discount_amount:,.0f} ₽</div>
         </div>
         """, unsafe_allow_html=True)
