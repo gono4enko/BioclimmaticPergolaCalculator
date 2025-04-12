@@ -1057,6 +1057,16 @@ def render_options_form():
     """
     st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Параметры перголы</h2>", unsafe_allow_html=True)
     
+    # Стили для всех заголовков полей
+    st.markdown("""
+    <style>
+    /* Стиль для заголовков всех полей ввода */
+    .stRadio > label, div[data-testid="stRadio"] label {
+        font-weight: 500 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Тип перголы
     pergola_type = st.radio(
         "Выберите тип перголы",
@@ -1081,7 +1091,7 @@ def render_options_form():
         horizontal=True
     )
     
-    # Освещение - с минимальными отступами
+    # Освещение - с минимальными отступами и вертикальным расположением чекбоксов
     st.markdown("""
     <style>
     /* Стили для чекбоксов с минимальными отступами */
@@ -1103,32 +1113,42 @@ def render_options_form():
         margin-top: -10px !important;
         padding-top: 0 !important;
     }
+    
+    /* Для вертикального расположения чекбоксов в мобильной версии и на desktop */
+    @media (max-width: 1200px) {
+        .stHorizontalBlock {
+            flex-direction: column !important;
+        }
+        
+        .stHorizontalBlock > div {
+            width: 100% !important;
+            min-width: 100% !important;
+        }
+    }
     </style>
     """, unsafe_allow_html=True)
     
     # Добавляем компактный заголовок "Освещение"
     st.markdown('<p class="lighting-section-header">Освещение</p>', unsafe_allow_html=True)
     
+    # Создаем колонки для чекбоксов (но через CSS делаем их вертикальными)
+    col1, col2 = st.columns(2)
+    
     # Инициализируем список для опций освещения
     lighting_options = []
     
-    # Вертикальное расположение чекбоксов освещения
-    st.markdown('<div class="tight-checkbox-layout">', unsafe_allow_html=True)
+    # Первый чекбокс - в первой колонке
+    with col1:
+        if st.checkbox("Белая светодиодная лента", value=False, key="white_led_checkbox", label_visibility="visible"):
+            lighting_options.append("white_led")
     
-    # Первый чекбокс
-    if st.checkbox("Белая светодиодная лента", value=False, key="white_led_checkbox", label_visibility="visible"):
-        lighting_options.append("white_led")
+    # Второй чекбокс во второй колонке (но через CSS они будут отображаться вертикально)
+    with col2:
+        if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_checkbox", label_visibility="visible"):
+            lighting_options.append("rgb_led")
     
-    # Второй чекбокс с уменьшенным отступом
-    st.markdown('<div class="second-checkbox">', unsafe_allow_html=True)
-    if st.checkbox("RGB светодиодная лента", value=False, key="rgb_led_checkbox", label_visibility="visible"):
-        lighting_options.append("rgb_led")
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Установка - с минимальным отступом
-    st.markdown("<p style='font-weight: 500; margin-bottom: 0px; margin-top: 0px;'>Установка</p>", unsafe_allow_html=True)
+    # Установка - используем такой же заголовок, как и для освещения
+    st.markdown('<p class="lighting-section-header">Установка</p>', unsafe_allow_html=True)
     
     installation = st.checkbox("С установкой", value=True, key="installation_checkbox", label_visibility="visible")
     
