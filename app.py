@@ -1981,7 +1981,83 @@ def send_page_height_to_parent():
     </script>
     """, unsafe_allow_html=True)
 
-# Функция scroll_to_results() была удалена и заменена на подход с session_state.need_to_scroll
+def scroll_to_results():
+    """
+    Добавляет JavaScript для перехода к якорю результатов при нажатии на скрытую кнопку
+    """
+    # Добавляем JavaScript для автоматического нажатия на ссылку-якорь
+    st.markdown("""
+    <script>
+        // Используем URL-хэш для скролла
+        function scrollToResults() {
+            console.log('Attempting to scroll to results...');
+            
+            // Ищем элемент с id="results"
+            const resultsElement = document.getElementById('results');
+            
+            if (resultsElement) {
+                console.log('Found results element, scrolling...');
+                
+                // Программно создаем и кликаем по ссылке на якорь
+                const scrollLink = document.createElement('a');
+                scrollLink.href = '#results';
+                scrollLink.style.display = 'none';
+                document.body.appendChild(scrollLink);
+                
+                // Прокручиваем с задержкой для надежности
+                setTimeout(() => {
+                    scrollLink.click();
+                    console.log('Clicked on results anchor link');
+                    
+                    // Удаляем ссылку после использования
+                    setTimeout(() => {
+                        document.body.removeChild(scrollLink);
+                    }, 100);
+                }, 500);
+                
+                return true;
+            }
+            
+            console.log('Results element not found');
+            
+            // Если якорь не найден, ищем заголовок или просто скроллим вниз
+            const resultsHeadings = Array.from(document.querySelectorAll('h2'))
+                .filter(h => h.textContent.includes('Результаты расчета'));
+            
+            if (resultsHeadings.length > 0) {
+                console.log('Found results heading, scrolling...');
+                const heading = resultsHeadings[0];
+                window.scrollTo({
+                    top: heading.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+                return true;
+            }
+            
+            // Крайний случай - просто скроллим на определенное расстояние вниз
+            console.log('No targets found, scrolling down as fallback');
+            window.scrollTo({
+                top: document.body.scrollHeight / 2,  // Примерно в середину страницы
+                behavior: 'smooth'
+            });
+            
+            return false;
+        }
+        
+        // Выполняем скролл после загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded, scheduling scroll');
+            setTimeout(scrollToResults, 300);
+        });
+        
+        // Также выполняем скролл сразу (для случая, когда DOM уже загружен)
+        console.log('Script loaded, scheduling immediate scroll');
+        setTimeout(scrollToResults, 500);
+        
+        // И выполняем третью попытку для надежности
+        setTimeout(scrollToResults, 1500);
+    </script>
+    """, unsafe_allow_html=True)
 
 def add_smart_device_adaptation():
     """
@@ -2453,13 +2529,13 @@ def main():
     st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
     
     # Инициализируем ключ для скролла, если его еще нет
-    if "need_to_scroll" not in st.session_state:
-        st.session_state.need_to_scroll = False
+    if "scroll_to_results" not in st.session_state:
+        st.session_state.scroll_to_results = False
     
     # Определим обработчик события для кнопки расчета
     def handle_calc_button():
         # Установим флаг, что нам нужно будет скроллить к результатам после расчета
-        st.session_state.need_to_scroll = True
+        st.session_state.scroll_to_results = True
         # Также сбросим флаг отображения описания
         st.session_state.description_shown = False
         
@@ -2491,71 +2567,16 @@ def main():
         
     # Отображаем кнопку для скролла к результатам (если есть результаты)
     if 'results' in st.session_state:
-        # Кнопка для скролла к результатам (компактная и заметная)
-        st.markdown("""
-        <a href="#final_price_anchor" style="display: block; width: 90%; margin: 10px auto; padding: 10px; 
-                       background-color: #0066cc; color: white; text-align: center; 
-                       border-radius: 5px; text-decoration: none; font-weight: bold;">
-           ↓ Перейти к результатам расчета ↓
-        </a>
-        """, unsafe_allow_html=True)
-        
         # Показываем общий результат и детальную информацию
+        # Добавляем якорь для результатов
+        st.markdown('<div id="results"></div>', unsafe_allow_html=True)
         render_results(st.session_state.results)
         
-        # НОВЫЙ ПОДХОД: используем якорь в URL
-        # При расчете будем добавлять фрагмент #final_price_anchor к URL
-        # И страница автоматически скроллит к этому якорю
-        if 'results' in st.session_state and st.session_state.get('need_to_scroll', False):
-            # Добавляем JavaScript для изменения URL через history.replaceState
-            st.markdown("""
-            <script>
-            // Функция добавления якоря к URL без перезагрузки страницы
-            function addAnchorToURL() {
-                // Получаем текущий URL
-                let currentURL = window.location.href;
-                
-                // Убираем старый якорь, если он есть
-                currentURL = currentURL.split('#')[0];
-                
-                // Добавляем якорь к URL
-                history.replaceState(null, null, currentURL + "#final_price_anchor");
-                
-                console.log("URL обновлен с якорем #final_price_anchor");
-                
-                // Пробуем вручную вызвать скроллинг к якорю
-                setTimeout(function() {
-                    const target = document.getElementById('final_price_anchor');
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'auto',
-                            block: 'start'
-                        });
-                        console.log("Выполнен скролл к элементу final_price_anchor");
-                    }
-                }, 200);
-            }
-            
-            // Выполняем сразу
-            addAnchorToURL();
-            
-            // А также добавляем обработчик загрузки, чтобы точно сработало
-            window.addEventListener('load', addAnchorToURL);
-            </script>
-            """, unsafe_allow_html=True)
-            
-            # Добавляем явную кнопку для скролла к результатам
-            st.markdown("""
-            <div style="text-align: center; margin: 15px 0;">
-              <button onclick="document.getElementById('final_price_anchor').scrollIntoView({behavior: 'smooth', block: 'start'})" 
-                style="background-color: #0066cc; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
-                Скроллить к результатам
-              </button>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Сбрасываем флаг, чтобы не делать скролл при каждом обновлении
-            st.session_state.need_to_scroll = False
+        # Если нужна прокрутка к результатам, вызываем функцию
+        if 'results' in st.session_state and st.session_state.get('scroll_to_results', False):
+            scroll_to_results()
+            # Сбрасываем флаг, чтобы не вызывать скрипт при каждом обновлении
+            st.session_state.scroll_to_results = False
     
     # Добавляем галерею проектов и счетчик установленных пергол
     # Разделяем содержимое после калькулятора
