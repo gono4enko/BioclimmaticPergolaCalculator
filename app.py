@@ -14,13 +14,6 @@ from datetime import datetime
 # Импортируем модуль для отображения галереи проектов
 from components.gallery import display_gallery_section
 
-# Импортируем модуль защиты контента, если он существует
-try:
-    import content_protection
-    CONTENT_PROTECTION_ENABLED = True
-except ImportError:
-    CONTENT_PROTECTION_ENABLED = False
-
 def get_plural_form(number, one, two, five):
     """
     Возвращает правильную форму существительного для числительного по правилам русского языка.
@@ -1205,19 +1198,8 @@ def render_results(results):
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
     
-    # Используем встроенные контейнеры Streamlit для обеспечения скроллинга
-    # В этой версии Streamlit параметры border и key не поддерживаются
-    results_container = st.container()
-    # Добавляем якорь для скроллинга
-    st.markdown('<div id="results_anchor_container"></div>', unsafe_allow_html=True)
-    
-    # Добавляем заголовок "Результаты расчета" для лучшей видимости
-    with results_container:
-        st.markdown("""
-        <h2 class="results-header" style="text-align: center; margin-top: 10px; margin-bottom: 15px; padding: 15px; 
-        background-color: #f0f7ff; border-radius: 8px; color: #0066cc; font-weight: bold; 
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">Результаты расчета</h2>
-        """, unsafe_allow_html=True)
+    # Создаем якорь для скролла с ID 
+    st.markdown('<div id="results" name="results"></div>', unsafe_allow_html=True)
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
@@ -1592,29 +1574,25 @@ def render_results(results):
             modular_description = get_modular_system_description()
             display_formatted_description(modular_description)
             
-            # Отображаем изображение модульной системы с улучшенной обработкой ошибок
+            # Отображаем изображение модульной системы
             modular_images = get_pergola_images("MODULAR")
             modular_caption = get_pergola_image_caption("MODULAR")
             
             if modular_images:
-                image_displayed = False
-                import os
+                # Пробуем загрузить изображения по очереди, пока не найдем рабочее
                 for img_path in modular_images:
                     try:
                         # Проверяем, существует ли файл
+                        import os
                         if not os.path.exists(img_path):
                             continue
                         
-                        # Отображаем изображение
-                        st.image(img_path, caption=modular_caption, use_column_width=True)
-                        image_displayed = True
+                        display_image_with_padding(img_path, caption=modular_caption)
                         break
                     except Exception as e:
-                        print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
                         continue
-                
-                if not image_displayed:
-                    st.warning("Не удалось загрузить изображение модульной системы")
+                else:
+                    st.warning(f"Не удалось загрузить изображение модульной системы")
             
             # Добавляем информацию о системе водоотведения для всех типов пергол
             # Отображаем описание системы водоотведения из модуля конфигурации
@@ -1626,24 +1604,14 @@ def render_results(results):
             drainage_caption = get_pergola_image_caption("DRAINAGE")
             
             if drainage_images:
-                image_displayed = False
-                import os
                 for img_path in drainage_images:
                     try:
-                        # Проверяем, существует ли файл
-                        if not os.path.exists(img_path):
-                            continue
-                        
-                        # Отображаем изображение
-                        st.image(img_path, caption=drainage_caption, use_column_width=True)
-                        image_displayed = True
+                        display_image_with_padding(img_path, caption=drainage_caption)
                         break
                     except Exception as e:
-                        print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
                         continue
-                
-                if not image_displayed:
-                    st.warning("Не удалось загрузить изображение системы водоотведения")
+                else:
+                    st.warning(f"Не удалось загрузить изображение системы водоотведения")
             
             # Добавляем информацию о приводе Bansbach только для пергол B500NEW
             if pergola_type == "B500NEW":
@@ -1655,24 +1623,14 @@ def render_results(results):
                 bansbach_caption = get_pergola_image_caption("BANSBACH")
                 
                 if bansbach_images:
-                    image_displayed = False
-                    import os
                     for img_path in bansbach_images:
                         try:
-                            # Проверяем, существует ли файл
-                            if not os.path.exists(img_path):
-                                continue
-                            
-                            # Отображаем изображение
-                            st.image(img_path, caption=bansbach_caption, use_column_width=True)
-                            image_displayed = True
+                            display_image_with_padding(img_path, caption=bansbach_caption)
                             break
                         except Exception as e:
-                            print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
                             continue
-                    
-                    if not image_displayed:
-                        st.warning("Не удалось загрузить изображение привода Bansbach")
+                    else:
+                        st.warning(f"Не удалось загрузить изображение привода Bansbach")
             
             # Добавляем информацию о приводе Somfy только для пергол B700NEW
             if pergola_type == "B700NEW":
@@ -1684,24 +1642,14 @@ def render_results(results):
                 somfy_caption = get_pergola_image_caption("SOMFY")
                 
                 if somfy_images:
-                    image_displayed = False
-                    import os
                     for img_path in somfy_images:
                         try:
-                            # Проверяем, существует ли файл
-                            if not os.path.exists(img_path):
-                                continue
-                            
-                            # Отображаем изображение
-                            st.image(img_path, caption=somfy_caption, use_column_width=True)
-                            image_displayed = True
+                            display_image_with_padding(img_path, caption=somfy_caption)
                             break
                         except Exception as e:
-                            print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
                             continue
-                    
-                    if not image_displayed:
-                        st.warning("Не удалось загрузить изображение привода Somfy")
+                    else:
+                        st.warning(f"Не удалось загрузить изображение привода Somfy")
             
             # Добавляем описание вариантов установки и вертикальных систем для всех типов пергол
             bioclimatic_install_description = get_bioclimatic_install_description()
@@ -1712,24 +1660,14 @@ def render_results(results):
             install_system_caption = get_pergola_image_caption("INSTALL_SYSTEM")
             
             if install_system_images:
-                image_displayed = False
-                import os
                 for img_path in install_system_images:
                     try:
-                        # Проверяем, существует ли файл
-                        if not os.path.exists(img_path):
-                            continue
-                        
-                        # Отображаем изображение
-                        st.image(img_path, caption=install_system_caption, use_column_width=True)
-                        image_displayed = True
+                        display_image_with_padding(img_path, caption=install_system_caption)
                         break
                     except Exception as e:
-                        print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
                         continue
-                
-                if not image_displayed:
-                    st.warning("Не удалось загрузить изображение вариантов установки")
+                else:
+                    st.warning(f"Не удалось загрузить изображение вариантов установки")
             
             # Добавляем техническое описание ламелей только для пергол B500 и B700, не для B600
             if pergola_type in ["B500NEW", "B700NEW"]:
@@ -1741,24 +1679,14 @@ def render_results(results):
                 lamella_engineering_caption = get_pergola_image_caption("LAMELLA_ENGINEERING")
                 
                 if lamella_engineering_images:
-                    image_displayed = False
-                    import os
                     for img_path in lamella_engineering_images:
                         try:
-                            # Проверяем, существует ли файл
-                            if not os.path.exists(img_path):
-                                continue
-                            
-                            # Отображаем изображение
-                            st.image(img_path, caption=lamella_engineering_caption, use_column_width=True)
-                            image_displayed = True
+                            display_image_with_padding(img_path, caption=lamella_engineering_caption)
                             break
                         except Exception as e:
-                            print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
                             continue
-                    
-                    if not image_displayed:
-                        st.warning("Не удалось загрузить изображение технических характеристик ламелей")
+                    else:
+                        st.warning(f"Не удалось загрузить изображение технических характеристик ламелей")
     
     # Добавляем отступ в конце страницы
     st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
@@ -2055,35 +1983,80 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Чистая функция для прокрутки к результатам, использующая нативный механизм Streamlit.
-    Эта функция добавляет стилизацию для подсветки результатов и применяет анимацию.
+    Добавляет JavaScript для перехода к якорю результатов при нажатии на скрытую кнопку
     """
-    # Добавляем стили для привлечения внимания к результатам
+    # Добавляем JavaScript для автоматического нажатия на ссылку-якорь
     st.markdown("""
-    <style>
-    /* Добавляем анимацию для заголовка результатов */
-    .results-header {
-        background-color: #f0f8ff;
-        border-radius: 8px;
-        padding: 15px;
-        margin-top: 10px;
-        margin-bottom: 15px;
-        border-left: 4px solid #0066cc;
-        animation: highlight 2s ease-in-out;
-    }
-    
-    @keyframes highlight {
-        0% { background-color: #f0f7ff; box-shadow: 0 0 5px rgba(0, 102, 204, 0.3); }
-        50% { background-color: #d0e5ff; box-shadow: 0 0 15px rgba(0, 102, 204, 0.5); }
-        100% { background-color: #f0f8ff; box-shadow: 0 0 5px rgba(0, 102, 204, 0.3); }
-    }
-    
-    /* Улучшаем видимость контейнера результатов */
-    [data-testid="stVerticalBlock"] [data-key="results_anchor_container"] {
-        scroll-margin-top: 80px;
-        padding-top: 10px;
-    }
-    </style>
+    <script>
+        // Используем URL-хэш для скролла
+        function scrollToResults() {
+            console.log('Attempting to scroll to results...');
+            
+            // Ищем элемент с id="results"
+            const resultsElement = document.getElementById('results');
+            
+            if (resultsElement) {
+                console.log('Found results element, scrolling...');
+                
+                // Программно создаем и кликаем по ссылке на якорь
+                const scrollLink = document.createElement('a');
+                scrollLink.href = '#results';
+                scrollLink.style.display = 'none';
+                document.body.appendChild(scrollLink);
+                
+                // Прокручиваем с задержкой для надежности
+                setTimeout(() => {
+                    scrollLink.click();
+                    console.log('Clicked on results anchor link');
+                    
+                    // Удаляем ссылку после использования
+                    setTimeout(() => {
+                        document.body.removeChild(scrollLink);
+                    }, 100);
+                }, 500);
+                
+                return true;
+            }
+            
+            console.log('Results element not found');
+            
+            // Если якорь не найден, ищем заголовок или просто скроллим вниз
+            const resultsHeadings = Array.from(document.querySelectorAll('h2'))
+                .filter(h => h.textContent.includes('Результаты расчета'));
+            
+            if (resultsHeadings.length > 0) {
+                console.log('Found results heading, scrolling...');
+                const heading = resultsHeadings[0];
+                window.scrollTo({
+                    top: heading.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+                return true;
+            }
+            
+            // Крайний случай - просто скроллим на определенное расстояние вниз
+            console.log('No targets found, scrolling down as fallback');
+            window.scrollTo({
+                top: document.body.scrollHeight / 2,  // Примерно в середину страницы
+                behavior: 'smooth'
+            });
+            
+            return false;
+        }
+        
+        // Выполняем скролл после загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded, scheduling scroll');
+            setTimeout(scrollToResults, 300);
+        });
+        
+        // Также выполняем скролл сразу (для случая, когда DOM уже загружен)
+        console.log('Script loaded, scheduling immediate scroll');
+        setTimeout(scrollToResults, 500);
+        
+        // И выполняем третью попытку для надежности
+        setTimeout(scrollToResults, 1500);
+    </script>
     """, unsafe_allow_html=True)
 
 def add_smart_device_adaptation():
@@ -2353,32 +2326,11 @@ def main():
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
     
-    # Инициализируем систему защиты контента, если она включена
-    if CONTENT_PROTECTION_ENABLED:
-        try:
-            content_protection.initialize_content_protection()
-        except Exception as e:
-            print(f"Ошибка инициализации защиты контента: {str(e)}")
-    
     # Добавляем умную адаптацию для различных размеров экрана
     add_smart_device_adaptation()
     
     # Добавляем код счетчика Яндекс.Метрики
     add_yandex_metrika()
-    
-    # Добавляем информацию в сайдбар
-    with st.sidebar:
-        st.title("Навигация")
-        st.write("**Основные функции:**")
-        st.page_link("app.py", label="🏡 Калькулятор пергол")
-        
-        st.write("**Тестовые инструменты:**")
-        st.page_link("pages/seasonal_promotions_test.py", label="🔄 Тест сезонных акций", help="Тестирование системы автоматической смены сезонных акций")
-        
-        # Добавляем ссылку на административную страницу защиты контента, если она включена
-        if CONTENT_PROTECTION_ENABLED:
-            st.write("**Администрирование:**")
-            st.page_link("pages/content_protection_admin.py", label="🔒 Защита контента", help="Управление защитой контента от непреднамеренных изменений")
     
     # Проверяем, нужно ли отправить событие в Яндекс.Метрику
     if st.session_state.get('send_ya_metrika_event', False):
@@ -2576,47 +2528,8 @@ def main():
     # Добавляем отступ перед кнопкой расчета
     st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
     
-    # Добавляем стили для улучшенной кнопки расчета
-    st.markdown("""
-    <style>
-    /* Стили для кнопки расчета - увеличенная высота и анимация */
-    div[data-testid="stButton"] > button[kind="primary"] {
-        height: 50px !important;
-        font-size: 18px !important;
-        font-weight: 500 !important;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    /* Анимация наведения для кнопки расчета */
-    div[data-testid="stButton"] > button[kind="primary"]:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3) !important;
-    }
-    
-    /* Анимация нажатия для кнопки расчета */
-    div[data-testid="stButton"] > button[kind="primary"]:active {
-        transform: translateY(1px) !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-    }
-    
-    /* Пульсирующая анимация для привлечения внимания */
-    @keyframes pulse-button {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.03); }
-        100% { transform: scale(1); }
-    }
-    
-    div[data-testid="stButton"] > button[kind="primary"] {
-        animation: pulse-button 1.2s infinite ease-in-out;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Кнопка для расчета - простая с уникальным идентификатором
-    calc_button = st.button("Рассчитать стоимость", type="primary", key="calc_button", use_container_width=True)
-    
-    if calc_button:
+    # Кнопка для расчета с улучшенным стилем
+    if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
         with st.spinner("Выполняется расчет..."):
             # Проверяем, что у нас есть данные для расчета
             if dimensions and options:
@@ -2642,42 +2555,24 @@ def main():
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.2rem; margin-bottom: 0.2rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
         
-    # Создаем якорь для начала формы параметров
-    form_start = st.container()
-    
-    # Отображаем результаты (если они доступны)
+    # Отображаем кнопку для скролла к результатам (если есть результаты)
     if 'results' in st.session_state:
+        # Кнопка для скролла к результатам (компактная и заметная)
+        st.markdown("""
+        <a href="#results" style="display: block; width: 90%; margin: 10px auto; padding: 10px; 
+                       background-color: #0066cc; color: white; text-align: center; 
+                       border-radius: 5px; text-decoration: none; font-weight: bold;">
+           ↓ Перейти к результатам расчета ↓
+        </a>
+        """, unsafe_allow_html=True)
+        
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
-        # Используем нативную навигацию Streamlit - если установлен флаг scroll_to_results
+        # Если нужна прокрутка к результатам, добавляем JS код
         if st.session_state.get('scroll_to_results', False):
-            # Добавляем стили для заголовка через функцию scroll_to_results
-            scroll_to_results() 
-            
-            # Добавляем JavaScript для прокрутки к якорю результатов
-            st.markdown("""
-            <script>
-            // Функция для прокрутки к элементу с нужным id
-            function scrollToResults() {
-                var element = document.getElementById('results_anchor_container');
-                if (element) {
-                    // Прокручиваем к элементу с плавной анимацией
-                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            }
-            
-            // Запускаем прокрутку после того, как DOM загрузится
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(scrollToResults, 300); // Небольшая задержка для надежности
-            });
-            
-            // На всякий случай запускаем и сразу
-            setTimeout(scrollToResults, 500);
-            </script>
-            """, unsafe_allow_html=True)
-            
-            # Сбрасываем флаг прокрутки
+            scroll_to_results()
+            # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
             st.session_state.scroll_to_results = False
     
     # Добавляем галерею проектов и счетчик установленных пергол
@@ -2687,112 +2582,9 @@ def main():
     # Всегда отображаем галерею проектов и счетчик установленных пергол
     display_gallery_section()
     
-    # Добавляем кнопку для прокрутки наверх с анимацией
-    
-    # Добавляем стили для кнопки прокрутки наверх
-    st.markdown("""
-    <style>
-    .scroll-top-button-container {
-        display: flex;
-        justify-content: center;
-        margin: 2rem auto;
-        width: 100%;
-        text-align: center;
-    }
-    
-    .scroll-top-button {
-        background-color: #0066cc;
-        color: white;
-        border: none;
-        border-radius: 50px;
-        padding: 12px 25px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        margin: 0 auto;
-    }
-    
-    .scroll-top-button:hover {
-        background-color: #0055aa;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    }
-    
-    .scroll-top-button svg {
-        margin-right: 8px;
-        vertical-align: middle;
-    }
-    
-    @keyframes bounce {
-        0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-        40% {transform: translateY(-8px);}
-        60% {transform: translateY(-4px);}
-    }
-    
-    .arrow-up {
-        animation: bounce 2s infinite;
-        display: inline-block;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Добавляем стили для кнопки прокрутки наверх
-    st.markdown("""
-    <style>
-    /* Стили для центрирования нативных кнопок Streamlit */
-    div.stButton {
-        display: flex;
-        justify-content: center;
-        margin: 1.5rem auto;
-    }
-    
-    /* Улучшенные стили для кнопки "Вернуться к параметрам" */
-    div.stButton > button:has(div:contains("Вернуться к параметрам")) {
-        background-color: #0066cc !important; 
-        color: white !important;
-        font-size: 1rem !important;
-        padding: 0.6rem 1.5rem !important;
-        min-width: 280px !important;
-        border-radius: 50px !important;
-        border: none !important;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
-        transition: all 0.3s ease !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-    
-    /* Стили для наведения на кнопку */
-    div.stButton > button:has(div:contains("Вернуться к параметрам")):hover {
-        background-color: #0055aa !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3) !important;
-    }
-    
-    /* Стили для нажатия на кнопку */
-    div.stButton > button:has(div:contains("Вернуться к параметрам")):active {
-        transform: translateY(1px) !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Используем стандартный компонент Streamlit для кнопки
-    # Когда кнопка нажата, мы просто перезагружаем страницу, что прокручивает её вверх
-    if st.button("⬆️ Вернуться к параметрам перголы", key="back_to_params_button", use_container_width=False):
-        # Перезагружаем страницу с сохранением только параметров перголы, но не результатов
-        # Это вернет пользователя обратно к форме ввода
-        st.session_state.pop('results', None)
-        st.session_state.scroll_to_results = False
-        st.rerun()
-    
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.5.7</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.3.8</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Создаем директории, если они не существуют
