@@ -94,7 +94,7 @@ def is_duplicate_image(new_image_path, directory, check_content=True):
     
     return False, None
 
-def heic_to_jpeg(heic_path, output_dir=None, quality=90, check_duplicates=True):
+def heic_to_jpeg(heic_path, output_dir=None, quality=90, check_duplicates=True, preserve_original=False):
     """
     Конвертирует файл HEIC в формат JPEG с использованием внешнего инструмента heif-convert
     
@@ -104,6 +104,7 @@ def heic_to_jpeg(heic_path, output_dir=None, quality=90, check_duplicates=True):
                                    Если не указана, используется та же директория
         quality (int): Качество выходного JPEG файла (0-100)
         check_duplicates (bool): Проверять на дубликаты
+        preserve_original (bool): Сохранять исходный HEIC файл (True) или удалять (False)
     
     Returns:
         str: Путь к сконвертированному JPEG файлу или None при ошибке
@@ -148,6 +149,15 @@ def heic_to_jpeg(heic_path, output_dir=None, quality=90, check_duplicates=True):
                 logging.warning(f"Невозможно оптимизировать изображение: {str(e)}")
                 
             logging.info(f"Файл конвертирован успешно: {output_path}")
+            
+            # Удаляем исходный файл, если не нужно его сохранять
+            if not preserve_original:
+                try:
+                    os.remove(heic_path)
+                    logging.info(f"Удален исходный файл: {heic_path}")
+                except Exception as e:
+                    logging.warning(f"Не удалось удалить исходный файл {heic_path}: {str(e)}")
+            
             return str(output_path)
         else:
             logging.error(f"Ошибка: Файл не был создан, хотя команда выполнена без ошибок")
@@ -165,7 +175,7 @@ def heic_to_jpeg(heic_path, output_dir=None, quality=90, check_duplicates=True):
         logging.error(f"Произошла неизвестная ошибка: {str(e)}")
         return None
 
-def convert_image_to_jpeg(image_path, output_dir=None, quality=90, check_duplicates=True):
+def convert_image_to_jpeg(image_path, output_dir=None, quality=90, check_duplicates=True, preserve_original=False):
     """
     Универсальная функция для конвертации различных форматов изображений в JPEG
     
@@ -174,6 +184,7 @@ def convert_image_to_jpeg(image_path, output_dir=None, quality=90, check_duplica
         output_dir (str, optional): Директория для сохранения JPEG файла
         quality (int): Качество выходного JPEG (0-100)
         check_duplicates (bool): Проверять на дубликаты
+        preserve_original (bool): Сохранять исходный файл (True) или удалять (False)
         
     Returns:
         str: Путь к JPEG файлу или None при ошибке
@@ -186,7 +197,7 @@ def convert_image_to_jpeg(image_path, output_dir=None, quality=90, check_duplica
     
     # Для HEIC используем специальную функцию
     if image_path.suffix.lower() in ('.heic', '.heif'):
-        return heic_to_jpeg(image_path, output_dir, quality, check_duplicates)
+        return heic_to_jpeg(image_path, output_dir, quality, check_duplicates, preserve_original)
     
     # Для других форматов используем PIL
     try:
@@ -217,6 +228,14 @@ def convert_image_to_jpeg(image_path, output_dir=None, quality=90, check_duplica
                 background.save(output_path, 'JPEG', quality=quality, optimize=True)
             else:
                 img.convert('RGB').save(output_path, 'JPEG', quality=quality, optimize=True)
+        
+        # Удаляем исходный файл, если нужно
+        if not preserve_original:
+            try:
+                os.remove(image_path)
+                logging.info(f"Удален исходный файл: {image_path}")
+            except Exception as e:
+                logging.warning(f"Не удалось удалить исходный файл {image_path}: {str(e)}")
                 
         return str(output_path)
     
@@ -225,13 +244,14 @@ def convert_image_to_jpeg(image_path, output_dir=None, quality=90, check_duplica
         return None
 
 # Функция для конвертации всех HEIC файлов в директории
-def batch_convert_heic(directory, quality=90):
+def batch_convert_heic(directory, quality=90, preserve_original=False):
     """
     Конвертирует все файлы HEIC в директории в формат JPEG
     
     Args:
         directory (str): Директория с HEIC файлами
         quality (int): Качество выходного JPEG (0-100)
+        preserve_original (bool): Сохранять исходные HEIC файлы (True) или удалять (False)
         
     Returns:
         list: Список путей к сконвертированным JPEG файлам
@@ -249,7 +269,7 @@ def batch_convert_heic(directory, quality=90):
         heic_files.extend(list(directory.glob(f"*{ext}")))
     
     for heic_file in heic_files:
-        jpeg_path = heic_to_jpeg(heic_file, quality=quality)
+        jpeg_path = heic_to_jpeg(heic_file, quality=quality, preserve_original=preserve_original)
         if jpeg_path:
             converted_files.append(jpeg_path)
     
