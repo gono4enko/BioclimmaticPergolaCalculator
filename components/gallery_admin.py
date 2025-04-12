@@ -579,92 +579,96 @@ def render_gallery_admin_interface(images_dir):
     # Секция для поиска и обработки дубликатов
     st.header("🔍 Поиск дубликатов изображений")
     
-    with st.expander("Инструменты обнаружения дубликатов", expanded=False):
-        st.markdown("""
-        ### Инструменты обнаружения дубликатов
-        Система может автоматически находить похожие изображения, которые могут быть дубликатами.
-        Проверка может выполняться по имени файла или по содержимому (наиболее точный метод).
-        """)
-        
-        check_content = st.checkbox("Использовать проверку по содержимому (более точная, но медленнее)", value=True)
-        
-        if st.button("Найти дубликаты", type="primary"):
-            with st.spinner("Поиск дубликатов..."):
-                # Обнаруживаем дубликаты
-                duplicates = detect_duplicate_images(images_dir, check_content=check_content)
-                st.session_state.duplicates = duplicates
-                
-                if duplicates:
-                    st.warning(f"Обнаружено {len(duplicates)} групп дубликатов")
-                else:
-                    st.success("Дубликаты не обнаружены")
-        
-        # Если есть найденные дубликаты, показываем их
-        if 'duplicates' in st.session_state and st.session_state.duplicates:
-            duplicates = st.session_state.duplicates
+    # Форма для запуска поиска дубликатов
+    st.markdown("""
+    ### Инструменты обнаружения дубликатов
+    Система может автоматически находить похожие изображения, которые могут быть дубликатами.
+    Проверка может выполняться по имени файла или по содержимому (наиболее точный метод).
+    """)
+    
+    check_content = st.checkbox("Использовать проверку по содержимому (более точная, но медленнее)", value=True)
+    
+    if st.button("Найти дубликаты", type="primary"):
+        with st.spinner("Поиск дубликатов..."):
+            # Обнаруживаем дубликаты
+            duplicates = detect_duplicate_images(images_dir, check_content=check_content)
+            st.session_state.duplicates = duplicates
             
-            for i, group in enumerate(duplicates):
-                with st.expander(f"Группа дубликатов {i+1} ({len(group)} файлов)", expanded=False):
-                    st.subheader(f"Группа дубликатов {i+1}")
+            if duplicates:
+                st.warning(f"Обнаружено {len(duplicates)} групп дубликатов")
+            else:
+                st.success("Дубликаты не обнаружены")
+    
+    # Если есть найденные дубликаты, показываем их
+    if 'duplicates' in st.session_state and st.session_state.duplicates:
+        duplicates = st.session_state.duplicates
+        
+        st.subheader(f"Найденные дубликаты ({len(duplicates)} групп)")
+        
+        # Отображаем каждую группу дубликатов
+        for i, group in enumerate(duplicates):
+            st.markdown(f"### Группа дубликатов {i+1} ({len(group)} файлов)")
+            
+            # Форма группового удаления
+            if len(group) > 1:
+                group_message = f"Оставить только первое изображение, исключить остальные {len(group)-1}"
+                if st.button(group_message, key=f"clean_duplicates_{i}"):
+                    keep_file = group[0]
+                    files_to_exclude = group[1:]
                     
-                    # Форма группового удаления
-                    if len(group) > 1:
-                        group_message = f"Оставить только первое изображение, исключить остальные {len(group)-1}"
-                        if st.button(group_message, key=f"clean_duplicates_{i}"):
-                            keep_file = group[0]
-                            files_to_exclude = group[1:]
-                            
-                            for img_name in files_to_exclude:
-                                exclude_image(img_name)
-                            
-                            st.success(f"Оставлено изображение '{keep_file}', исключены: {', '.join(files_to_exclude)}")
-                            st.rerun()
+                    for img_name in files_to_exclude:
+                        exclude_image(img_name)
                     
-                    # Макс. количество изображений в одной строке
-                    max_cols = min(3, len(group))
-                    for j in range(0, len(group), max_cols):
-                        cols = st.columns(max_cols)
-                        for k in range(max_cols):
-                            if j+k < len(group):
-                                img_name = group[j+k]
-                                img_path = os.path.join(images_dir, img_name)
-                                with cols[k]:
-                                    try:
-                                        st.image(img_path, caption=img_name, width=150)
-                                        
-                                        is_excluded = img_name in load_gallery_config()["excluded_images"]
-                                        status = "🚫 Исключено" if is_excluded else "✅ Активно"
-                                        
-                                        st.write(f"Статус: {status}")
-                                        
-                                        col1, col2 = st.columns(2)
-                                        with col1:
-                                            if is_excluded:
-                                                if st.button(f"📢 Опубликовать", key=f"dupl_include_{i}_{j+k}"):
-                                                    include_image(img_name)
-                                                    st.success(f"Изображение {img_name} опубликовано")
-                                                    st.rerun()
-                                            else:
-                                                if st.button(f"🚫 Исключить", key=f"dupl_exclude_{i}_{j+k}"):
-                                                    exclude_image(img_name)
-                                                    st.success(f"Изображение {img_name} исключено из галереи")
-                                                    st.rerun()
-                                        
-                                        with col2:
-                                            if st.button(f"❌ Удалить", key=f"dupl_delete_{i}_{j+k}", type="primary"):
-                                                if delete_image_permanently(img_name, images_dir):
-                                                    st.success(f"Изображение {img_name} удалено")
-                                                    st.rerun()
-                                                else:
-                                                    st.error(f"Не удалось удалить {img_name}")
-                                    except Exception as e:
-                                        st.error(f"Ошибка отображения {img_name}: {str(e)}")
-                                        if st.button(f"❌ Удалить поврежденный файл", key=f"dupl_delete_corrupt_{i}_{j+k}"):
-                                            if delete_image_permanently(img_name, images_dir):
-                                                st.success(f"Изображение {img_name} удалено")
-                                                st.rerun()
-                                            else:
-                                                st.error(f"Не удалось удалить {img_name}")
+                    st.success(f"Оставлено изображение '{keep_file}', исключены: {', '.join(files_to_exclude)}")
+                    st.rerun()
+            
+            # Макс. количество изображений в одной строке
+            max_cols = min(3, len(group))
+            for j in range(0, len(group), max_cols):
+                cols = st.columns(max_cols)
+                for k in range(max_cols):
+                    if j+k < len(group):
+                        img_name = group[j+k]
+                        img_path = os.path.join(images_dir, img_name)
+                        with cols[k]:
+                            try:
+                                st.image(img_path, caption=img_name, width=150)
+                                
+                                is_excluded = img_name in load_gallery_config()["excluded_images"]
+                                status = "🚫 Исключено" if is_excluded else "✅ Активно"
+                                
+                                st.write(f"Статус: {status}")
+                                
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    if is_excluded:
+                                        if st.button(f"📢 Опубликовать", key=f"dupl_include_{i}_{j+k}"):
+                                            include_image(img_name)
+                                            st.success(f"Изображение {img_name} опубликовано")
+                                            st.rerun()
+                                    else:
+                                        if st.button(f"🚫 Исключить", key=f"dupl_exclude_{i}_{j+k}"):
+                                            exclude_image(img_name)
+                                            st.success(f"Изображение {img_name} исключено из галереи")
+                                            st.rerun()
+                                
+                                with col2:
+                                    if st.button(f"❌ Удалить", key=f"dupl_delete_{i}_{j+k}", type="primary"):
+                                        if delete_image_permanently(img_name, images_dir):
+                                            st.success(f"Изображение {img_name} удалено")
+                                            st.rerun()
+                                        else:
+                                            st.error(f"Не удалось удалить {img_name}")
+                            except Exception as e:
+                                st.error(f"Ошибка отображения {img_name}: {str(e)}")
+                                if st.button(f"❌ Удалить поврежденный файл", key=f"dupl_delete_corrupt_{i}_{j+k}"):
+                                    if delete_image_permanently(img_name, images_dir):
+                                        st.success(f"Изображение {img_name} удалено")
+                                        st.rerun()
+                                    else:
+                                        st.error(f"Не удалось удалить {img_name}")
+            # Разделитель между группами дубликатов
+            st.markdown("---")
     
     # Вкладки для управления изображениями
     tab1, tab2, tab3 = st.tabs(["Все изображения", "Активные", "Исключенные"])
