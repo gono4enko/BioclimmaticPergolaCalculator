@@ -1588,20 +1588,13 @@ def render_results(results):
             if modular_images:
                 image_displayed = False
                 import os
-                from PIL import Image
-                
-                # Перебираем все изображения и пытаемся отобразить первое рабочее
                 for img_path in modular_images:
                     try:
                         # Проверяем, существует ли файл
                         if not os.path.exists(img_path):
                             continue
-                            
-                        # Проверяем, можно ли открыть изображение
-                        img = Image.open(img_path)
-                        img.verify()  # Быстрая проверка целостности
                         
-                        # Если всё в порядке, отображаем
+                        # Отображаем изображение
                         st.image(img_path, caption=modular_caption, use_column_width=True)
                         image_displayed = True
                         break
