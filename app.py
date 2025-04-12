@@ -1129,15 +1129,23 @@ def render_options_form():
     div[data-testid="stVerticalBlock"] > div:has(label:contains("Белая светодиодная лента")) {
         margin-top: 0 !important;
         margin-bottom: 0 !important;
-        padding-top: 3px !important;
-        padding-bottom: 3px !important;
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
     }
     
     div[data-testid="stVerticalBlock"] > div:has(label:contains("RGB светодиодная лента")) {
         margin-top: 0 !important;
         margin-bottom: 0 !important;
-        padding-top: 3px !important;
-        padding-bottom: 3px !important;
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+    }
+
+    /* Убираем отступы у родительского контейнера чекбоксов */
+    div.stCheckbox {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -1171,8 +1179,8 @@ def render_options_form():
     div[data-testid="stVerticalBlock"] > div:has(label:contains("С установкой")) {
         margin-top: 0 !important;
         margin-bottom: 0 !important;
-        padding-top: 3px !important;
-        padding-bottom: 3px !important;
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
     }
     </style>
     """, unsafe_allow_html=True)
