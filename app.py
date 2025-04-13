@@ -2063,117 +2063,221 @@ def scroll_to_results():
     </style>
     """, unsafe_allow_html=True)
     
-    # Добавляем плавающие кнопки скролла с ID для доступа из JavaScript
+    # Добавляем плавающие кнопки навигации с фиксированными стилями
     st.markdown("""
-    <a href="#final-price-target" id="btnScrollDown" class="fixed-button down" style="display: block;">
-        К результату ↓
-    </a>
+    <div id="navigation-buttons">
+        <a href="#final-price-target" id="btn-to-results" class="fixed-button down">
+            К результату ↓
+        </a>
+        
+        <a href="#calculator-parameters" id="btn-to-params" class="fixed-button up">
+            К параметрам ↑
+        </a>
+    </div>
     
-    <a href="#calculator-parameters" id="btnScrollUp" class="fixed-button up" style="display: none;">
-        К параметрам ↑
-    </a>
-    """, unsafe_allow_html=True)
-    
-    # Добавляем дополнительную кнопку под формой в основном потоке приложения
-    st.markdown("""
     <div class="scroll-container">
         <a href="#final-price-target" class="result-button">
             Посмотреть результат ↓
         </a>
     </div>
-    """, unsafe_allow_html=True)
     
-    # Добавляем скрипт для управления видимостью кнопок и автоматического скролла
-    st.markdown("""
     <script>
-        // Специальный флаг для автоматической прокрутки при первой загрузке
-        let autoScrollTriggered = false;
-        
         // Функция для управления видимостью кнопок навигации
-        function toggleNavigationButtons() {
-            // Поиск элементов навигации
-            const btnDown = document.querySelector('.fixed-button.down');
-            const btnUp = document.querySelector('.fixed-button.up');
+        function updateNavigationButtons() {
+            const btnToResults = document.getElementById('btn-to-results');
+            const btnToParams = document.getElementById('btn-to-params');
             
-            if (!btnDown || !btnUp) {
-                console.error('Ошибка: кнопки навигации не найдены');
+            if (!btnToResults || !btnToParams) {
+                console.error('Ошибка: кнопки навигации не найдены!');
                 return;
             }
             
-            // Получаем текущее положение скролла
-            const scrollY = window.scrollY || document.documentElement.scrollTop;
-            const pageHeight = Math.max(
-                document.body.scrollHeight, document.documentElement.scrollHeight,
-                document.body.offsetHeight, document.documentElement.offsetHeight
-            );
-            const windowHeight = window.innerHeight;
+            // Получаем текущую позицию прокрутки
+            const scrollPosition = window.scrollY;
             
-            // Определяем, находимся ли мы в нижней части страницы (ниже 30% общей высоты)
-            const scrollPercent = scrollY / (pageHeight - windowHeight);
-            const isInLowerPart = scrollPercent > 0.3;
+            // Проверяем, прокручена ли страница достаточно для показа кнопки "Наверх"
+            // Здесь используем фиксированное значение в пикселях для более точного контроля
+            const scrollThreshold = 800; // примерно после блока B500
             
-            // Управляем видимостью кнопок
-            if (isInLowerPart) {
-                // В нижней части страницы - показываем кнопку "К параметрам" и скрываем "К результату"
-                btnDown.style.display = 'none'; 
-                btnUp.style.display = 'block';
+            console.log('Позиция прокрутки:', scrollPosition, 'Порог:', scrollThreshold);
+            
+            // Простая логика переключения - показываем одну кнопку, скрываем другую
+            if (scrollPosition > scrollThreshold) {
+                btnToResults.style.display = 'none';
+                btnToParams.style.display = 'block';
+                console.log('Активна кнопка "К параметрам"');
             } else {
-                // В верхней части страницы - показываем кнопку "К результату" и скрываем "К параметрам"
-                btnDown.style.display = 'block';
-                btnUp.style.display = 'none';
+                btnToResults.style.display = 'block';
+                btnToParams.style.display = 'none';
+                console.log('Активна кнопка "К результатам"');
             }
         }
         
-        // Обработчик прокрутки страницы
-        function handleScroll() {
-            toggleNavigationButtons();
-        }
-        
-        // Обработчик хэша URL 
-        function handleHashChange() {
-            // Если есть хэш для прокрутки к результатам
-            if (window.location.hash === '#final-price-target') {
-                // Добавляем небольшую задержку для корректной прокрутки
-                setTimeout(function() {
-                    // Прокручиваем к результатам и обновляем навигацию
-                    const targetElement = document.getElementById('final-price-target');
-                    if (targetElement) {
-                        targetElement.scrollIntoView({ behavior: 'smooth' });
-                        setTimeout(toggleNavigationButtons, 1000);
-                    }
-                }, 300);
-            }
-        }
-        
-        // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Инициализация навигации...');
+        // Функция прокрутки к результатам с анализом наличия якоря
+        function scrollToResults(event, forceScroll) {
+            // Ищем элемент результатов по ID
+            const finalPriceTarget = document.getElementById('final-price-target');
             
-            // Добавляем обработчики событий
-            window.addEventListener('scroll', handleScroll);
-            window.addEventListener('hashchange', handleHashChange);
+            if (finalPriceTarget) {
+                // Предотвращаем стандартное поведение ссылки если нужно
+                if (event) {
+                    event.preventDefault();
+                }
+                
+                // Плавная прокрутка к результатам с дополнительным смещением вверх для удобства
+                const yOffset = -50; // Смещение на 50px вверх от верхней границы элемента
+                const y = finalPriceTarget.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                
+                window.scrollTo({
+                    top: y,
+                    behavior: 'smooth'
+                });
+                
+                console.log('💡 Прокрутка к результатам выполнена (смещение:', yOffset, 'px)');
+                
+                // Обновляем состояние кнопок после прокрутки
+                setTimeout(updateNavigationButtons, 800);
+                
+                return true;
+            } else {
+                console.log('❌ Якорь результатов не найден!');
+                return false;
+            }
+        }
+        
+        // Функция прокрутки к параметрам
+        function scrollToParameters(event) {
+            const parametersTarget = document.getElementById('calculator-parameters');
+            
+            if (parametersTarget) {
+                if (event) {
+                    event.preventDefault();
+                }
+                
+                parametersTarget.scrollIntoView({ behavior: 'smooth' });
+                console.log('Прокрутка к параметрам выполнена');
+                
+                // Обновляем состояние кнопок после прокрутки
+                setTimeout(updateNavigationButtons, 800);
+                
+                return true;
+            } else {
+                console.log('Якорь параметров не найден');
+                return false;
+            }
+        }
+        
+        // Инициализация обработчиков при загрузке документа
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Инициализация новой системы навигации...');
+            
+            // Добавляем обработчик события прокрутки
+            window.addEventListener('scroll', updateNavigationButtons);
+            
+            // Добавляем обработчики для кнопок
+            const btnToResults = document.getElementById('btn-to-results');
+            const btnToParams = document.getElementById('btn-to-params');
+            
+            if (btnToResults) {
+                btnToResults.addEventListener('click', function(e) {
+                    scrollToResults(e);
+                });
+            }
+            
+            if (btnToParams) {
+                btnToParams.addEventListener('click', function(e) {
+                    scrollToParameters(e);
+                });
+            }
+            
+            // Добавляем обработчик для форменной кнопки "Посмотреть результат"
+            const formResultBtn = document.querySelector('.result-button');
+            if (formResultBtn) {
+                formResultBtn.addEventListener('click', function(e) {
+                    scrollToResults(e);
+                });
+            }
             
             // Устанавливаем начальное состояние кнопок
-            toggleNavigationButtons();
+            updateNavigationButtons();
             
-            // Проверяем хэш при первой загрузке
-            if (window.location.hash) {
-                handleHashChange();
+            // Автоматическая прокрутка к результатам при их наличии
+            const finalPriceTarget = document.getElementById('final-price-target');
+            if (finalPriceTarget) {
+                // Проверяем, видим ли элемент в данный момент
+                const rect = finalPriceTarget.getBoundingClientRect();
+                const isVisible = (
+                    rect.top >= 0 &&
+                    rect.left >= 0 &&
+                    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+                );
+                
+                // Если результаты есть, но не видны - прокручиваем к ним
+                if (!isVisible) {
+                    setTimeout(function() {
+                        scrollToResults(null, true);
+                    }, 500);
+                }
             }
-            
-            // Проверяем наличие результатов по специальному элементу
-            const resultsExist = document.getElementById('final-price-target');
-            if (resultsExist && !autoScrollTriggered) {
-                // Если есть результаты и авто-прокрутка еще не выполнена
+        });
+        
+        // Этот код обрабатывает ситуацию, когда кнопка "Рассчитать" была нажата
+        function checkForScrollFlag() {
+            // Ищем специальный флаг в URL, который добавляется после нажатия кнопки "Рассчитать"
+            if (window.location.search.includes('scroll_to_results=true') || 
+                sessionStorage.getItem('scroll_to_results')) {
+                
+                // Сбрасываем флаг в сессии, чтобы не выполнять повторно
+                sessionStorage.removeItem('scroll_to_results');
+                
+                // Пробуем найти элемент с результатами и прокрутить к нему
                 setTimeout(function() {
-                    // Прокручиваем к результатам
-                    resultsExist.scrollIntoView({ behavior: 'smooth' });
-                    autoScrollTriggered = true;
-                    setTimeout(toggleNavigationButtons, 1000);
+                    const finalPriceTarget = document.getElementById('final-price-target');
+                    if (finalPriceTarget) {
+                        finalPriceTarget.scrollIntoView({ behavior: 'smooth' });
+                        console.log('Автоматическая прокрутка к результатам после расчета');
+                        
+                        // Обновляем состояние кнопок
+                        setTimeout(updateNavigationButtons, 800);
+                    }
                 }, 500);
+            }
+        }
+        
+        // Выполняем проверку после загрузки страницы
+        window.addEventListener('load', checkForScrollFlag);
+        
+        // Устанавливаем обработчик события для кнопки расчета
+        document.addEventListener('DOMContentLoaded', function() {
+            const calcButton = document.querySelector('button[data-testid="baseButton-primary"]');
+            if (calcButton) {
+                calcButton.addEventListener('click', function() {
+                    // Сохраняем флаг в сессионное хранилище
+                    sessionStorage.setItem('scroll_to_results', 'true');
+                    console.log('Нажата кнопка расчета, установлен флаг для прокрутки');
+                });
             }
         });
     </script>
+    
+    <style>
+    /* Стили для навигационных кнопок */
+    #navigation-buttons {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+    
+    #btn-to-results {
+        display: block; /* По умолчанию видна */
+    }
+    
+    #btn-to-params {
+        display: none; /* По умолчанию скрыта */
+    }
+    </style>
     """, unsafe_allow_html=True)
 
 def add_smart_device_adaptation():
@@ -2653,8 +2757,18 @@ def main():
     def handle_calc_button():
         # Установим флаг, что нам нужно будет скроллить к результатам после расчета
         st.session_state.scroll_to_results = True
+        # Добавляем флаг в сессионное хранилище браузера через JavaScript
+        st.markdown("""
+        <script>
+            // Устанавливаем флаг скролла в sessionStorage для доступа из JavaScript
+            sessionStorage.setItem('scroll_to_results', 'true');
+            console.log('💡 Python: установлен флаг скролла в sessionStorage');
+        </script>
+        """, unsafe_allow_html=True)
         # Также сбросим флаг отображения описания
         st.session_state.description_shown = False
+        # Добавляем отладочную информацию
+        print("💡 Кнопка расчета нажата, флаг scroll_to_results =", st.session_state.scroll_to_results)
         
     # Кнопка для расчета с улучшенным стилем
     calc_button = st.button("Рассчитать стоимость", type="primary", 
