@@ -2032,7 +2032,7 @@ def scroll_to_results():
         width: 100%;
     }
     
-    /* Стили для фиксированных кнопок */
+    /* Стили для фиксированных кнопок навигации */
     .fixed-button {
         position: fixed;
         bottom: 20px;
@@ -2046,26 +2046,14 @@ def scroll_to_results():
         font-weight: bold;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         transition: all 0.3s ease;
-        opacity: 1;
     }
     
+    /* Кнопка "К параметрам" - зеленая, слева */
     .fixed-button.up {
         bottom: 20px;
         left: 20px;
         right: auto;
         background-color: #008800;
-        opacity: 0; /* Начинаем со скрытой кнопки вверх */
-        visibility: hidden; /* Полностью скрываем элемент, а не только прозрачность */
-    }
-    
-    .fixed-button.down.hidden {
-        opacity: 0;
-        visibility: hidden; /* Полностью скрываем элемент */
-    }
-    
-    .fixed-button.up.visible {
-        opacity: 1;
-        visibility: visible; /* Показываем элемент */
     }
     
     /* Автоматический скролл после перезагрузки страницы */
@@ -2077,14 +2065,14 @@ def scroll_to_results():
     
     # Добавляем плавающую кнопку скролла вниз, которая скрывается при прокрутке к галерее
     st.markdown("""
-    <a href="#final-price-target" class="fixed-button down">
+    <a href="#final-price-target" class="fixed-button down" style="display: block;">
         К результату ↓
     </a>
     """, unsafe_allow_html=True)
     
     # Добавляем плавающую кнопку скролла вверх, которая появляется при прокрутке к галерее
     st.markdown("""
-    <a href="#calculator-parameters" class="fixed-button up">
+    <a href="#calculator-parameters" class="fixed-button up" style="display: none;">
         К параметрам ↑
     </a>
     """, unsafe_allow_html=True)
@@ -2101,134 +2089,92 @@ def scroll_to_results():
     # Добавляем скрипт для управления видимостью кнопок и автоматического скролла
     st.markdown("""
     <script>
-        // Создаем простой инструмент отладки
-        function createDebugTool() {
-            const debugDiv = document.createElement('div');
-            debugDiv.id = 'scroll-debug';
-            debugDiv.style.position = 'fixed';
-            debugDiv.style.top = '10px';
-            debugDiv.style.left = '10px';
-            debugDiv.style.zIndex = '9999';
-            debugDiv.style.background = 'rgba(0,0,0,0.7)';
-            debugDiv.style.color = 'white';
-            debugDiv.style.padding = '5px';
-            debugDiv.style.borderRadius = '5px';
-            debugDiv.style.fontSize = '12px';
-            debugDiv.style.maxWidth = '300px';
-            debugDiv.style.display = 'none'; // Отключаем в продакшн
-            document.body.appendChild(debugDiv);
-            return debugDiv;
-        }
+        // Специальный флаг для автоматической прокрутки при первой загрузке
+        let autoScrollTriggered = false;
         
-        // Функция для проверки видимости элемента
-        function isInViewport(element) {
-            const rect = element.getBoundingClientRect();
-            return (
-                rect.top <= (window.innerHeight || document.documentElement.clientHeight) &&
-                rect.bottom >= 0
-            );
-        }
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM загружен, начинаем настройку скролла');
-            
-            // Создаем инструмент отладки
-            const debugTool = createDebugTool();
-            
-            // Получаем ссылки на кнопки
+        // Функция для управления видимостью кнопок навигации
+        function toggleNavigationButtons() {
+            // Поиск элементов навигации
             const btnDown = document.querySelector('.fixed-button.down');
             const btnUp = document.querySelector('.fixed-button.up');
             
             if (!btnDown || !btnUp) {
-                console.error('Не удалось найти кнопки навигации!');
+                console.error('Ошибка: кнопки навигации не найдены');
                 return;
             }
             
-            console.log('Кнопки найдены', btnDown, btnUp);
+            // Получаем текущее положение скролла
+            const scrollY = window.scrollY || document.documentElement.scrollTop;
+            const pageHeight = Math.max(
+                document.body.scrollHeight, document.documentElement.scrollHeight,
+                document.body.offsetHeight, document.documentElement.offsetHeight
+            );
+            const windowHeight = window.innerHeight;
             
-            // Сначала показываем только кнопку вниз
-            btnDown.style.opacity = '1';
-            btnDown.style.visibility = 'visible';
-            btnUp.style.opacity = '0';
-            btnUp.style.visibility = 'hidden';
+            // Определяем, находимся ли мы в нижней части страницы (ниже 30% общей высоты)
+            const scrollPercent = scrollY / (pageHeight - windowHeight);
+            const isInLowerPart = scrollPercent > 0.3;
             
-            // Функция для обработки прокрутки
-            function handleScroll() {
-                // Получаем текущую позицию скролла
-                const scrollPosition = window.scrollY;
-                const windowHeight = window.innerHeight;
-                const pageHeight = document.body.scrollHeight;
-                
-                // Находим все заголовки B500
-                const b500Headers = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'))
-                    .filter(h => h.textContent.includes('B500') || h.textContent.includes('В500'));
-                
-                // Находим все заголовки галереи
-                const galleryHeaders = Array.from(document.querySelectorAll('h1, h2, h3'))
-                    .filter(h => h.textContent.includes('Наша галерея') || h.textContent.includes('проекты'));
-                
-                // Отладочная информация
-                let debugInfo = `Scroll: ${scrollPosition}<br>`;
-                debugInfo += `B500 headers: ${b500Headers.length}<br>`;
-                debugInfo += `Gallery headers: ${galleryHeaders.length}<br>`;
-                
-                // Проверяем, виден ли какой-либо из заголовков B500
-                let b500Visible = false;
-                b500Headers.forEach((header, index) => {
-                    const isVisible = isInViewport(header);
-                    debugInfo += `B500 #${index}: ${isVisible ? 'visible' : 'hidden'}<br>`;
-                    if (isVisible) {
-                        b500Visible = true;
+            // Управляем видимостью кнопок
+            if (isInLowerPart) {
+                // В нижней части страницы - показываем кнопку "К параметрам" и скрываем "К результату"
+                btnDown.style.display = 'none'; 
+                btnUp.style.display = 'block';
+            } else {
+                // В верхней части страницы - показываем кнопку "К результату" и скрываем "К параметрам"
+                btnDown.style.display = 'block';
+                btnUp.style.display = 'none';
+            }
+        }
+        
+        // Обработчик прокрутки страницы
+        function handleScroll() {
+            toggleNavigationButtons();
+        }
+        
+        // Обработчик хэша URL 
+        function handleHashChange() {
+            // Если есть хэш для прокрутки к результатам
+            if (window.location.hash === '#final-price-target') {
+                // Добавляем небольшую задержку для корректной прокрутки
+                setTimeout(function() {
+                    // Прокручиваем к результатам и обновляем навигацию
+                    const targetElement = document.getElementById('final-price-target');
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth' });
+                        setTimeout(toggleNavigationButtons, 1000);
                     }
-                });
-                
-                // Проверяем, находимся ли мы в нижней половине страницы
-                const inLowerHalf = scrollPosition > (pageHeight * 0.4);
-                debugInfo += `In lower half: ${inLowerHalf}<br>`;
-                
-                // Обновляем видимость кнопок
-                if (inLowerHalf || b500Visible) {
-                    // Показываем кнопку вверх и скрываем кнопку вниз
-                    btnDown.style.opacity = '0';
-                    btnDown.style.visibility = 'hidden';
-                    btnUp.style.opacity = '1';
-                    btnUp.style.visibility = 'visible';
-                    debugInfo += 'Action: Showing UP button<br>';
-                } else {
-                    // Показываем кнопку вниз и скрываем кнопку вверх
-                    btnDown.style.opacity = '1';
-                    btnDown.style.visibility = 'visible';
-                    btnUp.style.opacity = '0';
-                    btnUp.style.visibility = 'hidden';
-                    debugInfo += 'Action: Showing DOWN button<br>';
-                }
-                
-                // Обновляем отладочную информацию
-                debugTool.innerHTML = debugInfo;
+                }, 300);
+            }
+        }
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Инициализация навигации...');
+            
+            // Добавляем обработчики событий
+            window.addEventListener('scroll', handleScroll);
+            window.addEventListener('hashchange', handleHashChange);
+            
+            // Устанавливаем начальное состояние кнопок
+            toggleNavigationButtons();
+            
+            // Проверяем хэш при первой загрузке
+            if (window.location.hash) {
+                handleHashChange();
             }
             
-            // Вызываем функцию при скролле страницы и первой загрузке
-            window.addEventListener('scroll', handleScroll);
-            
-            // Обработка скролла при первой загрузке с задержкой
-            setTimeout(handleScroll, 500);
-            
-            // Если в URL есть якорь для результатов, выполняем скролл через небольшую задержку
-            setTimeout(function() {
-                if (window.location.hash === '#final-price-target') {
-                    window.location.hash = '#final-price-target';
-                    setTimeout(handleScroll, 100); // Еще раз проверяем после скролла
-                }
-            }, 500);
-            
-            // Добавляем прямые обработчики кликов для надежности
-            btnDown.addEventListener('click', function() {
-                console.log('Нажата кнопка вниз');
-            });
-            
-            btnUp.addEventListener('click', function() {
-                console.log('Нажата кнопка вверх');
-            });
+            // Проверяем наличие результатов по специальному элементу
+            const resultsExist = document.getElementById('final-price-target');
+            if (resultsExist && !autoScrollTriggered) {
+                // Если есть результаты и авто-прокрутка еще не выполнена
+                setTimeout(function() {
+                    // Прокручиваем к результатам
+                    resultsExist.scrollIntoView({ behavior: 'smooth' });
+                    autoScrollTriggered = true;
+                    setTimeout(toggleNavigationButtons, 1000);
+                }, 500);
+            }
         });
     </script>
     """, unsafe_allow_html=True)
