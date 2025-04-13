@@ -32,13 +32,13 @@ def normalize_image_size(image_path, target_width=GALLERY_STANDARD_WIDTH,
                          target_height=GALLERY_STANDARD_HEIGHT, quality=JPEG_QUALITY, 
                          force_aspect_ratio=False, create_thumbnail=False):
     """
-    Нормализует размер изображения до стандартного, сохраняя пропорции.
+    Нормализует размер изображения, фиксируя высоту и рассчитывая ширину пропорционально.
     Опционально может создать миниатюру.
     
     Args:
         image_path (str): Путь к исходному изображению
-        target_width (int): Целевая ширина
-        target_height (int): Целевая высота
+        target_width (int): Максимальная ширина (не используется при force_aspect_ratio=False)
+        target_height (int): Фиксированная высота для всех изображений
         quality (int): Качество JPEG (0-100)
         force_aspect_ratio (bool): Принудительно установить соотношение сторон (обрезка)
         create_thumbnail (bool): Создать миниатюру
@@ -52,23 +52,22 @@ def normalize_image_size(image_path, target_width=GALLERY_STANDARD_WIDTH,
         # Получаем текущие размеры и соотношение сторон
         orig_width, orig_height = img.size
         orig_aspect = orig_width / orig_height
-        target_aspect = target_width / target_height
         
-        # Определяем новые размеры с сохранением пропорций
+        # Определяем новые размеры
         if force_aspect_ratio:
             # Принудительно устанавливаем соотношение сторон через обрезку
             img = crop_to_aspect_ratio(img, GALLERY_ASPECT_RATIO)
             resized_img = img.resize((target_width, target_height), Image.LANCZOS)
         else:
-            # Изменяем размер, сохраняя оригинальные пропорции, не превышая целевые размеры
-            if orig_aspect > target_aspect:
-                # Изображение шире целевого соотношения
-                new_width = target_width
-                new_height = int(new_width / orig_aspect)
-            else:
-                # Изображение выше целевого соотношения
-                new_height = target_height
-                new_width = int(new_height * orig_aspect)
+            # Фиксируем высоту и рассчитываем ширину пропорционально
+            # Это обеспечит одинаковую высоту для всех изображений
+            new_height = target_height
+            new_width = int(new_height * orig_aspect)
+            
+            # Проверка, если ширина получилась слишком большой
+            if new_width > target_width * 2:  # Ограничиваем макс. ширину удвоенным значением target_width
+                logger.warning(f"Изображение слишком широкое ({new_width}px), ограничиваем")
+                new_width = target_width * 2
                 
             resized_img = img.resize((new_width, new_height), Image.LANCZOS)
         
@@ -130,13 +129,13 @@ def crop_to_aspect_ratio(img, target_ratio):
 
 def create_image_thumbnail(img, thumbnail_path, thumb_width, thumb_height, quality):
     """
-    Создает миниатюру для изображения.
+    Создает миниатюру для изображения с фиксированной высотой.
     
     Args:
         img (PIL.Image): Исходное изображение
         thumbnail_path (str): Путь для сохранения миниатюры
-        thumb_width (int): Ширина миниатюры
-        thumb_height (int): Высота миниатюры
+        thumb_width (int): Максимальная ширина миниатюры
+        thumb_height (int): Фиксированная высота миниатюры
         quality (int): Качество JPEG (0-100)
         
     Returns:
@@ -146,12 +145,24 @@ def create_image_thumbnail(img, thumbnail_path, thumb_width, thumb_height, quali
         # Создаем копию, чтобы не изменять оригинал
         thumb_img = img.copy()
         
-        # Изменяем размер с сохранением пропорций
-        thumb_img.thumbnail((thumb_width, thumb_height), Image.LANCZOS)
+        # Получаем размеры исходного изображения
+        orig_width, orig_height = thumb_img.size
+        orig_aspect = orig_width / orig_height
+        
+        # Определяем новые размеры с фиксированной высотой
+        new_height = thumb_height
+        new_width = int(new_height * orig_aspect)
+        
+        # Если новая ширина превышает максимально допустимую, ограничиваем её
+        if new_width > thumb_width * 2:
+            new_width = thumb_width * 2
+            
+        # Изменяем размер
+        thumb_img = thumb_img.resize((new_width, new_height), Image.LANCZOS)
         
         # Сохраняем миниатюру
         thumb_img.save(thumbnail_path, quality=quality, optimize=True)
-        logger.info(f"Миниатюра создана: {thumbnail_path}")
+        logger.info(f"Миниатюра создана: {thumbnail_path}, размер: {new_width}x{new_height}")
         
         return True
     except Exception as e:
@@ -210,28 +221,45 @@ def process_gallery_images_batch(gallery_dir, recursive=False, force_aspect_rati
     logger.info(f"Обработка пакета изображений завершена. Успешно: {success_count}, Ошибок: {error_count}")
     return success_count, error_count
 
-def get_display_size(original_width, original_height, max_display_width, max_display_height):
+def get_display_size(original_width, original_height, max_display_width, max_display_height, 
+                  fixed_height=False):
     """
     Вычисляет оптимальный размер для отображения изображения в интерфейсе.
+    Можно использовать два режима:
+    1. fixed_height=False: соблюдение пропорций с ограничением по макс. ширине и высоте
+    2. fixed_height=True: фиксированная высота для всех изображений
     
     Args:
         original_width (int): Исходная ширина изображения
         original_height (int): Исходная высота изображения
         max_display_width (int): Максимальная ширина для отображения
-        max_display_height (int): Максимальная высота для отображения
+        max_display_height (int): Максимальная или фиксированная высота для отображения
+        fixed_height (bool): Использовать фиксированную высоту для всех изображений
         
     Returns:
         tuple: (display_width, display_height) - размеры для отображения
     """
-    # Вычисляем соотношение ширины и высоты
-    width_ratio = max_display_width / original_width
-    height_ratio = max_display_height / original_height
-    
-    # Используем меньшее соотношение для сохранения пропорций
-    ratio = min(width_ratio, height_ratio)
-    
-    # Вычисляем новые размеры
-    display_width = int(original_width * ratio)
-    display_height = int(original_height * ratio)
+    if fixed_height:
+        # Фиксированная высота для галереи - все изображения будут одинаковой высоты
+        display_height = max_display_height
+        
+        # Вычисляем ширину с сохранением пропорций
+        display_width = int(original_width * (display_height / original_height))
+        
+        # Ограничиваем ширину, если она слишком большая
+        if display_width > max_display_width * 2:
+            display_width = max_display_width * 2
+    else:
+        # Стандартный режим - сохранение пропорций с ограничением размеров
+        # Вычисляем соотношение ширины и высоты
+        width_ratio = max_display_width / original_width
+        height_ratio = max_display_height / original_height
+        
+        # Используем меньшее соотношение для сохранения пропорций
+        ratio = min(width_ratio, height_ratio)
+        
+        # Вычисляем новые размеры
+        display_width = int(original_width * ratio)
+        display_height = int(original_height * ratio)
     
     return display_width, display_height

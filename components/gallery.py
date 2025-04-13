@@ -203,14 +203,16 @@ def display_installation_counter():
     # Отображаем счетчик в интерфейсе
     st.markdown(animated_html, unsafe_allow_html=True)
 
-def load_and_resize_image(image_path, max_width=800):
+def load_and_resize_image(image_path, max_width=800, max_height=600, fixed_height=True):
     """
-    Загружает и изменяет размер изображения, сохраняя пропорции.
+    Загружает и изменяет размер изображения, фиксируя высоту для всех изображений.
     Поддерживает форматы JPEG, PNG и HEIC.
     
     Args:
         image_path (str): Путь к изображению
         max_width (int): Максимальная ширина для отображения
+        max_height (int): Фиксированная высота для всех изображений 
+        fixed_height (bool): Использовать фиксированную высоту (True) или пропорциональное изменение размера (False)
         
     Returns:
         PIL.Image: Изображение с измененным размером
@@ -236,12 +238,22 @@ def load_and_resize_image(image_path, max_width=800):
         img = Image.open(image_path)
         width, height = img.size
         
-        # Сохраняем пропорции при изменении размера
-        if width > max_width:
-            ratio = max_width / width
-            new_width = max_width
-            new_height = int(height * ratio)
-            img = img.resize((new_width, new_height))
+        # Импортируем модуль нормализации изображений для использования оптимизированных функций
+        from components import image_normalizer
+        
+        if fixed_height:
+            # Используем нашу новую функцию, которая фиксирует высоту
+            new_width, new_height = image_normalizer.get_display_size(
+                width, height, max_width, max_height, fixed_height=True
+            )
+            img = img.resize((new_width, new_height), Image.LANCZOS)
+        else:
+            # Стандартное пропорциональное изменение размера (для обратной совместимости)
+            if width > max_width:
+                ratio = max_width / width
+                new_width = max_width
+                new_height = int(height * ratio)
+                img = img.resize((new_width, new_height), Image.LANCZOS)
             
         return img
     except Exception as e:
@@ -292,7 +304,8 @@ def create_gallery_html(image_urls, captions):
         
         .gallery-image {
             width: 100%;
-            height: auto;
+            height: 600px;  /* Фиксированная высота для всех изображений */
+            object-fit: cover;  /* Содержимое подстраивается под размер */
             display: block;
             margin: 0 auto;
         }
@@ -479,7 +492,7 @@ def display_projects_gallery():
         
         # Загружаем и отображаем изображения через Streamlit для получения URL
         for img_path in image_paths:
-            img = load_and_resize_image(img_path)
+            img = load_and_resize_image(img_path, max_width=800, max_height=600, fixed_height=True)
             if img:
                 # Используем контейнер для скрытия стандартного отображения
                 with st.container():
