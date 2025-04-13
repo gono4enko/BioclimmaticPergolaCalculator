@@ -1438,8 +1438,8 @@ def render_results(results):
                 </td>
                 """
             elif is_final_without_discount:
-                # Стиль для итоговой строки БЕЗ скидки (синий)
-                html_table += '<tr style="background-color:#e0f0ff;">'
+                # Стиль для итоговой строки БЕЗ скидки (синий) с якорем
+                html_table += '<tr id="final-price-target" style="background-color:#e0f0ff;">'
                 html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
                 
                 # Применяем специальный класс для значения "Итоговая стоимость" (без скидки)
