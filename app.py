@@ -82,8 +82,15 @@ LAMELLA_TYPES = {
 
 # Максимально допустимые размеры для каждого типа пергол
 MAX_DIMENSIONS = {
-    "B500NEW": {"width": 15.0, "length": 8.0},
-    "B700NEW": {"width": 15.0, "length": 7.25},
+    # B500 с ламелями 250 мм - ширина 13.5м, вынос 8м
+    "B500NEW_250": {"width": 13.5, "length": 8.0},
+    # B500 с ламелями 200 мм - ширина 15м, вынос 8м
+    "B500NEW_200": {"width": 15.0, "length": 8.0},
+    # B700 с ламелями 250 мм - ширина 13.5м, вынос 8м
+    "B700NEW_250": {"width": 13.5, "length": 8.0},
+    # B700 с ламелями 200 мм - ширина 15м, вынос 8м
+    "B700NEW_200": {"width": 15.0, "length": 8.0},
+    # B600 - ширина 13.5м, вынос 8м
     "B600": {"width": 13.5, "length": 8.0}
 }
 
@@ -1195,23 +1202,35 @@ def render_dimensions_form():
     st.session_state.setdefault('cached_width', None)
     st.session_state.setdefault('cached_length', None)
     
-    # Устанавливаем максимальные размеры согласно константам MAX_DIMENSIONS
-    # Если тип перголы не выбран или не найден в константах, используем максимальные значения
-    if current_pergola_type in MAX_DIMENSIONS:
-        max_width = MAX_DIMENSIONS[current_pergola_type]["width"]
-        max_length = MAX_DIMENSIONS[current_pergola_type]["length"]
+    # Получаем текущий тип ламелей
+    current_lamella_size = st.session_state.get("lamella_size", "250")
+    
+    # Формируем ключ для поиска максимальных размеров с учетом типа перголы и размера ламелей
+    # B600 не зависит от размера ламелей, поэтому для него используем просто тип
+    if current_pergola_type == "B600":
+        dimensions_key = current_pergola_type
     else:
-        # Используем максимальные значения для B500NEW/B700NEW как значения по умолчанию
-        max_width = 15.0
+        dimensions_key = f"{current_pergola_type}_{current_lamella_size}"
+    
+    # Устанавливаем максимальные размеры согласно константам MAX_DIMENSIONS
+    # Если комбинация типа перголы и ламелей не найдена, используем безопасные значения
+    if dimensions_key in MAX_DIMENSIONS:
+        max_width = MAX_DIMENSIONS[dimensions_key]["width"]
+        max_length = MAX_DIMENSIONS[dimensions_key]["length"]
+    else:
+        # Используем безопасные значения по умолчанию
+        max_width = 13.5  # Минимальное из максимальных значений ширины
         max_length = 8.0
     
     # Добавляем проверку минимальных значений для безопасности
     min_width = 2.0
     min_length = 2.0
     
-    # Принудительно обновляем значения session_state при смене типа перголы
-    if 'prev_pergola_type' not in st.session_state or st.session_state.get('prev_pergola_type') != current_pergola_type:
-        st.session_state['prev_pergola_type'] = current_pergola_type
+    # Принудительно обновляем значения session_state при смене типа перголы или размера ламелей
+    # Создаем комбинированный ключ из типа перголы и размера ламелей
+    combined_key = f"{current_pergola_type}_{current_lamella_size}"
+    if 'prev_combined_key' not in st.session_state or st.session_state.get('prev_combined_key') != combined_key:
+        st.session_state['prev_combined_key'] = combined_key
         st.session_state['cached_width'] = None
         st.session_state['cached_length'] = None
         
@@ -1317,13 +1336,27 @@ def render_options_form():
     # Тип ламелей - заголовок в том же стиле, что и для других разделов
     st.write("Выберите тип ламелей")
     
+    # Получаем размер ламелей из типа для сохранения в session_state
+    def get_lamella_size(lamella_type):
+        if "20" in lamella_type:
+            return "200"
+        elif "25" in lamella_type:
+            return "250"
+        elif "PIR" in lamella_type:
+            return "PIR"
+        return "250"  # По умолчанию 250 мм
+    
     lamella_type = st.radio(
         "",  # Пустая строка, так как заголовок добавляем отдельно
         options=lamella_options,
         format_func=lambda x: LAMELLA_TYPES.get(x, x),
         horizontal=True,
-        label_visibility="collapsed"  # Скрываем стандартный заголовок
+        label_visibility="collapsed",  # Скрываем стандартный заголовок
+        key="lamella_type"
     )
+    
+    # Сохраняем размер ламелей в session_state для использования в render_dimensions_form
+    st.session_state["lamella_size"] = get_lamella_size(lamella_type)
     
     # Глобальный CSS для заголовков разделов и выравнивания всех элементов формы
     st.markdown("""
