@@ -8,6 +8,8 @@ import pandas as pd
 from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
 # Импортируем функцию для плавного скролла
 from scroll import smooth_scroll_to
+# Импортируем функцию для виртуального скролла
+from auto_scroll import create_growing_spacer
 import os
 import math
 import csv
