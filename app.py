@@ -10,6 +10,8 @@ from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
 from scroll import smooth_scroll_to
 # Импортируем функцию для виртуального скролла
 from auto_scroll import create_growing_spacer
+# Импортируем модуль для анимаций и визуальных эффектов
+import animations
 import os
 import math
 import csv
