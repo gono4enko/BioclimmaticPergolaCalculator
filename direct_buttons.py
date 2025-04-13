@@ -6,10 +6,29 @@
 
 import streamlit as st
 
+def is_admin_page():
+    """
+    Проверяет, является ли текущая страница страницей администрирования.
+    
+    Returns:
+        bool: True если текущая страница относится к администрированию
+    """
+    # Получаем URL текущей страницы
+    page_url = st.experimental_get_query_params().get("_stcore_page_id", [""])[0]
+    page_name = page_url.lower()
+    
+    # Проверка на админские страницы
+    return any(admin_term in page_name 
+                for admin_term in ["admin", "prices_admin", "promotions_admin", "content_admin"])
+
 def inject_direct_buttons():
     """
     Внедряет базовые стили для расположения кнопок навигации справа вверху.
+    Не добавляет кнопки на страницах администрирования.
     """
+    # Проверяем, находимся ли мы на странице администрирования
+    if is_admin_page():
+        return  # Не добавляем кнопки на админ-страницах
     # Добавляем CSS для стилизации кнопок
     st.markdown("""
     <style>
@@ -87,16 +106,39 @@ def inject_direct_buttons():
     // Функция для перемещения кнопок из сайдбара в правый верхний угол
     function moveButtons() {
         // Проверяем, находимся ли мы на странице администрирования
-        const isAdminPage = window.location.pathname.includes('admin') || 
-                           window.location.pathname.includes('prices_admin');
+        // Проверяем URL и заголовок страницы для определения админ-страницы
+        const currentPath = window.location.pathname;
+        const isAdminPage = currentPath.includes('admin') || 
+                           currentPath.includes('prices_admin') || 
+                           document.title.includes('Администрирование');
         
-        // Если это страница администрирования, не показываем кнопки
+        console.log('Текущий путь:', currentPath);
+        console.log('Это админ-страница:', isAdminPage);
+        
+        // Если мы находимся на странице администрирования - удаляем кнопки
         if (isAdminPage) {
             // Находим и удаляем контейнер с кнопками, если он существует
             const existingContainer = document.querySelector('.nav-buttons-container');
             if (existingContainer) {
                 existingContainer.remove();
             }
+            
+            // Также находим и удаляем кнопки из сайдбара, чтобы предотвратить их перенос
+            const sidebar = document.querySelector('.stSidebar');
+            if (sidebar) {
+                const editButton = Array.from(sidebar.querySelectorAll('button'))
+                    .find(btn => btn.innerText.includes('Изменить размеры'));
+                const resultsButton = Array.from(sidebar.querySelectorAll('button'))
+                    .find(btn => btn.innerText.includes('К результатам'));
+                
+                if (editButton) {
+                    editButton.style.display = 'none';
+                }
+                if (resultsButton) {
+                    resultsButton.style.display = 'none';
+                }
+            }
+            
             return; // Прекращаем выполнение функции
         }
         
