@@ -1270,7 +1270,7 @@ def render_results(results):
             <strong>Количество модулей:</strong> {modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}
         </p>
         <div style='font-size: 1.4rem; font-weight: 700; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0; text-align: center;' id="results">
-            {f'Итоговая стоимость со скидкой:' if total_discount > 0 else 'Итоговая стоимость:'} <span style='font-size: 1.5rem; color: {"#1b5e20" if total_discount > 0 else "#0066cc"};'>{formatted_price} ₽</span>
+            <span id="final-price-target">{f'Итоговая стоимость со скидкой:' if total_discount > 0 else 'Итоговая стоимость:'} <span style='font-size: 1.5rem; color: {"#1b5e20" if total_discount > 0 else "#0066cc"};'>{formatted_price} ₽</span></span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1984,52 +1984,67 @@ def send_page_height_to_parent():
 def scroll_to_results():
     """
     Добавляет JavaScript для перехода к якорю результатов при нажатии на скрытую кнопку
+    с улучшенным механизмом обнаружения появления элементов в DOM
     """
     # Добавляем JavaScript для автоматического нажатия на ссылку-якорь
     st.markdown("""
     <script>
-        // Используем URL-хэш для скролла
+        // Функция для прокрутки к результату с ценой
         function scrollToResults() {
             console.log('Attempting to scroll to results...');
             
-            // Ищем элемент с id="results"
+            // Целевой элемент - блок с итоговой стоимостью со скидкой
+            const targetElement = document.getElementById('final-price-target');
+            
+            if (targetElement) {
+                console.log('Found final price target element, scrolling...');
+                
+                // Плавная прокрутка к целевому элементу с отступом для лучшей видимости
+                targetElement.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+                
+                // Подсветим элемент для привлечения внимания
+                const originalBackground = targetElement.style.backgroundColor;
+                targetElement.style.transition = 'background-color 0.5s ease';
+                targetElement.style.backgroundColor = 'rgba(255, 252, 127, 0.3)';
+                
+                // Возвращаем обычный цвет фона через 1.5 секунды
+                setTimeout(() => {
+                    targetElement.style.backgroundColor = originalBackground;
+                }, 1500);
+                
+                return true;
+            }
+            
+            // Запасной вариант - поиск элемента результатов
             const resultsElement = document.getElementById('results');
             
             if (resultsElement) {
                 console.log('Found results element, scrolling...');
                 
-                // Программно создаем и кликаем по ссылке на якорь
-                const scrollLink = document.createElement('a');
-                scrollLink.href = '#results';
-                scrollLink.style.display = 'none';
-                document.body.appendChild(scrollLink);
-                
-                // Прокручиваем с задержкой для надежности
-                setTimeout(() => {
-                    scrollLink.click();
-                    console.log('Clicked on results anchor link');
-                    
-                    // Удаляем ссылку после использования
-                    setTimeout(() => {
-                        document.body.removeChild(scrollLink);
-                    }, 100);
-                }, 500);
+                resultsElement.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
                 
                 return true;
             }
             
-            console.log('Results element not found');
+            console.log('Results element not found, trying to find headings');
             
             // Если якорь не найден, ищем заголовок или просто скроллим вниз
-            const resultsHeadings = Array.from(document.querySelectorAll('h2'))
-                .filter(h => h.textContent.includes('Результаты расчета'));
+            const resultsHeadings = Array.from(document.querySelectorAll('h2, h3'))
+                .filter(h => h.textContent.includes('Итоговая стоимость') || 
+                           h.textContent.includes('Результаты расчета'));
             
             if (resultsHeadings.length > 0) {
                 console.log('Found results heading, scrolling...');
                 const heading = resultsHeadings[0];
-                window.scrollTo({
-                    top: heading.offsetTop - 80,
-                    behavior: 'smooth'
+                heading.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
                 });
                 return true;
             }
@@ -2037,25 +2052,62 @@ def scroll_to_results():
             // Крайний случай - просто скроллим на определенное расстояние вниз
             console.log('No targets found, scrolling down as fallback');
             window.scrollTo({
-                top: document.body.scrollHeight / 2,  // Примерно в середину страницы
+                top: document.body.scrollHeight / 2,
                 behavior: 'smooth'
             });
             
             return false;
         }
         
-        // Выполняем скролл после загрузки DOM
+        // Функция для проверки наличия элементов и запуска прокрутки
+        function checkAndScroll(attempts = 0, maxAttempts = 10) {
+            if (attempts >= maxAttempts) {
+                console.log(`Exceeded max attempts (${maxAttempts}), trying fallback scroll`);
+                // Последняя попытка - скролл к середине страницы
+                setTimeout(() => {
+                    window.scrollTo({
+                        top: document.body.scrollHeight / 2,
+                        behavior: 'smooth'
+                    });
+                }, 300);
+                return;
+            }
+            
+            // Проверяем наличие элементов для прокрутки
+            const targetExists = document.getElementById('final-price-target') || 
+                               document.getElementById('results') ||
+                               Array.from(document.querySelectorAll('h2, h3'))
+                                   .some(h => h.textContent.includes('Итоговая стоимость') || 
+                                              h.textContent.includes('Результаты расчета'));
+            
+            if (targetExists) {
+                console.log(`Found target element on attempt ${attempts + 1}, scrolling...`);
+                setTimeout(scrollToResults, 100);  // Небольшая задержка для стабильности
+            } else {
+                // Если элементы не найдены, пробуем еще раз через увеличивающийся интервал
+                console.log(`Target element not found, scheduling attempt ${attempts + 1} of ${maxAttempts}`);
+                const delay = 300 + (attempts * 300);  // Увеличиваем задержку с каждой попыткой
+                setTimeout(() => checkAndScroll(attempts + 1, maxAttempts), delay);
+            }
+        }
+        
+        // Запускаем проверку и прокрутку после загрузки DOM
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded, scheduling scroll');
-            setTimeout(scrollToResults, 300);
+            console.log('DOM fully loaded, starting scroll monitoring');
+            checkAndScroll(0, 10);  // До 10 попыток с увеличивающимся интервалом
         });
         
-        // Также выполняем скролл сразу (для случая, когда DOM уже загружен)
-        console.log('Script loaded, scheduling immediate scroll');
-        setTimeout(scrollToResults, 500);
+        // Также запускаем проверку сразу (для случая, когда DOM уже загружен)
+        console.log('Script loaded, starting immediate scroll monitoring');
+        setTimeout(() => checkAndScroll(0, 10), 300);
         
-        // И выполняем третью попытку для надежности
-        setTimeout(scrollToResults, 1500);
+        // Дополнительная попытка через 3 секунды для особо долгих загрузок
+        setTimeout(() => {
+            if (!document.getElementById('final-price-target')) {
+                console.log('Final attempt to find and scroll to results');
+                checkAndScroll(5, 10);  // Начинаем с 5-й попытки для более быстрого увеличения задержки
+            }
+        }, 3000);
     </script>
     """, unsafe_allow_html=True)
 
