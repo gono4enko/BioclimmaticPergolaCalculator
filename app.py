@@ -943,12 +943,13 @@ def perform_calculation(dimensions, options):
         })
         results["total_price"] += delivery_price
         
-        # Добавляем наценку за установку (10%, если выбрана опция)
+        # Добавляем наценку за установку из модуля настроек, если выбрана опция
         if installation:
-            installation_price = round(base_total_price * 0.1, 2)
+            installation_markup_percent = pricing_settings.get_installation_markup_percent()
+            installation_price = round(base_total_price * installation_markup_percent / 100, 2)
             results["installation"] = {
                 "selected": True,
-                "percentage": 10,
+                "percentage": installation_markup_percent,
                 "price": installation_price
             }
             results["items"].append({
