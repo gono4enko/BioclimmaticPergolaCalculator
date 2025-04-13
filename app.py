@@ -3201,20 +3201,42 @@ def main():
                 st.session_state.show_floating_buttons = True
                 st.session_state.options = options
                 
-                # Отключаем автоматический скролл к результатам
-                st.session_state.scroll_to_results = False
+                # Включаем автоматический скролл к результатам
+                st.session_state.scroll_to_results = True
                 
                 # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
                 st.session_state.description_shown = False
                 
-                # Устанавливаем флаг для отправки события в Яндекс.Метрику после перезагрузки
+                # Устанавливаем флаг для отправки события в Яндекс.Метрику
                 st.session_state.send_ya_metrika_event = True
                 
-                # Запоминаем, что нужно установить хэш #results после перезагрузки страницы
+                # Запоминаем, что нужно установить хэш #results
                 st.session_state.set_hash_to_results = True
                 
-                # Перезагружаем страницу для отображения результатов
-                st.rerun()
+                # Добавляем отладочную информацию для проверки состояния флага
+                st.markdown(f"""
+                <script>
+                    console.log("✅ DEBUG: Расчет завершен, show_floating_buttons = {st.session_state.show_floating_buttons}");
+                </script>
+                """, unsafe_allow_html=True)
+                
+                # Вместо перезагрузки страницы добавляем JavaScript для скролла к результатам
+                # Это позволит избежать двойной перезагрузки и ускорит работу
+                st.markdown("""
+                <script>
+                    // Дожидаемся полной загрузки документа
+                    document.addEventListener('DOMContentLoaded', (event) => {
+                        // Функция для плавного скролла к результатам
+                        setTimeout(function() {
+                            const resultsElement = document.getElementById('results');
+                            if (resultsElement) {
+                                resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                console.log("⚡ DEBUG: Скролл к результатам через JavaScript");
+                            }
+                        }, 500);
+                    });
+                </script>
+                """, unsafe_allow_html=True)
     
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.2rem; margin-bottom: 0.2rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)

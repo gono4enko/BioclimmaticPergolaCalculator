@@ -24,6 +24,17 @@ def add_floating_button(target_id, button_text, position="bottom-right", color="
         appear_after_scroll (int, optional): Появляться только после скролла на указанное количество пикселей
         id (str, optional): Уникальный ID для кнопки, если нужно обращаться к ней через JS
     """
+    # Добавляем отладочное сообщение для проверки переданных параметров
+    st.markdown(f"""
+    <script>
+        console.log("🔧 DEBUG: add_floating_button вызван с параметрами:");
+        console.log("  target_id: {target_id}");
+        console.log("  button_text: {button_text}");
+        console.log("  position: {position}");
+        console.log("  appear_after_scroll: {appear_after_scroll}");
+        console.log("  id: {id}");
+    </script>
+    """, unsafe_allow_html=True)
     # Добавляем загрузку Font Awesome при первом вызове функции
     global _font_awesome_loaded
     if not _font_awesome_loaded:
@@ -145,6 +156,13 @@ def add_results_navigation_button():
     Добавляет плавающую кнопку для быстрого перехода к результатам расчета.
     Кнопка появляется только после скролла на 300 пикселей.
     """
+    # Добавляем отладочное сообщение для проверки вызова функции
+    st.markdown("""
+    <script>
+        console.log("🚀 DEBUG: Вызвана функция add_results_navigation_button()");
+    </script>
+    """, unsafe_allow_html=True)
+    
     # Загружаем компонент для обнаружения мобильных устройств
     mobile_css = """
     <style>
@@ -159,13 +177,14 @@ def add_results_navigation_button():
     """
     st.markdown(mobile_css, unsafe_allow_html=True)
     
+    # Добавляем принудительное отображение кнопки (без условия скролла)
     add_floating_button(
         target_id="results",
         button_text="К результатам",
         position="bottom-center",
         color="#0066cc",
         icon="arrow-down",
-        appear_after_scroll=300,
+        appear_after_scroll=None,  # Убираем условие скролла
         id="results-nav-button"
     )
 
@@ -174,6 +193,13 @@ def add_dimensions_edit_button():
     Добавляет плавающую зеленую кнопку для возврата к редактированию размеров.
     Появляется всегда на странице.
     """
+    # Добавляем отладочное сообщение для проверки вызова функции
+    st.markdown("""
+    <script>
+        console.log("🚀 DEBUG: Вызвана функция add_dimensions_edit_button()");
+    </script>
+    """, unsafe_allow_html=True)
+    
     # Загружаем CSS для мобильных устройств
     mobile_css = """
     <style>
