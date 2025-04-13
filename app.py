@@ -2865,91 +2865,31 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Создаем HTML-кнопку с собственной стилизацией, чтобы обеспечить идеальное центрирование
-    calculate_clicked = False
-    calc_button_id = "calculate_button_custom"
-    
-    st.markdown(f"""
-    <button 
-        id="{calc_button_id}" 
-        class="custom-calculate-button"
-        onclick="buttonClicked()"
-    >
-        РАССЧИТАТЬ СТОИМОСТЬ
-    </button>
-    
-    <script>
-        function buttonClicked() {{
-            // Устанавливаем флаг в сессионном хранилище
-            sessionStorage.setItem('calc_button_pressed', 'true');
-            // Перезагружаем страницу для активации обработчика нажатия
-            window.location.reload();
-        }}
-        
-        // При загрузке страницы проверяем, был ли нажат флаг
-        document.addEventListener('DOMContentLoaded', function() {{
-            if (sessionStorage.getItem('calc_button_pressed') === 'true') {{
-                // Сбрасываем флаг
-                sessionStorage.removeItem('calc_button_pressed');
-                // Устанавливаем скрытый параметр в URL для Streamlit
-                // Используем современный способ установки параметров URL вместо экспериментального
-                const url = new URL(window.location);
-                url.searchParams.set('{calc_button_id}_clicked', 'true');
-                window.history.replaceState({{}}, '', url);
-                
-                console.log("Кнопка была нажата, параметр добавлен в URL");
-            }}
-        }});
-    </script>
-    
+    # Добавляем CSS для анимации кнопки (применяется через класс)
+    st.markdown("""
     <style>
-    .custom-calculate-button {{
-        display: inline-block;
-        width: 100%;
-        height: 70px;
-        line-height: 70px;
+    div[data-testid="stButton"] button {
+        height: 65px;
         background-color: #0066cc;
         color: white;
-        font-size: 22px;
+        font-size: 18px;
         font-weight: 900;
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        margin: 15px 0;
-        cursor: pointer;
-        letter-spacing: 1px;
-        border: none;
+        letter-spacing: 0.5px;
+        animation: pulse-button 1s infinite;
         text-transform: uppercase;
-        animation: custom-pulse-button 1s infinite;
-        text-align: center;
-        padding: 0;
-        vertical-align: middle;
-        position: relative;
-    }}
+    }
     
-    @keyframes custom-pulse-button {{
-        0% {{ transform: scale(1) translateY(0); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); background-color: #0066cc; }}
-        50% {{ transform: scale(1.08) translateY(-8px); box-shadow: 0 10px 25px rgba(0, 102, 204, 0.6); background-color: #0088ff; }}
-        100% {{ transform: scale(1) translateY(0); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); background-color: #0066cc; }}
-    }}
+    @keyframes pulse-button {
+        0% { transform: scale(1) translateY(0); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); background-color: #0066cc; }
+        50% { transform: scale(1.05) translateY(-5px); box-shadow: 0 10px 25px rgba(0, 102, 204, 0.6); background-color: #0088ff; }
+        100% { transform: scale(1) translateY(0); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); background-color: #0066cc; }
+    }
     </style>
     """, unsafe_allow_html=True)
     
-    # Проверяем, была ли нажата кнопка (используя query_params)
-    if st.session_state.get('calc_button_pressed', False) or st.query_params.get(f"{calc_button_id}_clicked", ['false'])[0] == 'true':
-        calculate_clicked = True
-        # Сбрасываем состояние
-        st.session_state.calc_button_pressed = False
-        # Сбрасываем query params
-        if f"{calc_button_id}_clicked" in st.query_params:
-            # Создаем новую копию query params без параметра кнопки
-            new_params = dict(st.query_params)
-            if f"{calc_button_id}_clicked" in new_params:
-                del new_params[f"{calc_button_id}_clicked"]
-            # Устанавливаем новые query params
-            st.query_params.update(**new_params)
-    
-    # Если кнопка была нажата через HTML-form submit
-    if calculate_clicked:
+    # Создаем кнопку с помощью обычного button
+    if st.button("РАССЧИТАТЬ СТОИМОСТЬ", key="calc_button", use_container_width=True, 
+                type="primary", help="Нажмите, чтобы рассчитать стоимость перголы"):
         with st.spinner("Выполняется расчет..."):
             # Выводим отладочное сообщение 
             st.markdown("""
