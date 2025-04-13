@@ -3121,9 +3121,18 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Создаем кнопку с помощью обычного button
-    if st.button("РАССЧИТАТЬ СТОИМОСТЬ", key="calc_button", use_container_width=True, 
-                type="primary", help="Нажмите, чтобы рассчитать стоимость перголы"):
+    # Создаем кнопку по центру с помощью колонок
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    # Помещаем кнопку в среднюю колонку
+    with col2:
+        calculate_button = st.button("РАССЧИТАТЬ СТОИМОСТЬ", key="calc_button", 
+                                   use_container_width=True, 
+                                   type="primary", 
+                                   help="Нажмите, чтобы рассчитать стоимость перголы")
+    
+    # Обрабатываем нажатие на кнопку
+    if calculate_button:
         with st.spinner("Выполняется расчет..."):
             # Выводим отладочное сообщение 
             st.markdown("""
@@ -3138,6 +3147,11 @@ def main():
                 results = perform_calculation(dimensions, options)
                 
                 # Сохраняем результаты и опции в состоянии сессии
+                # Инициализируем переменную results, если не был выполнен расчет
+                if 'results' not in locals():
+                    results = {}
+                
+                # Сохраняем результаты в session_state
                 st.session_state.results = results
                 st.session_state.options = options
                 
