@@ -181,6 +181,165 @@ ACTIVE_PROMOTIONS = {
 
 # === Функции для работы с акциями ===
 
+def get_all_promotions() -> Dict:
+    """
+    Возвращает все акции из базы данных (файла).
+    
+    Returns:
+        Dict: Словарь со всеми акциями
+    """
+    import os
+    import json
+    
+    # Путь к файлу с акциями
+    promotions_file = os.path.join("config", "data", "promotions.json")
+    
+    # Создаем директорию, если ее нет
+    os.makedirs(os.path.dirname(promotions_file), exist_ok=True)
+    
+    # Проверяем существование файла
+    if not os.path.exists(promotions_file):
+        # Если файла нет, создаем его с базовыми акциями
+        default_promotions = {
+            "seasonal_spring": {
+                "name": "Весенняя акция",
+                "code": None,
+                "discount_percent": 5.0,
+                "start_date": "2025-03-01",
+                "end_date": "2025-05-31",
+                "description": "Скидка 5% на все перголы до конца весны",
+                "conditions": "Действительна для всех типов пергол",
+                "stackable": False,
+                "active": True
+            },
+            "large_size": {
+                "name": "Большие размеры",
+                "code": "BIG",
+                "discount_percent": 2.0,
+                "start_date": "2025-01-01",
+                "end_date": "2025-12-31",
+                "description": "Дополнительная скидка 2% на перголы от 7х7 метров",
+                "conditions": "Действительна только для пергол от 7х7 метров",
+                "stackable": True,
+                "active": True
+            }
+        }
+        
+        # Записываем дефолтные акции в файл
+        with open(promotions_file, "w", encoding="utf-8") as f:
+            json.dump(default_promotions, f, ensure_ascii=False, indent=4)
+        
+        return default_promotions
+    
+    # Если файл существует, читаем из него
+    try:
+        with open(promotions_file, "r", encoding="utf-8") as f:
+            promotions = json.load(f)
+        return promotions
+    except Exception as e:
+        print(f"Ошибка при чтении акций: {e}")
+        return {}
+
+def add_promotion(promotion_data: Dict) -> bool:
+    """
+    Добавляет новую акцию в базу данных.
+    
+    Args:
+        promotion_data: Данные новой акции
+        
+    Returns:
+        bool: True в случае успеха, False при ошибке
+    """
+    import os
+    import json
+    import uuid
+    
+    # Получаем текущие акции
+    promotions = get_all_promotions()
+    
+    # Генерируем уникальный идентификатор для новой акции
+    promo_id = str(uuid.uuid4())[:8]
+    
+    # Добавляем новую акцию
+    promotions[promo_id] = promotion_data
+    
+    # Сохраняем изменения
+    try:
+        promotions_file = os.path.join("config", "data", "promotions.json")
+        with open(promotions_file, "w", encoding="utf-8") as f:
+            json.dump(promotions, f, ensure_ascii=False, indent=4)
+        return True
+    except Exception as e:
+        print(f"Ошибка при сохранении акции: {e}")
+        return False
+
+def update_promotion(promo_id: str, promotion_data: Dict) -> bool:
+    """
+    Обновляет существующую акцию.
+    
+    Args:
+        promo_id: Идентификатор акции
+        promotion_data: Новые данные акции
+        
+    Returns:
+        bool: True в случае успеха, False при ошибке
+    """
+    import os
+    import json
+    
+    # Получаем текущие акции
+    promotions = get_all_promotions()
+    
+    # Проверяем существование акции
+    if promo_id not in promotions:
+        return False
+    
+    # Обновляем акцию
+    promotions[promo_id] = promotion_data
+    
+    # Сохраняем изменения
+    try:
+        promotions_file = os.path.join("config", "data", "promotions.json")
+        with open(promotions_file, "w", encoding="utf-8") as f:
+            json.dump(promotions, f, ensure_ascii=False, indent=4)
+        return True
+    except Exception as e:
+        print(f"Ошибка при обновлении акции: {e}")
+        return False
+
+def delete_promotion(promo_id: str) -> bool:
+    """
+    Удаляет акцию.
+    
+    Args:
+        promo_id: Идентификатор акции
+        
+    Returns:
+        bool: True в случае успеха, False при ошибке
+    """
+    import os
+    import json
+    
+    # Получаем текущие акции
+    promotions = get_all_promotions()
+    
+    # Проверяем существование акции
+    if promo_id not in promotions:
+        return False
+    
+    # Удаляем акцию
+    del promotions[promo_id]
+    
+    # Сохраняем изменения
+    try:
+        promotions_file = os.path.join("config", "data", "promotions.json")
+        with open(promotions_file, "w", encoding="utf-8") as f:
+            json.dump(promotions, f, ensure_ascii=False, indent=4)
+        return True
+    except Exception as e:
+        print(f"Ошибка при удалении акции: {e}")
+        return False
+
 def get_active_promotions() -> Dict:
     """
     Возвращает все активные акции с учетом текущей даты.

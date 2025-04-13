@@ -17,9 +17,26 @@ def is_admin_page():
     page_url = st.query_params.get("_stcore_page_id", [""])[0]
     page_name = page_url.lower()
     
-    # Проверка на админские страницы
-    return any(admin_term in page_name 
-                for admin_term in ["admin", "prices_admin", "promotions_admin", "content_admin"])
+    # Более строгие проверки для определения страниц администрирования
+    admin_terms = ["admin", "prices_admin", "promotions_admin", "content_admin", "gallery_admin"]
+    
+    # Проверяем через регулярное выражение наличие админ-терминов
+    import re
+    for admin_term in admin_terms:
+        if re.search(f'\\b{admin_term}\\b', page_name):
+            return True
+    
+    # Проверяем любые дополнительные признаки админской страницы
+    # Например, параметры URL
+    if 'admin' in str(st.query_params).lower():
+        return True
+        
+    # Проверка на страницу с паролем (тоже является админской)
+    if st.session_state.get('admin_login_attempted', False):
+        return True
+    
+    # Обычная проверка
+    return any(admin_term in page_name for admin_term in admin_terms)
 
 def inject_direct_buttons():
     """
@@ -106,11 +123,17 @@ def inject_direct_buttons():
     // Функция для перемещения кнопок из сайдбара в правый верхний угол
     function moveButtons() {
         // Проверяем, находимся ли мы на странице администрирования
-        // Проверяем URL и заголовок страницы для определения админ-страницы
+        // Проверяем URL, заголовок страницы и параметры URL для определения админ-страницы
         const currentPath = window.location.pathname;
+        const currentSearch = window.location.search;
+        const pageTitle = document.title || '';
+        
+        // Проверяем различные признаки админ-страницы
         const isAdminPage = currentPath.includes('admin') || 
                            currentPath.includes('prices_admin') || 
-                           document.title.includes('Администрирование');
+                           currentSearch.includes('admin') ||
+                           pageTitle.includes('Администрирование') ||
+                           (document.querySelector('h1') && document.querySelector('h1').innerText.includes('Администрирование'));
         
         console.log('Текущий путь:', currentPath);
         console.log('Это админ-страница:', isAdminPage);

@@ -2714,7 +2714,10 @@ def main():
     add_yandex_metrika()
     
     # Добавляем прямые плавающие кнопки навигации (новый метод)
-    inject_direct_buttons()
+    # Проверяем, что мы не на странице администрирования
+    current_path = st.query_params.get("_stcore_page_id", ["main"])[0].lower()
+    if not any(admin_term in current_path for admin_term in ["admin", "prices_admin", "promotions_admin"]):
+        inject_direct_buttons()
     
     # Добавляем общий JavaScript скрипт для автоматического изменения высоты и прокрутки
     add_common_script()
