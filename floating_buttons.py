@@ -154,18 +154,47 @@ def add_floating_button(target_id, button_text, position="bottom-right", color="
 def add_results_navigation_button():
     """
     Добавляет плавающую кнопку для быстрого перехода к результатам расчета.
-    Кнопка появляется только после скролла на 300 пикселей.
+    Кнопка отображается всегда, без дополнительных условий.
     """
     # Добавляем отладочное сообщение для проверки вызова функции
     st.markdown("""
     <script>
-        console.log("🚀 DEBUG: Вызвана функция add_results_navigation_button()");
+        console.log("🚀 DEBUG: Вызвана функция add_results_navigation_button() (обновленная версия)");
     </script>
     """, unsafe_allow_html=True)
     
-    # Загружаем компонент для обнаружения мобильных устройств
-    mobile_css = """
+    # Принудительно добавляем кнопку с CSS-стилями напрямую вместо использования add_floating_button
+    button_html = """
     <style>
+    /* Базовые стили для кнопки навигации */
+    #results-nav-button {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999 !important;
+        padding: 12px 20px;
+        background-color: #0066cc;
+        color: white;
+        border-radius: 50px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        display: block !important;
+        border: none;
+        outline: none;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Стили для эффекта наведения */
+    #results-nav-button:hover {
+        box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+        transform: translateX(-50%) scale(1.05);
+    }
+    
+    /* Стили для мобильных устройств */
     @media (max-width: 768px) {
         #results-nav-button {
             padding: 10px 15px !important;
@@ -174,35 +203,91 @@ def add_results_navigation_button():
         }
     }
     </style>
-    """
-    st.markdown(mobile_css, unsafe_allow_html=True)
     
-    # Добавляем принудительное отображение кнопки (без условия скролла)
-    add_floating_button(
-        target_id="results",
-        button_text="К результатам",
-        position="bottom-center",
-        color="#0066cc",
-        icon="arrow-down",
-        appear_after_scroll=None,  # Убираем условие скролла
-        id="results-nav-button"
-    )
+    <button id="results-nav-button">
+        <i class="fas fa-arrow-down" style="margin-right: 5px;"></i>К результатам
+    </button>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Добавляем Font Awesome, если его еще нет
+        if (!document.querySelector('link[href*="font-awesome"]')) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+            document.head.appendChild(link);
+        }
+        
+        // Добавляем обработчик события для кнопки
+        document.getElementById('results-nav-button').addEventListener('click', function() {
+            // Находим элемент, к которому нужно прокрутить
+            var targetElement = document.getElementById('results');
+            if (targetElement) {
+                // Плавная прокрутка к элементу
+                targetElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+                
+                // Добавляем выделение для элемента
+                targetElement.style.transition = 'background-color 0.5s ease';
+                targetElement.style.backgroundColor = '#f0f7ff';
+                setTimeout(function() {
+                    targetElement.style.backgroundColor = '';
+                }, 1500);
+            } else {
+                console.error('Элемент с ID "results" не найден');
+            }
+        });
+        
+        console.log('🎯 Обработчик событий для кнопки навигации к результатам добавлен!');
+    });
+    </script>
+    """
+    
+    # Добавляем HTML кнопки
+    components.html(button_html, height=0)
 
 def add_dimensions_edit_button():
     """
     Добавляет плавающую зеленую кнопку для возврата к редактированию размеров.
-    Появляется всегда на странице.
+    Кнопка отображается всегда, без дополнительных условий.
     """
     # Добавляем отладочное сообщение для проверки вызова функции
     st.markdown("""
     <script>
-        console.log("🚀 DEBUG: Вызвана функция add_dimensions_edit_button()");
+        console.log("🚀 DEBUG: Вызвана функция add_dimensions_edit_button() (обновленная версия)");
     </script>
     """, unsafe_allow_html=True)
     
-    # Загружаем CSS для мобильных устройств
-    mobile_css = """
+    # Принудительно добавляем кнопку с CSS-стилями напрямую вместо использования add_floating_button
+    button_html = """
     <style>
+    /* Базовые стили для кнопки навигации */
+    #dimensions-edit-button {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 9999 !important;
+        padding: 12px 20px;
+        background-color: #28a745;
+        color: white;
+        border-radius: 50px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        display: block !important;
+        border: none;
+        outline: none;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Стили для эффекта наведения */
+    #dimensions-edit-button:hover {
+        box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+        transform: scale(1.05);
+    }
+    
+    /* Стили для мобильных устройств */
     @media (max-width: 768px) {
         #dimensions-edit-button {
             padding: 10px 15px !important;
@@ -212,14 +297,44 @@ def add_dimensions_edit_button():
         }
     }
     </style>
-    """
-    st.markdown(mobile_css, unsafe_allow_html=True)
     
-    add_floating_button(
-        target_id="dimensions-form",
-        button_text="Изменить размеры",
-        position="bottom-left",
-        color="#28a745",
-        icon="edit",
-        id="dimensions-edit-button"
-    )
+    <button id="dimensions-edit-button">
+        <i class="fas fa-edit" style="margin-right: 5px;"></i>Изменить размеры
+    </button>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Добавляем Font Awesome, если его еще нет
+        if (!document.querySelector('link[href*="font-awesome"]')) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+            document.head.appendChild(link);
+        }
+        
+        // Добавляем обработчик события для кнопки
+        document.getElementById('dimensions-edit-button').addEventListener('click', function() {
+            // Находим элемент, к которому нужно прокрутить
+            var targetElement = document.getElementById('dimensions-form');
+            if (targetElement) {
+                // Плавная прокрутка к элементу
+                targetElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+                
+                // Добавляем выделение для элемента
+                targetElement.style.transition = 'background-color 0.5s ease';
+                targetElement.style.backgroundColor = '#f0fff4';
+                setTimeout(function() {
+                    targetElement.style.backgroundColor = '';
+                }, 1500);
+            } else {
+                console.error('Элемент с ID "dimensions-form" не найден');
+            }
+        });
+        
+        console.log('🎯 Обработчик событий для кнопки изменения размеров добавлен!');
+    });
+    </script>
+    """
+    
+    # Добавляем HTML кнопки
+    components.html(button_html, height=0)

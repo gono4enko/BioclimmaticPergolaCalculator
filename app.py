@@ -3267,20 +3267,19 @@ def main():
         </script>
         """, unsafe_allow_html=True)
         
-        # Добавляем плавающие кнопки после появления результатов
-        if st.session_state.get('show_floating_buttons', False):
-            # Выводим отладочное сообщение о добавлении кнопок
-            st.markdown("""
-            <script>
-                console.log("🎯 DEBUG: Добавляем плавающие кнопки");
-            </script>
-            """, unsafe_allow_html=True)
-            
-            # Добавляем кнопку навигации к результатам расчета
-            add_results_navigation_button()
-            
-            # Добавляем кнопку для возврата к форме размеров
-            add_dimensions_edit_button()
+        # Всегда добавляем плавающие кнопки, независимо от флага
+        # Выводим отладочное сообщение о добавлении кнопок
+        st.markdown("""
+        <script>
+            console.log("🎯 DEBUG: Всегда добавляем плавающие кнопки");
+        </script>
+        """, unsafe_allow_html=True)
+        
+        # Добавляем кнопку навигации к результатам расчета
+        add_results_navigation_button()
+        
+        # Добавляем кнопку для возврата к форме размеров
+        add_dimensions_edit_button()
     
     # Добавляем галерею проектов и счетчик установленных пергол
     # Разделяем содержимое после калькулятора
