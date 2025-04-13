@@ -449,8 +449,9 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
         }
     }
     </style>
-    <div class="discounts-container">
-        <div class="discounts-header">Примененные скидки</div>
+    <div style="width:85%; margin:0 auto; padding-left:25px; padding-right:25px;">
+        <div class="discounts-container">
+            <div class="discounts-header">Примененные скидки</div>
     """, unsafe_allow_html=True)
     
     for promo in applied_promotions:
@@ -476,6 +477,7 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
         <div class="discount-total">
             <div>Общая скидка:</div>
             <div>-{total_discount:,.0f} ₽</div>
+        </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
