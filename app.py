@@ -1989,9 +1989,10 @@ def scroll_to_results():
     # Добавляем стили для кнопки скролла и якоря
     st.markdown("""
     <style>
-    /* Якорь для результатов расчета */
+    /* Якорь для результатов расчета - увеличим смещение, чтобы блок был внизу экрана */
     #final-price-target {
-        scroll-margin-top: 100px;
+        scroll-margin-top: 70vh; /* 70% высоты экрана */
+        scroll-behavior: smooth;
     }
     
     /* Стили для кнопки скролла */
@@ -2034,6 +2035,11 @@ def scroll_to_results():
         font-weight: bold;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
+    
+    /* Автоматический скролл после перезагрузки страницы */
+    html {
+        scroll-behavior: smooth;
+    }
     </style>
     """, unsafe_allow_html=True)
     
@@ -2051,6 +2057,20 @@ def scroll_to_results():
             Посмотреть результат ↓
         </a>
     </div>
+    """, unsafe_allow_html=True)
+    
+    # Добавляем скрипт для автоматического скролла, используя window.location.hash
+    st.markdown("""
+    <script>
+        // Проверяем, должен ли быть скролл при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Если у нас есть якорь в URL, выполняем скролл через небольшую задержку
+            setTimeout(function() {
+                // Добавляем фрагмент в URL для активации скролла
+                window.location.hash = '#final-price-target';
+            }, 500);
+        });
+    </script>
     """, unsafe_allow_html=True)
 
 def add_smart_device_adaptation():
