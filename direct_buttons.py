@@ -11,164 +11,140 @@ def inject_direct_buttons():
     Внедряет плавающие кнопки навигации напрямую в HTML-код Streamlit
     без использования компонентов и зависимости от состояния приложения.
     """
+    # Добавляем стили напрямую
     st.markdown("""
     <style>
-    /* Базовые стили для плавающих кнопок */
-    .floating-nav-button {
-        position: fixed;
-        z-index: 9999 !important;
-        padding: 12px 20px;
-        border-radius: 50px;
-        font-weight: 600;
-        cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
-        display: block !important;
-        border: none;
-        outline: none;
-        color: white;
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
-    
-    /* Контейнер для кнопок - справа по центру вертикально */
-    .floating-buttons-container {
+    .dimension-button {
         position: fixed;
         right: 20px;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 9999 !important;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    /* Стиль для кнопки перехода к результатам - справа по центру */
-    #results-button {
-        background-color: #0066cc;
-        right: 20px;
-        margin-bottom: 10px;
-    }
-    
-    /* Стиль для кнопки возврата к форме размеров - справа по центру */
-    #dimensions-button {
+        top: calc(50% - 30px);
+        z-index: 9999;
         background-color: #28a745;
-        right: 20px;
+        color: white;
+        border: none;
+        border-radius: 30px;
+        padding: 10px 15px;
+        font-weight: bold;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        cursor: pointer;
+        transition: transform 0.3s ease;
     }
     
-    /* Анимация при наведении */
-    .floating-nav-button:hover {
-        box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+    .result-button {
+        position: fixed;
+        right: 20px;
+        top: calc(50% + 30px);
+        z-index: 9999;
+        background-color: #0066cc;
+        color: white;
+        border: none;
+        border-radius: 30px;
+        padding: 10px 15px;
+        font-weight: bold;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+    
+    .dimension-button:hover, .result-button:hover {
         transform: scale(1.05);
     }
     
-    /* Стили для мобильных устройств */
     @media (max-width: 768px) {
-        .floating-nav-button {
-            padding: 10px 15px !important;
-            font-size: 14px !important;
-        }
-        .floating-buttons-container {
+        .dimension-button, .result-button {
+            padding: 8px 12px;
+            font-size: 14px;
             right: 10px;
         }
     }
     </style>
+    """, unsafe_allow_html=True)
     
-    <div class="floating-buttons-container">
-        <button id="dimensions-button" class="floating-nav-button">
-            <i class="fas fa-edit" style="margin-right: 5px;"></i> Изменить размеры
-        </button>
-        
-        <button id="results-button" class="floating-nav-button">
-            <i class="fas fa-arrow-down" style="margin-right: 5px;"></i> К результатам
-        </button>
-    </div>
+    # Создаем кнопки напрямую через компоненты Streamlit
+    col1, col2, col3 = st.columns([1, 1, 20])
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    # Кнопка "Изменить размеры"
+    with col3:
+        dimensions_button = st.button("✏️ Изменить размеры", key="dimensions_button")
+        if dimensions_button:
+            st.rerun()
     
-    <script>
-    // Функция для инициализации кнопок
-    function initializeButtons() {
-        console.log("Инициализация прямых плавающих кнопок...");
+    # Кнопка "К результатам"
+    with col3:
+        results_button = st.button("⬇️ К результатам", key="results_button")
         
-        // Кнопка для перехода к результатам
-        var resultsButton = document.getElementById('results-button');
-        if (resultsButton) {
-            resultsButton.addEventListener('click', function(e) {
-                e.preventDefault(); // Предотвращаем стандартное поведение
-                console.log('Клик по кнопке "К результатам"');
-                
-                // Кликаем на существующую кнопку расчета
-                var calculateButton = document.querySelector('button[kind="primary"]');
-                if (calculateButton) {
-                    console.log('Нажатие на кнопку расчета');
-                    calculateButton.click();
-                } else {
-                    console.log('Кнопка расчета не найдена, ищем альтернативную');
-                    
-                    // Вторая попытка - по атрибуту data-testid
-                    var altCalculateButton = document.querySelector('button[data-testid="stButton"]');
-                    if (altCalculateButton) {
-                        console.log('Нажатие на альтернативную кнопку расчета');
-                        altCalculateButton.click();
-                    } else {
-                        console.error('Ни одна кнопка расчета не найдена');
-                    }
-                }
-            });
-            console.log('Обработчик для кнопки результатов добавлен');
-        } else {
-            console.error('Кнопка #results-button не найдена');
-        }
-        
-        // Кнопка для возврата к форме размеров
-        var dimensionsButton = document.getElementById('dimensions-button');
-        if (dimensionsButton) {
-            dimensionsButton.addEventListener('click', function(e) {
-                e.preventDefault(); // Предотвращаем стандартное поведение
-                console.log('Клик по кнопке "Изменить размеры"');
-                
-                // Пытаемся найти кнопку сброса или форму размеров
-                var resetStateButton = document.querySelector('button[data-testid="stButton"]');
-                if (resetStateButton) {
-                    // Находим все кнопки и ищем кнопку с текстом "Сбросить" или "Изменить размеры"
-                    var allButtons = document.querySelectorAll('button');
-                    var targetButton = null;
-                    
-                    allButtons.forEach(function(btn) {
-                        if (btn.innerText.includes('Изменить размеры') || 
-                            btn.innerText.includes('Сбросить') || 
-                            btn.innerText.includes('Назад')) {
-                            targetButton = btn;
-                        }
-                    });
-                    
-                    if (targetButton) {
-                        console.log('Нажатие на кнопку изменения размеров/сброса');
-                        targetButton.click();
-                    } else {
-                        // Если не нашли кнопку, перезагрузим страницу
-                        console.log('Кнопка изменения размеров не найдена, перезагрузка');
-                        window.location.reload();
-                    }
-                } else {
-                    console.log('Элементы управления не найдены, перезагрузка');
-                    window.location.reload();
-                }
-            });
-            console.log('Обработчик для кнопки изменения размеров добавлен');
-        } else {
-            console.error('Кнопка #dimensions-button не найдена');
-        }
+    # Скрываем стандартный вид кнопок и применяем собственные стили
+    st.markdown("""
+    <style>
+    /* Скрываем оригинальные кнопки */
+    button[data-testid="baseButton-secondary"]:has(div:contains("✏️ Изменить размеры")) {
+        visibility: hidden !important;
     }
     
-    // Инициализация при загрузке DOM
-    document.addEventListener('DOMContentLoaded', initializeButtons);
+    button[data-testid="baseButton-secondary"]:has(div:contains("⬇️ К результатам")) {
+        visibility: hidden !important;
+    }
     
-    // Повторная инициализация через таймаут для надежности
-    setTimeout(initializeButtons, 1000);
+    /* Создаем пользовательские кнопки */
+    [data-testid="column"]:last-child::before {
+        content: "✏️ Изменить размеры";
+        display: block;
+        position: fixed;
+        right: 20px;
+        top: calc(50% - 30px);
+        background-color: #28a745;
+        color: white;
+        border-radius: 30px;
+        padding: 10px 15px;
+        font-weight: bold;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        cursor: pointer;
+        z-index: 9999;
+        transition: transform 0.3s ease;
+    }
     
-    // Еще одна инициализация с большим таймаутом
-    setTimeout(initializeButtons, 2500);
+    [data-testid="column"]:last-child::after {
+        content: "⬇️ К результатам";
+        display: block;
+        position: fixed;
+        right: 20px;
+        top: calc(50% + 30px);
+        background-color: #0066cc;
+        color: white;
+        border-radius: 30px;
+        padding: 10px 15px;
+        font-weight: bold;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        cursor: pointer;
+        z-index: 9999;
+        transition: transform 0.3s ease;
+    }
+    
+    [data-testid="column"]:last-child::before:hover,
+    [data-testid="column"]:last-child::after:hover {
+        transform: scale(1.05);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Добавляем JavaScript для перехвата кликов
+    st.markdown("""
+    <script>
+        // Функция для имитации клика по скрытой кнопке
+        document.addEventListener('click', function(e) {
+            // Проверяем, был ли клик по нашей кнопке "Изменить размеры"
+            if (e.target.textContent.includes('✏️ Изменить размеры') || 
+                (e.target.parentNode && e.target.parentNode.textContent.includes('✏️ Изменить размеры'))) {
+                // Находим оригинальную кнопку и кликаем по ней
+                document.querySelector('button[data-testid="baseButton-secondary"]:has(div:contains("✏️ Изменить размеры"))').click();
+            }
+            
+            // Проверяем, был ли клик по нашей кнопке "К результатам"
+            if (e.target.textContent.includes('⬇️ К результатам') || 
+                (e.target.parentNode && e.target.parentNode.textContent.includes('⬇️ К результатам'))) {
+                // Находим оригинальную кнопку и кликаем по ней
+                document.querySelector('button[data-testid="baseButton-secondary"]:has(div:contains("⬇️ К результатам"))').click();
+            }
+        });
     </script>
     """, unsafe_allow_html=True)
