@@ -4,8 +4,9 @@
 1. Мониторинг директории для новых изображений
 2. Оптимизация имен файлов (удаление пробелов, специальных символов)
 3. Обработка изображений (конвертация HEIC, оптимизация размера)
-4. Автоматическое добавление в галерею
-5. Генерация превью и описаний
+4. Нормализация размеров изображений для единообразного отображения в галерее
+5. Автоматическое добавление в галерею
+6. Генерация превью и описаний
 """
 
 import os
@@ -19,7 +20,7 @@ import json
 import tempfile
 from pathlib import Path
 from datetime import datetime
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, UnidentifiedImageError, ImageOps
 import streamlit as st
 
 # Настройка логирования
@@ -30,7 +31,7 @@ logger = logging.getLogger('AutoGalleryUploader')
 # Добавляем родительскую директорию в путь
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import heic_converter
-from components import gallery_admin
+from components import gallery_admin, image_normalizer
 
 # Константы
 IMAGES_DIR = "attached_assets"
@@ -276,14 +277,15 @@ def update_image_description(image_filename, description):
         logger.error(f"Ошибка добавления описания для {image_filename}: {str(e)}")
         return False
 
-def process_image(source_path, add_to_gallery=True, preserve_original=True):
+def process_image(source_path, add_to_gallery=True, preserve_original=True, normalize_size=True):
     """
-    Обрабатывает изображение: оптимизирует имя, изменяет размер и добавляет в галерею.
+    Обрабатывает изображение: оптимизирует имя, изменяет размер, нормализует пропорции и добавляет в галерею.
     
     Args:
         source_path (str): Путь к исходному изображению
         add_to_gallery (bool): Добавлять ли изображение в галерею автоматически
         preserve_original (bool): Сохранять исходный файл (True) или удалять (False)
+        normalize_size (bool): Приводить ли изображение к стандартному размеру для галереи
         
     Returns:
         tuple: (успех, путь к обработанному файлу, сообщение)
@@ -338,10 +340,33 @@ def process_image(source_path, add_to_gallery=True, preserve_original=True):
             shutil.copy2(source_path, target_path)
             logger.info(f"Файл скопирован: {source_path} -> {target_path}")
             
-        # Оптимизируем изображение
+        # Оптимизируем изображение (базовая оптимизация качества и размера)
         optimize_result = optimize_image(target_path, preserve_original=preserve_original)
         if not optimize_result:
             return False, None, f"Не удалось оптимизировать изображение {target_path}"
+            
+        # Если требуется нормализация размеров для галереи - применяем её
+        if normalize_size:
+            # Нормализуем размер для стандартного отображения в галерее
+            normalized_path, thumbnail = image_normalizer.normalize_image_size(
+                target_path, 
+                target_width=image_normalizer.GALLERY_STANDARD_WIDTH,
+                target_height=image_normalizer.GALLERY_STANDARD_HEIGHT,
+                force_aspect_ratio=False,  # Сохраняем оригинальные пропорции
+                create_thumbnail=True      # Создаем миниатюру для предпросмотра
+            )
+            
+            if normalized_path:
+                # Обновляем путь к файлу, если нормализация прошла успешно
+                optimized_filename = os.path.basename(normalized_path)
+                target_path = normalized_path
+                logger.info(f"Изображение нормализовано к стандартному размеру: {normalized_path}")
+                
+                # Информация о миниатюре
+                if thumbnail:
+                    logger.info(f"Создана миниатюра изображения: {thumbnail}")
+            else:
+                logger.warning(f"Не удалось нормализовать размер изображения {target_path}, используем базовую оптимизацию")
             
         # Генерируем описание для изображения
         description = generate_image_description(optimized_filename)
@@ -357,7 +382,7 @@ def process_image(source_path, add_to_gallery=True, preserve_original=True):
         logger.error(f"Ошибка при обработке изображения {source_path}: {str(e)}")
         return False, None, f"Ошибка при обработке изображения: {str(e)}"
 
-def batch_process_directory(directory_path, add_to_gallery=True, recursive=False, preserve_original=True):
+def batch_process_directory(directory_path, add_to_gallery=True, recursive=False, preserve_original=True, normalize_size=True):
     """
     Обрабатывает все изображения в указанной директории.
     
@@ -366,17 +391,21 @@ def batch_process_directory(directory_path, add_to_gallery=True, recursive=False
         add_to_gallery (bool): Добавлять ли изображения в галерею автоматически
         recursive (bool): Обрабатывать ли вложенные директории рекурсивно
         preserve_original (bool): Сохранять исходный файл (True) или удалять (False)
+        normalize_size (bool): Приводить ли изображения к стандартному размеру для галереи
         
     Returns:
-        tuple: (успешно обработано, ошибки, список обработанных файлов)
+        tuple: (успешно обработано, ошибки, список обработанных файлов, список ошибок)
     """
     if not os.path.exists(directory_path) or not os.path.isdir(directory_path):
-        return 0, 1, [], f"Директория {directory_path} не существует"
+        return 0, 1, [], [f"Директория {directory_path} не существует"]
         
     success_count = 0
     error_count = 0
     processed_files = []
     errors = []
+    
+    logger.info(f"Начало пакетной обработки директории {directory_path}")
+    logger.info(f"Параметры: add_to_gallery={add_to_gallery}, recursive={recursive}, normalize_size={normalize_size}")
     
     # Перебираем все файлы в директории
     for root, dirs, files in os.walk(directory_path):
@@ -385,25 +414,34 @@ def batch_process_directory(directory_path, add_to_gallery=True, recursive=False
             ext = os.path.splitext(filename)[1].lower()
             if ext in SUPPORTED_EXTENSIONS:
                 file_path = os.path.join(root, filename)
+                logger.info(f"Обработка файла: {file_path}")
                 
-                # Обрабатываем изображение
-                success, target_path, message = process_image(file_path, add_to_gallery, preserve_original)
+                # Обрабатываем изображение с указанными параметрами
+                success, target_path, message = process_image(
+                    file_path, 
+                    add_to_gallery=add_to_gallery, 
+                    preserve_original=preserve_original,
+                    normalize_size=normalize_size
+                )
                 
                 if success:
                     success_count += 1
                     if target_path:
                         processed_files.append(target_path)
+                        logger.info(f"Файл успешно обработан: {target_path}")
                 else:
                     error_count += 1
                     errors.append(f"{filename}: {message}")
+                    logger.warning(f"Ошибка обработки файла {filename}: {message}")
                     
         # Если не рекурсивный режим, прерываем после первой директории
         if not recursive:
             break
             
+    logger.info(f"Завершение пакетной обработки. Успешно: {success_count}, Ошибок: {error_count}")
     return success_count, error_count, processed_files, errors
 
-def watch_directory(directory_path, interval=30, add_to_gallery=True, preserve_original=True):
+def watch_directory(directory_path, interval=30, add_to_gallery=True, preserve_original=True, normalize_size=True):
     """
     Следит за директорией и обрабатывает новые изображения.
     
@@ -412,6 +450,7 @@ def watch_directory(directory_path, interval=30, add_to_gallery=True, preserve_o
         interval (int): Интервал проверки в секундах
         add_to_gallery (bool): Добавлять ли изображения в галерею автоматически
         preserve_original (bool): Сохранять исходный файл (True) или удалять (False)
+        normalize_size (bool): Приводить ли изображения к стандартному размеру для галереи
     """
     if not os.path.exists(directory_path) or not os.path.isdir(directory_path):
         logger.error(f"Директория {directory_path} не существует")
@@ -447,7 +486,12 @@ def watch_directory(directory_path, interval=30, add_to_gallery=True, preserve_o
             if new_files:
                 logger.info(f"Обнаружено {len(new_files)} новых изображений")
                 for file_path in new_files:
-                    success, target_path, message = process_image(file_path, add_to_gallery, preserve_original)
+                    success, target_path, message = process_image(
+                        file_path, 
+                        add_to_gallery=add_to_gallery, 
+                        preserve_original=preserve_original,
+                        normalize_size=normalize_size
+                    )
                     logger.info(message)
     except KeyboardInterrupt:
         logger.info("Мониторинг остановлен пользователем")

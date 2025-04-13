@@ -90,12 +90,15 @@ def render_upload_section():
         )
         
         # Опции обработки
-        options_cols = st.columns(3)
+        options_cols = st.columns(4)
         with options_cols[0]:
             add_to_gallery = st.checkbox("Добавить в галерею", value=True)
         with options_cols[1]:
             optimize_size = st.checkbox("Оптимизировать размер", value=True)
         with options_cols[2]:
+            normalize_size = st.checkbox("Нормализовать размер", value=True, 
+                                         help="Приведение всех изображений к единому стандартному размеру для галереи")
+        with options_cols[3]:
             convert_heic = st.checkbox("Конвертировать HEIC", value=True)
             
         # Поле для описания
@@ -172,7 +175,10 @@ def render_upload_section():
                 
                 # Обрабатываем загруженный файл
                 success, target_path, message = auto_gallery_uploader.process_image(
-                    temp_file, add_to_gallery
+                    temp_file, 
+                    add_to_gallery=add_to_gallery,
+                    preserve_original=True,
+                    normalize_size=normalize_size
                 )
                 
                 if success:
@@ -232,10 +238,13 @@ def render_batch_processing():
             value=gallery.IMAGES_DIR
         )
         
-        batch_options = st.columns(2)
+        batch_options = st.columns(3)
         with batch_options[0]:
             batch_add_to_gallery = st.checkbox("Добавить в галерею", value=True, key="batch_add_gallery")
         with batch_options[1]:
+            batch_normalize_size = st.checkbox("Нормализовать размеры", value=True, key="batch_normalize",
+                                            help="Приведение всех изображений к единому стандартному размеру для галереи")
+        with batch_options[2]:
             recursive = st.checkbox("Рекурсивный режим", value=False, key="batch_recursive")
         
         start_batch = st.button(
@@ -282,7 +291,11 @@ def render_batch_processing():
         if os.path.exists(directory_path):
             with st.spinner("Выполняется пакетная обработка изображений..."):
                 success_count, error_count, processed_files, errors = auto_gallery_uploader.batch_process_directory(
-                    directory_path, batch_add_to_gallery, recursive
+                    directory_path, 
+                    add_to_gallery=batch_add_to_gallery, 
+                    recursive=recursive, 
+                    preserve_original=True,
+                    normalize_size=batch_normalize_size
                 )
                 
                 # Отображаем результаты
