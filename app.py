@@ -1983,79 +1983,46 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Добавляет JavaScript для перехода к якорю результатов при нажатии на скрытую кнопку
+    Добавляет прямой JavaScript для скролла к результатам.
+    Упрощенная версия без сложных функций.
     """
-    # Добавляем JavaScript для автоматического нажатия на ссылку-якорь
+    # Добавляем очень простой JavaScript для гарантированного скролла к элементу
     st.markdown("""
     <script>
-        // Используем URL-хэш для скролла
-        function scrollToResults() {
-            console.log('Attempting to scroll to results...');
-            
-            // Ищем элемент с id="results"
-            const resultsElement = document.getElementById('results');
-            
-            if (resultsElement) {
-                console.log('Found results element, scrolling...');
-                
-                // Программно создаем и кликаем по ссылке на якорь
-                const scrollLink = document.createElement('a');
-                scrollLink.href = '#results';
-                scrollLink.style.display = 'none';
-                document.body.appendChild(scrollLink);
-                
-                // Прокручиваем с задержкой для надежности
-                setTimeout(() => {
-                    scrollLink.click();
-                    console.log('Clicked on results anchor link');
-                    
-                    // Удаляем ссылку после использования
-                    setTimeout(() => {
-                        document.body.removeChild(scrollLink);
-                    }, 100);
-                }, 500);
-                
-                return true;
-            }
-            
-            console.log('Results element not found');
-            
-            // Если якорь не найден, ищем заголовок или просто скроллим вниз
-            const resultsHeadings = Array.from(document.querySelectorAll('h2'))
-                .filter(h => h.textContent.includes('Результаты расчета'));
-            
-            if (resultsHeadings.length > 0) {
-                console.log('Found results heading, scrolling...');
-                const heading = resultsHeadings[0];
-                window.scrollTo({
-                    top: heading.offsetTop - 80,
-                    behavior: 'smooth'
-                });
-                return true;
-            }
-            
-            // Крайний случай - просто скроллим на определенное расстояние вниз
-            console.log('No targets found, scrolling down as fallback');
-            window.scrollTo({
-                top: document.body.scrollHeight / 2,  // Примерно в середину страницы
-                behavior: 'smooth'
-            });
-            
-            return false;
-        }
-        
-        // Выполняем скролл после загрузки DOM
+        // Выполняем простой скролл к результатам сразу при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded, scheduling scroll');
-            setTimeout(scrollToResults, 300);
+            console.log('🔄 Выполняем прямой скролл к результатам');
+            
+            // Даем время для полной загрузки страницы
+            setTimeout(function() {
+                // Пробуем найти элемент разными способами
+                var target = document.getElementById('final-price-target') || 
+                             document.getElementById('results') || 
+                             document.querySelector('[id*="final-price"]');
+                
+                if (target) {
+                    console.log('✅ Элемент найден, выполняем прокрутку');
+                    
+                    // Получаем позицию элемента на странице с отступом
+                    var position = target.getBoundingClientRect().top + window.pageYOffset - 100;
+                    
+                    // Плавная прокрутка к элементу
+                    window.scrollTo({
+                        top: position,
+                        behavior: 'smooth'
+                    });
+                    
+                    console.log('✓ Прокрутка выполнена');
+                } else {
+                    // Запасной вариант - скролл вниз страницы
+                    console.log('⚠️ Элемент не найден, прокручиваем вниз');
+                    window.scrollTo({
+                        top: document.body.scrollHeight / 2,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 800);
         });
-        
-        // Также выполняем скролл сразу (для случая, когда DOM уже загружен)
-        console.log('Script loaded, scheduling immediate scroll');
-        setTimeout(scrollToResults, 500);
-        
-        // И выполняем третью попытку для надежности
-        setTimeout(scrollToResults, 1500);
     </script>
     """, unsafe_allow_html=True)
 

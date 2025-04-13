@@ -1,0 +1,85 @@
+Давай ты, как очень опытный и профессиональный коддер в Streamlit со знанием нашего проекта, знакомым со всеми этапами и особенностями разработки и созданными инструкциями реши задачу. 
+
+Мы много раз пытались реализовать скролл к результатам расчета по нажатию на кнопку Рассчитать стоимость. И у нас не получилось Вот рекомендации чат гпт. 
+
+Ты уже почти всё сделал правильно, у тебя есть:
+* <div id="results"> — якорь в нужном месте,
+* JavaScript-функция scroll_to_results() — которая должна к нему прокручивать,
+* установка st.session_state.scroll_to_results = True после расчета.
+Но! Важный нюанс: st.rerun() полностью перезагружает интерфейс и сбрасывает DOM, а значит якорь <div id="results"> появляется позже, чем скрипт пытается к нему прокрутить
+
+Решение: сделать скролл после перезагрузки
+Ты уже сохраняешь флаг scroll_to_results, теперь нужно сделать, чтобы при следующем рендере, когда results уже есть, запустить JavaScript-переход к якорю. Проблема в том, что твой скрипт вызывается слишком рано — DOMContentLoaded уже сработал к тому моменту.
+
+
+Исправление
+В функции scroll_to_results():
+1. Удали DOMContentLoaded и load обработчики.
+2. Оставь только setTimeout(scrollToResults, 500); — и вызови scroll_to_results() именно в блоке, когда уже есть результаты.
+Вот так:
+if st.session_state.get('scroll_to_results', False):
+    scroll_to_results()  # <--- добавляет скрипт на страницу
+    st.session_state.scroll_to_results = False  # Сброс флага
+
+
+А в scroll_to_results() (вставь внизу app.py как есть):
+def scroll_to_results():
+    """
+    Добавляет JavaScript для плавной прокрутки к якорю результатов после загрузки.
+    """
+    st.markdown("""
+    <script>
+        function scrollToResults() {
+            const target = document.getElementById("results");
+            if (target) {
+                target.scrollIntoView({ behavior: "smooth" });
+            }
+        }
+        setTimeout(scrollToResults, 500);  // отложенный запуск после рендера
+    </script>
+    """, unsafe_allow_html=True)
+
+
+Результат
+Теперь, когда пользователь нажимает «Рассчитать стоимость»:
+* происходит st.rerun() с флагом scroll_to_results = True,
+* при следующем рендере блок results уже на месте,
+* скрипт выполняет scrollIntoView() — и плавно прокручивает к результатам.
+
+Финальный вариант функции
+def add_common_script():
+    """
+    Добавляет универсальный JS-скрипт:
+    - Автоматическая прокрутка к #results при необходимости.
+    - Автоматическое изменение высоты iframe (актуально для встраивания в Tilda).
+    """
+    st.markdown("""
+    <script>
+        // Автоизменение размера iframe (если вставлено в Tilda или другой сайт)
+        function adjustHeight() {
+            const height = document.documentElement.scrollHeight;
+            window.parent.postMessage({ type: "streamlit:height", height: height }, "*");
+        }
+
+        // Плавная прокрутка к результатам, если элемент существует
+        function scrollToResults() {
+            const el = document.getElementById("results");
+            if (el) {
+                el.scrollIntoView({ behavior: "smooth" });
+            }
+        }
+
+        // После загрузки даем небольшой таймер и запускаем обе функции
+        setTimeout(() => {
+            adjustHeight();
+            if (window.location.hash === "#results") {
+                scrollToResults();
+            }
+        }, 500);
+    </script>
+    """, unsafe_allow_html=True)
+
+Как это работает
+* adjustHeight() — поднимает высоту родителя (если iframe внутри Tilda).
+* scrollToResults() — ищет якорь results и скроллит.
+* Если ты после st.rerun() добавляешь якорь #results, этот скрипт срабатывает и всё делает правильно.
