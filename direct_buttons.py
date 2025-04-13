@@ -86,6 +86,20 @@ def inject_direct_buttons():
     <script>
     // Функция для перемещения кнопок из сайдбара в правый верхний угол
     function moveButtons() {
+        // Проверяем, находимся ли мы на странице администрирования
+        const isAdminPage = window.location.pathname.includes('admin') || 
+                           window.location.pathname.includes('prices_admin');
+        
+        // Если это страница администрирования, не показываем кнопки
+        if (isAdminPage) {
+            // Находим и удаляем контейнер с кнопками, если он существует
+            const existingContainer = document.querySelector('.nav-buttons-container');
+            if (existingContainer) {
+                existingContainer.remove();
+            }
+            return; // Прекращаем выполнение функции
+        }
+        
         // Создаем контейнер для кнопок, если его еще нет
         if (!document.querySelector('.nav-buttons-container')) {
             const container = document.createElement('div');
@@ -144,9 +158,9 @@ def inject_direct_buttons():
                 }
             }
             
-            // Скрываем сайдбар
+            // Скрываем сайдбар только на основных страницах
             const sidebarParent = sidebar.parentElement;
-            if (sidebarParent) {
+            if (sidebarParent && !isAdminPage) {
                 sidebarParent.style.display = 'none';
             }
         }
