@@ -2892,6 +2892,7 @@ def main():
                 // Сбрасываем флаг
                 sessionStorage.removeItem('calc_button_pressed');
                 // Устанавливаем скрытый параметр в URL для Streamlit
+                // Используем современный способ установки параметров URL вместо экспериментального
                 const url = new URL(window.location);
                 url.searchParams.set('{calc_button_id}_clicked', 'true');
                 window.history.replaceState({{}}, '', url);
@@ -2934,15 +2935,18 @@ def main():
     """, unsafe_allow_html=True)
     
     # Проверяем, была ли нажата кнопка (используя query_params)
-    if st.session_state.get('calc_button_pressed', False) or st.experimental_get_query_params().get(f"{calc_button_id}_clicked", ['false'])[0] == 'true':
+    if st.session_state.get('calc_button_pressed', False) or st.query_params.get(f"{calc_button_id}_clicked", ['false'])[0] == 'true':
         calculate_clicked = True
         # Сбрасываем состояние
         st.session_state.calc_button_pressed = False
         # Сбрасываем query params
-        current_params = st.experimental_get_query_params()
-        if f"{calc_button_id}_clicked" in current_params:
-            del current_params[f"{calc_button_id}_clicked"]
-            st.experimental_set_query_params(**current_params)
+        if f"{calc_button_id}_clicked" in st.query_params:
+            # Создаем новую копию query params без параметра кнопки
+            new_params = dict(st.query_params)
+            if f"{calc_button_id}_clicked" in new_params:
+                del new_params[f"{calc_button_id}_clicked"]
+            # Устанавливаем новые query params
+            st.query_params.update(**new_params)
     
     # Если кнопка была нажата через HTML-form submit
     if calculate_clicked:
