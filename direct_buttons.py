@@ -32,13 +32,13 @@ def inject_direct_buttons():
     
     /* Кнопка "Изменить размеры" */
     .edit-dimensions-btn {
-        top: calc(50% - 30px);
+        top: calc(50% + 30px);
         background-color: #28a745;
     }
     
     /* Кнопка "К результатам" */
     .go-results-btn {
-        top: calc(50% + 30px);
+        top: calc(50% + 80px);
         background-color: #0066cc;
     }
     
