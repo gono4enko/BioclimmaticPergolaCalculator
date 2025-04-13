@@ -2,6 +2,7 @@
 Страница администрирования кэша.
 Позволяет просматривать статистику кэша, очищать устаревшие записи
 и предварительно кэшировать стандартные размеры пергол.
+Требует входа с правами администратора.
 """
 
 import os
@@ -16,11 +17,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Импортируем модули нашего приложения
 import cache_manager
 from app import perform_calculation
+from components.admin_auth import admin_required, check_admin_auth, admin_login_form, create_admin_panel
 
 st.set_page_config(
     page_title="Управление кэшем - Калькулятор пергол",
     page_icon="🔄",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
 # Стили
@@ -119,15 +122,9 @@ def display_cache_entries():
         st.dataframe(df, use_container_width=True, height=400)
 
 
-def main():
-    st.title("Управление кэшем калькулятора пергол")
-    
-    st.markdown("""
-    Эта страница позволяет управлять кэшем расчетов калькулятора пергол. 
-    Кэширование позволяет значительно ускорить работу приложения за счет
-    сохранения результатов предыдущих расчетов.
-    """)
-    
+@admin_required
+def show_admin_content():
+    """Показать содержимое админ-панели (требует авторизации)"""
     tab1, tab2, tab3 = st.tabs(["Статистика", "Содержимое кэша", "Управление"])
     
     with tab1:
@@ -175,6 +172,36 @@ def main():
                     cache_manager.prepare_standard_sizes_cache(perform_calculation)
                 st.success("Стандартные размеры успешно кэшированы")
                 st.rerun()
+
+def main():
+    st.title("Управление кэшем калькулятора пергол")
+    
+    st.markdown("""
+    Эта страница позволяет управлять кэшем расчетов калькулятора пергол. 
+    Кэширование позволяет значительно ускорить работу приложения за счет
+    сохранения результатов предыдущих расчетов.
+    """)
+    
+    # Проверяем авторизацию администратора
+    is_authenticated = check_admin_auth()
+    
+    if not is_authenticated:
+        st.warning("⚠️ Для доступа к управлению кэшем требуются права администратора")
+        
+        # Создаем свернутую форму входа
+        with st.expander("Войти как администратор", expanded=False):
+            admin_login_form("main")
+    else:
+        # Если пользователь авторизован, показываем панель администратора
+        st.success("✅ Вы авторизованы как администратор")
+        
+        # Добавляем кнопку выхода
+        if st.button("Выйти из режима администратора"):
+            st.session_state.admin_authenticated = False
+            st.rerun()
+        
+        # Показываем содержимое
+        show_admin_content()
 
 
 if __name__ == "__main__":
