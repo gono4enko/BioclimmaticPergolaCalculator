@@ -215,9 +215,17 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
     
     # Используем новый компонент таймера обратного отсчета
     if end_date:
-        # Создаем объект datetime для конечной даты
-        day, month, year = map(int, end_date.split('.'))
-        end_datetime = datetime.datetime(year, month, day, 23, 59, 59)
+        # Проверяем тип end_date и обрабатываем соответственно
+        if isinstance(end_date, str):
+            # Если end_date - строка, разбиваем ее
+            day, month, year = map(int, end_date.split('.'))
+            end_datetime = datetime.datetime(year, month, day, 23, 59, 59)
+        elif isinstance(end_date, datetime.date):
+            # Если end_date - объект datetime.date, используем его напрямую
+            end_datetime = datetime.datetime.combine(end_date, datetime.time(23, 59, 59))
+        else:
+            # Если неизвестный формат, используем сегодня + 30 дней
+            end_datetime = datetime.datetime.now() + datetime.timedelta(days=30)
         
         # Используем компонент для отображения таймера с датой окончания акции
         create_timer(
