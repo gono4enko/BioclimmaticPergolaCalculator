@@ -1983,46 +1983,20 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Добавляет прямой JavaScript для скролла к результатам.
-    Упрощенная версия без сложных функций.
+    Добавляет JavaScript для плавной прокрутки к якорю результатов после загрузки.
     """
-    # Добавляем очень простой JavaScript для гарантированного скролла к элементу
     st.markdown("""
     <script>
-        // Выполняем простой скролл к результатам сразу при загрузке страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔄 Выполняем прямой скролл к результатам');
-            
-            // Даем время для полной загрузки страницы
-            setTimeout(function() {
-                // Пробуем найти элемент разными способами
-                var target = document.getElementById('final-price-target') || 
-                             document.getElementById('results') || 
-                             document.querySelector('[id*="final-price"]');
-                
-                if (target) {
-                    console.log('✅ Элемент найден, выполняем прокрутку');
-                    
-                    // Получаем позицию элемента на странице с отступом
-                    var position = target.getBoundingClientRect().top + window.pageYOffset - 100;
-                    
-                    // Плавная прокрутка к элементу
-                    window.scrollTo({
-                        top: position,
-                        behavior: 'smooth'
-                    });
-                    
-                    console.log('✓ Прокрутка выполнена');
-                } else {
-                    // Запасной вариант - скролл вниз страницы
-                    console.log('⚠️ Элемент не найден, прокручиваем вниз');
-                    window.scrollTo({
-                        top: document.body.scrollHeight / 2,
-                        behavior: 'smooth'
-                    });
-                }
-            }, 800);
-        });
+        function scrollToResults() {
+            const target = document.getElementById("results");
+            if (target) {
+                target.scrollIntoView({ behavior: "smooth" });
+                console.log("✅ Прокрутка к результатам выполнена");
+            } else {
+                console.log("⚠️ Элемент #results не найден");
+            }
+        }
+        setTimeout(scrollToResults, 500);  // отложенный запуск после рендера
     </script>
     """, unsafe_allow_html=True)
 
