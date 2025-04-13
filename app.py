@@ -2768,8 +2768,86 @@ def main():
     # Добавляем отступ перед кнопкой расчета
     st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
     
-    # Используем пульсирующую анимированную кнопку для расчета
-    if animations.animate_button("Рассчитать стоимость", key="calc_button", animation_class="calculatorButtonPulse"):
+    # Используем прямое создание кнопки с нашими стилями для большей надежности
+    st.markdown("""
+    <style>
+    /* Улучшенный стиль для кнопки калькулятора */
+    div.stButton > button:first-child {
+        display: block;
+        width: 100%;
+        height: 70px !important;
+        background-color: #0066cc !important;
+        color: white !important;
+        text-align: center;
+        font-size: 20px !important;
+        font-weight: 900 !important;
+        line-height: 40px !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+        margin: 15px 0 !important;
+        cursor: pointer;
+        animation: pulse-button 1s infinite !important;
+        letter-spacing: 0.8px !important;
+        border: none !important;
+        text-transform: uppercase !important;
+    }
+    
+    @keyframes pulse-button {
+        0% { transform: scale(1) translateY(0); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); background-color: #0066cc !important; }
+        50% { transform: scale(1.08) translateY(-8px); box-shadow: 0 10px 25px rgba(0, 102, 204, 0.6); background-color: #0088ff !important; }
+        100% { transform: scale(1) translateY(0); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); background-color: #0066cc !important; }
+    }
+    </style>
+    
+    <script>
+    // Для обеспечения анимации также через JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        function animateCalculateButton() {
+            setTimeout(function() {
+                const buttons = document.querySelectorAll('div.stButton > button');
+                if (buttons.length > 0) {
+                    const calculationButton = buttons[0]; // первая кнопка - это кнопка расчета
+                    
+                    // Добавляем стили для анимации
+                    calculationButton.style.backgroundColor = '#0066cc';
+                    calculationButton.style.fontSize = '20px';
+                    calculationButton.style.fontWeight = '900';
+                    calculationButton.style.height = '70px';
+                    calculationButton.style.letterSpacing = '0.8px';
+                    calculationButton.style.textTransform = 'uppercase';
+                    
+                    // Запускаем анимацию
+                    let direction = 1;
+                    let scale = 1;
+                    let translateY = 0;
+                    setInterval(function() {
+                        scale += 0.005 * direction;
+                        translateY += 0.4 * direction;
+                        
+                        if (scale >= 1.08) direction = -1;
+                        if (scale <= 1) direction = 1;
+                        
+                        calculationButton.style.transform = `scale(${scale}) translateY(${-translateY}px)`;
+                        calculationButton.style.boxShadow = `0 ${4 + translateY * 2}px ${10 + translateY * 2}px rgba(0, 102, 204, ${0.3 + translateY * 0.03})`;
+                    }, 50);
+                }
+            }, 1000); // Даем время Streamlit отрендерить кнопку
+        }
+        
+        animateCalculateButton();
+        
+        // Для случаев, когда DOM обновляется
+        const observer = new MutationObserver(animateCalculateButton);
+        observer.observe(document.body, { subtree: true, childList: true });
+    });
+    </script>
+    <style>
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Создаем кнопку с помощью обычного button
+    if st.button("РАССЧИТАТЬ СТОИМОСТЬ", key="calc_button", use_container_width=True, 
+                type="primary", help="Нажмите, чтобы рассчитать стоимость перголы"):
         with st.spinner("Выполняется расчет..."):
             # Выводим отладочное сообщение 
             st.markdown("""
