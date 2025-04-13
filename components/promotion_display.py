@@ -510,7 +510,7 @@ def promotions_section(pergola_type: str, width: float, length: float,
     
     # Получаем список применимых акций и скидок
     applicable_promotions = promotions.get_applicable_promotions(
-        pergola_type, width, length, base_price, options_price, 
+        pergola_type, width, length, base_price, 
         options, promo_code, quick_decision_activated
     )
     
@@ -519,9 +519,12 @@ def promotions_section(pergola_type: str, width: float, length: float,
     
     # Отображаем сезонную акцию, если она есть в списке
     season_promo = None
+    # Список сезонов для поиска в ID акции
+    seasons = [promotions.SEASON_SPRING, promotions.SEASON_SUMMER, 
+               promotions.SEASON_AUTUMN, promotions.SEASON_WINTER]
     for promo in applicable_promotions:
         promo_id = promo.get("id", "")
-        if isinstance(promo_id, str) and any(season in promo_id for season in promotions.SEASONS):
+        if isinstance(promo_id, str) and any(season in promo_id for season in seasons):
             season_promo = promo
             break
     
