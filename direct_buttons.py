@@ -8,105 +8,168 @@ import streamlit as st
 
 def inject_direct_buttons():
     """
-    Внедряет плавающие кнопки навигации напрямую в HTML-код Streamlit
-    без использования компонентов и зависимости от состояния приложения.
+    Внедряет базовые стили для расположения кнопок навигации справа вверху.
     """
-    # Добавляем HTML и CSS для фиксированных кнопок
+    # Добавляем CSS для стилизации кнопок
     st.markdown("""
     <style>
-    /* Скрываем кнопки, создаваемые в контейнере */
-    #button-container {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        width: 0 !important;
-        position: absolute !important;
-        left: -9999px !important;
+    /* Стилизация встроенных кнопок */
+    .stButton {
+        position: relative;
+        z-index: 1;
     }
     
-    /* Стили для плавающих кнопок */
-    .right-floating-btn {
-        position: fixed !important;
-        right: 20px !important;
-        z-index: 9999 !important;
-        padding: 10px 15px !important;
-        border-radius: 30px !important;
+    /* Контейнер с кнопками навигации */
+    .nav-buttons-container {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    /* Стили для кнопки "Изменить размеры" */
+    .edit-button button {
+        background-color: #28a745 !important;
         color: white !important;
         font-weight: bold !important;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3) !important;
-        cursor: pointer !important;
-        text-align: center !important;
-        max-width: 180px !important;
+        padding: 0.5em 1em !important;
+        border-radius: 30px !important;
         border: none !important;
-        transition: transform 0.2s ease-in-out !important;
-        font-size: 14px !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2) !important;
+        width: auto !important;
     }
     
-    .edit-btn {
-        top: 100px !important;
-        background-color: #28a745 !important;
-    }
-    
-    .results-btn {
-        top: 160px !important;
+    /* Стили для кнопки "К результатам" */
+    .results-button button {
         background-color: #0066cc !important;
+        color: white !important;
+        font-weight: bold !important;
+        padding: 0.5em 1em !important;
+        border-radius: 30px !important;
+        border: none !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2) !important;
+        width: auto !important;
     }
     
-    .right-floating-btn:hover {
-        transform: scale(1.05) !important;
-        box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.4) !important;
-    }
-    
-    /* Адаптивность для мобильных устройств */
-    @media (max-width: 768px) {
-        .right-floating-btn {
-            padding: 8px 12px !important;
-            font-size: 12px !important;
-            right: 10px !important;
-        }
+    /* Эффект при наведении */
+    .edit-button button:hover, .results-button button:hover {
+        opacity: 0.9;
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3) !important;
     }
     </style>
+    """, unsafe_allow_html=True)
     
-    <!-- Фиксированные кнопки навигации -->
-    <button id="edit-btn" class="right-floating-btn edit-btn">🖋 Изменить размеры</button>
-    <button id="results-btn" class="right-floating-btn results-btn">⬇️ К результатам</button>
+    # Создаем фиксированные кнопки навигации при помощи обычных контейнеров Streamlit
+    edit_button = st.sidebar.button("🖋 Изменить размеры", key="edit_button")
+    results_button = st.sidebar.button("⬇️ К результатам", key="results_button")
     
+    # Обрабатываем нажатие на кнопку "Изменить размеры"
+    if edit_button:
+        # Сбрасываем состояние формы
+        for key in list(st.session_state.keys()):
+            if key.startswith("form_") or key in ["calculation_performed", "results"]:
+                if key in st.session_state:
+                    del st.session_state[key]
+        st.rerun()
+    
+    # Обрабатываем нажатие на кнопку "К результатам"
+    if results_button:
+        # Просто устанавливаем флаг для прокрутки
+        st.session_state.scroll_to_results = True
+        st.rerun()
+    
+    # Добавляем JavaScript для перемещения кнопок из сайдбара в фиксированный контейнер справа
+    st.markdown("""
     <script>
-    // Функционал кнопки сброса формы
-    document.getElementById('edit-btn').addEventListener('click', function() {
-        // Перезагрузка страницы
-        window.location.reload();
-    });
-    
-    // Функционал кнопки прокрутки к результатам
-    document.getElementById('results-btn').addEventListener('click', function() {
-        // Ищем элемент с ID results
-        var resultsElem = document.getElementById('results');
-        if (resultsElem) {
-            // Если элемент найден, прокручиваем к нему
-            resultsElem.scrollIntoView({behavior: 'smooth', block: 'start'});
-        } else {
-            // Если элемент не найден, ищем кнопку расчета и нажимаем на нее
-            var buttons = document.querySelectorAll('button');
-            for (var i = 0; i < buttons.length; i++) {
-                if (buttons[i].innerText && 
-                    (buttons[i].innerText.toLowerCase().includes('рассчитать') || 
-                    buttons[i].innerText.toLowerCase().includes('расчет'))) {
-                    // Нажимаем на кнопку расчета
-                    buttons[i].click();
-                    
-                    // Через секунду пробуем прокрутить к результатам
-                    setTimeout(function() {
-                        var results = document.getElementById('results');
-                        if (results) {
-                            results.scrollIntoView({behavior: 'smooth', block: 'start'});
+    // Функция для перемещения кнопок из сайдбара в правый верхний угол
+    function moveButtons() {
+        // Создаем контейнер для кнопок, если его еще нет
+        if (!document.querySelector('.nav-buttons-container')) {
+            const container = document.createElement('div');
+            container.className = 'nav-buttons-container';
+            document.body.appendChild(container);
+        }
+        
+        // Контейнер для кнопок
+        const container = document.querySelector('.nav-buttons-container');
+        
+        // Находим кнопки в сайдбаре
+        const sidebar = document.querySelector('.stSidebar');
+        if (sidebar) {
+            // Найдем кнопку "Изменить размеры"
+            const editButton = Array.from(sidebar.querySelectorAll('button'))
+                .find(btn => btn.innerText.includes('Изменить размеры'));
+            
+            // Найдем кнопку "К результатам"
+            const resultsButton = Array.from(sidebar.querySelectorAll('button'))
+                .find(btn => btn.innerText.includes('К результатам'));
+            
+            // Перемещаем кнопки в контейнер
+            if (editButton && !document.querySelector('.edit-button')) {
+                const editDiv = document.createElement('div');
+                editDiv.className = 'edit-button';
+                editDiv.appendChild(editButton.cloneNode(true));
+                container.appendChild(editDiv);
+                
+                // Добавляем обработчик события при клонировании
+                const newEditButton = editDiv.querySelector('button');
+                if (newEditButton) {
+                    newEditButton.addEventListener('click', function() {
+                        // Находим оригинальную кнопку и кликаем по ней
+                        if (editButton) {
+                            editButton.click();
                         }
-                    }, 1000);
-                    
-                    break;
+                    });
                 }
             }
+            
+            if (resultsButton && !document.querySelector('.results-button')) {
+                const resultsDiv = document.createElement('div');
+                resultsDiv.className = 'results-button';
+                resultsDiv.appendChild(resultsButton.cloneNode(true));
+                container.appendChild(resultsDiv);
+                
+                // Добавляем обработчик события при клонировании
+                const newResultsButton = resultsDiv.querySelector('button');
+                if (newResultsButton) {
+                    newResultsButton.addEventListener('click', function() {
+                        // Находим оригинальную кнопку и кликаем по ней
+                        if (resultsButton) {
+                            resultsButton.click();
+                        }
+                    });
+                }
+            }
+            
+            // Скрываем сайдбар
+            const sidebarParent = sidebar.parentElement;
+            if (sidebarParent) {
+                sidebarParent.style.display = 'none';
+            }
         }
+    }
+    
+    // Запускаем после загрузки страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(moveButtons, 500);
     });
+    
+    // Наблюдаем за изменениями в DOM и при необходимости перемещаем кнопки снова
+    const observer = new MutationObserver(function(mutations) {
+        setTimeout(moveButtons, 500);
+    });
+    
+    // Начинаем наблюдение за изменениями в DOM
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    // Запускаем сразу и через задержку для надежности
+    setTimeout(moveButtons, 100);
+    setTimeout(moveButtons, 1000);
     </script>
     """, unsafe_allow_html=True)
