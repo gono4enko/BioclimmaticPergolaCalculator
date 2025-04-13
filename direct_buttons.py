@@ -31,31 +31,35 @@ def inject_direct_buttons():
         visibility: visible !important;
     }
     
-    /* Стиль для кнопки перехода к результатам - внизу по центру */
-    #results-button {
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: #0066cc;
+    /* Контейнер для кнопок - справа по центру вертикально */
+    .floating-buttons-container {
+        position: fixed;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 9999 !important;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
     
-    /* Стиль для кнопки возврата к форме размеров - над кнопкой результатов по центру */
+    /* Стиль для кнопки перехода к результатам - справа по центру */
+    #results-button {
+        background-color: #0066cc;
+        right: 20px;
+        margin-bottom: 10px;
+    }
+    
+    /* Стиль для кнопки возврата к форме размеров - справа по центру */
     #dimensions-button {
-        bottom: 80px;
-        left: 50%;
-        transform: translateX(-50%);
         background-color: #28a745;
+        right: 20px;
     }
     
     /* Анимация при наведении */
     .floating-nav-button:hover {
         box-shadow: 0 6px 15px rgba(0,0,0,0.25);
-    }
-    #results-button:hover {
-        transform: translateX(-50%) scale(1.05);
-    }
-    #dimensions-button:hover {
-        transform: translateX(-50%) scale(1.05);
+        transform: scale(1.05);
     }
     
     /* Стили для мобильных устройств */
@@ -64,26 +68,21 @@ def inject_direct_buttons():
             padding: 10px 15px !important;
             font-size: 14px !important;
         }
-        #results-button {
-            bottom: 15px !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-        }
-        #dimensions-button {
-            bottom: 65px !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
+        .floating-buttons-container {
+            right: 10px;
         }
     }
     </style>
     
-    <button id="results-button" class="floating-nav-button">
-        <i class="fas fa-arrow-down" style="margin-right: 5px;"></i> К результатам
-    </button>
-    
-    <button id="dimensions-button" class="floating-nav-button">
-        <i class="fas fa-edit" style="margin-right: 5px;"></i> Изменить размеры
-    </button>
+    <div class="floating-buttons-container">
+        <button id="dimensions-button" class="floating-nav-button">
+            <i class="fas fa-edit" style="margin-right: 5px;"></i> Изменить размеры
+        </button>
+        
+        <button id="results-button" class="floating-nav-button">
+            <i class="fas fa-arrow-down" style="margin-right: 5px;"></i> К результатам
+        </button>
+    </div>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -95,13 +94,26 @@ def inject_direct_buttons():
         // Кнопка для перехода к результатам
         var resultsButton = document.getElementById('results-button');
         if (resultsButton) {
-            resultsButton.addEventListener('click', function() {
+            resultsButton.addEventListener('click', function(e) {
+                e.preventDefault(); // Предотвращаем стандартное поведение
                 console.log('Клик по кнопке "К результатам"');
-                var resultsElement = document.getElementById('results');
-                if (resultsElement) {
-                    resultsElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+                
+                // Кликаем на существующую кнопку расчета
+                var calculateButton = document.querySelector('button[kind="primary"]');
+                if (calculateButton) {
+                    console.log('Нажатие на кнопку расчета');
+                    calculateButton.click();
                 } else {
-                    console.error('Элемент #results не найден');
+                    console.log('Кнопка расчета не найдена, ищем альтернативную');
+                    
+                    // Вторая попытка - по атрибуту data-testid
+                    var altCalculateButton = document.querySelector('button[data-testid="stButton"]');
+                    if (altCalculateButton) {
+                        console.log('Нажатие на альтернативную кнопку расчета');
+                        altCalculateButton.click();
+                    } else {
+                        console.error('Ни одна кнопка расчета не найдена');
+                    }
                 }
             });
             console.log('Обработчик для кнопки результатов добавлен');
@@ -112,13 +124,36 @@ def inject_direct_buttons():
         // Кнопка для возврата к форме размеров
         var dimensionsButton = document.getElementById('dimensions-button');
         if (dimensionsButton) {
-            dimensionsButton.addEventListener('click', function() {
+            dimensionsButton.addEventListener('click', function(e) {
+                e.preventDefault(); // Предотвращаем стандартное поведение
                 console.log('Клик по кнопке "Изменить размеры"');
-                var dimensionsElement = document.getElementById('dimensions-form');
-                if (dimensionsElement) {
-                    dimensionsElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+                
+                // Пытаемся найти кнопку сброса или форму размеров
+                var resetStateButton = document.querySelector('button[data-testid="stButton"]');
+                if (resetStateButton) {
+                    // Находим все кнопки и ищем кнопку с текстом "Сбросить" или "Изменить размеры"
+                    var allButtons = document.querySelectorAll('button');
+                    var targetButton = null;
+                    
+                    allButtons.forEach(function(btn) {
+                        if (btn.innerText.includes('Изменить размеры') || 
+                            btn.innerText.includes('Сбросить') || 
+                            btn.innerText.includes('Назад')) {
+                            targetButton = btn;
+                        }
+                    });
+                    
+                    if (targetButton) {
+                        console.log('Нажатие на кнопку изменения размеров/сброса');
+                        targetButton.click();
+                    } else {
+                        // Если не нашли кнопку, перезагрузим страницу
+                        console.log('Кнопка изменения размеров не найдена, перезагрузка');
+                        window.location.reload();
+                    }
                 } else {
-                    console.error('Элемент #dimensions-form не найден');
+                    console.log('Элементы управления не найдены, перезагрузка');
+                    window.location.reload();
                 }
             });
             console.log('Обработчик для кнопки изменения размеров добавлен');
