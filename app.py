@@ -2657,6 +2657,9 @@ def main():
     """Основная функция приложения"""
     # Импортируем модуль для плавающих кнопок
     from floating_buttons import add_results_navigation_button, add_dimensions_edit_button
+    # Импортируем модуль для прямого внедрения кнопок
+    from direct_buttons import inject_direct_buttons
+    
     # Настраиваем страницу
     st.set_page_config(
         page_title="Калькулятор пергол DecoLife",
@@ -2709,6 +2712,9 @@ def main():
     
     # Добавляем код счетчика Яндекс.Метрики
     add_yandex_metrika()
+    
+    # Добавляем прямые плавающие кнопки навигации (новый метод)
+    inject_direct_buttons()
     
     # Добавляем общий JavaScript скрипт для автоматического изменения высоты и прокрутки
     add_common_script()
