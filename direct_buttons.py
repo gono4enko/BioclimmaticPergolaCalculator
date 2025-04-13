@@ -32,13 +32,13 @@ def inject_direct_buttons():
     
     /* Кнопка "Изменить размеры" */
     .edit-dimensions-btn {
-        top: 20px;
+        top: 100px;
         background-color: #28a745;
     }
     
     /* Кнопка "К результатам" */
     .go-results-btn {
-        top: 70px;
+        top: 150px;
         background-color: #0066cc;
     }
     
