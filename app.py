@@ -1195,11 +1195,11 @@ def render_results(results):
     Args:
         results (dict): Словарь с результатами расчета
     """
-    # Импортируем модуль отображения акций и скроллинг
+    # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
-    from components.streamlit_scroll import create_anchor
     
-    # Якорь больше не нужен, т.к. мы используем id на конкретном элементе
+    # Создаем якорь для скролла с ID 
+    st.markdown('<div id="results" name="results"></div>', unsafe_allow_html=True)
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
@@ -1269,8 +1269,8 @@ def render_results(results):
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Количество модулей:</strong> {modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}
         </p>
-        <div style='font-size: 1.4rem; font-weight: 700; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0; text-align: center;' id="results">
-            <span id="final-price-target">{f'Итоговая стоимость со скидкой:' if total_discount > 0 else 'Итоговая стоимость:'} <span style='font-size: 1.5rem; color: {"#1b5e20" if total_discount > 0 else "#0066cc"};'>{formatted_price} ₽</span></span>
+        <div style='font-size: 1.4rem; font-weight: 700; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0; text-align: center;'>
+            {f'Итоговая стоимость со скидкой:' if total_discount > 0 else 'Итоговая стоимость:'} <span style='font-size: 1.5rem; color: {"#1b5e20" if total_discount > 0 else "#0066cc"};'>{formatted_price} ₽</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1427,8 +1427,8 @@ def render_results(results):
             is_final_without_discount = "Итоговая стоимость:" in item[0]
             
             if is_final_with_discount:
-                # Стиль для итоговой строки СО скидкой (зеленый) с якорем для скролла
-                html_table += '<tr id="final-price-target" style="background-color:#e0ffea;">'
+                # Стиль для итоговой строки СО скидкой (зеленый)
+                html_table += '<tr style="background-color:#e0ffea;">'
                 html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #1b5e20; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
                 
                 # Применяем специальный класс для значения "Итоговая стоимость со скидкой"
@@ -1438,8 +1438,8 @@ def render_results(results):
                 </td>
                 """
             elif is_final_without_discount:
-                # Стиль для итоговой строки БЕЗ скидки (синий) с якорем
-                html_table += '<tr id="final-price-target" style="background-color:#e0f0ff;">'
+                # Стиль для итоговой строки БЕЗ скидки (синий)
+                html_table += '<tr style="background-color:#e0f0ff;">'
                 html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
                 
                 # Применяем специальный класс для значения "Итоговая стоимость" (без скидки)
@@ -1983,461 +1983,80 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Добавляет HTML-якорь и простую навигацию к итоговой цене. 
-    Отслеживает положение скролла и показывает/скрывает кнопки навигации в зависимости от позиции.
-    Включает различные методы обнаружения необходимости прокрутки.
+    Добавляет JavaScript для перехода к якорю результатов при нажатии на скрытую кнопку
     """
-    # Добавляем код JavaScript для автоматической прокрутки к результатам
+    # Добавляем JavaScript для автоматического нажатия на ссылку-якорь
     st.markdown("""
     <script>
-        // Функция прокрутки к результатам с разными методами поиска элемента
-        function scrollToResultElement() {
-            console.log('⬇️ Функция scrollToResultElement запущена');
+        // Используем URL-хэш для скролла
+        function scrollToResults() {
+            console.log('Attempting to scroll to results...');
             
-            // Ищем элементы результата несколькими способами
-            let resultElement = document.getElementById('final-price-target');
+            // Ищем элемент с id="results"
+            const resultsElement = document.getElementById('results');
             
-            // Запасные методы поиска элемента результатов
-            if (!resultElement) {
-                console.log('Поиск элемента по атрибуту id, содержащему final-price');
-                resultElement = document.querySelector('[id*="final-price"]');
-            }
-            
-            if (!resultElement) {
-                console.log('Поиск элемента по атрибуту id="results"');
-                resultElement = document.getElementById('results');
-            }
-            
-            if (!resultElement) {
-                // Ищем элемент с текстом "Итоговая стоимость"
-                const allElements = document.querySelectorAll('*');
-                for (const el of allElements) {
-                    if (el.textContent && el.textContent.includes('Итоговая стоимость')) {
-                        resultElement = el;
-                        console.log('Найден элемент по тексту "Итоговая стоимость"');
-                        break;
-                    }
-                }
-            }
-            
-            if (resultElement) {
-                // Прокручиваем к результатам с отступом для лучшего отображения
-                console.log('🎯 Элемент результатов найден, выполняем прокрутку');
+            if (resultsElement) {
+                console.log('Found results element, scrolling...');
                 
-                // Скроллим с учетом особенностей Streamlit
-                setTimeout(function() {
-                    // Прокручиваем с центрированием элемента результатов
-                    resultElement.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
+                // Программно создаем и кликаем по ссылке на якорь
+                const scrollLink = document.createElement('a');
+                scrollLink.href = '#results';
+                scrollLink.style.display = 'none';
+                document.body.appendChild(scrollLink);
+                
+                // Прокручиваем с задержкой для надежности
+                setTimeout(() => {
+                    scrollLink.click();
+                    console.log('Clicked on results anchor link');
                     
-                    console.log('✅ Прокрутка к результатам выполнена');
-                    
-                    // Очищаем все флаги прокрутки
-                    sessionStorage.removeItem('scroll_to_results');
-                    localStorage.removeItem('need_scroll_to_results');
-                    
-                    // Удаляем куки
-                    document.cookie = "scroll_to_results=; path=/; max-age=0";
-                }, 800);
-            } else {
-                console.error('❌ Элемент для прокрутки не найден (проверены все доступные методы)');
-            }
-        }
-    
-        // Выполняем прокрутку к результатам сразу после загрузки
-        document.addEventListener("DOMContentLoaded", function() {
-            console.log('📋 Проверка флагов для автоматической прокрутки');
-            
-            // Проверяем различные индикаторы необходимости прокрутки:
-            // 1. URL содержит параметр scroll=results
-            const urlParams = new URLSearchParams(window.location.search);
-            const hasUrlFlag = urlParams.get('scroll') === 'results';
-            
-            // 2. Флаг в sessionStorage
-            const hasSessionFlag = sessionStorage.getItem('scroll_to_results') === 'true';
-            
-            // 3. Флаг в localStorage
-            const hasLocalFlag = localStorage.getItem('need_scroll_to_results') === 'true';
-            
-            // 4. Флаг в cookie
-            const hasCookieFlag = document.cookie.includes('scroll_to_results=true');
-            
-            console.log('Флаги прокрутки:', {
-                url: hasUrlFlag,
-                session: hasSessionFlag,
-                local: hasLocalFlag,
-                cookie: hasCookieFlag
-            });
-            
-            // Если есть любой флаг - выполняем прокрутку
-            if (hasUrlFlag || hasSessionFlag || hasLocalFlag || hasCookieFlag) {
-                console.log('🚀 Инициирован автоматический скролл к результатам');
+                    // Удаляем ссылку после использования
+                    setTimeout(() => {
+                        document.body.removeChild(scrollLink);
+                    }, 100);
+                }, 500);
                 
-                // Выполняем прокрутку с задержкой для полной загрузки страницы
-                setTimeout(scrollToResultElement, 1000);
-            }
-        });
-    </script>
-    """, unsafe_allow_html=True)
-    
-    # Добавляем якорь к форме с параметрами в начале калькулятора
-    st.markdown("""
-    <div id="calculator-parameters"></div>
-    """, unsafe_allow_html=True)
-    
-    # Добавляем стили для кнопок скролла и якорей
-    st.markdown("""
-    <style>
-    /* Якорь для результатов расчета - увеличим смещение, чтобы блок был внизу экрана */
-    #final-price-target {
-        scroll-margin-top: 70vh; /* 70% высоты экрана */
-        scroll-behavior: smooth;
-    }
-    
-    /* Якорь для формы параметров */
-    #calculator-parameters {
-        scroll-margin-top: 30px;
-        scroll-behavior: smooth;
-    }
-    
-    /* Стили для кнопки скролла */
-    .result-button {
-        display: inline-block;
-        margin: 10px auto;
-        padding: 10px 15px;
-        background-color: #0066cc;
-        color: white !important;
-        text-decoration: none !important;
-        border-radius: 5px;
-        font-weight: bold;
-        text-align: center;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-    
-    .result-button:hover {
-        background-color: #0055aa;
-    }
-    
-    .scroll-container {
-        text-align: center;
-        margin: 15px auto;
-        width: 100%;
-    }
-    
-    /* Стили для фиксированных кнопок навигации */
-    .fixed-button {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1000;
-        padding: 10px 15px;
-        background-color: #0066cc;
-        color: white !important;
-        text-decoration: none !important;
-        border-radius: 5px;
-        font-weight: bold;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
-    }
-    
-    /* Кнопка "К параметрам" - зеленая, слева */
-    .fixed-button.up {
-        bottom: 20px;
-        left: 20px;
-        right: auto;
-        background-color: #008800;
-    }
-    
-    /* Автоматический скролл после перезагрузки страницы */
-    html {
-        scroll-behavior: smooth;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Добавляем плавающие кнопки навигации с фиксированными стилями
-    st.markdown("""
-    <div id="navigation-buttons">
-        <a href="#final-price-target" id="btn-to-results" class="fixed-button down">
-            К результату ↓
-        </a>
-        
-        <a href="#calculator-parameters" id="btn-to-params" class="fixed-button up">
-            К параметрам ↑
-        </a>
-    </div>
-    
-    <div class="scroll-container">
-        <a href="#final-price-target" class="result-button">
-            Посмотреть результат ↓
-        </a>
-    </div>
-    
-    <script>
-        // Функция для управления видимостью кнопок навигации
-        function updateNavigationButtons() {
-            // Получаем кнопки навигации независимо от метода (ID или класс)
-            const btnToResults = document.getElementById('btn-to-results') || document.querySelector('.fixed-button.down');
-            const btnToParams = document.getElementById('btn-to-params') || document.querySelector('.fixed-button.up');
-            
-            if (!btnToResults || !btnToParams) {
-                console.error('⚠️ Ошибка: кнопки навигации не найдены! Попытка использования селекторов классов...');
-                // Попытка найти через CSS класс как запасной вариант
-                const buttonsContainer = document.getElementById('navigation-buttons');
-                if (buttonsContainer) {
-                    console.log('📌 navigation-buttons контейнер найден, содержимое:', buttonsContainer.innerHTML);
-                }
-                return;
+                return true;
             }
             
-            // Получаем элемент с блоком B500 для определения позиции
-            // Используем несколько методов поиска
-            let b500Section = Array.from(document.querySelectorAll('h2, h3, div'))
-                .find(el => el.textContent && el.textContent.includes('B500'));
-                
-            // Запасной вариант - найти текст B500 в любом элементе
-            if (!b500Section) {
-                b500Section = Array.from(document.querySelectorAll('*'))
-                    .find(el => el.textContent && el.textContent.includes('B500'));
-            }
-                
-            // Получаем текущую позицию прокрутки
-            const scrollPosition = window.scrollY;
+            console.log('Results element not found');
             
-            // Устанавливаем порог прокрутки в пикселях
-            let scrollThreshold = 800; // Значение по умолчанию
+            // Если якорь не найден, ищем заголовок или просто скроллим вниз
+            const resultsHeadings = Array.from(document.querySelectorAll('h2'))
+                .filter(h => h.textContent.includes('Результаты расчета'));
             
-            // Если нашли блок B500, используем его позицию
-            if (b500Section) {
-                const b500Rect = b500Section.getBoundingClientRect();
-                const b500Position = b500Rect.top + window.pageYOffset;
-                scrollThreshold = b500Position - 100; // Немного выше заголовка
-                console.log('🔍 Найден блок B500, порог прокрутки:', scrollThreshold);
-            } else {
-                console.log('⚠️ Внимание: блок B500 не найден, используем порог по умолчанию');
-            }
-            
-            console.log('📊 Позиция прокрутки:', scrollPosition, 'Порог:', scrollThreshold);
-            
-            // Простая логика переключения - показываем одну кнопку, скрываем другую
-            if (scrollPosition > scrollThreshold) {
-                // Если прокручено ниже порога - скрываем кнопку к результатам, показываем к параметрам
-                btnToResults.style.display = 'none';
-                btnToParams.style.display = 'block';
-                console.log('▶️ Активна кнопка "К параметрам"');
-            } else {
-                // Если прокручено выше порога - показываем кнопку к результатам, скрываем к параметрам
-                btnToResults.style.display = 'block';
-                btnToParams.style.display = 'none';
-                console.log('▶️ Активна кнопка "К результатам"');
-            }
-        }
-        
-        // Функция прокрутки к результатам с анализом наличия якоря
-        function scrollToResults(event, forceScroll) {
-            // Ищем элемент результатов по ID
-            const finalPriceTarget = document.getElementById('final-price-target');
-            
-            if (finalPriceTarget) {
-                // Предотвращаем стандартное поведение ссылки если нужно
-                if (event) {
-                    event.preventDefault();
-                }
-                
-                // Плавная прокрутка к результатам с дополнительным смещением вверх для удобства
-                const yOffset = -50; // Смещение на 50px вверх от верхней границы элемента
-                const y = finalPriceTarget.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                
+            if (resultsHeadings.length > 0) {
+                console.log('Found results heading, scrolling...');
+                const heading = resultsHeadings[0];
                 window.scrollTo({
-                    top: y,
+                    top: heading.offsetTop - 80,
                     behavior: 'smooth'
                 });
-                
-                console.log('💡 Прокрутка к результатам выполнена (смещение:', yOffset, 'px)');
-                
-                // Обновляем состояние кнопок после прокрутки
-                setTimeout(updateNavigationButtons, 800);
-                
                 return true;
-            } else {
-                console.log('❌ Якорь результатов не найден!');
-                return false;
             }
-        }
-        
-        // Функция прокрутки к параметрам
-        function scrollToParameters(event) {
-            const parametersTarget = document.getElementById('calculator-parameters');
             
-            if (parametersTarget) {
-                if (event) {
-                    event.preventDefault();
-                }
-                
-                parametersTarget.scrollIntoView({ behavior: 'smooth' });
-                console.log('Прокрутка к параметрам выполнена');
-                
-                // Обновляем состояние кнопок после прокрутки
-                setTimeout(updateNavigationButtons, 800);
-                
-                return true;
-            } else {
-                console.log('Якорь параметров не найден');
-                return false;
-            }
-        }
-        
-        // Инициализация обработчиков при загрузке документа
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔄 Инициализация новой системы навигации...');
-            
-            // Выведем список всех доступных элементов интерфейса для отладки
-            console.log('📋 Все доступные элементы с ID:');
-            document.querySelectorAll('[id]').forEach(el => {
-                console.log(`ID: ${el.id}, Tag: ${el.tagName}, Class: ${el.className}`);
+            // Крайний случай - просто скроллим на определенное расстояние вниз
+            console.log('No targets found, scrolling down as fallback');
+            window.scrollTo({
+                top: document.body.scrollHeight / 2,  // Примерно в середину страницы
+                behavior: 'smooth'
             });
             
-            // Ищем кнопки навигации обоими методами - по ID и по селектору класса
-            const btnToResults = document.getElementById('btn-to-results');
-            const btnToParams = document.getElementById('btn-to-params');
-            
-            // А также ищем кнопки по классу как запасной вариант
-            const btnDownClass = document.querySelector('.fixed-button.down');
-            const btnUpClass = document.querySelector('.fixed-button.up');
-            
-            console.log('🔍 Поиск кнопок навигации:');
-            console.log('По ID - btnToResults:', btnToResults ? 'найдена' : 'НЕ НАЙДЕНА');
-            console.log('По ID - btnToParams:', btnToParams ? 'найдена' : 'НЕ НАЙДЕНА');
-            console.log('По класcу - down button:', btnDownClass ? 'найдена' : 'НЕ НАЙДЕНА');
-            console.log('По класcу - up button:', btnUpClass ? 'найдена' : 'НЕ НАЙДЕНА');
-            
-            // Добавляем обработчик события прокрутки
-            window.addEventListener('scroll', updateNavigationButtons);
-            
-            // Используем найденную кнопку независимо от метода поиска
-            const resultButton = btnToResults || btnDownClass;
-            const paramsButton = btnToParams || btnUpClass;
-            
-            if (resultButton) {
-                resultButton.addEventListener('click', function(e) {
-                    console.log('🖱️ Нажата кнопка "К результату"');
-                    scrollToResults(e);
-                });
-            }
-            
-            if (paramsButton) {
-                paramsButton.addEventListener('click', function(e) {
-                    console.log('🖱️ Нажата кнопка "К параметрам"');
-                    scrollToParameters(e);
-                });
-            }
-            
-            // Добавляем обработчик для форменной кнопки "Посмотреть результат"
-            const formResultBtn = document.querySelector('.result-button');
-            if (formResultBtn) {
-                formResultBtn.addEventListener('click', function(e) {
-                    scrollToResults(e);
-                });
-            }
-            
-            // Устанавливаем начальное состояние кнопок
-            updateNavigationButtons();
-            
-            // Автоматическая прокрутка к результатам при их наличии
-            const finalPriceTarget = document.getElementById('final-price-target');
-            if (finalPriceTarget) {
-                // Проверяем, видим ли элемент в данный момент
-                const rect = finalPriceTarget.getBoundingClientRect();
-                const isVisible = (
-                    rect.top >= 0 &&
-                    rect.left >= 0 &&
-                    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-                );
-                
-                // Если результаты есть, но не видны - прокручиваем к ним
-                if (!isVisible) {
-                    setTimeout(function() {
-                        scrollToResults(null, true);
-                    }, 500);
-                }
-            }
-        });
-        
-        // Этот код обрабатывает ситуацию, когда кнопка "Рассчитать" была нажата
-        function checkForScrollFlag() {
-            // Ищем специальный флаг в URL или в sessionStorage
-            const hasUrlFlag = window.location.search.includes('scroll_to_results=true');
-            const hasStorageFlag = sessionStorage.getItem('scroll_to_results');
-            
-            console.log('🔍 Проверка флагов скролла: URL=', hasUrlFlag, 'Storage=', hasStorageFlag);
-            
-            if (hasUrlFlag || hasStorageFlag) {
-                // Сбрасываем флаг в сессии, чтобы не выполнять повторно
-                sessionStorage.removeItem('scroll_to_results');
-                console.log('🧹 Флаг скролла удален из sessionStorage');
-                
-                // Пробуем найти элемент с результатами и прокрутить к нему
-                setTimeout(function() {
-                    const finalPriceTarget = document.getElementById('final-price-target');
-                    if (finalPriceTarget) {
-                        // Используем улучшенную функцию прокрутки с отступом
-                        const yOffset = -50;
-                        const y = finalPriceTarget.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                        
-                        window.scrollTo({
-                            top: y,
-                            behavior: 'smooth'
-                        });
-                        
-                        console.log('🚀 Автоматическая прокрутка к результатам после расчета выполнена');
-                        
-                        // Обновляем состояние кнопок после задержки
-                        setTimeout(updateNavigationButtons, 800);
-                    } else {
-                        console.error('⚠️ Элемент результатов не найден для прокрутки!');
-                    }
-                }, 500);
-            }
+            return false;
         }
         
-        // Выполняем проверку после загрузки страницы
-        window.addEventListener('load', checkForScrollFlag);
-        
-        // Устанавливаем обработчик события для кнопки расчета
+        // Выполняем скролл после загрузки DOM
         document.addEventListener('DOMContentLoaded', function() {
-            const calcButton = document.querySelector('button[data-testid="baseButton-primary"]');
-            if (calcButton) {
-                calcButton.addEventListener('click', function() {
-                    // Сохраняем флаг в сессионное хранилище
-                    sessionStorage.setItem('scroll_to_results', 'true');
-                    console.log('Нажата кнопка расчета, установлен флаг для прокрутки');
-                });
-            }
+            console.log('DOM fully loaded, scheduling scroll');
+            setTimeout(scrollToResults, 300);
         });
+        
+        // Также выполняем скролл сразу (для случая, когда DOM уже загружен)
+        console.log('Script loaded, scheduling immediate scroll');
+        setTimeout(scrollToResults, 500);
+        
+        // И выполняем третью попытку для надежности
+        setTimeout(scrollToResults, 1500);
     </script>
-    
-    <style>
-    /* Стили для навигационных кнопок */
-    #navigation-buttons {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1000;
-    }
-    
-    #btn-to-results {
-        display: block; /* По умолчанию видна */
-    }
-    
-    #btn-to-params {
-        display: none; /* По умолчанию скрыта */
-    }
-    </style>
     """, unsafe_allow_html=True)
 
 def add_smart_device_adaptation():
@@ -2909,49 +2528,8 @@ def main():
     # Добавляем отступ перед кнопкой расчета
     st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
     
-    # Инициализируем ключ для скролла, если его еще нет
-    if "scroll_to_results" not in st.session_state:
-        st.session_state.scroll_to_results = False
-    
-    # Определим обработчик события для кнопки расчета
-    def handle_calc_button():
-        # Установим флаг, что нам нужно будет скроллить к результатам после расчета
-        st.session_state.scroll_to_results = True
-        
-        # Используем прямой метод скролла, который выполнится после перезагрузки страницы
-        # Важно: добавляем в URL параметр, который распознается при загрузке страницы
-        st.experimental_set_query_params(scroll='results')
-        
-        # Добавим локальный и глобальный флаги для скролла в разных хранилищах
-        st.markdown("""
-        <script>
-            // Добавляем 3 способа для надежности:
-            // 1. SessionStorage для доступа через JavaScript
-            sessionStorage.setItem('scroll_to_results', 'true');
-            
-            // 2. LocalStorage для сохранения между перезагрузками
-            localStorage.setItem('need_scroll_to_results', 'true');
-            
-            // 3. Устанавливаем куки (запасной вариант)
-            document.cookie = "scroll_to_results=true; path=/; max-age=60";
-            
-            console.log('💡 Python: установлены флаги скролла во всех хранилищах');
-        </script>
-        """, unsafe_allow_html=True)
-        
-        # Также сбросим флаг отображения описания
-        st.session_state.description_shown = False
-        
-        # Добавляем отладочную информацию
-        print("💡 Кнопка расчета нажата, флаги скролла установлены")
-        
     # Кнопка для расчета с улучшенным стилем
-    calc_button = st.button("Рассчитать стоимость", type="primary", 
-                           use_container_width=True, key="calc_button", 
-                           on_click=handle_calc_button)
-    
-    # Проверяем, была ли нажата кнопка
-    if calc_button:
+    if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
         with st.spinner("Выполняется расчет..."):
             # Проверяем, что у нас есть данные для расчета
             if dimensions and options:
@@ -2962,6 +2540,12 @@ def main():
                 st.session_state.results = results
                 st.session_state.options = options
                 
+                # Добавляем флаг, что нужно прокрутить к результатам
+                st.session_state.scroll_to_results = True
+                
+                # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
+                st.session_state.description_shown = False
+                
                 # Устанавливаем флаг для отправки события в Яндекс.Метрику после перезагрузки
                 st.session_state.send_ya_metrika_event = True
                 
@@ -2971,41 +2555,24 @@ def main():
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.2rem; margin-bottom: 0.2rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
         
-    # Добавляем код для скролла к результатам при любых условиях
-    scroll_to_results()
-        
-    # Отображаем результаты (если они есть)
+    # Отображаем кнопку для скролла к результатам (если есть результаты)
     if 'results' in st.session_state:
+        # Кнопка для скролла к результатам (компактная и заметная)
+        st.markdown("""
+        <a href="#results" style="display: block; width: 90%; margin: 10px auto; padding: 10px; 
+                       background-color: #0066cc; color: white; text-align: center; 
+                       border-radius: 5px; text-decoration: none; font-weight: bold;">
+           ↓ Перейти к результатам расчета ↓
+        </a>
+        """, unsafe_allow_html=True)
+        
         # Показываем общий результат и детальную информацию
-        # Добавляем якорь для результатов - размещаем ПЕРЕД результатами для лучшего таргетинга
-        st.markdown('<div id="results"></div>', unsafe_allow_html=True)
         render_results(st.session_state.results)
         
-        # Если активирован флаг скролла - применяем дополнительный скрипт для надежности
+        # Если нужна прокрутка к результатам, добавляем JS код
         if st.session_state.get('scroll_to_results', False):
-            # Специальный JavaScript непосредственно после отображения результатов для надежного скролла
-            st.markdown("""
-            <script>
-                // Немедленно выполняем скрипт для скролла к id="final-price-target"
-                (function() {
-                    console.log('🎯 Принудительный скролл запущен после рендеринга результатов');
-                    
-                    // Даем время для полной загрузки DOM
-                    setTimeout(function() {
-                        const resultElement = document.getElementById('final-price-target');
-                        if (resultElement) {
-                            // Прокручиваем с отступом
-                            resultElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            console.log('🔄 Принудительная прокрутка к результатам выполнена');
-                        } else {
-                            console.error('❌ Элемент final-price-target не найден при принудительной прокрутке');
-                        }
-                    }, 800);
-                })();
-            </script>
-            """, unsafe_allow_html=True)
-            
-            # Сбрасываем флаг, чтобы не вызывать скрипт при каждом обновлении
+            scroll_to_results()
+            # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
             st.session_state.scroll_to_results = False
     
     # Добавляем галерею проектов и счетчик установленных пергол
