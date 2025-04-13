@@ -2084,32 +2084,60 @@ def scroll_to_results():
     <script>
         // Функция для управления видимостью кнопок навигации
         function updateNavigationButtons() {
-            const btnToResults = document.getElementById('btn-to-results');
-            const btnToParams = document.getElementById('btn-to-params');
+            // Получаем кнопки навигации независимо от метода (ID или класс)
+            const btnToResults = document.getElementById('btn-to-results') || document.querySelector('.fixed-button.down');
+            const btnToParams = document.getElementById('btn-to-params') || document.querySelector('.fixed-button.up');
             
             if (!btnToResults || !btnToParams) {
-                console.error('Ошибка: кнопки навигации не найдены!');
+                console.error('⚠️ Ошибка: кнопки навигации не найдены! Попытка использования селекторов классов...');
+                // Попытка найти через CSS класс как запасной вариант
+                const buttonsContainer = document.getElementById('navigation-buttons');
+                if (buttonsContainer) {
+                    console.log('📌 navigation-buttons контейнер найден, содержимое:', buttonsContainer.innerHTML);
+                }
                 return;
             }
             
+            // Получаем элемент с блоком B500 для определения позиции
+            // Используем несколько методов поиска
+            let b500Section = Array.from(document.querySelectorAll('h2, h3, div'))
+                .find(el => el.textContent && el.textContent.includes('B500'));
+                
+            // Запасной вариант - найти текст B500 в любом элементе
+            if (!b500Section) {
+                b500Section = Array.from(document.querySelectorAll('*'))
+                    .find(el => el.textContent && el.textContent.includes('B500'));
+            }
+                
             // Получаем текущую позицию прокрутки
             const scrollPosition = window.scrollY;
             
-            // Проверяем, прокручена ли страница достаточно для показа кнопки "Наверх"
-            // Здесь используем фиксированное значение в пикселях для более точного контроля
-            const scrollThreshold = 800; // примерно после блока B500
+            // Устанавливаем порог прокрутки в пикселях
+            let scrollThreshold = 800; // Значение по умолчанию
             
-            console.log('Позиция прокрутки:', scrollPosition, 'Порог:', scrollThreshold);
+            // Если нашли блок B500, используем его позицию
+            if (b500Section) {
+                const b500Rect = b500Section.getBoundingClientRect();
+                const b500Position = b500Rect.top + window.pageYOffset;
+                scrollThreshold = b500Position - 100; // Немного выше заголовка
+                console.log('🔍 Найден блок B500, порог прокрутки:', scrollThreshold);
+            } else {
+                console.log('⚠️ Внимание: блок B500 не найден, используем порог по умолчанию');
+            }
+            
+            console.log('📊 Позиция прокрутки:', scrollPosition, 'Порог:', scrollThreshold);
             
             // Простая логика переключения - показываем одну кнопку, скрываем другую
             if (scrollPosition > scrollThreshold) {
+                // Если прокручено ниже порога - скрываем кнопку к результатам, показываем к параметрам
                 btnToResults.style.display = 'none';
                 btnToParams.style.display = 'block';
-                console.log('Активна кнопка "К параметрам"');
+                console.log('▶️ Активна кнопка "К параметрам"');
             } else {
+                // Если прокручено выше порога - показываем кнопку к результатам, скрываем к параметрам
                 btnToResults.style.display = 'block';
                 btnToParams.style.display = 'none';
-                console.log('Активна кнопка "К результатам"');
+                console.log('▶️ Активна кнопка "К результатам"');
             }
         }
         
@@ -2169,23 +2197,45 @@ def scroll_to_results():
         
         // Инициализация обработчиков при загрузке документа
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Инициализация новой системы навигации...');
+            console.log('🔄 Инициализация новой системы навигации...');
+            
+            // Выведем список всех доступных элементов интерфейса для отладки
+            console.log('📋 Все доступные элементы с ID:');
+            document.querySelectorAll('[id]').forEach(el => {
+                console.log(`ID: ${el.id}, Tag: ${el.tagName}, Class: ${el.className}`);
+            });
+            
+            // Ищем кнопки навигации обоими методами - по ID и по селектору класса
+            const btnToResults = document.getElementById('btn-to-results');
+            const btnToParams = document.getElementById('btn-to-params');
+            
+            // А также ищем кнопки по классу как запасной вариант
+            const btnDownClass = document.querySelector('.fixed-button.down');
+            const btnUpClass = document.querySelector('.fixed-button.up');
+            
+            console.log('🔍 Поиск кнопок навигации:');
+            console.log('По ID - btnToResults:', btnToResults ? 'найдена' : 'НЕ НАЙДЕНА');
+            console.log('По ID - btnToParams:', btnToParams ? 'найдена' : 'НЕ НАЙДЕНА');
+            console.log('По класcу - down button:', btnDownClass ? 'найдена' : 'НЕ НАЙДЕНА');
+            console.log('По класcу - up button:', btnUpClass ? 'найдена' : 'НЕ НАЙДЕНА');
             
             // Добавляем обработчик события прокрутки
             window.addEventListener('scroll', updateNavigationButtons);
             
-            // Добавляем обработчики для кнопок
-            const btnToResults = document.getElementById('btn-to-results');
-            const btnToParams = document.getElementById('btn-to-params');
+            // Используем найденную кнопку независимо от метода поиска
+            const resultButton = btnToResults || btnDownClass;
+            const paramsButton = btnToParams || btnUpClass;
             
-            if (btnToResults) {
-                btnToResults.addEventListener('click', function(e) {
+            if (resultButton) {
+                resultButton.addEventListener('click', function(e) {
+                    console.log('🖱️ Нажата кнопка "К результату"');
                     scrollToResults(e);
                 });
             }
             
-            if (btnToParams) {
-                btnToParams.addEventListener('click', function(e) {
+            if (paramsButton) {
+                paramsButton.addEventListener('click', function(e) {
+                    console.log('🖱️ Нажата кнопка "К параметрам"');
                     scrollToParameters(e);
                 });
             }
@@ -2224,22 +2274,36 @@ def scroll_to_results():
         
         // Этот код обрабатывает ситуацию, когда кнопка "Рассчитать" была нажата
         function checkForScrollFlag() {
-            // Ищем специальный флаг в URL, который добавляется после нажатия кнопки "Рассчитать"
-            if (window.location.search.includes('scroll_to_results=true') || 
-                sessionStorage.getItem('scroll_to_results')) {
-                
+            // Ищем специальный флаг в URL или в sessionStorage
+            const hasUrlFlag = window.location.search.includes('scroll_to_results=true');
+            const hasStorageFlag = sessionStorage.getItem('scroll_to_results');
+            
+            console.log('🔍 Проверка флагов скролла: URL=', hasUrlFlag, 'Storage=', hasStorageFlag);
+            
+            if (hasUrlFlag || hasStorageFlag) {
                 // Сбрасываем флаг в сессии, чтобы не выполнять повторно
                 sessionStorage.removeItem('scroll_to_results');
+                console.log('🧹 Флаг скролла удален из sessionStorage');
                 
                 // Пробуем найти элемент с результатами и прокрутить к нему
                 setTimeout(function() {
                     const finalPriceTarget = document.getElementById('final-price-target');
                     if (finalPriceTarget) {
-                        finalPriceTarget.scrollIntoView({ behavior: 'smooth' });
-                        console.log('Автоматическая прокрутка к результатам после расчета');
+                        // Используем улучшенную функцию прокрутки с отступом
+                        const yOffset = -50;
+                        const y = finalPriceTarget.getBoundingClientRect().top + window.pageYOffset + yOffset;
                         
-                        // Обновляем состояние кнопок
+                        window.scrollTo({
+                            top: y,
+                            behavior: 'smooth'
+                        });
+                        
+                        console.log('🚀 Автоматическая прокрутка к результатам после расчета выполнена');
+                        
+                        // Обновляем состояние кнопок после задержки
                         setTimeout(updateNavigationButtons, 800);
+                    } else {
+                        console.error('⚠️ Элемент результатов не найден для прокрутки!');
                     }
                 }, 500);
             }
