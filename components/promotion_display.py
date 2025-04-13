@@ -538,10 +538,10 @@ def promotions_section(pergola_type: str, width: float, length: float,
         st.rerun()
     
     # Рассчитываем итоговую скидку на основе применимых акций
-    discount_result = promotions.calculate_discount(applicable_promotions, base_price, options_price)
+    total_discount, applied_promotions_list = promotions.calculate_discount(applicable_promotions, base_price, options_price)
     
     # Если есть применимые акции, отображаем их
-    if len(discount_result["applied_promotions"]) > 0:
+    if len(applied_promotions_list) > 0:
         display_applied_discounts(
             discount_result["applied_promotions"],
             discount_result["total_discount"]
