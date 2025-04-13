@@ -9,6 +9,7 @@
 import streamlit as st
 import datetime
 import time
+import uuid
 from typing import Dict, List, Optional
 
 # Импортируем модуль с акциями
@@ -16,6 +17,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import promotions
+from components.countdown_timer import create_timer
 
 def display_promo_badges(applicable_promotions: List[Dict]) -> None:
     """
@@ -466,7 +468,7 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
     st.markdown("""
     <style>
     .discounts-container {
-        margin-top: 20px;
+        margin-top: 0px;
         margin-bottom: 20px;
         border: 1px solid #E0E0E0;
         border-radius: 8px;
