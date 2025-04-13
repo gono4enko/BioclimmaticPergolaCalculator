@@ -1198,7 +1198,7 @@ def render_results(results):
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
     
-    # Создаем якорь для скролла с ID 
+    # Создаем якорь для скролла с ID
     st.markdown('<div id="results" name="results"></div>', unsafe_allow_html=True)
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
@@ -1981,6 +1981,42 @@ def send_page_height_to_parent():
     </script>
     """, unsafe_allow_html=True)
 
+def add_common_script():
+    """
+    Добавляет универсальный JS-скрипт:
+    - Автоматическая прокрутка к #results при необходимости.
+    - Автоматическое изменение высоты iframe (актуально для встраивания в Tilda).
+    """
+    st.markdown("""
+    <script>
+        // Автоизменение размера iframe (если вставлено в Tilda или другой сайт)
+        function adjustHeight() {
+            const height = document.documentElement.scrollHeight;
+            window.parent.postMessage({ type: "streamlit:height", height: height }, "*");
+        }
+
+        // Плавная прокрутка к результатам, если элемент существует
+        function scrollToResults() {
+            const el = document.getElementById("results");
+            if (el) {
+                console.log("✅ Элемент #results найден, выполняю прокрутку");
+                el.scrollIntoView({ behavior: "smooth" });
+                console.log("✅ Прокрутка выполнена");
+            } else {
+                console.log("⚠️ Элемент #results не найден");
+            }
+        }
+
+        // После загрузки даем небольшой таймер и запускаем обе функции
+        setTimeout(() => {
+            adjustHeight();
+            if (window.location.hash === "#results") {
+                scrollToResults();
+            }
+        }, 500);
+    </script>
+    """, unsafe_allow_html=True)
+
 def scroll_to_results():
     """
     Добавляет JavaScript для плавной прокрутки к якорю результатов после загрузки.
@@ -1990,8 +2026,9 @@ def scroll_to_results():
         function scrollToResults() {
             const target = document.getElementById("results");
             if (target) {
+                console.log("✅ Элемент #results найден, выполняю прокрутку");
                 target.scrollIntoView({ behavior: "smooth" });
-                console.log("✅ Прокрутка к результатам выполнена");
+                console.log("✅ Прокрутка выполнена");
             } else {
                 console.log("⚠️ Элемент #results не найден");
             }
@@ -2272,6 +2309,9 @@ def main():
     
     # Добавляем код счетчика Яндекс.Метрики
     add_yandex_metrika()
+    
+    # Добавляем общий JavaScript скрипт для автоматического изменения высоты и прокрутки
+    add_common_script()
     
     # Проверяем, нужно ли отправить событие в Яндекс.Метрику
     if st.session_state.get('send_ya_metrika_event', False):
