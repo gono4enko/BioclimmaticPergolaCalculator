@@ -418,8 +418,6 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
         border-bottom: 1px solid #E0E0E0;
         display: flex;
         justify-content: space-between;
-        padding-left: 25px;
-        padding-right: 25px;
     }
     .discount-item:first-child {
         margin-top: 10px;
@@ -439,8 +437,6 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
         display: flex;
         justify-content: space-between;
         font-weight: bold;
-        padding-left: 25px;
-        padding-right: 25px;
     }
     @media (max-width: 768px) {
         .discounts-header, .discount-item, .discount-total {

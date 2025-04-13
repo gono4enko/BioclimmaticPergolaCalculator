@@ -1520,7 +1520,7 @@ def render_results(results):
     # Устанавливаем значительный отрицательный верхний отступ, чтобы убрать лишнее пространство
     st.markdown("""
     <div style='width:85%; margin:0 auto; margin-top: -60px; margin-bottom: 0;'>
-        <h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 0; margin-bottom: 10px; text-align: center;'>Акции и скидки</h3>
+        <h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 0; margin-bottom: 0; text-align: center;'>Акции и скидки</h3>
     </div>
     """, unsafe_allow_html=True)
     
