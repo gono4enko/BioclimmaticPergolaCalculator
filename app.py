@@ -1198,8 +1198,15 @@ def render_results(results):
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
     
-    # Создаем якорь для скролла с ID, добавляем более заметные атрибуты для обнаружения в DOM
-    st.markdown('<div id="results" name="results" style="position:relative;width:100%;padding:1px;margin-top:10px;" class="results-marker" data-testid="results-anchor"></div>', unsafe_allow_html=True)
+    # Выводим отладочное сообщение при генерации блока результатов
+    st.markdown("""
+    <script>
+        console.log("🎯 DEBUG: render_results вызван, создаю якорь #results");
+    </script>
+    """, unsafe_allow_html=True)
+    
+    # Создаем якорь для скролла с ID, делаем его максимально заметным
+    st.markdown('<div id="results" name="results" style="position:relative;width:100%;height:20px;background-color:#f0f8ff;padding:1px;margin-top:10px;border-top:2px solid #0066cc;" class="results-marker" data-testid="results-anchor"></div>', unsafe_allow_html=True)
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
@@ -2405,6 +2412,26 @@ def main():
     # Добавляем общий JavaScript скрипт для автоматического изменения высоты и прокрутки
     add_common_script()
     
+    # Проверяем, нужно ли установить хеш в URL после перезагрузки страницы
+    if st.session_state.get('set_hash_to_results', False):
+        st.markdown("""
+        <script>
+            console.log("🔄 DEBUG: Установка хеша #results в URL после перезагрузки страницы");
+            window.location.hash = "results";
+            // Запускаем scrollToResultsWhenReady сразу после установки хеша
+            setTimeout(function() {
+                console.log("🔄 DEBUG: Принудительный запуск scrollToResultsWhenReady");
+                if (typeof scrollToResultsWhenReady === 'function') {
+                    scrollToResultsWhenReady();
+                } else {
+                    console.error("🔄 DEBUG: Функция scrollToResultsWhenReady не найдена!");
+                }
+            }, 100);
+        </script>
+        """, unsafe_allow_html=True)
+        # Сбрасываем флаг, чтобы не устанавливать хеш снова
+        st.session_state.set_hash_to_results = False
+    
     # Проверяем, нужно ли отправить событие в Яндекс.Метрику
     if st.session_state.get('send_ya_metrika_event', False):
         # Отправляем событие через JavaScript
@@ -2629,13 +2656,8 @@ def main():
                 # Устанавливаем флаг для отправки события в Яндекс.Метрику после перезагрузки
                 st.session_state.send_ya_metrika_event = True
                 
-                # Добавляем прямую установку хэша в URL
-                st.markdown("""
-                <script>
-                    console.log("🔄 DEBUG: Устанавливаю хэш #results в URL");
-                    window.location.hash = "results";
-                </script>
-                """, unsafe_allow_html=True)
+                # Запоминаем, что нужно установить хэш #results после перезагрузки страницы
+                st.session_state.set_hash_to_results = True
                 
                 # Перезагружаем страницу для отображения результатов
                 st.rerun()
