@@ -543,8 +543,8 @@ def promotions_section(pergola_type: str, width: float, length: float,
     # Если есть применимые акции, отображаем их
     if len(applied_promotions_list) > 0:
         display_applied_discounts(
-            discount_result["applied_promotions"],
-            discount_result["total_discount"]
+            applied_promotions_list,
+            total_discount
         )
     
-    return discount_result["total_discount"]
+    return total_discount
