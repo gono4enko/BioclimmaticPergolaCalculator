@@ -3177,8 +3177,32 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
+    # Добавляем стили для кнопки, чтобы текст отображался в одну строку
+    st.markdown("""
+    <style>
+    /* Стили для кнопки "РАССЧИТАТЬ СТОИМОСТЬ" */
+    div[data-testid="stButton"] > button[data-testid="baseButton-primary"] {
+        white-space: nowrap !important;
+        font-size: 1.1rem !important;
+        padding: 0.8rem 1rem !important;
+        min-width: 300px !important;
+        width: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+    }
+    
+    /* Стили для текста внутри кнопки */
+    div[data-testid="stButton"] > button[data-testid="baseButton-primary"] p {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        display: inline-block !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Создаем кнопку по центру (с небольшим смещением) с помощью колонок
-    col1, col2, col3 = st.columns([0.8, 2.4, 0.8])
+    col1, col2, col3 = st.columns([0.6, 2.8, 0.6])
     
     # Помещаем кнопку в среднюю колонку
     with col2:
