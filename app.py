@@ -930,10 +930,11 @@ def perform_calculation(dimensions, options):
         # Базовая стоимость (без наценок)
         base_total_price = results["total_price"]
         
-        # Добавляем наценку за доставку (8% автоматически)
-        delivery_price = round(base_total_price * 0.08, 2)
+        # Добавляем наценку за доставку из модуля настроек
+        delivery_markup_percent = pricing_settings.get_delivery_markup_percent()
+        delivery_price = round(base_total_price * delivery_markup_percent / 100, 2)
         results["delivery"] = {
-            "percentage": 8,
+            "percentage": delivery_markup_percent,
             "price": delivery_price
         }
         results["items"].append({
@@ -1546,7 +1547,7 @@ def render_results(results):
     base_price = results["base_price"]
     
     # Курс евро для конвертации цен
-    euro_rate = EURO_RATE
+    euro_rate = pricing_settings.get_euro_rate()
     total_price = results["total_price"]
     
     # Рассчитываем общую стоимость опций для определения скидок
