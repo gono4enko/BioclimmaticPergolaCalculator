@@ -2067,7 +2067,15 @@ def scroll_to_results():
     Компонент smooth_scroll_to автоматически выполняет скролл к указанному элементу
     после полной загрузки страницы.
     """
-    # Вызываем функцию из модуля scroll.py
+    # Добавляем отладочное сообщение для трассировки вызовов
+    st.markdown("""
+    <script>
+        console.log("🔄 DEBUG: Вызвана scroll_to_results(), которая использует компонент smooth_scroll_to");
+    </script>
+    """, unsafe_allow_html=True)
+    
+    # Вызываем функцию из модуля scroll.py, указывая визуальное подсвечивание элемента
+    # для лучшей видимости для пользователя
     smooth_scroll_to(target_id="results")
 
 def add_smart_device_adaptation():
@@ -2346,23 +2354,89 @@ def main():
     # Добавляем общий JavaScript скрипт для автоматического изменения высоты и прокрутки
     add_common_script()
     
-    # Проверяем, нужно ли установить хеш в URL после перезагрузки страницы
+    # Проверяем, нужно ли выполнить скролл к элементу "results" после перезагрузки страницы
+    # Используем комбинацию подходов для максимальной надежности
     if st.session_state.get('set_hash_to_results', False):
         st.markdown("""
         <script>
-            console.log("🔄 DEBUG: Установка хеша #results в URL после перезагрузки страницы");
-            window.location.hash = "results";
-            // Запускаем scrollToResultsWhenReady сразу после установки хеша
-            setTimeout(function() {
-                console.log("🔄 DEBUG: Принудительный запуск scrollToResultsWhenReady");
-                if (typeof scrollToResultsWhenReady === 'function') {
-                    scrollToResultsWhenReady();
-                } else {
-                    console.error("🔄 DEBUG: Функция scrollToResultsWhenReady не найдена!");
+            (function() {
+                console.log("🔄 DEBUG: Запуск комбинированного скролла к результатам (усиленная версия)");
+                
+                // Устанавливаем хеш в URL для совместимости со старыми механизмами скроллинга
+                try {
+                    console.log("🔄 DEBUG: Установка хеша #results в URL");
+                    window.location.hash = "results";
+                } catch(e) {
+                    console.error("🔄 DEBUG: Ошибка при установке хеша в URL:", e);
                 }
-            }, 100);
+                
+                // Запускаем устаревшую функцию для совместимости
+                setTimeout(function() {
+                    console.log("🔄 DEBUG: Проверка и запуск scrollToResultsWhenReady (для совместимости)");
+                    if (typeof scrollToResultsWhenReady === 'function') {
+                        scrollToResultsWhenReady();
+                    } else {
+                        console.log("🔄 DEBUG: Функция scrollToResultsWhenReady не найдена (это нормально для нового кода)");
+                    }
+                }, 500);
+                
+                // Дополнительный механизм скролла через нативный DOM API
+                const tryScrollToResults = function(attempt) {
+                    if (attempt > 20) return; // максимум 20 попыток
+                    
+                    console.log(`🔄 DEBUG: Дополнительный механизм скролла (попытка #${attempt})`);
+                    const resultsBlock = document.getElementById("results");
+                    
+                    if (resultsBlock) {
+                        console.log("🔄 DEBUG: Элемент #results найден, выполняю прямой скролл");
+                        
+                        // Применяем визуальное выделение к элементу для лучшей видимости
+                        resultsBlock.style.backgroundColor = "#e6f2ff";
+                        resultsBlock.style.transition = "background-color 2s, border-color 2s";
+                        resultsBlock.style.borderColor = "#0066cc";
+                        resultsBlock.style.borderWidth = "3px";
+                        
+                        try {
+                            // Скролл с плавной анимацией
+                            resultsBlock.scrollIntoView({behavior: 'smooth', block: 'start'});
+                            
+                            // Дублирующий скролл через window.scrollTo
+                            setTimeout(function() {
+                                try {
+                                    const y = resultsBlock.getBoundingClientRect().top + window.pageYOffset - 30;
+                                    window.scrollTo({top: y, behavior: 'smooth'});
+                                    console.log(`🔄 DEBUG: Дублирующий scrollTo выполнен`);
+                                } catch(e) {
+                                    console.error("🔄 DEBUG: Ошибка в дублирующем scrollTo:", e);
+                                }
+                            }, 300);
+                            
+                            // Убираем выделение через 3 секунды
+                            setTimeout(function() {
+                                resultsBlock.style.backgroundColor = "transparent";
+                                resultsBlock.style.borderColor = "transparent";
+                            }, 3000);
+                            
+                        } catch(e) {
+                            console.error("🔄 DEBUG: Ошибка при выполнении scrollIntoView:", e);
+                        }
+                    } else {
+                        console.log(`🔄 DEBUG: Элемент #results не найден, повторная попытка через 200мс`);
+                        setTimeout(function() {
+                            tryScrollToResults(attempt + 1);
+                        }, 200);
+                    }
+                };
+                
+                // Запускаем дополнительный механизм скролла с задержкой 
+                setTimeout(function() {
+                    tryScrollToResults(1);
+                }, 800);
+                
+            })();
         </script>
         """, unsafe_allow_html=True)
+        
         # Сбрасываем флаг, чтобы не устанавливать хеш снова
         st.session_state.set_hash_to_results = False
     
