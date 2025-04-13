@@ -1208,7 +1208,32 @@ def render_results(results):
     """, unsafe_allow_html=True)
     
     # Создаем якорь для скролла с ID, делаем его максимально заметным
-    st.markdown('<div id="results" name="results" style="position:relative;width:100%;height:20px;background-color:#f0f8ff;padding:1px;margin-top:10px;border-top:2px solid #0066cc;" class="results-marker" data-testid="results-anchor"></div>', unsafe_allow_html=True)
+    # Создаем более заметный блок с ID "results" для надежного скролла
+    st.markdown('''
+    <div id="results" name="results" 
+         style="position:relative;
+                width:100%;
+                height:40px;  /* Увеличенная высота для лучшей видимости */
+                background-color:#e6f2ff;  /* Более заметный цвет фона */
+                padding:5px;
+                margin-top:20px;
+                margin-bottom:10px;
+                border-top:3px solid #0066cc;
+                border-radius:3px;
+                text-align:center;" 
+         class="results-marker" 
+         data-testid="results-anchor">
+         <!-- Добавляем текст внутрь для лучшей видимости элемента -->
+         <span style="font-weight:bold;color:#0066cc;font-size:18px;">Результаты расчета</span>
+    </div>
+    ''', unsafe_allow_html=True)
+    
+    # Добавляем дополнительную отметку для надежности
+    st.markdown("""
+    <script>
+        console.log("🔍 DEBUG: Создан якорь #results");
+    </script>
+    """, unsafe_allow_html=True)
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
