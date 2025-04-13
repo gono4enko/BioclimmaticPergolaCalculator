@@ -3255,6 +3255,9 @@ def main():
         
     # Отображаем результаты (если есть)
     if 'results' in st.session_state:
+        # Добавляем якорь для прокрутки
+        st.markdown('<div id="results"></div>', unsafe_allow_html=True)
+        
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
