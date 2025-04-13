@@ -3,8 +3,9 @@
 Позволяет добавлять фиксированные кнопки, которые остаются видимыми при прокрутке страницы
 и могут выполнять переход к заданным якорям на странице.
 """
+
 import streamlit as st
-from streamlit.components.v1 import html
+import streamlit.components.v1 as components
 
 def add_floating_button(target_id, button_text, position="bottom-right", color="#0066cc", 
                        icon=None, appear_after_scroll=None, id=None):
@@ -20,99 +21,113 @@ def add_floating_button(target_id, button_text, position="bottom-right", color="
         appear_after_scroll (int, optional): Появляться только после скролла на указанное количество пикселей
         id (str, optional): Уникальный ID для кнопки, если нужно обращаться к ней через JS
     """
+    # Генерируем уникальный ID, если не предоставлен
     if id is None:
-        id = f"floating-btn-{target_id}"
+        import hashlib
+        id = f"floating-btn-{hashlib.md5(button_text.encode()).hexdigest()[:8]}"
     
-    # Определяем позицию кнопки
+    # Определяем позицию кнопки в CSS
     position_css = ""
     if position == "bottom-right":
         position_css = "right: 20px; bottom: 20px;"
     elif position == "bottom-left":
         position_css = "left: 20px; bottom: 20px;"
     elif position == "bottom-center":
-        position_css = "left: 50%; transform: translateX(-50%); bottom: 20px;"
+        position_css = "left: 50%; bottom: 20px; transform: translateX(-50%);"
+    elif position == "middle-right":
+        position_css = "right: 20px; top: 50%; transform: translateY(-50%);"
     
-    # Добавляем иконку, если она указана
+    # Добавляем иконку, если указана
     icon_html = ""
     if icon:
-        icon_html = f'<i class="fas fa-{icon}" style="margin-right: 8px;"></i>'
+        icon_html = f'<i class="fas fa-{icon}" style="margin-right: 5px;"></i>'
     
-    # CSS для плавающей кнопки
-    css = f"""
-    <style>
-    #{id} {{
-        position: fixed;
-        {position_css}
-        background-color: {color};
-        color: white;
-        border: none;
-        border-radius: 25px;
-        padding: 10px 20px;
-        font-size: 14px;
-        cursor: pointer;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        z-index: 9999;
-        display: {"none" if appear_after_scroll else "block"};
-        transition: all 0.3s ease;
-        opacity: 0.9;
-    }}
-    
-    #{id}:hover {{
-        transform: {("translateX(-50%) scale(1.05)" if position == "bottom-center" else "scale(1.05)")};
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-        opacity: 1;
-    }}
-    </style>
-    """
-    
-    # JavaScript для функционала кнопки
-    js = f"""
-    <script>
-    (function() {{
-        // Добавляем FontAwesome, если нужна иконка
-        if ('{icon}' && !document.querySelector('link[href*="fontawesome"]')) {{
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
-            document.head.appendChild(link);
-        }}
-        
-        // Создаем кнопку и добавляем ее на страницу
-        const button = document.createElement('button');
-        button.id = '{id}';
-        button.innerHTML = '{icon_html}{button_text}';
-        document.body.appendChild(button);
-        
-        // Обработчик клика для скролла к указанному элементу
-        button.addEventListener('click', function() {{
-            const targetElement = document.getElementById('{target_id}');
-            if (targetElement) {{
-                console.log('🔄 Скролл к элементу #{target_id}');
-                targetElement.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+    # Добавляем условие появления после скролла
+    scroll_js = ""
+    display_style = "display: block;"
+    if appear_after_scroll is not None:
+        display_style = "display: none;"
+        scroll_js = f"""
+        window.addEventListener('scroll', function() {{
+            const button = document.getElementById('{id}');
+            if (window.scrollY > {appear_after_scroll}) {{
+                button.style.display = 'block';
             }} else {{
-                console.error('⚠️ Элемент #{target_id} не найден');
+                button.style.display = 'none';
             }}
         }});
-        
-        // Если задан порог появления после скролла
-        {f'''
-        const showButtonAfterScroll = () => {{
-            if (window.scrollY > {appear_after_scroll}) {{
-                document.getElementById('{id}').style.display = 'block';
-            }} else {{
-                document.getElementById('{id}').style.display = 'none';
-            }}
-        }};
-        window.addEventListener('scroll', showButtonAfterScroll);
-        showButtonAfterScroll();
-        ''' if appear_after_scroll else ''}
-    }})();
+        """
+    
+    # Формируем HTML и CSS для кнопки
+    html = f"""
+    <div id="{id}" class="floating-button" 
+         style="position: fixed; {position_css} z-index: 1000; {display_style} 
+                cursor: pointer; padding: 12px 20px; border-radius: 50px; 
+                background-color: {color}; color: white; font-weight: 600;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); 
+                transition: all 0.3s ease;">
+        {icon_html}{button_text}
+    </div>
+    
+    <script>
+    document.getElementById('{id}').addEventListener('click', function() {{
+        const targetElement = document.getElementById('{target_id}');
+        if (targetElement) {{
+            // Плавная прокрутка к элементу
+            targetElement.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+            
+            // Добавляем выделение для элемента
+            targetElement.style.transition = 'background-color 0.5s ease';
+            targetElement.style.backgroundColor = '#f0f7ff';
+            setTimeout(function() {{
+                targetElement.style.backgroundColor = '';
+            }}, 1500);
+        }}
+    }});
+    
+    // Эффект при наведении и нажатии
+    document.getElementById('{id}').addEventListener('mouseover', function() {{
+        this.style.boxShadow = '0 6px 15px rgba(0, 0, 0, 0.25)';
+        this.style.transform = this.style.transform.includes('translateX') ? 
+            'translateX(-50%) scale(1.05)' : 
+            (this.style.transform.includes('translateY') ? 
+                'translateY(-50%) scale(1.05)' : 'scale(1.05)');
+    }});
+    
+    document.getElementById('{id}').addEventListener('mouseout', function() {{
+        this.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.2)';
+        this.style.transform = this.style.transform.includes('translateX') ? 
+            'translateX(-50%)' : 
+            (this.style.transform.includes('translateY') ? 
+                'translateY(-50%)' : 'none');
+    }});
+    
+    document.getElementById('{id}').addEventListener('mousedown', function() {{
+        this.style.transform = this.style.transform.includes('translateX') ? 
+            'translateX(-50%) scale(0.95)' : 
+            (this.style.transform.includes('translateY') ? 
+                'translateY(-50%) scale(0.95)' : 'scale(0.95)');
+    }});
+    
+    document.getElementById('{id}').addEventListener('mouseup', function() {{
+        this.style.transform = this.style.transform.includes('translateX') ? 
+            'translateX(-50%) scale(1.05)' : 
+            (this.style.transform.includes('translateY') ? 
+                'translateY(-50%) scale(1.05)' : 'scale(1.05)');
+    }});
+    
+    // Адаптация для мобильных устройств
+    if (window.innerWidth < 768) {{
+        document.getElementById('{id}').style.padding = '8px 15px';
+        document.getElementById('{id}').style.fontSize = '14px';
+    }}
+    
+    {scroll_js}
     </script>
     """
     
-    # Выводим CSS и JavaScript
-    html_content = css + js
-    html(html_content, height=0)
+    # Добавляем кнопку на страницу
+    components.html(html, height=0)
 
 def add_results_navigation_button():
     """
@@ -120,13 +135,13 @@ def add_results_navigation_button():
     Кнопка появляется только после скролла на 300 пикселей.
     """
     add_floating_button(
-        target_id="results", 
-        button_text="К результатам расчета", 
-        position="bottom-right", 
-        color="#0066cc", 
+        target_id="results",
+        button_text="К результатам",
+        position="bottom-center",
+        color="#0066cc",
         icon="arrow-down",
         appear_after_scroll=300,
-        id="btn-to-results"
+        id="results-nav-button"
     )
 
 def add_dimensions_edit_button():
@@ -135,10 +150,10 @@ def add_dimensions_edit_button():
     Появляется всегда на странице.
     """
     add_floating_button(
-        target_id="dimensions-form", 
-        button_text="Изменить размеры", 
-        position="bottom-center", 
-        color="#4CAF50", 
+        target_id="dimensions-form",
+        button_text="Изменить размеры",
+        position="bottom-left",
+        color="#28a745",
         icon="edit",
-        id="btn-edit-dimensions"
+        id="dimensions-edit-button"
     )

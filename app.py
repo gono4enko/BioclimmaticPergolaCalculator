@@ -1188,6 +1188,9 @@ def render_dimensions_form():
     Returns:
         dict: Словарь с введенными размерами
     """
+    # Добавляем ID-якорь для возможности скролла к этой секции
+    st.markdown('<div id="dimensions-form"></div>', unsafe_allow_html=True)
+    
     st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Размеры перголы</h2>", unsafe_allow_html=True)
     
     # Начало блока с классом dimensions-form для умной адаптации
@@ -2646,6 +2649,8 @@ def add_smart_device_adaptation():
 
 def main():
     """Основная функция приложения"""
+    # Импортируем модуль для плавающих кнопок
+    from floating_buttons import add_results_navigation_button, add_dimensions_edit_button
     # Настраиваем страницу
     st.set_page_config(
         page_title="Калькулятор пергол DecoLife",
@@ -3191,6 +3196,9 @@ def main():
                 # Отключаем автоматический скролл к результатам
                 st.session_state.scroll_to_results = False
                 
+                # Активируем флаг для добавления плавающих кнопок навигации
+                st.session_state.show_floating_buttons = True
+                
                 # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
                 st.session_state.description_shown = False
                 
@@ -3220,6 +3228,14 @@ def main():
             
             # Сбрасываем флаг, чтобы не выполнять скролл при каждом обновлении страницы
             st.session_state.scroll_to_results = False
+            
+        # Добавляем плавающие кнопки после появления результатов
+        if st.session_state.get('show_floating_buttons', False):
+            # Добавляем кнопку навигации к результатам расчета
+            add_results_navigation_button()
+            
+            # Добавляем кнопку для возврата к форме размеров
+            add_dimensions_edit_button()
     
     # Добавляем галерею проектов и счетчик установленных пергол
     # Разделяем содержимое после калькулятора
