@@ -1984,14 +1984,25 @@ def send_page_height_to_parent():
 def scroll_to_results():
     """
     Добавляет HTML-якорь и простую навигацию к итоговой цене. 
-    Упрощенный подход через натуральный HTML без JavaScript.
+    Отслеживает положение скролла и показывает/скрывает кнопки навигации в зависимости от позиции.
     """
-    # Добавляем стили для кнопки скролла и якоря
+    # Добавляем якорь к форме с параметрами в начале калькулятора
+    st.markdown("""
+    <div id="calculator-parameters"></div>
+    """, unsafe_allow_html=True)
+    
+    # Добавляем стили для кнопок скролла и якорей
     st.markdown("""
     <style>
     /* Якорь для результатов расчета - увеличим смещение, чтобы блок был внизу экрана */
     #final-price-target {
         scroll-margin-top: 70vh; /* 70% высоты экрана */
+        scroll-behavior: smooth;
+    }
+    
+    /* Якорь для формы параметров */
+    #calculator-parameters {
+        scroll-margin-top: 30px;
         scroll-behavior: smooth;
     }
     
@@ -2021,7 +2032,7 @@ def scroll_to_results():
         width: 100%;
     }
     
-    /* Стили для фиксированной кнопки */
+    /* Стили для фиксированных кнопок */
     .fixed-button {
         position: fixed;
         bottom: 20px;
@@ -2034,6 +2045,14 @@ def scroll_to_results():
         border-radius: 5px;
         font-weight: bold;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        transition: opacity 0.3s ease;
+    }
+    
+    .fixed-button.up {
+        bottom: 20px;
+        left: 20px;
+        right: auto;
+        opacity: 0; /* Начинаем со скрытой кнопки вверх */
     }
     
     /* Автоматический скролл после перезагрузки страницы */
@@ -2043,10 +2062,17 @@ def scroll_to_results():
     </style>
     """, unsafe_allow_html=True)
     
-    # Добавляем плавающую кнопку скролла, которая всегда видна
+    # Добавляем плавающую кнопку скролла вниз, которая скрывается при прокрутке к галерее
     st.markdown("""
-    <a href="#final-price-target" class="fixed-button">
+    <a href="#final-price-target" class="fixed-button down">
         К результату ↓
+    </a>
+    """, unsafe_allow_html=True)
+    
+    # Добавляем плавающую кнопку скролла вверх, которая появляется при прокрутке к галерее
+    st.markdown("""
+    <a href="#calculator-parameters" class="fixed-button up">
+        К параметрам ↑
     </a>
     """, unsafe_allow_html=True)
     
@@ -2059,15 +2085,56 @@ def scroll_to_results():
     </div>
     """, unsafe_allow_html=True)
     
-    # Добавляем скрипт для автоматического скролла, используя window.location.hash
+    # Добавляем скрипт для управления видимостью кнопок и автоматического скролла
     st.markdown("""
     <script>
-        // Проверяем, должен ли быть скролл при загрузке страницы
+        // Функция для проверки, находится ли элемент в видимой области
+        function isElementInViewport(el) {
+            var rect = el.getBoundingClientRect();
+            return (
+                rect.top >= 0 &&
+                rect.left >= 0 &&
+                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+            );
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
-            // Если у нас есть якорь в URL, выполняем скролл через небольшую задержку
+            // Находим заголовок галереи, который служит триггером для скрытия кнопки вниз
+            const galleryTitle = document.querySelector('h1:contains("Наша галерея и проекты")');
+            const btnDown = document.querySelector('.fixed-button.down');
+            const btnUp = document.querySelector('.fixed-button.up');
+            
+            // Функция для обработки прокрутки и управления видимостью кнопок
+            function handleScroll() {
+                // Проверяем, проскроллили ли мы до галереи
+                const gallerySection = document.querySelector('h1:contains("Наша галерея и проекты")');
+                if (gallerySection) {
+                    const galleryRect = gallerySection.getBoundingClientRect();
+                    
+                    // Если галерея видна, скрываем кнопку вниз и показываем кнопку вверх
+                    if (galleryRect.top < window.innerHeight && galleryRect.bottom >= 0) {
+                        if (btnDown) btnDown.style.opacity = '0';
+                        if (btnUp) btnUp.style.opacity = '1';
+                    } else {
+                        // Иначе показываем кнопку вниз и скрываем кнопку вверх
+                        if (btnDown) btnDown.style.opacity = '1';
+                        if (btnUp) btnUp.style.opacity = '0';
+                    }
+                }
+            }
+            
+            // Вызываем функцию при скролле страницы
+            window.addEventListener('scroll', handleScroll);
+            
+            // Вызываем функцию при загрузке, чтобы установить начальное состояние
+            handleScroll();
+            
+            // Если в URL есть якорь для результатов, выполняем скролл через небольшую задержку
             setTimeout(function() {
-                // Добавляем фрагмент в URL для активации скролла
-                window.location.hash = '#final-price-target';
+                if (window.location.hash === '#final-price-target') {
+                    window.location.hash = '#final-price-target';
+                }
             }, 500);
         });
     </script>
