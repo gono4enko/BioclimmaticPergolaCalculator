@@ -523,107 +523,104 @@ else:
         # Получаем список прайс-листов
         price_lists = get_price_lists()
         
-        # Загрузка нового прайс-листа
-        with st.expander("⬆️ Загрузить новый прайс-лист", expanded=False):
-            st.subheader("Загрузка нового прайс-листа")
-            
-            upload_col1, upload_col2 = st.columns(2)
-            
-            with upload_col1:
-                # Выбор типа перголы
-                pergola_type = st.selectbox(
-                    "Тип перголы",
-                    options=["B500NEW", "B700NEW", "B600"],
-                    help="Выберите тип перголы для прайс-листа"
-                )
+        # Загрузка новых прайс-листов - разделение по типам перголы и размерам ламелей
+        st.subheader("⬆️ Загрузка прайс-листов")
+        
+        # Создаем вкладки для разных типов пергол
+        pergola_tabs = st.tabs(["B500NEW", "B700NEW", "B600"])
+        
+        for i, pergola_type in enumerate(["B500NEW", "B700NEW", "B600"]):
+            with pergola_tabs[i]:
+                st.write(f"### Прайс-листы для {pergola_type}")
                 
-                # Выбор размера ламелей
-                lamella_size = st.selectbox(
-                    "Размер ламелей",
-                    options=["200", "250", "PIR"],
-                    help="Выберите размер ламелей для прайс-листа"
-                )
-            
-            with upload_col2:
-                # Загрузка файла
-                uploaded_file = st.file_uploader(
-                    "Выберите файл прайс-листа",
-                    type=["csv", "xlsx", "xls"],
-                    help="Загрузите файл прайс-листа в формате CSV или Excel"
-                )
+                # Вкладки для разных размеров ламелей
+                lamella_tabs = st.tabs(["Ламель 200 мм", "Ламель 250 мм", "Ламель PIR"])
                 
-                # Флаг замены существующего файла
-                replace_existing = st.checkbox(
-                    "Заменить существующий прайс-лист",
-                    value=True,
-                    help="При включении заменит существующий прайс-лист с таким же названием"
-                )
-            
-            # Дополнительная информация о формате прайс-листа
-            st.markdown("### ℹ️ Формат прайс-листа")
-            st.markdown("""
-            **Требования к формату прайс-листа:**
-            
-            1. Первый столбец должен содержать значения выноса перголы (в метрах)
-            2. Первая строка должна содержать значения ширины перголы (в метрах)
-            3. Ячейки с ценами должны содержать числовые значения (в евро)
-            4. CSV-файлы должны использовать разделитель ";"
-            
-            **Пример формата CSV:**
-            ```
-            ;3;3.5;4;4.5;5;5.5;6
-            2;1000;1100;1200;1300;1400;1500;1600
-            2.5;1100;1200;1300;1400;1500;1600;1700
-            3;1200;1300;1400;1500;1600;1700;1800
-            ```
-            
-            **Пример формата Excel:**
-                Аналогичный формат, с шириной в первой строке и выносом в первом столбце.
-                """)
-            
-            # Кнопка загрузки
-            if st.button("Загрузить прайс-лист"):
-                if uploaded_file is None:
-                    st.error("⚠️ Выберите файл для загрузки")
-                else:
-                    # Формируем имя файла
-                    file_extension = os.path.splitext(uploaded_file.name)[1].lower()
-                    if file_extension not in ALLOWED_EXTENSIONS:
-                        st.error(f"⚠️ Неподдерживаемый формат файла. Разрешены: {', '.join(ALLOWED_EXTENSIONS)}")
-                    else:
-                        # Формируем имя файла для сохранения
-                        new_filename = f"{pergola_type}_{lamella_size}{file_extension}"
-                        new_file_path = os.path.join(PRICES_DIR, new_filename)
+                for j, lamella_size in enumerate(["200", "250", "PIR"]):
+                    with lamella_tabs[j]:
+                        st.write(f"#### Загрузка прайс-листа для {pergola_type} с ламелями {lamella_size} мм")
                         
-                        # Проверяем, существует ли файл с таким именем
-                        if os.path.exists(new_file_path) and not replace_existing:
-                            st.error(f"⚠️ Файл с именем {new_filename} уже существует. Выберите опцию замены или используйте другое имя.")
-                        else:
-                            # Создаем резервную копию существующего файла, если он есть
-                            if os.path.exists(new_file_path):
-                                backup_dir = os.path.join(PRICES_DIR, "backups")
-                                os.makedirs(backup_dir, exist_ok=True)
-                                
-                                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                                backup_filename = f"{os.path.splitext(new_filename)[0]}_{timestamp}{file_extension}"
-                                backup_path = os.path.join(backup_dir, backup_filename)
-                                
-                                try:
-                                    shutil.copy2(new_file_path, backup_path)
-                                    st.info(f"ℹ️ Создана резервная копия существующего прайс-листа: {backup_filename}")
-                                except Exception as e:
-                                    st.warning(f"⚠️ Не удалось создать резервную копию: {str(e)}")
-                            
-                            # Сохраняем загруженный файл
-                            try:
-                                with open(new_file_path, "wb") as f:
-                                    f.write(uploaded_file.getbuffer())
-                                st.success(f"✅ Прайс-лист успешно загружен: {new_filename}")
-                                
-                                # Обновляем список прайс-листов
-                                price_lists = get_price_lists()
-                            except Exception as e:
-                                st.error(f"❌ Ошибка при сохранении файла: {str(e)}")
+                        # Загрузка файла
+                        uploaded_file = st.file_uploader(
+                            f"Выберите файл прайс-листа (CSV)",
+                            type=["csv", "xlsx", "xls"],
+                            help="Загрузите файл прайс-листа в формате CSV или Excel",
+                            key=f"upload_{pergola_type}_{lamella_size}"
+                        )
+                        
+                        # Флаг замены существующего файла
+                        replace_existing = st.checkbox(
+                            "Заменить существующий прайс-лист",
+                            value=True,
+                            help="При включении заменит существующий прайс-лист с таким же названием",
+                            key=f"replace_{pergola_type}_{lamella_size}"
+                        )
+                        
+                        # Кнопка загрузки для текущей комбинации
+                        if st.button("Загрузить прайс-лист", key=f"upload_button_{pergola_type}_{lamella_size}"):
+                            if uploaded_file is None:
+                                st.error("⚠️ Выберите файл для загрузки")
+                            else:
+                                # Формируем имя файла
+                                file_extension = os.path.splitext(uploaded_file.name)[1].lower()
+                                if file_extension not in ALLOWED_EXTENSIONS:
+                                    st.error(f"⚠️ Неподдерживаемый формат файла. Разрешены: {', '.join(ALLOWED_EXTENSIONS)}")
+                                else:
+                                    # Формируем имя файла для сохранения
+                                    new_filename = f"{pergola_type}_{lamella_size}{file_extension}"
+                                    new_file_path = os.path.join(PRICES_DIR, new_filename)
+                                    
+                                    # Проверяем, существует ли файл с таким именем
+                                    if os.path.exists(new_file_path) and not replace_existing:
+                                        st.error(f"⚠️ Файл с именем {new_filename} уже существует. Выберите опцию замены или используйте другое имя.")
+                                    else:
+                                        # Создаем резервную копию существующего файла, если он есть
+                                        if os.path.exists(new_file_path):
+                                            backup_dir = os.path.join(PRICES_DIR, "backups")
+                                            os.makedirs(backup_dir, exist_ok=True)
+                                            
+                                            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                                            backup_filename = f"{os.path.splitext(new_filename)[0]}_{timestamp}{file_extension}"
+                                            backup_path = os.path.join(backup_dir, backup_filename)
+                                            
+                                            try:
+                                                shutil.copy2(new_file_path, backup_path)
+                                                st.info(f"ℹ️ Создана резервная копия существующего прайс-листа: {backup_filename}")
+                                            except Exception as e:
+                                                st.warning(f"⚠️ Не удалось создать резервную копию: {str(e)}")
+                                        
+                                        # Сохраняем загруженный файл
+                                        try:
+                                            with open(new_file_path, "wb") as f:
+                                                f.write(uploaded_file.getbuffer())
+                                            st.success(f"✅ Прайс-лист успешно загружен: {new_filename}")
+                                            
+                                            # Обновляем список прайс-листов
+                                            price_lists = get_price_lists()
+                                        except Exception as e:
+                                            st.error(f"❌ Ошибка при сохранении файла: {str(e)}")
+
+        # Дополнительная информация о формате прайс-листа (общая для всех типов)
+        st.markdown("### ℹ️ Формат прайс-листа")
+        st.markdown("""
+        **Требования к формату прайс-листа:**
+        
+        1. Первый столбец должен содержать значения выноса перголы (в метрах)
+        2. Первая строка должна содержать значения ширины перголы (в метрах)
+        3. Ячейки с ценами должны содержать числовые значения (в евро)
+        4. CSV-файлы должны использовать разделитель ";"
+        
+        **Пример формата CSV:**
+        ```
+        ;3;3.5;4;4.5;5;5.5;6
+        2;1000;1100;1200;1300;1400;1500;1600
+        2.5;1100;1200;1300;1400;1500;1600;1700
+        3;1200;1300;1400;1500;1600;1700;1800
+        ```
+        
+        **Пример формата Excel:**
+        Аналогичный формат, с шириной в первой строке и выносом в первом столбце.
+        """)
         
         # Список существующих прайс-листов
         st.subheader("Существующие прайс-листы")
@@ -634,6 +631,8 @@ else:
             # Создаем DataFrame с информацией о прайс-листах
             price_list_data = [{
                 "Имя файла": pl["name"],
+                "Тип перголы": pl["name"].split("_")[0] if "_" in pl["name"] else "Неизвестно",
+                "Размер ламели": pl["name"].split("_")[1].split(".")[0] if "_" in pl["name"] else "Неизвестно",
                 "Размер": f"{pl['size'] / 1024:.1f} КБ",
                 "Последнее изменение": pl["modified"].strftime("%d.%m.%Y %H:%M")
             } for pl in price_lists]
@@ -646,6 +645,8 @@ else:
                 use_container_width=True,
                 column_config={
                     "Имя файла": st.column_config.TextColumn("Имя файла"),
+                    "Тип перголы": st.column_config.TextColumn("Тип перголы"),
+                    "Размер ламели": st.column_config.TextColumn("Размер ламели"),
                     "Размер": st.column_config.TextColumn("Размер"),
                     "Последнее изменение": st.column_config.TextColumn("Последнее изменение")
                 }
