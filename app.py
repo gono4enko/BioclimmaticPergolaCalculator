@@ -1992,13 +1992,13 @@ def send_page_height_to_parent():
 
 def add_common_script():
     """
-    Добавляет универсальный JS-скрипт:
-    - Автоматическая прокрутка к #results при необходимости.
-    - Автоматическое изменение высоты iframe (актуально для встраивания в Tilda).
+    Добавляет универсальный JS-скрипт.
+    Примечание: функция прокрутки удалена, т.к. теперь используется кастомный компонент из scroll.py
+    Осталась только функция изменения высоты iframe, которая необходима для встраивания в Tilda.
     """
     st.markdown("""
     <script>
-    console.log("💻 DEBUG: Инициализация скрипта add_common_script");
+    console.log("💻 DEBUG: Инициализация скрипта add_common_script (обновленная версия)");
     
     // Автоизменение размера iframe (если вставлено в Tilda или другой сайт)
     function adjustHeight() {
@@ -2009,134 +2009,41 @@ def add_common_script():
         console.log("💻 DEBUG: Отправлено сообщение изменения высоты родителю");
     }
 
-    // Функция с интервалом, которая ждёт появления #results и скроллит к нему
+    // Устаревшая функция для совместимости со старыми вставками
     function scrollToResultsWhenReady() {
-        console.log("💻 DEBUG: Запуск scrollToResultsWhenReady() - поиск с интервалом");
-        let attempts = 0;
-        const maxAttempts = 50;  // 50 попыток * 100мс = 5 секунд максимум
-
-        const interval = setInterval(() => {
-            attempts += 1;
-            console.log(`💻 DEBUG: Попытка #${attempts} найти #results`);
-            
-            const el = document.getElementById("results");
-            if (el) {
-                console.log(`💻 DEBUG: ✅ Элемент #results найден на попытке #${attempts}`);
-                clearInterval(interval);
-                
-                // Задержка перед скроллом, чтобы избежать дёрганий и дать странице закончить построение
-                setTimeout(() => {
-                    console.log(`💻 DEBUG: Делаю скролл к #results (позиция Y = ${el.getBoundingClientRect().top}px)`);
-                    try {
-                        el.scrollIntoView({ behavior: "smooth", block: "start" });
-                        console.log("💻 DEBUG: ✅ scrollIntoView выполнен успешно");
-                    } catch (e) {
-                        console.error(`💻 DEBUG: ❌ Ошибка при scrollIntoView: ${e.message}`);
-                        
-                        // Запасной вариант
-                        try {
-                            console.log("💻 DEBUG: Пробую запасной вариант window.scrollTo()");
-                            const yOffset = el.getBoundingClientRect().top + window.pageYOffset - 50;
-                            window.scrollTo({
-                                top: yOffset,
-                                behavior: "smooth"
-                            });
-                            console.log(`💻 DEBUG: Скролл на позицию ${yOffset}px выполнен`);
-                        } catch (e2) {
-                            console.error(`💻 DEBUG: ❌ Ошибка при запасном scrollTo: ${e2.message}`);
-                        }
-                    }
-                }, 150);  // Пауза перед scroll, чтобы избежать дёрганий
-            }
-
-            // Если превысили лимит попыток
-            if (attempts >= maxAttempts) {
-                console.log(`💻 DEBUG: ⚠️ Достигнут лимит попыток (${maxAttempts}). Прекращаю поиск #results`);
-                clearInterval(interval);
-            }
-        }, 100);  // Проверяем каждые 100 мс
+        console.log("💻 DEBUG: Вызвана устаревшая функция scrollToResultsWhenReady()");
+        console.log("💻 DEBUG: Скролл теперь обрабатывается компонентом из модуля scroll.py");
+        // Функция оставлена для обратной совместимости, но ничего не делает
     }
 
-    // Установим слушатель событий для хеша в URL
+    // Установим слушатель событий для хеша в URL (только для обратной совместимости)
     window.addEventListener('hashchange', function() {
         console.log(`💻 DEBUG: Обнаружено изменение хеша в URL: ${window.location.hash}`);
-        if (window.location.hash === '#results') {
-            console.log('💻 DEBUG: Хеш изменен на #results, запускаю скролл');
-            scrollToResultsWhenReady();
-        }
+        // Функционал обрабатывается компонентом из модуля scroll.py
     });
 
-    // Запускаем после загрузки страницы
+    // Запускаем после загрузки страницы (только изменение высоты)
     setTimeout(() => {
         console.log("💻 DEBUG: Страница загружена, выполняю основные функции");
         
         // Всегда подгоняем размер фрейма
         adjustHeight();
         
-        // Если в URL уже есть #results, запускаем скролл
-        if (window.location.hash === "#results") {
-            console.log("💻 DEBUG: В URL найден хеш #results, запускаю скролл");
-            scrollToResultsWhenReady();
-        } else {
-            console.log("💻 DEBUG: Хеш #results в URL не найден. Активирую поиск элемента на случай если он уже на странице");
-            
-            // Проверим на всякий случай есть ли уже якорь на странице
-            const el = document.getElementById("results");
-            if (el) {
-                console.log("💻 DEBUG: Элемент #results уже существует в DOM, запускаю скролл");
-                scrollToResultsWhenReady();
-            } else {
-                console.log("💻 DEBUG: Элемент #results пока не существует в DOM");
-            }
-        }
+        console.log("💻 DEBUG: Функция скролла переведена на модуль scroll.py");
     }, 300);
     </script>
     """, unsafe_allow_html=True)
 
+# Функция заменена на кастомный компонент smooth_scroll_to из модуля scroll.py
+# Для обратной совместимости оставляем обертку с тем же именем
 def scroll_to_results():
     """
-    Добавляет JavaScript для плавной прокрутки к якорю результатов после загрузки.
-    
-    Примечание: Эта функция используется для прямого скролла, когда другие методы не сработали.
-    Использует ID 'results' для поиска элемента в DOM.
+    Использует кастомный компонент для плавного скролла к элементу с ID "results".
+    Компонент smooth_scroll_to автоматически выполняет скролл к указанному элементу
+    после полной загрузки страницы.
     """
-    st.markdown("""
-    <script>
-        console.log("🔍 DEBUG scroll_to_results: Запуск специальной функции скролла");
-        
-        // Не будем выполнять сразу, а дадим время DOM загрузиться полностью
-        setTimeout(function() {
-            console.log("🔍 DEBUG scroll_to_results: Проверяю наличие элемента #results");
-            const target = document.getElementById("results");
-            
-            if (target) {
-                console.log("🔍 DEBUG scroll_to_results: ✅ Элемент #results найден");
-                console.log(`🔍 DEBUG scroll_to_results: Позиция элемента: ${target.getBoundingClientRect().top}px от верха окна`);
-                
-                // Сделаем небольшую паузу перед скроллом для стабильности
-                setTimeout(function() {
-                    console.log("🔍 DEBUG scroll_to_results: Выполняю плавный скролл к элементу");
-                    
-                    try {
-                        // Запасной вариант с позиционированием
-                        const yOffset = -100;  // отступ в пикселях
-                        const y = target.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                        
-                        window.scrollTo({
-                            top: y,
-                            behavior: 'smooth'
-                        });
-                        console.log(`🔍 DEBUG scroll_to_results: Выполнен скролл на позицию ${y}px`);
-                    } catch (e) {
-                        console.error(`🔍 DEBUG scroll_to_results: ❌ Ошибка при скролле: ${e}`);
-                    }
-                }, 200);
-            } else {
-                console.log("🔍 DEBUG scroll_to_results: ⚠️ Элемент #results не найден, скролл невозможен");
-            }
-        }, 800);  // увеличиваем задержку для надежности загрузки DOM
-    </script>
-    """, unsafe_allow_html=True)
+    # Вызываем функцию из модуля scroll.py
+    smooth_scroll_to(target_id="results")
 
 def add_smart_device_adaptation():
     """
@@ -2681,10 +2588,11 @@ def main():
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
-        # Если нужна прокрутка к результатам, добавляем JS код
+        # Если нужна прокрутка к результатам, используем кастомный компонент для плавного скролла
         if st.session_state.get('scroll_to_results', False):
-            scroll_to_results()
-            # Сбрасываем флаг, чтобы не добавлять скрипт при каждом обновлении
+            # Используем компонент для плавного скролла к результатам
+            smooth_scroll_to(target_id="results")
+            # Сбрасываем флаг, чтобы не выполнять скролл при каждом обновлении страницы
             st.session_state.scroll_to_results = False
     
     # Добавляем галерею проектов и счетчик установленных пергол
