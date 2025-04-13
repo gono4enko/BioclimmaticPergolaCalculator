@@ -3193,13 +3193,13 @@ def main():
                 
                 # Сохраняем результаты в session_state
                 st.session_state.results = results
+                
+                # Включаем отображение плавающих кнопок навигации
+                st.session_state.show_floating_buttons = True
                 st.session_state.options = options
                 
                 # Отключаем автоматический скролл к результатам
                 st.session_state.scroll_to_results = False
-                
-                # Активируем флаг для добавления плавающих кнопок навигации
-                st.session_state.show_floating_buttons = True
                 
                 # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
                 st.session_state.description_shown = False
