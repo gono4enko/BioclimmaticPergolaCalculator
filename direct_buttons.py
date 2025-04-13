@@ -8,80 +8,121 @@ import streamlit as st
 
 def inject_direct_buttons():
     """
-    Внедряет кнопки навигации в правом верхнем углу экрана.
-    Использует простой подход с формами для гарантированной работы кнопок.
+    Внедряет плавающие кнопки навигации напрямую в HTML-код Streamlit
+    без использования компонентов и зависимости от состояния приложения.
     """
-    # Добавляем только CSS-стили для кнопок, не добавляя сами кнопки через HTML
+    # Добавляем стили для фиксированных кнопок справа
     st.markdown("""
     <style>
-    /* Стилизуем кнопку "Изменить размеры" */
-    div[data-testid="element-container"]:has(button:contains("📝 Сброс формы")) button {
-        position: fixed !important;
-        right: 20px !important;
-        top: 100px !important;
+    /* Стили для фиксированных кнопок справа по центру */
+    .floating-button-right {
+        position: fixed;
+        right: 20px;
         z-index: 9999 !important;
-        background-color: #28a745 !important;
-        color: white !important;
-        border-radius: 30px !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important;
-        padding: 10px 18px !important;
-        width: auto !important;
-        font-weight: bold !important;
-        text-align: center !important;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 30px;
+        padding: 10px 18px;
+        font-weight: bold;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        text-align: center;
     }
     
-    /* Стилизуем кнопку "К результатам" */
-    div[data-testid="element-container"]:has(button:contains("🔄 Рассчитать")) button {
-        position: fixed !important;
-        right: 20px !important;
-        top: 150px !important;
-        z-index: 9999 !important;
-        background-color: #0066cc !important;
-        color: white !important;
-        border-radius: 30px !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important;
-        padding: 10px 18px !important;
-        width: auto !important;
-        font-weight: bold !important;
-        text-align: center !important;
+    /* Кнопка "Изменить размеры" */
+    .edit-dimensions-btn {
+        top: 100px;
+        background-color: #28a745;
     }
     
-    /* Анимация при наведении */
-    div[data-testid="element-container"]:has(button:contains("📝 Сброс формы")) button:hover,
-    div[data-testid="element-container"]:has(button:contains("🔄 Рассчитать")) button:hover {
-        transform: scale(1.05) !important;
-        box-shadow: 0 6px 15px rgba(0,0,0,0.25) !important;
+    /* Кнопка "К результатам" */
+    .go-results-btn {
+        top: 160px;
+        background-color: #0066cc;
+    }
+    
+    /* Стиль при наведении */
+    .floating-button-right:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     }
     
     /* Адаптивность для мобильных устройств */
     @media (max-width: 768px) {
-        div[data-testid="element-container"]:has(button:contains("📝 Сброс формы")) button,
-        div[data-testid="element-container"]:has(button:contains("🔄 Рассчитать")) button {
-            padding: 8px 14px !important;
-            font-size: 14px !important;
-            right: 10px !important;
+        .floating-button-right {
+            padding: 8px 14px;
+            font-size: 14px;
+            right: 10px;
         }
     }
     </style>
+    
+    <!-- Добавляем фиксированные кнопки -->
+    <button class="floating-button-right edit-dimensions-btn" id="edit-dimensions" onclick="resetForm()">🖋 Изменить размеры</button>
+    <button class="floating-button-right go-results-btn" id="go-results" onclick="clickCalculate()">⬇️ К результатам</button>
+    
+    <script>
+    // Функция для сброса формы
+    function resetForm() {
+        // Находим все поля ввода и сбрасываем их значения
+        var inputs = document.querySelectorAll('input');
+        for (var i = 0; i < inputs.length; i++) {
+            if (inputs[i].type === 'text' || inputs[i].type === 'number') {
+                inputs[i].value = '';
+            } else if (inputs[i].type === 'checkbox' || inputs[i].type === 'radio') {
+                inputs[i].checked = false;
+            }
+        }
+        
+        // Также сбрасываем select'ы
+        var selects = document.querySelectorAll('select');
+        for (var i = 0; i < selects.length; i++) {
+            selects[i].selectedIndex = 0;
+        }
+        
+        // Перезагружаем страницу
+        window.location.reload();
+    }
+    
+    // Функция для клика по кнопке "Рассчитать"
+    function clickCalculate() {
+        // Находим кнопку расчета
+        var buttons = document.querySelectorAll('button');
+        var calcButton = null;
+        
+        for (var i = 0; i < buttons.length; i++) {
+            var buttonText = buttons[i].innerText.toLowerCase();
+            if (buttonText.includes('рассчитать') || buttonText.includes('расчет')) {
+                calcButton = buttons[i];
+                break;
+            }
+        }
+        
+        if (calcButton) {
+            // Прокручиваем к форме, если она не видна
+            var form = document.querySelector('form');
+            if (form) {
+                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            
+            // Нажимаем на кнопку расчета
+            calcButton.click();
+            
+            // Если есть результаты, прокручиваем к ним
+            setTimeout(function() {
+                var results = document.getElementById('results');
+                if (results) {
+                    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 1000);
+        } else {
+            // Если кнопка расчета не найдена, пробуем прокрутить к результатам
+            var results = document.getElementById('results');
+            if (results) {
+                results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    }
+    </script>
     """, unsafe_allow_html=True)
-    
-    # Создаем невидимые контейнеры для кнопок
-    col1, col2, col3 = st.columns([1, 1, 20])
-    
-    # Кнопка "Изменить размеры" (клонируем существующую кнопку сброса)
-    with col3:
-        dimensions_reset = st.button("📝 Сброс формы", key="dimensions_reset_button")
-        if dimensions_reset:
-            # Сбрасываем состояние формы
-            for key in st.session_state.keys():
-                if key.startswith("form_") or key == "calculation_performed":
-                    del st.session_state[key]
-            st.rerun()
-    
-    # Кнопка "К результатам" (клонируем существующую кнопку расчета)
-    with col3:
-        calculate_button = st.button("🔄 Рассчитать", key="calculate_button_fixed")
-        if calculate_button:
-            # Устанавливаем флаг для расчета
-            st.session_state["calculation_requested"] = True
-            st.rerun()
