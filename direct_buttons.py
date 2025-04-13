@@ -8,199 +8,105 @@ import streamlit as st
 
 def inject_direct_buttons():
     """
-    Внедряет плавающие кнопки навигации с использованием нативных элементов Streamlit
-    и JavaScript для их правильного позиционирования и функциональности.
+    Внедряет плавающие кнопки навигации напрямую в HTML-код Streamlit
+    без использования компонентов и зависимости от состояния приложения.
     """
-    # Добавляем стили для позиционирования кнопок
+    # Добавляем HTML и CSS для фиксированных кнопок
     st.markdown("""
     <style>
-    /* Стиль для скрытого контейнера кнопок */
-    #fixed-button-container {
+    /* Скрываем кнопки, создаваемые в контейнере */
+    #button-container {
         display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
     }
     
-    /* Стили для создания плавающих кнопок из обычных кнопок Streamlit */
-    .fixed-button-edit {
+    /* Стили для плавающих кнопок */
+    .right-floating-btn {
         position: fixed !important;
+        right: 20px !important;
+        z-index: 9999 !important;
+        padding: 10px 15px !important;
+        border-radius: 30px !important;
+        color: white !important;
+        font-weight: bold !important;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3) !important;
+        cursor: pointer !important;
+        text-align: center !important;
+        max-width: 180px !important;
+        border: none !important;
+        transition: transform 0.2s ease-in-out !important;
+        font-size: 14px !important;
+    }
+    
+    .edit-btn {
         top: 100px !important;
-        right: 20px !important;
-        z-index: 9999 !important;
         background-color: #28a745 !important;
-        color: white !important;
-        border-radius: 30px !important;
-        padding: 5px 15px !important;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
-        transition: all 0.3s ease !important;
     }
     
-    .fixed-button-calc {
-        position: fixed !important;
+    .results-btn {
         top: 160px !important;
-        right: 20px !important;
-        z-index: 9999 !important;
         background-color: #0066cc !important;
-        color: white !important;
-        border-radius: 30px !important;
-        padding: 5px 15px !important;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
-        transition: all 0.3s ease !important;
     }
     
-    .fixed-button-edit:hover, .fixed-button-calc:hover {
+    .right-floating-btn:hover {
         transform: scale(1.05) !important;
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3) !important;
+        box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.4) !important;
     }
     
     /* Адаптивность для мобильных устройств */
     @media (max-width: 768px) {
-        .fixed-button-edit, .fixed-button-calc {
-            padding: 3px 10px !important;
-            font-size: 0.8rem !important;
+        .right-floating-btn {
+            padding: 8px 12px !important;
+            font-size: 12px !important;
             right: 10px !important;
         }
     }
     </style>
-    """, unsafe_allow_html=True)
     
-    # Добавляем JavaScript для нахождения кнопок по их содержимому и применения стилей
-    st.markdown("""
+    <!-- Фиксированные кнопки навигации -->
+    <button id="edit-btn" class="right-floating-btn edit-btn">🖋 Изменить размеры</button>
+    <button id="results-btn" class="right-floating-btn results-btn">⬇️ К результатам</button>
+    
     <script>
-    // Функция для позиционирования кнопок
-    function setupButtonStyles() {
-        // Ищем все кнопки на странице
-        const buttons = document.querySelectorAll('button');
-        
-        // Для каждой кнопки проверяем ее текст
-        for (let i = 0; i < buttons.length; i++) {
-            const button = buttons[i];
-            const buttonText = (button.innerText || '').toLowerCase();
-            
-            // Если это кнопка "Сбросить форму"
-            if (buttonText.includes('сбросить форму')) {
-                // Добавляем стиль для кнопки "Изменить размеры"
-                button.classList.add('fixed-button-edit');
-                button.innerText = '🖋 Изменить размеры';
-                
-                // Предотвращаем дублирование обработчиков событий
-                button.onclick = function() {
-                    // Перезагружаем страницу, чтобы сбросить форму
-                    window.location.reload();
-                    return false;
-                };
-            }
-            
-            // Если это кнопка "К результатам"
-            if (buttonText.includes('к результатам')) {
-                // Добавляем стиль для кнопки "К результатам"
-                button.classList.add('fixed-button-calc');
-                
-                // Предотвращаем дублирование обработчиков событий
-                button.onclick = function() {
-                    // Находим результаты и прокручиваем к ним
-                    const resultsSection = document.getElementById('results');
-                    if (resultsSection) {
-                        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    } else {
-                        // Если нет результатов, то пробуем найти кнопку расчета и нажать на нее
-                        const calcButton = findCalculateButton();
-                        if (calcButton) {
-                            calcButton.click();
-                            // После нажатия ждем появления результатов
-                            setTimeout(function() {
-                                const results = document.getElementById('results');
-                                if (results) {
-                                    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }
-                            }, 1000);
+    // Функционал кнопки сброса формы
+    document.getElementById('edit-btn').addEventListener('click', function() {
+        // Перезагрузка страницы
+        window.location.reload();
+    });
+    
+    // Функционал кнопки прокрутки к результатам
+    document.getElementById('results-btn').addEventListener('click', function() {
+        // Ищем элемент с ID results
+        var resultsElem = document.getElementById('results');
+        if (resultsElem) {
+            // Если элемент найден, прокручиваем к нему
+            resultsElem.scrollIntoView({behavior: 'smooth', block: 'start'});
+        } else {
+            // Если элемент не найден, ищем кнопку расчета и нажимаем на нее
+            var buttons = document.querySelectorAll('button');
+            for (var i = 0; i < buttons.length; i++) {
+                if (buttons[i].innerText && 
+                    (buttons[i].innerText.toLowerCase().includes('рассчитать') || 
+                    buttons[i].innerText.toLowerCase().includes('расчет'))) {
+                    // Нажимаем на кнопку расчета
+                    buttons[i].click();
+                    
+                    // Через секунду пробуем прокрутить к результатам
+                    setTimeout(function() {
+                        var results = document.getElementById('results');
+                        if (results) {
+                            results.scrollIntoView({behavior: 'smooth', block: 'start'});
                         }
-                    }
-                    return false;
-                };
+                    }, 1000);
+                    
+                    break;
+                }
             }
         }
-    }
-    
-    // Функция для поиска кнопки расчета стоимости
-    function findCalculateButton() {
-        const buttons = document.querySelectorAll('button');
-        
-        for (let i = 0; i < buttons.length; i++) {
-            const buttonText = (buttons[i].innerText || '').toLowerCase();
-            if (buttonText.includes('рассчитать') || buttonText.includes('расчет')) {
-                return buttons[i];
-            }
-        }
-        
-        return null;
-    }
-    
-    // Функция для прокрутки к результатам
-    function scrollToResults() {
-        const resultsSection = document.getElementById('results');
-        if (resultsSection) {
-            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
-    
-    // Запускаем первую настройку кнопок после загрузки страницы
-    window.addEventListener('DOMContentLoaded', function() {
-        // Ждем 500мс, чтобы DOM полностью сформировался
-        setTimeout(setupButtonStyles, 500);
     });
-    
-    // Также запускаем настройку после полной загрузки страницы
-    window.addEventListener('load', function() {
-        // Ждем 1000мс после полной загрузки
-        setTimeout(setupButtonStyles, 1000);
-    });
-    
-    // Обновляем стили при изменении DOM
-    const observer = new MutationObserver(function(mutations) {
-        // При каждом значительном изменении DOM пробуем обновить стили кнопок
-        setTimeout(setupButtonStyles, 500);
-    });
-    
-    // Начинаем наблюдение за изменениями в DOM
-    observer.observe(document.body, { 
-        childList: true, 
-        subtree: true 
-    });
-    
-    // Запускаем настройку сразу для случаев, когда DOM уже загружен
-    setTimeout(setupButtonStyles, 100);
-    setTimeout(setupButtonStyles, 1000);
-    setTimeout(setupButtonStyles, 2000);
-    </script>
-    """, unsafe_allow_html=True)
-    
-    # Создаем настоящие кнопки Streamlit, которые будут стилизованы через JavaScript
-    with st.container():
-        st.button("Сбросить форму", key="reset_form_button", on_click=reset_form)
-        st.button("К результатам", key="go_to_results_button", on_click=scroll_to_results)
-
-def reset_form():
-    """
-    Сбрасывает состояние формы и перезагружает страницу
-    """
-    # Сбрасываем все состояния формы
-    for key in list(st.session_state.keys()):
-        if key.startswith("form_") or key == "calculation_performed" or key == "results":
-            if key in st.session_state:
-                del st.session_state[key]
-    
-    # Перезагружаем страницу
-    st.rerun()
-
-def scroll_to_results():
-    """
-    Прокручивает страницу к результатам
-    """
-    # Добавляем JavaScript для прокрутки к якорю #results
-    st.markdown("""
-    <script>
-    const resultsElement = document.getElementById('results');
-    if (resultsElement) {
-        resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
     </script>
     """, unsafe_allow_html=True)
