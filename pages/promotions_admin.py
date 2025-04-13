@@ -18,6 +18,13 @@ from typing import Dict, List, Optional
 # Добавляем корневую директорию проекта в путь для импорта
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Импортируем модуль для авторизации администратора
+try:
+    from components.admin_auth import admin_required, check_admin_auth, admin_login_form
+except ImportError:
+    st.error("Не удалось импортировать модуль авторизации. Проверьте наличие файла components/admin_auth.py")
+    st.stop()
+
 # Импортируем модуль с акциями
 from config import promotions
 from components.admin_auth import admin_required, check_admin_auth, admin_login_form
@@ -584,60 +591,71 @@ def main():
     
     st.title("Управление акциями и скидками")
     
-    # Получаем список всех акций
-    all_promotions = load_promotions_data()
+    # Проверяем права доступа администратора
+    is_authenticated = check_admin_auth()
     
-    # Инициализируем состояние сессии
-    if "show_edit_form" not in st.session_state:
-        st.session_state["show_edit_form"] = False
-    if "edit_promo_id" not in st.session_state:
-        st.session_state["edit_promo_id"] = None
-    
-    # Обработка действий
-    if "action" in st.session_state:
-        if st.session_state["action"] == "edit" and "promo_id" in st.session_state:
-            st.session_state["show_edit_form"] = True
-            st.session_state["edit_promo_id"] = st.session_state["promo_id"]
-        elif st.session_state["action"] == "delete" and "promo_id" in st.session_state:
-            delete_promotion(st.session_state["promo_id"])
-            st.success(f"Акция удалена")
-            st.session_state.pop("action")
-            st.session_state.pop("promo_id")
+    if not is_authenticated:
+        st.warning("⚠️ Для доступа к управлению акциями требуется авторизация")
+        
+        # Отображаем форму входа
+        if admin_login_form(location="main"):
             st.rerun()
-        elif st.session_state["action"] == "new":
-            st.session_state["show_edit_form"] = True
+    else:
+        # Показываем интерфейс администрирования только после аутентификации
+        # Получаем список всех акций
+        all_promotions = load_promotions_data()
+        
+        # Инициализируем состояние сессии
+        if "show_edit_form" not in st.session_state:
+            st.session_state["show_edit_form"] = False
+        if "edit_promo_id" not in st.session_state:
             st.session_state["edit_promo_id"] = None
         
-        # Сбрасываем действие
-        st.session_state.pop("action", None)
-    
-    # Показываем форму редактирования или основной интерфейс
-    if st.session_state["show_edit_form"]:
-        if st.session_state["edit_promo_id"] is None:
-            edit_promotion_form()
-        else:
-            promo_id = st.session_state["edit_promo_id"]
-            if promo_id in all_promotions:
-                edit_promotion_form(promo_id, all_promotions[promo_id])
-            else:
-                st.error(f"Акция с ID '{promo_id}' не найдена")
-                st.session_state["show_edit_form"] = False
+        # Обработка действий
+        if "action" in st.session_state:
+            if st.session_state["action"] == "edit" and "promo_id" in st.session_state:
+                st.session_state["show_edit_form"] = True
+                st.session_state["edit_promo_id"] = st.session_state["promo_id"]
+            elif st.session_state["action"] == "delete" and "promo_id" in st.session_state:
+                delete_promotion(st.session_state["promo_id"])
+                st.success(f"Акция удалена")
+                st.session_state.pop("action")
+                st.session_state.pop("promo_id")
                 st.rerun()
-    else:
-        # Кнопка для создания новой акции
-        if st.button("Создать новую акцию", type="primary"):
-            st.session_state["action"] = "new"
-            st.rerun()
-        
-        # Разделяем акции на активные и неактивные
-        active_promotions = {}
-        inactive_promotions = {}
-        
-        for promo_id, promotion in all_promotions.items():
-            if is_promotion_active(promotion):
-                active_promotions[promo_id] = promotion
+            elif st.session_state["action"] == "new":
+                st.session_state["show_edit_form"] = True
+                st.session_state["edit_promo_id"] = None
+            
+            # Сбрасываем действие
+            st.session_state.pop("action", None)
+    
+        # Показываем форму редактирования или основной интерфейс только если аутентифицированы
+        if st.session_state["show_edit_form"]:
+            if st.session_state["edit_promo_id"] is None:
+                edit_promotion_form()
             else:
-                inactive_promotions[promo_id] = promotion
+                promo_id = st.session_state["edit_promo_id"]
+                if promo_id in all_promotions:
+                    edit_promotion_form(promo_id, all_promotions[promo_id])
+                else:
+                    st.error(f"Акция с ID '{promo_id}' не найдена")
+                    st.session_state["show_edit_form"] = False
+                    st.rerun()
+        else:
+            # Кнопка для создания новой акции
+            if st.button("Создать новую акцию", type="primary"):
+                st.session_state["action"] = "new"
+                st.rerun()
+            
+            # Разделяем акции на активные и неактивные
+            active_promotions = {}
+            inactive_promotions = {}
+            
+            for promo_id, promotion in all_promotions.items():
+                if is_promotion_active(promotion):
+                    active_promotions[promo_id] = promotion
+                else:
+                    inactive_promotions[promo_id] = promotion
         
         # Отображаем активные акции
         st.header("Активные акции")
