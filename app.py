@@ -1191,6 +1191,10 @@ def render_dimensions_form():
     # Получаем текущий тип перголы из session_state, если он уже выбран
     current_pergola_type = st.session_state.get("pergola_type")
     
+    # Принудительно обнуляем сохраненные значения при каждом рендере, чтобы избежать проблем с кэшированием
+    st.session_state.setdefault('cached_width', None)
+    st.session_state.setdefault('cached_length', None)
+    
     # Устанавливаем максимальные размеры согласно константам MAX_DIMENSIONS
     # Если тип перголы не выбран или не найден в константах, используем максимальные значения
     if current_pergola_type in MAX_DIMENSIONS:
@@ -1200,7 +1204,25 @@ def render_dimensions_form():
         # Используем максимальные значения для B500NEW/B700NEW как значения по умолчанию
         max_width = 15.0
         max_length = 8.0
+    
+    # Добавляем проверку минимальных значений для безопасности
+    min_width = 2.0
+    min_length = 2.0
+    
+    # Принудительно обновляем значения session_state при смене типа перголы
+    if 'prev_pergola_type' not in st.session_state or st.session_state.get('prev_pergola_type') != current_pergola_type:
+        st.session_state['prev_pergola_type'] = current_pergola_type
+        st.session_state['cached_width'] = None
+        st.session_state['cached_length'] = None
         
+    # Устанавливаем значения по умолчанию или берем из кэша
+    default_width = st.session_state.get('cached_width') or 3.0
+    default_length = st.session_state.get('cached_length') or 4.0
+    
+    # Обеспечиваем, чтобы значения по умолчанию не выходили за пределы допустимых
+    default_width = min(max(default_width, min_width), max_width)
+    default_length = min(max(default_length, min_length), max_length)
+    
     # Выводим для отладки
     print(f"Текущий тип перголы из session_state: {current_pergola_type}")
     print(f"Установленные максимальные размеры: ширина={max_width}м, длина={max_length}м")
@@ -1208,24 +1230,30 @@ def render_dimensions_form():
     with col1:
         width = st.number_input(
             "Ширина (м)",
-            min_value=2.0,
+            min_value=min_width,
             max_value=max_width,
-            value=3.0,
+            value=default_width,
             step=0.5,
             format="%.2f",
-            help=f"Ширина перголы в метрах (2.0 - {max_width} м)"
+            help=f"Ширина перголы в метрах ({min_width} - {max_width} м)",
+            key=f"width_input_{current_pergola_type}"  # Уникальный ключ для каждого типа перголы
         )
     
     with col2:
         length = st.number_input(
             "Вынос (м)",
-            min_value=2.0,
+            min_value=min_length,
             max_value=max_length,
-            value=4.0,
+            value=default_length,
             step=0.5,
             format="%.2f",
-            help=f"Глубина (вынос) перголы в метрах (2.0 - {max_length} м)"
+            help=f"Глубина (вынос) перголы в метрах ({min_length} - {max_length} м)",
+            key=f"length_input_{current_pergola_type}"  # Уникальный ключ для каждого типа перголы
         )
+    
+    # Сохраняем выбранные значения в кэш
+    st.session_state['cached_width'] = width
+    st.session_state['cached_length'] = length
     
     # Определяем количество модулей автоматически по обоим параметрам - ширине и выносу
     modules = get_modules_by_dimensions(width, length)
