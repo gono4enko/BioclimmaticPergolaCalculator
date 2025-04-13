@@ -2100,20 +2100,27 @@ def scroll_to_results():
         }
         
         document.addEventListener('DOMContentLoaded', function() {
-            // Находим заголовок галереи, который служит триггером для скрытия кнопки вниз
-            const galleryTitle = document.querySelector('h1:contains("Наша галерея и проекты")');
+            // Получаем ссылки на кнопки
             const btnDown = document.querySelector('.fixed-button.down');
             const btnUp = document.querySelector('.fixed-button.up');
             
             // Функция для обработки прокрутки и управления видимостью кнопок
             function handleScroll() {
-                // Проверяем, проскроллили ли мы до галереи
-                const gallerySection = document.querySelector('h1:contains("Наша галерея и проекты")');
-                if (gallerySection) {
-                    const galleryRect = gallerySection.getBoundingClientRect();
+                // Проверяем, проскроллили ли мы до галереи или секции B500
+                // Находим элементы по тексту в заголовках
+                const gallerySection = Array.from(document.querySelectorAll('h1')).find(el => 
+                    el.textContent.includes('Наша галерея и проекты'));
                     
-                    // Если галерея видна, скрываем кнопку вниз и показываем кнопку вверх
-                    if (galleryRect.top < window.innerHeight && galleryRect.bottom >= 0) {
+                const b500Section = Array.from(document.querySelectorAll('h2, h3')).find(el => 
+                    el.textContent.includes('B500') || el.textContent.includes('В500'));
+                
+                if (gallerySection || b500Section) {
+                    const targetElement = gallerySection || b500Section;
+                    const elementRect = targetElement.getBoundingClientRect();
+                    
+                    // Если целевой элемент виден в окне просмотра, скрываем кнопку вниз и показываем кнопку вверх
+                    // Используем более гибкое условие - если верхняя часть элемента уже в зоне видимости
+                    if (elementRect.top < window.innerHeight * 0.8) {
                         if (btnDown) btnDown.style.opacity = '0';
                         if (btnUp) btnUp.style.opacity = '1';
                     } else {
@@ -2121,6 +2128,11 @@ def scroll_to_results():
                         if (btnDown) btnDown.style.opacity = '1';
                         if (btnUp) btnUp.style.opacity = '0';
                     }
+                }
+                
+                // Добавляем дополнительное условие: если мы скроллим и находимся в верхней части страницы
+                if (window.scrollY < 100) {
+                    if (btnUp) btnUp.style.opacity = '0';
                 }
             }
             
