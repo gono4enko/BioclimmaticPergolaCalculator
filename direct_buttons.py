@@ -14,7 +14,7 @@ def is_admin_page():
         bool: True если текущая страница относится к администрированию
     """
     # Получаем URL текущей страницы
-    page_url = st.experimental_get_query_params().get("_stcore_page_id", [""])[0]
+    page_url = st.query_params.get("_stcore_page_id", [""])[0]
     page_name = page_url.lower()
     
     # Проверка на админские страницы
