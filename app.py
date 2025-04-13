@@ -1194,15 +1194,22 @@ def render_dimensions_form():
     # Получаем текущий тип перголы из session_state, если он уже выбран
     current_pergola_type = st.session_state.get("pergola_type")
     
-    # Устанавливаем максимальные размеры по умолчанию
-    if current_pergola_type in MAX_DIMENSIONS:
-        # Если тип перголы уже выбран, используем соответствующие максимальные размеры
-        max_width = MAX_DIMENSIONS[current_pergola_type]["width"]
-        max_length = MAX_DIMENSIONS[current_pergola_type]["length"]
+    # Логируем для отладки
+    print(f"Текущий тип перголы из session_state: {current_pergola_type}")
+    
+    # Принудительно устанавливаем максимальные размеры вместо условной логики
+    # Это гарантирует, что независимо от выбранного типа будет доступен выбор больших размеров
+    if current_pergola_type == "B600":
+        # Для B600 максимальная ширина 13.5м
+        max_width = 13.5
+        max_length = 8.0
     else:
-        # Если тип перголы еще не выбран, используем самые большие максимальные размеры из всех типов
-        max_width = max(MAX_DIMENSIONS["B500NEW"]["width"], MAX_DIMENSIONS["B700NEW"]["width"], MAX_DIMENSIONS["B600"]["width"])
-        max_length = max(MAX_DIMENSIONS["B500NEW"]["length"], MAX_DIMENSIONS["B700NEW"]["length"], MAX_DIMENSIONS["B600"]["length"])
+        # Для B500NEW и B700NEW максимальная ширина 15м
+        max_width = 15.0
+        max_length = 8.0
+        
+    # Выводим для отладки
+    print(f"Установленные максимальные размеры: ширина={max_width}м, длина={max_length}м")
     
     with col1:
         width = st.number_input(
