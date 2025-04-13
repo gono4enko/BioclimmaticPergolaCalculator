@@ -6,6 +6,8 @@ import streamlit as st
 import pandas as pd
 # Импортируем функции для работы с Яндекс.Метрикой
 from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
+# Импортируем функцию для плавного скролла
+from scroll import smooth_scroll_to
 import os
 import math
 import csv

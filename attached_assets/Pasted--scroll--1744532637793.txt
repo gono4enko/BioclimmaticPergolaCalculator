@@ -1,0 +1,61 @@
+Рабочее решение: кастомный компонент с плавным scroll
+Мы можем внедрить пользовательский компонент на JS, который будет слушать флаг из Streamlit и выполнять плавный scroll.
+1. Установка библиотеки streamlit-js (или кастомного компонента)
+Если ты на Replit, добавь в requirements.txt:
+streamlit-components
+
+
+Создаём кастомный JS-компонент для плавного scroll
+from streamlit.components.v1 import html
+
+def smooth_scroll_to(target_id):
+    scroll_code = f"""
+    <script>
+        const target = document.getElementById("{target_id}");
+        if (target) {{
+            target.scrollIntoView({{ behavior: "smooth", block: "start" }});
+        }}
+    </script>
+    """
+    html(scroll_code, height=0)
+
+Вставляем якорь перед результатом и скроллим к нему
+import streamlit as st
+
+if "scroll" not in st.session_state:
+    st.session_state.scroll = False
+
+with st.form("input_form"):
+    width = st.number_input("Ширина", ...)
+    submit = st.form_submit_button("Рассчитать")
+
+    if submit:
+        st.session_state.scroll = True
+        st.session_state.result = 1000
+        st.rerun()
+
+# форма всегда сверху
+
+# якорь перед результатом
+st.markdown('<div id="results"></div>', unsafe_allow_html=True)
+
+if "result" in st.session_state:
+    st.subheader("Стоимость:")
+    st.success(f"{st.session_state.result} €")
+
+    # и только теперь вызываем плавный scroll
+    if st.session_state.scroll:
+        smooth_scroll_to("results")
+        st.session_state.scroll = False
+
+
+Как это работает:
+1. После submit → сохраняется флаг в session_state и вызывается st.rerun().
+2. После перерисовки Streamlit снова доходит до блока if st.session_state.scroll и исполняет scrollIntoView с плавной анимацией.
+3. Затем флаг сбрасывается, чтобы при следующем рендере не было повтора.
+
+Результат:
+* Полностью управляется с Python-стороны.
+* Плавный переход.
+* Совместим с Replit, Tilda и любыми другими контейнерами.
+Хочешь, я помогу тебе вставить это точно в твой текущий калькулятор? Можешь скинуть кусок кода — адаптирую под него.
