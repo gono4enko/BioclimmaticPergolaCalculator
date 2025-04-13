@@ -2773,15 +2773,15 @@ def main():
     <style>
     /* Улучшенный стиль для кнопки калькулятора */
     div.stButton > button:first-child {
-        display: block;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
         width: 100%;
         height: 70px !important;
         background-color: #0066cc !important;
         color: white !important;
-        text-align: center;
         font-size: 20px !important;
         font-weight: 900 !important;
-        line-height: 40px !important;
         border-radius: 8px !important;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
         margin: 15px 0 !important;
@@ -2790,6 +2790,14 @@ def main():
         letter-spacing: 0.8px !important;
         border: none !important;
         text-transform: uppercase !important;
+        padding: 0 !important;
+    }
+    
+    div.stButton > button:first-child p {
+        margin: 0 !important;
+        padding: 0 !important;
+        text-align: center !important;
+        width: 100% !important;
     }
     
     @keyframes pulse-button {
@@ -2808,13 +2816,25 @@ def main():
                 if (buttons.length > 0) {
                     const calculationButton = buttons[0]; // первая кнопка - это кнопка расчета
                     
-                    // Добавляем стили для анимации
+                    // Добавляем стили для анимации и выравнивания текста по центру
                     calculationButton.style.backgroundColor = '#0066cc';
                     calculationButton.style.fontSize = '20px';
                     calculationButton.style.fontWeight = '900';
                     calculationButton.style.height = '70px';
                     calculationButton.style.letterSpacing = '0.8px';
                     calculationButton.style.textTransform = 'uppercase';
+                    calculationButton.style.display = 'flex';
+                    calculationButton.style.justifyContent = 'center';
+                    calculationButton.style.alignItems = 'center';
+                    
+                    // Центрируем текст внутри кнопки
+                    const buttonText = calculationButton.querySelector('p');
+                    if (buttonText) {
+                        buttonText.style.margin = '0';
+                        buttonText.style.padding = '0';
+                        buttonText.style.textAlign = 'center';
+                        buttonText.style.width = '100%';
+                    }
                     
                     // Запускаем анимацию
                     let direction = 1;
