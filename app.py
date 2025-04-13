@@ -2045,14 +2045,27 @@ def scroll_to_results():
         border-radius: 5px;
         font-weight: bold;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        transition: opacity 0.3s ease;
+        transition: all 0.3s ease;
+        opacity: 1;
     }
     
     .fixed-button.up {
         bottom: 20px;
         left: 20px;
         right: auto;
+        background-color: #008800;
         opacity: 0; /* Начинаем со скрытой кнопки вверх */
+        visibility: hidden; /* Полностью скрываем элемент, а не только прозрачность */
+    }
+    
+    .fixed-button.down.hidden {
+        opacity: 0;
+        visibility: hidden; /* Полностью скрываем элемент */
+    }
+    
+    .fixed-button.up.visible {
+        opacity: 1;
+        visibility: visible; /* Показываем элемент */
     }
     
     /* Автоматический скролл после перезагрузки страницы */
@@ -2106,33 +2119,56 @@ def scroll_to_results():
             
             // Функция для обработки прокрутки и управления видимостью кнопок
             function handleScroll() {
-                // Проверяем, проскроллили ли мы до галереи или секции B500
-                // Находим элементы по тексту в заголовках
-                const gallerySection = Array.from(document.querySelectorAll('h1')).find(el => 
-                    el.textContent.includes('Наша галерея и проекты'));
-                    
-                const b500Section = Array.from(document.querySelectorAll('h2, h3')).find(el => 
-                    el.textContent.includes('B500') || el.textContent.includes('В500'));
+                // Получаем текущую позицию скролла
+                const scrollPosition = window.scrollY;
                 
-                if (gallerySection || b500Section) {
-                    const targetElement = gallerySection || b500Section;
-                    const elementRect = targetElement.getBoundingClientRect();
-                    
-                    // Если целевой элемент виден в окне просмотра, скрываем кнопку вниз и показываем кнопку вверх
-                    // Используем более гибкое условие - если верхняя часть элемента уже в зоне видимости
-                    if (elementRect.top < window.innerHeight * 0.8) {
-                        if (btnDown) btnDown.style.opacity = '0';
-                        if (btnUp) btnUp.style.opacity = '1';
-                    } else {
-                        // Иначе показываем кнопку вниз и скрываем кнопку вверх
-                        if (btnDown) btnDown.style.opacity = '1';
-                        if (btnUp) btnUp.style.opacity = '0';
+                // Найдем элементы на странице
+                const headings = document.querySelectorAll('h1, h2, h3, h4');
+                let b500Found = false;
+                let galleryFound = false;
+                
+                // Проверяем все заголовки для поиска B500 или галереи
+                headings.forEach(heading => {
+                    const headingText = heading.textContent.trim();
+                    if (headingText.includes('B500') || headingText.includes('В500')) {
+                        b500Found = true;
+                        
+                        // Проверяем, виден ли заголовок B500 на экране
+                        const rect = heading.getBoundingClientRect();
+                        if (rect.top < window.innerHeight * 0.7) {
+                            // Заголовок B500 виден, переключаем кнопки
+                            btnDown.classList.add('hidden');
+                            btnUp.classList.add('visible');
+                        }
                     }
+                    
+                    if (headingText.includes('Наша галерея') || headingText.includes('проекты')) {
+                        galleryFound = true;
+                    }
+                });
+                
+                // Если мы в верхней части страницы, скрываем кнопку "Вверх"
+                if (scrollPosition < 300) {
+                    btnUp.classList.remove('visible');
+                    btnDown.classList.remove('hidden');
                 }
                 
-                // Добавляем дополнительное условие: если мы скроллим и находимся в верхней части страницы
-                if (window.scrollY < 100) {
-                    if (btnUp) btnUp.style.opacity = '0';
+                // Проверяем, есть ли видимый заголовок B500 и показываем/скрываем кнопки соответственно
+                const visibleB500 = Array.from(headings).some(heading => {
+                    const headingText = heading.textContent.trim();
+                    if ((headingText.includes('B500') || headingText.includes('В500'))) {
+                        const rect = heading.getBoundingClientRect();
+                        return (rect.top < window.innerHeight * 0.8 && rect.bottom > 0);
+                    }
+                    return false;
+                });
+                
+                if (visibleB500) {
+                    btnDown.classList.add('hidden');
+                    btnUp.classList.add('visible');
+                } else if (scrollPosition < 300) {
+                    btnUp.classList.remove('visible');
+                    btnDown.classList.remove('hidden');
                 }
             }
             
