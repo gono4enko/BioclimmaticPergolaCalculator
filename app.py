@@ -1198,8 +1198,8 @@ def render_results(results):
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
     
-    # Создаем якорь для скролла с ID
-    st.markdown('<div id="results" name="results"></div>', unsafe_allow_html=True)
+    # Создаем якорь для скролла с ID, добавляем более заметные атрибуты для обнаружения в DOM
+    st.markdown('<div id="results" name="results" style="position:relative;width:100%;padding:1px;margin-top:10px;" class="results-marker" data-testid="results-anchor"></div>', unsafe_allow_html=True)
     
     # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
@@ -1989,51 +1989,179 @@ def add_common_script():
     """
     st.markdown("""
     <script>
+        console.log("💻 DEBUG: Инициализация скрипта add_common_script");
+        
         // Автоизменение размера iframe (если вставлено в Tilda или другой сайт)
         function adjustHeight() {
+            console.log("💻 DEBUG: Начинаю adjustHeight()");
             const height = document.documentElement.scrollHeight;
+            console.log(`💻 DEBUG: Высота документа = ${height}px`);
             window.parent.postMessage({ type: "streamlit:height", height: height }, "*");
+            console.log("💻 DEBUG: Отправлено сообщение изменения высоты родителю");
         }
 
         // Плавная прокрутка к результатам, если элемент существует
         function scrollToResults() {
+            console.log("💻 DEBUG: Начинаю scrollToResults()");
+            console.log("💻 DEBUG: Ищу элемент с id='results'");
+            
             const el = document.getElementById("results");
             if (el) {
-                console.log("✅ Элемент #results найден, выполняю прокрутку");
-                el.scrollIntoView({ behavior: "smooth" });
-                console.log("✅ Прокрутка выполнена");
+                console.log(`💻 DEBUG: ✅ Элемент #results найден: ${el.tagName}, позиция Y = ${el.getBoundingClientRect().top}px от верха окна`);
+                console.log("💻 DEBUG: Начинаю прокрутку к элементу");
+                try {
+                    el.scrollIntoView({ behavior: "smooth" });
+                    console.log("💻 DEBUG: ✅ scrollIntoView выполнен успешно");
+                } catch (e) {
+                    console.error(`💻 DEBUG: ❌ Ошибка в scrollIntoView: ${e.message}`);
+                    // Запасной вариант
+                    try {
+                        const yOffset = el.getBoundingClientRect().top + window.pageYOffset - 100;
+                        console.log(`💻 DEBUG: Пробую запасной вариант scrollTo (${yOffset}px)`);
+                        window.scrollTo({
+                            top: yOffset,
+                            behavior: "smooth"
+                        });
+                    } catch (e2) {
+                        console.error(`💻 DEBUG: ❌ Ошибка в запасном scrollTo: ${e2.message}`);
+                    }
+                }
             } else {
-                console.log("⚠️ Элемент #results не найден");
+                console.log("💻 DEBUG: ⚠️ Элемент #results НЕ найден, пробую другие якоря");
+                
+                // Попробуем найти другие потенциальные якоря
+                const alternateAnchors = [
+                    document.querySelector('[id*="result"]'),
+                    document.querySelector('[id*="price"]'),
+                    document.querySelector('h2:contains("Результаты")'),
+                    document.querySelector('h3:contains("Стоимость")')
+                ];
+                
+                for (let i = 0; i < alternateAnchors.length; i++) {
+                    const anchor = alternateAnchors[i];
+                    if (anchor) {
+                        console.log(`💻 DEBUG: Найден альтернативный якорь #${i+1}: ${anchor.tagName}`);
+                        try {
+                            anchor.scrollIntoView({ behavior: "smooth" });
+                            console.log(`💻 DEBUG: ✅ Прокрутка к альтернативному якорю #${i+1} выполнена`);
+                            return;
+                        } catch (e) {
+                            console.error(`💻 DEBUG: ❌ Ошибка при прокрутке к альтернативному якорю: ${e.message}`);
+                        }
+                    }
+                }
+                
+                console.log("💻 DEBUG: ⚠️ Ни один якорь не найден, пробую скролл вниз страницы");
+                
+                // Если ничего не найдено, просто прокрутим на половину документа
+                try {
+                    const halfHeight = document.body.scrollHeight / 2;
+                    window.scrollTo({
+                        top: halfHeight,
+                        behavior: "smooth"
+                    });
+                    console.log(`💻 DEBUG: Выполнен скролл на ${halfHeight}px (половина документа)`);
+                } catch (e) {
+                    console.error(`💻 DEBUG: ❌ Ошибка при прокрутке вниз: ${e.message}`);
+                }
             }
         }
 
-        // После загрузки даем небольшой таймер и запускаем обе функции
-        setTimeout(() => {
-            adjustHeight();
-            if (window.location.hash === "#results") {
-                scrollToResults();
+        // DOM-обратный вызов для прокрутки с несколькими попытками
+        function tryScrollToResults(attemptsLeft = 5) {
+            console.log(`💻 DEBUG: Попытка #${6-attemptsLeft} прокрутить к результатам`);
+            
+            if (attemptsLeft <= 0) {
+                console.log("💻 DEBUG: Исчерпаны все попытки прокрутки");
+                return;
             }
-        }, 500);
+            
+            const el = document.getElementById("results");
+            if (el) {
+                console.log(`💻 DEBUG: ✅ Найден элемент #results (попытка #${6-attemptsLeft})`);
+                setTimeout(() => {
+                    scrollToResults();
+                }, 100);
+            } else {
+                console.log(`💻 DEBUG: ⚠️ Элемент #results не найден (попытка #${6-attemptsLeft}), жду...`);
+                setTimeout(() => {
+                    tryScrollToResults(attemptsLeft - 1);
+                }, 200);
+            }
+        }
+
+        // Сначала дадим странице полностью загрузиться
+        console.log("💻 DEBUG: Устанавливаю таймер для запуска функций");
+        setTimeout(() => {
+            console.log("💻 DEBUG: Таймер сработал, запускаю функции");
+            adjustHeight();
+            
+            // Попробуем обе стратегии
+            if (window.location.hash === "#results") {
+                console.log("💻 DEBUG: Обнаружен хэш #results в URL");
+                scrollToResults();
+            } else {
+                console.log("💻 DEBUG: Хэш #results не найден в URL, начинаю обратные попытки");
+                tryScrollToResults(5);
+            }
+        }, 800);
+        
+        // Повторим для надежности через более долгий промежуток времени
+        setTimeout(() => {
+            console.log("💻 DEBUG: Повторный вызов после полной загрузки DOM");
+            const resultsElement = document.getElementById("results");
+            if (resultsElement) {
+                console.log("💻 DEBUG: ✅ Элемент #results найден при повторной проверке");
+                scrollToResults();
+            } else {
+                console.log("💻 DEBUG: ⚠️ Элемент #results не найден при повторной проверке");
+            }
+        }, 2000);
     </script>
     """, unsafe_allow_html=True)
 
 def scroll_to_results():
     """
     Добавляет JavaScript для плавной прокрутки к якорю результатов после загрузки.
+    
+    Примечание: Эта функция используется для прямого скролла, когда другие методы не сработали.
+    Использует ID 'results' для поиска элемента в DOM.
     """
     st.markdown("""
     <script>
-        function scrollToResults() {
+        console.log("🔍 DEBUG scroll_to_results: Запуск специальной функции скролла");
+        
+        // Не будем выполнять сразу, а дадим время DOM загрузиться полностью
+        setTimeout(function() {
+            console.log("🔍 DEBUG scroll_to_results: Проверяю наличие элемента #results");
             const target = document.getElementById("results");
+            
             if (target) {
-                console.log("✅ Элемент #results найден, выполняю прокрутку");
-                target.scrollIntoView({ behavior: "smooth" });
-                console.log("✅ Прокрутка выполнена");
+                console.log("🔍 DEBUG scroll_to_results: ✅ Элемент #results найден");
+                console.log(`🔍 DEBUG scroll_to_results: Позиция элемента: ${target.getBoundingClientRect().top}px от верха окна`);
+                
+                // Сделаем небольшую паузу перед скроллом для стабильности
+                setTimeout(function() {
+                    console.log("🔍 DEBUG scroll_to_results: Выполняю плавный скролл к элементу");
+                    
+                    try {
+                        // Запасной вариант с позиционированием
+                        const yOffset = -100;  // отступ в пикселях
+                        const y = target.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                        
+                        window.scrollTo({
+                            top: y,
+                            behavior: 'smooth'
+                        });
+                        console.log(`🔍 DEBUG scroll_to_results: Выполнен скролл на позицию ${y}px`);
+                    } catch (e) {
+                        console.error(`🔍 DEBUG scroll_to_results: ❌ Ошибка при скролле: ${e}`);
+                    }
+                }, 200);
             } else {
-                console.log("⚠️ Элемент #results не найден");
+                console.log("🔍 DEBUG scroll_to_results: ⚠️ Элемент #results не найден, скролл невозможен");
             }
-        }
-        setTimeout(scrollToResults, 500);  // отложенный запуск после рендера
+        }, 800);  // увеличиваем задержку для надежности загрузки DOM
     </script>
     """, unsafe_allow_html=True)
 
@@ -2512,6 +2640,13 @@ def main():
     # Кнопка для расчета с улучшенным стилем
     if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
         with st.spinner("Выполняется расчет..."):
+            # Выводим отладочное сообщение 
+            st.markdown("""
+            <script>
+                console.log("🔄 DEBUG: Нажата кнопка 'Рассчитать стоимость'");
+            </script>
+            """, unsafe_allow_html=True)
+            
             # Проверяем, что у нас есть данные для расчета
             if dimensions and options:
                 # Выполняем расчет
@@ -2529,6 +2664,14 @@ def main():
                 
                 # Устанавливаем флаг для отправки события в Яндекс.Метрику после перезагрузки
                 st.session_state.send_ya_metrika_event = True
+                
+                # Добавляем прямую установку хэша в URL
+                st.markdown("""
+                <script>
+                    console.log("🔄 DEBUG: Устанавливаю хэш #results в URL");
+                    window.location.hash = "results";
+                </script>
+                """, unsafe_allow_html=True)
                 
                 # Перезагружаем страницу для отображения результатов
                 st.rerun()
