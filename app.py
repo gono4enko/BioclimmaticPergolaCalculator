@@ -2895,16 +2895,40 @@ def main():
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.2rem; margin-bottom: 0.2rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
         
-    # Отображаем кнопку для скролла к результатам (если есть результаты)
+    # Добавляем код для скролла к результатам при любых условиях
+    scroll_to_results()
+        
+    # Отображаем результаты (если они есть)
     if 'results' in st.session_state:
         # Показываем общий результат и детальную информацию
-        # Добавляем якорь для результатов
+        # Добавляем якорь для результатов - размещаем ПЕРЕД результатами для лучшего таргетинга
         st.markdown('<div id="results"></div>', unsafe_allow_html=True)
         render_results(st.session_state.results)
         
-        # Если нужна прокрутка к результатам, вызываем функцию
-        if 'results' in st.session_state and st.session_state.get('scroll_to_results', False):
-            scroll_to_results()
+        # Если активирован флаг скролла - применяем дополнительный скрипт для надежности
+        if st.session_state.get('scroll_to_results', False):
+            # Специальный JavaScript непосредственно после отображения результатов для надежного скролла
+            st.markdown("""
+            <script>
+                // Немедленно выполняем скрипт для скролла к id="final-price-target"
+                (function() {
+                    console.log('🎯 Принудительный скролл запущен после рендеринга результатов');
+                    
+                    // Даем время для полной загрузки DOM
+                    setTimeout(function() {
+                        const resultElement = document.getElementById('final-price-target');
+                        if (resultElement) {
+                            // Прокручиваем с отступом
+                            resultElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            console.log('🔄 Принудительная прокрутка к результатам выполнена');
+                        } else {
+                            console.error('❌ Элемент final-price-target не найден при принудительной прокрутке');
+                        }
+                    }, 800);
+                })();
+            </script>
+            """, unsafe_allow_html=True)
+            
             # Сбрасываем флаг, чтобы не вызывать скрипт при каждом обновлении
             st.session_state.scroll_to_results = False
     
