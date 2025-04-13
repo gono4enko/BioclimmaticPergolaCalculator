@@ -600,6 +600,17 @@ def perform_calculation(dimensions, options):
         length_m = float(dimensions.get("length", 0))
         pergola_type = options.get("pergola_type", "")
         lamella_type = options.get("lamella_type", "")
+        
+        # Проверяем, не превышает ли размер максимально допустимый для данного типа перголы
+        if pergola_type in MAX_DIMENSIONS:
+            max_width = MAX_DIMENSIONS[pergola_type]["width"]
+            max_length = MAX_DIMENSIONS[pergola_type]["length"]
+            
+            if width_m > max_width:
+                raise ValueError(f"Ширина перголы ({width_m} м) превышает максимально допустимую ({max_width} м) для типа {pergola_type}")
+            
+            if length_m > max_length:
+                raise ValueError(f"Вынос перголы ({length_m} м) превышает максимально допустимый ({max_length} м) для типа {pergola_type}")
         modules = get_modules_by_dimensions(width_m, length_m, pergola_type)  # Автоматически определяем модули по размерам
         lighting_options = options.get("lighting", [])
         installation = options.get("installation", False)  # Опция установки
