@@ -9,7 +9,6 @@
 import streamlit as st
 import datetime
 import time
-import uuid
 from typing import Dict, List, Optional
 
 # Импортируем модуль с акциями
@@ -17,7 +16,6 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import promotions
-from components.countdown_timer import create_timer
 
 def display_promo_badges(applicable_promotions: List[Dict]) -> None:
     """
@@ -97,7 +95,7 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
     """
     # Обновляем информацию о сезонной акции
     current_season = promotions.get_current_season()
-    season_key = f"{current_season}_sale_{datetime.date.today().year}"
+    season_key = f"{current_season}_sale_{datetime.datetime.now().year}"
     
     # Проверяем, что предоставленная акция актуальна для текущего сезона
     # Если нет, генерируем новую сезонную акцию
@@ -173,77 +171,114 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
     season_name_ru = promotions.get_season_name_in_russian(current_season)
     season_color = promotions.SEASON_COLORS.get(current_season, '#4CAF50')  # Зеленый цвет по умолчанию
     
-    # Отображаем заголовок акции и описание
+    # Отображаем панель со срочной скидкой
     with st.container():
         season_name_ru = promotions.get_season_name_in_russian(current_season)
-        promo_title = urgent_promotion.get('name', f'{season_name_ru} акция {datetime.date.today().year}')
+        promo_title = urgent_promotion.get('name', f'{season_name_ru} акция {datetime.datetime.now().year}')
         promo_description = urgent_promotion.get('description', f'Скидка {urgent_promotion.get("discount_value", 5)}% до конца сезона!')
         
         # Добавляем стили для заголовка и описания
         st.markdown(f"""
         <style>
-        .promo-header {{
+        .urgent-panel {{
             background-color: {urgent_promotion.get('badge_color', season_color)};
             color: white;
-            padding: 12px 15px;
-            border-radius: 8px 8px 0 0;
-            text-align: center;
-            margin-bottom: 0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
             width: 85%;
             margin-left: auto;
             margin-right: auto;
         }}
-        .promo-description {{
-            background-color: {urgent_promotion.get('badge_color', season_color)};
-            color: white;
-            padding: 0 15px 5px 15px;
-            text-align: center;
+        .urgent-panel h4 {{
+            margin: 0 0 2px 0;
             font-size: 1.1rem;
-            margin-top: 0;
-            width: 85%;
-            margin-left: auto;
-            margin-right: auto;
+            text-align: center;
+        }}
+        .urgent-panel p {{
+            margin: 0 0 10px 0;
+            font-size: 1.25rem;
+            text-align: center;
+            font-weight: 500;
+        }}
+        .countdown {{
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #FFEB3B;
+        }}
+        .pulse-animation {{
+            animation: pulse 2s infinite;
+        }}
+        @keyframes pulse {{
+            0% {{ transform: scale(1); }}
+            50% {{ transform: scale(1.03); }}
+            100% {{ transform: scale(1); }}
+        }}
+        @media (max-width: 768px) {{
+            .urgent-panel h4 {{
+                font-size: 0.95rem;
+            }}
+            .urgent-panel p {{
+                font-size: 1rem;
+            }}
+            .countdown {{
+                font-size: 0.9rem;
+            }}
         }}
         </style>
-        <div class="promo-header">
-            <h4 style="margin: 0; font-size: 1.2rem;">{promo_title}</h4>
-        </div>
-        <div class="promo-description">
-            <p style="margin: 5px 0;">{promo_description}</p>
+        <div class="urgent-panel pulse-animation">
+            <h4>{promo_title}</h4>
+            <p>{promo_description}</p>
+            <div class="countdown-container" style="text-align: center;">
+                <span>До окончания акции: </span>
+                <span class="countdown" id="countdown">{display_text}</span>
+            </div>
+            <!-- Кнопка активации скидки удалена, скидка применяется автоматически -->
         </div>
         """, unsafe_allow_html=True)
-    
-    # Используем новый компонент таймера обратного отсчета
-    if end_date:
-        # Проверяем тип end_date и обрабатываем соответственно
-        if isinstance(end_date, str):
-            # Если end_date - строка, разбиваем ее
-            day, month, year = map(int, end_date.split('.'))
-            end_datetime = datetime.datetime(year, month, day, 23, 59, 59)
-        elif isinstance(end_date, datetime.date):
-            # Если end_date - объект datetime.date, используем его напрямую
-            end_datetime = datetime.datetime.combine(end_date, datetime.time(23, 59, 59))
-        else:
-            # Если неизвестный формат, используем сегодня + 30 дней
-            end_datetime = datetime.datetime.now() + datetime.timedelta(days=30)
         
-        # Используем компонент для отображения таймера с датой окончания акции
-        create_timer(
-            end_time=end_datetime,
-            background_color=urgent_promotion.get('badge_color', season_color),
-            text_color="white",
-            timer_color="#FFEB3B"
-        )
-    else:
-        # Используем компонент для отображения таймера с обратным отсчетом часов
-        create_timer(
-            hours=hours,
-            minutes=minutes,
-            seconds=seconds,
-            background_color=urgent_promotion.get('badge_color', season_color),
-            text_color="white",
-            timer_color="#FFEB3B"
-        )
+        # Обратный отсчет с помощью JavaScript
+        st.markdown(f"""
+        <script>
+            // Устанавливаем начальное время
+            var countDownDate = new Date().getTime() + {total_ms};
+            
+            // Функция для форматирования чисел с ведущим нулем
+            function formatNumber(num) {{
+                return num < 10 ? '0' + num : num;
+            }}
+            
+            // Обновляем таймер каждую секунду
+            var x = setInterval(function() {{
+                var now = new Date().getTime();
+                var distance = countDownDate - now;
+                
+                // Расчеты для дней, часов, минут и секунд
+                var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                // Отображаем результат
+                var displayText = "";
+                if (days > 0) {{
+                    displayText = days + " дн. " + formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
+                }} else {{
+                    displayText = formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
+                }}
+                
+                document.getElementById("countdown").innerHTML = displayText;
+                
+                // Если время истекло
+                if (distance < 0) {{
+                    clearInterval(x);
+                    document.getElementById("countdown").innerHTML = "ВРЕМЯ ИСТЕКЛО";
+                }}
+            }}, 1000);
+        </script>
+        """, unsafe_allow_html=True)
         
         # Устанавливаем автоматическое применение скидки
         st.session_state.urgent_discount_activated = True
@@ -364,30 +399,31 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
     st.markdown("""
     <style>
     .discounts-container {
-        margin-top: 0px;
-        margin-bottom: 20px;
+        margin-top: 15px;
         border: 1px solid #E0E0E0;
         border-radius: 8px;
         overflow: hidden;
-        width: 100%;
-        background-color: #f8f9fa;
+        width: 85%;
+        margin-left: auto;
+        margin-right: auto;
     }
     .discounts-header {
         background-color: #F5F5F5;
-        padding: 12px 20px;
+        padding: 10px 15px;
         font-weight: bold;
-        font-size: 1.1rem;
         border-bottom: 1px solid #E0E0E0;
         text-align: center;
     }
     .discount-item {
-        padding: 12px 20px;
+        padding: 10px 15px;
         border-bottom: 1px solid #E0E0E0;
         display: flex;
         justify-content: space-between;
+        padding-left: 25px;
+        padding-right: 25px;
     }
     .discount-item:first-child {
-        margin-top: 0;
+        margin-top: 10px;
     }
     .discount-item:last-child {
         border-bottom: none;
@@ -400,18 +436,17 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
     }
     .discount-total {
         background-color: #FFFDE7;
-        padding: 12px 20px;
+        padding: 10px 15px;
         display: flex;
         justify-content: space-between;
         font-weight: bold;
+        padding-left: 25px;
+        padding-right: 25px;
     }
     @media (max-width: 768px) {
         .discounts-header, .discount-item, .discount-total {
-            padding: 10px 15px;
-            font-size: 0.9rem;
-        }
-        .discounts-header {
-            font-size: 1rem;
+            padding: 8px 10px;
+            font-size: 0.8rem;
         }
     }
     </style>
@@ -473,56 +508,40 @@ def promotions_section(pergola_type: str, width: float, length: float,
     if "urgent_discount_activated" not in st.session_state:
         st.session_state.urgent_discount_activated = False
     
-    # Получаем список применимых акций
+    # Получаем список применимых акций и скидок
     applicable_promotions = promotions.get_applicable_promotions(
-        pergola_type=pergola_type,
-        width=width,
-        length=length,
-        base_price=base_price,
-        options=options,
-        promo_code=promo_code,
-        quick_decision_activated=quick_decision_activated
+        pergola_type, width, length, base_price, options_price, 
+        options, promo_code, quick_decision_activated
     )
     
-    # Отображаем значки акций
+    # Отображаем бейджи акций
     display_promo_badges(applicable_promotions)
     
-    # Ищем акцию для отображения панели с обратным отсчетом
-    urgent_promotion = None
-    
-    # Сначала ищем акции с обратным отсчетом до даты (весенняя акция)
+    # Отображаем сезонную акцию, если она есть в списке
+    season_promo = None
     for promo in applicable_promotions:
-        if promo.get("show_countdown", False):
-            # Если эта акция должна показывать обратный отсчет
-            urgent_promotion = promo
+        promo_id = promo.get("id", "")
+        if isinstance(promo_id, str) and any(season in promo_id for season in promotions.SEASONS):
+            season_promo = promo
             break
     
-    # Если не нашли акцию с обратным отсчетом до даты, ищем обычную срочную акцию
-    if not urgent_promotion:
-        for promo in applicable_promotions:
-            if any(c.get("type") == promotions.CONDITION_QUICK_DECISION 
-                for c in promo.get("conditions", [])):
-                # Если есть условие срочной скидки
-                if promo.get("activation_required", False) and not quick_decision_activated:
-                    # Если требуется активация и скидка еще не активирована
-                    urgent_promotion = promo
-                    break
+    if season_promo:
+        display_urgent_discount_panel(season_promo)
     
-    # Показываем панель с обратным отсчетом (для любого типа акции)
-    if urgent_promotion:
-        display_urgent_discount_panel(urgent_promotion)
+    # Поле для ввода промокода
+    input_promo_code = promo_code_input()
+    if input_promo_code and input_promo_code != promo_code:
+        # Если промокод был изменен, обновляем список акций
+        st.rerun()
     
-    # Удалена форма ввода промокода
+    # Рассчитываем итоговую скидку на основе применимых акций
+    discount_result = promotions.calculate_discount(applicable_promotions, base_price, options_price)
     
-    # Рассчитываем скидку на основе применимых акций
-    total_discount, applied_promotions = promotions.calculate_discount(
-        applicable_promotions=applicable_promotions,
-        base_price=base_price,
-        options_price=options_price
-    )
+    # Если есть применимые акции, отображаем их
+    if len(discount_result["applied_promotions"]) > 0:
+        display_applied_discounts(
+            discount_result["applied_promotions"],
+            discount_result["total_discount"]
+        )
     
-    # Отображаем информацию о примененных скидках, если они есть
-    if applied_promotions:
-        display_applied_discounts(applied_promotions, total_discount)
-    
-    return total_discount
+    return discount_result["total_discount"]
