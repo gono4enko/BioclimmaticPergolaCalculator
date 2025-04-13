@@ -23,7 +23,7 @@ if not is_authenticated:
     
     # Отображаем форму входа
     if admin_login_form(location="main"):
-        st.experimental_rerun()
+        st.rerun()
 else:
     # Отображаем административный интерфейс
     st.success("Вы авторизованы как администратор")
@@ -61,7 +61,7 @@ else:
                         st.error(f"Ошибка при очистке кэша: {str(e)}")
                         
                 if st.button("Перезагрузить приложение"):
-                    st.experimental_rerun()
+                    st.rerun()
                 
                 st.write("Статистика системы:")
                 st.text(f"Путь к рабочей директории: {os.getcwd()}")
@@ -268,4 +268,4 @@ else:
 if is_authenticated:
     if st.button("Выйти из режима администратора"):
         st.session_state.admin_authenticated = False
-        st.experimental_rerun()
+        st.rerun()
