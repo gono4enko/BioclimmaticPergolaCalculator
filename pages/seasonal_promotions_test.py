@@ -4,8 +4,14 @@
 """
 import streamlit as st
 import datetime
+import os
+import sys
+
+# Добавляем путь для импорта компонентов
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import promotions
 from components import promotion_display
+from components.admin_auth import admin_required, check_admin_auth, admin_login_form
 
 # Настройка страницы
 st.set_page_config(
@@ -17,6 +23,11 @@ st.set_page_config(
 
 # Заголовок приложения
 st.title("Тестирование сезонных акций")
+
+# Проверка авторизации администратора
+if not check_admin_auth():
+    admin_login_form("Для доступа к странице тестирования сезонных акций требуется аутентификация")
+    st.stop()
 
 # Информация о текущем времени и сезоне
 st.subheader("Текущее время и сезон")

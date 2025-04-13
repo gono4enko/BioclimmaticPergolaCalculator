@@ -7,11 +7,15 @@ import os
 import tempfile
 import streamlit as st
 import logging
+import sys
 from datetime import datetime
 from PIL import Image
 
+# Добавляем путь для импорта компонентов
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Импортируем компоненты для работы с галереей
 from components import auto_gallery_uploader, gallery_admin, gallery
+from components.admin_auth import admin_required, check_admin_auth, admin_login_form
 import heic_converter
 
 # Настройка страницы
