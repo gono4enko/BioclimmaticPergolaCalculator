@@ -3024,6 +3024,9 @@ def main():
     st.markdown("<h1 style='text-align: center; margin-top: 10px; margin-bottom: 5px; font-size: 2.2rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
+    # Создаем якорь для перехода к форме размеров
+    st.markdown('<div id="dimensions-form"></div>', unsafe_allow_html=True)
+    
     # Получаем размеры перголы
     dimensions = render_dimensions_form()
     
