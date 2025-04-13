@@ -158,7 +158,7 @@ def display_installation_counter():
     # Создаем контейнер с красивой анимацией и стилем, согласованным со статьями
     counter_html = f"""
     <div class="installation-counter">
-        <div class="counter-number">{count} пергол</div>
+        <div class="counter-number">{count} ПЕРГОЛ</div>
         <div class="counter-label">установлено в 2025 году</div>
     </div>
     
@@ -177,9 +177,10 @@ def display_installation_counter():
     }}
     
     .counter-number {{
-        font-size: 2.8rem;
+        font-size: 3.5rem;
         font-weight: bold;
         margin-bottom: 3px;
+        letter-spacing: 1px;
     }}
     
     .counter-label {{
@@ -199,7 +200,7 @@ def display_installation_counter():
         }}
         
         .counter-number {{
-            font-size: 2.4rem;
+            font-size: 3.0rem;
         }}
         
         .counter-label {{

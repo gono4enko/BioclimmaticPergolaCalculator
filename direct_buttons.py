@@ -31,31 +31,32 @@ def inject_direct_buttons():
         visibility: visible !important;
     }
     
-    /* Стиль для кнопки перехода к результатам - внизу по центру */
+    /* Контейнер для кнопок - справа по центру вертикально */
+    .floating-buttons-container {
+        position: fixed;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 9999 !important;
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+    }
+    
+    /* Стиль для кнопки перехода к результатам */
     #results-button {
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
         background-color: #0066cc;
     }
     
-    /* Стиль для кнопки возврата к форме размеров - над кнопкой результатов по центру */
+    /* Стиль для кнопки возврата к форме размеров */
     #dimensions-button {
-        bottom: 80px;
-        left: 50%;
-        transform: translateX(-50%);
         background-color: #28a745;
     }
     
     /* Анимация при наведении */
     .floating-nav-button:hover {
         box-shadow: 0 6px 15px rgba(0,0,0,0.25);
-    }
-    #results-button:hover {
-        transform: translateX(-50%) scale(1.05);
-    }
-    #dimensions-button:hover {
-        transform: translateX(-50%) scale(1.05);
+        transform: scale(1.05);
     }
     
     /* Стили для мобильных устройств */
@@ -64,26 +65,23 @@ def inject_direct_buttons():
             padding: 10px 15px !important;
             font-size: 14px !important;
         }
-        #results-button {
-            bottom: 15px !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-        }
-        #dimensions-button {
-            bottom: 65px !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
+        
+        .floating-buttons-container {
+            right: 10px;
+            gap: 8px;
         }
     }
     </style>
     
-    <button id="results-button" class="floating-nav-button">
-        <i class="fas fa-arrow-down" style="margin-right: 5px;"></i> К результатам
-    </button>
-    
-    <button id="dimensions-button" class="floating-nav-button">
-        <i class="fas fa-edit" style="margin-right: 5px;"></i> Изменить размеры
-    </button>
+    <div class="floating-buttons-container">
+        <button id="dimensions-button" class="floating-nav-button">
+            <i class="fas fa-edit" style="margin-right: 5px;"></i> Изменить размеры
+        </button>
+        
+        <button id="results-button" class="floating-nav-button">
+            <i class="fas fa-arrow-down" style="margin-right: 5px;"></i> К результатам
+        </button>
+    </div>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -95,13 +93,26 @@ def inject_direct_buttons():
         // Кнопка для перехода к результатам
         var resultsButton = document.getElementById('results-button');
         if (resultsButton) {
-            resultsButton.addEventListener('click', function() {
+            resultsButton.addEventListener('click', function(e) {
+                e.preventDefault(); // Предотвращаем стандартное поведение
                 console.log('Клик по кнопке "К результатам"');
-                var resultsElement = document.getElementById('results');
-                if (resultsElement) {
-                    resultsElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+                
+                // Кликаем на существующую ссылку для расчета вместо скролла
+                var calculateButton = document.querySelector('button[data-testid="stButton"]');
+                if (calculateButton) {
+                    console.log('Нажатие на существующую кнопку расчета');
+                    calculateButton.click();
                 } else {
-                    console.error('Элемент #results не найден');
+                    console.log('Кнопка расчета не найдена');
+                    // Альтернативный путь - пытаемся найти скрытый элемент
+                    var resultsElement = document.getElementById('results');
+                    if (resultsElement) {
+                        // Показываем элемент без скролла
+                        resultsElement.style.display = 'block';
+                        console.log('Отображаем блок результатов напрямую');
+                    } else {
+                        console.error('Элемент #results не найден');
+                    }
                 }
             });
             console.log('Обработчик для кнопки результатов добавлен');
@@ -112,11 +123,16 @@ def inject_direct_buttons():
         // Кнопка для возврата к форме размеров
         var dimensionsButton = document.getElementById('dimensions-button');
         if (dimensionsButton) {
-            dimensionsButton.addEventListener('click', function() {
+            dimensionsButton.addEventListener('click', function(e) {
+                e.preventDefault(); // Предотвращаем стандартное поведение
                 console.log('Клик по кнопке "Изменить размеры"');
+                
+                // Показываем форму размеров без скролла
                 var dimensionsElement = document.getElementById('dimensions-form');
                 if (dimensionsElement) {
-                    dimensionsElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+                    // Показываем элемент без скролла
+                    dimensionsElement.style.display = 'block';
+                    console.log('Отображаем форму размеров напрямую');
                 } else {
                     console.error('Элемент #dimensions-form не найден');
                 }
