@@ -7,6 +7,9 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
+# Глобальная переменная для отслеживания загрузки Font Awesome
+_font_awesome_loaded = False
+
 def add_floating_button(target_id, button_text, position="bottom-right", color="#0066cc", 
                        icon=None, appear_after_scroll=None, id=None):
     """
@@ -21,6 +24,14 @@ def add_floating_button(target_id, button_text, position="bottom-right", color="
         appear_after_scroll (int, optional): Появляться только после скролла на указанное количество пикселей
         id (str, optional): Уникальный ID для кнопки, если нужно обращаться к ней через JS
     """
+    # Добавляем загрузку Font Awesome при первом вызове функции
+    global _font_awesome_loaded
+    if not _font_awesome_loaded:
+        st.markdown("""
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        """, unsafe_allow_html=True)
+        # Отмечаем, что уже загрузили Font Awesome
+        _font_awesome_loaded = True
     # Генерируем уникальный ID, если не предоставлен
     if id is None:
         import hashlib
@@ -134,6 +145,20 @@ def add_results_navigation_button():
     Добавляет плавающую кнопку для быстрого перехода к результатам расчета.
     Кнопка появляется только после скролла на 300 пикселей.
     """
+    # Загружаем компонент для обнаружения мобильных устройств
+    mobile_css = """
+    <style>
+    @media (max-width: 768px) {
+        #results-nav-button {
+            padding: 10px 15px !important;
+            font-size: 14px !important;
+            bottom: 15px !important;
+        }
+    }
+    </style>
+    """
+    st.markdown(mobile_css, unsafe_allow_html=True)
+    
     add_floating_button(
         target_id="results",
         button_text="К результатам",
@@ -149,6 +174,21 @@ def add_dimensions_edit_button():
     Добавляет плавающую зеленую кнопку для возврата к редактированию размеров.
     Появляется всегда на странице.
     """
+    # Загружаем CSS для мобильных устройств
+    mobile_css = """
+    <style>
+    @media (max-width: 768px) {
+        #dimensions-edit-button {
+            padding: 10px 15px !important;
+            font-size: 14px !important;
+            bottom: 15px !important;
+            left: 15px !important;
+        }
+    }
+    </style>
+    """
+    st.markdown(mobile_css, unsafe_allow_html=True)
+    
     add_floating_button(
         target_id="dimensions-form",
         button_text="Изменить размеры",

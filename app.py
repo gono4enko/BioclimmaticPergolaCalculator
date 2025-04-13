@@ -12,6 +12,8 @@ from scroll import smooth_scroll_to
 from auto_scroll import create_growing_spacer
 # Импортируем модуль для анимаций и визуальных эффектов
 import animations
+# Импортируем модуль для плавающих кнопок навигации
+from floating_buttons import add_results_navigation_button, add_dimensions_edit_button
 import os
 import math
 import csv
