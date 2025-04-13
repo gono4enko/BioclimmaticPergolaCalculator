@@ -21,6 +21,8 @@ import time
 from datetime import datetime
 # Импортируем модуль для отображения галереи проектов
 from components.gallery import display_gallery_section
+# Импортируем модуль настроек цен и наценок
+from config import pricing_settings
 
 def get_plural_form(number, one, two, five):
     """
@@ -122,12 +124,8 @@ COLUMNS_PRICES = {
 GUTTER_INSERT_THRESHOLD = 6.5
 GUTTER_INSERT_PRICE_PER_METER = 80  # Цена усилителя лотка 80 евро за погонный метр
 
-# Наценки за доставку и установку (в процентах от базовой стоимости)
-DELIVERY_MARKUP_PERCENT = 10  # 10% наценка за доставку (добавляется автоматически)
-INSTALLATION_MARKUP_PERCENT = 15  # 15% наценка за установку (опционально)
-
-# Курс евро в рублях
-EURO_RATE = 110  # 1 евро = 110 рублей
+# Наценки за доставку и установку (в процентах от базовой стоимости) и курс евро
+# загружаются из модуля pricing_settings, где они могут быть изменены через админпанель
 
 # Правила для выбора привода Bansbach для B500NEW
 BANSBACH_DRIVE_RULES = {
