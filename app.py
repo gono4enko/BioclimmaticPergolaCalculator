@@ -2189,6 +2189,9 @@ def display_image_with_padding(image_path, caption=None, padding_percent=5):
         caption (str, optional): Подпись к изображению
         padding_percent (int, optional): Процент отступа от ширины контейнера (по умолчанию 5%)
     """
+    # Добавляем верхний отступ перед изображением
+    st.markdown('<div style="margin-top: 30px;"></div>', unsafe_allow_html=True)
+    
     # Создаем контейнер с отступами для изображения
     container = st.container()
     with container:
@@ -2199,6 +2202,7 @@ def display_image_with_padding(image_path, caption=None, padding_percent=5):
             .image-container {{
                 width: {100 - 2*padding_percent}%;
                 margin: 0 auto;
+                margin-top: 30px;
                 margin-bottom: 20px;
             }}
             </style>
