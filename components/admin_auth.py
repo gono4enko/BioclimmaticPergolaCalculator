@@ -8,7 +8,7 @@ import time
 from functools import wraps
 
 # Фиксированный пароль администратора (хранится в хешированном виде)
-ADMIN_PASSWORD_HASH = "cc31e42c5271ea456ac8644a3b8a1a0deb8c2eff21d5a70c7cc6b5bc12b23103"  # хеш для 'andrew009'
+ADMIN_PASSWORD_HASH = "a05a8083f4d3dac9c2935b94ec7b870a61b981ed3c1f6d4ee1a66a7445993384"  # хеш для 'andrew009'
 
 
 def hash_password(password):
