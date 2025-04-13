@@ -1207,26 +1207,74 @@ def render_results(results):
     </script>
     """, unsafe_allow_html=True)
     
-    # Создаем якорь для скролла с ID, делаем его максимально заметным
-    # Создаем более заметный блок с ID "results" для надежного скролла
+    # Создаем ЭКСТРЕМАЛЬНО заметный якорь для скролла
+    # Делаем его максимально видимым и доступным
     st.markdown('''
-    <div id="results" name="results" 
+    <div id="results" name="results"
          style="position:relative;
                 width:100%;
-                height:40px;  /* Увеличенная высота для лучшей видимости */
-                background-color:#e6f2ff;  /* Более заметный цвет фона */
-                padding:5px;
-                margin-top:20px;
-                margin-bottom:10px;
-                border-top:3px solid #0066cc;
-                border-radius:3px;
-                text-align:center;" 
-         class="results-marker" 
+                height:70px;  /* Максимально заметная высота */
+                background-color:#FFD700;  /* Золотой фон для максимальной видимости */
+                padding:15px;
+                margin-top:50px;
+                margin-bottom:20px;
+                border:4px solid #0066cc;
+                border-radius:10px;
+                text-align:center;
+                box-shadow: 0 0 20px 5px rgba(0,102,204,0.5);" 
+         class="results-marker ultra-visible-element special-target" 
          data-testid="results-anchor">
-         <!-- Добавляем текст внутрь для лучшей видимости элемента -->
-         <span style="font-weight:bold;color:#0066cc;font-size:18px;">Результаты расчета</span>
+         <!-- Добавляем заметный текст и эмодзи для лучшей видимости -->
+         <span style="font-weight:bold;color:#0066cc;font-size:24px;">
+            ⬇️ РЕЗУЛЬТАТЫ РАСЧЕТА ⬇️
+         </span>
+         <!-- Добавляем дополнительные атрибуты для повышения доступности -->
+         <a href="#results" id="results-link" title="Якорь результатов расчета" 
+            style="position:absolute;width:100%;height:100%;top:0;left:0;z-index:1;">
+            <span style="opacity:0;">Результаты расчета</span>
+         </a>
     </div>
+    
+    <!-- Дополнительные якоря с разными ID для большей надежности -->
+    <div id="pergola-results" class="results-marker" style="position:relative;height:1px;"></div>
+    <div id="calculation-results" class="results-marker" style="position:relative;height:1px;"></div>
+    <a name="results-section" id="results-section" class="results-marker"></a>
     ''', unsafe_allow_html=True)
+    
+    # Добавляем JavaScript для дополнительной обработки блока результатов
+    st.markdown("""
+    <script>
+        // Улучшаем видимость блока результатов и добавляем анимацию
+        (function enhanceResultsVisibility() {
+            setTimeout(function() {
+                const resultsBlock = document.getElementById('results');
+                if (resultsBlock) {
+                    // Пульсирующая анимация для привлечения внимания
+                    resultsBlock.style.animation = 'pulse 2s infinite';
+                    
+                    // Добавляем стиль анимации
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        @keyframes pulse {
+                            0% { box-shadow: 0 0 20px 5px rgba(0,102,204,0.5); }
+                            50% { box-shadow: 0 0 30px 10px rgba(0,102,204,0.7); }
+                            100% { box-shadow: 0 0 20px 5px rgba(0,102,204,0.5); }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                    
+                    // Через 5 секунд убираем анимацию
+                    setTimeout(function() {
+                        resultsBlock.style.animation = 'none';
+                        resultsBlock.style.transition = 'all 1s ease';
+                        resultsBlock.style.backgroundColor = '#e6f2ff';
+                        resultsBlock.style.boxShadow = '0 0 10px rgba(0,102,204,0.3)';
+                    }, 5000);
+                }
+            }, 500);
+        })();
+    </script>
+    """, unsafe_allow_html=True)
     
     # Добавляем дополнительную отметку для надежности
     st.markdown("""
@@ -2355,14 +2403,14 @@ def main():
     add_common_script()
     
     # Проверяем, нужно ли выполнить скролл к элементу "results" после перезагрузки страницы
-    # Используем комбинацию подходов для максимальной надежности
+    # Используем три разных подхода для максимальной надежности
     if st.session_state.get('set_hash_to_results', False):
         st.markdown("""
         <script>
             (function() {
-                console.log("🔄 DEBUG: Запуск комбинированного скролла к результатам (усиленная версия)");
+                console.log("🔄 DEBUG: Запуск экстремального комбинированного скролла (все методы)");
                 
-                // Устанавливаем хеш в URL для совместимости со старыми механизмами скроллинга
+                // 1. Устанавливаем хеш в URL для совместимости со старыми механизмами
                 try {
                     console.log("🔄 DEBUG: Установка хеша #results в URL");
                     window.location.hash = "results";
@@ -2370,72 +2418,146 @@ def main():
                     console.error("🔄 DEBUG: Ошибка при установке хеша в URL:", e);
                 }
                 
-                // Запускаем устаревшую функцию для совместимости
-                setTimeout(function() {
-                    console.log("🔄 DEBUG: Проверка и запуск scrollToResultsWhenReady (для совместимости)");
-                    if (typeof scrollToResultsWhenReady === 'function') {
-                        scrollToResultsWhenReady();
-                    } else {
-                        console.log("🔄 DEBUG: Функция scrollToResultsWhenReady не найдена (это нормально для нового кода)");
-                    }
-                }, 500);
-                
-                // Дополнительный механизм скролла через нативный DOM API
-                const tryScrollToResults = function(attempt) {
-                    if (attempt > 20) return; // максимум 20 попыток
-                    
-                    console.log(`🔄 DEBUG: Дополнительный механизм скролла (попытка #${attempt})`);
-                    const resultsBlock = document.getElementById("results");
-                    
-                    if (resultsBlock) {
-                        console.log("🔄 DEBUG: Элемент #results найден, выполняю прямой скролл");
-                        
-                        // Применяем визуальное выделение к элементу для лучшей видимости
-                        resultsBlock.style.backgroundColor = "#e6f2ff";
-                        resultsBlock.style.transition = "background-color 2s, border-color 2s";
-                        resultsBlock.style.borderColor = "#0066cc";
-                        resultsBlock.style.borderWidth = "3px";
-                        
-                        try {
-                            // Скролл с плавной анимацией
-                            resultsBlock.scrollIntoView({behavior: 'smooth', block: 'start'});
-                            
-                            // Дублирующий скролл через window.scrollTo
-                            setTimeout(function() {
-                                try {
-                                    const y = resultsBlock.getBoundingClientRect().top + window.pageYOffset - 30;
-                                    window.scrollTo({top: y, behavior: 'smooth'});
-                                    console.log(`🔄 DEBUG: Дублирующий scrollTo выполнен`);
-                                } catch(e) {
-                                    console.error("🔄 DEBUG: Ошибка в дублирующем scrollTo:", e);
-                                }
-                            }, 300);
-                            
-                            // Убираем выделение через 3 секунды
-                            setTimeout(function() {
-                                resultsBlock.style.backgroundColor = "transparent";
-                                resultsBlock.style.borderColor = "transparent";
-                            }, 3000);
-                            
-                        } catch(e) {
-                            console.error("🔄 DEBUG: Ошибка при выполнении scrollIntoView:", e);
-                        }
-                    } else {
-                        console.log(`🔄 DEBUG: Элемент #results не найден, повторная попытка через 200мс`);
-                        setTimeout(function() {
-                            tryScrollToResults(attempt + 1);
-                        }, 200);
+                // 2. Прямой скролл к фиксированной координате
+                // Координаты предполагаемого расположения блока результатов
+                const scrollToPosition = (y) => {
+                    try {
+                        window.scrollTo({top: y, behavior: 'auto'});
+                        console.log(`🔄 DEBUG: Выполнен прямой скролл к Y=${y}px`);
+                    } catch(e) {
+                        console.error(`🔄 DEBUG: Ошибка при скролле к Y=${y}px:`, e);
                     }
                 };
                 
-                // Запускаем дополнительный механизм скролла с задержкой 
-                setTimeout(function() {
-                    tryScrollToResults(1);
-                }, 800);
+                // 3. Многоэтапный скролл с визуальным выделением
+                // Для большой надежности запускаем серию скроллов к разным позициям
+                [800, 900, 1000, 1200, 1500, 2000].forEach((pos, index) => {
+                    setTimeout(() => scrollToPosition(pos), 400 + (index * 200));
+                });
                 
+                // 4. Поиск по ID и скролл к элементу
+                setTimeout(() => {
+                    const tryScrollToResults = (attempt) => {
+                        if (attempt > 25) return;
+                        
+                        const resultsBlock = document.getElementById("results");
+                        if (resultsBlock) {
+                            console.log(`🔄 DEBUG: Найден элемент #results (попытка #${attempt})`);
+                            
+                            // Яркое визуальное выделение элемента
+                            resultsBlock.style.backgroundColor = "#FFD700"; // Золотой цвет для заметности
+                            resultsBlock.style.transition = "all 0.5s";
+                            resultsBlock.style.boxShadow = "0 0 25px 15px rgba(255, 215, 0, 0.6)";
+                            resultsBlock.style.borderRadius = "10px";
+                            resultsBlock.style.paddingTop = "10px"; 
+                            
+                            try {
+                                // Скролл с минимальной анимацией для надежности
+                                resultsBlock.scrollIntoView({behavior: 'auto', block: 'start'});
+                                
+                                setTimeout(() => {
+                                    // После короткой задержки делаем второй скролл через window.scrollTo
+                                    try {
+                                        const y = resultsBlock.getBoundingClientRect().top + window.pageYOffset - 30;
+                                        window.scrollTo({top: y, behavior: 'auto'});
+                                    } catch(e) {}
+                                    
+                                    // Убираем выделение через несколько секунд
+                                    setTimeout(() => {
+                                        resultsBlock.style.backgroundColor = "#e6f2ff";
+                                        resultsBlock.style.boxShadow = "0 0 5px rgba(0, 102, 204, 0.3)";
+                                        resultsBlock.style.transition = "all 2s";
+                                    }, 3000);
+                                }, 200);
+                            } catch(e) {
+                                console.error("🔄 DEBUG: Ошибка при скролле:", e);
+                            }
+                        } else {
+                            setTimeout(() => tryScrollToResults(attempt + 1), 200);
+                        }
+                    };
+                    
+                    tryScrollToResults(1);
+                }, 1000);
+                
+                // 5. Поиск по тексту (запасной вариант)
+                setTimeout(() => {
+                    // Ищем заголовок "Результаты расчета" 
+                    const headers = document.querySelectorAll('h1, h2, h3, h4, h5, div');
+                    let resultsHeader = null;
+                    
+                    for (let i = 0; i < headers.length; i++) {
+                        if (headers[i].textContent.includes('Результаты расчета')) {
+                            resultsHeader = headers[i];
+                            break;
+                        }
+                    }
+                    
+                    if (resultsHeader) {
+                        try {
+                            console.log("🔄 DEBUG: Найден заголовок 'Результаты расчета'");
+                            const y = resultsHeader.getBoundingClientRect().top + window.pageYOffset - 50;
+                            window.scrollTo({top: y, behavior: 'auto'});
+                        } catch(e) {}
+                    }
+                }, 1500);
+                
+                // 6. Запускаем устаревшую функцию для совместимости
+                setTimeout(() => {
+                    if (typeof scrollToResultsWhenReady === 'function') {
+                        scrollToResultsWhenReady();
+                    }
+                }, 2000);
+                
+                // 7. Создаем визуальный индикатор прокрутки
+                setTimeout(() => {
+                    try {
+                        const indicator = document.createElement('div');
+                        indicator.style.position = 'fixed';
+                        indicator.style.left = '5px';
+                        indicator.style.top = '50%';
+                        indicator.style.width = '40px';
+                        indicator.style.height = '80px';
+                        indicator.style.backgroundColor = '#0066cc';
+                        indicator.style.opacity = '0.7';
+                        indicator.style.borderRadius = '5px';
+                        indicator.style.zIndex = '9999';
+                        indicator.style.display = 'flex';
+                        indicator.style.alignItems = 'center';
+                        indicator.style.justifyContent = 'center';
+                        indicator.style.color = 'white';
+                        indicator.style.fontSize = '25px';
+                        indicator.style.fontWeight = 'bold';
+                        indicator.style.cursor = 'pointer';
+                        indicator.innerHTML = '&#9660;'; // Стрелка вниз
+                        indicator.title = 'Нажмите для прокрутки к результатам';
+                        
+                        indicator.addEventListener('click', function() {
+                            const resultsBlock = document.getElementById("results");
+                            if (resultsBlock) {
+                                resultsBlock.scrollIntoView({behavior: 'smooth'});
+                            } else {
+                                window.scrollTo({top: 1200, behavior: 'smooth'});
+                            }
+                        });
+                        
+                        document.body.appendChild(indicator);
+                        
+                        // Удаляем индикатор через 8 секунд
+                        setTimeout(() => {
+                            indicator.style.transition = 'opacity 1s';
+                            indicator.style.opacity = '0';
+                            setTimeout(() => indicator.remove(), 1000);
+                        }, 8000);
+                    } catch(e) {}
+                }, 2500);
             })();
         </script>
         """, unsafe_allow_html=True)
+        
+        # Инициируем компонент плавного скролла с фиксированной позицией
+        # для дополнительной надежности
+        smooth_scroll_to(target_id=None, fixed_y_position=1000)
         
         # Сбрасываем флаг, чтобы не устанавливать хеш снова
         st.session_state.set_hash_to_results = False
@@ -2689,8 +2811,22 @@ def main():
         
         # Если нужна прокрутка к результатам, используем кастомный компонент для плавного скролла
         if st.session_state.get('scroll_to_results', False):
-            # Используем компонент для плавного скролла к результатам
+            # Добавляем отладочное сообщение
+            st.markdown("""
+            <script>
+                console.log("🚀 DEBUG: Запущена прокрутка к результатам из обработчика scroll_to_results=True");
+            </script>
+            """, unsafe_allow_html=True)
+            
+            # Используем компонент для плавного скролла:
+            # 1) Основной вариант - скролл к элементу по ID
             smooth_scroll_to(target_id="results")
+            
+            # 2) Дополнительный вариант - скролл к фиксированной позиции
+            # Задержка перед запуском второго варианта скролла для избежания конфликтов
+            time.sleep(0.5)
+            smooth_scroll_to(target_id=None, fixed_y_position=800)
+            
             # Сбрасываем флаг, чтобы не выполнять скролл при каждом обновлении страницы
             st.session_state.scroll_to_results = False
     
