@@ -1983,131 +1983,68 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Добавляет JavaScript для перехода к якорю результатов при нажатии на скрытую кнопку
-    с улучшенным механизмом обнаружения появления элементов в DOM
+    Добавляет HTML-код с автоматической прокруткой к якорю результатов.
+    Использует прямой переход по URL с якорем для более надежной работы.
     """
-    # Добавляем JavaScript для автоматического нажатия на ссылку-якорь
+    # Сначала добавим базовые стили для нашего якоря и анимации подсветки
+    st.markdown("""
+    <style>
+    /* Стили для подсветки результата */
+    @keyframes highlight {
+        0% { background-color: transparent; }
+        30% { background-color: rgba(255, 252, 127, 0.4); }
+        100% { background-color: transparent; }
+    }
+    
+    /* Анимация подсветки для привлечения внимания */
+    .highlight-result {
+        animation: highlight 2s ease-in-out;
+    }
+    
+    /* Якорь для результатов расчета */
+    #final-price-target {
+        scroll-margin-top: 100px;
+        display: block;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Теперь добавим мета-тег для принудительного обновления страницы при переходе к якорю
+    # Это заставит браузер перерисовать страницу и выполнить скролл
+    st.markdown("""
+    <meta http-equiv="refresh" content="0.5;URL='#final-price-target'">
+    """, unsafe_allow_html=True)
+    
+    # Добавим видимую кнопку для ручного скролла (на случай, если автоматический не сработает)
+    st.markdown("""
+    <div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+        <a href="#final-price-target" 
+           style="display: inline-block; padding: 10px 15px; 
+                  background-color: #0066cc; color: white; 
+                  text-decoration: none; border-radius: 5px;
+                  font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+            К результату ↓
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Добавим JavaScript только для подсветки результата, без ненадежного автоскролла
     st.markdown("""
     <script>
-        // Функция для прокрутки к результату с ценой
-        function scrollToResults() {
-            console.log('Attempting to scroll to results...');
-            
+        // Функция для подсветки результата
+        function highlightResult() {
             // Целевой элемент - блок с итоговой стоимостью со скидкой
             const targetElement = document.getElementById('final-price-target');
             
             if (targetElement) {
-                console.log('Found final price target element, scrolling...');
-                
-                // Плавная прокрутка к целевому элементу с отступом для лучшей видимости
-                targetElement.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center' 
-                });
-                
-                // Подсветим элемент для привлечения внимания
-                const originalBackground = targetElement.style.backgroundColor;
-                targetElement.style.transition = 'background-color 0.5s ease';
-                targetElement.style.backgroundColor = 'rgba(255, 252, 127, 0.3)';
-                
-                // Возвращаем обычный цвет фона через 1.5 секунды
-                setTimeout(() => {
-                    targetElement.style.backgroundColor = originalBackground;
-                }, 1500);
-                
-                return true;
-            }
-            
-            // Запасной вариант - поиск элемента результатов
-            const resultsElement = document.getElementById('results');
-            
-            if (resultsElement) {
-                console.log('Found results element, scrolling...');
-                
-                resultsElement.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
-                });
-                
-                return true;
-            }
-            
-            console.log('Results element not found, trying to find headings');
-            
-            // Если якорь не найден, ищем заголовок или просто скроллим вниз
-            const resultsHeadings = Array.from(document.querySelectorAll('h2, h3'))
-                .filter(h => h.textContent.includes('Итоговая стоимость') || 
-                           h.textContent.includes('Результаты расчета'));
-            
-            if (resultsHeadings.length > 0) {
-                console.log('Found results heading, scrolling...');
-                const heading = resultsHeadings[0];
-                heading.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center' 
-                });
-                return true;
-            }
-            
-            // Крайний случай - просто скроллим на определенное расстояние вниз
-            console.log('No targets found, scrolling down as fallback');
-            window.scrollTo({
-                top: document.body.scrollHeight / 2,
-                behavior: 'smooth'
-            });
-            
-            return false;
-        }
-        
-        // Функция для проверки наличия элементов и запуска прокрутки
-        function checkAndScroll(attempts = 0, maxAttempts = 10) {
-            if (attempts >= maxAttempts) {
-                console.log(`Exceeded max attempts (${maxAttempts}), trying fallback scroll`);
-                // Последняя попытка - скролл к середине страницы
-                setTimeout(() => {
-                    window.scrollTo({
-                        top: document.body.scrollHeight / 2,
-                        behavior: 'smooth'
-                    });
-                }, 300);
-                return;
-            }
-            
-            // Проверяем наличие элементов для прокрутки
-            const targetExists = document.getElementById('final-price-target') || 
-                               document.getElementById('results') ||
-                               Array.from(document.querySelectorAll('h2, h3'))
-                                   .some(h => h.textContent.includes('Итоговая стоимость') || 
-                                              h.textContent.includes('Результаты расчета'));
-            
-            if (targetExists) {
-                console.log(`Found target element on attempt ${attempts + 1}, scrolling...`);
-                setTimeout(scrollToResults, 100);  // Небольшая задержка для стабильности
-            } else {
-                // Если элементы не найдены, пробуем еще раз через увеличивающийся интервал
-                console.log(`Target element not found, scheduling attempt ${attempts + 1} of ${maxAttempts}`);
-                const delay = 300 + (attempts * 300);  // Увеличиваем задержку с каждой попыткой
-                setTimeout(() => checkAndScroll(attempts + 1, maxAttempts), delay);
+                console.log('Found final price target element, highlighting...');
+                // Добавляем класс для анимации
+                targetElement.classList.add('highlight-result');
             }
         }
         
-        // Запускаем проверку и прокрутку после загрузки DOM
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded, starting scroll monitoring');
-            checkAndScroll(0, 10);  // До 10 попыток с увеличивающимся интервалом
-        });
-        
-        // Также запускаем проверку сразу (для случая, когда DOM уже загружен)
-        console.log('Script loaded, starting immediate scroll monitoring');
-        setTimeout(() => checkAndScroll(0, 10), 300);
-        
-        // Дополнительная попытка через 3 секунды для особо долгих загрузок
-        setTimeout(() => {
-            if (!document.getElementById('final-price-target')) {
-                console.log('Final attempt to find and scroll to results');
-                checkAndScroll(5, 10);  // Начинаем с 5-й попытки для более быстрого увеличения задержки
-            }
-        }, 3000);
+        // Выполняем подсветку с небольшой задержкой
+        setTimeout(highlightResult, 1000);
     </script>
     """, unsafe_allow_html=True)
 
