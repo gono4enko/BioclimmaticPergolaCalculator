@@ -173,181 +173,69 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
     season_name_ru = promotions.get_season_name_in_russian(current_season)
     season_color = promotions.SEASON_COLORS.get(current_season, '#4CAF50')  # Зеленый цвет по умолчанию
     
-    # Отображаем панель со срочной скидкой
+    # Отображаем заголовок акции и описание
     with st.container():
+        season_name_ru = promotions.get_season_name_in_russian(current_season)
+        promo_title = urgent_promotion.get('name', f'{season_name_ru} акция {datetime.date.today().year}')
+        promo_description = urgent_promotion.get('description', f'Скидка {urgent_promotion.get("discount_value", 5)}% до конца сезона!')
+        
+        # Добавляем стили для заголовка и описания
         st.markdown(f"""
         <style>
-        .urgent-panel {{
+        .promo-header {{
             background-color: {urgent_promotion.get('badge_color', season_color)};
             color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            position: relative;
-            overflow: hidden;
+            padding: 12px 15px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+            margin-bottom: 0;
             width: 85%;
             margin-left: auto;
             margin-right: auto;
         }}
-        .urgent-panel h4 {{
-            margin: 0 0 2px 0;
-            font-size: 1.1rem;
+        .promo-description {{
+            background-color: {urgent_promotion.get('badge_color', season_color)};
+            color: white;
+            padding: 0 15px 5px 15px;
             text-align: center;
-        }}
-        .urgent-panel p {{
-            margin: 0 0 10px 0;
-            font-size: 1.25rem;
-            text-align: center;
-            font-weight: 500;
-        }}
-        .countdown {{
-            font-weight: bold;
             font-size: 1.1rem;
-            color: #FFEB3B;
-        }}
-        .pulse-animation {{
-            animation: pulse 2s infinite;
-        }}
-        @keyframes pulse {{
-            0% {{ transform: scale(1); }}
-            50% {{ transform: scale(1.03); }}
-            100% {{ transform: scale(1); }}
-        }}
-        @media (max-width: 768px) {{
-            .urgent-panel h4 {{
-                font-size: 0.95rem;
-            }}
-            .urgent-panel p {{
-                font-size: 1rem;
-            }}
-            .countdown {{
-                font-size: 0.9rem;
-            }}
+            margin-top: 0;
+            width: 85%;
+            margin-left: auto;
+            margin-right: auto;
         }}
         </style>
-        <div class="urgent-panel pulse-animation">
-            <h4>{urgent_promotion.get('name', f'{season_name_ru} акция {datetime.date.today().year}')}</h4>
-            <p>{urgent_promotion.get('description', f'Скидка {urgent_promotion.get("discount_value", 5)}% до конца сезона!')}</p>
-            <div class="countdown-container" style="text-align: center;">
-                <span>До окончания акции: </span>
-                <span class="countdown" id="countdown">{display_text}</span>
-            </div>
-            <!-- Кнопка активации скидки удалена, скидка применяется автоматически -->
+        <div class="promo-header">
+            <h4 style="margin: 0; font-size: 1.2rem;">{promo_title}</h4>
+        </div>
+        <div class="promo-description">
+            <p style="margin: 5px 0;">{promo_description}</p>
         </div>
         """, unsafe_allow_html=True)
+    
+    # Используем новый компонент таймера обратного отсчета
+    if end_date:
+        # Создаем объект datetime для конечной даты
+        day, month, year = map(int, end_date.split('.'))
+        end_datetime = datetime.datetime(year, month, day, 23, 59, 59)
         
-        # Обратный отсчет с помощью JavaScript
-        # Генерируем уникальный ID для таймера, который не будет конфликтовать при обновлении страницы
-        timer_id = f"countdown_{int(time.time() * 1000)}"
-        
-        # Разделяем исходное значение времени для отображения в HTML
-        if days > 0:
-            display_html = f"{days} дн. {hours:02d}:{minutes:02d}:{seconds:02d}"
-        else:
-            display_html = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-        
-        # Формируем метку времени для JavaScript - когда таймер должен закончиться
-        end_timestamp = int(time.time() * 1000) + total_ms
-        
-        st.markdown(f"""
-        <script>
-            // Создаем функцию, которая будет мгновенно выполнена
-            (function() {{
-                // Устанавливаем конечное время (timestamp в миллисекундах)
-                var endTime = {end_timestamp};
-                
-                // Функция для форматирования чисел с ведущим нулем
-                function formatNumber(num) {{
-                    return num < 10 ? '0' + num : num;
-                }}
-                
-                // Функция для обновления таймера
-                function updateTimer() {{
-                    // Находим элемент таймера
-                    var countdownElement = document.getElementById("countdown");
-                    if (!countdownElement) {{
-                        console.error("Элемент таймера не найден!");
-                        return;
-                    }}
-                    
-                    // Получаем текущее время
-                    var now = new Date().getTime();
-                    
-                    // Вычисляем оставшееся время
-                    var distance = endTime - now;
-                    
-                    // Если время истекло
-                    if (distance < 0) {{
-                        countdownElement.innerHTML = "ВРЕМЯ ИСТЕКЛО";
-                        // Через 5 секунд перезагружаем страницу
-                        setTimeout(function() {{
-                            window.parent.postMessage({{
-                                type: "streamlit:componentRerun"
-                            }}, "*");
-                        }}, 5000);
-                        return;
-                    }}
-                    
-                    // Расчеты для дней, часов, минут и секунд
-                    var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                    
-                    // Форматируем время для отображения
-                    var displayText = "";
-                    if (days > 0) {{
-                        displayText = days + " дн. " + formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
-                    }} else {{
-                        displayText = formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
-                    }}
-                    
-                    // Обновляем содержимое таймера
-                    countdownElement.innerHTML = displayText;
-                }}
-                
-                // Запускаем сразу для начальной инициализации
-                updateTimer();
-                
-                // Запускаем обновление таймера каждую секунду
-                setInterval(updateTimer, 1000);
-                
-                // Добавляем обработчик для обновления при загрузке DOM
-                document.addEventListener('DOMContentLoaded', updateTimer);
-                
-                // Запускаем обновление таймера при прокрутке страницы (это поможет для iframe)
-                window.addEventListener('scroll', updateTimer);
-                
-                // Запускаем обновление таймера при фокусе на окне
-                window.addEventListener('focus', updateTimer);
-                
-                // Дополнительные обработчики для Streamlit iframe
-                try {{
-                    // Отправляем сообщение родительскому окну (если оно есть)
-                    window.parent.postMessage({{
-                        type: "timerStarted",
-                        timerId: "{timer_id}"
-                    }}, "*");
-                    
-                    // Настраиваем обработчик сообщений
-                    window.addEventListener('message', function(event) {{
-                        if (event.data && event.data.type === "updateTimer") {{
-                            updateTimer();
-                        }}
-                    }});
-                    
-                    // Запускаем обновление при появлении потока данных Streamlit
-                    var streamlitDocReadyOriginal = window.streamlitDocReady;
-                    window.streamlitDocReady = function() {{
-                        if (streamlitDocReadyOriginal) streamlitDocReadyOriginal();
-                        updateTimer();
-                    }};
-                }} catch(e) {{
-                    console.log("Не удалось настроить обработчики iframe:", e);
-                }}
-            }})();
-        </script>
-        """, unsafe_allow_html=True)
+        # Используем компонент для отображения таймера с датой окончания акции
+        create_timer(
+            end_time=end_datetime,
+            background_color=urgent_promotion.get('badge_color', season_color),
+            text_color="white",
+            timer_color="#FFEB3B"
+        )
+    else:
+        # Используем компонент для отображения таймера с обратным отсчетом часов
+        create_timer(
+            hours=hours,
+            minutes=minutes,
+            seconds=seconds,
+            background_color=urgent_promotion.get('badge_color', season_color),
+            text_color="white",
+            timer_color="#FFEB3B"
+        )
         
         # Устанавливаем автоматическое применение скидки
         st.session_state.urgent_discount_activated = True

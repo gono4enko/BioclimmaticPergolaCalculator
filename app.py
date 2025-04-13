@@ -2398,6 +2398,39 @@ def main():
         layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
     )
     
+    # Добавляем глобальные CSS-стили для улучшения скролла и анимаций
+    st.markdown("""
+    <style>
+    html {
+        scroll-behavior: smooth !important;
+        overflow-y: scroll;
+    }
+    
+    body, .main {
+        height: auto !important;
+        min-height: 100vh;
+    }
+    
+    /* Убираем лишние отступы */
+    .block-container {
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+    
+    /* Улучшенный скролл для Safari и других браузеров */
+    body {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Стили для обеспечения видимости элементов при скролле */
+    #results-section {
+        display: block;
+        min-height: 50px;
+        margin-top: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Добавляем умную адаптацию для различных размеров экрана
     add_smart_device_adaptation()
     
