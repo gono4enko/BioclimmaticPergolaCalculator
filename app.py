@@ -1985,37 +1985,98 @@ def scroll_to_results():
     """
     Добавляет HTML-якорь и простую навигацию к итоговой цене. 
     Отслеживает положение скролла и показывает/скрывает кнопки навигации в зависимости от позиции.
+    Включает различные методы обнаружения необходимости прокрутки.
     """
     # Добавляем код JavaScript для автоматической прокрутки к результатам
     st.markdown("""
     <script>
+        // Функция прокрутки к результатам с разными методами поиска элемента
+        function scrollToResultElement() {
+            console.log('⬇️ Функция scrollToResultElement запущена');
+            
+            // Ищем элементы результата несколькими способами
+            let resultElement = document.getElementById('final-price-target');
+            
+            // Запасные методы поиска элемента результатов
+            if (!resultElement) {
+                console.log('Поиск элемента по атрибуту id, содержащему final-price');
+                resultElement = document.querySelector('[id*="final-price"]');
+            }
+            
+            if (!resultElement) {
+                console.log('Поиск элемента по атрибуту id="results"');
+                resultElement = document.getElementById('results');
+            }
+            
+            if (!resultElement) {
+                // Ищем элемент с текстом "Итоговая стоимость"
+                const allElements = document.querySelectorAll('*');
+                for (const el of allElements) {
+                    if (el.textContent && el.textContent.includes('Итоговая стоимость')) {
+                        resultElement = el;
+                        console.log('Найден элемент по тексту "Итоговая стоимость"');
+                        break;
+                    }
+                }
+            }
+            
+            if (resultElement) {
+                // Прокручиваем к результатам с отступом для лучшего отображения
+                console.log('🎯 Элемент результатов найден, выполняем прокрутку');
+                
+                // Скроллим с учетом особенностей Streamlit
+                setTimeout(function() {
+                    // Прокручиваем с центрированием элемента результатов
+                    resultElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    
+                    console.log('✅ Прокрутка к результатам выполнена');
+                    
+                    // Очищаем все флаги прокрутки
+                    sessionStorage.removeItem('scroll_to_results');
+                    localStorage.removeItem('need_scroll_to_results');
+                    
+                    // Удаляем куки
+                    document.cookie = "scroll_to_results=; path=/; max-age=0";
+                }, 800);
+            } else {
+                console.error('❌ Элемент для прокрутки не найден (проверены все доступные методы)');
+            }
+        }
+    
         // Выполняем прокрутку к результатам сразу после загрузки
         document.addEventListener("DOMContentLoaded", function() {
-            // Проверяем флаг необходимости прокрутки
-            if (sessionStorage.getItem('scroll_to_results') === 'true') {
-                console.log('⬇️ Автоматический скролл к результатам активирован');
+            console.log('📋 Проверка флагов для автоматической прокрутки');
+            
+            // Проверяем различные индикаторы необходимости прокрутки:
+            // 1. URL содержит параметр scroll=results
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasUrlFlag = urlParams.get('scroll') === 'results';
+            
+            // 2. Флаг в sessionStorage
+            const hasSessionFlag = sessionStorage.getItem('scroll_to_results') === 'true';
+            
+            // 3. Флаг в localStorage
+            const hasLocalFlag = localStorage.getItem('need_scroll_to_results') === 'true';
+            
+            // 4. Флаг в cookie
+            const hasCookieFlag = document.cookie.includes('scroll_to_results=true');
+            
+            console.log('Флаги прокрутки:', {
+                url: hasUrlFlag,
+                session: hasSessionFlag,
+                local: hasLocalFlag,
+                cookie: hasCookieFlag
+            });
+            
+            // Если есть любой флаг - выполняем прокрутку
+            if (hasUrlFlag || hasSessionFlag || hasLocalFlag || hasCookieFlag) {
+                console.log('🚀 Инициирован автоматический скролл к результатам');
                 
-                // Сбрасываем флаг в sessionStorage
-                sessionStorage.removeItem('scroll_to_results');
-                
-                // Даем время странице полностью загрузиться
-                setTimeout(function() {
-                    const resultElement = document.getElementById('final-price-target');
-                    if (resultElement) {
-                        // Прокручиваем к результатам с отступом для лучшего отображения
-                        const yOffset = -100;
-                        const y = resultElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                        
-                        window.scrollTo({
-                            top: y,
-                            behavior: 'smooth'
-                        });
-                        
-                        console.log('🔄 Прокрутка к результатам выполнена из функции scroll_to_results');
-                    } else {
-                        console.error('❌ Элемент для прокрутки не найден (final-price-target)');
-                    }
-                }, 700);
+                // Выполняем прокрутку с задержкой для полной загрузки страницы
+                setTimeout(scrollToResultElement, 1000);
             }
         });
     </script>
@@ -2856,18 +2917,33 @@ def main():
     def handle_calc_button():
         # Установим флаг, что нам нужно будет скроллить к результатам после расчета
         st.session_state.scroll_to_results = True
-        # Добавляем флаг в сессионное хранилище браузера через JavaScript
+        
+        # Используем прямой метод скролла, который выполнится после перезагрузки страницы
+        # Важно: добавляем в URL параметр, который распознается при загрузке страницы
+        st.experimental_set_query_params(scroll='results')
+        
+        # Добавим локальный и глобальный флаги для скролла в разных хранилищах
         st.markdown("""
         <script>
-            // Устанавливаем флаг скролла в sessionStorage для доступа из JavaScript
+            // Добавляем 3 способа для надежности:
+            // 1. SessionStorage для доступа через JavaScript
             sessionStorage.setItem('scroll_to_results', 'true');
-            console.log('💡 Python: установлен флаг скролла в sessionStorage');
+            
+            // 2. LocalStorage для сохранения между перезагрузками
+            localStorage.setItem('need_scroll_to_results', 'true');
+            
+            // 3. Устанавливаем куки (запасной вариант)
+            document.cookie = "scroll_to_results=true; path=/; max-age=60";
+            
+            console.log('💡 Python: установлены флаги скролла во всех хранилищах');
         </script>
         """, unsafe_allow_html=True)
+        
         # Также сбросим флаг отображения описания
         st.session_state.description_shown = False
+        
         # Добавляем отладочную информацию
-        print("💡 Кнопка расчета нажата, флаг scroll_to_results =", st.session_state.scroll_to_results)
+        print("💡 Кнопка расчета нажата, флаги скролла установлены")
         
     # Кнопка для расчета с улучшенным стилем
     calc_button = st.button("Рассчитать стоимость", type="primary", 
