@@ -2101,89 +2101,134 @@ def scroll_to_results():
     # Добавляем скрипт для управления видимостью кнопок и автоматического скролла
     st.markdown("""
     <script>
-        // Функция для проверки, находится ли элемент в видимой области
-        function isElementInViewport(el) {
-            var rect = el.getBoundingClientRect();
+        // Создаем простой инструмент отладки
+        function createDebugTool() {
+            const debugDiv = document.createElement('div');
+            debugDiv.id = 'scroll-debug';
+            debugDiv.style.position = 'fixed';
+            debugDiv.style.top = '10px';
+            debugDiv.style.left = '10px';
+            debugDiv.style.zIndex = '9999';
+            debugDiv.style.background = 'rgba(0,0,0,0.7)';
+            debugDiv.style.color = 'white';
+            debugDiv.style.padding = '5px';
+            debugDiv.style.borderRadius = '5px';
+            debugDiv.style.fontSize = '12px';
+            debugDiv.style.maxWidth = '300px';
+            debugDiv.style.display = 'none'; // Отключаем в продакшн
+            document.body.appendChild(debugDiv);
+            return debugDiv;
+        }
+        
+        // Функция для проверки видимости элемента
+        function isInViewport(element) {
+            const rect = element.getBoundingClientRect();
             return (
-                rect.top >= 0 &&
-                rect.left >= 0 &&
-                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+                rect.top <= (window.innerHeight || document.documentElement.clientHeight) &&
+                rect.bottom >= 0
             );
         }
         
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM загружен, начинаем настройку скролла');
+            
+            // Создаем инструмент отладки
+            const debugTool = createDebugTool();
+            
             // Получаем ссылки на кнопки
             const btnDown = document.querySelector('.fixed-button.down');
             const btnUp = document.querySelector('.fixed-button.up');
             
-            // Функция для обработки прокрутки и управления видимостью кнопок
+            if (!btnDown || !btnUp) {
+                console.error('Не удалось найти кнопки навигации!');
+                return;
+            }
+            
+            console.log('Кнопки найдены', btnDown, btnUp);
+            
+            // Сначала показываем только кнопку вниз
+            btnDown.style.opacity = '1';
+            btnDown.style.visibility = 'visible';
+            btnUp.style.opacity = '0';
+            btnUp.style.visibility = 'hidden';
+            
+            // Функция для обработки прокрутки
             function handleScroll() {
                 // Получаем текущую позицию скролла
                 const scrollPosition = window.scrollY;
+                const windowHeight = window.innerHeight;
+                const pageHeight = document.body.scrollHeight;
                 
-                // Найдем элементы на странице
-                const headings = document.querySelectorAll('h1, h2, h3, h4');
-                let b500Found = false;
-                let galleryFound = false;
+                // Находим все заголовки B500
+                const b500Headers = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'))
+                    .filter(h => h.textContent.includes('B500') || h.textContent.includes('В500'));
                 
-                // Проверяем все заголовки для поиска B500 или галереи
-                headings.forEach(heading => {
-                    const headingText = heading.textContent.trim();
-                    if (headingText.includes('B500') || headingText.includes('В500')) {
-                        b500Found = true;
-                        
-                        // Проверяем, виден ли заголовок B500 на экране
-                        const rect = heading.getBoundingClientRect();
-                        if (rect.top < window.innerHeight * 0.7) {
-                            // Заголовок B500 виден, переключаем кнопки
-                            btnDown.classList.add('hidden');
-                            btnUp.classList.add('visible');
-                        }
-                    }
-                    
-                    if (headingText.includes('Наша галерея') || headingText.includes('проекты')) {
-                        galleryFound = true;
+                // Находим все заголовки галереи
+                const galleryHeaders = Array.from(document.querySelectorAll('h1, h2, h3'))
+                    .filter(h => h.textContent.includes('Наша галерея') || h.textContent.includes('проекты'));
+                
+                // Отладочная информация
+                let debugInfo = `Scroll: ${scrollPosition}<br>`;
+                debugInfo += `B500 headers: ${b500Headers.length}<br>`;
+                debugInfo += `Gallery headers: ${galleryHeaders.length}<br>`;
+                
+                // Проверяем, виден ли какой-либо из заголовков B500
+                let b500Visible = false;
+                b500Headers.forEach((header, index) => {
+                    const isVisible = isInViewport(header);
+                    debugInfo += `B500 #${index}: ${isVisible ? 'visible' : 'hidden'}<br>`;
+                    if (isVisible) {
+                        b500Visible = true;
                     }
                 });
                 
-                // Если мы в верхней части страницы, скрываем кнопку "Вверх"
-                if (scrollPosition < 300) {
-                    btnUp.classList.remove('visible');
-                    btnDown.classList.remove('hidden');
+                // Проверяем, находимся ли мы в нижней половине страницы
+                const inLowerHalf = scrollPosition > (pageHeight * 0.4);
+                debugInfo += `In lower half: ${inLowerHalf}<br>`;
+                
+                // Обновляем видимость кнопок
+                if (inLowerHalf || b500Visible) {
+                    // Показываем кнопку вверх и скрываем кнопку вниз
+                    btnDown.style.opacity = '0';
+                    btnDown.style.visibility = 'hidden';
+                    btnUp.style.opacity = '1';
+                    btnUp.style.visibility = 'visible';
+                    debugInfo += 'Action: Showing UP button<br>';
+                } else {
+                    // Показываем кнопку вниз и скрываем кнопку вверх
+                    btnDown.style.opacity = '1';
+                    btnDown.style.visibility = 'visible';
+                    btnUp.style.opacity = '0';
+                    btnUp.style.visibility = 'hidden';
+                    debugInfo += 'Action: Showing DOWN button<br>';
                 }
                 
-                // Проверяем, есть ли видимый заголовок B500 и показываем/скрываем кнопки соответственно
-                const visibleB500 = Array.from(headings).some(heading => {
-                    const headingText = heading.textContent.trim();
-                    if ((headingText.includes('B500') || headingText.includes('В500'))) {
-                        const rect = heading.getBoundingClientRect();
-                        return (rect.top < window.innerHeight * 0.8 && rect.bottom > 0);
-                    }
-                    return false;
-                });
-                
-                if (visibleB500) {
-                    btnDown.classList.add('hidden');
-                    btnUp.classList.add('visible');
-                } else if (scrollPosition < 300) {
-                    btnUp.classList.remove('visible');
-                    btnDown.classList.remove('hidden');
-                }
+                // Обновляем отладочную информацию
+                debugTool.innerHTML = debugInfo;
             }
             
-            // Вызываем функцию при скролле страницы
+            // Вызываем функцию при скролле страницы и первой загрузке
             window.addEventListener('scroll', handleScroll);
             
-            // Вызываем функцию при загрузке, чтобы установить начальное состояние
-            handleScroll();
+            // Обработка скролла при первой загрузке с задержкой
+            setTimeout(handleScroll, 500);
             
             // Если в URL есть якорь для результатов, выполняем скролл через небольшую задержку
             setTimeout(function() {
                 if (window.location.hash === '#final-price-target') {
                     window.location.hash = '#final-price-target';
+                    setTimeout(handleScroll, 100); // Еще раз проверяем после скролла
                 }
             }, 500);
+            
+            // Добавляем прямые обработчики кликов для надежности
+            btnDown.addEventListener('click', function() {
+                console.log('Нажата кнопка вниз');
+            });
+            
+            btnUp.addEventListener('click', function() {
+                console.log('Нажата кнопка вверх');
+            });
         });
     </script>
     """, unsafe_allow_html=True)
