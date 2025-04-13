@@ -2869,20 +2869,26 @@ def main():
     st.markdown("""
     <style>
     div[data-testid="stButton"] button {
-        height: 65px;
+        height: 55px;
         background-color: #0066cc;
         color: white;
-        font-size: 18px;
-        font-weight: 900;
+        font-size: 16px;
+        font-weight: 700;
         letter-spacing: 0.5px;
-        animation: pulse-button 1s infinite;
+        animation: pulse-button 2s ease-in-out infinite;
         text-transform: uppercase;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto;
+        width: 100%;
     }
     
+    /* Более тонкая и медленная анимация */
     @keyframes pulse-button {
-        0% { transform: scale(1) translateY(0); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); background-color: #0066cc; }
-        50% { transform: scale(1.05) translateY(-5px); box-shadow: 0 10px 25px rgba(0, 102, 204, 0.6); background-color: #0088ff; }
-        100% { transform: scale(1) translateY(0); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); background-color: #0066cc; }
+        0% { transform: scale(1); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); background-color: #0066cc; }
+        50% { transform: scale(1.03); box-shadow: 0 6px 15px rgba(0, 102, 204, 0.4); background-color: #0077dd; }
+        100% { transform: scale(1); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); background-color: #0066cc; }
     }
     </style>
     """, unsafe_allow_html=True)
