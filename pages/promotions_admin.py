@@ -20,6 +20,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Импортируем модуль с акциями
 from config import promotions
+from components.admin_auth import admin_required, check_admin_auth, admin_login_form
 
 # Константы
 PROMOTIONS_DATA_FILE = "data/promotions_data.json"
