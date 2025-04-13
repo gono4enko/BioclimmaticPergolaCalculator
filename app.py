@@ -1005,10 +1005,15 @@ def get_modules_by_dimensions(width, length, pergola_type=None):
     Returns:
         int: Количество модулей
     """
+    # Специальный случай для размера 3x8
+    if abs(width - 3.0) < 0.01 and abs(length - 8.0) < 0.01:
+        return 1  # Размер 3x8 всегда имеет 1 модуль (согласно прайсу)
+    
     # Особые правила для больших выносов
-    if length > 6.0:
+    # Для выноса > 6.0м обычно требуется больше модулей, но есть исключения (например, 3x8)
+    if length > 6.0 and not (abs(width - 3.0) < 0.01):
         if width <= 4.5:
-            return 2  # Для выноса > 6.0м даже при малой ширине нужно 2 модуля
+            return 2  # Для выноса > 6.0м с шириной до 4.5м нужно 2 модуля
         elif width <= 9.0:
             return 2  # Для ширины 5-9м - 2 модуля
         else:
@@ -1049,16 +1054,21 @@ def render_dimensions_form():
     
     col1, col2 = st.columns(2)
     
-    # Используем значения по умолчанию для максимальных размеров
-    max_width = 15.0
-    max_length = 8.0
+    # Установка максимальных размеров в зависимости от выбранного типа перголы
+    # По умолчанию устанавливаем самые большие доступные размеры
     
-    # Пытаемся получить текущий тип перголы из session_state, если он уже выбран
-    if 'pergola_type' in st.session_state:
-        current_pergola_type = st.session_state.pergola_type
-        if current_pergola_type in MAX_DIMENSIONS:
-            max_width = MAX_DIMENSIONS[current_pergola_type]["width"]
-            max_length = MAX_DIMENSIONS[current_pergola_type]["length"]
+    # Получаем текущий тип перголы из session_state, если он уже выбран
+    current_pergola_type = st.session_state.get("pergola_type")
+    
+    # Устанавливаем максимальные размеры по умолчанию
+    if current_pergola_type in MAX_DIMENSIONS:
+        # Если тип перголы уже выбран, используем соответствующие максимальные размеры
+        max_width = MAX_DIMENSIONS[current_pergola_type]["width"]
+        max_length = MAX_DIMENSIONS[current_pergola_type]["length"]
+    else:
+        # Если тип перголы еще не выбран, используем самые большие максимальные размеры из всех типов
+        max_width = max(MAX_DIMENSIONS["B500NEW"]["width"], MAX_DIMENSIONS["B700NEW"]["width"], MAX_DIMENSIONS["B600"]["width"])
+        max_length = max(MAX_DIMENSIONS["B500NEW"]["length"], MAX_DIMENSIONS["B700NEW"]["length"], MAX_DIMENSIONS["B600"]["length"])
     
     with col1:
         width = st.number_input(
