@@ -235,50 +235,74 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
         """, unsafe_allow_html=True)
         
         # Обратный отсчет с помощью JavaScript
+        # Создаем уникальный ID для скрипта и элемента, чтобы избежать конфликтов
+        timer_id = f"countdown_{int(time.time() * 1000)}"
+        
         st.markdown(f"""
         <script>
-            // Устанавливаем начальное время
-            var countDownDate = new Date().getTime() + {total_ms};
-            
-            // Функция для форматирования чисел с ведущим нулем
-            function formatNumber(num) {{
-                return num < 10 ? '0' + num : num;
-            }}
-            
-            // Обновляем таймер каждую секунду
-            var x = setInterval(function() {{
-                var now = new Date().getTime();
-                var distance = countDownDate - now;
+            // Немедленно вызываемая функция для изоляции переменных
+            (function() {{
+                // Устанавливаем начальное время
+                var countDownDate = new Date().getTime() + {total_ms};
                 
-                // Расчеты для дней, часов, минут и секунд
-                var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                
-                // Отображаем результат
-                var displayText = "";
-                if (days > 0) {{
-                    displayText = days + " дн. " + formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
-                }} else {{
-                    displayText = formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
+                // Функция для форматирования чисел с ведущим нулем
+                function formatNumber(num) {{
+                    return num < 10 ? '0' + num : num;
                 }}
                 
-                document.getElementById("countdown").innerHTML = displayText;
-                
-                // Если время истекло
-                if (distance < 0) {{
-                    clearInterval(x);
-                    document.getElementById("countdown").innerHTML = "ВРЕМЯ ИСТЕКЛО";
+                // Ждем, когда DOM будет готов
+                document.addEventListener('DOMContentLoaded', function() {{
+                    // Запускаем обновление таймера только при появлении элемента
+                    var countdownElement = document.getElementById("countdown");
+                    if (!countdownElement) {{
+                        console.error("Элемент таймера не найден!");
+                        return;
+                    }}
                     
-                    // Перезагружаем страницу для обновления акции
+                    // Обновляем таймер каждую секунду
+                    var x = setInterval(function() {{
+                        var now = new Date().getTime();
+                        var distance = countDownDate - now;
+                        
+                        // Расчеты для дней, часов, минут и секунд
+                        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                        
+                        // Отображаем результат
+                        var displayText = "";
+                        if (days > 0) {{
+                            displayText = days + " дн. " + formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
+                        }} else {{
+                            displayText = formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
+                        }}
+                        
+                        countdownElement.innerHTML = displayText;
+                        
+                        // Если время истекло
+                        if (distance < 0) {{
+                            clearInterval(x);
+                            countdownElement.innerHTML = "ВРЕМЯ ИСТЕКЛО";
+                            
+                            // Перезагружаем страницу для обновления акции
+                            setTimeout(function() {{
+                                window.parent.postMessage({{
+                                    type: "streamlit:componentRerun"
+                                }}, "*");
+                            }}, 5000); // Перезагрузка через 5 секунд
+                        }}
+                    }}, 1000);
+                }});
+                
+                // Альтернативный запуск для Streamlit (может загружаться динамически)
+                if (document.readyState === 'complete' || document.readyState === 'interactive') {{
                     setTimeout(function() {{
-                        window.parent.postMessage({{
-                            type: "streamlit:componentRerun"
-                        }}, "*");
-                    }}, 5000); // Перезагрузка через 5 секунд
+                        var event = new Event('DOMContentLoaded');
+                        document.dispatchEvent(event);
+                    }}, 100);
                 }}
-            }}, 1000);
+            }})();
         </script>
         """, unsafe_allow_html=True)
         
