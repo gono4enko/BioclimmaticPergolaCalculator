@@ -36,16 +36,16 @@ def smooth_scroll_to(target_id, fixed_y_position=None):
                                 top: {fixed_y_position},
                                 behavior: 'smooth'
                             }});
-                            console.log(`🎯 SCROLL: Выполнен скролл к Y={fixed_y_position}px (задержка ${delay}мс)`);
+                            console.log("🎯 SCROLL: Выполнен скролл к Y=" + fixed_y_position + "px (задержка " + delay + "мс)");
                         }} catch(e) {{
-                            console.error(`🎯 SCROLL: Ошибка при скролле к Y={fixed_y_position}px:`, e);
+                            console.error("🎯 SCROLL: Ошибка при скролле к Y=" + fixed_y_position + "px:", e);
                             
                             // Запасной вариант для старых браузеров
                             try {{
                                 window.scrollTo(0, {fixed_y_position});
-                                console.log(`🎯 SCROLL: Выполнен прямой скролл к Y={fixed_y_position}px`);
+                                console.log("🎯 SCROLL: Выполнен прямой скролл к Y=" + {fixed_y_position} + "px");
                             }} catch(e2) {{
-                                console.error(`🎯 SCROLL: Ошибка при прямом скролле:`, e2);
+                                console.error("🎯 SCROLL: Ошибка при прямом скролле:", e2);
                             }}
                         }}
                     }}, delay);
