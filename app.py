@@ -1986,6 +1986,41 @@ def scroll_to_results():
     Добавляет HTML-якорь и простую навигацию к итоговой цене. 
     Отслеживает положение скролла и показывает/скрывает кнопки навигации в зависимости от позиции.
     """
+    # Добавляем код JavaScript для автоматической прокрутки к результатам
+    st.markdown("""
+    <script>
+        // Выполняем прокрутку к результатам сразу после загрузки
+        document.addEventListener("DOMContentLoaded", function() {
+            // Проверяем флаг необходимости прокрутки
+            if (sessionStorage.getItem('scroll_to_results') === 'true') {
+                console.log('⬇️ Автоматический скролл к результатам активирован');
+                
+                // Сбрасываем флаг в sessionStorage
+                sessionStorage.removeItem('scroll_to_results');
+                
+                // Даем время странице полностью загрузиться
+                setTimeout(function() {
+                    const resultElement = document.getElementById('final-price-target');
+                    if (resultElement) {
+                        // Прокручиваем к результатам с отступом для лучшего отображения
+                        const yOffset = -100;
+                        const y = resultElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                        
+                        window.scrollTo({
+                            top: y,
+                            behavior: 'smooth'
+                        });
+                        
+                        console.log('🔄 Прокрутка к результатам выполнена из функции scroll_to_results');
+                    } else {
+                        console.error('❌ Элемент для прокрутки не найден (final-price-target)');
+                    }
+                }, 700);
+            }
+        });
+    </script>
+    """, unsafe_allow_html=True)
+    
     # Добавляем якорь к форме с параметрами в начале калькулятора
     st.markdown("""
     <div id="calculator-parameters"></div>
