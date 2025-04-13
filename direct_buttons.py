@@ -31,7 +31,7 @@ def inject_direct_buttons():
         visibility: visible !important;
     }
     
-    /* Стиль для кнопки перехода к результатам */
+    /* Стиль для кнопки перехода к результатам - внизу по центру */
     #results-button {
         bottom: 20px;
         left: 50%;
@@ -39,10 +39,11 @@ def inject_direct_buttons():
         background-color: #0066cc;
     }
     
-    /* Стиль для кнопки возврата к форме размеров */
+    /* Стиль для кнопки возврата к форме размеров - над кнопкой результатов по центру */
     #dimensions-button {
-        bottom: 20px;
-        left: 20px;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
         background-color: #28a745;
     }
     
@@ -54,7 +55,7 @@ def inject_direct_buttons():
         transform: translateX(-50%) scale(1.05);
     }
     #dimensions-button:hover {
-        transform: scale(1.05);
+        transform: translateX(-50%) scale(1.05);
     }
     
     /* Стили для мобильных устройств */
@@ -65,10 +66,13 @@ def inject_direct_buttons():
         }
         #results-button {
             bottom: 15px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
         }
         #dimensions-button {
-            bottom: 15px !important;
-            left: 15px !important;
+            bottom: 65px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
         }
     }
     </style>

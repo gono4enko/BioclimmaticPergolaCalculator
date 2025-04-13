@@ -1477,7 +1477,7 @@ def render_results(results):
          style="position:relative;
                 width:100%;
                 height:1px;  /* Минимальная высота, чтобы якорь не занимал место */
-                margin:0;
+                margin-top:50px; /* Увеличенный верхний отступ для предотвращения наложения плавающих элементов */
                 padding:0;
                 opacity:0;  /* Полностью прозрачный */
                 visibility:hidden;" /* Скрытый, но доступный для скриптов */
