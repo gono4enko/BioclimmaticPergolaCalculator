@@ -404,9 +404,7 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
         border: 1px solid #E0E0E0;
         border-radius: 8px;
         overflow: hidden;
-        width: 85%;
-        margin-left: auto;
-        margin-right: auto;
+        width: 100%;
     }
     .discounts-header {
         background-color: #F5F5F5;
