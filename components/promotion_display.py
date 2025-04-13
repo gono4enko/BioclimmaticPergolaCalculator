@@ -186,7 +186,7 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
             padding: 10px 15px;
             border-radius: 8px;
             margin-bottom: 15px;
-            margin-top: -15px;
+            margin-top: -5px;
             position: relative;
             overflow: hidden;
             width: 85%;
@@ -400,7 +400,7 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
     st.markdown("""
     <style>
     .discounts-container {
-        margin-top: -5px;
+        margin-top: 5px;
         border: 1px solid #E0E0E0;
         border-radius: 8px;
         overflow: hidden;
