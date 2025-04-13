@@ -992,10 +992,137 @@ def perform_calculation(dimensions, options):
         print(error_msg)
         return {"error": error_msg}
 
+def get_modules_from_price_data(width, length, pergola_type, lamella_size):
+    """
+    Определяет количество модулей на основе данных из прайс-листа.
+    
+    Args:
+        width (float): Ширина перголы в метрах
+        length (float): Вынос (длина) перголы в метрах
+        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
+        lamella_size (str): Размер ламели (200, 250, PIR)
+        
+    Returns:
+        int: Количество модулей или None, если не удалось определить
+    """
+    # Определяем соответствие типов пергол и имен файлов
+    file_mapping = {
+        ("B500NEW", "200"): ["attached_assets/Price_B500-20.csv", "attached_assets/Прайс_В500-20.csv"],
+        ("B500NEW", "250"): ["attached_assets/Price_B500-25.csv", "attached_assets/Прайс_В500-25.csv"],
+        ("B700NEW", "200"): ["attached_assets/Price_B700-20.csv", "attached_assets/Прайс_B700-20.csv"],
+        ("B700NEW", "250"): ["attached_assets/Price_B700-25.csv", "attached_assets/Прайс_B700-25.csv"],
+        ("B600", "PIR"): ["attached_assets/Price_B600_PIR.csv", "attached_assets/Прайс_В600_PIR.csv"]
+    }
+    
+    key = (pergola_type, lamella_size)
+    if key not in file_mapping:
+        print(f"Ошибка: Комбинация {pergola_type} и {lamella_size} не найдена в маппинге файлов")
+        return None
+    
+    # Получаем пути к файлам прайса
+    file_paths = file_mapping[key]
+    
+    # Проверяем, существует ли хотя бы один из файлов
+    existing_file_path = None
+    for path in file_paths:
+        if os.path.exists(path):
+            existing_file_path = path
+            break
+    
+    if not existing_file_path:
+        print(f"Ошибка: Файлы прайса {file_paths} не найдены")
+        return None
+    
+    # Используем найденный файл
+    file_path = existing_file_path
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            # Определяем разделитель CSV (точка с запятой или запятая)
+            first_line = file.readline().strip()
+            if ';' in first_line:
+                delimiter = ';'
+            else:
+                delimiter = ','
+            
+            # Перематываем файл в начало
+            file.seek(0)
+            
+            reader = csv.reader(file, delimiter=delimiter)
+            
+            # Читаем первую строку (с информацией о модулях)
+            first_row = next(reader)
+            if "модуль" not in ' '.join(first_row).lower():
+                print("Ошибка: Не найдена информация о модулях в первой строке прайса")
+                return None
+            
+            # Читаем вторую строку (с размерами)
+            width_row = next(reader)
+            
+            # Найдем ближайшие значения ширины и длины
+            closest_width_idx = None
+            closest_width_diff = float('inf')
+            
+            # Пропускаем первую колонку (она содержит описание)
+            for i, w in enumerate(width_row[1:], 1):
+                try:
+                    w_value = float(w.replace(',', '.'))
+                    diff = abs(w_value - width)
+                    if diff < closest_width_diff:
+                        closest_width_diff = diff
+                        closest_width_idx = i
+                except (ValueError, TypeError):
+                    continue
+            
+            if closest_width_idx is None:
+                print(f"Ошибка: Не удалось найти ближайшую ширину к {width} в прайсе")
+                return None
+            
+            closest_length_row = None
+            closest_length_diff = float('inf')
+            
+            # Перебираем строки с длинами
+            for row in reader:
+                try:
+                    length_value = float(row[0].replace(',', '.'))
+                    diff = abs(length_value - length)
+                    if diff < closest_length_diff:
+                        closest_length_diff = diff
+                        closest_length_row = row
+                except (ValueError, TypeError, IndexError):
+                    continue
+            
+            if closest_length_row is None:
+                print(f"Ошибка: Не удалось найти ближайший вынос к {length} в прайсе")
+                return None
+            
+            # Получаем информацию о модулях из первой строки для найденной ячейки
+            if closest_width_idx < len(first_row):
+                module_info = first_row[closest_width_idx]
+                if "1 модуль" in module_info:
+                    return 1
+                elif "2 модуля" in module_info:
+                    return 2
+                elif "3 модуля" in module_info:
+                    return 3
+                else:
+                    # Пытаемся извлечь число модулей из строки
+                    import re
+                    match = re.search(r'(\d+)\s*модул', module_info)
+                    if match:
+                        return int(match.group(1))
+            
+            print(f"Предупреждение: Не удалось определить количество модулей из прайса для {width}x{length}")
+            return None
+            
+    except Exception as e:
+        print(f"Ошибка при чтении прайса для определения модулей: {str(e)}")
+        return None
+
 def get_modules_by_dimensions(width, length, pergola_type=None):
     """
     Определяет количество модулей в зависимости от размеров перголы и ее типа.
-    Учитывает как ширину, так и вынос (длину) перголы.
+    Сначала пытается получить информацию из прайс-листа, затем использует логические правила.
     
     Args:
         width (float): Ширина перголы в метрах
@@ -1005,23 +1132,30 @@ def get_modules_by_dimensions(width, length, pergola_type=None):
     Returns:
         int: Количество модулей
     """
+    # Если указан тип перголы, пытаемся определить по прайсу
+    if pergola_type:
+        # Определяем размер ламели в зависимости от типа перголы
+        if pergola_type == "B600":
+            lamella_size = "PIR"
+        else:
+            # По умолчанию используем стандартный размер 250мм
+            lamella_size = "250"
+        
+        # Пытаемся получить количество модулей из прайса
+        modules_from_price = get_modules_from_price_data(width, length, pergola_type, lamella_size)
+        if modules_from_price is not None:
+            return modules_from_price
+    
+    # Если не удалось определить по прайсу, используем логические правила
+    
     # Специальный случай для размера 3x8
     if abs(width - 3.0) < 0.01 and abs(length - 8.0) < 0.01:
         return 1  # Размер 3x8 всегда имеет 1 модуль (согласно прайсу)
     
-    # Особые правила для больших выносов
-    # Для выноса > 6.0м обычно требуется больше модулей, но есть исключения (например, 3x8)
-    if length > 6.0 and not (abs(width - 3.0) < 0.01):
-        if width <= 4.5:
-            return 2  # Для выноса > 6.0м с шириной до 4.5м нужно 2 модуля
-        elif width <= 9.0:
-            return 2  # Для ширины 5-9м - 2 модуля
-        else:
-            return 3  # Для ширины 9.5м и более - 3 модуля
-    
-    # Стандартные правила по ширине
+    # Стандартные правила по ширине и длине
     if width <= 4.5:
-        return 1  # Для ширины до 4.5м - 1 модуль
+        # Для ширины до 4.5м обычно 1 модуль, но при большом выносе может быть больше
+        return 1 if length <= 6.0 else 2
     elif width <= 9.0:
         return 2  # Для ширины 5-9м - 2 модуля
     else:

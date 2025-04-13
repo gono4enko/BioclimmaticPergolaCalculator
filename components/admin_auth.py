@@ -85,11 +85,11 @@ def admin_login_form(location="sidebar"):
         if location == "sidebar":
             if st.sidebar.button("Выйти из режима администратора"):
                 st.session_state.admin_authenticated = False
-                st.experimental_rerun()
+                st.rerun()
         else:
             if st.button("Выйти из режима администратора"):
                 st.session_state.admin_authenticated = False
-                st.experimental_rerun()
+                st.rerun()
         return True
     
     # Отображаем форму входа
@@ -107,7 +107,7 @@ def admin_login_form(location="sidebar"):
                     st.session_state.admin_authenticated = True
                     st.session_state.auth_error = False
                     st.session_state.login_attempts = 0
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     st.session_state.auth_error = True
                     st.session_state.login_attempts += 1
@@ -125,7 +125,7 @@ def admin_login_form(location="sidebar"):
                 st.session_state.admin_authenticated = True
                 st.session_state.auth_error = False
                 st.session_state.login_attempts = 0
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.session_state.auth_error = True
                 st.session_state.login_attempts += 1
