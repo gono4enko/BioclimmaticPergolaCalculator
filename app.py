@@ -1298,7 +1298,7 @@ def render_results(results):
     # Переместили заголовок акций и скидок наверх, перед блоком результатов расчета
     st.markdown("""
     <div style='width:85%; margin:0 auto; margin-top: 10px;'>
-        <h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 0; margin-bottom: 15px; text-align: center;'>Акции и скидки</h3>
+        <h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 20px; margin-bottom: 15px; text-align: center;'>Акции и скидки</h3>
     </div>
     """, unsafe_allow_html=True)
     
@@ -2771,43 +2771,17 @@ def main():
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.2rem; margin-bottom: 0.2rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
     
-    # Если был запрос на скролл к результатам, добавляем якорный div перед блоком результатов
-    if st.session_state.get('scroll_to_results', False):
-        # Добавляем отладочное сообщение
-        st.markdown("""
-        <script>
-            console.log("🚀 DEBUG: Добавление якоря для скролла к результатам");
-        </script>
-        """, unsafe_allow_html=True)
-        
-        # Создаем якорь для скролла перед блоком результатов
-        st.markdown('<div id="scroll-target"></div>', unsafe_allow_html=True)
+    # Здесь был код для создания якоря, теперь используем только компонент scroll.py
         
     # Отображаем результаты (если есть)
     if 'results' in st.session_state:
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
-        # Если был запрос на скролл к результатам, добавляем автоматический скрипт
+        # Если был запрос на скролл к результатам, используем компонент smooth_scroll_to
         if st.session_state.get('scroll_to_results', False):
-            st.markdown("""
-            <script>
-                // Простой прямой скролл к якорю
-                document.addEventListener('DOMContentLoaded', function() {
-                    try {
-                        const target = document.getElementById('scroll-target');
-                        if (target) {
-                            setTimeout(() => {
-                                target.scrollIntoView({ behavior: 'auto', block: 'start' });
-                                console.log("🚀 Выполнен скролл к якорю #scroll-target");
-                            }, 300);
-                        }
-                    } catch(e) {
-                        console.error("Ошибка скролла:", e);
-                    }
-                });
-            </script>
-            """, unsafe_allow_html=True)
+            # Используем компонент из модуля scroll.py для скролла к якорю #results
+            smooth_scroll_to('results')
             
             # Сбрасываем флаг, чтобы не выполнять скролл при каждом обновлении страницы
             st.session_state.scroll_to_results = False
