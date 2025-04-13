@@ -591,6 +591,30 @@ else:
                                         
                                         # Сохраняем загруженный файл
                                         try:
+                                            # Проверяем, что файл имеет правильный формат
+                                            if file_extension == '.csv':
+                                                # Читаем файл в память для предварительной проверки
+                                                csv_content = uploaded_file.read().decode('utf-8', errors='replace')
+                                                uploaded_file.seek(0)  # Сбрасываем указатель чтения файла
+                                                
+                                                # Проверяем базовую структуру CSV
+                                                lines = csv_content.strip().split('\n')
+                                                if not lines or len(lines) < 2:
+                                                    st.error("❌ CSV файл должен содержать как минимум заголовок и одну строку данных")
+                                                    continue  # Пропускаем дальнейшую обработку для этого файла
+                                                    
+                                                # Проверяем формат заголовка и наличие данных
+                                                header = lines[0].split(';')
+                                                if len(header) < 2:
+                                                    st.error("❌ Заголовок CSV должен содержать ячейки для ширины (минимум 2 колонки)")
+                                                    continue  # Пропускаем дальнейшую обработку для этого файла
+                                                    
+                                                first_row = lines[1].split(';')
+                                                if len(first_row) < 2:
+                                                    st.error("❌ Данные CSV должны содержать вынос и цены (минимум 2 колонки)")
+                                                    continue  # Пропускаем дальнейшую обработку для этого файла
+                                                
+                                            # Сохраняем файл
                                             with open(new_file_path, "wb") as f:
                                                 f.write(uploaded_file.getbuffer())
                                             st.success(f"✅ Прайс-лист успешно загружен: {new_filename}")
@@ -628,6 +652,109 @@ else:
         if not price_lists:
             st.warning("⚠️ Прайс-листы не найдены")
         else:
+            # Опция для массового управления прайс-листами
+            show_mass_delete = st.checkbox("Массовое управление прайс-листами", value=False)
+            
+            if show_mass_delete:
+                # Создаем словарь для отслеживания выбранных прайс-листов
+                selected_price_lists = {}
+                
+                # Создаем чекбоксы для выбора прайс-листов
+                st.write("### Выберите прайс-листы для удаления")
+                
+                # Группируем прайс-листы по типу перголы и размеру ламели
+                grouped_lists = {}
+                
+                for pl in price_lists:
+                    parts = pl["name"].split("_")
+                    if len(parts) >= 2:
+                        pergola_type = parts[0]
+                        lamella_size = parts[1].split(".")[0] if "." in parts[1] else parts[1]
+                        
+                        if pergola_type not in grouped_lists:
+                            grouped_lists[pergola_type] = {}
+                        
+                        if lamella_size not in grouped_lists[pergola_type]:
+                            grouped_lists[pergola_type][lamella_size] = []
+                        
+                        grouped_lists[pergola_type][lamella_size].append(pl)
+                    else:
+                        # Для прайс-листов с неизвестным форматом имени
+                        if "Прочие" not in grouped_lists:
+                            grouped_lists["Прочие"] = {"Неизвестно": []}
+                        
+                        grouped_lists["Прочие"]["Неизвестно"].append(pl)
+                
+                # Создаем чекбоксы по группам
+                for pergola_type, lamella_groups in grouped_lists.items():
+                    st.write(f"#### {pergola_type}")
+                    
+                    for lamella_size, files in lamella_groups.items():
+                        st.write(f"##### Ламель {lamella_size}")
+                        
+                        for pl in files:
+                            # Отображаем дату изменения вместе с именем файла
+                            modified_date = pl["modified"].strftime("%d.%m.%Y %H:%M")
+                            display_name = f"{pl['name']} (изменен {modified_date})"
+                            
+                            selected = st.checkbox(
+                                display_name,
+                                key=f"select_{pl['name']}",
+                                value=False
+                            )
+                            
+                            if selected:
+                                selected_price_lists[pl["name"]] = pl
+                
+                # Кнопка для массового удаления
+                if selected_price_lists:
+                    st.write(f"Выбрано прайс-листов: {len(selected_price_lists)}")
+                    
+                    if st.button("Удалить выбранные прайс-листы"):
+                        st.warning("⚠️ Вы уверены, что хотите удалить выбранные прайс-листы?")
+                        
+                        confirm_col1, confirm_col2 = st.columns(2)
+                        
+                        with confirm_col1:
+                            if st.button("Да, удалить", key="confirm_mass_delete"):
+                                # Создаем директорию для резервных копий
+                                backup_dir = os.path.join(PRICES_DIR, "backups")
+                                os.makedirs(backup_dir, exist_ok=True)
+                                
+                                success_count = 0
+                                error_count = 0
+                                
+                                for name, pl in selected_price_lists.items():
+                                    try:
+                                        # Создаем резервную копию
+                                        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                                        backup_filename = f"{os.path.splitext(name)[0]}_{timestamp}{os.path.splitext(name)[1]}"
+                                        backup_path = os.path.join(backup_dir, backup_filename)
+                                        
+                                        shutil.copy2(pl["path"], backup_path)
+                                        
+                                        # Удаляем файл
+                                        os.remove(pl["path"])
+                                        
+                                        success_count += 1
+                                    except Exception as e:
+                                        st.error(f"❌ Ошибка при удалении файла {name}: {str(e)}")
+                                        error_count += 1
+                                
+                                if success_count > 0:
+                                    st.success(f"✅ Успешно удалено прайс-листов: {success_count}")
+                                
+                                if error_count > 0:
+                                    st.error(f"❌ Ошибок при удалении: {error_count}")
+                                
+                                # Обновляем список прайс-листов
+                                price_lists = get_price_lists()
+                                st.rerun()
+                        
+                        with confirm_col2:
+                            if st.button("Отмена", key="cancel_mass_delete"):
+                                st.rerun()
+            
             # Создаем DataFrame с информацией о прайс-листах
             price_list_data = [{
                 "Имя файла": pl["name"],
@@ -652,11 +779,20 @@ else:
                 }
             )
             
+            # Создаем форматированные опции для выпадающего списка (с датой изменения)
+            formatted_options = [f"{pl['name']} (изменен {pl['modified'].strftime('%d.%m.%Y %H:%M')})" for pl in price_lists]
+            
+            # Создаем словарь для сопоставления форматированных имен с оригинальными
+            option_mapping = {formatted: pl["name"] for formatted, pl in zip(formatted_options, price_lists)}
+            
             # Выбор файла для просмотра или удаления
-            selected_price_list = st.selectbox(
+            selected_formatted = st.selectbox(
                 "Выберите прайс-лист для просмотра или удаления",
-                options=[pl["name"] for pl in price_lists]
+                options=formatted_options
             )
+            
+            # Получаем оригинальное имя файла
+            selected_price_list = option_mapping.get(selected_formatted)
             
             if selected_price_list:
                 # Находим выбранный прайс-лист
@@ -671,7 +807,7 @@ else:
                         # Загружаем данные из файла
                         try:
                             if selected_price_list.endswith(".csv"):
-                                df = pd.read_csv(selected_pl["path"], sep=";")
+                                df = pd.read_csv(selected_pl["path"], sep=";", on_bad_lines='skip')
                             else:  # Excel файл
                                 df = pd.read_excel(selected_pl["path"])
                             
