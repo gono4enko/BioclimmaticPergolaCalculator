@@ -2097,24 +2097,21 @@ def add_common_script():
     </script>
     """, unsafe_allow_html=True)
 
-# Функция заменена на кастомный компонент smooth_scroll_to из модуля scroll.py
-# Для обратной совместимости оставляем обертку с тем же именем
+# Обновленная функция, использующая виртуальный скролл вместо JavaScript
 def scroll_to_results():
     """
-    Использует кастомный компонент для плавного скролла к элементу с ID "results".
-    Компонент smooth_scroll_to автоматически выполняет скролл к указанному элементу
-    после полной загрузки страницы.
+    Использует механизм виртуального скролла через растущий spacer-элемент.
+    Этот подход не требует JavaScript и работает даже в ограниченных средах.
     """
     # Добавляем отладочное сообщение для трассировки вызовов
     st.markdown("""
     <script>
-        console.log("🔄 DEBUG: Вызвана scroll_to_results(), которая использует компонент smooth_scroll_to");
+        console.log("🔄 DEBUG: Вызвана scroll_to_results(), используется виртуальный скролл");
     </script>
     """, unsafe_allow_html=True)
     
-    # Вызываем функцию из модуля scroll.py, указывая визуальное подсвечивание элемента
-    # для лучшей видимости для пользователя
-    smooth_scroll_to(target_id="results")
+    # Вызываем функцию виртуального скролла из модуля auto_scroll.py
+    create_growing_spacer(trigger=True, max_height=600, step=50, delay=0.01)
 
 def add_smart_device_adaptation():
     """
@@ -2504,9 +2501,8 @@ def main():
         </script>
         """, unsafe_allow_html=True)
         
-        # Инициируем компонент плавного скролла с фиксированной позицией
-        # для дополнительной надежности
-        smooth_scroll_to(target_id=None, fixed_y_position=1000)
+        # Используем виртуальный скролл вместо JavaScript
+        create_growing_spacer(trigger=True, max_height=800, step=50, delay=0.01)
         
         # Сбрасываем флаг, чтобы не устанавливать хеш снова
         st.session_state.set_hash_to_results = False
@@ -2749,23 +2745,18 @@ def main():
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
-        # Если нужна прокрутка к результатам, используем кастомный компонент для плавного скролла
+        # Если нужна прокрутка к результатам, используем виртуальный скролл
         if st.session_state.get('scroll_to_results', False):
             # Добавляем отладочное сообщение
             st.markdown("""
             <script>
-                console.log("🚀 DEBUG: Запущена прокрутка к результатам из обработчика scroll_to_results=True");
+                console.log("🚀 DEBUG: Запущена виртуальная прокрутка к результатам (growing spacer)");
             </script>
             """, unsafe_allow_html=True)
             
-            # Используем компонент для плавного скролла:
-            # 1) Основной вариант - скролл к элементу по ID
-            smooth_scroll_to(target_id="results")
-            
-            # 2) Дополнительный вариант - скролл к фиксированной позиции
-            # Задержка перед запуском второго варианта скролла для избежания конфликтов
-            time.sleep(0.5)
-            smooth_scroll_to(target_id=None, fixed_y_position=800)
+            # Используем виртуальный скролл для плавной прокрутки вниз
+            # Создаем растущий spacer перед блоком результатов
+            create_growing_spacer(trigger=True, max_height=600, step=50, delay=0.01)
             
             # Сбрасываем флаг, чтобы не выполнять скролл при каждом обновлении страницы
             st.session_state.scroll_to_results = False
