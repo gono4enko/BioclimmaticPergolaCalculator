@@ -2063,16 +2063,13 @@ def scroll_to_results():
     </style>
     """, unsafe_allow_html=True)
     
-    # Добавляем плавающую кнопку скролла вниз, которая скрывается при прокрутке к галерее
+    # Добавляем плавающие кнопки скролла с ID для доступа из JavaScript
     st.markdown("""
-    <a href="#final-price-target" class="fixed-button down" style="display: block;">
+    <a href="#final-price-target" id="btnScrollDown" class="fixed-button down" style="display: block;">
         К результату ↓
     </a>
-    """, unsafe_allow_html=True)
     
-    # Добавляем плавающую кнопку скролла вверх, которая появляется при прокрутке к галерее
-    st.markdown("""
-    <a href="#calculator-parameters" class="fixed-button up" style="display: none;">
+    <a href="#calculator-parameters" id="btnScrollUp" class="fixed-button up" style="display: none;">
         К параметрам ↑
     </a>
     """, unsafe_allow_html=True)
