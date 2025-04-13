@@ -1294,11 +1294,11 @@ def render_results(results):
     options_price = total_price - base_price
     
     # Отображаем акции и считаем скидку перед отображением результатов
-    st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
+    # Удален лишний отступ перед заголовком
     # Переместили заголовок акций и скидок наверх, перед блоком результатов расчета
     st.markdown("""
-    <div style='width:85%; margin:0 auto; margin-top: 0;'>
-        <h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 0; margin-bottom: 15px; text-align: center;'>Акции и скидки</h3>
+    <div style='width:85%; margin:0 auto; margin-top: 0; margin-bottom: 0;'>
+        <h3 style='font-size: 2.0rem; font-weight: 600; color: #0066cc; margin-top: 0; margin-bottom: 10px; text-align: center;'>Акции и скидки</h3>
     </div>
     """, unsafe_allow_html=True)
     
