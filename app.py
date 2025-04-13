@@ -2595,8 +2595,15 @@ def main():
     st.set_page_config(
         page_title="Калькулятор пергол DecoLife",
         page_icon="🏠",
-        layout="centered"  # Изменено с "wide" на "centered" для более узкого интерфейса
+        layout="centered",  # Изменено с "wide" на "centered" для более узкого интерфейса
+        initial_sidebar_state="collapsed"  # Боковая панель будет свернута по умолчанию
     )
+    
+    # Импортируем компоненты для аутентификации администратора
+    from components.admin_auth import admin_login_form
+    
+    # Добавляем форму авторизации в боковую панель
+    admin_login_form(location="sidebar")
     
     # Добавляем глобальные CSS-стили для улучшения скролла и анимаций
     st.markdown("""
