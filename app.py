@@ -1427,8 +1427,8 @@ def render_results(results):
             is_final_without_discount = "Итоговая стоимость:" in item[0]
             
             if is_final_with_discount:
-                # Стиль для итоговой строки СО скидкой (зеленый)
-                html_table += '<tr style="background-color:#e0ffea;">'
+                # Стиль для итоговой строки СО скидкой (зеленый) с якорем для скролла
+                html_table += '<tr id="final-price-target" style="background-color:#e0ffea;">'
                 html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #1b5e20; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
                 
                 # Применяем специальный класс для значения "Итоговая стоимость со скидкой"
@@ -2031,9 +2031,9 @@ def scroll_to_results():
     </style>
     """, unsafe_allow_html=True)
     
-    # Добавляем скрытую кнопку для скролла (появится, если автоскролл не сработает)
+    # Добавляем постоянно видимую кнопку для ручного скролла
     st.markdown("""
-    <div id="scrollButton" class="scroll-button" onclick="smoothScrollToResults()">
+    <div id="scrollButton" class="scroll-button visible" onclick="smoothScrollToResults()">
         К результату ↓
     </div>
     """, unsafe_allow_html=True)
@@ -2122,31 +2122,61 @@ def scroll_to_results():
         console.log('Scheduling scroll attempts...');
         setTimeout(() => attemptScroll(0, 8), 300);
         
-        // Дополнительная попытка через 3 секунды для случаев медленной загрузки
+        // Дополнительная попытка через 6 секунд для случаев медленной загрузки
         setTimeout(() => {
             // Проверяем, возможно элемент уже появился, но прокрутка не сработала
             if (document.getElementById('final-price-target')) {
-                console.log('Final attempt - element exists');
+                console.log('Long timeout final attempt - final-price-target found');
                 smoothScrollToResults();
             } else {
-                console.log('Final attempt - trying approximate scroll');
-                // Если целевой элемент все еще не найден, скроллим примерно в середину
-                window.scrollTo({
-                    top: document.body.scrollHeight * 0.5,
-                    behavior: 'smooth'
-                });
+                // Ищем элементы по более широким критериям
+                const priceElements = Array.from(document.querySelectorAll('div, p, h1, h2, h3, h4, span'))
+                    .filter(el => el.textContent && (
+                        el.textContent.includes('руб.') || 
+                        el.textContent.includes('₽') ||
+                        el.textContent.includes('Итого') ||
+                        el.textContent.includes('Итоговая стоимость') || 
+                        el.textContent.includes('со скидкой')
+                    ));
                 
-                // Показываем кнопку для ручного скролла
-                const scrollButton = document.getElementById('scrollButton');
-                if (scrollButton) {
-                    scrollButton.classList.add('visible');
-                    // Скрываем кнопку через 15 секунд
-                    setTimeout(() => {
-                        scrollButton.classList.remove('visible');
-                    }, 15000);
+                if (priceElements.length > 0) {
+                    console.log('Long timeout final attempt - found price element by text content');
+                    priceElements[0].scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    
+                    // Визуально выделяем найденный элемент
+                    try {
+                        const originalBackground = priceElements[0].style.backgroundColor;
+                        priceElements[0].style.transition = 'background-color 0.5s ease';
+                        priceElements[0].style.backgroundColor = 'rgba(255, 252, 127, 0.4)';
+                        setTimeout(() => {
+                            priceElements[0].style.backgroundColor = originalBackground;
+                        }, 2000);
+                    } catch (e) {
+                        console.error('Error highlighting element:', e);
+                    }
+                } else {
+                    console.log('Long timeout final attempt - using approximate scroll');
+                    // Если ничего не найдено, прокручиваем на 60% высоты страницы
+                    window.scrollTo({
+                        top: document.body.scrollHeight * 0.6,
+                        behavior: 'smooth'
+                    });
                 }
             }
-        }, 3000);
+        }, 6000);
+        
+        // Ещё одна попытка через 10 секунд (сверхдолгий таймаут)
+        setTimeout(() => {
+            console.log('Super long timeout final attempt - last resort scrolling');
+            // Просто прокручиваем в предполагаемое место результатов
+            window.scrollTo({
+                top: document.body.scrollHeight * 0.65,
+                behavior: 'smooth'
+            });
+        }, 10000);
     </script>
     """, unsafe_allow_html=True)
 
