@@ -42,14 +42,16 @@ def inject_direct_buttons():
         background-color: #0066cc;
     }
     
-    /* Скрываем все стандартные кнопки */
-    div[data-testid="stHorizontalBlock"] button {
+    /* Скрываем только определенные кнопки */
+    /* Ищем только те кнопки в горизонтальных блоках, которые содержат эмодзи ✏️ или ⬇️ */
+    div[data-testid="stHorizontalBlock"] button:has(div:contains("✏️")), 
+    div[data-testid="stHorizontalBlock"] button:has(div:contains("⬇️")) {
         display: none !important;
     }
     
-    /* Скрываем верхние кнопки с эмодзи */
-    button:has(div:contains("✏️")), 
-    button:has(div:contains("⬇️")) {
+    /* Скрываем верхние кнопки с эмодзи, но не другие функциональные кнопки */
+    button:has(div:contains("✏️ Изменить размеры")), 
+    button:has(div:contains("⬇️ К результатам")) {
         display: none !important;
     }
     
@@ -119,13 +121,34 @@ def inject_direct_buttons():
                 const calcButtons = Array.from(document.querySelectorAll('button'));
                 let calcButton = null;
                 
+                // Сначала ищем основную кнопку расчета
                 for (const btn of calcButtons) {
                     if (btn.innerText && (
                         btn.innerText.includes('Рассчитать') || 
-                        btn.innerText.includes('Расчет')
+                        btn.innerText.includes('Расчет') ||
+                        btn.innerText.includes('Рассчитайте') ||
+                        btn.innerText.includes('РАССЧИТАТЬ') || 
+                        btn.innerText.includes('Посчитать')
                     )) {
                         calcButton = btn;
                         break;
+                    }
+                }
+                
+                // Если не нашли, ищем синюю кнопку (стиль primary)
+                if (!calcButton) {
+                    calcButton = document.querySelector('button[kind="primary"]');
+                }
+                
+                // Если и это не сработало, пробуем найти большую зеленую кнопку
+                if (!calcButton) {
+                    for (const btn of calcButtons) {
+                        if (getComputedStyle(btn).backgroundColor.includes('green') || 
+                            getComputedStyle(btn).backgroundColor.includes('rgb(40, 167, 69)') ||
+                            btn.classList.contains('stButton')) {
+                            calcButton = btn;
+                            break;
+                        }
                     }
                 }
                 
