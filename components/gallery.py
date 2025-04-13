@@ -148,16 +148,23 @@ def display_installation_counter():
     # Нулевой отступ перед счетчиком
     st.markdown("<div style='height: 0px;'></div>", unsafe_allow_html=True)
     
+    # Импортируем модуль для определения текущей акции и соответствующего цвета
+    from config.promotions import get_current_season, SEASON_COLORS
+    
+    # Получаем текущий сезон и цвет фона для счетчика
+    current_season = get_current_season()
+    background_color = SEASON_COLORS.get(current_season, "#004B9A")  # Используем сезонный цвет или синий по умолчанию
+    
     # Создаем контейнер с красивой анимацией и стилем, согласованным со статьями
     counter_html = f"""
     <div class="installation-counter">
-        <div class="counter-number">Более {count} пергол</div>
+        <div class="counter-number">{count} пергол</div>
         <div class="counter-label">установлено в 2025 году</div>
     </div>
     
     <style>
     .installation-counter {{
-        background-color: #004B9A;
+        background-color: {background_color};
         color: white;
         padding: 12px;
         border-radius: 8px;
