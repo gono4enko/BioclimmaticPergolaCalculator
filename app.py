@@ -3189,6 +3189,8 @@ def main():
         width: 100% !important;
         display: flex !important;
         justify-content: center !important;
+        align-items: center !important; /* Добавлено для вертикального центрирования */
+        height: 60px !important; /* Задаем фиксированную высоту */
     }
     
     /* Стили для текста внутри кнопки */
@@ -3197,6 +3199,9 @@ def main():
         overflow: visible !important;
         text-overflow: clip !important;
         display: inline-block !important;
+        margin: auto !important; /* Центрирование по вертикали */
+        padding: 0 !important; /* Убираем отступы */
+        line-height: 1 !important; /* Уменьшаем межстрочный интервал */
     }
     </style>
     """, unsafe_allow_html=True)
