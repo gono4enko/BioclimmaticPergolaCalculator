@@ -1983,10 +1983,10 @@ def send_page_height_to_parent():
 
 def scroll_to_results():
     """
-    Добавляет HTML-код с автоматической прокруткой к якорю результатов.
-    Использует прямой переход по URL с якорем для более надежной работы.
+    Добавляет JavaScript для плавной прокрутки к результатам с многократными попытками.
+    Оптимизировано для Streamlit с учетом задержки отрисовки компонентов.
     """
-    # Сначала добавим базовые стили для нашего якоря и анимации подсветки
+    # Добавляем стили для подсветки и кнопки скролла
     st.markdown("""
     <style>
     /* Стили для подсветки результата */
@@ -2006,45 +2006,147 @@ def scroll_to_results():
         scroll-margin-top: 100px;
         display: block;
     }
+    
+    /* Стили для кнопки скролла */
+    .scroll-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        padding: 10px 15px;
+        background-color: #0066cc;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .scroll-button.visible {
+        opacity: 1;
+    }
     </style>
     """, unsafe_allow_html=True)
     
-    # Теперь добавим мета-тег для принудительного обновления страницы при переходе к якорю
-    # Это заставит браузер перерисовать страницу и выполнить скролл
+    # Добавляем скрытую кнопку для скролла (появится, если автоскролл не сработает)
     st.markdown("""
-    <meta http-equiv="refresh" content="0.5;URL='#final-price-target'">
-    """, unsafe_allow_html=True)
-    
-    # Добавим видимую кнопку для ручного скролла (на случай, если автоматический не сработает)
-    st.markdown("""
-    <div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-        <a href="#final-price-target" 
-           style="display: inline-block; padding: 10px 15px; 
-                  background-color: #0066cc; color: white; 
-                  text-decoration: none; border-radius: 5px;
-                  font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-            К результату ↓
-        </a>
+    <div id="scrollButton" class="scroll-button" onclick="smoothScrollToResults()">
+        К результату ↓
     </div>
     """, unsafe_allow_html=True)
     
-    # Добавим JavaScript только для подсветки результата, без ненадежного автоскролла
+    # Добавляем JavaScript для надежного скролла и подсветки
     st.markdown("""
     <script>
-        // Функция для подсветки результата
-        function highlightResult() {
+        // Функция для плавной прокрутки к элементу
+        function smoothScrollToResults() {
+            console.log('Starting smooth scroll to results...');
+            
             // Целевой элемент - блок с итоговой стоимостью со скидкой
             const targetElement = document.getElementById('final-price-target');
             
             if (targetElement) {
-                console.log('Found final price target element, highlighting...');
-                // Добавляем класс для анимации
+                console.log('Found final price target element, scrolling...');
+                
+                // Плавная прокрутка к элементу
+                targetElement.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                
+                // Подсветка элемента
                 targetElement.classList.add('highlight-result');
+                
+                return true;
+            }
+            
+            // Альтернативный поиск результатов в заголовках, если якорь не найден
+            console.log('Target not found, searching for result headings...');
+            const resultHeadings = Array.from(document.querySelectorAll('h2, h3, div'))
+                .filter(el => el.textContent && (
+                    el.textContent.includes('Итоговая стоимость') || 
+                    el.textContent.includes('Результаты расчета')
+                ));
+            
+            if (resultHeadings.length > 0) {
+                console.log('Found result heading, scrolling...');
+                resultHeadings[0].scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                return true;
+            }
+            
+            // Если ничего не найдено, скроллим приблизительно в нужное место
+            console.log('No targets found, using approximate scroll');
+            window.scrollTo({
+                top: document.body.scrollHeight * 0.6, // Примерно 60% от высоты страницы
+                behavior: 'smooth'
+            });
+            
+            return false;
+        }
+        
+        // Функция для попыток скролла с увеличивающимися интервалами
+        function attemptScroll(attempts = 0, maxAttempts = 8) {
+            if (attempts >= maxAttempts) {
+                console.log('Max scroll attempts reached, showing manual button');
+                // Показываем кнопку для ручного скролла
+                const scrollButton = document.getElementById('scrollButton');
+                if (scrollButton) {
+                    scrollButton.classList.add('visible');
+                    // Скрываем кнопку через 15 секунд
+                    setTimeout(() => {
+                        scrollButton.classList.remove('visible');
+                    }, 15000);
+                }
+                return;
+            }
+            
+            // Проверяем наличие целевого элемента
+            if (document.getElementById('final-price-target')) {
+                console.log(`Found target on attempt ${attempts + 1}, scrolling...`);
+                smoothScrollToResults();
+            } else {
+                console.log(`Target not found on attempt ${attempts + 1}, scheduling next attempt...`);
+                // Увеличиваем интервал с каждой попыткой (300мс, 500мс, 800мс, 1200мс и т.д.)
+                const delay = 300 + (attempts * 200);
+                setTimeout(() => attemptScroll(attempts + 1, maxAttempts), delay);
             }
         }
         
-        // Выполняем подсветку с небольшой задержкой
-        setTimeout(highlightResult, 1000);
+        // Запускаем попытки скролла с короткой задержкой
+        console.log('Scheduling scroll attempts...');
+        setTimeout(() => attemptScroll(0, 8), 300);
+        
+        // Дополнительная попытка через 3 секунды для случаев медленной загрузки
+        setTimeout(() => {
+            // Проверяем, возможно элемент уже появился, но прокрутка не сработала
+            if (document.getElementById('final-price-target')) {
+                console.log('Final attempt - element exists');
+                smoothScrollToResults();
+            } else {
+                console.log('Final attempt - trying approximate scroll');
+                // Если целевой элемент все еще не найден, скроллим примерно в середину
+                window.scrollTo({
+                    top: document.body.scrollHeight * 0.5,
+                    behavior: 'smooth'
+                });
+                
+                // Показываем кнопку для ручного скролла
+                const scrollButton = document.getElementById('scrollButton');
+                if (scrollButton) {
+                    scrollButton.classList.add('visible');
+                    // Скрываем кнопку через 15 секунд
+                    setTimeout(() => {
+                        scrollButton.classList.remove('visible');
+                    }, 15000);
+                }
+            }
+        }, 3000);
     </script>
     """, unsafe_allow_html=True)
 
