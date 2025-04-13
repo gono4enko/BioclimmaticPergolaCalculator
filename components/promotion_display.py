@@ -235,72 +235,113 @@ def display_urgent_discount_panel(urgent_promotion: Optional[Dict] = None) -> bo
         """, unsafe_allow_html=True)
         
         # Обратный отсчет с помощью JavaScript
-        # Создаем уникальный ID для скрипта и элемента, чтобы избежать конфликтов
+        # Генерируем уникальный ID для таймера, который не будет конфликтовать при обновлении страницы
         timer_id = f"countdown_{int(time.time() * 1000)}"
+        
+        # Разделяем исходное значение времени для отображения в HTML
+        if days > 0:
+            display_html = f"{days} дн. {hours:02d}:{minutes:02d}:{seconds:02d}"
+        else:
+            display_html = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+        
+        # Формируем метку времени для JavaScript - когда таймер должен закончиться
+        end_timestamp = int(time.time() * 1000) + total_ms
         
         st.markdown(f"""
         <script>
-            // Немедленно вызываемая функция для изоляции переменных
+            // Создаем функцию, которая будет мгновенно выполнена
             (function() {{
-                // Устанавливаем начальное время
-                var countDownDate = new Date().getTime() + {total_ms};
+                // Устанавливаем конечное время (timestamp в миллисекундах)
+                var endTime = {end_timestamp};
                 
                 // Функция для форматирования чисел с ведущим нулем
                 function formatNumber(num) {{
                     return num < 10 ? '0' + num : num;
                 }}
                 
-                // Ждем, когда DOM будет готов
-                document.addEventListener('DOMContentLoaded', function() {{
-                    // Запускаем обновление таймера только при появлении элемента
+                // Функция для обновления таймера
+                function updateTimer() {{
+                    // Находим элемент таймера
                     var countdownElement = document.getElementById("countdown");
                     if (!countdownElement) {{
                         console.error("Элемент таймера не найден!");
                         return;
                     }}
                     
-                    // Обновляем таймер каждую секунду
-                    var x = setInterval(function() {{
-                        var now = new Date().getTime();
-                        var distance = countDownDate - now;
-                        
-                        // Расчеты для дней, часов, минут и секунд
-                        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                        
-                        // Отображаем результат
-                        var displayText = "";
-                        if (days > 0) {{
-                            displayText = days + " дн. " + formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
-                        }} else {{
-                            displayText = formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
-                        }}
-                        
-                        countdownElement.innerHTML = displayText;
-                        
-                        // Если время истекло
-                        if (distance < 0) {{
-                            clearInterval(x);
-                            countdownElement.innerHTML = "ВРЕМЯ ИСТЕКЛО";
-                            
-                            // Перезагружаем страницу для обновления акции
-                            setTimeout(function() {{
-                                window.parent.postMessage({{
-                                    type: "streamlit:componentRerun"
-                                }}, "*");
-                            }}, 5000); // Перезагрузка через 5 секунд
-                        }}
-                    }}, 1000);
-                }});
+                    // Получаем текущее время
+                    var now = new Date().getTime();
+                    
+                    // Вычисляем оставшееся время
+                    var distance = endTime - now;
+                    
+                    // Если время истекло
+                    if (distance < 0) {{
+                        countdownElement.innerHTML = "ВРЕМЯ ИСТЕКЛО";
+                        // Через 5 секунд перезагружаем страницу
+                        setTimeout(function() {{
+                            window.parent.postMessage({{
+                                type: "streamlit:componentRerun"
+                            }}, "*");
+                        }}, 5000);
+                        return;
+                    }}
+                    
+                    // Расчеты для дней, часов, минут и секунд
+                    var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    
+                    // Форматируем время для отображения
+                    var displayText = "";
+                    if (days > 0) {{
+                        displayText = days + " дн. " + formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
+                    }} else {{
+                        displayText = formatNumber(hours) + ":" + formatNumber(minutes) + ":" + formatNumber(seconds);
+                    }}
+                    
+                    // Обновляем содержимое таймера
+                    countdownElement.innerHTML = displayText;
+                }}
                 
-                // Альтернативный запуск для Streamlit (может загружаться динамически)
-                if (document.readyState === 'complete' || document.readyState === 'interactive') {{
-                    setTimeout(function() {{
-                        var event = new Event('DOMContentLoaded');
-                        document.dispatchEvent(event);
-                    }}, 100);
+                // Запускаем сразу для начальной инициализации
+                updateTimer();
+                
+                // Запускаем обновление таймера каждую секунду
+                setInterval(updateTimer, 1000);
+                
+                // Добавляем обработчик для обновления при загрузке DOM
+                document.addEventListener('DOMContentLoaded', updateTimer);
+                
+                // Запускаем обновление таймера при прокрутке страницы (это поможет для iframe)
+                window.addEventListener('scroll', updateTimer);
+                
+                // Запускаем обновление таймера при фокусе на окне
+                window.addEventListener('focus', updateTimer);
+                
+                // Дополнительные обработчики для Streamlit iframe
+                try {{
+                    // Отправляем сообщение родительскому окну (если оно есть)
+                    window.parent.postMessage({{
+                        type: "timerStarted",
+                        timerId: "{timer_id}"
+                    }}, "*");
+                    
+                    // Настраиваем обработчик сообщений
+                    window.addEventListener('message', function(event) {{
+                        if (event.data && event.data.type === "updateTimer") {{
+                            updateTimer();
+                        }}
+                    }});
+                    
+                    // Запускаем обновление при появлении потока данных Streamlit
+                    var streamlitDocReadyOriginal = window.streamlitDocReady;
+                    window.streamlitDocReady = function() {{
+                        if (streamlitDocReadyOriginal) streamlitDocReadyOriginal();
+                        updateTimer();
+                    }};
+                }} catch(e) {{
+                    console.log("Не удалось настроить обработчики iframe:", e);
                 }}
             }})();
         </script>
