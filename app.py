@@ -695,8 +695,15 @@ def perform_calculation(dimensions, options):
             # Количество устройств для пульта ДУ (привод + освещение)
             devices_count = drive_count
             if "white_led" in lighting_options or "rgb_led" in lighting_options:
-                # Добавляем блоки управления освещением - по одному на каждый модуль
-                devices_count += modules  # Каждый модуль требует отдельного канала для освещения
+                # Добавляем блоки управления освещением - по одному на каждый тип подсветки
+                # Для одной перголы независимо от количества модулей используется
+                # один блок управления для каждого типа подсветки
+                led_controllers = 0
+                if "white_led" in lighting_options:
+                    led_controllers += 1
+                if "rgb_led" in lighting_options:
+                    led_controllers += 1
+                devices_count += led_controllers
             
             # Определяем тип и стоимость пульта ДУ
             remote_name, remote_price = get_remote_control(devices_count)
@@ -722,10 +729,20 @@ def perform_calculation(dimensions, options):
             lighting_cost = 0
             led_types = []
             
-            # Блок управления освещением - по 1 блоку на каждый модуль
+            # Блок управления освещением - 1 блок на каждый тип подсветки
             if has_lighting:
-                # Количество блоков управления зависит от количества модулей
-                controllers_count = modules
+                # Для одной перголы независимо от количества модулей используется
+                # один блок управления для каждого типа подсветки
+                controllers_count = 0
+                
+                # Если есть белая подсветка - добавляем один блок управления
+                if "white_led" in lighting_options:
+                    controllers_count += 1
+                
+                # Если есть RGB подсветка - добавляем ещё один блок управления
+                if "rgb_led" in lighting_options:
+                    controllers_count += 1
+                
                 total_controller_price = LIGHTING_PRICES["controller"] * controllers_count
                 lighting_cost += total_controller_price
                 results["items"].append({
@@ -833,15 +850,22 @@ def perform_calculation(dimensions, options):
         
         # Освещение
         if has_lighting:
-            # Добавляем блок управления освещением - по 1 блоку на каждый модуль
+            # Определяем количество блоков управления освещением (по одному на каждый тип подсветки)
+            led_controllers = 0
+            if "white_led" in lighting_options:
+                led_controllers += 1
+            if "rgb_led" in lighting_options:
+                led_controllers += 1
+                
+            # Добавляем блок управления освещением - по 1 блоку на каждый тип подсветки
             specification.append({
                 "name": "Блок управления освещением Somfy RTS Dimmer",
-                "count": f"{modules} шт.",
+                "count": f"{led_controllers} шт.",
                 "price": ""
             })
             
             # Увеличиваем счетчик устройств для определения типа пульта
-            lighting_devices_count = modules  # По 1 блоку управления на каждый модуль
+            lighting_devices_count = led_controllers  # По 1 блоку управления на каждый тип подсветки
             
             if "white_led" in lighting_options:
                 specification.append({
