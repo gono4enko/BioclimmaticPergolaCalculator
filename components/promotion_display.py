@@ -497,10 +497,8 @@ def promotions_section(pergola_type: str, width: float, length: float,
     Returns:
         float: Сумма скидки
     """
-    # Получаем промокод, если введен
+    # Промокоды отключены
     promo_code = None
-    if "promo_code_applied" in st.session_state and st.session_state.promo_code_applied:
-        promo_code = st.session_state.promo_code
     
     # Акция быстрого решения отключена
     quick_decision_activated = False
@@ -531,11 +529,7 @@ def promotions_section(pergola_type: str, width: float, length: float,
     if season_promo:
         display_urgent_discount_panel(season_promo)
     
-    # Поле для ввода промокода
-    input_promo_code = promo_code_input()
-    if input_promo_code and input_promo_code != promo_code:
-        # Если промокод был изменен, обновляем список акций
-        st.rerun()
+    # Поле для ввода промокода отключено
     
     # Рассчитываем итоговую скидку на основе применимых акций
     total_discount, applied_promotions_list = promotions.calculate_discount(applicable_promotions, base_price, options_price)
