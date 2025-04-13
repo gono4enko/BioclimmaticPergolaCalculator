@@ -2764,10 +2764,10 @@ def main():
     options = render_options_form()
     
     # Добавляем отступ перед кнопкой расчета
-    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
     
-    # Кнопка для расчета с улучшенным стилем
-    if st.button("Рассчитать стоимость", type="primary", use_container_width=True):
+    # Используем пульсирующую анимированную кнопку для расчета
+    if animations.animate_button("Рассчитать стоимость", key="calc_button", animation_class="calculatorButtonPulse"):
         with st.spinner("Выполняется расчет..."):
             # Выводим отладочное сообщение 
             st.markdown("""

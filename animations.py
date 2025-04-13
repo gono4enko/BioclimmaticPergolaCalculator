@@ -317,7 +317,7 @@ def animate_button(button_text, key=None, animation_class="pulseAnimation"):
     /* Анимация пульсации кнопки калькулятора */
     @keyframes calculatorButtonPulse {
         0% { transform: scale(1); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); }
-        50% { transform: scale(1.03); box-shadow: 0 4px 10px rgba(0, 102, 204, 0.3); }
+        50% { transform: scale(1.05); box-shadow: 0 6px 15px rgba(0, 102, 204, 0.4); }
         100% { transform: scale(1); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); }
     }
     
@@ -326,15 +326,18 @@ def animate_button(button_text, key=None, animation_class="pulseAnimation"):
         background-color: #0066cc;
         color: white;
         border: none;
-        border-radius: 5px;
-        padding: 8px 16px;
-        font-size: 16px;
-        height: 50px;
-        line-height: 30px;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-size: 18px;
+        height: 65px;
+        line-height: 40px;
         font-weight: bold;
         width: 100%;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         transition: all 0.3s ease;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        letter-spacing: 0.5px;
     }
     
     /* Стиль при наведении */
