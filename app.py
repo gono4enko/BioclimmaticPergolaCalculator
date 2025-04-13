@@ -1038,26 +1038,37 @@ def render_dimensions_form():
     
     col1, col2 = st.columns(2)
     
+    # Используем значения по умолчанию для максимальных размеров
+    max_width = 15.0
+    max_length = 8.0
+    
+    # Пытаемся получить текущий тип перголы из session_state, если он уже выбран
+    if 'pergola_type' in st.session_state:
+        current_pergola_type = st.session_state.pergola_type
+        if current_pergola_type in MAX_DIMENSIONS:
+            max_width = MAX_DIMENSIONS[current_pergola_type]["width"]
+            max_length = MAX_DIMENSIONS[current_pergola_type]["length"]
+    
     with col1:
         width = st.number_input(
             "Ширина (м)",
             min_value=2.0,
-            max_value=15.0,
+            max_value=max_width,
             value=3.0,
             step=0.5,
             format="%.2f",
-            help="Ширина перголы в метрах (2.0 - 15.0 м)"
+            help=f"Ширина перголы в метрах (2.0 - {max_width} м)"
         )
     
     with col2:
         length = st.number_input(
             "Вынос (м)",
             min_value=2.0,
-            max_value=8.0,
+            max_value=max_length,
             value=4.0,
             step=0.5,
             format="%.2f",
-            help="Глубина (вынос) перголы в метрах (2.0 - 8.0 м)"
+            help=f"Глубина (вынос) перголы в метрах (2.0 - {max_length} м)"
         )
     
     # Определяем количество модулей автоматически по обоим параметрам - ширине и выносу
@@ -1105,7 +1116,9 @@ def render_options_form():
         options=list(PERGOLA_TYPES.keys()),
         format_func=lambda x: PERGOLA_TYPES.get(x, x),
         horizontal=True,
-        label_visibility="collapsed"  # Скрываем стандартный заголовок
+        label_visibility="collapsed",  # Скрываем стандартный заголовок
+        on_change=lambda: None,
+        key="pergola_type"  # Ключ для session_state, чтобы форма размеров могла получить текущий тип
     )
     
     # Тип ламелей - зависит от выбранного типа перголы
