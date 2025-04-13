@@ -159,39 +159,44 @@ def display_installation_counter():
     .installation-counter {{
         background-color: #004B9A;
         color: white;
-        padding: 15px;
-        border-radius: 10px;
+        padding: 12px;
+        border-radius: 8px;
         text-align: center;
-        margin: 5px 20px 20px 20px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        margin: 5px 20px 10px 20px;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
         animation: pulse 2s infinite;
         z-index: 1000;
         position: relative;
     }}
     
     .counter-number {{
-        font-size: 3.5rem;
+        font-size: 2.8rem;
         font-weight: bold;
-        margin-bottom: 5px;
+        margin-bottom: 3px;
     }}
     
     .counter-label {{
-        font-size: 1.4rem;
+        font-size: 1.2rem;
     }}
     
     @keyframes pulse {{
         0% {{ transform: scale(1); }}
-        50% {{ transform: scale(1.03); }}
+        50% {{ transform: scale(1.02); }}
         100% {{ transform: scale(1); }}
     }}
     
     @media (max-width: 768px) {{
         .installation-counter {{
-            margin: 10px 15px 25px 15px;
+            margin: 8px 15px 10px 15px;
+            padding: 10px;
         }}
         
         .counter-number {{
-            font-size: 2.8rem;
+            font-size: 2.4rem;
+        }}
+        
+        .counter-label {{
+            font-size: 1.1rem;
         }}
     }}
     </style>
@@ -278,8 +283,8 @@ def create_gallery_html(image_urls, captions):
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 15px;
-            margin: 10px auto 30px auto;
+            gap: 10px;
+            margin: 8px auto 20px auto;
             padding: 0 10px;
             text-align: center;
             max-width: 1200px;
@@ -293,7 +298,7 @@ def create_gallery_html(image_urls, captions):
             overflow: hidden;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             display: inline-block;
         }
         
@@ -326,12 +331,18 @@ def create_gallery_html(image_urls, captions):
             .gallery-item {
                 width: 100%;
                 max-width: none;
+                margin-bottom: 8px;
             }
             
             .gallery-container {
-                padding: 0 15px;
-                margin: 10px auto 25px auto;
+                padding: 0 10px;
+                margin: 5px auto 15px auto;
                 max-width: 95%;
+                gap: 8px;
+            }
+            
+            .gallery-image {
+                height: 450px; /* Немного меньшая высота для мобильных устройств */
             }
         }
         </style>
@@ -537,8 +548,8 @@ def display_gallery_section():
         st.markdown("""
         <style>
         .gallery-description {
-            padding: 15px 20px;
-            margin-bottom: 20px;
+            padding: 10px 20px;
+            margin-bottom: 10px;
             font-size: 1.1rem;
             line-height: 1.5;
             color: #333;
@@ -548,8 +559,8 @@ def display_gallery_section():
             font-size: 1.8rem;
             color: #0066cc;
             font-weight: 600;
-            margin: 15px 20px;
-            padding-bottom: 10px;
+            margin: 10px 20px;
+            padding-bottom: 5px;
             text-align: center;
         }
         </style>
@@ -557,8 +568,8 @@ def display_gallery_section():
         
         # Заголовок раздела в стиле статей с выравниванием по центру
         st.markdown("""
-        <div style="padding: 15px 20px 0px 20px; max-width: 100%; text-align: center;">
-            <h1 style="font-size: 2.2rem; color: #0066cc; font-weight: 600; margin-bottom: 5px; text-align: center;">
+        <div style="padding: 10px 20px 0px 20px; max-width: 100%; text-align: center;">
+            <h1 style="font-size: 2rem; color: #0066cc; font-weight: 600; margin-bottom: 3px; text-align: center;">
                 Наша галерея и проекты
             </h1>
         </div>
