@@ -2097,21 +2097,39 @@ def add_common_script():
     </script>
     """, unsafe_allow_html=True)
 
-# Обновленная функция, использующая виртуальный скролл вместо JavaScript
+# Обновленная функция, использующая скрипт JavaScript для прокрутки к якорю
 def scroll_to_results():
     """
-    Использует механизм виртуального скролла через растущий spacer-элемент.
-    Этот подход не требует JavaScript и работает даже в ограниченных средах.
+    Использует JavaScript для прокрутки к элементу с ID "scroll-target".
     """
     # Добавляем отладочное сообщение для трассировки вызовов
     st.markdown("""
     <script>
-        console.log("🔄 DEBUG: Вызвана scroll_to_results(), используется виртуальный скролл");
+        console.log("🔄 DEBUG: Вызвана scroll_to_results(), используется скролл к якорю");
     </script>
     """, unsafe_allow_html=True)
     
-    # Вызываем функцию виртуального скролла из модуля auto_scroll.py
-    create_growing_spacer(trigger=True, max_height=600, step=50, delay=0.01)
+    # Создаем якорь перед результатами, если его еще нет
+    st.markdown('<div id="scroll-target"></div>', unsafe_allow_html=True)
+    
+    # Добавляем скрипт для скролла к якорю
+    st.markdown("""
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const target = document.getElementById('scroll-target');
+                if (target) {
+                    setTimeout(() => {
+                        target.scrollIntoView({ behavior: 'auto', block: 'start' });
+                        console.log("🚀 Выполнен скролл к якорю #scroll-target");
+                    }, 300);
+                }
+            } catch(e) {
+                console.error("Ошибка скролла:", e);
+            }
+        });
+    </script>
+    """, unsafe_allow_html=True)
 
 def add_smart_device_adaptation():
     """
@@ -2501,8 +2519,21 @@ def main():
         </script>
         """, unsafe_allow_html=True)
         
-        # Используем виртуальный скролл вместо JavaScript
-        create_growing_spacer(trigger=True, max_height=800, step=50, delay=0.01)
+        # Добавляем упрощенный JavaScript для прокрутки к якорю
+        st.markdown("""
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                try {
+                    const target = document.getElementById('scroll-target');
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'auto', block: 'start' });
+                    }
+                } catch(e) {
+                    console.error("Ошибка скролла:", e);
+                }
+            });
+        </script>
+        """, unsafe_allow_html=True)
         
         # Сбрасываем флаг, чтобы не устанавливать хеш снова
         st.session_state.set_hash_to_results = False
@@ -2739,24 +2770,44 @@ def main():
     
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.2rem; margin-bottom: 0.2rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+    
+    # Если был запрос на скролл к результатам, добавляем якорный div перед блоком результатов
+    if st.session_state.get('scroll_to_results', False):
+        # Добавляем отладочное сообщение
+        st.markdown("""
+        <script>
+            console.log("🚀 DEBUG: Добавление якоря для скролла к результатам");
+        </script>
+        """, unsafe_allow_html=True)
+        
+        # Создаем якорь для скролла перед блоком результатов
+        st.markdown('<div id="scroll-target"></div>', unsafe_allow_html=True)
         
     # Отображаем результаты (если есть)
     if 'results' in st.session_state:
         # Показываем общий результат и детальную информацию
         render_results(st.session_state.results)
         
-        # Если нужна прокрутка к результатам, используем виртуальный скролл
+        # Если был запрос на скролл к результатам, добавляем автоматический скрипт
         if st.session_state.get('scroll_to_results', False):
-            # Добавляем отладочное сообщение
             st.markdown("""
             <script>
-                console.log("🚀 DEBUG: Запущена виртуальная прокрутка к результатам (growing spacer)");
+                // Простой прямой скролл к якорю
+                document.addEventListener('DOMContentLoaded', function() {
+                    try {
+                        const target = document.getElementById('scroll-target');
+                        if (target) {
+                            setTimeout(() => {
+                                target.scrollIntoView({ behavior: 'auto', block: 'start' });
+                                console.log("🚀 Выполнен скролл к якорю #scroll-target");
+                            }, 300);
+                        }
+                    } catch(e) {
+                        console.error("Ошибка скролла:", e);
+                    }
+                });
             </script>
             """, unsafe_allow_html=True)
-            
-            # Используем виртуальный скролл для плавной прокрутки вниз
-            # Создаем растущий spacer перед блоком результатов
-            create_growing_spacer(trigger=True, max_height=600, step=50, delay=0.01)
             
             # Сбрасываем флаг, чтобы не выполнять скролл при каждом обновлении страницы
             st.session_state.scroll_to_results = False
