@@ -3154,8 +3154,8 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Создаем кнопку по центру с помощью колонок
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # Создаем кнопку по центру (с небольшим смещением) с помощью колонок
+    col1, col2, col3 = st.columns([1.2, 1.6, 1.2])
     
     # Помещаем кнопку в среднюю колонку
     with col2:
@@ -3188,8 +3188,8 @@ def main():
                 st.session_state.results = results
                 st.session_state.options = options
                 
-                # Добавляем флаг, что нужно прокрутить к результатам
-                st.session_state.scroll_to_results = True
+                # Отключаем автоматический скролл к результатам
+                st.session_state.scroll_to_results = False
                 
                 # Сбрасываем флаг описания, чтобы оно обновлялось при каждом новом расчете
                 st.session_state.description_shown = False
