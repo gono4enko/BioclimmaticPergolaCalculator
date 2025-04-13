@@ -1207,32 +1207,19 @@ def render_results(results):
     </script>
     """, unsafe_allow_html=True)
     
-    # Создаем ЭКСТРЕМАЛЬНО заметный якорь для скролла
-    # Делаем его максимально видимым и доступным
+    # Создаем скрытый якорь для скролла
+    # Якорь невидим, но доступен для JavaScript скриптов
     st.markdown('''
     <div id="results" name="results"
          style="position:relative;
                 width:100%;
-                height:70px;  /* Максимально заметная высота */
-                background-color:#FFD700;  /* Золотой фон для максимальной видимости */
-                padding:15px;
-                margin-top:50px;
-                margin-bottom:20px;
-                border:4px solid #0066cc;
-                border-radius:10px;
-                text-align:center;
-                box-shadow: 0 0 20px 5px rgba(0,102,204,0.5);" 
-         class="results-marker ultra-visible-element special-target" 
+                height:1px;  /* Минимальная высота, чтобы якорь не занимал место */
+                margin:0;
+                padding:0;
+                opacity:0;  /* Полностью прозрачный */
+                visibility:hidden;" /* Скрытый, но доступный для скриптов */
+         class="results-marker" 
          data-testid="results-anchor">
-         <!-- Добавляем заметный текст и эмодзи для лучшей видимости -->
-         <span style="font-weight:bold;color:#0066cc;font-size:24px;">
-            ⬇️ РЕЗУЛЬТАТЫ РАСЧЕТА ⬇️
-         </span>
-         <!-- Добавляем дополнительные атрибуты для повышения доступности -->
-         <a href="#results" id="results-link" title="Якорь результатов расчета" 
-            style="position:absolute;width:100%;height:100%;top:0;left:0;z-index:1;">
-            <span style="opacity:0;">Результаты расчета</span>
-         </a>
     </div>
     
     <!-- Дополнительные якоря с разными ID для большей надежности -->
@@ -2510,48 +2497,7 @@ def main():
                     }
                 }, 2000);
                 
-                // 7. Создаем визуальный индикатор прокрутки
-                setTimeout(() => {
-                    try {
-                        const indicator = document.createElement('div');
-                        indicator.style.position = 'fixed';
-                        indicator.style.left = '5px';
-                        indicator.style.top = '50%';
-                        indicator.style.width = '40px';
-                        indicator.style.height = '80px';
-                        indicator.style.backgroundColor = '#0066cc';
-                        indicator.style.opacity = '0.7';
-                        indicator.style.borderRadius = '5px';
-                        indicator.style.zIndex = '9999';
-                        indicator.style.display = 'flex';
-                        indicator.style.alignItems = 'center';
-                        indicator.style.justifyContent = 'center';
-                        indicator.style.color = 'white';
-                        indicator.style.fontSize = '25px';
-                        indicator.style.fontWeight = 'bold';
-                        indicator.style.cursor = 'pointer';
-                        indicator.innerHTML = '&#9660;'; // Стрелка вниз
-                        indicator.title = 'Нажмите для прокрутки к результатам';
-                        
-                        indicator.addEventListener('click', function() {
-                            const resultsBlock = document.getElementById("results");
-                            if (resultsBlock) {
-                                resultsBlock.scrollIntoView({behavior: 'smooth'});
-                            } else {
-                                window.scrollTo({top: 1200, behavior: 'smooth'});
-                            }
-                        });
-                        
-                        document.body.appendChild(indicator);
-                        
-                        // Удаляем индикатор через 8 секунд
-                        setTimeout(() => {
-                            indicator.style.transition = 'opacity 1s';
-                            indicator.style.opacity = '0';
-                            setTimeout(() => indicator.remove(), 1000);
-                        }, 8000);
-                    } catch(e) {}
-                }, 2500);
+                // Визуальный индикатор прокрутки удален
             })();
         </script>
         """, unsafe_allow_html=True)
