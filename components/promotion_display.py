@@ -418,6 +418,8 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
         border-bottom: 1px solid #E0E0E0;
         display: flex;
         justify-content: space-between;
+        padding-left: 25px;
+        padding-right: 25px;
     }
     .discount-item:first-child {
         margin-top: 10px;
@@ -434,12 +436,24 @@ def display_applied_discounts(applied_promotions: List[Dict], total_discount: fl
     .discount-total {
         background-color: #FFFDE7;
         padding: 10px 15px;
+        padding-left: 25px;
+        padding-right: 25px;
         display: flex;
         justify-content: space-between;
         font-weight: bold;
     }
     @media (max-width: 768px) {
-        .discounts-header, .discount-item, .discount-total {
+        .discounts-header {
+            padding: 8px 10px;
+            font-size: 0.8rem;
+        }
+        .discount-item {
+            padding: 8px 10px;
+            padding-left: 15px;
+            padding-right: 15px;
+            font-size: 0.8rem;
+        }
+        .discount-total {
             padding: 8px 10px;
             font-size: 0.8rem;
         }

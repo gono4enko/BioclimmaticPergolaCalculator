@@ -3234,8 +3234,22 @@ def main():
             # Сбрасываем флаг, чтобы не выполнять скролл при каждом обновлении страницы
             st.session_state.scroll_to_results = False
             
+        # Добавляем отладочную информацию о состоянии флага плавающих кнопок
+        st.markdown(f"""
+        <script>
+            console.log("🔍 DEBUG: show_floating_buttons = {st.session_state.get('show_floating_buttons', False)}");
+        </script>
+        """, unsafe_allow_html=True)
+        
         # Добавляем плавающие кнопки после появления результатов
         if st.session_state.get('show_floating_buttons', False):
+            # Выводим отладочное сообщение о добавлении кнопок
+            st.markdown("""
+            <script>
+                console.log("🎯 DEBUG: Добавляем плавающие кнопки");
+            </script>
+            """, unsafe_allow_html=True)
+            
             # Добавляем кнопку навигации к результатам расчета
             add_results_navigation_button()
             
