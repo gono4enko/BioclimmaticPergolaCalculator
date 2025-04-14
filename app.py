@@ -2076,6 +2076,7 @@ def display_formatted_description(description_text):
             color: #333333;
             font-weight: 700; /* Жирный шрифт */
             font-family: inherit; /* Использовать основной шрифт */
+            text-align: center; /* Центрирование заголовков */
         }
         .description-container h3 {
             font-size: 1.9rem; /* Размер для h3 */
@@ -2084,6 +2085,7 @@ def display_formatted_description(description_text):
             color: #333333;
             font-weight: 700; /* Жирный шрифт */
             font-family: inherit; /* Использовать основной шрифт */
+            text-align: center; /* Центрирование заголовков */
         }
         .description-container h4 {
             font-size: 1.7rem; /* Размер для h4 */
@@ -2092,6 +2094,7 @@ def display_formatted_description(description_text):
             color: #333333;
             font-weight: 700; /* Жирный шрифт */
             font-family: inherit; /* Использовать основной шрифт */
+            text-align: center; /* Центрирование заголовков */
         }
         .description-container p {
             margin-bottom: 10px;
