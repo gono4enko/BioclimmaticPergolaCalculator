@@ -2070,30 +2070,34 @@ def display_formatted_description(description_text):
             width: 100%;
         }
         .description-container h1, .description-container h2 {
-            font-size: 3.2rem; /* Увеличенный размер для h1 и h2 */
+            font-size: 2.2rem; /* Размер для h1 и h2 */
             margin-top: 30px;
             margin-bottom: 20px;
             color: #333333;
-            font-weight: 700;
+            font-weight: 700; /* Жирный шрифт */
+            font-family: inherit; /* Использовать основной шрифт */
         }
         .description-container h3 {
-            font-size: 2.86rem; /* Увеличено на 30% от 2.2rem */
+            font-size: 1.9rem; /* Размер для h3 */
             margin-top: 25px;
             margin-bottom: 20px;
             color: #333333;
-            font-weight: 600;
+            font-weight: 700; /* Жирный шрифт */
+            font-family: inherit; /* Использовать основной шрифт */
         }
         .description-container h4 {
-            font-size: 2.34rem; /* Увеличено на 30% от 1.8rem */
+            font-size: 1.7rem; /* Размер для h4 */
             margin-top: 20px;
             margin-bottom: 15px;
             color: #333333;
-            font-weight: 500;
+            font-weight: 700; /* Жирный шрифт */
+            font-family: inherit; /* Использовать основной шрифт */
         }
         .description-container p {
             margin-bottom: 10px;
             line-height: 1.5;
-            font-size: 1.25rem; /* Увеличенный размер параграфов */
+            font-size: 1.25rem; /* Размер параграфов */
+            font-family: inherit; /* Использовать основной шрифт */
         }
         .description-container ul {
             margin-left: 20px;
