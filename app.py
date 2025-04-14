@@ -1251,6 +1251,17 @@ def render_dimensions_form():
     print(f"Текущий тип перголы из session_state: {current_pergola_type}")
     print(f"Установленные максимальные размеры: ширина={max_width}м, длина={max_length}м")
     
+    # Создаем ключи для полей ввода с учетом типа перголы
+    width_key = f"width_input_{current_pergola_type}"
+    length_key = f"length_input_{current_pergola_type}"
+    
+    # Используем on_change для сохранения значений при их изменении
+    def update_width():
+        st.session_state['cached_width'] = st.session_state[width_key]
+    
+    def update_length():
+        st.session_state['cached_length'] = st.session_state[length_key]
+    
     with col1:
         width = st.number_input(
             "Ширина (м)",
@@ -1260,7 +1271,8 @@ def render_dimensions_form():
             step=0.5,
             format="%.2f",
             help=f"Ширина перголы в метрах ({min_width} - {max_width} м)",
-            key=f"width_input_{current_pergola_type}"  # Уникальный ключ для каждого типа перголы
+            key=width_key,  # Уникальный ключ для каждого типа перголы
+            on_change=update_width  # Функция для немедленного обновления значения
         )
     
     with col2:
@@ -1272,10 +1284,11 @@ def render_dimensions_form():
             step=0.5,
             format="%.2f",
             help=f"Глубина (вынос) перголы в метрах ({min_length} - {max_length} м)",
-            key=f"length_input_{current_pergola_type}"  # Уникальный ключ для каждого типа перголы
+            key=length_key,  # Уникальный ключ для каждого типа перголы
+            on_change=update_length  # Функция для немедленного обновления значения
         )
     
-    # Сохраняем выбранные значения в кэш
+    # Обновляем кэш на всякий случай (дублирование для надежности)
     st.session_state['cached_width'] = width
     st.session_state['cached_length'] = length
     
