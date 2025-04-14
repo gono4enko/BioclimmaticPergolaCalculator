@@ -578,7 +578,7 @@ def display_gallery_section():
         st.markdown("""
         <div style="padding: 10px 20px 0px 20px; max-width: 100%; text-align: center;">
             <h1 style="font-size: 2rem; color: #0066cc; font-weight: 600; margin-bottom: 3px; text-align: center;">
-                Наша галерея и проекты
+                Галерея наших работ
             </h1>
         </div>
         """, unsafe_allow_html=True)
