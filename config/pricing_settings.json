@@ -1,6 +1,6 @@
 {
     "euro_rate": 110,
-    "delivery_markup_percent": 9,
+    "delivery_markup_percent": 8,
     "installation_markup_percent": 13,
     "content_order": {
         "gallery": 1,
