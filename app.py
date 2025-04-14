@@ -2211,12 +2211,26 @@ def display_image_with_padding(image_path, caption=None, padding_percent=5):
         
         # Проверяем существование файла
         import os
-        if not os.path.exists(image_path):
-            raise FileNotFoundError(f"Изображение не найдено: {image_path}")
+        
+        # Преобразуем путь в абсолютный, если он относительный
+        # Это поможет при запуске на Replit или в другом окружении
+        if not os.path.isabs(image_path):
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            abs_image_path = os.path.join(base_dir, image_path)
+        else:
+            abs_image_path = image_path
+        
+        # Проверяем существование файла по абсолютному пути
+        if not os.path.exists(abs_image_path):
+            st.warning(f"Изображение не найдено: {image_path}")
+            return
             
         # Отображаем изображение
         # Вместо параметра use_container_width=True используем width=None для занятия всей ширины
-        st.image(image_path, caption=caption, width=None)
+        try:
+            st.image(abs_image_path, caption=caption, width=None)
+        except Exception as e:
+            st.warning(f"Ошибка при загрузке изображения: {e}")
 
 def send_page_height_to_parent():
     """
