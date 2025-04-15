@@ -1490,6 +1490,11 @@ def render_options_form():
                         # Пишем в лог для отладки
                         print(f"Ошибка при загрузке изображения {right_image_path}: {str(e)}")
     
+    # Добавляем вертикальный отступ после изображений
+    st.markdown("""
+    <div style="height: 30px;"></div>
+    """, unsafe_allow_html=True)
+    
     # Тип ламелей - зависит от выбранного типа перголы
     lamella_options = []
     if pergola_type == "B500NEW":
