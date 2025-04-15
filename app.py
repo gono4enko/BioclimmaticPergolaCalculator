@@ -1466,12 +1466,13 @@ def render_options_form():
         "installation": installation
     }
 
-def render_results(results):
+def render_results(results, show_articles=False):
     """
     Отображает результаты расчета стоимости перголы
     
     Args:
         results (dict): Словарь с результатами расчета
+        show_articles (bool, optional): Флаг для отображения статей с описаниями. По умолчанию False.
     """
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
@@ -1883,8 +1884,8 @@ def render_results(results):
     # Отображаем разделитель между таблицей стоимости и описанием перголы
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
     
-    # Добавляем информацию о типе перголы и изображение только один раз в сессии
-    if not st.session_state.get('description_shown', False):
+    # Добавляем информацию о типе перголы и изображение только если show_articles=True
+    if show_articles and not st.session_state.get('description_shown', False):
         # Устанавливаем флаг, что описание уже было показано в этой сессии
         st.session_state.description_shown = True
         
@@ -3366,7 +3367,7 @@ def main():
         st.markdown('<div id="results"></div>', unsafe_allow_html=True)
         
         # Показываем общий результат и детальную информацию
-        render_results(st.session_state.results)
+        render_results(st.session_state.results, show_articles=False)
         
         # Если был запрос на скролл к результатам, используем компонент smooth_scroll_to
         if st.session_state.get('scroll_to_results', False):
