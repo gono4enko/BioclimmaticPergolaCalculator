@@ -7,8 +7,11 @@
 import os
 import base64
 import logging
-from typing import Dict, Tuple, Optional
+import json
+from typing import Dict, Tuple, Optional, Union
 import streamlit as st
+from PIL import Image
+import io
 
 # Настройка логгера
 logging.basicConfig(level=logging.INFO, 
@@ -27,10 +30,72 @@ MIME_TYPES = {
     '.webp': 'image/webp',
 }
 
+# Настройки для WebP конвертации
+WEBP_QUALITY = 85  # Баланс между качеством и сжатием
+WEBP_CACHE_DIR = "processed_images"  # Папка для хранения сконвертированных WebP изображений
+ENABLE_WEBP_CONVERSION = False  # Временно отключено до полного тестирования
+
+# Создаем папку для кэша WebP, если её нет
+if not os.path.exists(WEBP_CACHE_DIR):
+    os.makedirs(WEBP_CACHE_DIR, exist_ok=True)
+
+def convert_to_webp(image_path: str) -> Optional[str]:
+    """
+    Конвертирует изображение в формат WebP для более быстрой загрузки.
+    
+    Args:
+        image_path (str): Путь к исходному изображению
+        
+    Returns:
+        Optional[str]: Путь к конвертированному WebP-изображению или None в случае ошибки
+    """
+    if not ENABLE_WEBP_CONVERSION:
+        return None
+        
+    try:
+        # Проверяем существование файла
+        if not os.path.exists(image_path):
+            logger.warning(f"Файл не найден: {image_path}")
+            return None
+            
+        # Формируем имя файла WebP
+        base_name = os.path.basename(image_path)
+        file_name, _ = os.path.splitext(base_name)
+        webp_path = os.path.join(WEBP_CACHE_DIR, f"{file_name}.webp")
+        
+        # Если WebP-версия уже существует и новее оригинала, возвращаем её
+        if os.path.exists(webp_path):
+            if os.path.getmtime(webp_path) >= os.path.getmtime(image_path):
+                logger.debug(f"Использую существующий WebP: {webp_path}")
+                return webp_path
+        
+        # Открываем изображение
+        img = Image.open(image_path)
+        
+        # Конвертируем в RGB, если это PNG с прозрачностью
+        if img.mode == 'RGBA':
+            # Создаем белый фон
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            # Накладываем изображение с альфа-каналом
+            background.paste(img, mask=img.split()[3])
+            img = background
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        # Сохраняем в формате WebP
+        img.save(webp_path, 'WEBP', quality=WEBP_QUALITY)
+        logger.info(f"Изображение конвертировано в WebP: {webp_path}")
+        
+        return webp_path
+    except Exception as e:
+        logger.error(f"Ошибка при конвертации в WebP {image_path}: {str(e)}")
+        return None
+
 @st.cache_data(ttl=3600, show_spinner=False)
 def get_image_base64(image_path: str) -> Tuple[str, str]:
     """
     Загружает изображение и преобразует его в base64 с кэшированием.
+    При необходимости и если включено, конвертирует в WebP для ускорения.
     
     Args:
         image_path (str): Путь к изображению
@@ -146,33 +211,94 @@ def preload_all_pergola_images():
 def preload_images_js():
     """
     Возвращает JavaScript-код для предварительной загрузки изображений на стороне браузера.
+    Использует современные техники оптимизации и приоритизации загрузки.
     """
-    return """
+    # Создаем список путей ко всем основным изображениям пергол
+    image_paths = [
+        "attached_assets/b500_rotation.png",
+        "attached_assets/b700_sliding.png", 
+        "attached_assets/b600_sandwich.png",
+        "attached_assets/linear_drive_b500.png",
+        "attached_assets/somfy_pergola_b700.jpg",
+        "attached_assets/pir_sandwich_panel_b600.png",
+        "attached_assets/Линейный привод-2.png",
+        "attached_assets/Линейный привод.png",
+        "attached_assets/Somfy Pergola.jpg",
+        "attached_assets/Снимок экрана 2025-04-16 в 00.35.39.png"
+    ]
+    
+    # Генерируем Base64 данные для всех изображений, которые существуют
+    preloaded_images = []
+    for path in image_paths:
+        if os.path.exists(path):
+            mime_type, base64_data = get_image_base64(path)
+            preloaded_images.append(f"data:{mime_type};base64,{base64_data}")
+            logger.info(f"Подготовлено для предзагрузки: {path}")
+        else:
+            logger.warning(f"Не найдено изображение для предзагрузки: {path}")
+    
+    # Собираем JSON-строку для встраивания в JavaScript
+    images_json = json.dumps(preloaded_images)
+    
+    return f"""
     <script>
-        // Функция для предварительной загрузки изображений
-        function preloadImages() {
-            // Список всех изображений для предзагрузки
-            const imagesToPreload = [
-                "data:image/png;base64,",  // Заглушка для демонстрации
-            ];
+        // Функция для предварительной загрузки изображений с высоким приоритетом
+        function preloadImagesHighPriority() {{
+            // Список всех изображений для предзагрузки (заполняется из Python)
+            const imagesToPreload = {images_json};
             
-            // Создаем невидимые элементы img для предзагрузки
-            imagesToPreload.forEach(src => {
+            // Создаем элементы link для предзагрузки с высоким приоритетом
+            imagesToPreload.forEach(src => {{
+                const link = document.createElement('link');
+                link.rel = 'preload';
+                link.href = src;
+                link.as = 'image';
+                link.importance = 'high'; // Высокий приоритет загрузки
+                link.fetchpriority = 'high'; // Новое свойство для Chromium
+                document.head.appendChild(link);
+                
+                // Также создаем невидимые img для реальной загрузки
                 const img = new Image();
                 img.src = src;
-            });
+                img.style.position = 'absolute';
+                img.style.opacity = '0';
+                img.style.width = '1px';
+                img.style.height = '1px';
+                img.style.zIndex = '-1000';
+                document.body.appendChild(img);
+            }});
             
-            console.log("🚀 Предварительная загрузка изображений выполнена");
-        }
+            console.log("🚀 Предварительная загрузка " + imagesToPreload.length + " изображений выполнена с высоким приоритетом");
+        }}
         
-        // Запускаем предзагрузку изображений
-        document.addEventListener('DOMContentLoaded', preloadImages);
+        // Запускаем предзагрузку изображений сразу
+        preloadImagesHighPriority();
         
         // Добавляем кэширующие заголовки через мета-теги
         const metaCache = document.createElement('meta');
         metaCache.httpEquiv = 'Cache-Control';
-        metaCache.content = 'public, max-age=31536000';
+        metaCache.content = 'public, max-age=31536000, immutable';
         document.head.appendChild(metaCache);
+        
+        // Добавляем мета-тег для отключения масштабирования на мобильных устройствах
+        const metaViewport = document.createElement('meta');
+        metaViewport.name = 'viewport';
+        metaViewport.content = 'width=device-width, initial-scale=1, maximum-scale=1';
+        document.head.appendChild(metaViewport);
+        
+        // Улучшенный обработчик предзагрузки при изменении URL
+        window.addEventListener('pushstate', preloadImagesHighPriority);
+        window.addEventListener('popstate', preloadImagesHighPriority);
+        
+        // Улучшаем память браузера, удаляя неиспользуемые элементы
+        setTimeout(() => {{
+            const preloadedImages = document.querySelectorAll('img[style*="opacity: 0"]');
+            preloadedImages.forEach(img => {{
+                if (img.complete) {{
+                    img.remove();
+                }}
+            }});
+        }}, 10000);
     </script>
     """
 
