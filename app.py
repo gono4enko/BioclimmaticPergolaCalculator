@@ -1392,9 +1392,16 @@ def render_options_form():
         # Правое изображение - детальное изображение (добавляется программно в других частях кода)
         # Для B600 не будем показывать правое изображение
         if pergola_type == "B500NEW":
-            # Путь к прикрепленному файлу изображения линейного привода с красным элементом
-            # Используем именно файл "Линейный привод-2.png" как просил пользователь
-            right_image_path = "attached_assets/Линейный привод-2.png"
+            # Пробуем сначала английское название файла, а затем кириллическое - для совместимости
+            # Используем изображение линейного привода с красным элементом
+            if os.path.exists("attached_assets/linear_drive_b500.png"):
+                right_image_path = "attached_assets/linear_drive_b500.png"
+            elif os.path.exists("attached_assets/Линейный привод-2.png"):
+                right_image_path = "attached_assets/Линейный привод-2.png"
+            else:
+                # Пробуем найти любое подходящее изображение привода
+                right_image_path = "attached_assets/Линейный привод.png" if os.path.exists("attached_assets/Линейный привод.png") else None
+            
             right_caption = "Линейный привод для перголы В500"
         elif pergola_type == "B700NEW":
             right_image_path = "attached_assets/Lin gate.jpg" if os.path.exists("attached_assets/Lin gate.jpg") else None
