@@ -1402,10 +1402,26 @@ def render_options_form():
             
         # Создаем контейнер с изображениями в две колонки
         if left_image_path and os.path.exists(left_image_path):
+            # Добавляем стили для заголовков изображений
+            st.markdown("""
+            <style>
+            .image-header {
+                text-align: center;
+                font-weight: 500;
+                color: #1E88E5;
+                margin-bottom: 10px;
+                font-size: 1rem;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            
             cols = st.columns([1, 1] if right_image_path and os.path.exists(right_image_path) else [1])
             
             # Левая колонка с основным изображением
             with cols[0]:
+                # Заголовок для основного изображения
+                st.markdown("<div class='image-header'>Изображение №1</div>", unsafe_allow_html=True)
+                
                 try:
                     file_extension = os.path.splitext(left_image_path)[1].lower()
                     mime_type = "image/png" if file_extension == ".png" else "image/jpeg"
@@ -1432,6 +1448,9 @@ def render_options_form():
             # Правая колонка с дополнительным изображением (если есть)
             if right_image_path and os.path.exists(right_image_path) and len(cols) > 1:
                 with cols[1]:
+                    # Заголовок для дополнительного изображения
+                    st.markdown("<div class='image-header'>Изображение №2</div>", unsafe_allow_html=True)
+                    
                     try:
                         file_extension = os.path.splitext(right_image_path)[1].lower()
                         mime_type = "image/png" if file_extension == ".png" else "image/jpeg"
