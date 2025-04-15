@@ -130,7 +130,9 @@ def preload_all_pergola_images():
         "attached_assets/Линейный привод-2.png",
         "attached_assets/Линейный привод.png",
         "attached_assets/somfy_pergola_b700.jpg",
-        "attached_assets/Somfy Pergola.jpg"
+        "attached_assets/Somfy Pergola.jpg",
+        "attached_assets/pir_sandwich_panel_b600.png",
+        "attached_assets/Снимок экрана 2025-04-16 в 00.35.39.png"
     ]
     
     # Создаем список всех изображений
@@ -219,7 +221,13 @@ def get_optimized_pergola_images(pergola_type: str) -> Tuple[str, str]:
 
     elif pergola_type == "B600":
         left_image_path = "attached_assets/b600_sandwich.png"
-        right_image_path = None  # Для B600 нет дополнительного изображения
+        # Добавляем детальное изображение для B600 со структурой PIR панели
+        if os.path.exists("attached_assets/pir_sandwich_panel_b600.png"):
+            right_image_path = "attached_assets/pir_sandwich_panel_b600.png"
+        elif os.path.exists("attached_assets/Снимок экрана 2025-04-16 в 00.35.39.png"):
+            right_image_path = "attached_assets/Снимок экрана 2025-04-16 в 00.35.39.png"
+        else:
+            right_image_path = None
     else:
         left_image_path = None
         right_image_path = None
