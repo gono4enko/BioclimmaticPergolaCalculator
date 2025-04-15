@@ -1377,14 +1377,14 @@ def render_options_form():
         caption = ""
         
         if pergola_type == "B500NEW":
-            image_path = "attached_assets/Линейный привод.png"
-            caption = "Линейный привод для перголы В500 с поворотными ламелями"
+            image_path = "attached_assets/b500_rotation.png"
+            caption = "Пергола В500 с поворотными ламелями"
         elif pergola_type == "B700NEW":
-            # Здесь в будущем можно добавить изображение для B700NEW
-            pass
+            image_path = "attached_assets/b700_sliding.png"
+            caption = "Пергола В700 с поворотно-сдвижными ламелями"
         elif pergola_type == "B600":
-            # Здесь в будущем можно добавить изображение для B600
-            pass
+            image_path = "attached_assets/b600_sandwich.png"
+            caption = "Пергола В600 со стационарными PIR панелями"
         
         # Показываем изображение, если оно найдено
         if image_path and os.path.exists(image_path):
