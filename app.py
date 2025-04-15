@@ -1372,33 +1372,70 @@ def render_options_form():
             unsafe_allow_html=True
         )
         
-        # Отображаем изображение в зависимости от выбранного типа перголы
-        image_path = None
-        caption = ""
+        # Отображаем два изображения рядом для выбранного типа перголы
+        left_image_path = None
+        right_image_path = None
+        left_caption = ""
+        right_caption = ""
         
+        # Левое изображение - общий вид перголы
         if pergola_type == "B500NEW":
-            image_path = "attached_assets/b500_rotation.png"
-            caption = "Пергола В500 с поворотными ламелями"
+            left_image_path = "attached_assets/b500_rotation.png"
+            left_caption = "Пергола В500 с поворотными ламелями"
         elif pergola_type == "B700NEW":
-            image_path = "attached_assets/b700_sliding.png"
-            caption = "Пергола В700 с поворотно-сдвижными ламелями"
+            left_image_path = "attached_assets/b700_sliding.png"
+            left_caption = "Пергола В700 с поворотно-сдвижными ламелями"
         elif pergola_type == "B600":
-            image_path = "attached_assets/b600_sandwich.png"
-            caption = "Пергола В600 со стационарными PIR панелями"
+            left_image_path = "attached_assets/b600_sandwich.png"
+            left_caption = "Пергола В600 со стационарными PIR панелями"
         
-        # Показываем изображение, если оно найдено
-        if image_path and os.path.exists(image_path):
-            st.markdown(
-                f"""
-                <div class="pergola-image-container">
-                    <div>
-                        <img src="data:image/png;base64,{base64.b64encode(open(image_path, 'rb').read()).decode()}" class="pergola-image" alt="{PERGOLA_TYPES[pergola_type]}">
-                        <div class="pergola-image-caption">{caption}</div>
+        # Правое изображение - детальное изображение (добавляется программно в других частях кода)
+        # Для B600 не будем показывать правое изображение
+        if pergola_type == "B500NEW":
+            right_image_path = "attached_assets/Линейный привод.png" if os.path.exists("attached_assets/Линейный привод.png") else None
+            right_caption = "Линейный привод для перголы В500"
+        elif pergola_type == "B700NEW":
+            right_image_path = "attached_assets/Lin gate.jpg" if os.path.exists("attached_assets/Lin gate.jpg") else None
+            right_caption = "Подвижные ламели перголы В700"
+            
+        # Создаем контейнер с изображениями в две колонки
+        if left_image_path and os.path.exists(left_image_path):
+            cols = st.columns([1, 1] if right_image_path and os.path.exists(right_image_path) else [1])
+            
+            # Левая колонка с основным изображением
+            with cols[0]:
+                file_extension = os.path.splitext(left_image_path)[1].lower()
+                mime_type = "image/png" if file_extension == ".png" else "image/jpeg"
+                
+                st.markdown(
+                    f"""
+                    <div class="pergola-image-container">
+                        <div>
+                            <img src="data:{mime_type};base64,{base64.b64encode(open(left_image_path, 'rb').read()).decode()}" class="pergola-image" alt="{PERGOLA_TYPES[pergola_type]}">
+                            <div class="pergola-image-caption">{left_caption}</div>
+                        </div>
                     </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+                    """,
+                    unsafe_allow_html=True
+                )
+            
+            # Правая колонка с дополнительным изображением (если есть)
+            if right_image_path and os.path.exists(right_image_path) and len(cols) > 1:
+                with cols[1]:
+                    file_extension = os.path.splitext(right_image_path)[1].lower()
+                    mime_type = "image/png" if file_extension == ".png" else "image/jpeg"
+                    
+                    st.markdown(
+                        f"""
+                        <div class="pergola-image-container">
+                            <div>
+                                <img src="data:{mime_type};base64,{base64.b64encode(open(right_image_path, 'rb').read()).decode()}" class="pergola-image" alt="Детали {PERGOLA_TYPES[pergola_type]}">
+                                <div class="pergola-image-caption">{right_caption}</div>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
     
     # Тип ламелей - зависит от выбранного типа перголы
     lamella_options = []
