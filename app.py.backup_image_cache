@@ -1458,9 +1458,6 @@ def render_options_form():
             </style>
             """, unsafe_allow_html=True)
             
-            # Добавляем диагностический вывод
-            st.write(f"Изображения получены: слева - {'есть' if left_image_html else 'нет'}, справа - {'есть' if right_image_html else 'нет'}")
-            
             # Создаем колонки на основе наличия второго изображения
             cols = st.columns([1, 1] if right_image_html else [1])
             
@@ -1468,7 +1465,13 @@ def render_options_form():
             with cols[0]:
                 # Отображаем основное изображение перголы через HTML
                 st.markdown(
-                    f'<div class="pergola-image-container">{left_image_html}</div>',
+                    f"""
+                    <div class="pergola-image-container">
+                        <div>
+                            {left_image_html}
+                        </div>
+                    </div>
+                    """,
                     unsafe_allow_html=True
                 )
             
@@ -1477,7 +1480,13 @@ def render_options_form():
                 with cols[1]:
                     # Отображаем дополнительное изображение перголы через HTML
                     st.markdown(
-                        f'<div class="pergola-image-container">{right_image_html}</div>',
+                        f"""
+                        <div class="pergola-image-container">
+                            <div>
+                                {right_image_html}
+                            </div>
+                        </div>
+                        """,
                         unsafe_allow_html=True
                     )
     

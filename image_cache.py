@@ -101,12 +101,7 @@ def get_html_image_tag(image_path: str, alt_text: str = "", css_class: str = "",
     class_attr = f'class="{css_class}"' if css_class else ""
     
     # Создаем тег img с data URI и атрибутами для оптимизации загрузки
-    html = f"""<img src="data:{mime_type};base64,{base64_data}" 
-                   alt="{alt_text}" 
-                   {class_attr} 
-                   {style_attr} 
-                   loading="eager" 
-                   decoding="async">"""
+    html = f'<img src="data:{mime_type};base64,{base64_data}" alt="{alt_text}" {class_attr} {style_attr} loading="eager" decoding="async">'
     
     return html
 
