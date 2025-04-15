@@ -3,9 +3,23 @@
 Отделяем описания от основного кода для облегчения будущих модификаций.
 Применен единый стиль оформления для всех типов пергол.
 """
+from datetime import datetime
 
 # Инициализация словаря описаний
 PERGOLA_DESCRIPTIONS = {}
+
+# Словарь с датами публикаций статей
+PUBLICATION_DATES = {
+    "B500NEW": datetime(2025, 3, 15),  # 15 марта 2025
+    "B700NEW": datetime(2025, 3, 20),  # 20 марта 2025
+    "B600": datetime(2025, 3, 25),     # 25 марта 2025
+    "MODULAR": datetime(2025, 4, 2),   # 2 апреля 2025
+    "DRAINAGE": datetime(2025, 4, 5),  # 5 апреля 2025
+    "BANSBACH": datetime(2025, 4, 8),  # 8 апреля 2025
+    "SOMFY": datetime(2025, 4, 10),    # 10 апреля 2025
+    "LAMELLA_ENGINEERING": datetime(2025, 4, 12), # 12 апреля 2025
+    "INSTALL_SYSTEM": datetime(2025, 4, 14)  # 14 апреля 2025
+}
 
 # Описание перголы B500NEW
 B500_DESCRIPTION = """
@@ -116,6 +130,30 @@ MODULAR_SYSTEM_DESCRIPTION = """
     <li>Частные дворы с зонами отдыха и бассейнами.</li>
 </ul>
 """
+
+# Функция для получения даты публикации статьи
+def get_publication_date(article_type):
+    """
+    Возвращает дату публикации статьи в отформатированном виде
+    
+    Args:
+        article_type (str): Тип статьи/перголы (B500NEW, B700NEW, B600, и т.д.)
+        
+    Returns:
+        str: Строка с отформатированной датой публикации или пустая строка, если дата не найдена
+    """
+    if article_type in PUBLICATION_DATES:
+        date_obj = PUBLICATION_DATES[article_type]
+        # Форматируем дату в российском стиле с названием месяца
+        months = [
+            'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+            'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+        ]
+        day = date_obj.day
+        month = months[date_obj.month - 1]
+        year = date_obj.year
+        return f"{day} {month} {year}"
+    return ""
 
 # Словарь с путями к изображениям
 PERGOLA_IMAGES = {
