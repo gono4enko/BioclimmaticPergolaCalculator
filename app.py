@@ -1406,38 +1406,54 @@ def render_options_form():
             
             # Левая колонка с основным изображением
             with cols[0]:
-                file_extension = os.path.splitext(left_image_path)[1].lower()
-                mime_type = "image/png" if file_extension == ".png" else "image/jpeg"
-                
-                st.markdown(
-                    f"""
-                    <div class="pergola-image-container">
-                        <div>
-                            <img src="data:{mime_type};base64,{base64.b64encode(open(left_image_path, 'rb').read()).decode()}" class="pergola-image" alt="{PERGOLA_TYPES[pergola_type]}">
-                            <div class="pergola-image-caption">{left_caption}</div>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-            
-            # Правая колонка с дополнительным изображением (если есть)
-            if right_image_path and os.path.exists(right_image_path) and len(cols) > 1:
-                with cols[1]:
-                    file_extension = os.path.splitext(right_image_path)[1].lower()
+                try:
+                    file_extension = os.path.splitext(left_image_path)[1].lower()
                     mime_type = "image/png" if file_extension == ".png" else "image/jpeg"
+                    
+                    with open(left_image_path, 'rb') as img_file:
+                        img_data = img_file.read()
                     
                     st.markdown(
                         f"""
                         <div class="pergola-image-container">
                             <div>
-                                <img src="data:{mime_type};base64,{base64.b64encode(open(right_image_path, 'rb').read()).decode()}" class="pergola-image" alt="Детали {PERGOLA_TYPES[pergola_type]}">
-                                <div class="pergola-image-caption">{right_caption}</div>
+                                <img src="data:{mime_type};base64,{base64.b64encode(img_data).decode()}" class="pergola-image" alt="{PERGOLA_TYPES[pergola_type]}">
+                                <div class="pergola-image-caption">{left_caption}</div>
                             </div>
                         </div>
                         """,
                         unsafe_allow_html=True
                     )
+                except Exception as e:
+                    st.error(f"Ошибка при загрузке изображения: {str(e)}")
+                    # Пишем в лог для отладки
+                    print(f"Ошибка при загрузке изображения {left_image_path}: {str(e)}")
+            
+            # Правая колонка с дополнительным изображением (если есть)
+            if right_image_path and os.path.exists(right_image_path) and len(cols) > 1:
+                with cols[1]:
+                    try:
+                        file_extension = os.path.splitext(right_image_path)[1].lower()
+                        mime_type = "image/png" if file_extension == ".png" else "image/jpeg"
+                        
+                        with open(right_image_path, 'rb') as img_file:
+                            img_data = img_file.read()
+                            
+                        st.markdown(
+                            f"""
+                            <div class="pergola-image-container">
+                                <div>
+                                    <img src="data:{mime_type};base64,{base64.b64encode(img_data).decode()}" class="pergola-image" alt="Детали {PERGOLA_TYPES[pergola_type]}">
+                                    <div class="pergola-image-caption">{right_caption}</div>
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                    except Exception as e:
+                        st.error(f"Ошибка при загрузке изображения: {str(e)}")
+                        # Пишем в лог для отладки
+                        print(f"Ошибка при загрузке изображения {right_image_path}: {str(e)}")
     
     # Тип ламелей - зависит от выбранного типа перголы
     lamella_options = []
