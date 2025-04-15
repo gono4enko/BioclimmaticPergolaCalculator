@@ -18,6 +18,7 @@ import os
 import math
 import csv
 import time
+import base64
 from datetime import datetime
 # Импортируем модуль для отображения галереи проектов
 from components.gallery import display_gallery_section
@@ -1341,6 +1342,63 @@ def render_options_form():
         on_change=lambda: None,
         key="pergola_type"  # Ключ для session_state, чтобы форма размеров могла получить текущий тип
     )
+    
+    # Добавляем визуализацию выбранного типа перголы
+    with st.container():
+        st.markdown(
+            """
+            <style>
+            .pergola-image-container {
+                margin-top: 15px;
+                margin-bottom: 15px;
+                text-align: center;
+                display: flex;
+                justify-content: center;
+            }
+            .pergola-image {
+                max-width: 100%;
+                max-height: 300px;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+            .pergola-image-caption {
+                font-size: 0.9rem;
+                text-align: center;
+                margin-top: 8px;
+                color: #555;
+            }
+            </style>
+            """, 
+            unsafe_allow_html=True
+        )
+        
+        # Отображаем изображение в зависимости от выбранного типа перголы
+        image_path = None
+        caption = ""
+        
+        if pergola_type == "B500NEW":
+            image_path = "attached_assets/Линейный привод.png"
+            caption = "Линейный привод для перголы В500 с поворотными ламелями"
+        elif pergola_type == "B700NEW":
+            # Здесь в будущем можно добавить изображение для B700NEW
+            pass
+        elif pergola_type == "B600":
+            # Здесь в будущем можно добавить изображение для B600
+            pass
+        
+        # Показываем изображение, если оно найдено
+        if image_path and os.path.exists(image_path):
+            st.markdown(
+                f"""
+                <div class="pergola-image-container">
+                    <div>
+                        <img src="data:image/png;base64,{base64.b64encode(open(image_path, 'rb').read()).decode()}" class="pergola-image" alt="{PERGOLA_TYPES[pergola_type]}">
+                        <div class="pergola-image-caption">{caption}</div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
     
     # Тип ламелей - зависит от выбранного типа перголы
     lamella_options = []
