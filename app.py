@@ -1998,7 +1998,7 @@ def render_results(results):
             
             # Добавляем описание вариантов установки и вертикальных систем для всех типов пергол
             bioclimatic_install_description = get_bioclimatic_install_description()
-            display_formatted_description(bioclimatic_install_description)
+            display_formatted_description(bioclimatic_install_description, "INSTALL_SYSTEM")
             
             # Отображаем изображение вариантов установки
             install_system_images = get_pergola_images("INSTALL_SYSTEM")
@@ -2017,7 +2017,7 @@ def render_results(results):
             # Добавляем техническое описание ламелей только для пергол B500 и B700, не для B600
             if pergola_type in ["B500NEW", "B700NEW"]:
                 lamella_engineering_description = get_lamella_engineering_description()
-                display_formatted_description(lamella_engineering_description)
+                display_formatted_description(lamella_engineering_description, "LAMELLA_ENGINEERING")
                 
                 # Отображаем изображение технических характеристик ламелей
                 lamella_engineering_images = get_pergola_images("LAMELLA_ENGINEERING")
