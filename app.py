@@ -1392,7 +1392,7 @@ def render_options_form():
         # Правое изображение - детальное изображение (добавляется программно в других частях кода)
         # Для B600 не будем показывать правое изображение
         if pergola_type == "B500NEW":
-            right_image_path = "attached_assets/Линейный привод.png" if os.path.exists("attached_assets/Линейный привод.png") else None
+            right_image_path = "attached_assets/linear_drive_b500.jpeg"
             right_caption = "Линейный привод для перголы В500"
         elif pergola_type == "B700NEW":
             right_image_path = "attached_assets/Lin gate.jpg" if os.path.exists("attached_assets/Lin gate.jpg") else None
