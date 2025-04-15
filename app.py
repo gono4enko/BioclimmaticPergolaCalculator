@@ -1439,8 +1439,7 @@ def render_options_form():
             
             # Левая колонка с основным изображением
             with cols[0]:
-                # Заголовок для основного изображения
-                st.markdown("<div class='image-header'>Изображение №1</div>", unsafe_allow_html=True)
+                # Убираем заголовок для основного изображения
                 
                 try:
                     file_extension = os.path.splitext(left_image_path)[1].lower()
@@ -1454,7 +1453,6 @@ def render_options_form():
                         <div class="pergola-image-container">
                             <div>
                                 <img src="data:{mime_type};base64,{base64.b64encode(img_data).decode()}" class="pergola-image" alt="{PERGOLA_TYPES[pergola_type]}">
-                                <div class="pergola-image-caption">{left_caption}</div>
                             </div>
                         </div>
                         """,
@@ -1468,8 +1466,7 @@ def render_options_form():
             # Правая колонка с дополнительным изображением (если есть)
             if right_image_path and os.path.exists(right_image_path) and len(cols) > 1:
                 with cols[1]:
-                    # Заголовок для дополнительного изображения
-                    st.markdown("<div class='image-header'>Изображение №2</div>", unsafe_allow_html=True)
+                    # Убираем заголовок для дополнительного изображения
                     
                     try:
                         file_extension = os.path.splitext(right_image_path)[1].lower()
@@ -1483,7 +1480,6 @@ def render_options_form():
                             <div class="pergola-image-container">
                                 <div>
                                     <img src="data:{mime_type};base64,{base64.b64encode(img_data).decode()}" class="pergola-image" alt="Детали {PERGOLA_TYPES[pergola_type]}">
-                                    <div class="pergola-image-caption">{right_caption}</div>
                                 </div>
                             </div>
                             """,
