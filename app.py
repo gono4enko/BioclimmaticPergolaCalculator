@@ -1404,9 +1404,13 @@ def render_options_form():
             
             right_caption = "Линейный привод для перголы В500"
         elif pergola_type == "B700NEW":
-            # Пробуем сначала английское название файла, а затем кириллическое - для совместимости
+            # Пробуем сначала английское название файла в формате jpg, затем png, и наконец кириллическое название
             # Используем новое изображение системы Somfy для B700
-            if os.path.exists("attached_assets/somfy_pergola_b700.png"):
+            if os.path.exists("attached_assets/somfy_pergola_b700.jpg"):
+                right_image_path = "attached_assets/somfy_pergola_b700.jpg"
+            elif os.path.exists("attached_assets/Somfy Pergola.jpg"):
+                right_image_path = "attached_assets/Somfy Pergola.jpg"
+            elif os.path.exists("attached_assets/somfy_pergola_b700.png"):
                 right_image_path = "attached_assets/somfy_pergola_b700.png"
             elif os.path.exists("attached_assets/Somfy Pergola.png"):
                 right_image_path = "attached_assets/Somfy Pergola.png"
