@@ -1422,9 +1422,12 @@ def render_options_form():
             
             right_caption = "Система уплотнения ламелей перголы В700"
             
-        # Создаем контейнер с изображениями в две колонки
-        if left_image_path and os.path.exists(left_image_path):
-            # Добавляем стили для заголовков изображений
+        # Создаем контейнер с изображениями в две колонки с использованием оптимизированного кэша
+        # Получаем оптимизированные HTML-теги для изображений перголы из кэша
+        left_image_html, right_image_html = get_optimized_pergola_images(pergola_type)
+        
+        if left_image_html:
+            # Добавляем стили для изображений и контейнеров
             st.markdown("""
             <style>
             .image-header {
@@ -1434,63 +1437,58 @@ def render_options_form():
                 margin-bottom: 10px;
                 font-size: 1rem;
             }
+            .pergola-image-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin: 0 auto;
+                width: 100%;
+                padding: 5px;
+            }
+            .pergola-image {
+                max-width: 100%;
+                height: auto;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                transition: transform 0.3s ease;
+            }
+            .pergola-image:hover {
+                transform: scale(1.02);
+            }
             </style>
             """, unsafe_allow_html=True)
             
-            cols = st.columns([1, 1] if right_image_path and os.path.exists(right_image_path) else [1])
+            # Создаем колонки на основе наличия второго изображения
+            cols = st.columns([1, 1] if right_image_html else [1])
             
-            # Левая колонка с основным изображением
+            # Левая колонка с основным изображением (всегда доступна)
             with cols[0]:
-                # Убираем заголовок для основного изображения
-                
-                try:
-                    file_extension = os.path.splitext(left_image_path)[1].lower()
-                    mime_type = "image/png" if file_extension == ".png" else "image/jpeg"
-                    
-                    with open(left_image_path, 'rb') as img_file:
-                        img_data = img_file.read()
-                    
+                # Отображаем основное изображение перголы через HTML
+                st.markdown(
+                    f"""
+                    <div class="pergola-image-container">
+                        <div>
+                            {left_image_html}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            
+            # Правая колонка с дополнительным изображением (если есть)
+            if right_image_html and len(cols) > 1:
+                with cols[1]:
+                    # Отображаем дополнительное изображение перголы через HTML
                     st.markdown(
                         f"""
                         <div class="pergola-image-container">
                             <div>
-                                <img src="data:{mime_type};base64,{base64.b64encode(img_data).decode()}" class="pergola-image" alt="{PERGOLA_TYPES[pergola_type]}">
+                                {right_image_html}
                             </div>
                         </div>
                         """,
                         unsafe_allow_html=True
                     )
-                except Exception as e:
-                    st.error(f"Ошибка при загрузке изображения: {str(e)}")
-                    # Пишем в лог для отладки
-                    print(f"Ошибка при загрузке изображения {left_image_path}: {str(e)}")
-            
-            # Правая колонка с дополнительным изображением (если есть)
-            if right_image_path and os.path.exists(right_image_path) and len(cols) > 1:
-                with cols[1]:
-                    # Убираем заголовок для дополнительного изображения
-                    
-                    try:
-                        file_extension = os.path.splitext(right_image_path)[1].lower()
-                        mime_type = "image/png" if file_extension == ".png" else "image/jpeg"
-                        
-                        with open(right_image_path, 'rb') as img_file:
-                            img_data = img_file.read()
-                            
-                        st.markdown(
-                            f"""
-                            <div class="pergola-image-container">
-                                <div>
-                                    <img src="data:{mime_type};base64,{base64.b64encode(img_data).decode()}" class="pergola-image" alt="Детали {PERGOLA_TYPES[pergola_type]}">
-                                </div>
-                            </div>
-                            """,
-                            unsafe_allow_html=True
-                        )
-                    except Exception as e:
-                        st.error(f"Ошибка при загрузке изображения: {str(e)}")
-                        # Пишем в лог для отладки
-                        print(f"Ошибка при загрузке изображения {right_image_path}: {str(e)}")
     
     # Добавляем вертикальный отступ после изображений
     st.markdown("""
