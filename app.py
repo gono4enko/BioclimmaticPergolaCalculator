@@ -1458,8 +1458,7 @@ def render_options_form():
             </style>
             """, unsafe_allow_html=True)
             
-            # Добавляем диагностический вывод
-            st.write(f"Изображения получены: слева - {'есть' if left_image_html else 'нет'}, справа - {'есть' if right_image_html else 'нет'}")
+            # Диагностический вывод убран
             
             # Создаем колонки на основе наличия второго изображения
             cols = st.columns([1, 1] if right_image_html else [1])
