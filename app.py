@@ -14,6 +14,8 @@ from auto_scroll import create_growing_spacer
 import animations
 # Импортируем модуль для плавающих кнопок навигации
 from floating_buttons import add_results_navigation_button, add_dimensions_edit_button
+# Импортируем модуль кэширования и оптимизации изображений
+from image_cache import preload_all_pergola_images, get_optimized_pergola_images, preload_images_js
 import os
 import math
 import csv
@@ -2870,6 +2872,15 @@ def main():
         layout="centered",  # Изменено с "wide" на "centered" для более узкого интерфейса
         initial_sidebar_state="collapsed"  # Боковая панель будет свернута по умолчанию
     )
+    
+    # Предварительно загружаем все изображения пергол для быстрого отображения
+    # Для максимальной производительности и мгновенного отображения изображений
+    if 'images_preloaded' not in st.session_state:
+        preload_all_pergola_images()
+        st.session_state['images_preloaded'] = True
+    
+    # Добавляем JavaScript для предзагрузки изображений и кэширования на стороне браузера
+    st.markdown(preload_images_js(), unsafe_allow_html=True)
     
     # Импортируем компоненты для аутентификации администратора
     from components.admin_auth import admin_login_form
