@@ -2635,7 +2635,13 @@ def create_simple_pdf(pergola_data):
     
     # Информация о компании
     from datetime import datetime
-    current_date = datetime.now().strftime("%d.%m.%Y")
+    import pytz
+    
+    # Определяем московскую временную зону
+    moscow_tz = pytz.timezone('Europe/Moscow')
+    now_utc = datetime.now(pytz.utc)
+    now_moscow = now_utc.astimezone(moscow_tz)
+    current_date = now_moscow.strftime("%d.%m.%Y")
     
     elements.append(Paragraph("© 2025 Комфортный дом | Все права защищены", footer_style))
     elements.append(Paragraph(f"Дата формирования: {current_date}", footer_style))
@@ -2741,9 +2747,15 @@ def create_very_simple_pdf(pergola_data):
     pdf.cell(130, 10, "TOTAL:", 1, 0)
     pdf.cell(60, 10, f"{total_cost:,.2f} RUB".replace(",", " "), 1, 1, align="R")
     
-    # Дата
+    # Дата с использованием московского времени
     from datetime import datetime
-    current_date = datetime.now().strftime("%d.%m.%Y")
+    import pytz
+    
+    # Определяем московскую временную зону
+    moscow_tz = pytz.timezone('Europe/Moscow')
+    now_utc = datetime.now(pytz.utc)
+    now_moscow = now_utc.astimezone(moscow_tz)
+    current_date = now_moscow.strftime("%d.%m.%Y")
     
     pdf.ln(10)
     pdf.set_font("Arial", "I", 10)

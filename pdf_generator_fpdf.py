@@ -6,8 +6,12 @@
 import os
 import io
 from datetime import datetime
+import pytz
 from fpdf import FPDF
 from PIL import Image
+
+# Определяем московскую временную зону
+MOSCOW_TZ = pytz.timezone('Europe/Moscow')
 
 # Создаем директорию для сохранения сгенерированных PDF
 os.makedirs("generated_pdf", exist_ok=True)
@@ -108,12 +112,13 @@ def generate_commercial_offer(pergola_data, user_data=None):
             except:
                 pass
     
-    # Создаем уникальное имя файла на основе текущей даты и времени
-    now = datetime.now()
-    timestamp = now.strftime("%Y%m%d_%H%M%S")
+    # Создаем уникальное имя файла на основе текущей даты и времени по московскому времени
+    now_utc = datetime.now(pytz.utc)
+    now_moscow = now_utc.astimezone(MOSCOW_TZ)
+    timestamp = now_moscow.strftime("%Y%m%d_%H%M%S")
     
     # Форматируем текущую дату для отображения в документе
-    current_date = now.strftime("%d.%m.%Y")
+    current_date = now_moscow.strftime("%d.%m.%Y")
     
     # Определяем путь для сохранения файла
     if user_data and user_data.get('phone'):
