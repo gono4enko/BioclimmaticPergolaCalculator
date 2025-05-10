@@ -2615,9 +2615,19 @@ def create_simple_pdf(pergola_data):
         # Добавляем строку в таблицу
         table_data.append([name, price_str])
     
-    # Итоговая строка
+    # Итоговая строка 
     total_str = f"{total_cost:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
     table_data.append(["ИТОГО:", total_str])
+    
+    # Если есть скидка, добавляем строку со скидкой и итоговую сумму со скидкой
+    discount = pergola_data.get("discount", 0)
+    if discount > 0:
+        discount_str = f"{discount:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
+        table_data.append(["СКИДКА:", discount_str])
+        
+        total_after_discount = pergola_data.get("total_price_after_discount", total_cost)
+        total_after_discount_str = f"{total_after_discount:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
+        table_data.append(["ИТОГО СО СКИДКОЙ:", total_after_discount_str])
     
     # Создаем таблицу
     table = Table(table_data, colWidths=[350, 150])
@@ -2639,6 +2649,41 @@ def create_simple_pdf(pergola_data):
     table.setStyle(table_style)
     elements.append(table)
     elements.append(Spacer(1, 30))
+    
+    # Раздел Спецификации перголы, если есть данные
+    specification = pergola_data.get("specification", [])
+    if specification:
+        elements.append(Paragraph("Спецификация перголы:", heading2_style))
+        elements.append(Spacer(1, 10))
+        
+        # Создаем таблицу спецификации
+        spec_table_data = [["Наименование", "Количество"]]
+        
+        for item in specification:
+            name = item.get("name", "")
+            count = item.get("count", "")
+            spec_table_data.append([name, count])
+        
+        # Создаем таблицу
+        spec_table = Table(spec_table_data, colWidths=[350, 150])
+        
+        # Стиль таблицы спецификации
+        spec_table_style = TableStyle([
+            ('BACKGROUND', (0, 0), (1, 0), colors.lightgrey),
+            ('TEXTCOLOR', (0, 0), (1, 0), colors.black),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (1, 0), 'DejaVuSans-Bold'),
+            ('FONTNAME', (0, 1), (-1, -1), 'DejaVuSans'),
+            ('FONTSIZE', (0, 0), (1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ])
+        
+        spec_table.setStyle(spec_table_style)
+        elements.append(spec_table)
+        elements.append(Spacer(1, 30))
     
     # Информация о компании
     from datetime import datetime
@@ -2809,6 +2854,10 @@ def export_to_pdf():
         "length": dimensions.get("length", 0),
         "modules": dimensions.get("modules", 1),
         "items": results.get("items", []),
+        "specification": results.get("specification", []),
+        "total_price": results.get("total_price", 0),
+        "discount": results.get("discount", 0),
+        "total_price_after_discount": results.get("total_price_after_discount", 0),
         "euro_rate": 110  # Фиксированный курс евро для расчетов
     }
     
