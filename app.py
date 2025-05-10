@@ -3363,7 +3363,7 @@ def main():
     
     # Настраиваем страницу
     st.set_page_config(
-        page_title="Калькулятор пергол DecoLife",
+        page_title="Калькулятор биоклиматических пергол DecoLife",
         page_icon="🏠",
         layout="centered",  # Изменено с "wide" на "centered" для более узкого интерфейса
         initial_sidebar_state="collapsed"  # Боковая панель будет свернута по умолчанию
@@ -3818,7 +3818,7 @@ def main():
     """, unsafe_allow_html=True)
     
     # Заголовок с минимальным отступом
-    st.markdown("<h1 style='text-align: center; margin-top: 0px; margin-bottom: 5px; font-size: 2.2rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; margin-top: 0px; margin-bottom: 5px; font-size: 2.1rem; font-weight: 600; color: #0066cc;'>Калькулятор расчета стоимости биоклиматических пергол</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
     # Создаем якорь для перехода к форме размеров
