@@ -2441,7 +2441,7 @@ def display_formatted_description(description_text, article_type=None):
 
 def create_simple_pdf(pergola_data):
     """
-    Создает простой PDF-файл без использования внешних шрифтов.
+    Создает простой PDF-файл с поддержкой кириллицы.
     
     Args:
         pergola_data (dict): Данные о перголе для включения в PDF
@@ -2449,8 +2449,15 @@ def create_simple_pdf(pergola_data):
     Returns:
         str: Путь к сгенерированному PDF-файлу
     """
-    from fpdf import FPDF
+    import io
     import time
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     
     # Создаем директорию для PDF, если её нет
     os.makedirs("generated_pdf", exist_ok=True)
@@ -2459,91 +2466,110 @@ def create_simple_pdf(pergola_data):
     timestamp = int(time.time())
     pdf_path = f"generated_pdf/pergola_offer_{timestamp}.pdf"
     
-    # Создаем объект PDF с базовыми настройками
-    pdf = FPDF()
-    pdf.add_page()
+    # Создаем документ
+    doc = SimpleDocTemplate(
+        pdf_path,
+        pagesize=A4,
+        title="Коммерческое предложение - Пергола",
+        author="Калькулятор пергол"
+    )
     
-    # Используем встроенные шрифты
-    pdf.set_font("Helvetica", size=12)
+    # Создаем стили
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(
+        name='Russian', 
+        fontName='Helvetica',
+        fontSize=12,
+        leading=14
+    ))
     
-    # Добавляем заголовок
-    pdf.set_font("Helvetica", style="B", size=16)
-    pdf.cell(200, 10, txt="Коммерческое предложение", ln=True, align="C")
-    pdf.cell(200, 10, txt="Биоклиматическая пергола", ln=True, align="C")
-    pdf.ln(10)
+    # Создаем элементы для PDF
+    elements = []
     
-    # Добавляем основную информацию
-    pdf.set_font("Helvetica", size=12)
+    # Заголовок
+    title_style = styles["Heading1"]
+    title_style.alignment = 1  # По центру
+    elements.append(Paragraph("Коммерческое предложение", title_style))
+    elements.append(Paragraph("Биоклиматическая пергола", title_style))
+    elements.append(Spacer(1, 20))
     
     # Параметры перголы
-    pdf.set_font("Helvetica", style="B", size=14)
-    pdf.cell(200, 10, txt="Параметры перголы:", ln=True)
-    pdf.ln(5)
+    elements.append(Paragraph("Параметры перголы:", styles["Heading2"]))
+    elements.append(Spacer(1, 10))
     
-    pdf.set_font("Helvetica", size=12)
+    # Основная информация
     pergola_type = pergola_data.get("pergola_type", "")
     width = pergola_data.get("width", 0)
     length = pergola_data.get("length", 0)
-    
-    pdf.cell(100, 10, txt=f"Модель: {pergola_type}", ln=True)
-    pdf.cell(100, 10, txt=f"Ширина: {width} м", ln=True)
-    pdf.cell(100, 10, txt=f"Длина (вынос): {length} м", ln=True)
-    
     modules = pergola_data.get("modules", 1)
-    pdf.cell(100, 10, txt=f"Количество модулей: {modules}", ln=True)
     
-    # Стоимость
-    pdf.ln(10)
-    pdf.set_font("Helvetica", style="B", size=14)
-    pdf.cell(200, 10, txt="Стоимость:", ln=True)
-    pdf.ln(5)
+    info_style = styles["Russian"]
+    elements.append(Paragraph(f"Модель: {pergola_type}", info_style))
+    elements.append(Paragraph(f"Ширина: {width} м", info_style))
+    elements.append(Paragraph(f"Длина (вынос): {length} м", info_style))
+    elements.append(Paragraph(f"Количество модулей: {modules}", info_style))
+    elements.append(Spacer(1, 20))
+    
+    # Секция стоимости
+    elements.append(Paragraph("Стоимость:", styles["Heading2"]))
+    elements.append(Spacer(1, 10))
     
     # Таблица со стоимостью
     items = pergola_data.get("items", [])
+    euro_rate = pergola_data.get("euro_rate", 110)
     
-    # Заголовки таблицы
-    pdf.set_font("Helvetica", style="B", size=12)
-    pdf.cell(130, 10, txt="Наименование", border=1)
-    pdf.cell(60, 10, txt="Стоимость", border=1, ln=True, align="R")
-    
-    # Данные таблицы
-    pdf.set_font("Helvetica", size=12)
+    # Подготовка данных для таблицы
+    table_data = [["Наименование", "Стоимость"]]
     total_cost = 0
+    
     for item in items:
         name = item.get("name", "")
         price = item.get("price", 0)
         # Конвертируем в рубли
-        price_rub = price * pergola_data.get("euro_rate", 110)
+        price_rub = price * euro_rate
         total_cost += price_rub
         
         # Форматируем цену
         price_str = f"{price_rub:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
         
-        # Проверяем длину текста и при необходимости обрезаем
-        if len(name) > 50:
-            name = name[:47] + "..."
-            
-        pdf.cell(130, 10, txt=name, border=1)
-        pdf.cell(60, 10, txt=price_str, border=1, ln=True, align="R")
+        # Добавляем строку в таблицу
+        table_data.append([name, price_str])
     
     # Итоговая строка
-    pdf.set_font("Helvetica", style="B", size=12)
     total_str = f"{total_cost:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
-    pdf.cell(130, 10, txt="ИТОГО:", border=1)
-    pdf.cell(60, 10, txt=total_str, border=1, ln=True, align="R")
+    table_data.append(["ИТОГО:", total_str])
+    
+    # Создаем таблицу
+    table = Table(table_data, colWidths=[350, 150])
+    
+    # Стиль таблицы
+    table_style = TableStyle([
+        ('BACKGROUND', (0, 0), (1, 0), colors.lightgrey),
+        ('TEXTCOLOR', (0, 0), (1, 0), colors.black),
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (1, 0), 12),
+        ('BACKGROUND', (0, -1), (1, -1), colors.lightgrey),
+        ('FONTNAME', (0, -1), (1, -1), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ])
+    
+    table.setStyle(table_style)
+    elements.append(table)
+    elements.append(Spacer(1, 30))
     
     # Информация о компании
-    pdf.ln(15)
-    pdf.set_font("Helvetica", style="I", size=10)
-    pdf.cell(0, 10, txt="© 2025 Комфортный дом | Все права защищены", align="C", ln=True)
-    
-    # Текущая дата
     from datetime import datetime
     current_date = datetime.now().strftime("%d.%m.%Y")
-    pdf.cell(0, 10, txt=f"Дата формирования: {current_date}", align="C")
     
-    # Сохраняем PDF
-    pdf.output(pdf_path)
+    footer_style = styles["Italic"]
+    footer_style.alignment = 1  # По центру
+    elements.append(Paragraph("© 2025 Комфортный дом | Все права защищены", footer_style))
+    elements.append(Paragraph(f"Дата формирования: {current_date}", footer_style))
+    
+    # Строим PDF
+    doc.build(elements)
     
     return pdf_path
 
