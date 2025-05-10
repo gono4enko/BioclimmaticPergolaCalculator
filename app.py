@@ -2662,7 +2662,33 @@ def create_simple_pdf(pergola_data):
         for item in specification:
             name = item.get("name", "")
             count = item.get("count", "")
-            spec_table_data.append([name, count])
+            
+            # Проверяем, что имя не слишком длинное
+            if len(name) > 60:
+                # Находим подходящее место для переноса (пробел после 50-60 символов)
+                split_position = name.rfind(' ', 50, 60)
+                
+                if split_position == -1:  # Если не нашли подходящий пробел
+                    split_position = 60   # Просто разделим на 60 символе
+                
+                # Разбиваем имя на две строки
+                first_line = name[:split_position]
+                second_line = name[split_position:].strip()
+                
+                # Создаем параграф с авто-переносом
+                paragraph_style = ParagraphStyle(
+                    'SpecItem',
+                    fontName='DejaVuSans',
+                    fontSize=10,
+                    leading=12,
+                    spaceBefore=0,
+                    spaceAfter=0
+                )
+                name_paragraph = Paragraph(f"{first_line}<br/>{second_line}", paragraph_style)
+                # Используем преобразование в строку, чтобы избежать ошибки типа
+                spec_table_data.append([str(name_paragraph), count])
+            else:
+                spec_table_data.append([name, count])
         
         # Создаем таблицу
         spec_table = Table(spec_table_data, colWidths=[350, 150])
@@ -2842,12 +2868,33 @@ def create_very_simple_pdf(pergola_data):
             name = name.replace("ламели", "lamellas")
             name = name.replace("модуль", "module")
             
-            # Ограничиваем длину имени
+            # Проверяем длину и разбиваем длинные строки на две
             if len(name) > 60:
-                name = name[:57] + "..."
+                # Находим подходящее место для переноса (пробел после 40-50 символов)
+                split_position = name.rfind(' ', 40, 50)
                 
-            pdf.cell(130, 10, name, 1, 0)
-            pdf.cell(60, 10, count, 1, 1, align="C")
+                if split_position == -1:  # Если не нашли подходящий пробел
+                    split_position = 50   # Просто разделим на 50 символе
+                
+                # Разбиваем имя на две строки
+                first_line = name[:split_position]
+                second_line = name[split_position:].strip()
+                
+                # Сохраняем текущую позицию
+                current_x = pdf.get_x()
+                current_y = pdf.get_y()
+                
+                # Рисуем ячейку с первой строкой (без границы снизу)
+                pdf.cell(130, 6, first_line, 'LTR', 0)
+                pdf.cell(60, 6, "", 'LTR', 1, align="C")
+                
+                # Переходим к следующей строке и рисуем вторую строку (без границы сверху)
+                pdf.set_xy(current_x, current_y + 6)
+                pdf.cell(130, 6, second_line, 'LBR', 0)
+                pdf.cell(60, 6, count, 'LBR', 1, align="C")
+            else:
+                pdf.cell(130, 10, name, 1, 0)
+                pdf.cell(60, 10, count, 1, 1, align="C")
     
     # Дата с использованием московского времени
     from datetime import datetime
