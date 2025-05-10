@@ -4,6 +4,8 @@
 """
 import streamlit as st
 import pandas as pd
+import io
+import json
 # Импортируем функции для работы с Яндекс.Метрикой
 from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
 # Импортируем функцию для плавного скролла
@@ -16,11 +18,14 @@ import animations
 from floating_buttons import add_results_navigation_button, add_dimensions_edit_button
 # Импортируем модуль кэширования и оптимизации изображений
 from image_cache import preload_all_pergola_images, get_optimized_pergola_images, preload_images_js
+# Импортируем модуль для генерации PDF
+from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
 import os
 import math
 import csv
 import time
 import base64
+import uuid
 from datetime import datetime
 # Импортируем модуль для отображения галереи проектов
 from components.gallery import display_gallery_section
