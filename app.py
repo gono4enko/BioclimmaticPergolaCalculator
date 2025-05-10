@@ -2439,6 +2439,114 @@ def display_formatted_description(description_text, article_type=None):
         plain_text = re.sub(r'<.*?>', ' ', description_text)
         st.write(plain_text)
 
+def create_simple_pdf(pergola_data):
+    """
+    Создает простой PDF-файл без использования внешних шрифтов.
+    
+    Args:
+        pergola_data (dict): Данные о перголе для включения в PDF
+        
+    Returns:
+        str: Путь к сгенерированному PDF-файлу
+    """
+    from fpdf import FPDF
+    import time
+    
+    # Создаем директорию для PDF, если её нет
+    os.makedirs("generated_pdf", exist_ok=True)
+    
+    # Генерируем имя файла на основе текущего времени
+    timestamp = int(time.time())
+    pdf_path = f"generated_pdf/pergola_offer_{timestamp}.pdf"
+    
+    # Создаем объект PDF с базовыми настройками
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Используем встроенные шрифты
+    pdf.set_font("Helvetica", size=12)
+    
+    # Добавляем заголовок
+    pdf.set_font("Helvetica", style="B", size=16)
+    pdf.cell(200, 10, txt="Коммерческое предложение", ln=True, align="C")
+    pdf.cell(200, 10, txt="Биоклиматическая пергола", ln=True, align="C")
+    pdf.ln(10)
+    
+    # Добавляем основную информацию
+    pdf.set_font("Helvetica", size=12)
+    
+    # Параметры перголы
+    pdf.set_font("Helvetica", style="B", size=14)
+    pdf.cell(200, 10, txt="Параметры перголы:", ln=True)
+    pdf.ln(5)
+    
+    pdf.set_font("Helvetica", size=12)
+    pergola_type = pergola_data.get("pergola_type", "")
+    width = pergola_data.get("width", 0)
+    length = pergola_data.get("length", 0)
+    
+    pdf.cell(100, 10, txt=f"Модель: {pergola_type}", ln=True)
+    pdf.cell(100, 10, txt=f"Ширина: {width} м", ln=True)
+    pdf.cell(100, 10, txt=f"Длина (вынос): {length} м", ln=True)
+    
+    modules = pergola_data.get("modules", 1)
+    pdf.cell(100, 10, txt=f"Количество модулей: {modules}", ln=True)
+    
+    # Стоимость
+    pdf.ln(10)
+    pdf.set_font("Helvetica", style="B", size=14)
+    pdf.cell(200, 10, txt="Стоимость:", ln=True)
+    pdf.ln(5)
+    
+    # Таблица со стоимостью
+    items = pergola_data.get("items", [])
+    
+    # Заголовки таблицы
+    pdf.set_font("Helvetica", style="B", size=12)
+    pdf.cell(130, 10, txt="Наименование", border=1)
+    pdf.cell(60, 10, txt="Стоимость", border=1, ln=True, align="R")
+    
+    # Данные таблицы
+    pdf.set_font("Helvetica", size=12)
+    total_cost = 0
+    for item in items:
+        name = item.get("name", "")
+        price = item.get("price", 0)
+        # Конвертируем в рубли
+        price_rub = price * pergola_data.get("euro_rate", 110)
+        total_cost += price_rub
+        
+        # Форматируем цену
+        price_str = f"{price_rub:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
+        
+        # Проверяем длину текста и при необходимости обрезаем
+        if len(name) > 50:
+            name = name[:47] + "..."
+            
+        pdf.cell(130, 10, txt=name, border=1)
+        pdf.cell(60, 10, txt=price_str, border=1, ln=True, align="R")
+    
+    # Итоговая строка
+    pdf.set_font("Helvetica", style="B", size=12)
+    total_str = f"{total_cost:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
+    pdf.cell(130, 10, txt="ИТОГО:", border=1)
+    pdf.cell(60, 10, txt=total_str, border=1, ln=True, align="R")
+    
+    # Информация о компании
+    pdf.ln(15)
+    pdf.set_font("Helvetica", style="I", size=10)
+    pdf.cell(0, 10, txt="© 2025 Комфортный дом | Все права защищены", align="C", ln=True)
+    
+    # Текущая дата
+    from datetime import datetime
+    current_date = datetime.now().strftime("%d.%m.%Y")
+    pdf.cell(0, 10, txt=f"Дата формирования: {current_date}", align="C")
+    
+    # Сохраняем PDF
+    pdf.output(pdf_path)
+    
+    return pdf_path
+
 def export_to_pdf():
     """
     Формирует данные для экспорта и генерирует PDF-файл.
@@ -2452,28 +2560,67 @@ def export_to_pdf():
         return None
     
     results = st.session_state.results
-    pergola_type = results.get("options", {}).get("pergola_type", "")
     
-    # Получаем описание перголы
-    if 'config.pergola_descriptions' not in sys.modules:
-        from config.pergola_descriptions import get_pergola_description
-    else:
-        from config.pergola_descriptions import get_pergola_description
+    # Проверяем директории для шрифтов и PDF
+    os.makedirs("fonts", exist_ok=True)
+    os.makedirs("generated_pdf", exist_ok=True)
+    os.makedirs("processed_images", exist_ok=True)
     
-    pergola_description = get_pergola_description(pergola_type)
+    options = results.get("options", {})
+    pergola_type = options.get("pergola_type", "")
+    dimensions = results.get("dimensions", {})
     
-    # Форматируем данные для PDF
-    pergola_data = format_pergola_data_for_pdf(
-        results=results, 
-        options=results.get("options", {}), 
-        dimensions=results.get("dimensions", {}),
-        pergola_description=pergola_description
-    )
+    # Подготавливаем данные для PDF
+    pdf_data = {
+        "pergola_type": pergola_type,
+        "width": dimensions.get("width", 0),
+        "length": dimensions.get("length", 0),
+        "modules": dimensions.get("modules", 1),
+        "items": results.get("items", []),
+        "euro_rate": 110  # Фиксированный курс евро для расчетов
+    }
     
-    # Генерируем PDF
     try:
+        # Сначала пробуем создать простой PDF
+        st.info("Создаем PDF-документ...")
+        pdf_file_path = create_simple_pdf(pdf_data)
+        
+        if pdf_file_path and os.path.exists(pdf_file_path):
+            # Проверяем размер файла
+            file_size = os.path.getsize(pdf_file_path)
+            if file_size > 0:
+                st.success(f"PDF файл успешно создан: {pdf_file_path}")
+                return pdf_file_path
+        
+        st.warning("Простой PDF не был создан, пробуем расширенный вариант...")
+        
+        # Если простой PDF не создался, пробуем более сложный вариант с библиотекой FPDF
+        # Получаем описание перголы
+        if 'config.pergola_descriptions' not in sys.modules:
+            from config.pergola_descriptions import get_pergola_description
+        else:
+            from config.pergola_descriptions import get_pergola_description
+        
+        pergola_description = get_pergola_description(pergola_type)
+        
+        # Форматируем данные для PDF
+        pergola_data = format_pergola_data_for_pdf(
+            results=results, 
+            options=options, 
+            dimensions=dimensions,
+            pergola_description=pergola_description
+        )
+        
+        # Генерируем PDF с использованием расширенной функции
         pdf_file_path = generate_commercial_offer(pergola_data)
-        return pdf_file_path
+        
+        if pdf_file_path and os.path.exists(pdf_file_path):
+            st.success(f"PDF файл успешно создан: {pdf_file_path}")
+            return pdf_file_path
+        else:
+            st.error("Не удалось создать PDF-файл.")
+            return None
+        
     except Exception as e:
         st.error(f"Ошибка при генерации PDF: {str(e)}")
         import traceback
