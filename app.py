@@ -21,6 +21,8 @@ from floating_buttons import add_results_navigation_button, add_dimensions_edit_
 from image_cache import preload_all_pergola_images, get_optimized_pergola_images, preload_images_js
 # Импортируем модуль для генерации PDF
 from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
+# Импортируем модуль оптимизации производительности
+from performance_optimizations import optimize_images_loading, optimize_form_rendering, add_page_speed_optimizations
 import os
 import math
 import csv
