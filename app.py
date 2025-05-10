@@ -2736,22 +2736,31 @@ def create_simple_pdf(pergola_data):
     elements.append(HRFlowable(width="100%", thickness=1, color=colors.black, spaceAfter=10))
     
     # Стиль для названия компании (жирный)
-    company_style = styles["Heading2"]
-    company_style.alignment = 1  # По центру
-    company_style.fontSize = 11
-    company_style.leading = 13
+    company_style = ParagraphStyle(
+        'CompanyTitle',
+        fontName='DejaVuSans-Bold',
+        fontSize=11,
+        leading=13,
+        alignment=1  # По центру
+    )
     
-    # Стиль для остальной информации (курсив)
-    info_style = styles["Italic"]
-    info_style.alignment = 1  # По центру
-    info_style.fontSize = 9
-    info_style.leading = 11
+    # Стиль для остальной информации (обычный)
+    info_style = ParagraphStyle(
+        'CompanyInfo',
+        fontName='DejaVuSans',
+        fontSize=9,
+        leading=11,
+        alignment=1  # По центру
+    )
     
     # Стиль для даты (меньший размер)
-    date_style = styles["Italic"]
-    date_style.alignment = 1  # По центру
-    date_style.fontSize = 8
-    date_style.leading = 10
+    date_style = ParagraphStyle(
+        'DateInfo',
+        fontName='DejaVuSans',
+        fontSize=8,
+        leading=10,
+        alignment=1  # По центру
+    )
     
     # Добавляем колонтитул с информацией о компании
     elements.append(Paragraph("Компания «Комфортный дом»", company_style))
@@ -2799,18 +2808,42 @@ def create_very_simple_pdf(pergola_data):
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # Используем только базовые шрифты
-    pdf.set_font("Arial", "B", 16)
+    # Проверяем и пытаемся использовать шрифты DejaVu
+    font_path = os.path.join('fonts', 'DejaVuSans.ttf')
+    bold_font_path = os.path.join('fonts', 'DejaVuSans-Bold.ttf')
+    
+    use_dejavu = False
+    if os.path.exists(font_path) and os.path.exists(bold_font_path):
+        try:
+            # Добавляем шрифты в PDF
+            pdf.add_font('DejaVu', '', font_path, uni=True)
+            pdf.add_font('DejaVu', 'B', bold_font_path, uni=True)
+            use_dejavu = True
+        except Exception as e:
+            # Если не удалось загрузить шрифты, используем базовые
+            print(f"Не удалось загрузить шрифты DejaVu: {e}")
+    
+    # Выбираем подходящий шрифт
+    if use_dejavu:
+        pdf.set_font("DejaVu", "B", 16)
+    else:
+        pdf.set_font("Arial", "B", 16)
     
     # Заголовок (только латиница)
     pdf.cell(0, 10, "Commercial Offer - Pergola System", ln=True, align="C")
     pdf.ln(10)
     
     # Информация о перголе (только латиница)
-    pdf.set_font("Arial", "B", 12)
+    if use_dejavu:
+        pdf.set_font("DejaVu", "B", 12)
+    else:
+        pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, "Pergola Parameters:", ln=True)
     
-    pdf.set_font("Arial", "", 12)
+    if use_dejavu:
+        pdf.set_font("DejaVu", "", 12)
+    else:
+        pdf.set_font("Arial", "", 12)
     pergola_type = pergola_data.get("pergola_type", "")
     width = pergola_data.get("width", 0)
     length = pergola_data.get("length", 0)
@@ -2823,16 +2856,25 @@ def create_very_simple_pdf(pergola_data):
     pdf.ln(10)
     
     # Секция стоимости
-    pdf.set_font("Arial", "B", 12)
+    if use_dejavu:
+        pdf.set_font("DejaVu", "B", 12)
+    else:
+        pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, "Cost table:", ln=True)
     
     # Заголовки таблицы
-    pdf.set_font("Arial", "B", 10)
+    if use_dejavu:
+        pdf.set_font("DejaVu", "B", 10)
+    else:
+        pdf.set_font("Arial", "B", 10)
     pdf.cell(130, 10, "Item", 1, 0)
     pdf.cell(60, 10, "Price", 1, 1, align="R")
     
     # Данные таблицы
-    pdf.set_font("Arial", "", 10)
+    if use_dejavu:
+        pdf.set_font("DejaVu", "", 10)
+    else:
+        pdf.set_font("Arial", "", 10)
     
     # Получаем данные
     items = pergola_data.get("items", [])
