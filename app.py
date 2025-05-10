@@ -2487,7 +2487,7 @@ def create_simple_pdf(pergola_data):
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
     from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     
     # Создаем директорию для PDF, если её нет
@@ -2729,8 +2729,38 @@ def create_simple_pdf(pergola_data):
     now_moscow = now_utc.astimezone(moscow_tz)
     current_date = now_moscow.strftime("%d.%m.%Y")
     
-    elements.append(Paragraph("© 2025 Комфортный дом | Все права защищены", footer_style))
-    elements.append(Paragraph(f"Дата формирования: {current_date}", footer_style))
+    # Добавляем разделительную линию
+    elements.append(Spacer(1, 10))
+    
+    # Горизонтальная линия (разделитель)
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.black, spaceAfter=10))
+    
+    # Стиль для названия компании (жирный)
+    company_style = styles["Heading2"]
+    company_style.alignment = 1  # По центру
+    company_style.fontSize = 11
+    company_style.leading = 13
+    
+    # Стиль для остальной информации (курсив)
+    info_style = styles["Italic"]
+    info_style.alignment = 1  # По центру
+    info_style.fontSize = 9
+    info_style.leading = 11
+    
+    # Стиль для даты (меньший размер)
+    date_style = styles["Italic"]
+    date_style.alignment = 1  # По центру
+    date_style.fontSize = 8
+    date_style.leading = 10
+    
+    # Добавляем колонтитул с информацией о компании
+    elements.append(Paragraph("Компания «Комфортный дом»", company_style))
+    elements.append(Paragraph("Комплексные решения для обустройства террас, веранды и беседок.", info_style))
+    elements.append(Paragraph("ИП Гоноченко А.В. ОГРНИП 321619600249231", info_style))
+    elements.append(Paragraph("Тел.: +7-906-429-74-20 Сайт: pergolamarket.ru", info_style))
+    
+    elements.append(Spacer(1, 5))
+    elements.append(Paragraph(f"Коммерческое предложение сформировано: {current_date}", date_style))
     
     # Строим PDF
     doc.build(elements)
@@ -2915,9 +2945,24 @@ def create_very_simple_pdf(pergola_data):
     current_date = now_moscow.strftime("%d.%m.%Y")
     
     pdf.ln(10)
-    pdf.set_font("Arial", "I", 10)
-    pdf.cell(0, 10, f"Commercial offer generated on: {current_date}", ln=True, align="C")
-    pdf.cell(0, 10, "© 2025 Comfort Home | All rights reserved", ln=True, align="C")
+    
+    # Добавляем разделительную линию перед колонтитулом
+    pdf.line(20, pdf.get_y(), pdf.w - 20, pdf.get_y())
+    pdf.ln(5)
+    
+    # Информация о компании
+    pdf.set_font("Arial", "B", 11)
+    pdf.cell(0, 8, "Компания «Комфортный дом»", ln=True, align="C")
+    
+    pdf.set_font("Arial", "I", 9)
+    pdf.cell(0, 6, "Комплексные решения для обустройства террас, веранды и беседок.", ln=True, align="C")
+    pdf.cell(0, 6, "ИП Гоноченко А.В. ОГРНИП 321619600249231", ln=True, align="C")
+    pdf.cell(0, 6, "Тел.: +7-906-429-74-20 Сайт: pergolamarket.ru", ln=True, align="C")
+    
+    # Дата создания
+    pdf.ln(5)
+    pdf.set_font("Arial", "I", 8)
+    pdf.cell(0, 6, f"Коммерческое предложение сформировано: {current_date}", ln=True, align="C")
     
     # Сохраняем PDF
     pdf.output(pdf_path)
