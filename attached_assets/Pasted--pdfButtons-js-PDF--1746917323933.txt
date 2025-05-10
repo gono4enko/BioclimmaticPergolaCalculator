@@ -1,0 +1,156 @@
+/**
+ * Файл pdfButtons.js - обработка экспорта PDF
+ * 
+ * Основные функции:
+ * - Привязка обработчиков к кнопкам экспорта PDF
+ * - Отправка запросов на генерацию PDF
+ * - Обработка ответов и скачивание файлов
+ */
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Привязка обработчиков событий к кнопкам
+    const pdfButton = document.getElementById('new-pdf-button');
+    if (pdfButton) {
+        pdfButton.addEventListener('click', handlePdfExport);
+    }
+    
+    /**
+     * Обработчик нажатия на кнопку экспорта PDF
+     */
+    function handlePdfExport() {
+        // Визуальная индикация процесса
+        const button = this;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Генерация PDF...';
+        button.disabled = true;
+        
+        // Получение данных расчета
+        const calculationData = getCalculationData();
+        
+        // Сохранение данных на сервере перед экспортом
+        saveCalculationData(calculationData)
+            .then(response => {
+                if (response.status === 'success') {
+                    // Запуск экспорта PDF
+                    return generatePdf(response.id);
+                } else {
+                    throw new Error('Ошибка сохранения данных');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при подготовке данных:', error);
+                alert('Произошла ошибка при подготовке данных для PDF');
+            })
+            .finally(() => {
+                // Восстановление состояния кнопки
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+    }
+    
+    /**
+     * Получение данных текущего расчета из интерфейса
+     * @returns {Object} Данные расчета
+     */
+    function getCalculationData() {
+        // Получение всех необходимых данных из интерфейса
+        // [Код для получения данных из DOM или из хранилища]
+        
+        // Кэширование данных расчета для PDF
+        window.lastCalculationData = calculationData;
+        console.log('Данные расчёта сохранены для PDF:', calculationData);
+        
+        return calculationData;
+    }
+    
+    /**
+     * Сохранение данных расчета на сервере
+     * @param {Object} data Данные для сохранения
+     * @returns {Promise} Результат операции
+     */
+    function saveCalculationData(data) {
+        return fetch('/api/save-calculation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка сохранения данных на сервере');
+            }
+            return response.json();
+        });
+    }
+    
+    /**
+     * Генерация и скачивание PDF
+     * @param {string} calculationId ID сохраненного расчета
+     */
+    function generatePdf(calculationId) {
+        console.log('Сохранение данных расчета...');
+        console.log('Данные расчета успешно сохранены с ID:', calculationId);
+        console.log('Отправляем запрос на генерацию PDF через маршрут /export_pdf_new');
+        
+        const startTime = new Date();
+        
+        // Создание запроса на генерацию PDF
+        fetch(`/export_pdf_new?id=${calculationId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            // Проверка успешности ответа
+            if (!response.ok) {
+                throw new Error('Ошибка генерации PDF');
+            }
+            
+            // Логирование времени ответа
+            const responseTime = (new Date() - startTime) / 1000;
+            console.log(`Получен ответ от сервера за ${responseTime.toFixed(2)} секунд`);
+            
+            // Получение имени файла из заголовка, если он есть
+            const contentDisposition = response.headers.get('content-disposition');
+            let fileName = 'Pergola_calculation.pdf';
+            if (contentDisposition) {
+                const fileNameMatch = contentDisposition.match(/filename=["']?([^"']+)/);
+                if (fileNameMatch && fileNameMatch[1]) {
+                    fileName = fileNameMatch[1];
+                }
+            }
+            console.log(`Получено имя файла из сервера: ${fileName}`);
+            
+            // Преобразование ответа в blob для скачивания
+            return response.blob().then(blob => {
+                return { blob, fileName };
+            });
+        })
+        .then(({ blob, fileName }) => {
+            // Создание ссылки для скачивания
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            
+            // Инициирование скачивания
+            a.click();
+            
+            // Очистка ресурсов
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            // Логирование результата
+            const totalTime = (new Date() - startTime) / 1000;
+            console.log(`Общее время создания PDF: ${totalTime.toFixed(2)} секунд`);
+        })
+        .catch(error => {
+            console.error('Ошибка при генерации PDF:', error);
+            alert('Произошла ошибка при создании PDF');
+        });
+    }
+});
