@@ -2684,9 +2684,17 @@ def create_simple_pdf(pergola_data):
                     spaceBefore=0,
                     spaceAfter=0
                 )
-                name_paragraph = Paragraph(f"{first_line}<br/>{second_line}", paragraph_style)
-                # Используем преобразование в строку, чтобы избежать ошибки типа
-                spec_table_data.append([str(name_paragraph), count])
+                # Вместо использования Paragraph, лучше разобьем данные на две строки напрямую
+                name_cell = Table([[first_line], [second_line]], colWidths=[350])
+                name_cell_style = TableStyle([
+                    ('FONTNAME', (0, 0), (0, 1), 'DejaVuSans'),
+                    ('FONTSIZE', (0, 0), (0, 1), 10),
+                    ('ALIGN', (0, 0), (0, 1), 'LEFT'),
+                    ('VALIGN', (0, 0), (0, 1), 'MIDDLE'),
+                    ('GRID', (0, 0), (0, 1), 0, colors.white) # Без внутренних границ
+                ])
+                name_cell.setStyle(name_cell_style)
+                spec_table_data.append([name_cell, count])
             else:
                 spec_table_data.append([name, count])
         
