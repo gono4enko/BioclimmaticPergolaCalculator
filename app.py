@@ -3465,7 +3465,13 @@ def main():
     
     # Добавляем прямые плавающие кнопки навигации (новый метод)
     # Проверяем, что мы не на странице администрирования
-    current_path = st.query_params.get("_stcore_page_id", ["main"])[0].lower()
+    # Используем только один метод работы с query_params - новый API
+    page_param = st.query_params.get("_stcore_page_id")
+    current_path = "main"  # значение по умолчанию
+    
+    if page_param is not None:
+        current_path = page_param.lower()
+        
     if not any(admin_term in current_path for admin_term in ["admin", "prices_admin", "promotions_admin"]):
         inject_direct_buttons()
     

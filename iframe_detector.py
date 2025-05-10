@@ -11,8 +11,8 @@ def is_in_iframe():
     Returns:
         bool: True если приложение запущено в iframe, иначе False
     """
-    query_params = st.experimental_get_query_params()
-    return 'embedded' in query_params or 'iframe' in query_params
+    # Используем новый API для работы с параметрами запроса
+    return 'embedded' in st.query_params or 'iframe' in st.query_params
 
 def add_iframe_detector_script():
     """
