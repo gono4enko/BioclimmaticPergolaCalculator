@@ -1196,7 +1196,7 @@ def get_modules_by_width(width):
 
 def render_dimensions_form():
     """
-    Отображает форму для ввода размеров перголы
+    Отображает форму для ввода размеров перголы с оптимизированной производительностью
     
     Returns:
         dict: Словарь с введенными размерами
@@ -1204,10 +1204,32 @@ def render_dimensions_form():
     # Добавляем ID-якорь для возможности скролла к этой секции
     st.markdown('<div id="dimensions-form"></div>', unsafe_allow_html=True)
     
+    # Оптимизированная стилизация для более быстрой загрузки и отрисовки формы
+    st.markdown("""
+    <style>
+    /* Оптимизируем поля ввода для более быстрой отрисовки */
+    .stNumberInput input {
+        transition: none !important;
+        animation: none !important;
+        font-size: 16px !important; /* Предотвращает зум на мобильных */
+    }
+    /* Предварительно выделяем место для полей ввода */
+    .stNumberInput {
+        min-height: 60px;
+        contain: size layout;
+    }
+    /* Оптимизируем селекторы для более быстрой отрисовки */
+    .stSelectbox {
+        will-change: transform;
+        contain: content;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Размеры перголы</h2>", unsafe_allow_html=True)
     
-    # Начало блока с классом dimensions-form для умной адаптации
-    st.markdown("<div class='dimensions-form'>", unsafe_allow_html=True)
+    # Начало блока с классом dimensions-form с улучшенными атрибутами для производительности
+    st.markdown("<div class='dimensions-form' style='contain: content; will-change: transform;'>", unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
@@ -3337,14 +3359,36 @@ def main():
         initial_sidebar_state="collapsed"  # Боковая панель будет свернута по умолчанию
     )
     
+    # Добавляем общие оптимизации страницы для быстрой загрузки
+    st.markdown(add_page_speed_optimizations(), unsafe_allow_html=True)
+    
+    # Определяем критически важные изображения для быстрой первоначальной загрузки
+    critical_images = [
+        "attached_assets/b500_rotation.png",
+        "attached_assets/linear_drive_b500.png"
+    ]
+    
+    # Второстепенные изображения, загружаемые с задержкой для ускорения отображения формы
+    secondary_images = [
+        "attached_assets/b700_sliding.png",
+        "attached_assets/b600_sandwich.png",
+        "attached_assets/somfy_pergola_b700.jpg"
+    ]
+    
+    # Добавляем оптимизированную многоуровневую загрузку изображений
+    st.markdown(optimize_images_loading(
+        critical_images=critical_images,
+        secondary_images=secondary_images
+    ), unsafe_allow_html=True)
+    
     # Предварительно загружаем все изображения пергол для быстрого отображения
     # Для максимальной производительности и мгновенного отображения изображений
     if 'images_preloaded' not in st.session_state:
         preload_all_pergola_images()
         st.session_state['images_preloaded'] = True
     
-    # Добавляем JavaScript для предзагрузки изображений и кэширования на стороне браузера
-    st.markdown(preload_images_js(), unsafe_allow_html=True)
+    # Добавляем оптимизацию для форм, чтобы пользователь мог быстрее вводить данные
+    st.markdown(optimize_form_rendering(), unsafe_allow_html=True)
     
     # Импортируем компоненты для аутентификации администратора
     from components.admin_auth import admin_login_form
