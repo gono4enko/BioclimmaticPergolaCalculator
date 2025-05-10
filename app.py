@@ -3790,7 +3790,29 @@ def main():
     """, unsafe_allow_html=True)
     
     # Заголовок калькулятора - крупный и четкий
-    st.markdown("<h1 style='text-align: center; margin-top: 10px; margin-bottom: 5px; font-size: 2.2rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
+    # Добавляем стили для уменьшения отступов страницы
+    st.markdown("""
+    <style>
+    /* Уменьшаем отступы в начале страницы */
+    .main .block-container {
+        padding-top: 0px !important;
+        margin-top: 0px !important;
+    }
+    /* Уменьшаем отступы для заголовков */
+    h1 {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    /* Уменьшаем отступы для всех элементов Streamlit */
+    .stHeadingContainer {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Заголовок с минимальным отступом
+    st.markdown("<h1 style='text-align: center; margin-top: 0px; margin-bottom: 5px; font-size: 2.2rem; font-weight: 600; color: #0066cc;'>Калькулятор стоимости перголы</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
     # Создаем якорь для перехода к форме размеров
