@@ -2952,17 +2952,17 @@ def create_very_simple_pdf(pergola_data):
     
     # Информация о компании
     pdf.set_font("Arial", "B", 11)
-    pdf.cell(0, 8, "Компания «Комфортный дом»", ln=True, align="C")
+    pdf.cell(0, 8, "Company \"Komfortny dom\"", ln=True, align="C")
     
     pdf.set_font("Arial", "I", 9)
-    pdf.cell(0, 6, "Комплексные решения для обустройства террас, веранды и беседок.", ln=True, align="C")
-    pdf.cell(0, 6, "ИП Гоноченко А.В. ОГРНИП 321619600249231", ln=True, align="C")
-    pdf.cell(0, 6, "Тел.: +7-906-429-74-20 Сайт: pergolamarket.ru", ln=True, align="C")
+    pdf.cell(0, 6, "Complex solutions for terraces, verandas and gazebos.", ln=True, align="C")
+    pdf.cell(0, 6, "IP Gonochenko A.V. OGRNIP 321619600249231", ln=True, align="C")
+    pdf.cell(0, 6, "Tel.: +7-906-429-74-20 Website: pergolamarket.ru", ln=True, align="C")
     
     # Дата создания
     pdf.ln(5)
     pdf.set_font("Arial", "I", 8)
-    pdf.cell(0, 6, f"Коммерческое предложение сформировано: {current_date}", ln=True, align="C")
+    pdf.cell(0, 6, f"Commercial offer generated on: {current_date}", ln=True, align="C")
     
     # Сохраняем PDF
     pdf.output(pdf_path)
