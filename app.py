@@ -23,6 +23,10 @@ from image_cache import preload_all_pergola_images, get_optimized_pergola_images
 from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
 # Импортируем модуль оптимизации производительности
 from performance_optimizations import optimize_images_loading, optimize_form_rendering, add_page_speed_optimizations
+# Импортируем модуль оптимизации для iframe
+from iframe_optimizer import optimize_for_iframe, add_content_visibility_optimizations, optimize_startup_sequence
+# Импортируем модуль определения iframe
+from iframe_detector import adapt_for_iframe
 import os
 import math
 import csv
@@ -3359,6 +3363,18 @@ def main():
         initial_sidebar_state="collapsed"  # Боковая панель будет свернута по умолчанию
     )
     
+    # Определяем, запущено ли приложение в iframe, и адаптируем интерфейс
+    in_iframe = adapt_for_iframe()
+    
+    # Добавляем дополнительные оптимизации для iframe
+    if in_iframe:
+        # Если в iframe, применяем специальные оптимизации
+        st.session_state['iframe_mode'] = True
+        optimize_for_iframe()
+    
+    # Добавляем CSS-оптимизации для ускорения загрузки контента
+    st.markdown(add_content_visibility_optimizations(), unsafe_allow_html=True)
+    
     # Добавляем общие оптимизации страницы для быстрой загрузки
     st.markdown(add_page_speed_optimizations(), unsafe_allow_html=True)
     
@@ -3381,14 +3397,26 @@ def main():
         secondary_images=secondary_images
     ), unsafe_allow_html=True)
     
-    # Предварительно загружаем все изображения пергол для быстрого отображения
-    # Для максимальной производительности и мгновенного отображения изображений
+    # Предварительно загружаем только критические изображения для быстрого отображения
+    # Используем кэш в памяти для предотвращения повторной обработки при обновлении страницы
     if 'images_preloaded' not in st.session_state:
-        preload_all_pergola_images()
+        # Загружаем только критические изображения сначала для ускорения начальной загрузки
+        for img_path in critical_images:
+            if os.path.exists(img_path):
+                # Извлекаем имя файла без пути и расширения
+                file_name = img_path.split('/')[-1]
+                base_name = file_name.split('.')[0]
+                
+                # Используем функцию для предварительной загрузки изображения в кэш
+                # Передаем стандартный тип перголы "B500NEW" для загрузки базовых изображений
+                get_optimized_pergola_images("B500NEW")
         st.session_state['images_preloaded'] = True
     
     # Добавляем оптимизацию для форм, чтобы пользователь мог быстрее вводить данные
     st.markdown(optimize_form_rendering(), unsafe_allow_html=True)
+    
+    # Добавляем оптимизацию последовательности загрузки для приоритизации формы ввода
+    st.markdown(optimize_startup_sequence(), unsafe_allow_html=True)
     
     # Импортируем компоненты для аутентификации администратора
     from components.admin_auth import admin_login_form
