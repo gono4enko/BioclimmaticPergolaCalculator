@@ -2588,6 +2588,31 @@ def create_simple_pdf(pergola_data):
     elements.append(Paragraph(f"Ширина: {width} м", normal_style))
     elements.append(Paragraph(f"Длина (вынос): {length} м", normal_style))
     elements.append(Paragraph(f"Количество модулей: {modules}", normal_style))
+    elements.append(Spacer(1, 10))
+    
+    # Добавление изображения перголы
+    image_path = get_pergola_image_path(pergola_type)
+    if image_path and os.path.exists(image_path):
+        try:
+            # Создаем изображение из файла
+            from reportlab.lib.units import inch
+            from reportlab.platypus import Image
+            
+            # Определяем размеры изображения (ширина ~80% от ширины страницы)
+            img_width = 6 * inch  # примерно 80% от A4
+            img = Image(image_path, width=img_width, preserveAspectRatio=True)
+            
+            # Добавляем изображение
+            elements.append(img)
+            
+            # Добавляем подпись
+            caption_style = ParagraphStyle('Caption', fontName='DejaVuSans', fontSize=10, alignment=1)
+            elements.append(Spacer(1, 5))
+            elements.append(Paragraph("Визуализация модели", caption_style))
+        except Exception as e:
+            # Если возникла проблема с добавлением изображения, пропускаем
+            print(f"Ошибка при добавлении изображения в PDF: {e}")
+    
     elements.append(Spacer(1, 20))
     
     # Секция стоимости
@@ -2776,6 +2801,32 @@ def create_simple_pdf(pergola_data):
     
     return pdf_path
 
+def get_pergola_image_path(pergola_type):
+    """
+    Возвращает путь к изображению перголы на основе ее типа.
+    
+    Args:
+        pergola_type (str): Тип перголы (B500, B600, B700)
+        
+    Returns:
+        str: Путь к изображению или None, если изображение не найдено
+    """
+    # Стандартизируем тип перголы (приводим к верхнему регистру)
+    pergola_type = pergola_type.upper() if pergola_type else ""
+    
+    # Словарь с соответствиями типа перголы и путей к изображениям
+    image_paths = {
+        "B500": "attached_assets/b500_rotation.png",
+        "B600": "attached_assets/b600_sandwich.png", 
+        "B700": "attached_assets/b700_sliding.png",
+        "B500NEW": "attached_assets/b500_rotation.png",
+        "B600NEW": "attached_assets/b600_sandwich.png",
+        "B700NEW": "attached_assets/b700_sliding.png"
+    }
+    
+    # Возвращаем путь к изображению или None, если тип не найден
+    return image_paths.get(pergola_type)
+
 def create_very_simple_pdf(pergola_data):
     """
     Создает предельно простой PDF без кириллических шрифтов для случаев, когда шрифтов нет.
@@ -2854,6 +2905,29 @@ def create_very_simple_pdf(pergola_data):
     pdf.cell(0, 10, f"Length: {length} m", ln=True)
     pdf.cell(0, 10, f"Number of modules: {modules}", ln=True)
     pdf.ln(10)
+    
+    # Добавляем изображение перголы в зависимости от выбранного типа
+    image_path = get_pergola_image_path(pergola_type)
+    if image_path and os.path.exists(image_path):
+        try:
+            # Устанавливаем ширину изображения, чтобы оно занимало большую часть страницы
+            page_width = pdf.w - 40  # ширина страницы минус поля
+            image_width = page_width
+            
+            # Вычисляем X координату для центрирования изображения
+            x_pos = (pdf.w - image_width) / 2
+            
+            # Добавляем изображение
+            pdf.image(image_path, x=x_pos, y=pdf.get_y(), w=image_width)
+            
+            # Добавляем пространство после изображения
+            pdf.ln(5)
+            pdf.cell(0, 10, "Model visualization", ln=True, align="C")
+            pdf.ln(10)
+        except Exception as e:
+            # Если возникла ошибка при вставке изображения, продолжаем без него
+            print(f"Ошибка при добавлении изображения перголы: {e}")
+            pass
     
     # Секция стоимости
     if use_dejavu:
