@@ -27,6 +27,8 @@ from performance_optimizations import optimize_images_loading, optimize_form_ren
 from iframe_optimizer import optimize_for_iframe, add_content_visibility_optimizations, optimize_startup_sequence
 # Импортируем модуль определения iframe
 from iframe_detector import adapt_for_iframe
+# Импортируем модуль для исправления отступов вверху страницы
+from fix_top_padding import remove_padding_top
 import os
 import math
 import csv
@@ -3354,6 +3356,10 @@ def main():
     from floating_buttons import add_results_navigation_button, add_dimensions_edit_button
     # Импортируем модуль для прямого внедрения кнопок
     from direct_buttons import inject_direct_buttons
+    
+    # Удаляем лишние отступы вверху страницы - первое, что делаем
+    # для минимизации отступа между верхним краем и заголовком
+    remove_padding_top()
     
     # Настраиваем страницу
     st.set_page_config(
