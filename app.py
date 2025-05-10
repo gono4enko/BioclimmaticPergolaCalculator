@@ -2663,15 +2663,20 @@ def create_very_simple_pdf(pergola_data):
         str: Путь к сгенерированному PDF-файлу
     """
     import io
-    import time
+    from datetime import datetime
+    import pytz
     from fpdf import FPDF
     
     # Создаем директорию для PDF, если её нет
     os.makedirs("generated_pdf", exist_ok=True)
     
-    # Генерируем имя файла на основе текущего времени
-    timestamp = int(time.time())
-    pdf_path = f"generated_pdf/pergola_offer_{timestamp}.pdf"
+    # Генерируем имя файла на основе московского времени
+    # Определяем московскую временную зону
+    moscow_tz = pytz.timezone('Europe/Moscow')
+    now_utc = datetime.now(pytz.utc)
+    now_moscow = now_utc.astimezone(moscow_tz)
+    timestamp = now_moscow.strftime("%Y%m%d_%H%M%S")
+    pdf_path = f"generated_pdf/KP_Pergola_{timestamp}.pdf"
     
     # Создаем PDF с базовыми настройками
     pdf = FPDF()
