@@ -6,6 +6,7 @@ import streamlit as st
 import pandas as pd
 import io
 import json
+import sys
 # Импортируем функции для работы с Яндекс.Метрикой
 from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
 # Импортируем функцию для плавного скролла
@@ -1622,6 +1623,44 @@ def render_results(results, show_articles=False):
         results (dict): Словарь с результатами расчета
         show_articles (bool, optional): Флаг для отображения статей с описаниями. По умолчанию False.
     """
+    # Добавляем стили для кнопки экспорта PDF
+    st.markdown("""
+    <style>
+    .pdf-export-button {
+        background-color: #3f6daa;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: bold;
+        display: inline-block;
+        text-align: center;
+        margin: 10px 0;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+    .pdf-export-button:hover {
+        background-color: #2c4b75;
+        transform: translateY(-2px);
+    }
+    .download-button {
+        display: inline-block;
+        background-color: #4CAF50;
+        color: white !important;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: bold;
+        margin: 10px 0;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        transition: background-color 0.3s;
+    }
+    .download-button:hover {
+        background-color: #45a049;
+    }
+    </style>
+    """, unsafe_allow_html=True)
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
     
@@ -2029,6 +2068,42 @@ def render_results(results, show_articles=False):
     </div>
     """, unsafe_allow_html=True)
     
+    # Добавляем кнопку для экспорта PDF
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("📄 Экспорт КП в PDF", key="export_pdf_button", help="Экспортировать коммерческое предложение в PDF"):
+            with st.spinner("Генерация PDF..."):
+                # Если PDF уже был сгенерирован ранее, используем его
+                if 'pdf_file_path' in st.session_state:
+                    pdf_path = st.session_state.pdf_file_path
+                else:
+                    # Иначе создаем новый PDF
+                    pdf_path = export_to_pdf()
+                    if pdf_path:
+                        st.session_state.pdf_file_path = pdf_path
+                
+                # Если PDF успешно сгенерирован, показываем ссылку для скачивания
+                if pdf_path:
+                    download_link = get_pdf_download_link(pdf_path)
+                    st.markdown(f"""
+                    <div style="text-align: center; margin: 20px 0;">
+                        {download_link}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Отправляем событие в Яндекс.Метрику
+                    st.markdown("""
+                    <script>
+                    // Отправка события экспорта PDF в Яндекс.Метрику
+                    if (typeof ym !== 'undefined') {
+                        ym(94463245, 'reachGoal', 'pdf_export');
+                        console.log('Отправлено событие pdf_export в Яндекс.Метрику');
+                    }
+                    </script>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.error("Не удалось сгенерировать PDF. Пожалуйста, попробуйте еще раз.")
+    
     # Отображаем разделитель между таблицей стоимости и описанием перголы
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
     
@@ -2363,6 +2438,75 @@ def display_formatted_description(description_text, article_type=None):
         import re
         plain_text = re.sub(r'<.*?>', ' ', description_text)
         st.write(plain_text)
+
+def export_to_pdf():
+    """
+    Формирует данные для экспорта и генерирует PDF-файл.
+    Добавляет кнопку для скачивания сгенерированного PDF.
+    
+    Returns:
+        str: Путь к сгенерированному PDF-файлу
+    """
+    if 'results' not in st.session_state:
+        st.error("Сначала нужно выполнить расчет!")
+        return None
+    
+    results = st.session_state.results
+    pergola_type = results.get("options", {}).get("pergola_type", "")
+    
+    # Получаем описание перголы
+    if 'config.pergola_descriptions' not in sys.modules:
+        from config.pergola_descriptions import get_pergola_description
+    else:
+        from config.pergola_descriptions import get_pergola_description
+    
+    pergola_description = get_pergola_description(pergola_type)
+    
+    # Форматируем данные для PDF
+    pergola_data = format_pergola_data_for_pdf(
+        results=results, 
+        options=results.get("options", {}), 
+        dimensions=results.get("dimensions", {}),
+        pergola_description=pergola_description
+    )
+    
+    # Генерируем PDF
+    try:
+        pdf_file_path = generate_commercial_offer(pergola_data)
+        return pdf_file_path
+    except Exception as e:
+        st.error(f"Ошибка при генерации PDF: {str(e)}")
+        import traceback
+        st.write(traceback.format_exc())
+        return None
+
+def get_pdf_download_link(pdf_path):
+    """
+    Создает ссылку для скачивания PDF-файла.
+    
+    Args:
+        pdf_path (str): Путь к PDF-файлу
+        
+    Returns:
+        str: HTML-код с ссылкой для скачивания
+    """
+    if not pdf_path or not os.path.exists(pdf_path):
+        return ""
+    
+    # Получаем имя файла для отображения
+    file_name = os.path.basename(pdf_path)
+    
+    # Читаем файл в бинарном режиме
+    with open(pdf_path, "rb") as file:
+        pdf_bytes = file.read()
+    
+    # Кодируем в base64
+    b64 = base64.b64encode(pdf_bytes).decode()
+    
+    # Создаем ссылку для скачивания
+    href = f'<a href="data:application/pdf;base64,{b64}" download="{file_name}" class="download-button">Скачать PDF</a>'
+    
+    return href
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
