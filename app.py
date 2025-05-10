@@ -2804,6 +2804,51 @@ def create_very_simple_pdf(pergola_data):
     pdf.cell(130, 10, "TOTAL:", 1, 0)
     pdf.cell(60, 10, f"{total_cost:,.2f} RUB".replace(",", " "), 1, 1, align="R")
     
+    # Если есть скидка, добавляем строку скидки и итоговую сумму со скидкой
+    discount = pergola_data.get("discount", 0)
+    if discount > 0:
+        pdf.cell(130, 10, "DISCOUNT:", 1, 0)
+        pdf.cell(60, 10, f"{discount:,.2f} RUB".replace(",", " "), 1, 1, align="R")
+        
+        total_after_discount = pergola_data.get("total_price_after_discount", total_cost)
+        pdf.cell(130, 10, "TOTAL WITH DISCOUNT:", 1, 0)
+        pdf.cell(60, 10, f"{total_after_discount:,.2f} RUB".replace(",", " "), 1, 1, align="R")
+    
+    # Добавляем раздел Спецификации перголы, если есть данные
+    specification = pergola_data.get("specification", [])
+    if specification:
+        pdf.ln(10)
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(0, 10, "Pergola Specification:", ln=True)
+        
+        # Заголовки таблицы спецификации
+        pdf.set_font("Arial", "B", 10)
+        pdf.cell(130, 10, "Item", 1, 0)
+        pdf.cell(60, 10, "Quantity", 1, 1, align="C")
+        
+        # Данные таблицы спецификации
+        pdf.set_font("Arial", "", 10)
+        
+        for item in specification:
+            name = item.get("name", "")
+            count = item.get("count", "")
+            
+            # Упрощаем имена для ASCII
+            name = name.replace("привод", "drive")
+            name = name.replace("подсветка", "lighting")
+            name = name.replace("лотка", "gutter")
+            name = name.replace("усилитель", "reinforcement")
+            name = name.replace("пульт", "remote")
+            name = name.replace("ламели", "lamellas")
+            name = name.replace("модуль", "module")
+            
+            # Ограничиваем длину имени
+            if len(name) > 60:
+                name = name[:57] + "..."
+                
+            pdf.cell(130, 10, name, 1, 0)
+            pdf.cell(60, 10, count, 1, 1, align="C")
+    
     # Дата с использованием московского времени
     from datetime import datetime
     import pytz
