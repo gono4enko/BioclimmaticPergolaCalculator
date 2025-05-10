@@ -2906,13 +2906,17 @@ def create_very_simple_pdf(pergola_data):
         pdf.cell(60, 10, price_str, 1, 1, align="R")
     
     # Итоговая строка
-    pdf.set_font("Arial", "B", 10)
+    if use_dejavu:
+        pdf.set_font("DejaVu", "B", 10)
+    else:
+        pdf.set_font("Arial", "B", 10)
     pdf.cell(130, 10, "TOTAL:", 1, 0)
     pdf.cell(60, 10, f"{total_cost:,.2f} RUB".replace(",", " "), 1, 1, align="R")
     
     # Если есть скидка, добавляем строку скидки и итоговую сумму со скидкой
     discount = pergola_data.get("discount", 0)
     if discount > 0:
+        # Шрифт и стиль уже установлены выше
         pdf.cell(130, 10, "DISCOUNT:", 1, 0)
         pdf.cell(60, 10, f"{discount:,.2f} RUB".replace(",", " "), 1, 1, align="R")
         
@@ -2924,16 +2928,25 @@ def create_very_simple_pdf(pergola_data):
     specification = pergola_data.get("specification", [])
     if specification:
         pdf.ln(10)
-        pdf.set_font("Arial", "B", 12)
+        if use_dejavu:
+            pdf.set_font("DejaVu", "B", 12)
+        else:
+            pdf.set_font("Arial", "B", 12)
         pdf.cell(0, 10, "Pergola Specification:", ln=True)
         
         # Заголовки таблицы спецификации
-        pdf.set_font("Arial", "B", 10)
+        if use_dejavu:
+            pdf.set_font("DejaVu", "B", 10)
+        else:
+            pdf.set_font("Arial", "B", 10)
         pdf.cell(130, 10, "Item", 1, 0)
         pdf.cell(60, 10, "Quantity", 1, 1, align="C")
         
         # Данные таблицы спецификации
-        pdf.set_font("Arial", "", 10)
+        if use_dejavu:
+            pdf.set_font("DejaVu", "", 10)
+        else:
+            pdf.set_font("Arial", "", 10)
         
         for item in specification:
             name = item.get("name", "")
@@ -2993,17 +3006,26 @@ def create_very_simple_pdf(pergola_data):
     pdf.ln(5)
     
     # Информация о компании
-    pdf.set_font("Arial", "B", 11)
+    if use_dejavu:
+        pdf.set_font("DejaVu", "B", 11)
+    else:
+        pdf.set_font("Arial", "B", 11)
     pdf.cell(0, 8, "Company \"Komfortny dom\"", ln=True, align="C")
     
-    pdf.set_font("Arial", "I", 9)
+    if use_dejavu:
+        pdf.set_font("DejaVu", "I", 9)
+    else:
+        pdf.set_font("Arial", "I", 9)
     pdf.cell(0, 6, "Complex solutions for terraces, verandas and gazebos.", ln=True, align="C")
     pdf.cell(0, 6, "IP Gonochenko A.V. OGRNIP 321619600249231", ln=True, align="C")
     pdf.cell(0, 6, "Tel.: +7-906-429-74-20 Website: pergolamarket.ru", ln=True, align="C")
     
     # Дата создания
     pdf.ln(5)
-    pdf.set_font("Arial", "I", 8)
+    if use_dejavu:
+        pdf.set_font("DejaVu", "I", 8)
+    else:
+        pdf.set_font("Arial", "I", 8)
     pdf.cell(0, 6, f"Commercial offer generated on: {current_date}", ln=True, align="C")
     
     # Сохраняем PDF
