@@ -2451,6 +2451,7 @@ def create_simple_pdf(pergola_data):
     """
     import io
     import time
+    import os
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import A4
     from reportlab.pdfbase import pdfmetrics
@@ -2461,6 +2462,18 @@ def create_simple_pdf(pergola_data):
     
     # Создаем директорию для PDF, если её нет
     os.makedirs("generated_pdf", exist_ok=True)
+    
+    # Регистрируем шрифт с поддержкой кириллицы
+    font_path = os.path.join('fonts', 'DejaVuSans.ttf')
+    bold_font_path = os.path.join('fonts', 'DejaVuSans-Bold.ttf')
+    
+    # Проверяем наличие шрифтов и создаем простую версию
+    if not os.path.exists(font_path) or not os.path.exists(bold_font_path):
+        return create_very_simple_pdf(pergola_data)
+    
+    # Регистрируем шрифты
+    pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
+    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', bold_font_path))
     
     # Генерируем имя файла на основе текущего времени
     timestamp = int(time.time())
@@ -2478,23 +2491,54 @@ def create_simple_pdf(pergola_data):
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(
         name='Russian', 
-        fontName='Helvetica',
+        fontName='DejaVuSans',
         fontSize=12,
         leading=14
     ))
+    
+    # Создаем свои стили с кириллическими шрифтами
+    title_style = ParagraphStyle(
+        name='CustomTitle',
+        fontName='DejaVuSans-Bold',
+        fontSize=18,
+        alignment=1,  # По центру
+        spaceAfter=12
+    )
+    
+    heading2_style = ParagraphStyle(
+        name='CustomHeading2',
+        fontName='DejaVuSans-Bold',
+        fontSize=14,
+        spaceBefore=12,
+        spaceAfter=6
+    )
+    
+    normal_style = ParagraphStyle(
+        name='CustomNormal',
+        fontName='DejaVuSans',
+        fontSize=12,
+        leading=14
+    )
+    
+    footer_style = ParagraphStyle(
+        name='CustomFooter',
+        fontName='DejaVuSans',
+        fontSize=10,
+        alignment=1,  # По центру
+        leading=12,
+        fontStyle='italic'
+    )
     
     # Создаем элементы для PDF
     elements = []
     
     # Заголовок
-    title_style = styles["Heading1"]
-    title_style.alignment = 1  # По центру
     elements.append(Paragraph("Коммерческое предложение", title_style))
     elements.append(Paragraph("Биоклиматическая пергола", title_style))
     elements.append(Spacer(1, 20))
     
     # Параметры перголы
-    elements.append(Paragraph("Параметры перголы:", styles["Heading2"]))
+    elements.append(Paragraph("Параметры перголы:", heading2_style))
     elements.append(Spacer(1, 10))
     
     # Основная информация
@@ -2503,15 +2547,14 @@ def create_simple_pdf(pergola_data):
     length = pergola_data.get("length", 0)
     modules = pergola_data.get("modules", 1)
     
-    info_style = styles["Russian"]
-    elements.append(Paragraph(f"Модель: {pergola_type}", info_style))
-    elements.append(Paragraph(f"Ширина: {width} м", info_style))
-    elements.append(Paragraph(f"Длина (вынос): {length} м", info_style))
-    elements.append(Paragraph(f"Количество модулей: {modules}", info_style))
+    elements.append(Paragraph(f"Модель: {pergola_type}", normal_style))
+    elements.append(Paragraph(f"Ширина: {width} м", normal_style))
+    elements.append(Paragraph(f"Длина (вынос): {length} м", normal_style))
+    elements.append(Paragraph(f"Количество модулей: {modules}", normal_style))
     elements.append(Spacer(1, 20))
     
     # Секция стоимости
-    elements.append(Paragraph("Стоимость:", styles["Heading2"]))
+    elements.append(Paragraph("Стоимость:", heading2_style))
     elements.append(Spacer(1, 10))
     
     # Таблица со стоимостью
@@ -2548,10 +2591,11 @@ def create_simple_pdf(pergola_data):
         ('TEXTCOLOR', (0, 0), (1, 0), colors.black),
         ('ALIGN', (0, 0), (0, -1), 'LEFT'),
         ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-        ('FONTNAME', (0, 0), (1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 0), (1, 0), 'DejaVuSans-Bold'),  # Используем кириллический шрифт
+        ('FONTNAME', (0, 1), (-1, -2), 'DejaVuSans'),     # Используем кириллический шрифт
+        ('FONTNAME', (0, -1), (1, -1), 'DejaVuSans-Bold'), # Используем кириллический шрифт для итоговой строки
         ('BOTTOMPADDING', (0, 0), (1, 0), 12),
         ('BACKGROUND', (0, -1), (1, -1), colors.lightgrey),
-        ('FONTNAME', (0, -1), (1, -1), 'Helvetica-Bold'),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
     ])
     
@@ -2563,13 +2607,121 @@ def create_simple_pdf(pergola_data):
     from datetime import datetime
     current_date = datetime.now().strftime("%d.%m.%Y")
     
-    footer_style = styles["Italic"]
-    footer_style.alignment = 1  # По центру
     elements.append(Paragraph("© 2025 Комфортный дом | Все права защищены", footer_style))
     elements.append(Paragraph(f"Дата формирования: {current_date}", footer_style))
     
     # Строим PDF
     doc.build(elements)
+    
+    return pdf_path
+
+def create_very_simple_pdf(pergola_data):
+    """
+    Создает предельно простой PDF без кириллических шрифтов для случаев, когда шрифтов нет.
+    Использует английские названия и ASCII-символы.
+    
+    Args:
+        pergola_data (dict): Данные о перголе для включения в PDF
+        
+    Returns:
+        str: Путь к сгенерированному PDF-файлу
+    """
+    import io
+    import time
+    from fpdf import FPDF
+    
+    # Создаем директорию для PDF, если её нет
+    os.makedirs("generated_pdf", exist_ok=True)
+    
+    # Генерируем имя файла на основе текущего времени
+    timestamp = int(time.time())
+    pdf_path = f"generated_pdf/pergola_offer_{timestamp}.pdf"
+    
+    # Создаем PDF с базовыми настройками
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    # Используем только базовые шрифты
+    pdf.set_font("Arial", "B", 16)
+    
+    # Заголовок (только латиница)
+    pdf.cell(0, 10, "Commercial Offer - Pergola System", ln=True, align="C")
+    pdf.ln(10)
+    
+    # Информация о перголе (только латиница)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "Pergola Parameters:", ln=True)
+    
+    pdf.set_font("Arial", "", 12)
+    pergola_type = pergola_data.get("pergola_type", "")
+    width = pergola_data.get("width", 0)
+    length = pergola_data.get("length", 0)
+    modules = pergola_data.get("modules", 1)
+    
+    pdf.cell(0, 10, f"Model: {pergola_type}", ln=True)
+    pdf.cell(0, 10, f"Width: {width} m", ln=True)
+    pdf.cell(0, 10, f"Length: {length} m", ln=True)
+    pdf.cell(0, 10, f"Number of modules: {modules}", ln=True)
+    pdf.ln(10)
+    
+    # Секция стоимости
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "Cost table:", ln=True)
+    
+    # Заголовки таблицы
+    pdf.set_font("Arial", "B", 10)
+    pdf.cell(130, 10, "Item", 1, 0)
+    pdf.cell(60, 10, "Price", 1, 1, align="R")
+    
+    # Данные таблицы
+    pdf.set_font("Arial", "", 10)
+    
+    # Получаем данные
+    items = pergola_data.get("items", [])
+    euro_rate = pergola_data.get("euro_rate", 110)
+    total_cost = 0
+    
+    for item in items:
+        name = item.get("name", "")
+        # Упрощаем имена для ASCII
+        name = name.replace("привод", "drive")
+        name = name.replace("подсветка", "lighting")
+        name = name.replace("лотка", "gutter")
+        name = name.replace("усилитель", "reinforcement")
+        name = name.replace("пульт", "remote")
+        
+        price = item.get("price", 0)
+        # Конвертируем в рубли
+        price_rub = price * euro_rate
+        total_cost += price_rub
+        
+        # Форматируем цену
+        price_str = f"{price_rub:,.2f} RUB".replace(",", " ")
+        
+        # Ограничиваем длину имени
+        if len(name) > 60:
+            name = name[:57] + "..."
+            
+        pdf.cell(130, 10, name, 1, 0)
+        pdf.cell(60, 10, price_str, 1, 1, align="R")
+    
+    # Итоговая строка
+    pdf.set_font("Arial", "B", 10)
+    pdf.cell(130, 10, "TOTAL:", 1, 0)
+    pdf.cell(60, 10, f"{total_cost:,.2f} RUB".replace(",", " "), 1, 1, align="R")
+    
+    # Дата
+    from datetime import datetime
+    current_date = datetime.now().strftime("%d.%m.%Y")
+    
+    pdf.ln(10)
+    pdf.set_font("Arial", "I", 10)
+    pdf.cell(0, 10, f"Commercial offer generated on: {current_date}", ln=True, align="C")
+    pdf.cell(0, 10, "© 2025 Comfort Home | All rights reserved", ln=True, align="C")
+    
+    # Сохраняем PDF
+    pdf.output(pdf_path)
     
     return pdf_path
 
