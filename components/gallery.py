@@ -585,7 +585,7 @@ def display_gallery_section():
         
         # Счетчик установленных пергол
         display_installation_counter()
-        st.markdown('<div class="gallery-description">Взгляните на некоторые из наших недавних проектов. Каждая пергола уникальна и создана в соответствии с потребностями и пожеланиями клиента.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="gallery-description" style="margin-top: 0; padding-top: 0;">Взгляните на некоторые из наших недавних проектов. Каждая пергола уникальна и создана в соответствии с потребностями и пожеланиями клиента.</div>', unsafe_allow_html=True)
         
         # Отображаем галерею с проектами
         display_projects_gallery()

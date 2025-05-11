@@ -4878,8 +4878,52 @@ def main():
         # Добавляем кнопку для возврата к форме размеров
         add_dimensions_edit_button()
     
-    # Добавляем галерею проектов и счетчик установленных пергол
-    # Убираем разделитель для уменьшения вертикального пробела
+    # Добавляем стили для уменьшения вертикального пробела между результатами и галереей
+    st.markdown("""
+    <style>
+    /* Уменьшаем отступы между результатами и галереей - глобальное правило */
+    [data-testid="stVerticalBlock"] > div:last-child > div {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    /* Минимизируем все отступы внизу таблицы */
+    .stTable {
+        margin-bottom: 0 !important;
+    }
+    
+    /* Применяем крайне минимальные отступы для всех элементов галереи */
+    .gallery-container {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    /* Дополнительные правила для удаления отступов между секциями */
+    [data-testid="stVerticalBlock"] > div:nth-last-child(2) {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Компактные стили для кнопки экспорта PDF */
+    [data-testid="baseButton-secondary"] {
+        margin-bottom: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Уменьшение отступов для заголовка галереи */
+    h1 {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    /* Супер-компактные стили для разделителей */
+    hr {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 1px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
     
     # Всегда отображаем галерею проектов и счетчик установленных пергол
     display_gallery_section()
