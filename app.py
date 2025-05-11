@@ -4171,6 +4171,16 @@ def main():
     # Импортируем компоненты для аутентификации администратора
     from components.admin_auth import admin_login_form
     
+    # Инициализируем переменные состояния сессии для аутентификации
+    if "admin_authenticated" not in st.session_state:
+        st.session_state.admin_authenticated = False
+    if "auth_error" not in st.session_state:
+        st.session_state.auth_error = False
+    if "login_attempts" not in st.session_state:
+        st.session_state.login_attempts = 0
+    if "last_attempt_time" not in st.session_state:
+        st.session_state.last_attempt_time = 0
+    
     # Добавляем форму авторизации в боковую панель
     admin_login_form(location="sidebar")
     
