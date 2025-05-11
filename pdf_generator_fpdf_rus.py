@@ -114,7 +114,7 @@ class PDF(FPDF):
         self.set_text_color(80, 80, 80)  # Серый цвет текста для футера
         
         # Текст сайта слева
-        self.cell(100, 10, 'www.komfortnyj-dom.ru', 0, 0, 'L')
+        self.cell(100, 10, 'https://pergolamarket.ru/calculator_bioclimatic_pergola', 0, 0, 'L')
         
         # Номер страницы справа
         self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'R')
@@ -508,7 +508,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
         
         # Устанавливаем информацию о текущей дате
         pdf.set_font('DejaVu', '', 10)
-        pdf.cell(0, 5, f"Ростов-на-Дону, {current_date}", 0, 1, "L")
+        pdf.cell(0, 5, f"г.Ростов-на-Дону, {current_date}", 0, 1, "L")
         
         # Добавляем номер коммерческого предложения
         pdf.ln(5)
@@ -942,7 +942,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
         contact_info = [
             "Телефон: +7 (495) 123-45-67",
             "Email: info@komfortnyj-dom.ru",
-            "Веб-сайт: www.komfortnyj-dom.ru",
+            "Веб-сайт: https://pergolamarket.ru/calculator_bioclimatic_pergola",
             "Адрес: г. Москва, ул. Примерная, д. 123"
         ]
         
@@ -1027,7 +1027,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
             simple_pdf.set_font('Arial', '', 10)
             simple_pdf.cell(0, 7, "Телефон: +7 (495) 123-45-67", 0, 1)
             simple_pdf.cell(0, 7, "Email: info@komfortnyj-dom.ru", 0, 1)
-            simple_pdf.cell(0, 7, "Веб-сайт: www.komfortnyj-dom.ru", 0, 1)
+            simple_pdf.cell(0, 7, "Веб-сайт: https://pergolamarket.ru/calculator_bioclimatic_pergola", 0, 1)
             
             # Сохраняем упрощенный PDF в дефолтную директорию
             backup_filename = f"generated_pdf/KP_Pergola_simple_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
