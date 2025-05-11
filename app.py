@@ -3492,11 +3492,22 @@ def export_to_pdf():
     pergola_type = options.get("pergola_type", "")
     dimensions = results.get("dimensions", {})
     
-    # Подготавливаем данные для PDF
+    # Подготавливаем данные для PDF - добавляем более подробное логирование
+    import logging
+    default_width = st.session_state.get('cached_width') or 3.0
+    default_length = st.session_state.get('cached_length') or 4.0
+    logging.info(f"Default dimensions from session: width={default_width}, length={default_length}")
+    
+    # Важно: используем полное логирование до создания pdf_data
+    logging.info(f"PDF Export - Original dimensions in results: {dimensions}")
+    logging.info(f"PDF Export - Width from dimensions: {dimensions.get('width', 'Not Found')}")
+    logging.info(f"PDF Export - Length from dimensions: {dimensions.get('length', 'Not Found')}")
+    
+    # Создаем pdf_data с явными значениями (без использования None или 0)
     pdf_data = {
         "pergola_type": pergola_type,
-        "width": dimensions.get("width", 0),
-        "length": dimensions.get("length", 0),
+        "width": dimensions.get("width", default_width),  # Используем значения из dimensions с захватом из default если отсутствуют
+        "length": dimensions.get("length", default_length),
         "modules": dimensions.get("modules", 1),
         "items": results.get("items", []),
         "specification": results.get("specification", []),
@@ -3506,11 +3517,10 @@ def export_to_pdf():
         "euro_rate": 110  # Фиксированный курс евро для расчетов
     }
     
-    # Добавляем логирование для отладки размеров
-    import logging
-    logging.info(f"PDF Export - Dimensions in results: {dimensions}")
-    logging.info(f"PDF Export - Width in pdf_data: {pdf_data['width']}")
-    logging.info(f"PDF Export - Length in pdf_data: {pdf_data['length']}")
+    # Проверяем финальные значения
+    logging.info(f"PDF Export - Final pdf_data: {pdf_data}")
+    logging.info(f"PDF Export - Final Width in pdf_data: {pdf_data['width']}")
+    logging.info(f"PDF Export - Final Length in pdf_data: {pdf_data['length']}")
     
     try:
         # Показываем индикатор загрузки

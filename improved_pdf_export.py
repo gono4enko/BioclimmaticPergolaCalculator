@@ -79,9 +79,15 @@ def generate_pdf_file_name(pergola_data):
     Returns:
         str: Информативное имя файла в формате "КП_Пергола_тип_ширинаxдлина_дата.pdf"
     """
+    # Добавляем логирование для отладки
+    import logging
+    logging.info(f"[generate_pdf_file_name] Received pergola_data: {pergola_data}")
+    
     pergola_type = pergola_data.get("pergola_type", "unknown")
     width = pergola_data.get("width", 0)
     length = pergola_data.get("length", 0)
+    
+    logging.info(f"[generate_pdf_file_name] Extracted width: {width}, length: {length}")
     
     # Определяем временную зону Ростова-на-Дону для корректной даты (та же, что и у Москвы)
     rostov_tz = pytz.timezone('Europe/Moscow')
@@ -89,8 +95,19 @@ def generate_pdf_file_name(pergola_data):
     now_rostov = now_utc.astimezone(rostov_tz)
     current_date = now_rostov.strftime("%d.%m.%Y")
     
-    # Формируем информативное имя файла
-    file_name = f"КП_пергола_{pergola_type}_{width}x{length}м_{current_date}.pdf"
+    # Проверка на числовой формат и округление до 1 знака после запятой
+    if isinstance(width, (int, float)) and isinstance(length, (int, float)):
+        width_formatted = round(float(width), 1)
+        length_formatted = round(float(length), 1)
+        logging.info(f"[generate_pdf_file_name] Formatted dimensions: width={width_formatted}, length={length_formatted}")
+    else:
+        width_formatted = width
+        length_formatted = length
+        logging.info(f"[generate_pdf_file_name] Using non-numeric dimensions")
+        
+    # Формируем информативное имя файла с округленными значениями
+    file_name = f"КП_пергола_{pergola_type}_{width_formatted}x{length_formatted}м_{current_date}.pdf"
+    logging.info(f"[generate_pdf_file_name] Generated file name: {file_name}")
     
     return file_name
 
