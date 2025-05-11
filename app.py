@@ -3252,7 +3252,9 @@ def create_very_simple_pdf(pergola_data):
                 pdf.cell(130, 10, name, 1, 0, align="L")
                 pdf.cell(60, 10, count, 1, 1, align="C")
     
-    # Добавляем примечания после таблицы спецификации
+    
+    
+    # Добавляем примечания после таблиц
     pdf.ln(15)  # Отступ перед примечаниями
     
     if use_dejavu:
