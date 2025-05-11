@@ -556,8 +556,8 @@ def display_gallery_section():
         st.markdown("""
         <style>
         .gallery-description {
-            padding: 10px 20px;
-            margin-bottom: 10px;
+            padding: 5px 20px;
+            margin-bottom: 5px;
             font-size: 1.1rem;
             line-height: 1.5;
             color: #333;
