@@ -462,11 +462,21 @@ def generate_commercial_offer(pergola_data, user_data=None):
             pdf.cell(0, 8, "Спецификация:", 0, 1, "L")
             
             # Проверяем, поместится ли таблица на текущей странице
-            # В среднем строка занимает 6-7 мм, заголовок и отступы - ещё 20 мм
-            table_height = len(specification) * 6 + 20
+            # Предварительно оцениваем возможную дополнительную высоту из-за многострочного текста
+            # Для длинных названий компонентов (длиннее 80 символов) добавляем дополнительную высоту
+            
+            additional_height = 0
+            for item in specification:
+                name = item.get('name', '')
+                # Если название длинное, добавляем дополнительную высоту
+                if len(name) > 80:
+                    # Примерно +6мм на каждые дополнительные 40 символов
+                    additional_lines = len(name) // 40
+                    additional_height += additional_lines * 6
             
             # Если таблица не помещается, добавляем новую страницу
-            if pdf.check_table_fit(len(specification) + 3):
+            # Передаем дополнительную высоту в качестве параметра
+            if pdf.check_table_fit(len(specification) + 3, additional_height=additional_height):
                 # Таблица поместится (функция возвращает True) - ничего не делаем
                 pass
             
@@ -486,15 +496,40 @@ def generate_commercial_offer(pergola_data, user_data=None):
         # Добавляем стоимость, если она есть
         items = pergola_data.get('items', [])
         if items:
-            pdf.add_page()
+            # Проверяем, достаточно ли места для раздела "Стоимость" на текущей странице
+            # Оцениваем необходимое пространство: заголовок (8мм) + отступ (10мм) + 
+            # таблица (высота строки * количество строк + заголовок таблицы)
+            needed_space = 8 + 10 + (len(items) * 8) + 10
+            
+            # Получаем текущую позицию Y и оцениваем оставшееся пространство
+            current_y = pdf.get_y()
+            remaining_space = 272 - current_y  # 272мм - примерная нижняя граница страницы
+            
+            # Если места достаточно, добавляем отступ перед новым разделом
+            # иначе - добавляем новую страницу
+            if remaining_space >= needed_space:
+                pdf.ln(10)  # Отступ перед разделом "Стоимость"
+            else:
+                pdf.add_page()
+            
             pdf.set_font('DejaVu', 'B', 14)
             pdf.cell(0, 8, "Стоимость:", 0, 1, "L")
             
             # Проверяем, поместится ли таблица на текущей странице
-            table_height = len(items) * 6 + 20
+            # В среднем строка занимает 8 мм, заголовок и отступы - ещё 20 мм
             
+            # Оцениваем дополнительную высоту для длинных названий
+            additional_height = 0
+            for item in items:
+                name = item.get('name', '')
+                # Если название длинное, добавляем дополнительную высоту
+                if len(name) > 80:
+                    # Примерно +6мм на каждые дополнительные 40 символов
+                    additional_lines = len(name) // 40
+                    additional_height += additional_lines * 6
+                    
             # Если таблица не помещается, добавляем новую страницу
-            if pdf.check_table_fit(len(items) + 3):
+            if pdf.check_table_fit(len(items) + 2, additional_height=additional_height):
                 # Таблица поместится (функция возвращает True) - ничего не делаем
                 pass
             
@@ -523,9 +558,9 @@ def generate_commercial_offer(pergola_data, user_data=None):
                     # Для сотен: 100 ₽
                     price_str = f"{price_value} ₽"
                 
-                # Используем уменьшенную высоту строки (6 мм вместо 8 мм)
-                # Меняем выравнивание с R (правого) на L (левое) для соответствия таблице спецификации
-                pdf.table_row([str(i), item['name'], price_str], widths, aligns=["C", "L", "L"], row_height=6)
+                # Используем многострочную ячейку вместо обычной для лучшего переноса длинных текстов
+                # Выравниваем текст по левому краю для удобства чтения
+                pdf.multi_cell_row([str(i), name, price_str], widths, aligns=["C", "L", "R"], min_row_height=7)
                 
             # Добавляем итоговую строку
             pdf.set_fill_color(211, 211, 211)  # Светло-серый цвет
