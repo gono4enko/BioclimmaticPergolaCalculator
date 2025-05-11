@@ -3586,10 +3586,8 @@ def export_to_pdf():
                 logging.info(f"Размер PDF файла: {file_size} байт")
                 
                 if file_size > 0:
-                    st.success("PDF файл успешно создан!")
-                    # Используем новую функцию для улучшенного скачивания PDF
-                    from improved_pdf_export import get_streamlit_download_component
-                    st.markdown(get_streamlit_download_component(pdf_file_path), unsafe_allow_html=True)
+                    # ВАЖНО: Не добавляем кнопку скачивания здесь, так как она будет добавлена в основном коде
+                    # Возвращаем путь к файлу PDF для скачивания в основном коде
                     return pdf_file_path
                 else:
                     # Если размер файла равен 0, считаем что PDF не создался
