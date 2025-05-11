@@ -2778,6 +2778,34 @@ def create_simple_pdf(pergola_data):
         elements.append(spec_table)
         elements.append(Spacer(1, 30))
     
+    # Добавляем раздел примечаний
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph("Примечания:", heading2_style))
+    elements.append(Spacer(1, 10))
+    
+    # Стиль для текста примечаний
+    note_style = ParagraphStyle(
+        'Notes',
+        fontName='DejaVuSans',
+        fontSize=10,
+        leading=14,
+        spaceBefore=3,
+        spaceAfter=3
+    )
+    
+    # Добавляем каждое примечание отдельной строкой с нумерацией
+    remarks = [
+        "Расчет является предварительным и может быть уточнен при обращении в компанию.",
+        "Срок действия предложения: 14 дней с даты расчета.",
+        "Срок поставки: 6 недель с момента подтверждения заказа.",
+        "Условия оплаты: 80% предоплата, 20% после монтажа."
+    ]
+    
+    for i, remark in enumerate(remarks, 1):
+        elements.append(Paragraph(f"{i}. {remark}", note_style))
+    
+    elements.append(Spacer(1, 10))
+    
     # Информация о компании
     from datetime import datetime
     import pytz
