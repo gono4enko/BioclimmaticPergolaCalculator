@@ -3594,12 +3594,16 @@ def export_to_pdf():
             # Генерируем PDF с использованием расширенной функции
             pdf_file_path = generate_commercial_offer(pergola_data)
             
+            # Примечание: это запасной вариант, который выполняется только если основной не сработал
+            # Проверяем размер файла
             if pdf_file_path and os.path.exists(pdf_file_path):
-                st.success("PDF файл успешно создан!")
-                # Используем новую функцию для улучшенного скачивания PDF
-                from improved_pdf_export import get_streamlit_download_component
-                st.markdown(get_streamlit_download_component(pdf_file_path), unsafe_allow_html=True)
-                return pdf_file_path
+                file_size = os.path.getsize(pdf_file_path)
+                if file_size > 0:
+                    st.success("PDF файл успешно создан через расширенный вариант!")
+                    # Используем новую функцию для улучшенного скачивания PDF
+                    from improved_pdf_export import get_streamlit_download_component
+                    st.markdown(get_streamlit_download_component(pdf_file_path), unsafe_allow_html=True)
+                    return pdf_file_path
             else:
                 st.error("Не удалось создать PDF-файл.")
                 return None
