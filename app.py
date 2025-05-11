@@ -3107,32 +3107,75 @@ def create_very_simple_pdf(pergola_data):
             name = name.replace("ламели", "lamellas")
             name = name.replace("модуль", "module")
             
-            # Проверяем длину и разбиваем длинные строки на две
-            if len(name) > 60:
-                # Находим подходящее место для переноса (пробел после 40-50 символов)
-                split_position = name.rfind(' ', 40, 50)
+            # Создаем функцию для переноса текста на несколько строк
+            def split_text_into_lines(text, max_width, font_size=10):
+                """Разбивает текст на строки, которые помещаются в указанную ширину"""
+                lines = []
                 
-                if split_position == -1:  # Если не нашли подходящий пробел
-                    split_position = 50   # Просто разделим на 50 символе
+                # Если текст короткий, возвращаем его как есть
+                if pdf.get_string_width(text) <= max_width:
+                    return [text]
                 
-                # Разбиваем имя на две строки
-                first_line = name[:split_position]
-                second_line = name[split_position:].strip()
+                # Разбиваем текст на слова
+                words = text.split()
+                current_line = ""
                 
+                for word in words:
+                    # Проверяем, поместится ли слово в текущую строку
+                    if pdf.get_string_width(current_line + " " + word) <= max_width:
+                        if current_line:
+                            current_line += " " + word
+                        else:
+                            current_line = word
+                    else:
+                        # Если не помещается, добавляем текущую строку в список и начинаем новую
+                        if current_line:
+                            lines.append(current_line)
+                        current_line = word
+                
+                # Добавляем последнюю строку
+                if current_line:
+                    lines.append(current_line)
+                
+                return lines
+            
+            # Получаем доступную ширину для текста (с учетом отступов)
+            available_width = 120  # 130 - 10 отступы
+            
+            # Разбиваем текст на строки
+            text_lines = split_text_into_lines(name, available_width)
+            
+            # Если текст нужно разбить на несколько строк
+            if len(text_lines) > 1:
                 # Сохраняем текущую позицию
                 current_x = pdf.get_x()
                 current_y = pdf.get_y()
                 
-                # Рисуем ячейку с первой строкой (без границы снизу)
-                pdf.cell(130, 6, first_line, 'LTR', 0)
-                pdf.cell(60, 6, "", 'LTR', 1, align="C")
+                # Высота одной строки текста
+                line_height = 6
+                # Общая высота ячейки
+                total_height = line_height * len(text_lines)
                 
-                # Переходим к следующей строке и рисуем вторую строку (без границы сверху)
-                pdf.set_xy(current_x, current_y + 6)
-                pdf.cell(130, 6, second_line, 'LBR', 0)
-                pdf.cell(60, 6, count, 'LBR', 1, align="C")
+                # Рисуем ячейку для подсчета с полными границами
+                pdf.set_xy(current_x + 130, current_y)
+                pdf.cell(60, total_height, count, 1, 0, align="C")
+                
+                # Возвращаемся к начальной позиции
+                pdf.set_xy(current_x, current_y)
+                
+                # Рисуем прямоугольник для текста
+                pdf.rect(current_x, current_y, 130, total_height)
+                
+                # Выводим каждую строку текста
+                for i, line in enumerate(text_lines):
+                    pdf.set_xy(current_x + 2, current_y + i * line_height)  # +2 для отступа слева
+                    pdf.cell(126, line_height, line, 0, 0, align="L")
+                
+                # Перемещаем позицию после всех ячеек
+                pdf.set_xy(current_x, current_y + total_height)
             else:
-                pdf.cell(130, 10, name, 1, 0)
+                # Для однострочного текста используем обычный вывод
+                pdf.cell(130, 10, name, 1, 0, align="L")
                 pdf.cell(60, 10, count, 1, 1, align="C")
     
     # Дата с использованием московского времени

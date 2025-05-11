@@ -86,7 +86,7 @@ class PDF(FPDF):
         self.cell(0, 9, title, 0, 1, 'L', 1)
         self.ln(3)  # Отступ после заголовка
     
-    def check_table_fit(self, rows_count, row_height=8):
+    def check_table_fit(self, rows_count, row_height=8, additional_height=0):
         """
         Проверяет, поместится ли таблица на текущей странице
         Если не поместится - добавляет новую страницу
@@ -94,18 +94,21 @@ class PDF(FPDF):
         Args:
             rows_count (int): Количество строк в таблице
             row_height (int): Высота одной строки в мм
+            additional_height (int): Дополнительная высота (для учета многострочных ячеек)
             
         Returns:
             bool: True если таблица помещается, False если добавлена новая страница
         """
         # Примерная высота таблицы: высота строки * кол-во строк + запас 15 мм на заголовки и отступы
-        table_height = rows_count * row_height + 15
+        # Добавляем additional_height для учета многострочных ячеек
+        table_height = rows_count * row_height + 15 + additional_height
         
         # Получаем текущую позицию Y (высоту от начала страницы)
         current_y = self.get_y()
         
         # Рассчитываем оставшееся пространство на странице
-        page_bottom = 277  # Примерная нижняя граница страницы A4 с учетом полей и футера
+        # Увеличим отступ от нижней границы для надежности
+        page_bottom = 272  # Уменьшаем нижнюю границу для большего запаса от футера
         available_space = page_bottom - current_y
         
         # Если таблица не помещается, добавляем новую страницу
