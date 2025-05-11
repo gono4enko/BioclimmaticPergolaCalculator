@@ -439,6 +439,11 @@ def generate_commercial_offer(pergola_data, user_data=None):
     Returns:
         str: Путь к сгенерированному PDF-файлу
     """
+    # Добавляем логирование для отладки
+    import logging
+    logging.info(f"[generate_commercial_offer] Received pergola_data: {pergola_data}")
+    logging.info(f"[generate_commercial_offer] Width from pergola_data: {pergola_data.get('width', 'No width')}")
+    logging.info(f"[generate_commercial_offer] Length from pergola_data: {pergola_data.get('length', 'No length')}")
     try:
         # Очищаем временные файлы обработанных изображений
         for file in os.listdir("processed_images"):
