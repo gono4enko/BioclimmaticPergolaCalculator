@@ -1,18 +1,17 @@
 """
 Модуль для улучшенного экспорта PDF с поддержкой корректного именования файлов.
 Этот модуль реализует функциональность экспорта PDF-файлов с правильным названием
-при сохранении, используя современные приемы работы с HTTP-заголовками и JavaScript.
+при сохранении, используя встроенные компоненты Streamlit для скачивания.
 """
 
 import os
 import base64
 from datetime import datetime
 import pytz
-from urllib.parse import quote
-import json
 import logging
-import shutil
 import glob
+import io
+import streamlit as st
 
 # Настройка логгера
 logger = logging.getLogger(__name__)
@@ -119,192 +118,100 @@ def save_pdf_for_debugging(pdf_data, file_name):
     logger.info(f"PDF сохранен: {debug_file_path}")
     return debug_file_path
 
-def get_improved_pdf_download_link(pdf_path):
+def get_streamlit_download_component(pdf_path):
     """
-    Создает улучшенную ссылку для скачивания PDF с правильным именем файла.
-    Использует современные техники для обеспечения корректного именования файлов
-    при скачивании с поддержкой кириллицы.
+    Создает компонент Streamlit для скачивания PDF с правильным именем файла.
+    Вместо использования сложного JavaScript и HTML, использует
+    встроенный компонент Streamlit st.download_button.
     
     Args:
         pdf_path (str): Путь к PDF-файлу
         
     Returns:
-        str: HTML-код с кнопкой и JavaScript для скачивания PDF
+        None: Компоненты создаются напрямую через Streamlit
     """
     if not pdf_path or not os.path.exists(pdf_path):
-        return ""
+        st.error("PDF файл не найден")
+        return
     
-    # Получаем имя файла для отображения и установки в заголовках
+    # Получаем имя файла 
     file_name = os.path.basename(pdf_path)
-    
-    # Формируем уникальный идентификатор для этого файла
-    file_id = file_name.replace('.', '_').replace(' ', '_')
     
     # Читаем файл в бинарном режиме
     with open(pdf_path, "rb") as file:
         pdf_bytes = file.read()
     
-    # Кодируем в base64
-    b64 = base64.b64encode(pdf_bytes).decode()
-    
     # Размер файла в килобайтах для отображения
-    file_size_kb = os.path.getsize(pdf_path) // 1024
-
-    # URL-кодируем имя файла для использования в HTTP-заголовках
-    file_name_url_encoded = quote(file_name)
-
-    # Создаем улучшенный JavaScript для скачивания с поддержкой правильного имени файла
-    download_script = f"""
+    file_size_kb = int(len(pdf_bytes) / 1024)
+    
+    # Создаем контейнер с информацией
+    st.markdown(f"""
+    <div style="text-align: center; margin: 20px 0;">
+        <h3>Коммерческое предложение готово!</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Создаем две колонки для кнопок
+    col1, col2 = st.columns(2)
+    
+    # Кнопка скачивания в первой колонке
+    with col1:
+        st.download_button(
+            label="Скачать PDF",
+            data=pdf_bytes,
+            file_name=file_name,
+            mime="application/pdf",
+            key="download_pdf",
+            help="Скачать PDF-файл на компьютер",
+        )
+    
+    # Кнопка просмотра во второй колонке
+    with col2:
+        # Для просмотра используем тот же компонент, но с другой меткой
+        st.download_button(
+            label="Просмотреть",
+            data=pdf_bytes,
+            file_name=file_name,
+            mime="application/pdf",
+            key="view_pdf",
+            help="Открыть PDF-файл в браузере",
+        )
+    
+    # Отображаем информацию о файле
+    st.markdown(f"""
+    <div style="font-size: 12px; color: #6c757d; margin-top: 5px; text-align: center;">
+        Файл <strong>{file_name}</strong> ({file_size_kb} KB)
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Скрипт для отправки события в Яндекс.Метрику
+    st.markdown("""
     <script>
-    document.addEventListener('DOMContentLoaded', function() {{
-        const pdfDownloadBtn = document.getElementById('pdf-download-{file_id}');
-        const pdfViewBtn = document.getElementById('pdf-view-{file_id}');
-        
-        if (pdfDownloadBtn) {{
-            pdfDownloadBtn.addEventListener('click', function(e) {{
-                e.preventDefault();
-                
-                try {{
-                    // Создаем объект Blob из данных PDF
-                    const pdfData = atob('{b64}');
-                    const byteCharacters = pdfData;
-                    const byteNumbers = new Array(byteCharacters.length);
-                    for (let i = 0; i < byteCharacters.length; i++) {{
-                        byteNumbers[i] = byteCharacters.charCodeAt(i);
-                    }}
-                    const byteArray = new Uint8Array(byteNumbers);
-                    const blob = new Blob([byteArray], {{type: 'application/pdf'}});
-                    
-                    // Декодированное имя файла с кириллицей
-                    const fileName = decodeURIComponent('{file_name_url_encoded}');
-                    console.log('Скачивание файла с именем: ' + fileName);
-                    
-                    // Создаем ссылку для скачивания
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = URL.createObjectURL(blob);
-                    downloadLink.download = fileName;
-                    
-                    // Добавляем элемент на страницу и запускаем скачивание
-                    document.body.appendChild(downloadLink);
-                    downloadLink.click();
-                    
-                    // Удаляем элемент и освобождаем ресурсы
-                    setTimeout(() => {{
-                        document.body.removeChild(downloadLink);
-                        URL.revokeObjectURL(downloadLink.href);
-                    }}, 100);
-                    
-                    // Показываем простое уведомление об успешном скачивании
-                    alert("PDF файл успешно скачивается. Имя файла: " + fileName);
-                    
-                    // Отправляем событие в Яндекс.Метрику
-                    if (typeof ym !== 'undefined') {{
+        // Отправляем событие в Яндекс.Метрику при загрузке страницы
+        if (typeof ym !== 'undefined') {
+            ym(94463245, 'reachGoal', 'pdf_generated');
+            console.log('Отправлено событие pdf_generated в Яндекс.Метрику');
+            
+            // Находим кнопки скачивания и просмотра
+            document.addEventListener('DOMContentLoaded', function() {
+                // Для скачивания PDF
+                const downloadBtn = document.querySelector('[data-testid="stDownloadButton"]:nth-of-type(1)');
+                if (downloadBtn) {
+                    downloadBtn.addEventListener('click', function() {
                         ym(94463245, 'reachGoal', 'pdf_download');
                         console.log('Отправлено событие pdf_download в Яндекс.Метрику');
-                    }}
-                }} catch(error) {{
-                    console.error('Ошибка при скачивании PDF:', error);
-                    alert('Произошла ошибка при скачивании PDF. Пожалуйста, попробуйте ещё раз.');
-                }}
-            }});
-        }}
-        
-        if (pdfViewBtn) {{
-            pdfViewBtn.addEventListener('click', function(e) {{
-                e.preventDefault();
+                    });
+                }
                 
-                try {{
-                    // Создаем ссылку для просмотра в новой вкладке
-                    const dataUrl = 'data:application/pdf;base64,{b64}';
-                    const newWindow = window.open();
-                    
-                    if (newWindow) {{
-                        newWindow.document.write(`
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <title>{file_name}</title>
-                                <style>
-                                    body, html {{ margin: 0; padding: 0; height: 100%; overflow: hidden; }}
-                                    #pdf-viewer {{ width: 100%; height: 100%; }}
-                                </style>
-                            </head>
-                            <body>
-                                <embed id="pdf-viewer" src="${{dataUrl}}" type="application/pdf" />
-                            </body>
-                            </html>
-                        `);
-                    }} else {{
-                        // Если блокировщик всплывающих окон предотвратил открытие
-                        window.location.href = dataUrl;
-                    }}
-                    
-                    // Отправляем событие в Яндекс.Метрику
-                    if (typeof ym !== 'undefined') {{
+                // Для просмотра PDF
+                const viewBtn = document.querySelector('[data-testid="stDownloadButton"]:nth-of-type(2)');
+                if (viewBtn) {
+                    viewBtn.addEventListener('click', function() {
                         ym(94463245, 'reachGoal', 'pdf_view');
                         console.log('Отправлено событие pdf_view в Яндекс.Метрику');
-                    }}
-                }} catch(error) {{
-                    console.error('Ошибка при просмотре PDF:', error);
-                    alert('Произошла ошибка при открытии PDF. Пожалуйста, попробуйте ещё раз.');
-                }}
-            }});
-        }}
-    }});
+                    });
+                }
+            });
+        }
     </script>
-    """
-    
-    # Создаем HTML-код с двумя кнопками: скачать и просмотреть
-    html = f"""
-    <div class="pdf-actions-container" style="text-align: center; margin: 20px 0; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;">
-        <div style="margin-bottom: 10px; font-weight: bold;">
-            Коммерческое предложение готово!
-        </div>
-        
-        <div style="display: flex; justify-content: center; gap: 15px; margin: 15px 0; flex-wrap: wrap;">
-            <button id="pdf-download-{file_id}" style="display: inline-flex; align-items: center; 
-                   padding: 10px 15px; background-color: #007bff; color: white; 
-                   border: none; border-radius: 4px; cursor: pointer; font-size: 14px;
-                   min-width: 150px; min-height: 40px;">
-                <svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" 
-                     viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 12l-4-4h2.5V3h3v5H12l-4 4z"/>
-                    <path d="M2 14h12v1H2z"/>
-                </svg>
-                Скачать PDF
-            </button>
-            
-            <button id="pdf-view-{file_id}" style="display: inline-flex; align-items: center; 
-                   padding: 10px 15px; background-color: #6c757d; color: white; 
-                   border: none; border-radius: 4px; cursor: pointer; font-size: 14px;
-                   min-width: 150px; min-height: 40px;">
-                <svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" 
-                     viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 3C4.5 3 1.5 6 1.5 8s3 5 6.5 5 6.5-3 6.5-5-3-5-6.5-5zm0 8c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3z"/>
-                    <circle cx="8" cy="8" r="1.5"/>
-                </svg>
-                Просмотреть
-            </button>
-        </div>
-        
-        <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
-            Файл <strong>{file_name}</strong> ({file_size_kb} KB)
-        </div>
-    </div>
-    {download_script}
-    """
-    
-    return html
-
-# Функция для интеграции с Streamlit
-def get_streamlit_download_component(pdf_path):
-    """
-    Создает компонент для отображения в Streamlit для скачивания PDF.
-    
-    Args:
-        pdf_path (str): Путь к PDF-файлу
-        
-    Returns:
-        str: HTML-код с компонентом для скачивания PDF
-    """
-    return get_improved_pdf_download_link(pdf_path)
+    """, unsafe_allow_html=True)
