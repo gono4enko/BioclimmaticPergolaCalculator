@@ -3474,6 +3474,26 @@ def export_to_pdf():
     Returns:
         str: Путь к сгенерированному PDF-файлу
     """
+    # Подготовка ресурсов для PDF
+    try:
+        # Проверяем, существует ли модуль prepare_pdf_assets
+        import sys
+        import os
+        
+        # Добавляем директорию assets в путь для импорта
+        assets_path = 'assets'
+        if assets_path not in sys.path and os.path.exists(assets_path):
+            sys.path.append(assets_path)
+        
+        try:
+            from prepare_pdf_assets import prepare_pdf_assets
+            prepare_pdf_assets()
+            print("Подготовка ресурсов для PDF выполнена успешно")
+        except ImportError:
+            print("Модуль prepare_pdf_assets не найден")
+    except Exception as e:
+        print(f"Ошибка при подготовке ресурсов для PDF: {e}")
+        # Продолжаем работу даже в случае ошибки
     if 'results' not in st.session_state:
         st.error("Сначала нужно выполнить расчет!")
         return None
