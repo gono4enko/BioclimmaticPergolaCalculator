@@ -151,6 +151,11 @@ def get_streamlit_download_component(pdf_path):
     </div>
     """, unsafe_allow_html=True)
     
+    # Создаем уникальные ключи на основе имени файла
+    file_id = file_name.replace('.', '_').replace(' ', '_').replace('-', '_')
+    download_key = f"download_pdf_{file_id}"
+    view_key = f"view_pdf_{file_id}"
+    
     # Создаем две колонки для кнопок
     col1, col2 = st.columns(2)
     
@@ -161,7 +166,7 @@ def get_streamlit_download_component(pdf_path):
             data=pdf_bytes,
             file_name=file_name,
             mime="application/pdf",
-            key="download_pdf",
+            key=download_key,
             help="Скачать PDF-файл на компьютер",
         )
     
@@ -173,7 +178,7 @@ def get_streamlit_download_component(pdf_path):
             data=pdf_bytes,
             file_name=file_name,
             mime="application/pdf",
-            key="view_pdf",
+            key=view_key,
             help="Открыть PDF-файл в браузере",
         )
     
@@ -185,33 +190,33 @@ def get_streamlit_download_component(pdf_path):
     """, unsafe_allow_html=True)
     
     # Скрипт для отправки события в Яндекс.Метрику
-    st.markdown("""
+    st.markdown(f"""
     <script>
         // Отправляем событие в Яндекс.Метрику при загрузке страницы
-        if (typeof ym !== 'undefined') {
+        if (typeof ym !== 'undefined') {{
             ym(94463245, 'reachGoal', 'pdf_generated');
             console.log('Отправлено событие pdf_generated в Яндекс.Метрику');
             
-            // Находим кнопки скачивания и просмотра
-            document.addEventListener('DOMContentLoaded', function() {
+            // Находим кнопки скачивания и просмотра по уникальным идентификаторам
+            document.addEventListener('DOMContentLoaded', function() {{
                 // Для скачивания PDF
-                const downloadBtn = document.querySelector('[data-testid="stDownloadButton"]:nth-of-type(1)');
-                if (downloadBtn) {
-                    downloadBtn.addEventListener('click', function() {
+                const downloadBtn = document.querySelector('[data-testid="stDownloadButton-{download_key}"]');
+                if (downloadBtn) {{
+                    downloadBtn.addEventListener('click', function() {{
                         ym(94463245, 'reachGoal', 'pdf_download');
                         console.log('Отправлено событие pdf_download в Яндекс.Метрику');
-                    });
-                }
+                    }});
+                }}
                 
                 // Для просмотра PDF
-                const viewBtn = document.querySelector('[data-testid="stDownloadButton"]:nth-of-type(2)');
-                if (viewBtn) {
-                    viewBtn.addEventListener('click', function() {
+                const viewBtn = document.querySelector('[data-testid="stDownloadButton-{view_key}"]');
+                if (viewBtn) {{
+                    viewBtn.addEventListener('click', function() {{
                         ym(94463245, 'reachGoal', 'pdf_view');
                         console.log('Отправлено событие pdf_view в Яндекс.Метрику');
-                    });
-                }
-            });
-        }
+                    }});
+                }}
+            }});
+        }}
     </script>
     """, unsafe_allow_html=True)
