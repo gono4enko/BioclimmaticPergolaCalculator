@@ -3496,11 +3496,8 @@ def get_pdf_download_link(pdf_path):
     # Кодируем в base64
     b64 = base64.b64encode(pdf_bytes).decode()
     
-    # Создаем ссылку для открытия в новой вкладке (убираем атрибут download и добавляем target="_blank")
-    href = f'<a href="data:application/pdf;base64,{b64}" target="_blank" class="download-button">Открыть PDF</a>'
-    
-    # Добавим также кнопку для скачивания, если пользователь предпочитает сохранить файл
-    href += f'<br/><a href="data:application/pdf;base64,{b64}" download="{file_name}" class="download-link" style="margin-top:5px; font-size:0.8rem; display:inline-block;">Скачать PDF</a>'
+    # Создаем ссылку для открытия в новой вкладке с именем "Сохранить PDF"
+    href = f'<a href="data:application/pdf;base64,{b64}" target="_blank" class="download-button">Сохранить PDF</a>'
     
     return href
 
