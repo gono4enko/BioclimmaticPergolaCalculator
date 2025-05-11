@@ -3545,16 +3545,18 @@ def export_to_pdf():
     try:
         # Показываем индикатор загрузки
         with st.spinner("Создание PDF-документа..."):
-            # Сначала пробуем создать простой PDF
+            # Используем улучшенный модуль для создания PDF с синей шапкой
             import logging
-            logging.info("Запускаем создание PDF через create_simple_pdf")
+            logging.info("Запускаем создание PDF через generate_commercial_offer")
             
             # Создаем более информативное имя файла
             from improved_pdf_export import generate_pdf_file_name
             file_name = generate_pdf_file_name(pdf_data)
             
-            # Генерируем PDF с улучшенным именем файла
-            pdf_file_path = create_simple_pdf(pdf_data)
+            # Генерируем PDF с шапкой через pdf_generator_fpdf_rus.py
+            from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
+            pergola_data = format_pergola_data_for_pdf(results, options, dimensions, "")
+            pdf_file_path = generate_commercial_offer(pergola_data)
             logging.info(f"PDF файл создан: {pdf_file_path}")
             
             # Если файл создан успешно
