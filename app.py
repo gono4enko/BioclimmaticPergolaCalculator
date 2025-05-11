@@ -2898,12 +2898,16 @@ def create_very_simple_pdf(pergola_data):
     bold_font_path = os.path.join('fonts', 'DejaVuSans-Bold.ttf')
     
     use_dejavu = False
+    print(f"Проверка наличия шрифтов: font_path={font_path}, exists={os.path.exists(font_path)}")
+    print(f"Проверка наличия шрифтов: bold_font_path={bold_font_path}, exists={os.path.exists(bold_font_path)}")
+    
     if os.path.exists(font_path) and os.path.exists(bold_font_path):
         try:
             # Добавляем шрифты в PDF
             pdf.add_font('DejaVu', '', font_path, uni=True)
             pdf.add_font('DejaVu', 'B', bold_font_path, uni=True)
             use_dejavu = True
+            print(f"Шрифты DejaVu успешно загружены, use_dejavu={use_dejavu}")
         except Exception as e:
             # Если не удалось загрузить шрифты, используем базовые
             print(f"Не удалось загрузить шрифты DejaVu: {e}")
