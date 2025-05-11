@@ -66,24 +66,40 @@ class PDF(FPDF):
         # Рисуем синий прямоугольник по всей ширине страницы
         self.rect(0, 0, 210, 30, style='F')
         
-        # Проверяем наличие файла логотипа
-        logo_path = 'assets/logo.png'
-        if os.path.exists(logo_path):
-            # Добавляем логотип компании (слева)
-            try:
-                # Добавляем логотип (размер 100x30 мм)
-                self.image(logo_path, 10, 2, 100, 25)
-            except Exception as e:
-                # Если возникает ошибка с логотипом, используем текстовую версию
-                print(f"Ошибка при добавлении логотипа: {e}")
-                self.set_font('DejaVu', 'B', 14)
-                self.set_xy(10, 10)
-                self.cell(100, 7, 'Компания «Комфортный дом»', 0, 0, 'L')
-        else:
-            # Если логотип не найден, используем текстовую версию
-            self.set_font('DejaVu', 'B', 14)
-            self.set_xy(10, 10)
-            self.cell(100, 7, 'Компания «Комфортный дом»', 0, 0, 'L')
+        # Добавляем название компании (слева) - текстовая версия всегда работает
+        self.set_font('DejaVu', 'B', 14)
+        self.set_xy(10, 10)
+        self.cell(100, 7, 'Компания «Комфортный дом»', 0, 0, 'L')
+        
+        # Пробуем различные пути к логотипу
+        logo_paths = [
+            'assets/logo.png',  
+            'assets_for_pdf/logo.png',
+            './assets/logo.png',
+            os.path.join(os.path.dirname(__file__), 'assets/logo.png'),
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets/logo.png')
+        ]
+        
+        # Расширенная отладочная информация
+        for path in logo_paths:
+            print(f"Проверка пути к логотипу: {path} -> {'Найден' if os.path.exists(path) else 'Не найден'}")
+        
+        # Поиск и загрузка логотипа
+        logo_loaded = False
+        for logo_path in logo_paths:
+            if os.path.exists(logo_path):
+                try:
+                    # Добавляем логотип (размер 100x25 мм) если найден файл
+                    self.image(logo_path, 10, 2, 100, 25)
+                    print(f"Логотип успешно загружен из: {logo_path}")
+                    logo_loaded = True
+                    break
+                except Exception as e:
+                    print(f"Ошибка при добавлении логотипа из {logo_path}: {e}")
+                    continue
+        
+        if not logo_loaded:
+            print("Все попытки загрузки логотипа завершились неудачно")
         
         # Добавляем контактную информацию (справа)
         self.set_font('DejaVu', '', 9)
