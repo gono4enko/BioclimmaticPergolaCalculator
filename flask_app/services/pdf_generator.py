@@ -15,7 +15,10 @@ class PergolaQuotePDF(FPDF):
     """
     
     def __init__(self, orientation='P', unit='mm', format='A4'):
-        super().__init__(orientation=orientation, unit=unit, format=format)
+        # Приводим параметры к требуемым типам для FPDF
+        super().__init__(orientation=('P' if orientation == 'P' else 'L'), 
+                         unit=('mm' if unit == 'mm' else 'pt'), 
+                         format=('A4' if format == 'A4' else 'A3'))
         # Используем стандартные шрифты вместо кастомных
         self.set_font('Helvetica')
         
@@ -100,18 +103,18 @@ def generate_pdf(data):
             pdf.set_font('Helvetica', 'B', 12)
             pdf.cell(0, 10, 'Дополнительные опции:', 0, 1)
             
-            pdf.set_font('Arial', '', 10)
+            pdf.set_font('Helvetica', '', 10)
             for key, value in options.items():
                 if value:
                     pdf.cell(0, 6, f'✓ {key}', 0, 1)
         
         # Таблица с позициями и ценами
         pdf.ln(10)
-        pdf.set_font('Arial', 'B', 12)
+        pdf.set_font('Helvetica', 'B', 12)
         pdf.cell(0, 10, 'Спецификация:', 0, 1)
         
         # Заголовки таблицы
-        pdf.set_font('Arial', 'B', 10)
+        pdf.set_font('Helvetica', 'B', 10)
         pdf.set_fill_color(240, 240, 240)
         
         col_width = [100, 30, 30]
@@ -120,7 +123,7 @@ def generate_pdf(data):
         pdf.cell(col_width[2], 10, 'Цена, ₽', 1, 1, 'C', True)
         
         # Строки таблицы
-        pdf.set_font('Arial', '', 10)
+        pdf.set_font('Helvetica', '', 10)
         
         items = data.get('items', [])
         for item in items:
@@ -138,7 +141,7 @@ def generate_pdf(data):
         
         # Итоговая стоимость
         pdf.ln(5)
-        pdf.set_font('Arial', 'B', 12)
+        pdf.set_font('Helvetica', 'B', 12)
         total_price = data.get('total_price', 0)
         formatted_total = f"{int(total_price):,}".replace(',', ' ')
         pdf.cell(130, 10, 'Итого:', 0, 0, 'R')
@@ -147,7 +150,7 @@ def generate_pdf(data):
         # Скидка
         discount = data.get('discount', 0)
         if discount > 0:
-            pdf.set_font('Arial', '', 10)
+            pdf.set_font('Helvetica', '', 10)
             pdf.cell(130, 8, f'Скидка {discount}%:', 0, 0, 'R')
             
             total_after_discount = data.get('total_price_after_discount', 0)
@@ -156,10 +159,10 @@ def generate_pdf(data):
         
         # Условия и сроки
         pdf.ln(10)
-        pdf.set_font('Arial', 'B', 12)
+        pdf.set_font('Helvetica', 'B', 12)
         pdf.cell(0, 10, 'Условия:', 0, 1)
         
-        pdf.set_font('Arial', '', 10)
+        pdf.set_font('Helvetica', '', 10)
         pdf.multi_cell(0, 6, 'Срок изготовления: 4-6 недель с момента предоплаты\n'
                            'Гарантия: 3 года на конструкцию, 1 год на электронику\n'
                            'Условия оплаты: 70% предоплата, 30% по готовности к монтажу')

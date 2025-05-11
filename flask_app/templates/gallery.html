@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Галерея пергол{% endblock %}
+
+{% block content %}
+<div class="gallery-container">
+    <h1>Галерея реализованных проектов</h1>
+    
+    <div class="gallery-description">
+        <p>В данном разделе представлены примеры установленных пергол различных типов и конфигураций. 
+        Вы можете оценить внешний вид и особенности каждой модели.</p>
+    </div>
+    
+    <div class="gallery-grid">
+        {% for image in gallery_images %}
+        <div class="gallery-item">
+            <a href="{{ url_for('static', filename='images/gallery/' + image.filename) }}" class="gallery-link" data-lightbox="pergola-gallery" data-title="{{ image.title }}">
+                <img src="{{ url_for('static', filename='images/gallery/thumbnails/' + image.thumbnail) }}" alt="{{ image.title }}" class="gallery-thumbnail">
+                <div class="gallery-caption">
+                    <h3>{{ image.title }}</h3>
+                    <p>{{ image.description }}</p>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lightbox.min.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/lightbox.min.js') }}"></script>
+<script>
+    lightbox.option({
+      'resizeDuration': 200,
+      'wrapAround': true,
+      'albumLabel': "Изображение %1 из %2"
+    });
+</script>
+{% endblock %}
