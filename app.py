@@ -3593,10 +3593,39 @@ def export_to_pdf():
             file_name = generate_pdf_file_name(pdf_data)
             
             # Генерируем PDF с шапкой через pdf_generator_fpdf_rus.py
-            from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
-            pergola_data = format_pergola_data_for_pdf(results, options, dimensions, "")
-            pdf_file_path = generate_commercial_offer(pergola_data)
-            logging.info(f"PDF файл создан: {pdf_file_path}")
+            try:
+                from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
+                
+                # Создаем директории, если они не существуют
+                for dir_path in ["fonts", "processed_images", "assets_for_pdf", "generated_pdf"]:
+                    os.makedirs(dir_path, exist_ok=True)
+                
+                # Добавляем подробную отладочную информацию
+                print("\n=== ЭКСПОРТ PDF - ДАННЫЕ ДЛЯ ГЕНЕРАЦИИ ===")
+                print(f"Тип перголы: {options.get('pergola_type', 'Не указан')}")
+                print(f"Ширина: {dimensions.get('width', 'Не указана')}")
+                print(f"Длина: {dimensions.get('length', 'Не указана')}")
+                print(f"Модули: {dimensions.get('modules', 'Не указаны')}")
+                print("="*40 + "\n")
+                
+                # Форматируем данные для PDF
+                pergola_data = format_pergola_data_for_pdf(results, options, dimensions, "")
+                
+                # Проверяем, что все основные данные присутствуют
+                for key in ['pergola_type', 'width', 'length', 'modules']:
+                    if key not in pergola_data or pergola_data[key] is None:
+                        print(f"ВНИМАНИЕ: Отсутствует или пустое значение для {key}")
+                
+                # Генерируем PDF
+                print("Запуск generate_commercial_offer...")
+                pdf_file_path = generate_commercial_offer(pergola_data)
+                print(f"PDF файл создан: {pdf_file_path}")
+                logging.info(f"PDF файл создан: {pdf_file_path}")
+            except Exception as e:
+                import traceback
+                print(f"ОШИБКА при создании PDF: {e}")
+                traceback.print_exc()
+                pdf_file_path = None
             
             # Если файл создан успешно
             if pdf_file_path and os.path.exists(pdf_file_path):

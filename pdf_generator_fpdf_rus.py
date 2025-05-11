@@ -401,47 +401,49 @@ def get_pergola_images(pergola_type):
     Returns:
         list: Список путей к изображениям перголы
     """
+    import os
+    import traceback
+    
+    print("\n=== Поиск изображений для PDF ===")
+    print(f"Тип перголы: {pergola_type}")
+    
     # Создаем список для хранения путей к изображениям
     image_paths = []
     
-    # Определяем базовый путь к изображениям в зависимости от типа перголы
-    pergola_lower = pergola_type.lower().replace("new", "")
-    base_image_dir = "assets"
-    
-    # Проверяем существование директории с изображениями
-    if not os.path.exists(base_image_dir):
-        print(f"Директория {base_image_dir} не найдена")
-        return image_paths
-    
-    # Ищем изображения в директории assets, которые соответствуют типу перголы
-    for filename in os.listdir(base_image_dir):
-        filepath = os.path.join(base_image_dir, filename)
-        # Ищем подходящие изображения по имени файла (содержит тип перголы)
-        if os.path.isfile(filepath) and (pergola_lower in filename.lower() or pergola_type in filename):
-            if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
-                image_paths.append(filepath)
-                print(f"Найдено изображение для PDF: {filepath}")
-    
-    # Если не нашли конкретные изображения для этого типа перголы, используем общие изображения
-    if not image_paths:
-        # Ищем общие изображения пергол
-        for filename in os.listdir(base_image_dir):
-            filepath = os.path.join(base_image_dir, filename)
-            if os.path.isfile(filepath) and 'pergola' in filename.lower():
-                if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
-                    image_paths.append(filepath)
-                    print(f"Найдено общее изображение перголы для PDF: {filepath}")
-    
-    # Если все еще нет изображений, проверяем в attached_assets
-    if not image_paths and os.path.exists('attached_assets'):
-        for filename in os.listdir('attached_assets'):
-            filepath = os.path.join('attached_assets', filename)
-            if os.path.isfile(filepath) and (pergola_lower in filename.lower() or 
-                                            pergola_type in filename or 
-                                            'pergola' in filename.lower()):
-                if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
-                    image_paths.append(filepath)
-                    print(f"Найдено изображение в attached_assets для PDF: {filepath}")
+    try:
+        # Создаем необходимые директории
+        for dir_path in ["assets", "assets_for_pdf", "generated_pdf"]:
+            os.makedirs(dir_path, exist_ok=True)
+            
+        # Находим несколько изображений пергол для примера (из директории attached_assets)
+        sample_images = []
+        try:
+            if os.path.exists('attached_assets'):
+                for filename in os.listdir('attached_assets'):
+                    if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+                        sample_images.append(os.path.join('attached_assets', filename))
+                        if len(sample_images) >= 3:  # Находим не более 3 изображений
+                            break
+        except Exception as e:
+            print(f"Ошибка при поиске примеров изображений: {e}")
+        
+        # Добавляем найденные изображения в список
+        if sample_images:
+            image_paths = sample_images
+            for img in image_paths:
+                if os.path.exists(img):
+                    print(f"✓ Изображение найдено: {img}")
+                else:
+                    print(f"✗ Изображение не существует: {img}")
+        else:
+            print("Изображения не найдены")
+            
+    except Exception as e:
+        print(f"Ошибка при поиске изображений: {e}")
+        traceback.print_exc()
+        
+    print(f"Найдено {len(image_paths)} изображений")
+    print("=== Конец поиска изображений ===\n")
     
     return image_paths
 
