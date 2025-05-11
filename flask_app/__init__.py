@@ -30,7 +30,12 @@ def create_app(test_config=None):
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         PDF_FOLDER=os.path.join(app.root_path, 'generated_pdf'),
         UPLOAD_FOLDER=os.path.join(app.root_path, 'uploads'),
-        MAX_CONTENT_LENGTH=16 * 1024 * 1024  # 16 MB лимит загрузки
+        MAX_CONTENT_LENGTH=16 * 1024 * 1024,  # 16 MB лимит загрузки
+        ALLOWED_SCRAPING_DOMAINS=[
+            'pergolamarket.ru', 'pergolas.ru', 'decolife.ru', 'forumhouse.ru', 
+            'stroyka.ru', 'wikipedia.org', 'dizainland.ru', 'houzz.ru', 
+            'inmyroom.ru', 'ivd.ru', 'elitepergola.ru'
+        ]
     )
     
     # Если передан тестовый конфиг, используем его
@@ -51,6 +56,10 @@ def create_app(test_config=None):
     
     from .controllers.api_routes import bp as api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
+    
+    # Регистрация блюпринта для скрапера
+    from .controllers.scraper_controller import register_scraper_blueprints
+    register_scraper_blueprints(app)
     
     # Регистрация обработчика ошибок
     @app.errorhandler(404)
