@@ -2204,9 +2204,10 @@ def render_results(results, show_articles=False):
                     """
                     st.markdown(file_info, unsafe_allow_html=True)
                     
-                    # Получаем ссылку для открытия PDF
-                    download_link = get_pdf_download_link(pdf_path)
-                    st.markdown(download_link, unsafe_allow_html=True)
+                    # Получаем улучшенный компонент для скачивания PDF
+                    from improved_pdf_export import get_streamlit_download_component
+                    download_component = get_streamlit_download_component(pdf_path)
+                    st.markdown(download_component, unsafe_allow_html=True)
                     
                     # Отправляем событие в Яндекс.Метрику
                     st.markdown("""
@@ -2592,16 +2593,22 @@ def create_simple_pdf(pergola_data):
     pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
     pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', bold_font_path))
     
-    # Генерируем имя файла на основе московского времени
-    from datetime import datetime
-    import pytz
-    
-    # Определяем московскую временную зону
-    moscow_tz = pytz.timezone('Europe/Moscow')
-    now_utc = datetime.now(pytz.utc)
-    now_moscow = now_utc.astimezone(moscow_tz)
-    timestamp = now_moscow.strftime("%Y%m%d_%H%M%S")
-    pdf_path = f"generated_pdf/KP_Pergola_{timestamp}.pdf"
+    # Генерируем информативное имя файла на основе данных перголы
+    try:
+        from improved_pdf_export import generate_pdf_file_name
+        file_name = generate_pdf_file_name(pergola_data)
+        pdf_path = os.path.join("generated_pdf", file_name)
+    except ImportError:
+        # Запасной вариант, если модуль улучшенного экспорта не доступен
+        from datetime import datetime
+        import pytz
+        
+        # Определяем московскую временную зону
+        moscow_tz = pytz.timezone('Europe/Moscow')
+        now_utc = datetime.now(pytz.utc)
+        now_moscow = now_utc.astimezone(moscow_tz)
+        timestamp = now_moscow.strftime("%Y%m%d_%H%M%S")
+        pdf_path = f"generated_pdf/KP_Pergola_{timestamp}.pdf"
     
     # Создаем документ
     doc = SimpleDocTemplate(
@@ -2995,13 +3002,18 @@ def create_very_simple_pdf(pergola_data):
     # Создаем директорию для PDF, если её нет
     os.makedirs("generated_pdf", exist_ok=True)
     
-    # Генерируем имя файла на основе московского времени
-    # Определяем московскую временную зону
-    moscow_tz = pytz.timezone('Europe/Moscow')
-    now_utc = datetime.now(pytz.utc)
-    now_moscow = now_utc.astimezone(moscow_tz)
-    timestamp = now_moscow.strftime("%Y%m%d_%H%M%S")
-    pdf_path = f"generated_pdf/KP_Pergola_{timestamp}.pdf"
+    # Генерируем информативное имя файла на основе данных перголы
+    try:
+        from improved_pdf_export import generate_pdf_file_name
+        file_name = generate_pdf_file_name(pergola_data)
+        pdf_path = os.path.join("generated_pdf", file_name)
+    except ImportError:
+        # Запасной вариант, если модуль улучшенного экспорта не доступен
+        moscow_tz = pytz.timezone('Europe/Moscow')
+        now_utc = datetime.now(pytz.utc)
+        now_moscow = now_utc.astimezone(moscow_tz)
+        timestamp = now_moscow.strftime("%Y%m%d_%H%M%S")
+        pdf_path = f"generated_pdf/KP_Pergola_{timestamp}.pdf"
     
     # Создаем PDF с базовыми настройками
     pdf = FPDF()
@@ -3456,8 +3468,8 @@ def create_very_simple_pdf(pergola_data):
 
 def export_to_pdf():
     """
-    Формирует данные для экспорта и генерирует PDF-файл.
-    Добавляет кнопку для скачивания сгенерированного PDF.
+    Формирует данные для экспорта и генерирует PDF-файл с улучшенным скачиванием.
+    Использует improved_pdf_export для правильного именования файлов при скачивании.
     
     Returns:
         str: Путь к сгенерированному PDF-файлу
@@ -3492,50 +3504,64 @@ def export_to_pdf():
     }
     
     try:
-        # Сначала пробуем создать простой PDF
-        st.info("Создаем PDF-документ...")
-        # Добавляем логирование
-        import logging
-        logging.info("Запускаем создание PDF через create_simple_pdf")
-        pdf_file_path = create_simple_pdf(pdf_data)
-        logging.info(f"PDF файл создан: {pdf_file_path}")
+        # Показываем индикатор загрузки
+        with st.spinner("Создание PDF-документа..."):
+            # Сначала пробуем создать простой PDF
+            import logging
+            logging.info("Запускаем создание PDF через create_simple_pdf")
+            
+            # Создаем более информативное имя файла
+            from improved_pdf_export import generate_pdf_file_name
+            file_name = generate_pdf_file_name(pdf_data)
+            
+            # Генерируем PDF с улучшенным именем файла
+            pdf_file_path = create_simple_pdf(pdf_data)
+            logging.info(f"PDF файл создан: {pdf_file_path}")
+            
+            # Если файл создан успешно
+            if pdf_file_path and os.path.exists(pdf_file_path):
+                # Проверяем размер файла
+                file_size = os.path.getsize(pdf_file_path)
+                logging.info(f"Размер PDF файла: {file_size} байт")
+                
+                if file_size > 0:
+                    st.success("PDF файл успешно создан!")
+                    # Используем новую функцию для улучшенного скачивания PDF
+                    from improved_pdf_export import get_streamlit_download_component
+                    st.markdown(get_streamlit_download_component(pdf_file_path), unsafe_allow_html=True)
+                    return pdf_file_path
         
-        if pdf_file_path and os.path.exists(pdf_file_path):
-            # Проверяем размер файла
-            file_size = os.path.getsize(pdf_file_path)
-            logging.info(f"Размер PDF файла: {file_size} байт")
-            if file_size > 0:
-                st.success(f"PDF файл успешно создан: {pdf_file_path}")
+            # Если простой PDF не создался, пробуем более сложный вариант
+            st.warning("Простой PDF не был создан, пробуем расширенный вариант...")
+            
+            # Получаем описание перголы
+            if 'config.pergola_descriptions' not in sys.modules:
+                from config.pergola_descriptions import get_pergola_description
+            else:
+                from config.pergola_descriptions import get_pergola_description
+            
+            pergola_description = get_pergola_description(pergola_type)
+            
+            # Форматируем данные для PDF
+            pergola_data = format_pergola_data_for_pdf(
+                results=results, 
+                options=options, 
+                dimensions=dimensions,
+                pergola_description=pergola_description
+            )
+            
+            # Генерируем PDF с использованием расширенной функции
+            pdf_file_path = generate_commercial_offer(pergola_data)
+            
+            if pdf_file_path and os.path.exists(pdf_file_path):
+                st.success("PDF файл успешно создан!")
+                # Используем новую функцию для улучшенного скачивания PDF
+                from improved_pdf_export import get_streamlit_download_component
+                st.markdown(get_streamlit_download_component(pdf_file_path), unsafe_allow_html=True)
                 return pdf_file_path
-        
-        st.warning("Простой PDF не был создан, пробуем расширенный вариант...")
-        
-        # Если простой PDF не создался, пробуем более сложный вариант с библиотекой FPDF
-        # Получаем описание перголы
-        if 'config.pergola_descriptions' not in sys.modules:
-            from config.pergola_descriptions import get_pergola_description
-        else:
-            from config.pergola_descriptions import get_pergola_description
-        
-        pergola_description = get_pergola_description(pergola_type)
-        
-        # Форматируем данные для PDF
-        pergola_data = format_pergola_data_for_pdf(
-            results=results, 
-            options=options, 
-            dimensions=dimensions,
-            pergola_description=pergola_description
-        )
-        
-        # Генерируем PDF с использованием расширенной функции
-        pdf_file_path = generate_commercial_offer(pergola_data)
-        
-        if pdf_file_path and os.path.exists(pdf_file_path):
-            st.success(f"PDF файл успешно создан: {pdf_file_path}")
-            return pdf_file_path
-        else:
-            st.error("Не удалось создать PDF-файл.")
-            return None
+            else:
+                st.error("Не удалось создать PDF-файл.")
+                return None
         
     except Exception as e:
         st.error(f"Ошибка при генерации PDF: {str(e)}")
