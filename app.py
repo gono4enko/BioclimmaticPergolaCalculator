@@ -674,6 +674,26 @@ def perform_calculation(dimensions, options):
             "total_price": base_price
         }
         
+        # Определяем размер ламели для отображения
+        lamella_display = "250 мм" if lamella_size == "250" else "200 мм" if lamella_size == "200" else "PIR"
+        
+        # Добавляем стоимость самой перголы в список позиций
+        # Это исправляет проблему с отсутствием стоимости перголы в PDF
+        pergola_name = f"Пергола серии {pergola_type} - с поворотными ламелями {width_m:.2f}×{length_m:.2f} м. Ламели {lamella_display} (стандарт), Количество модулей - {modules}"
+        
+        # Для B500 и B700 добавляем количество ламелей
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            # Расчет количества ламелей
+            lamella_size_mm = 200 if lamella_size == "200" else 250
+            lamellas_count = int(length_m * 1000 / lamella_size_mm)
+            pergola_name = f"Пергола серии {pergola_type} - с поворотными ламелями {width_m:.2f}×{length_m:.2f} м. Ламели {lamella_display} (стандарт), Количество ламелей - {lamellas_count} шт. ({modules} модуля)"
+        
+        # Добавляем перголу в список товаров
+        results["items"].append({
+            "name": pergola_name,
+            "price": base_price
+        })
+        
         # Проверяем, нужны ли дополнительные колонны
         need_columns = needs_additional_columns(pergola_type, lamella_size, length_m)
         if need_columns:
