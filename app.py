@@ -2487,7 +2487,7 @@ def create_simple_pdf(pergola_data):
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
     from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable, PageBreak
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     
     # Создаем директорию для PDF, если её нет
@@ -2643,6 +2643,9 @@ def create_simple_pdf(pergola_data):
     
     elements.append(Spacer(1, 20))
     
+    # Добавляем разрыв страницы перед таблицей стоимости, чтобы она начиналась с новой страницы
+    elements.append(PageBreak())
+    
     # Секция стоимости
     elements.append(Paragraph("Стоимость:", heading2_style))
     elements.append(Spacer(1, 10))
@@ -2706,6 +2709,9 @@ def create_simple_pdf(pergola_data):
     # Раздел Спецификации перголы, если есть данные
     specification = pergola_data.get("specification", [])
     if specification:
+        # Добавляем разрыв страницы перед спецификацией, чтобы она начиналась с новой страницы
+        elements.append(PageBreak())
+        
         elements.append(Paragraph("Спецификация перголы:", heading2_style))
         elements.append(Spacer(1, 10))
         
