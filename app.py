@@ -2918,16 +2918,20 @@ def create_very_simple_pdf(pergola_data):
     else:
         pdf.set_font("Arial", "B", 16)
     
-    # Заголовок (только латиница)
-    pdf.cell(0, 10, "Commercial Offer - Pergola System", ln=True, align="C")
+    # Заголовок
+    if use_dejavu:
+        pdf.cell(0, 10, "Коммерческое предложение - Биоклиматическая пергола", ln=True, align="C")
+    else:
+        pdf.cell(0, 10, "Commercial Offer - Pergola System", ln=True, align="C")
     pdf.ln(10)
     
-    # Информация о перголе (только латиница)
+    # Информация о перголе
     if use_dejavu:
         pdf.set_font("DejaVu", "B", 12)
+        pdf.cell(0, 10, "Параметры перголы:", ln=True)
     else:
         pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "Pergola Parameters:", ln=True)
+        pdf.cell(0, 10, "Pergola Parameters:", ln=True)
     
     if use_dejavu:
         pdf.set_font("DejaVu", "", 12)
@@ -2938,10 +2942,16 @@ def create_very_simple_pdf(pergola_data):
     length = pergola_data.get("length", 0)
     modules = pergola_data.get("modules", 1)
     
-    pdf.cell(0, 10, f"Model: {pergola_type}", ln=True)
-    pdf.cell(0, 10, f"Width: {width} m", ln=True)
-    pdf.cell(0, 10, f"Length: {length} m", ln=True)
-    pdf.cell(0, 10, f"Number of modules: {modules}", ln=True)
+    if use_dejavu:
+        pdf.cell(0, 10, f"Модель: {pergola_type}", ln=True)
+        pdf.cell(0, 10, f"Ширина: {width} м", ln=True)
+        pdf.cell(0, 10, f"Вынос: {length} м", ln=True)
+        pdf.cell(0, 10, f"Количество модулей: {modules}", ln=True)
+    else:
+        pdf.cell(0, 10, f"Model: {pergola_type}", ln=True)
+        pdf.cell(0, 10, f"Width: {width} m", ln=True)
+        pdf.cell(0, 10, f"Length: {length} m", ln=True)
+        pdf.cell(0, 10, f"Number of modules: {modules}", ln=True)
     pdf.ln(10)
     
     # Добавляем изображение перголы в зависимости от выбранного типа
@@ -3271,25 +3281,30 @@ def create_very_simple_pdf(pergola_data):
     # Информация о компании
     if use_dejavu:
         pdf.set_font("DejaVu", "B", 11)
+        pdf.cell(0, 8, "Компания \"Комфортный дом\"", ln=True, align="C")
     else:
         pdf.set_font("Arial", "B", 11)
-    pdf.cell(0, 8, "Company \"Komfortny dom\"", ln=True, align="C")
+        pdf.cell(0, 8, "Company \"Komfortny dom\"", ln=True, align="C")
     
     if use_dejavu:
         pdf.set_font("DejaVu", "I", 9)
+        pdf.cell(0, 6, "Комплексные решения для террас, веранд и беседок.", ln=True, align="C")
+        pdf.cell(0, 6, "ИП Гоноченко А.В. ОГРНИП 321619600249231", ln=True, align="C")
+        pdf.cell(0, 6, "Тел.: +7-906-429-74-20 Сайт: pergolamarket.ru", ln=True, align="C")
     else:
         pdf.set_font("Arial", "I", 9)
-    pdf.cell(0, 6, "Complex solutions for terraces, verandas and gazebos.", ln=True, align="C")
-    pdf.cell(0, 6, "IP Gonochenko A.V. OGRNIP 321619600249231", ln=True, align="C")
-    pdf.cell(0, 6, "Tel.: +7-906-429-74-20 Website: pergolamarket.ru", ln=True, align="C")
+        pdf.cell(0, 6, "Complex solutions for terraces, verandas and gazebos.", ln=True, align="C")
+        pdf.cell(0, 6, "IP Gonochenko A.V. OGRNIP 321619600249231", ln=True, align="C")
+        pdf.cell(0, 6, "Tel.: +7-906-429-74-20 Website: pergolamarket.ru", ln=True, align="C")
     
     # Дата создания
     pdf.ln(5)
     if use_dejavu:
         pdf.set_font("DejaVu", "I", 8)
+        pdf.cell(0, 6, f"Коммерческое предложение сформировано: {current_date}", ln=True, align="C")
     else:
         pdf.set_font("Arial", "I", 8)
-    pdf.cell(0, 6, f"Commercial offer generated on: {current_date}", ln=True, align="C")
+        pdf.cell(0, 6, f"Commercial offer generated on: {current_date}", ln=True, align="C")
     
     # Сохраняем PDF
     pdf.output(pdf_path)
