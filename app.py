@@ -1655,6 +1655,7 @@ def render_results(results, show_articles=False):
         results (dict): Словарь с результатами расчета
         show_articles (bool, optional): Флаг для отображения статей с описаниями. По умолчанию False.
     """
+    import os  # Импортируем модуль os внутри функции
     # Добавляем стили для кнопок экспорта PDF
     st.markdown("""
     <style>
