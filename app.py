@@ -65,7 +65,8 @@ def get_plural_form(number, one, two, five):
     if n >= 2 and n <= 4:
         return two
     return five
-from pdf_generator_fpdf import generate_commercial_offer, format_pergola_data_for_pdf
+# Явно импортируем только из pdf_generator_fpdf_rus (строка 25)
+# from pdf_generator_fpdf import generate_commercial_offer, format_pergola_data_for_pdf
 from config.pergola_descriptions import (
     get_pergola_description,
     get_modular_system_description,
