@@ -3109,12 +3109,22 @@ def create_very_simple_pdf(pergola_data):
             
             # Создаем функцию для переноса текста на несколько строк
             def split_text_into_lines(text, max_width, font_size=10):
-                """Разбивает текст на строки, которые помещаются в указанную ширину"""
+                """
+                Разбивает текст на строки, которые помещаются в указанную ширину.
+                Особенность: корректно обрабатывает длинные слова, разбивая их при необходимости.
+                """
                 lines = []
+                
+                # Предварительная обработка текста
+                if not text:
+                    return [""]
                 
                 # Если текст короткий, возвращаем его как есть
                 if pdf.get_string_width(text) <= max_width:
                     return [text]
+                
+                # Корректируем ширину, добавляя небольшой запас
+                effective_width = max_width - 2
                 
                 # Разбиваем текст на слова
                 words = text.split()
@@ -3122,20 +3132,44 @@ def create_very_simple_pdf(pergola_data):
                 
                 for word in words:
                     # Проверяем, поместится ли слово в текущую строку
-                    if pdf.get_string_width(current_line + " " + word) <= max_width:
-                        if current_line:
-                            current_line += " " + word
-                        else:
-                            current_line = word
+                    test_line = current_line + (" " if current_line else "") + word
+                    
+                    if pdf.get_string_width(test_line) <= effective_width:
+                        # Слово помещается - добавляем его к текущей строке
+                        current_line = test_line
                     else:
-                        # Если не помещается, добавляем текущую строку в список и начинаем новую
+                        # Слово не помещается - начинаем новую строку
+                        
+                        # Сначала сохраняем текущую строку
                         if current_line:
                             lines.append(current_line)
-                        current_line = word
+                        
+                        # Проверяем, поместится ли само слово в строку
+                        if pdf.get_string_width(word) <= effective_width:
+                            # Слово помещается в новую строку
+                            current_line = word
+                        else:
+                            # Слово слишком длинное - разбиваем его на части
+                            current_part = ""
+                            for char in word:
+                                test_part = current_part + char
+                                if pdf.get_string_width(test_part) <= effective_width:
+                                    current_part = test_part
+                                else:
+                                    # Часть слова не помещается - добавляем в строки
+                                    lines.append(current_part)
+                                    current_part = char
+                            
+                            # Используем последнюю часть для текущей строки
+                            current_line = current_part
                 
                 # Добавляем последнюю строку
                 if current_line:
                     lines.append(current_line)
+                
+                # Если ни одной строки не получилось, добавляем пустую
+                if not lines:
+                    lines = [""]
                 
                 return lines
             

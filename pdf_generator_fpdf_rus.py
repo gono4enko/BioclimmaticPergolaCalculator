@@ -147,100 +147,161 @@ class PDF(FPDF):
         # Устанавливаем шрифт
         self.set_font('DejaVu', '', 10)
         
+        # Преобразуем все элементы данных в строки
+        data = [str(item) for item in data]
+        
         # Сохраняем текущую позицию
         x_start = self.get_x()
         y_start = self.get_y()
         
-        # Вычисляем высоту для каждой ячейки
+        # Вычисляем height для каждой ячейки
         heights = []
+        line_counts = []
         
-        # Сначала вычислим высоту для каждой ячейки
+        # Сначала вычислим высоту для каждой ячейки,
+        # разбивая текст на строки соответствующей ширины
         for i, text in enumerate(data):
-            text = str(text)
-            current_x = x_start
-            for j in range(i):
-                current_x += widths[j]
-                
-            self.set_xy(current_x, y_start)
+            lines = self.get_multi_cell_lines(text, widths[i] - 4)  # Отступ 4 мм
+            line_count = len(lines)
+            line_counts.append(line_count)
             
-            # Используем multi_cell для вычисления высоты
-            self.multi_cell(widths[i], min_row_height, text, 1, aligns[i], fill=False)
-            heights.append(self.get_y() - y_start)
-            
-            # Восстанавливаем позицию
-            self.set_xy(x_start, y_start)
+            # Вычисляем высоту ячейки (количество строк * высота строки)
+            cell_height = line_count * min_row_height
+            heights.append(cell_height)
         
-        # Определяем максимальную высоту
+        # Определяем максимальную высоту строки таблицы
         max_height = max(heights)
+        max_height = max(max_height, min_row_height)  # Минимальная высота
         
         # Теперь рисуем ячейки с одинаковой высотой
         for i, text in enumerate(data):
-            text = str(text)
+            current_x = x_start
+            for j in range(i):
+                current_x += widths[j]
             
-            # Рисуем ячейку
-            if i == len(data) - 1:
-                # Последняя ячейка с переносом строки
-                self.multi_cell(widths[i], max_height, text, 1, aligns[i], fill=False)
-                # Возвращаемся на начало строки
-                self.set_xy(x_start, y_start + max_height)
+            # Рисуем границу ячейки
+            self.rect(current_x, y_start, widths[i], max_height)
+            
+            # Если текст состоит из нескольких строк
+            lines = self.get_multi_cell_lines(text, widths[i] - 4)
+            
+            if len(lines) > 1:
+                # Для многострочного текста используем multi_cell
+                self.set_xy(current_x, y_start)
+                
+                # Вычисляем высоту одной строки с учетом равномерного распределения всего текста
+                line_height = max_height / len(lines)
+                
+                # Выводим текст построчно с учетом выравнивания
+                for line in lines:
+                    # Вычисляем x-позицию в зависимости от выравнивания
+                    if aligns[i] == 'C':  # По центру
+                        line_width = self.get_string_width(line)
+                        text_x = current_x + (widths[i] - line_width) / 2
+                    elif aligns[i] == 'R':  # По правому краю
+                        line_width = self.get_string_width(line)
+                        text_x = current_x + widths[i] - line_width - 2
+                    else:  # По левому краю (L)
+                        text_x = current_x + 2
+                    
+                    self.set_xy(text_x, self.get_y())
+                    self.cell(0, line_height, line, 0, 2, '')
             else:
-                # Создаем прямоугольник для ячейки
-                self.rect(self.get_x(), self.get_y(), widths[i], max_height)
+                # Для однострочного текста центрируем по вертикали
+                line_height = max_height
                 
-                # Вычисляем количество строк в тексте
-                lines = self.get_multi_cell_lines(text, widths[i])
+                # Определяем вертикальное положение (по центру ячейки)
+                text_y = y_start + (max_height - min_row_height) / 2
                 
-                # Если текст многострочный, обрабатываем его особым образом
-                if len(lines) > 1:
-                    self.multi_cell(widths[i], min_row_height, text, 0, aligns[i], fill=False)
-                    # Восстанавливаем позицию для следующей ячейки
-                    self.set_xy(self.get_x() + widths[i], y_start)
-                else:
-                    # Для однострочного текста используем обычную ячейку
-                    self.cell(widths[i], max_height, text, 0, 0, aligns[i])
+                self.set_xy(current_x + 2, text_y)
+                self.cell(widths[i] - 4, min_row_height, text, 0, 0, aligns[i])
+        
+        # Переходим на следующую строку
+        self.set_xy(x_start, y_start + max_height)
 
     def get_multi_cell_lines(self, text, width):
         """
-        Возвращает количество строк в многострочной ячейке
+        Возвращает список строк, на которые разбивается текст,
+        чтобы поместиться в указанную ширину.
         
         Args:
             text (str): Текст для отображения
-            width (float): Ширина ячейки в мм
+            width (float): Доступная ширина в мм
             
         Returns:
-            list: Список строк
+            list: Список строк после разбиения
         """
-        # Разбиваем текст на строки по переносам
-        lines = []
-        wmax = width - 4  # Учитываем отступы
+        # Предварительная обработка текста
+        if not text:
+            return [""]
+            
+        # Разбиваем текст по явным переносам строк
         text_array = text.split('\n')
+        lines = []
+        
+        # Корректируем ширину, добавляя небольшой запас
+        # (это нужно для надежности, чтобы избежать обрезания текста)
+        effective_width = width - 2
         
         for text_line in text_array:
-            text_width = self.get_string_width(text_line)
-            
-            if text_width <= wmax:
-                # Строка помещается целиком
+            # Если строка короткая, просто добавляем её
+            if self.get_string_width(text_line) <= effective_width:
                 lines.append(text_line)
-            else:
-                # Разбиваем строку на части
-                words = text_line.split(' ')
-                current_line = ''
+                continue
                 
-                for word in words:
-                    word_width = self.get_string_width(word + ' ')
+            # Разбиваем строку на слова
+            words = text_line.split(' ')
+            current_line = ''
+            
+            for word in words:
+                # Проверяем, поместится ли слово в текущую строку
+                test_line = current_line + (' ' if current_line else '') + word
+                if self.get_string_width(test_line) <= effective_width:
+                    # Слово помещается - добавляем его к текущей строке
+                    current_line = test_line
+                else:
+                    # Слово не помещается - начинаем новую строку
                     
-                    if self.get_string_width(current_line + word) <= wmax:
-                        current_line += word + ' '
+                    # Сначала сохраняем текущую строку
+                    if current_line:
+                        lines.append(current_line)
+                    
+                    # Проверяем, поместится ли само слово в строку
+                    if self.get_string_width(word) <= effective_width:
+                        # Слово помещается в новую строку
+                        current_line = word
                     else:
-                        # Добавляем текущую строку и начинаем новую
-                        if current_line:
-                            lines.append(current_line.strip())
-                        current_line = word + ' '
-                
-                # Добавляем последнюю строку
-                if current_line:
-                    lines.append(current_line.strip())
+                        # Слово слишком длинное - разбиваем его на части
+                        parts = []
+                        current_part = ''
+                        
+                        for char in word:
+                            test_part = current_part + char
+                            if self.get_string_width(test_part) <= effective_width:
+                                current_part = test_part
+                            else:
+                                parts.append(current_part)
+                                current_part = char
+                        
+                        # Добавляем последнюю часть
+                        if current_part:
+                            parts.append(current_part)
+                        
+                        # Первую часть используем для текущей строки
+                        if parts:
+                            current_line = parts[0]
+                            # Остальные части сразу добавляем в список строк
+                            for i in range(1, len(parts)):
+                                lines.append(parts[i])
+            
+            # Добавляем последнюю строку
+            if current_line:
+                lines.append(current_line)
         
+        # Если ни одной строки не получилось, добавляем пустую
+        if not lines:
+            lines = [""]
+            
         return lines
     
     def table_row(self, data, widths, aligns=None, row_height=7):
