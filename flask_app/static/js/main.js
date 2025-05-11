@@ -1,189 +1,245 @@
 /**
- * Основной JavaScript файл для функциональности приложения
+ * Основной файл JavaScript для приложения калькулятора пергол
+ * Содержит утилиты и общие функции, используемые на всех страницах
  */
 
+// Инициализация документа
 document.addEventListener('DOMContentLoaded', function() {
-    // Проверка, запущен ли JavaScript
-    console.log('Main.js loaded successfully');
-    
-    // Добавляем класс для запуска CSS-анимаций
-    document.body.classList.add('js-enabled');
-    
-    // Плавная прокрутка для якорных ссылок
-    setupSmoothScrolling();
-    
-    // Инициализация всплывающих подсказок Bootstrap, если они используются
-    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    }
-    
-    // Отправка событий в Яндекс.Метрику, если она подключена
-    setupYandexMetrikaEvents();
-    
-    // Обработка параметров URL, если страница - калькулятор
-    if (window.location.pathname.includes('calculator')) {
-        processUrlParams();
-    }
+  // Активация всех подсказок Bootstrap
+  initializeTooltips();
+  
+  // Настройка плавной прокрутки
+  setupSmoothScrolling();
+  
+  // Активация активного элемента в навигации
+  highlightActiveNavItem();
+  
+  // Инициализация Яндекс.Метрики
+  setupYandexMetrika();
+  
+  // Обработка параметров URL
+  processUrlParams();
 });
 
 /**
- * Настройка плавной прокрутки для якорных ссылок
+ * Инициализирует все подсказки Bootstrap на странице
+ */
+function initializeTooltips() {
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(function(tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+}
+
+/**
+ * Настраивает плавную прокрутку для всех якорных ссылок на странице
  */
 function setupSmoothScrolling() {
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            
-            const targetId = this.getAttribute('href');
-            if (targetId === '#') return;
-            
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) {
-                targetElement.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+      
+      const targetElement = document.querySelector(targetId);
+      if (targetElement) {
+        targetElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
         });
+      }
     });
+  });
 }
 
 /**
- * Настройка событий Яндекс.Метрики
+ * Подсвечивает активный элемент в навигационном меню
  */
-function setupYandexMetrikaEvents() {
-    // Отслеживание событий калькулятора
-    const calculateButton = document.querySelector('button[type="submit"]');
-    if (calculateButton) {
-        calculateButton.addEventListener('click', function() {
-            sendYandexEvent('calculator', 'click', 'calculate');
-        });
-    }
+function highlightActiveNavItem() {
+  const currentPath = window.location.pathname;
+  const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+  
+  navLinks.forEach(link => {
+    const linkPath = link.getAttribute('href');
     
-    // Отслеживание событий экспорта PDF
-    const exportPdfButton = document.getElementById('exportPDF');
-    if (exportPdfButton) {
-        exportPdfButton.addEventListener('click', function() {
-            sendYandexEvent('calculator', 'click', 'export_pdf');
-        });
+    // Проверяем, соответствует ли путь ссылки текущему пути
+    if (linkPath && (
+      linkPath === currentPath || 
+      (linkPath !== '/' && currentPath.startsWith(linkPath))
+    )) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
     }
-    
-    // Отслеживание переходов по каталогу
-    const catalogLinks = document.querySelectorAll('.catalog-item a');
-    catalogLinks.forEach(link => {
-        link.addEventListener('click', function() {
-            sendYandexEvent('catalog', 'click', this.getAttribute('href'));
-        });
-    });
+  });
 }
 
 /**
- * Отправка события в Яндекс.Метрику
+ * Настраивает отправку событий в Яндекс.Метрику
+ */
+function setupYandexMetrika() {
+  // Добавляем обработчики для кнопок с атрибутом data-ym-event
+  document.querySelectorAll('[data-ym-event]').forEach(el => {
+    el.addEventListener('click', function() {
+      const category = this.getAttribute('data-ym-category') || 'Взаимодействие';
+      const action = this.getAttribute('data-ym-event');
+      const label = this.getAttribute('data-ym-label') || '';
+      
+      sendYandexEvent(category, action, label);
+    });
+  });
+  
+  // Отслеживаем отправку форм
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function() {
+      const formName = this.getAttribute('name') || this.getAttribute('id') || 'Форма';
+      sendYandexEvent('Формы', 'Отправка', formName);
+    });
+  });
+}
+
+/**
+ * Отправляет событие в Яндекс.Метрику (если она доступна)
+ * 
  * @param {string} category - Категория события
  * @param {string} action - Действие
- * @param {string} label - Метка
+ * @param {string} label - Метка (опционально)
  */
 function sendYandexEvent(category, action, label) {
-    try {
-        if (typeof ym !== 'undefined') {
-            ym(89136431, 'reachGoal', action, {
-                category: category,
-                label: label
-            });
-            console.log(`Yandex.Metrika event sent: ${category} / ${action} / ${label}`);
-        } else {
-            console.log(`Yandex.Metrika not available. Event would be: ${category} / ${action} / ${label}`);
-        }
-    } catch (e) {
-        console.error('Error sending Yandex.Metrika event:', e);
+  // Проверяем, инициализирована ли Яндекс.Метрика
+  if (typeof ym !== 'undefined') {
+    ym(12345678, 'reachGoal', action, {
+      category: category,
+      label: label
+    });
+    console.log(`Отправлено событие в Яндекс.Метрику: ${category} / ${action} / ${label}`);
+  } else {
+    console.log(`Яндекс.Метрика не доступна. Событие: ${category} / ${action} / ${label}`);
+    
+    // Сохраняем событие для последующей отправки
+    if (typeof window.pendingMetrikaEvents === 'undefined') {
+      window.pendingMetrikaEvents = [];
     }
+    
+    window.pendingMetrikaEvents.push({
+      category,
+      action,
+      label
+    });
+  }
 }
 
 /**
- * Обработка параметров URL для калькулятора
+ * Обрабатывает параметры URL для контроля состояния приложения
  */
 function processUrlParams() {
-    const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  // Обработка импорта данных из PDF
+  if (urlParams.has('import') && urlParams.get('import') === 'true') {
+    const importedData = localStorage.getItem('importedPdfData');
     
-    // Заполнение типа перголы
-    if (urlParams.has('type')) {
-        const type = urlParams.get('type');
-        const typeRadio = document.querySelector(`input[name="pergola_type"][value="${type}"]`);
-        if (typeRadio) {
-            typeRadio.checked = true;
-            const event = new Event('change');
-            typeRadio.dispatchEvent(event);
-            
-            // Выделяем карточку
-            const card = typeRadio.closest('.option-card');
-            if (card) {
-                // Снимаем выделение с других карточек
-                document.querySelectorAll('.option-card[data-option="pergola-type"]').forEach(c => {
-                    c.classList.remove('selected');
-                });
-                card.classList.add('selected');
-            }
-        }
+    if (importedData) {
+      const dataObj = JSON.parse(importedData);
+      console.log('Импортировано из PDF:', dataObj);
+      
+      // Генерируем событие для уведомления приложения об импорте данных
+      const importEvent = new CustomEvent('pdf-data-imported', { detail: dataObj });
+      document.dispatchEvent(importEvent);
+      
+      // Очищаем сохраненные данные
+      localStorage.removeItem('importedPdfData');
     }
-    
-    // Заполнение размера ламелей
-    if (urlParams.has('lamella')) {
-        const lamella = urlParams.get('lamella');
-        const lamellaRadio = document.querySelector(`input[name="lamella_size"][value="${lamella}"]`);
-        if (lamellaRadio) {
-            lamellaRadio.checked = true;
-            const event = new Event('change');
-            lamellaRadio.dispatchEvent(event);
-            
-            // Выделяем карточку
-            const card = lamellaRadio.closest('.option-card');
-            if (card) {
-                // Снимаем выделение с других карточек
-                document.querySelectorAll('.option-card[data-option="lamella-size"]').forEach(c => {
-                    c.classList.remove('selected');
-                });
-                card.classList.add('selected');
-            }
-        }
-    }
-    
-    // Заполнение модулей
-    if (urlParams.has('modules')) {
-        const modules = urlParams.get('modules');
-        // Здесь нет прямого поля для модулей, но можно рассчитать на основе ширины
-        // Приблизительный расчет: до 4м - 1 модуль, до 7м - 2 модуля, больше - 3 модуля
-        const width = parseInt(modules) * 2 + 1; // Примерная формула
-        const widthInput = document.getElementById('width');
-        if (widthInput && width > 0) {
-            widthInput.value = Math.min(width, 7); // Ограничиваем максимальной шириной
-        }
-    }
-    
-    // Включение LED подсветки
-    if (urlParams.has('led') && urlParams.get('led') === 'true') {
-        const ledCheckbox = document.getElementById('ledLighting');
-        if (ledCheckbox) {
-            ledCheckbox.checked = true;
-            
-            // Выделяем карточку
-            const card = ledCheckbox.closest('.option-card');
-            if (card) {
-                card.classList.add('selected');
-            }
-        }
-    }
-    
-    // Другие параметры можно обрабатывать аналогично
+  }
+  
+  // Обработка других параметров URL
+  // ...
 }
 
 /**
- * Форматирование числа как цены
+ * Форматирует число в денежный формат с валютой
+ * 
  * @param {number} price - Число для форматирования
- * @returns {string} - Отформатированная строка
+ * @param {string} currency - Валюта (по умолчанию: ₽)
+ * @returns {string} Отформатированная строка с валютой
  */
-function formatPrice(price) {
-    return new Intl.NumberFormat('ru-RU').format(Math.round(price));
+function formatPrice(price, currency = '₽') {
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'decimal', 
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(price) + ' ' + currency;
+}
+
+/**
+ * Показывает уведомление пользователю
+ * 
+ * @param {string} message - Сообщение для отображения
+ * @param {string} type - Тип уведомления (success, error, warning, info)
+ * @param {number} duration - Продолжительность отображения в мс (по умолчанию: 3000)
+ */
+function showNotification(message, type = 'info', duration = 3000) {
+  // Проверяем, существует ли контейнер для уведомлений
+  let notificationContainer = document.getElementById('notification-container');
+  
+  if (!notificationContainer) {
+    notificationContainer = document.createElement('div');
+    notificationContainer.id = 'notification-container';
+    notificationContainer.style.position = 'fixed';
+    notificationContainer.style.top = '1rem';
+    notificationContainer.style.right = '1rem';
+    notificationContainer.style.zIndex = '9999';
+    document.body.appendChild(notificationContainer);
+  }
+  
+  // Создаем элемент уведомления
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type} alert-dismissible fade show`;
+  notification.role = 'alert';
+  
+  // Добавляем иконку
+  let icon = 'info-circle';
+  switch (type) {
+    case 'success': icon = 'check-circle'; break;
+    case 'warning': icon = 'exclamation-triangle'; break;
+    case 'error': case 'danger': icon = 'exclamation-circle'; type = 'danger'; break;
+  }
+  
+  notification.innerHTML = `
+    <i class="bi bi-${icon} me-2"></i>
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
+  
+  // Добавляем анимацию и стили
+  notification.style.minWidth = '250px';
+  notification.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
+  notification.style.marginBottom = '0.5rem';
+  notification.style.transform = 'translateX(100%)';
+  notification.style.transition = 'transform 0.3s ease-out';
+  
+  // Добавляем уведомление в контейнер
+  notificationContainer.appendChild(notification);
+  
+  // Запускаем анимацию появления
+  setTimeout(() => {
+    notification.style.transform = 'translateX(0)';
+  }, 10);
+  
+  // Автоматическое скрытие уведомления
+  setTimeout(() => {
+    notification.style.transform = 'translateX(100%)';
+    notification.addEventListener('transitionend', () => {
+      notification.remove();
+    });
+  }, duration);
+  
+  // Обработчик кнопки закрытия
+  notification.querySelector('.btn-close').addEventListener('click', () => {
+    notification.style.transform = 'translateX(100%)';
+    notification.addEventListener('transitionend', () => {
+      notification.remove();
+    });
+  });
 }

@@ -61,6 +61,10 @@ def create_app(test_config=None):
     from .controllers.scraper_controller import register_scraper_blueprints
     register_scraper_blueprints(app)
     
+    # Регистрация блюпринта для работы с PDF
+    from .controllers.pdf_controller import register_pdf_blueprints
+    register_pdf_blueprints(app)
+    
     # Регистрация обработчика ошибок
     @app.errorhandler(404)
     def page_not_found(error):

@@ -1,199 +1,276 @@
-/* Основные стили приложения */
+/* 
+ * Основные стили для приложения калькулятора пергол
+ * Добавляет брендированные элементы и улучшает стандартный Bootstrap
+ */
 
-/* Общие стили и переменные */
 :root {
-    --primary-color: #0d6efd;
-    --secondary-color: #6c757d;
-    --success-color: #198754;
-    --danger-color: #dc3545;
-    --light-color: #f8f9fa;
-    --dark-color: #212529;
-    --font-family: 'Roboto', 'Arial', sans-serif;
-    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --transition: all 0.3s ease;
+  --primary-color: #0d6efd;
+  --secondary-color: #6c757d;
+  --success-color: #198754;
+  --info-color: #0dcaf0;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --light-color: #f8f9fa;
+  --dark-color: #212529;
 }
 
+/* Общие стили */
 body {
-    font-family: var(--font-family);
-    color: var(--dark-color);
-    line-height: 1.6;
-    background-color: #ffffff;
+  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  background-color: #f5f5f5;
 }
 
-/* Анимации и эффекты */
-.hover-shadow {
-    transition: var(--transition);
+.container {
+  max-width: 1200px;
+  padding: 0 15px;
 }
 
-.hover-shadow:hover {
-    box-shadow: var(--box-shadow);
-    transform: translateY(-3px);
+/* Шапка сайта */
+.navbar {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.fade-in {
-    animation: fadeIn 0.5s ease-in-out;
+.navbar-brand img {
+  filter: drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.3));
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.slide-in {
-    animation: slideIn 0.5s ease-in-out;
-}
-
-@keyframes slideIn {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-/* Кнопки и интерактивные элементы */
+/* Стилизация кнопок */
 .btn {
-    font-weight: 500;
-    transition: var(--transition);
+  border-radius: 4px;
+  transition: all 0.3s;
 }
 
 .btn-primary {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
 .btn-primary:hover {
-    background-color: #0b5ed7;
-    border-color: #0a58ca;
-    transform: translateY(-2px);
-}
-
-.btn-outline-primary {
-    color: var(--primary-color);
-    border-color: var(--primary-color);
-}
-
-.btn-outline-primary:hover {
-    background-color: var(--primary-color);
-    color: white;
-    transform: translateY(-2px);
-}
-
-/* Заголовки */
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 600;
-    margin-bottom: 1rem;
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Карточки */
 .card {
-    border-radius: 0.5rem;
-    overflow: hidden;
-    transition: var(--transition);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+  border: none;
+  border-radius: 8px;
+  transition: all 0.3s;
+  margin-bottom: 20px;
+}
+
+.card-header {
+  border-top-left-radius: 8px !important;
+  border-top-right-radius: 8px !important;
+  font-weight: 500;
 }
 
 .card:hover {
-    box-shadow: var(--box-shadow);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
 }
 
-.card-img-top {
-    height: 200px;
-    object-fit: cover;
+/* Таблицы */
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table thead th {
+  background-color: rgba(13, 110, 253, 0.05);
+  border-bottom: 2px solid var(--primary-color);
+  font-weight: 600;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(13, 110, 253, 0.05);
 }
 
 /* Формы */
 .form-control, .form-select {
-    border-radius: 0.375rem;
-    padding: 0.75rem;
-    border: 1px solid #ced4da;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .form-control:focus, .form-select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
 
 .form-label {
-    margin-bottom: 0.5rem;
-    font-weight: 500;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #555;
 }
 
-/* Навигация */
-.navbar {
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+/* Анимации */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.navbar-brand {
-    font-weight: 600;
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
 }
 
-.navbar-nav .nav-link {
-    font-weight: 500;
-    padding: 0.5rem 1rem;
+/* Секция результатов */
+#analysisResults {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s ease;
 }
 
-.navbar-nav .nav-link.active {
-    color: var(--primary-color);
+#analysisResults.d-block, #analysisResults:not(.d-none) {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-/* Медиа-запросы для адаптивности */
+/* Адаптивный дизайн */
 @media (max-width: 768px) {
-    .container {
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-    
-    h1 {
-        font-size: 2rem;
-    }
-    
-    h2 {
-        font-size: 1.75rem;
-    }
-    
-    .navbar-brand {
-        font-size: 1.25rem;
-    }
+  .container {
+    padding: 0 10px;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  h1 {
+    font-size: 1.8rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
 }
 
-/* Специфические стили для страниц */
-
-/* Страница калькулятора */
-.calculator-container {
-    background-color: var(--light-color);
-    padding: 2rem;
-    border-radius: 0.5rem;
-    margin-bottom: 2rem;
+/* Иконки */
+.bi {
+  margin-right: 0.25rem;
+  vertical-align: -0.125em;
 }
 
-.result-container {
-    background-color: white;
-    padding: 2rem;
-    border-radius: 0.5rem;
-    box-shadow: var(--box-shadow);
+/* Подвал сайта */
+footer {
+  margin-top: 3rem;
 }
 
-/* Страница каталога */
-.catalog-filter {
-    background-color: white;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    margin-bottom: 2rem;
-    box-shadow: var(--box-shadow);
+/* Стили для калькулятора */
+.calculator-section {
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
-.catalog-item-image {
-    height: 250px;
-    object-fit: cover;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
+.result-section {
+  background-color: rgba(13, 110, 253, 0.05);
+  border-left: 4px solid var(--primary-color);
+  padding: 20px;
+  border-radius: 0 10px 10px 0;
 }
 
-/* Стили для мобильных устройств */
-@media (max-width: 576px) {
-    .catalog-item-image {
-        height: 200px;
-    }
-    
-    .calculator-container, .result-container, .catalog-filter {
-        padding: 1rem;
-    }
+/* Стили для визуализации перголы */
+.pergola-visualization {
+  background-color: #e9ecef;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+}
+
+.pergola-visualization img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Стили для страницы скрапера */
+.summary-content {
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-left: 4px solid var(--info-color);
+}
+
+/* Стили для PDF-менеджера */
+.parse-btn:hover {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+/* Подсветка активного элемента навигации */
+.nav-item .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+/* Стили для индикации загрузки */
+.loading {
+  position: relative;
+}
+
+.loading:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath opacity='0.2' fill='%230d6efd' d='M20.201,5.169c-8.254,0-14.946,6.692-14.946,14.946c0,8.255,6.692,14.946,14.946,14.946 s14.946-6.691,14.946-14.946C35.146,11.861,28.455,5.169,20.201,5.169z M20.201,31.749c-6.425,0-11.634-5.208-11.634-11.634 c0-6.425,5.209-11.634,11.634-11.634c6.425,0,11.633,5.209,11.633,11.634C31.834,26.541,26.626,31.749,20.201,31.749z'/%3E%3Cpath fill='%230d6efd' d='M26.013,10.047l1.654-2.866c-2.198-1.272-4.743-2.012-7.466-2.012h0v3.312h0 C22.32,8.481,24.301,9.057,26.013,10.047z'%3E%3CanimateTransform attributeType='xml' attributeName='transform' type='rotate' from='0 20 20' to='360 20 20' dur='0.5s' repeatCount='indefinite'/%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 100;
+  border-radius: 8px;
+}
+
+/* Поддержка для Webkit и Firefox */
+@-webkit-keyframes fadeIn { 
+  from { opacity: 0; } 
+  to { opacity: 1; } 
+}
+
+@-moz-keyframes fadeIn { 
+  from { opacity: 0; } 
+  to { opacity: 1; } 
+}
+
+/* Значки для опций в калькуляторе */
+.option-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  color: var(--primary-color);
+}
+
+.option-card {
+  cursor: pointer;
+  transition: all 0.3s;
+  height: 100%;
+}
+
+.option-card:hover {
+  transform: translateY(-5px);
+}
+
+.option-card.selected {
+  border-color: var(--primary-color);
+  background-color: rgba(13, 110, 253, 0.05);
 }
