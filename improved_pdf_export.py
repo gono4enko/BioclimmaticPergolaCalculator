@@ -194,69 +194,8 @@ def get_improved_pdf_download_link(pdf_path):
                         URL.revokeObjectURL(downloadLink.href);
                     }}, 100);
                     
-                    // Показываем уведомление об успешном скачивании
-                    const alertContainer = document.createElement('div');
-                    
-                    // Добавляем стили для анимации как текст
-                    const styleText = '@keyframes fadeInOut { ' +
-                                    '0% { opacity: 0; transform: translateY(10px); } ' +
-                                    '10% { opacity: 1; transform: translateY(0); } ' +
-                                    '80% { opacity: 1; } ' +
-                                    '100% { opacity: 0; } ' +
-                                    '}';
-                    const styleElem = document.createElement('style');
-                    styleElem.textContent = styleText;
-                    document.head.appendChild(styleElem);
-                    
-                    // Создаем контейнер уведомления
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = 'pdf-alert';
-                    alertDiv.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background-color: #f0f8ff; border: 1px solid #007bff; border-radius: 5px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 9999; animation: fadeInOut 5s;';
-                    
-                    // Создаем верхнюю часть с иконкой
-                    const headerDiv = document.createElement('div');
-                    headerDiv.style.cssText = 'display: flex; align-items: center; margin-bottom: 8px;';
-                    
-                    // Создаем SVG иконку
-                    const svgIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                    svgIcon.setAttribute('style', 'width: 20px; height: 20px; fill: #007bff; margin-right: 10px;');
-                    svgIcon.setAttribute('viewBox', '0 0 16 16');
-                    
-                    const iconPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    iconPath.setAttribute('d', 'M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm3.707-9.293a1 1 0 0 0-1.414-1.414L7 8.586 5.707 7.293a1 1 0 0 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l4-4z');
-                    svgIcon.appendChild(iconPath);
-                    
-                    // Добавляем заголовок
-                    const titleDiv = document.createElement('div');
-                    titleDiv.style.fontWeight = 'bold';
-                    titleDiv.textContent = 'PDF файл скачивается';
-                    
-                    // Собираем верхнюю часть
-                    headerDiv.appendChild(svgIcon);
-                    headerDiv.appendChild(titleDiv);
-                    
-                    // Создаем нижнюю часть с именем файла
-                    const fileInfoDiv = document.createElement('div');
-                    fileInfoDiv.style.cssText = 'font-size: 0.9rem; margin-left: 30px;';
-                    fileInfoDiv.textContent = 'Имя файла: ';
-                    
-                    const fileNameSpan = document.createElement('span');
-                    fileNameSpan.style.fontFamily = 'monospace';
-                    fileNameSpan.textContent = fileName;
-                    fileInfoDiv.appendChild(fileNameSpan);
-                    
-                    // Собираем все вместе
-                    alertDiv.appendChild(headerDiv);
-                    alertDiv.appendChild(fileInfoDiv);
-                    alertContainer.appendChild(alertDiv);
-                    
-                    // Добавляем на страницу
-                    document.body.appendChild(alertContainer);
-                    
-                    // Удаляем уведомление через 5 секунд
-                    setTimeout(() => {{
-                        document.body.removeChild(alertContainer);
-                    }}, 5000);
+                    // Показываем простое уведомление об успешном скачивании
+                    alert("PDF файл успешно скачивается. Имя файла: " + fileName);
                     
                     // Отправляем событие в Яндекс.Метрику
                     if (typeof ym !== 'undefined') {{
