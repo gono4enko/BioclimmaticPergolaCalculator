@@ -2592,7 +2592,11 @@ def create_simple_pdf(pergola_data):
     
     # Добавление изображения перголы
     image_path = get_pergola_image_path(pergola_type)
+    print(f"Тип перголы для изображения: {pergola_type}")
+    print(f"Путь к изображению: {image_path}")
+    
     if image_path and os.path.exists(image_path):
+        print(f"Файл изображения существует: {os.path.exists(image_path)}")
         try:
             # Создаем изображение из файла
             from reportlab.lib.units import inch
@@ -2600,10 +2604,14 @@ def create_simple_pdf(pergola_data):
             
             # Определяем размеры изображения (ширина ~80% от ширины страницы)
             img_width = 6 * inch  # примерно 80% от A4
-            img = Image(image_path, width=img_width, preserveAspectRatio=True)
+            print(f"Ширина изображения: {img_width}")
+            
+            # Создаем изображение с указанной шириной и автоматическим сохранением пропорций
+            img = Image(image_path, width=img_width)
             
             # Добавляем изображение
             elements.append(img)
+            print("Изображение добавлено в PDF")
             
             # Добавляем подпись
             caption_style = ParagraphStyle('Caption', fontName='DejaVuSans', fontSize=10, alignment=1)
@@ -2612,6 +2620,10 @@ def create_simple_pdf(pergola_data):
         except Exception as e:
             # Если возникла проблема с добавлением изображения, пропускаем
             print(f"Ошибка при добавлении изображения в PDF: {e}")
+            import traceback
+            print(traceback.format_exc())
+    else:
+        print(f"Файл изображения не существует: {image_path}")
     
     elements.append(Spacer(1, 20))
     
@@ -2908,7 +2920,10 @@ def create_very_simple_pdf(pergola_data):
     
     # Добавляем изображение перголы в зависимости от выбранного типа
     image_path = get_pergola_image_path(pergola_type)
+    print(f"Простая версия PDF - Тип перголы: {pergola_type}, путь: {image_path}")
+    
     if image_path and os.path.exists(image_path):
+        print(f"Файл изображения для простой версии PDF существует: {os.path.exists(image_path)}")
         try:
             # Устанавливаем ширину изображения, чтобы оно занимало большую часть страницы
             page_width = pdf.w - 40  # ширина страницы минус поля
@@ -2917,17 +2932,37 @@ def create_very_simple_pdf(pergola_data):
             # Вычисляем X координату для центрирования изображения
             x_pos = (pdf.w - image_width) / 2
             
-            # Добавляем изображение
-            pdf.image(image_path, x=x_pos, y=pdf.get_y(), w=image_width)
+            # Сохраняем текущую Y позицию
+            current_y = pdf.get_y()
             
-            # Добавляем пространство после изображения
-            pdf.ln(5)
+            # Добавляем изображение
+            pdf.image(image_path, x=x_pos, y=current_y, w=image_width)
+            
+            # Вычисляем высоту добавленного изображения (пропорционально)
+            img_info = os.stat(image_path)
+            if img_info.st_size > 0:  # Проверяем, что файл не пустой
+                from PIL import Image
+                img = Image.open(image_path)
+                img_width, img_height = img.size
+                aspect_ratio = img_height / img_width
+                calc_height = image_width * aspect_ratio
+                
+                # Перемещаем текущую позицию после изображения
+                pdf.set_y(current_y + calc_height + 10)  # +10 для отступа
+            else:
+                # Если не удалось определить размер, просто добавляем отступ
+                pdf.ln(120)  # Примерно для отступа
+            
+            # Добавляем подпись
             pdf.cell(0, 10, "Model visualization", ln=True, align="C")
             pdf.ln(10)
+            
+            print("Изображение успешно добавлено в простую версию PDF")
         except Exception as e:
             # Если возникла ошибка при вставке изображения, продолжаем без него
-            print(f"Ошибка при добавлении изображения перголы: {e}")
-            pass
+            print(f"Ошибка при добавлении изображения перголы в простую версию PDF: {e}")
+            import traceback
+            print(traceback.format_exc())
     
     # Секция стоимости
     if use_dejavu:
