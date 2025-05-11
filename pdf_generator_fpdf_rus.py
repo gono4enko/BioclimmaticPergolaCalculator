@@ -941,10 +941,10 @@ def generate_commercial_offer(pergola_data, user_data=None):
         pdf.ln(3)
         
         contact_info = [
-            "Телефон: +7 (495) 123-45-67",
-            "Email: info@komfortnyj-dom.ru",
-            "Веб-сайт: https://pergolamarket.ru/calculator_bioclimatic_pergola",
-            "Адрес: г. Москва, ул. Примерная, д. 123"
+            "Телефон: +7 (906) 429-74-20",
+            "Email: zakaz@infopergola.ru",
+            "Веб-сайт: https://pergolamarket.ru",
+            "Адрес: г.Ростов-на-Дону, ул.Орская, 27\\1"
         ]
         
         for info in contact_info:
@@ -1026,9 +1026,10 @@ def generate_commercial_offer(pergola_data, user_data=None):
             simple_pdf.cell(0, 10, "Контактная информация:", 0, 1)
             
             simple_pdf.set_font('Arial', '', 10)
-            simple_pdf.cell(0, 7, "Телефон: +7 (495) 123-45-67", 0, 1)
-            simple_pdf.cell(0, 7, "Email: info@komfortnyj-dom.ru", 0, 1)
-            simple_pdf.cell(0, 7, "Веб-сайт: https://pergolamarket.ru/calculator_bioclimatic_pergola", 0, 1)
+            simple_pdf.cell(0, 7, "Телефон: +7 (906) 429-74-20", 0, 1)
+            simple_pdf.cell(0, 7, "Email: zakaz@infopergola.ru", 0, 1)
+            simple_pdf.cell(0, 7, "Веб-сайт: https://pergolamarket.ru", 0, 1)
+            simple_pdf.cell(0, 7, "Адрес: г.Ростов-на-Дону, ул.Орская, 27\\1", 0, 1)
             
             # Сохраняем упрощенный PDF в дефолтную директорию
             backup_filename = f"generated_pdf/KP_Pergola_simple_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
