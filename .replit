@@ -18,15 +18,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "TestPdfServer"
+args = "MainServer"
 
 [[workflows.workflow]]
-name = "TestPdfServer"
+name = "MainServer"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run test_pdf.py --server.port 5000 --logger.level debug"
+args = "streamlit run app.py --server.port 5000 --logger.level debug"
 waitForPort = 5000
 
 [[ports]]
