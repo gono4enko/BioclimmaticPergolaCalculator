@@ -3506,11 +3506,30 @@ def export_to_pdf():
             sys.path.append(assets_path)
         
         try:
-            from prepare_pdf_assets import prepare_pdf_assets
-            prepare_pdf_assets()
-            print("Подготовка ресурсов для PDF выполнена успешно")
-        except ImportError:
-            print("Модуль prepare_pdf_assets не найден")
+            # Пытаемся импортировать модуль из assets
+            # Вариант 1: прямой импорт из пакета assets
+            try:
+                from assets.prepare_pdf_assets import prepare_pdf_assets
+                prepare_pdf_assets()
+                print("Подготовка ресурсов для PDF выполнена успешно")
+            # Вариант 2: импорт как файл из директории
+            except ImportError:
+                print("Пытаемся альтернативный импорт...")
+                import importlib.util
+                # Указываем полный путь к файлу
+                spec = importlib.util.spec_from_file_location(
+                    "prepare_pdf_assets", 
+                    os.path.join(assets_path, "prepare_pdf_assets.py")
+                )
+                if spec and spec.loader:
+                    pdf_assets_module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(pdf_assets_module)
+                    pdf_assets_module.prepare_pdf_assets()
+                    print("Подготовка ресурсов для PDF через прямой импорт выполнена успешно")
+                else:
+                    print("Модуль prepare_pdf_assets не найден по указанному пути")
+        except Exception as e:
+            print(f"Ошибка при импорте модуля prepare_pdf_assets: {e}")
     except Exception as e:
         print(f"Ошибка при подготовке ресурсов для PDF: {e}")
         # Продолжаем работу даже в случае ошибки
