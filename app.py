@@ -2602,12 +2602,28 @@ def create_simple_pdf(pergola_data):
             from reportlab.lib.units import inch
             from reportlab.platypus import Image
             
-            # Определяем размеры изображения (ширина ~80% от ширины страницы)
-            img_width = 6 * inch  # примерно 80% от A4
+            # Определяем размеры изображения (ширина ~70% от ширины страницы, чтобы избежать ошибки "too large")
+            img_width = 4.5 * inch  # уменьшенный размер для безопасности
             print(f"Ширина изображения: {img_width}")
             
-            # Создаем изображение с указанной шириной и автоматическим сохранением пропорций
-            img = Image(image_path, width=img_width)
+            # Получаем реальные размеры изображения для расчета пропорций
+            from PIL import Image as PILImage
+            pil_img = PILImage.open(image_path)
+            orig_width, orig_height = pil_img.size
+            pil_img.close()
+            
+            # Вычисляем высоту с сохранением пропорций
+            aspect_ratio = orig_height / orig_width
+            img_height = img_width * aspect_ratio
+            
+            # Проверяем, не слишком ли высокое изображение (ограничиваем 5 дюймами)
+            if img_height > 5 * inch:
+                img_height = 5 * inch
+                img_width = img_height / aspect_ratio
+                print(f"Изображение слишком высокое, ограничиваем высоту. Новые размеры: {img_width}x{img_height}")
+            
+            # Создаем изображение с указанными размерами
+            img = Image(image_path, width=img_width, height=img_height)
             
             # Добавляем изображение
             elements.append(img)
@@ -2925,9 +2941,31 @@ def create_very_simple_pdf(pergola_data):
     if image_path and os.path.exists(image_path):
         print(f"Файл изображения для простой версии PDF существует: {os.path.exists(image_path)}")
         try:
-            # Устанавливаем ширину изображения, чтобы оно занимало большую часть страницы
-            page_width = pdf.w - 40  # ширина страницы минус поля
-            image_width = page_width
+            # Устанавливаем ширину изображения, чтобы оно занимало часть страницы
+            from PIL import Image as PILImage
+            
+            # Открываем изображение и получаем его размеры
+            pil_img = PILImage.open(image_path)
+            orig_width, orig_height = pil_img.size
+            pil_img.close()
+            
+            # Вычисляем соотношение сторон
+            aspect_ratio = orig_height / orig_width
+            
+            # Устанавливаем ограничения для размеров (не более 70% ширины и не более 40% высоты страницы)
+            page_width = pdf.w - 60  # ширина страницы с отступами
+            max_img_width = page_width * 0.7
+            max_img_height = pdf.h * 0.4
+            
+            # Вычисляем размеры с сохранением пропорций
+            image_width = max_img_width
+            image_height = image_width * aspect_ratio
+            
+            # Если высота получается слишком большой, ограничиваем её
+            if image_height > max_img_height:
+                image_height = max_img_height
+                image_width = image_height / aspect_ratio
+                print(f"Изображение слишком высокое, ограничиваем высоту. Новые размеры: {image_width}x{image_height}")
             
             # Вычисляем X координату для центрирования изображения
             x_pos = (pdf.w - image_width) / 2
@@ -2936,22 +2974,10 @@ def create_very_simple_pdf(pergola_data):
             current_y = pdf.get_y()
             
             # Добавляем изображение
-            pdf.image(image_path, x=x_pos, y=current_y, w=image_width)
+            pdf.image(image_path, x=x_pos, y=current_y, w=image_width, h=image_height)
             
-            # Вычисляем высоту добавленного изображения (пропорционально)
-            img_info = os.stat(image_path)
-            if img_info.st_size > 0:  # Проверяем, что файл не пустой
-                from PIL import Image
-                img = Image.open(image_path)
-                img_width, img_height = img.size
-                aspect_ratio = img_height / img_width
-                calc_height = image_width * aspect_ratio
-                
-                # Перемещаем текущую позицию после изображения
-                pdf.set_y(current_y + calc_height + 10)  # +10 для отступа
-            else:
-                # Если не удалось определить размер, просто добавляем отступ
-                pdf.ln(120)  # Примерно для отступа
+            # Перемещаем текущую позицию после изображения
+            pdf.set_y(current_y + image_height + 10)  # +10 для отступа
             
             # Добавляем подпись
             pdf.cell(0, 10, "Model visualization", ln=True, align="C")
