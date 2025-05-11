@@ -129,11 +129,11 @@ def get_streamlit_download_component(pdf_path):
         pdf_path (str): Путь к PDF-файлу
         
     Returns:
-        None: Компоненты создаются напрямую через Streamlit
+        str: Пустая строка, чтобы не отображать None в интерфейсе
     """
     if not pdf_path or not os.path.exists(pdf_path):
         st.error("PDF файл не найден")
-        return
+        return ""
     
     # Получаем имя файла 
     file_name = os.path.basename(pdf_path)
@@ -155,33 +155,17 @@ def get_streamlit_download_component(pdf_path):
     # Создаем гарантированно уникальные ключи с использованием UUID
     unique_id = str(uuid.uuid4())[:8]  # Используем первые 8 символов UUID для краткости
     download_key = f"download_pdf_{unique_id}"
-    view_key = f"view_pdf_{unique_id}"
     
-    # Создаем две колонки для кнопок
-    col1, col2 = st.columns(2)
-    
-    # Кнопка скачивания в первой колонке
-    with col1:
-        st.download_button(
-            label="Скачать PDF",
-            data=pdf_bytes,
-            file_name=file_name,
-            mime="application/pdf",
-            key=download_key,
-            help="Скачать PDF-файл на компьютер",
-        )
-    
-    # Кнопка просмотра во второй колонке
-    with col2:
-        # Для просмотра используем тот же компонент, но с другой меткой
-        st.download_button(
-            label="Просмотреть",
-            data=pdf_bytes,
-            file_name=file_name,
-            mime="application/pdf",
-            key=view_key,
-            help="Открыть PDF-файл в браузере",
-        )
+    # Кнопка скачивания по центру
+    st.download_button(
+        label="Скачать PDF",
+        data=pdf_bytes,
+        file_name=file_name,
+        mime="application/pdf",
+        key=download_key,
+        help="Скачать PDF-файл на компьютер",
+        use_container_width=True,  # Растягиваем кнопку на всю ширину контейнера
+    )
     
     # Отображаем информацию о файле
     st.markdown(f"""
@@ -202,3 +186,6 @@ def get_streamlit_download_component(pdf_path):
         }
     </script>
     """, unsafe_allow_html=True)
+    
+    # Возвращаем пустую строку вместо None
+    return ""

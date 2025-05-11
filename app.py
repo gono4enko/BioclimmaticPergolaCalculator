@@ -2206,8 +2206,7 @@ def render_results(results, show_articles=False):
                     
                     # Получаем улучшенный компонент для скачивания PDF
                     from improved_pdf_export import get_streamlit_download_component
-                    download_component = get_streamlit_download_component(pdf_path)
-                    st.markdown(download_component, unsafe_allow_html=True)
+                    get_streamlit_download_component(pdf_path)
                     
                     # Отправляем событие в Яндекс.Метрику
                     st.markdown("""
