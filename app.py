@@ -7,6 +7,8 @@ import pandas as pd
 import io
 import json
 import sys
+import time
+import os
 # Импортируем функции для работы с Яндекс.Метрикой
 from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
 # Импортируем функцию для плавного скролла
@@ -2118,25 +2120,92 @@ def render_results(results, show_articles=False):
     # Добавляем кнопку для экспорта PDF
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("📄 Экспорт КП в PDF", key="export_pdf_button", help="Экспортировать коммерческое предложение в PDF"):
-            with st.spinner("Генерация PDF..."):
+        # Определяем стиль кнопки с улучшенным внешним видом
+        button_style = """
+        <style>
+        .pdf-button {
+            background-color: #3f6daa;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            text-align: center;
+            margin: 10px auto;
+            width: 100%;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .pdf-button:hover {
+            background-color: #2c4b75;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .pdf-button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        </style>
+        """
+        st.markdown(button_style, unsafe_allow_html=True)
+        
+        # Проверяем, есть ли уже сгенерированный PDF в сессии
+        pdf_already_generated = 'pdf_file_path' in st.session_state and os.path.exists(st.session_state.pdf_file_path)
+        
+        if st.button(
+            "📄 Экспорт КП в PDF", 
+            key="export_pdf_button", 
+            help="Экспортировать коммерческое предложение в PDF в формате для печати",
+            use_container_width=True
+        ):
+            # Показываем индикатор загрузки с более подробным сообщением
+            with st.spinner("Создаем PDF-документ..."):
                 # Если PDF уже был сгенерирован ранее, используем его
-                if 'pdf_file_path' in st.session_state:
+                if pdf_already_generated:
                     pdf_path = st.session_state.pdf_file_path
+                    st.success("PDF найден в кэше, загружаем...")
                 else:
+                    # Создаем последовательный список статусов для пользователя
+                    status_container = st.empty()
+                    status_container.info("Подготавливаем данные для экспорта...")
+                    time.sleep(0.5)  # Небольшая задержка для лучшего UX
+                    
                     # Иначе создаем новый PDF
+                    status_container.info("Генерируем PDF-документ...")
                     pdf_path = export_to_pdf()
+                    
                     if pdf_path:
                         st.session_state.pdf_file_path = pdf_path
+                        status_container.success(f"PDF успешно создан: {os.path.basename(pdf_path)}")
+                    else:
+                        status_container.error("Ошибка при создании PDF")
                 
                 # Если PDF успешно сгенерирован, показываем ссылку для скачивания
                 if pdf_path:
-                    download_link = get_pdf_download_link(pdf_path)
-                    st.markdown(f"""
-                    <div style="text-align: center; margin: 20px 0;">
-                        {download_link}
+                    # Отображаем информацию об успешном создании
+                    st.success(f"PDF файл успешно создан")
+                    
+                    # Получаем размер файла
+                    file_size_bytes = os.path.getsize(pdf_path)
+                    file_size_kb = file_size_bytes / 1024
+                    file_size_str = f"{file_size_kb:.1f} Кб"
+                    
+                    # Отображаем информацию о файле
+                    file_info = f"""
+                    <div style="margin: 15px 0; padding: 10px; background-color: #f8f9fa; border-radius: 5px; border-left: 4px solid #3f6daa;">
+                        <div style="font-weight: bold; margin-bottom: 5px;">Информация о документе:</div>
+                        <div>Имя файла: {os.path.basename(pdf_path)}</div>
+                        <div>Размер: {file_size_str}</div>
+                        <div>Создан: {datetime.now().strftime('%d.%m.%Y %H:%M')}</div>
                     </div>
-                    """, unsafe_allow_html=True)
+                    """
+                    st.markdown(file_info, unsafe_allow_html=True)
+                    
+                    # Получаем ссылку для открытия PDF
+                    download_link = get_pdf_download_link(pdf_path)
+                    st.markdown(download_link, unsafe_allow_html=True)
                     
                     # Отправляем событие в Яндекс.Метрику
                     st.markdown("""
@@ -3497,7 +3566,32 @@ def get_pdf_download_link(pdf_path):
     b64 = base64.b64encode(pdf_bytes).decode()
     
     # Создаем ссылку для открытия в новой вкладке с именем "Сохранить PDF"
-    href = f'<a href="data:application/pdf;base64,{b64}" target="_blank" class="download-button">Сохранить PDF</a>'
+    href = f'''
+    <div style="text-align: center; margin: 20px 0;">
+        <a href="data:application/pdf;base64,{b64}" 
+           target="_blank" 
+           class="download-button"
+           onclick="if (typeof ym !== 'undefined') {{ ym(94463245, 'reachGoal', 'pdf_open'); }}">
+           <i class="fas fa-file-pdf"></i> Сохранить PDF
+        </a>
+        <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">
+            PDF откроется в новой вкладке
+        </div>
+    </div>
+    '''
+    
+    # Добавляем JavaScript для отправки события в Яндекс.Метрику при открытии PDF
+    href += '''
+    <script>
+        // Функция для отслеживания события открытия PDF в Яндекс.Метрике
+        function trackPdfOpen() {
+            if (typeof ym !== 'undefined') {
+                ym(94463245, 'reachGoal', 'pdf_open');
+                console.log('Отправлено событие pdf_open в Яндекс.Метрику');
+            }
+        }
+    </script>
+    '''
     
     return href
 
