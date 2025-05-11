@@ -3505,6 +3505,12 @@ def export_to_pdf():
         "euro_rate": 110  # Фиксированный курс евро для расчетов
     }
     
+    # Добавляем логирование для отладки размеров
+    import logging
+    logging.info(f"PDF Export - Dimensions in results: {dimensions}")
+    logging.info(f"PDF Export - Width in pdf_data: {pdf_data['width']}")
+    logging.info(f"PDF Export - Length in pdf_data: {pdf_data['length']}")
+    
     try:
         # Показываем индикатор загрузки
         with st.spinner("Создание PDF-документа..."):
