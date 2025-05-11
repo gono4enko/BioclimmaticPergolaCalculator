@@ -876,10 +876,15 @@ def generate_commercial_offer(pergola_data, user_data=None):
             if section_index > 0:
                 pdf.add_page()
                 # Если у нас более одного раздела, добавляем заголовки для дополнительных
-                if section_index == 1:
-                    pdf.chapter_title("Модульная система пергол:")
-                elif section_index == 2:
-                    pdf.chapter_title("Система водоотведения:")
+                section_titles = {
+                    1: "Модульная система пергол:",
+                    2: "Система водоотведения:",
+                    3: "Инженерные характеристики ламелей:",
+                    4: "Система установки и проектирования:",
+                    5: "Привод и автоматика:"
+                }
+                if section_index in section_titles:
+                    pdf.chapter_title(section_titles[section_index])
             
             # HTML-описание нужно преобразовать в чистый текст более эффективным способом
             try:
@@ -1016,6 +1021,68 @@ def generate_commercial_offer(pergola_data, user_data=None):
                         print(f"Изображение не найдено: {img_path}")
             except Exception as e:
                 print(f"Ошибка при обработке HTML: {str(e)}")
+        
+        # Добавляем отдельный раздел с изображениями перголы из pergola_data
+        image_paths = pergola_data.get('image_paths', [])
+        image_caption = pergola_data.get('image_caption', '')
+        
+        if image_paths:
+            # Начинаем новую страницу для галереи изображений
+            pdf.add_page()
+            pdf.chapter_title("Галерея изображений:")
+            
+            # Добавляем пояснение с типом перголы
+            if image_caption:
+                pdf.set_font('DejaVu', 'I', 11)
+                pdf.cell(0, 8, image_caption, 0, 1, "C")
+                pdf.ln(5)
+            
+            # Обрабатываем все изображения из списка
+            for img_path in image_paths:
+                if os.path.exists(img_path):
+                    try:
+                        from PIL import Image
+                        
+                        # Открываем изображение и определяем его размеры
+                        img_obj = Image.open(img_path)
+                        width, height = img_obj.size
+                        
+                        # Определяем ширину в миллиметрах для PDF (A4: 210x297 мм)
+                        max_width_mm = 170  # Максимальная ширина в мм (с учетом полей)
+                        max_height_mm = 240  # Максимальная высота в мм (с учетом полей)
+                        
+                        # Рассчитываем размеры с сохранением пропорций
+                        img_width_mm = max_width_mm
+                        img_height_mm = height * (img_width_mm / width)
+                        
+                        # Если высота слишком большая, пересчитываем размеры
+                        if img_height_mm > max_height_mm:
+                            img_height_mm = max_height_mm
+                            img_width_mm = width * (img_height_mm / height)
+                        
+                        # Добавляем отступ перед изображением
+                        pdf.ln(5)
+                        
+                        # Проверяем, поместится ли изображение на текущей странице
+                        if pdf.get_y() + img_height_mm + 10 > 270:  # 270 = 297 - нижнее поле
+                            pdf.add_page()
+                        
+                        # Вставляем изображение с явным указанием ширины и высоты
+                        pdf.image(
+                            img_path,
+                            x=(210 - img_width_mm) / 2,  # центрируем
+                            y=pdf.get_y(),  # текущая позиция Y
+                            w=img_width_mm,  # ширина
+                            h=img_height_mm  # высота, рассчитанная с сохранением пропорций
+                        )
+                        
+                        # Добавляем отступ после изображения
+                        pdf.ln(10)
+                        print(f"Добавлено изображение в PDF: {img_path}")
+                    except Exception as e:
+                        print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
+                else:
+                    print(f"Изображение не найдено: {img_path}")
         
         # Добавляем контактную информацию - проверяем, может ли она поместиться на текущей странице
         # Примерный размер для контактной информации (6 строк по 7 мм + заголовок и отступы)
