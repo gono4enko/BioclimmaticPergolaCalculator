@@ -2225,25 +2225,9 @@ def render_results(results, show_articles=False):
                     """
                     st.markdown(file_info, unsafe_allow_html=True)
                     
-                    # Читаем PDF-файл для скачивания
-                    import time
-                    try:
-                        # Открываем PDF-файл для чтения в двоичном режиме
-                        with open(pdf_path, "rb") as pdf_file:
-                            pdf_bytes = pdf_file.read()
-                            
-                        # Отображаем кнопку скачивания с уникальным ключом, чтобы избежать дублирования
-                        st.download_button(
-                            label="📥 Скачать PDF",
-                            data=pdf_bytes,
-                            file_name=os.path.basename(pdf_path),
-                            mime="application/pdf",
-                            key=f"download_pdf_{int(time.time())}",  # Генерируем уникальный ключ на основе времени
-                            help="Скачать PDF-файл на компьютер",
-                            use_container_width=True,
-                        )
-                    except Exception as e:
-                        st.error(f"Ошибка при подготовке файла для скачивания: {str(e)}")
+                    # Получаем улучшенный компонент для скачивания PDF
+                    from improved_pdf_export import get_streamlit_download_component
+                    get_streamlit_download_component(pdf_path)
                     
                     # Отправляем событие в Яндекс.Метрику
                     st.markdown("""
@@ -3505,113 +3489,120 @@ def create_very_simple_pdf(pergola_data):
 def export_to_pdf():
     """
     Формирует данные для экспорта и генерирует PDF-файл с улучшенным скачиванием.
-    Использует простую версию PDF-генератора для максимальной надежности.
+    Использует improved_pdf_export для правильного именования файлов при скачивании.
     
     Returns:
         str: Путь к сгенерированному PDF-файлу
     """
-    import os
-    import sys
-    import logging
-    
-    # Настраиваем логирование для отладки PDF-генерации
-    logging.basicConfig(
-        level=logging.INFO,
-        filename=os.path.join("logs", "pdf_generation.log"),
-        filemode="a",
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-    logger = logging.getLogger("export_to_pdf")
-    
-    # Проверяем, были ли выполнены расчеты
+    # Подготовка ресурсов для PDF
+    try:
+        # Проверяем, существует ли модуль prepare_pdf_assets
+        import sys
+        import os
+        
+        # Добавляем директорию assets в путь для импорта
+        assets_path = 'assets'
+        if assets_path not in sys.path and os.path.exists(assets_path):
+            sys.path.append(assets_path)
+        
+        try:
+            from prepare_pdf_assets import prepare_pdf_assets
+            prepare_pdf_assets()
+            print("Подготовка ресурсов для PDF выполнена успешно")
+        except ImportError:
+            print("Модуль prepare_pdf_assets не найден")
+    except Exception as e:
+        print(f"Ошибка при подготовке ресурсов для PDF: {e}")
+        # Продолжаем работу даже в случае ошибки
     if 'results' not in st.session_state:
         st.error("Сначала нужно выполнить расчет!")
         return None
     
     results = st.session_state.results
+    
+    # Подготавливаем директории и используем улучшенное управление PDF-файлами
+    os.makedirs("fonts", exist_ok=True)
+    os.makedirs("processed_images", exist_ok=True)
+    
+    # Используем новую функцию для управления директорией PDF-файлов
+    from improved_pdf_export import ensure_pdf_directory
+    ensure_pdf_directory()
+    
     options = results.get("options", {})
-    dimensions = results.get("dimensions", {})
     pergola_type = options.get("pergola_type", "")
+    dimensions = results.get("dimensions", {})
     
-    # Создаем необходимые директории
-    os.makedirs("generated_pdf", exist_ok=True)
-    os.makedirs("logs", exist_ok=True)
-    
-    # Получаем параметры из результатов расчета
+    # Подготавливаем данные для PDF - добавляем более подробное логирование
+    import logging
     default_width = st.session_state.get('cached_width') or 3.0
     default_length = st.session_state.get('cached_length') or 4.0
+    logging.info(f"Default dimensions from session: width={default_width}, length={default_length}")
     
-    # Логируем данные для отладки
-    logger.info(f"Экспорт PDF для перголы: {pergola_type}")
-    logger.info(f"Размеры из результатов: {dimensions}")
+    # Важно: используем полное логирование до создания pdf_data
+    logging.info(f"PDF Export - Original dimensions in results: {dimensions}")
+    logging.info(f"PDF Export - Width from dimensions: {dimensions.get('width', 'Not Found')}")
+    logging.info(f"PDF Export - Length from dimensions: {dimensions.get('length', 'Not Found')}")
     
-    # Формируем данные для PDF
+    # Создаем pdf_data с явными значениями (без использования None или 0)
     pdf_data = {
         "pergola_type": pergola_type,
-        "width": dimensions.get("width", default_width),
+        "width": dimensions.get("width", default_width),  # Используем значения из dimensions с захватом из default если отсутствуют
         "length": dimensions.get("length", default_length),
         "modules": dimensions.get("modules", 1),
         "items": results.get("items", []),
+        "specification": results.get("specification", []),
         "total_price": results.get("total_price", 0),
         "discount": results.get("discount", 0),
-        "total_price_after_discount": results.get("total_price_after_discount", 0)
+        "total_price_after_discount": results.get("total_price_after_discount", 0),
+        "euro_rate": 110  # Фиксированный курс евро для расчетов
     }
+    
+    # Проверяем финальные значения
+    logging.info(f"PDF Export - Final pdf_data: {pdf_data}")
+    logging.info(f"PDF Export - Final Width in pdf_data: {pdf_data['width']}")
+    logging.info(f"PDF Export - Final Length in pdf_data: {pdf_data['length']}")
     
     try:
         # Показываем индикатор загрузки
         with st.spinner("Создание PDF-документа..."):
-            # Пробуем использовать простой генератор PDF
-            try:
-                logger.info("Используем simple_pdf для создания PDF")
-                from simple_pdf import generate_simple_pdf
-                pdf_file_path = generate_simple_pdf(pdf_data)
+            # Используем улучшенный модуль для создания PDF с синей шапкой
+            import logging
+            logging.info("Запускаем создание PDF через generate_commercial_offer")
+            
+            # Создаем более информативное имя файла
+            from improved_pdf_export import generate_pdf_file_name
+            file_name = generate_pdf_file_name(pdf_data)
+            
+            # Генерируем PDF с шапкой через pdf_generator_fpdf_rus.py
+            from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
+            pergola_data = format_pergola_data_for_pdf(results, options, dimensions, "")
+            pdf_file_path = generate_commercial_offer(pergola_data)
+            logging.info(f"PDF файл создан: {pdf_file_path}")
+            
+            # Если файл создан успешно
+            if pdf_file_path and os.path.exists(pdf_file_path):
+                # Проверяем размер файла
+                file_size = os.path.getsize(pdf_file_path)
+                logging.info(f"Размер PDF файла: {file_size} байт")
                 
-                if pdf_file_path and os.path.exists(pdf_file_path):
-                    # Выводим читаемую для пользователя информацию о созданном PDF
-                    logger.info(f"PDF файл успешно создан: {pdf_file_path}")
+                if file_size > 0:
+                    # ВАЖНО: Не добавляем кнопку скачивания здесь, так как она будет добавлена в основном коде
+                    # Возвращаем путь к файлу PDF для скачивания в основном коде
                     return pdf_file_path
                 else:
-                    # Пробуем запасной вариант
-                    logger.warning("Не удалось создать PDF через simple_pdf, пробуем основной генератор")
-                    
-                    # Пробуем использовать основной PDF-генератор
-                    from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
-                    
-                    # Подготавливаем данные для PDF
-                    try:
-                        # Проверяем наличие модуля подготовки ресурсов
-                        assets_path = 'assets'
-                        if assets_path not in sys.path and os.path.exists(assets_path):
-                            sys.path.append(assets_path)
-                            
-                        try:
-                            from prepare_pdf_assets import prepare_pdf_assets
-                            prepare_pdf_assets()
-                            logger.info("Подготовка ресурсов для PDF выполнена успешно")
-                        except ImportError:
-                            logger.warning("Модуль prepare_pdf_assets не найден")
-                    except Exception as e:
-                        logger.error(f"Ошибка при подготовке ресурсов: {str(e)}")
-                    
-                    # Генерируем PDF с полными данными
-                    pergola_data = format_pergola_data_for_pdf(results, options, dimensions, "")
-                    pdf_file_path = generate_commercial_offer(pergola_data)
-                    
-                    if pdf_file_path and os.path.exists(pdf_file_path):
-                        logger.info(f"PDF успешно создан через основной генератор: {pdf_file_path}")
-                        return pdf_file_path
-                    else:
-                        st.error("Не удалось создать PDF документ")
-                        return None
-                
-            except ImportError as ie:
-                logger.error(f"Ошибка импорта модуля для PDF: {str(ie)}")
-                st.error(f"Ошибка при создании PDF: модуль не найден")
-                return None
-                
+                    # Если размер файла равен 0, считаем что PDF не создался
+                    st.error("PDF файл был создан, но имеет нулевой размер")
+            else:
+                # Если файл не создался вообще
+                st.error("Не удалось создать PDF файл")
+            
+            # В этом случае мы НЕ пытаемся создать второй PDF-файл, чтобы избежать дублирования кнопок
+            return None
+        
     except Exception as e:
-        logger.error(f"Непредвиденная ошибка при генерации PDF: {str(e)}", exc_info=True)
-        st.error(f"Не удалось сгенерировать PDF. Пожалуйста, попробуйте еще раз.")
+        st.error(f"Ошибка при генерации PDF: {str(e)}")
+        import traceback
+        st.write(traceback.format_exc())
         return None
 
 
