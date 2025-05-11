@@ -435,7 +435,32 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
     
     # Добавляем позиции для таблицы стоимости
     if "items" in results:
+        # Добавляем подробное логирование для понимания проблемы с разными суммами
+        logging.info(f"[format_pergola_data_for_pdf] Items count: {len(results['items'])}")
+        for i, item in enumerate(results['items']):
+            logging.info(f"[format_pergola_data_for_pdf] Item {i+1}: {item.get('name', 'No name')} - {item.get('price', 0)}")
+        
+        # Получаем все существующие ключи для основного элемента (перголы)
+        if len(results['items']) > 0:
+            base_item = results['items'][0]  # Первый элемент обычно сама пергола
+            logging.info(f"[format_pergola_data_for_pdf] Base item keys: {base_item.keys()}")
+        
+        # Проверяем, есть ли скидка
+        discount = results.get('discount', 0)
+        logging.info(f"[format_pergola_data_for_pdf] Discount: {discount}")
+        
+        # Проверяем итоговую стоимость
+        total_price = results.get('total_price', 0)
+        total_price_after_discount = results.get('total_price_after_discount', 0)
+        logging.info(f"[format_pergola_data_for_pdf] Total price: {total_price}")
+        logging.info(f"[format_pergola_data_for_pdf] Total price after discount: {total_price_after_discount}")
+        
+        # Теперь передаем элементы для PDF
         pergola_data["items"] = results["items"]
+        
+        # Добавляем информацию о скидке, если она есть
+        pergola_data["discount"] = discount
+        pergola_data["total_price_after_discount"] = total_price_after_discount
     
     # Добавляем текстовые описания
     pergola_data["description"] = pergola_description
@@ -677,12 +702,20 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 # Выравниваем текст по левому краю для удобства чтения
                 pdf.multi_cell_row([str(i), name, price_str], widths, aligns=["C", "L", "R"], min_row_height=7)
                 
-            # Добавляем итоговую строку
+            # Проверяем есть ли в данных скидка
+            discount = pergola_data.get('discount', 0)
+            total_price_after_discount = pergola_data.get('total_price_after_discount', 0)
+            
+            # Логируем для отладки
+            logging.info(f"[generate_commercial_offer] Discount: {discount}")
+            logging.info(f"[generate_commercial_offer] Total price after discount: {total_price_after_discount}")
+            
+            # 1. Сначала добавляем промежуточный итог (без скидки)
             pdf.set_fill_color(211, 211, 211)  # Светло-серый цвет
             pdf.set_font('DejaVu', 'B', 11)  # Увеличиваем шрифт для итоговой суммы
             pdf.set_text_color(0, 0, 0)  # Черный текст
             
-            # Форматируем итоговую цену
+            # Форматируем промежуточную итоговую цену
             total_price_value = int(total_cost)
             if total_price_value >= 1000000:
                 # Для миллионов форматируем как "1 234 567 ₽"
@@ -694,10 +727,45 @@ def generate_commercial_offer(pergola_data, user_data=None):
             # Строка ИТОГО должна выглядеть как обычная строка, но с другим содержимым
             # Используем те же ширины столбцов, что и в основной таблице для единообразия
             pdf.cell(10, 10, "", 1, 0, "C", fill=True)  # Первая колонка - пустая
-            pdf.cell(110, 10, "ИТОГО:", 1, 0, "L", fill=True)  # Вторая колонка - "ИТОГО:" с левым выравниванием
+            pdf.cell(110, 10, "Итого:", 1, 0, "L", fill=True)  # Вторая колонка - "Итого:" с левым выравниванием
             pdf.cell(50, 10, total_price_str, 1, 1, "R", fill=True)  # Третья колонка - сумма с правым выравниванием
             
-            # Убрали дублирование итоговой суммы, чтобы не повторяться
+            # 2. Если есть скидка, добавляем строку со скидкой
+            if discount > 0:
+                # Форматируем скидку
+                discount_value = int(discount)
+                if discount_value >= 1000000:
+                    discount_str = f"-{discount_value:,d}".replace(',', ' ') + " ₽"
+                else:
+                    discount_str = f"-{discount_value:,d}".replace(',', ' ') + " ₽"
+                
+                # Задаем светло-зеленый цвет для строки скидки
+                pdf.set_fill_color(200, 255, 200)  # Светло-зеленый
+                
+                # Строка СКИДКА
+                pdf.cell(10, 10, "", 1, 0, "C", fill=True)  # Первая колонка - пустая
+                pdf.cell(110, 10, "Скидка по акции:", 1, 0, "L", fill=True)
+                pdf.cell(50, 10, discount_str, 1, 1, "R", fill=True)
+                
+                # 3. Добавляем строку ИТОГО со скидкой жирным шрифтом
+                pdf.set_fill_color(200, 255, 200)  # Сохраняем тот же цвет
+                pdf.set_font('DejaVu', 'B', 12)  # Увеличиваем шрифт для финальной суммы
+                
+                # Форматируем конечную цену со скидкой
+                final_price_value = int(total_price_after_discount) if total_price_after_discount else total_price_value - discount_value
+                if final_price_value >= 1000000:
+                    final_price_str = f"{final_price_value:,d}".replace(',', ' ') + " ₽"
+                else:
+                    final_price_str = f"{final_price_value:,d}".replace(',', ' ') + " ₽"
+                
+                # Строка финального ИТОГО
+                pdf.cell(10, 10, "", 1, 0, "C", fill=True)  # Первая колонка - пустая
+                pdf.cell(110, 10, "ИТОГО:", 1, 0, "L", fill=True)  # Вторая колонка - "ИТОГО:" с левым выравниванием
+                pdf.cell(50, 10, final_price_str, 1, 1, "R", fill=True)  # Третья колонка - сумма с правым выравниванием
+            
+            # Сброс цвета текста и заливки
+            pdf.set_text_color(0, 0, 0)
+            pdf.set_fill_color(255, 255, 255)
         else:
             pdf.set_font('DejaVu', '', 10)
             pdf.cell(0, 7, "Данные о стоимости отсутствуют", 0, 1)
