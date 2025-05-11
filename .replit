@@ -18,15 +18,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "MainServer"
+args = "MinimalPergolaApp"
 
 [[workflows.workflow]]
-name = "MainServer"
+name = "MinimalPergolaApp"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run app.py --server.port 5000 --logger.level debug"
+args = "streamlit run minimal_pergola_app.py --server.port 5000 --logger.level debug"
 waitForPort = 5000
 
 [[ports]]
