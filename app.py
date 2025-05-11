@@ -3567,17 +3567,33 @@ def get_pdf_download_link(pdf_path):
     b64 = base64.b64encode(pdf_bytes).decode()
     
     # Создаем ссылку для открытия в новой вкладке с именем "Сохранить PDF"
+    # Используем встроенный скрипт для отслеживания вместо прямого onclick
+    tracking_script = """
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const pdfLink = document.querySelector('.download-button');
+        if (pdfLink) {
+            pdfLink.addEventListener('click', function() {
+                if (typeof ym !== 'undefined') {
+                    ym(94463245, 'reachGoal', 'pdf_open');
+                }
+            });
+        }
+    });
+    </script>
+    """
+    
     href = f'''
     <div style="text-align: center; margin: 20px 0;">
         <a href="data:application/pdf;base64,{b64}" 
            target="_blank" 
-           class="download-button"
-           onclick="if (typeof ym !== 'undefined') {{ ym(94463245, 'reachGoal', 'pdf_open'); }}">
+           class="download-button">
            <i class="fas fa-file-pdf"></i> Сохранить PDF
         </a>
         <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">
             PDF откроется в новой вкладке
         </div>
+        {tracking_script}
     </div>
     '''
     
