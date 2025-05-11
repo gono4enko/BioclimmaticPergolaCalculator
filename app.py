@@ -1653,7 +1653,7 @@ def render_results(results, show_articles=False):
         results (dict): Словарь с результатами расчета
         show_articles (bool, optional): Флаг для отображения статей с описаниями. По умолчанию False.
     """
-    # Добавляем стили для кнопки экспорта PDF
+    # Добавляем стили для кнопок экспорта PDF
     st.markdown("""
     <style>
     .pdf-export-button {
@@ -1684,10 +1684,27 @@ def render_results(results, show_articles=False):
         font-weight: bold;
         margin: 10px 0;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        transition: background-color 0.3s;
+        transition: all 0.3s;
     }
     .download-button:hover {
         background-color: #45a049;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .download-link {
+        display: inline-block;
+        color: #3f6daa !important;
+        text-decoration: none;
+        margin-top: 5px;
+        padding: 5px 10px;
+        font-size: 0.85rem;
+        border: 1px solid #3f6daa;
+        border-radius: 4px;
+        transition: all 0.3s;
+    }
+    .download-link:hover {
+        background-color: #f0f5ff;
+        color: #2c4b75 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -3458,13 +3475,13 @@ def export_to_pdf():
 
 def get_pdf_download_link(pdf_path):
     """
-    Создает ссылку для скачивания PDF-файла.
+    Создает ссылку для открытия PDF-файла в новой вкладке браузера.
     
     Args:
         pdf_path (str): Путь к PDF-файлу
         
     Returns:
-        str: HTML-код с ссылкой для скачивания
+        str: HTML-код с ссылкой для открытия PDF в новой вкладке
     """
     if not pdf_path or not os.path.exists(pdf_path):
         return ""
@@ -3479,8 +3496,11 @@ def get_pdf_download_link(pdf_path):
     # Кодируем в base64
     b64 = base64.b64encode(pdf_bytes).decode()
     
-    # Создаем ссылку для скачивания
-    href = f'<a href="data:application/pdf;base64,{b64}" download="{file_name}" class="download-button">Скачать PDF</a>'
+    # Создаем ссылку для открытия в новой вкладке (убираем атрибут download и добавляем target="_blank")
+    href = f'<a href="data:application/pdf;base64,{b64}" target="_blank" class="download-button">Открыть PDF</a>'
+    
+    # Добавим также кнопку для скачивания, если пользователь предпочитает сохранить файл
+    href += f'<br/><a href="data:application/pdf;base64,{b64}" download="{file_name}" class="download-link" style="margin-top:5px; font-size:0.8rem; display:inline-block;">Скачать PDF</a>'
     
     return href
 
