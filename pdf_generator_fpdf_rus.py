@@ -691,9 +691,10 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 # Для других значений так же
                 total_price_str = f"{total_price_value:,d}".replace(',', ' ') + " ₽"
             
+            # Строка ИТОГО должна выглядеть как обычная строка, но с другим содержимым
             pdf.cell(10, 10, "", 1, 0, "C", fill=True)
-            pdf.cell(83, 10, "ИТОГО:", 1, 0, "R", fill=True)
-            pdf.cell(67, 10, total_price_str, 1, 1, "L", fill=True)
+            pdf.cell(83, 10, "ИТОГО:", 1, 0, "L", fill=True)  # Левое выравнивание для "ИТОГО:"
+            pdf.cell(67, 10, total_price_str, 1, 1, "R", fill=True)  # Правое выравнивание для стоимости
             
             # Убрали дублирование итоговой суммы, чтобы не повторяться
         else:
