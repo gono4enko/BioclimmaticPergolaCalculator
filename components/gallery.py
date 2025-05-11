@@ -564,11 +564,11 @@ def display_gallery_section():
             text-align: center;
         }
         .gallery-subtitle {
-            font-size: 1.8rem;
+            font-size: 1.7rem;
             color: #0066cc;
             font-weight: 600;
-            margin: 10px 20px;
-            padding-bottom: 5px;
+            margin: 0px 20px;
+            padding-bottom: 0px;
             text-align: center;
         }
         </style>
