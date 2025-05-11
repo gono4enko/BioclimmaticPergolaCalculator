@@ -166,10 +166,10 @@ def display_installation_counter():
     .installation-counter {{
         background-color: {background_color};
         color: white;
-        padding: 12px;
+        padding: 8px;
         border-radius: 8px;
         text-align: center;
-        margin: 5px 20px 10px 20px;
+        margin: 0px 20px 5px 20px;
         box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
         animation: pulse 2s infinite;
         z-index: 1000;
@@ -577,7 +577,7 @@ def display_gallery_section():
         # Заголовок раздела в стиле статей с выравниванием по центру (уменьшенные отступы)
         st.markdown("""
         <div style="padding: 0px 20px 0px 20px; max-width: 100%; text-align: center;">
-            <h1 style="font-size: 2rem; color: #0066cc; font-weight: 600; margin-top: 0px; margin-bottom: 3px; text-align: center;">
+            <h1 style="font-size: 1.8rem; color: #0066cc; font-weight: 600; margin-top: 0px; margin-bottom: 2px; text-align: center;">
                 Галерея наших работ
             </h1>
         </div>
