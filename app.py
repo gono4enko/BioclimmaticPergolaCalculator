@@ -4664,8 +4664,8 @@ def main():
         add_dimensions_edit_button()
     
     # Добавляем галерею проектов и счетчик установленных пергол
-    # Разделяем содержимое после калькулятора
-    st.markdown("<hr style='margin-top: 1rem; margin-bottom: 0.5rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+    # Разделяем содержимое после калькулятора (уменьшенный отступ сверху)
+    st.markdown("<hr style='margin-top: 0.3rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
     
     # Всегда отображаем галерею проектов и счетчик установленных пергол
     display_gallery_section()
