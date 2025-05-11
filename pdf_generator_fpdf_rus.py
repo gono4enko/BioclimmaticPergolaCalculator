@@ -391,6 +391,78 @@ class PDF(FPDF):
         
         self.ln()  # Переход на новую строку
 
+def get_pergola_images(pergola_type):
+    """
+    Возвращает список путей к изображениям перголы указанного типа для использования в PDF
+    
+    Args:
+        pergola_type (str): Тип перголы (B500NEW, B600, B700NEW)
+        
+    Returns:
+        list: Список путей к изображениям перголы
+    """
+    # Создаем список для хранения путей к изображениям
+    image_paths = []
+    
+    # Определяем базовый путь к изображениям в зависимости от типа перголы
+    pergola_lower = pergola_type.lower().replace("new", "")
+    base_image_dir = "assets"
+    
+    # Проверяем существование директории с изображениями
+    if not os.path.exists(base_image_dir):
+        print(f"Директория {base_image_dir} не найдена")
+        return image_paths
+    
+    # Ищем изображения в директории assets, которые соответствуют типу перголы
+    for filename in os.listdir(base_image_dir):
+        filepath = os.path.join(base_image_dir, filename)
+        # Ищем подходящие изображения по имени файла (содержит тип перголы)
+        if os.path.isfile(filepath) and (pergola_lower in filename.lower() or pergola_type in filename):
+            if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                image_paths.append(filepath)
+                print(f"Найдено изображение для PDF: {filepath}")
+    
+    # Если не нашли конкретные изображения для этого типа перголы, используем общие изображения
+    if not image_paths:
+        # Ищем общие изображения пергол
+        for filename in os.listdir(base_image_dir):
+            filepath = os.path.join(base_image_dir, filename)
+            if os.path.isfile(filepath) and 'pergola' in filename.lower():
+                if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                    image_paths.append(filepath)
+                    print(f"Найдено общее изображение перголы для PDF: {filepath}")
+    
+    # Если все еще нет изображений, проверяем в attached_assets
+    if not image_paths and os.path.exists('attached_assets'):
+        for filename in os.listdir('attached_assets'):
+            filepath = os.path.join('attached_assets', filename)
+            if os.path.isfile(filepath) and (pergola_lower in filename.lower() or 
+                                            pergola_type in filename or 
+                                            'pergola' in filename.lower()):
+                if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                    image_paths.append(filepath)
+                    print(f"Найдено изображение в attached_assets для PDF: {filepath}")
+    
+    return image_paths
+
+def get_pergola_image_caption(pergola_type):
+    """
+    Возвращает подпись для галереи изображений в PDF
+    
+    Args:
+        pergola_type (str): Тип перголы (B500NEW, B600, B700NEW)
+        
+    Returns:
+        str: Подпись для галереи изображений
+    """
+    captions = {
+        "B500NEW": "Биоклиматическая пергола серии B500 с поворотными ламелями",
+        "B600": "Биоклиматическая пергола серии B600 со сдвижной крышей",
+        "B700NEW": "Биоклиматическая пергола премиум-класса серии B700 с поворотными ламелями"
+    }
+    
+    return captions.get(pergola_type, "Биоклиматическая пергола")
+
 def format_pergola_data_for_pdf(results, options, dimensions, pergola_description):
     """
     Форматирует данные расчета перголы для использования в генерации PDF
@@ -472,9 +544,7 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
         get_bansbach_description,
         get_somfy_description,
         get_lamella_engineering_description,
-        get_installation_system_description,
-        get_pergola_images,
-        get_pergola_image_caption
+        get_installation_system_description
     )
     
     # Добавляем дополнительные описания
