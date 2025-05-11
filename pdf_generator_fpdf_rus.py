@@ -465,10 +465,14 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
     # Добавляем текстовые описания
     pergola_data["description"] = pergola_description
     
-    # Дополнительно можно добавить модульное описание и описание системы водоотведения
+    # Добавляем все описания для PDF
     from config.pergola_descriptions import (
         get_modular_system_description,
         get_drainage_system_description,
+        get_bansbach_description,
+        get_somfy_description,
+        get_lamella_engineering_description,
+        get_installation_system_description,
         get_pergola_images,
         get_pergola_image_caption
     )
@@ -476,6 +480,16 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
     # Добавляем дополнительные описания
     pergola_data["modular_description"] = get_modular_system_description()
     pergola_data["drainage_description"] = get_drainage_system_description()
+    
+    # Добавляем описания технических характеристик
+    pergola_data["lamella_engineering_description"] = get_lamella_engineering_description()
+    pergola_data["installation_system_description"] = get_installation_system_description()
+    
+    # Добавляем описания приводов в зависимости от типа перголы
+    if options["pergola_type"] == "B500NEW":
+        pergola_data["drive_description"] = get_bansbach_description()
+    elif options["pergola_type"] == "B700NEW":
+        pergola_data["drive_description"] = get_somfy_description()
     
     # Добавляем пути к изображениям
     pergola_data["image_paths"] = get_pergola_images(options["pergola_type"])
