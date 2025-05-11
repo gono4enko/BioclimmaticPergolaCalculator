@@ -197,9 +197,15 @@ def get_improved_pdf_download_link(pdf_path):
                     // Показываем уведомление об успешном скачивании
                     const alertContainer = document.createElement('div');
                     
-                    // Создаем стили для анимации
+                    // Добавляем стили для анимации как текст
+                    const styleText = '@keyframes fadeInOut { ' +
+                                    '0% { opacity: 0; transform: translateY(10px); } ' +
+                                    '10% { opacity: 1; transform: translateY(0); } ' +
+                                    '80% { opacity: 1; } ' +
+                                    '100% { opacity: 0; } ' +
+                                    '}';
                     const styleElem = document.createElement('style');
-                    styleElem.textContent = '@keyframes fadeInOut { 0% { opacity: 0; transform: translateY(10px); } 10% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; } }';
+                    styleElem.textContent = styleText;
                     document.head.appendChild(styleElem);
                     
                     // Создаем контейнер уведомления
