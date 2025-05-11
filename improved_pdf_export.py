@@ -83,11 +83,11 @@ def generate_pdf_file_name(pergola_data):
     width = pergola_data.get("width", 0)
     length = pergola_data.get("length", 0)
     
-    # Определяем московскую временную зону для корректной даты
-    moscow_tz = pytz.timezone('Europe/Moscow')
+    # Определяем временную зону Ростова-на-Дону для корректной даты (та же, что и у Москвы)
+    rostov_tz = pytz.timezone('Europe/Moscow')
     now_utc = datetime.now(pytz.utc)
-    now_moscow = now_utc.astimezone(moscow_tz)
-    current_date = now_moscow.strftime("%d.%m.%Y")
+    now_rostov = now_utc.astimezone(rostov_tz)
+    current_date = now_rostov.strftime("%d.%m.%Y")
     
     # Формируем информативное имя файла
     file_name = f"КП_пергола_{pergola_type}_{width}x{length}м_{current_date}.pdf"
