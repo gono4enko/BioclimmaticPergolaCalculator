@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="400" height="120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Фон логотипа (прозрачный) -->
+  <rect width="400" height="120" fill="none"/>
+  
+  <!-- Название компании -->
+  <text x="120" y="70" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#FFFFFF">
+    КОМФОРТНЫЙ ДОМ
+  </text>
+  
+  <!-- Иконка дома -->
+  <g transform="translate(10, 30) scale(0.7)">
+    <!-- Крыша дома -->
+    <polygon points="0,50 80,0 160,50" fill="#FFFFFF"/>
+    <!-- Основание дома -->
+    <rect x="30" y="50" width="100" height="70" fill="#FFFFFF"/>
+    <!-- Дверь -->
+    <rect x="65" y="80" width="30" height="40" fill="#2A4C7F"/>
+    <!-- Окно -->
+    <rect x="40" y="60" width="20" height="20" fill="#2A4C7F"/>
+    <rect x="100" y="60" width="20" height="20" fill="#2A4C7F"/>
+  </g>
+  
+  <!-- Слоган -->
+  <text x="120" y="90" font-family="Arial, sans-serif" font-size="12" fill="#FFFFFF">
+    Биоклиматические перголы и навесы
+  </text>
+</svg>

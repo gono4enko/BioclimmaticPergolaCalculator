@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.cairo
     pkgs.x265
     pkgs.nasm
     pkgs.libde265
