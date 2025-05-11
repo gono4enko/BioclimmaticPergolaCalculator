@@ -2228,7 +2228,6 @@ def render_results(results, show_articles=False):
                     # Читаем PDF-файл для скачивания
                     import time
                     try:
-                        # Открываем PDF-файл для чтения в двоичном режиме
                         with open(pdf_path, "rb") as pdf_file:
                             pdf_bytes = pdf_file.read()
                             
