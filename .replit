@@ -18,21 +18,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "MainServer"
+args = "TestPdfServer"
 
 [[workflows.workflow]]
-name = "MainServer"
+name = "TestPdfServer"
 author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run app.py --server.port 5000 --logger.level debug"
+args = "streamlit run test_pdf.py --server.port 5000 --logger.level debug"
 waitForPort = 5000
 
 [[ports]]
