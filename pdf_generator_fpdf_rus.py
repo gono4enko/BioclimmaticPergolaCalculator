@@ -825,9 +825,19 @@ def generate_commercial_offer(pergola_data, user_data=None):
         if drainage_description:
             descriptions.append(drainage_description)
             
-        bansbach_description = pergola_data.get('bansbach_description', '')
-        if bansbach_description:
-            descriptions.append(bansbach_description)
+        # Технические описания ламелей и системы установки
+        lamella_engineering_description = pergola_data.get('lamella_engineering_description', '')
+        if lamella_engineering_description:
+            descriptions.append(lamella_engineering_description)
+            
+        installation_system_description = pergola_data.get('installation_system_description', '')
+        if installation_system_description:
+            descriptions.append(installation_system_description)
+            
+        # Описания приводов (зависят от типа перголы)
+        drive_description = pergola_data.get('drive_description', '')
+        if drive_description:
+            descriptions.append(drive_description)
             
         # Если описаний не нашлось, создаем базовое описание по умолчанию
         if not descriptions:
