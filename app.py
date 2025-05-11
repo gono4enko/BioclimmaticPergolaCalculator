@@ -2225,9 +2225,24 @@ def render_results(results, show_articles=False):
                     """
                     st.markdown(file_info, unsafe_allow_html=True)
                     
-                    # Получаем улучшенный компонент для скачивания PDF
-                    from improved_pdf_export import get_streamlit_download_component
-                    get_streamlit_download_component(pdf_path)
+                    # Читаем PDF-файл для скачивания
+                    import time
+                    try:
+                        with open(pdf_path, "rb") as pdf_file:
+                            pdf_bytes = pdf_file.read()
+                            
+                        # Отображаем кнопку скачивания с уникальным ключом, чтобы избежать дублирования
+                        st.download_button(
+                            label="📥 Скачать PDF",
+                            data=pdf_bytes,
+                            file_name=os.path.basename(pdf_path),
+                            mime="application/pdf",
+                            key=f"download_pdf_{int(time.time())}",  # Генерируем уникальный ключ на основе времени
+                            help="Скачать PDF-файл на компьютер",
+                            use_container_width=True,
+                        )
+                    except Exception as e:
+                        st.error(f"Ошибка при подготовке файла для скачивания: {str(e)}")
                     
                     # Отправляем событие в Яндекс.Метрику
                     st.markdown("""
