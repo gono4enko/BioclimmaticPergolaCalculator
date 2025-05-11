@@ -579,13 +579,17 @@ def generate_commercial_offer(pergola_data, user_data=None):
     Returns:
         str: Путь к сгенерированному PDF-файлу
     """
+    # Проверяем наличие необходимых директорий и создаем их при необходимости
+    import os
+    for dir_path in ["fonts", "processed_images", "assets_for_pdf", "generated_pdf"]:
+        os.makedirs(dir_path, exist_ok=True)
+    
     # Добавляем логирование для отладки
     import logging
+    import traceback
     logging.info(f"[generate_commercial_offer] Received pergola_data: {pergola_data}")
     logging.info(f"[generate_commercial_offer] Width from pergola_data: {pergola_data.get('width', 'No width')}")
     logging.info(f"[generate_commercial_offer] Length from pergola_data: {pergola_data.get('length', 'No length')}")
-    # Добавляем подробное логирование с печатью трассировки стека для отладки
-    import traceback
     
     print("\n" + "="*50)
     print("ГЕНЕРАЦИЯ PDF - ОТЛАДОЧНАЯ ИНФОРМАЦИЯ")
@@ -1239,12 +1243,27 @@ def generate_commercial_offer(pergola_data, user_data=None):
         os.makedirs(os.path.dirname(pdf_filename), exist_ok=True)
         
         # Сохраняем PDF
-        pdf.output(pdf_filename)
-        print(f"PDF успешно создан: {pdf_filename}")
-        
-        return pdf_filename
+        # Сохраняем PDF в файл
+        try:
+            pdf.output(pdf_filename)
+            print(f"PDF успешно создан: {pdf_filename}")
+            
+            # Проверяем, что файл действительно создан и имеет размер
+            if os.path.exists(pdf_filename) and os.path.getsize(pdf_filename) > 0:
+                print(f"Подтверждение: файл {pdf_filename} существует и имеет размер {os.path.getsize(pdf_filename)} байт")
+                return pdf_filename
+            else:
+                print(f"Ошибка: файл {pdf_filename} не был создан или имеет нулевой размер")
+                raise Exception(f"Файл PDF не был создан: {pdf_filename}")
+        except Exception as e:
+            print(f"Ошибка при сохранении PDF: {e}")
+            traceback.print_exc()
+            raise
         
     except Exception as e:
+        print(f"Общая ошибка при создании PDF: {e}")
+        print("Детали ошибки:")
+        traceback.print_exc()
         print(f"Ошибка при создании PDF: {str(e)}")
         
         try:
