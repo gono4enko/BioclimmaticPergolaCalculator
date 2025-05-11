@@ -3591,45 +3591,15 @@ def export_to_pdf():
                     from improved_pdf_export import get_streamlit_download_component
                     st.markdown(get_streamlit_download_component(pdf_file_path), unsafe_allow_html=True)
                     return pdf_file_path
-        
-            # Если простой PDF не создался, пробуем более сложный вариант
-            st.warning("Простой PDF не был создан, пробуем расширенный вариант...")
-            
-            # Получаем описание перголы
-            if 'config.pergola_descriptions' not in sys.modules:
-                from config.pergola_descriptions import get_pergola_description
+                else:
+                    # Если размер файла равен 0, считаем что PDF не создался
+                    st.error("PDF файл был создан, но имеет нулевой размер")
             else:
-                from config.pergola_descriptions import get_pergola_description
+                # Если файл не создался вообще
+                st.error("Не удалось создать PDF файл")
             
-            pergola_description = get_pergola_description(pergola_type)
-            
-            # Форматируем данные для PDF
-            pergola_data = format_pergola_data_for_pdf(
-                results=results, 
-                options=options, 
-                dimensions=dimensions,
-                pergola_description=pergola_description
-            )
-            
-            # Этот блок кода является запасным вариантом и выполняется только если основной не сработал
-            # Мы должны быть осторожны, чтобы не дублировать кнопки скачивания
-            
-            # Генерируем PDF с использованием расширенной функции
-            backup_pdf_path = generate_commercial_offer(pergola_data)
-            
-            # Проверяем размер файла
-            if backup_pdf_path and os.path.exists(backup_pdf_path):
-                backup_file_size = os.path.getsize(backup_pdf_path)
-                
-                if backup_file_size > 0:
-                    st.success("PDF файл успешно создан через расширенный вариант!")
-                    # Используем новую функцию для улучшенного скачивания PDF
-                    from improved_pdf_export import get_streamlit_download_component
-                    st.markdown(get_streamlit_download_component(backup_pdf_path), unsafe_allow_html=True)
-                    return backup_pdf_path
-            else:
-                st.error("Не удалось создать PDF-файл.")
-                return None
+            # В этом случае мы НЕ пытаемся создать второй PDF-файл, чтобы избежать дублирования кнопок
+            return None
         
     except Exception as e:
         st.error(f"Ошибка при генерации PDF: {str(e)}")
