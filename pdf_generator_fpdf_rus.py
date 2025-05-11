@@ -108,13 +108,25 @@ class PDF(FPDF):
         """Создает нижний колонтитул на каждой странице"""
         # Позиция на 1.5 см от нижнего края
         self.set_y(-15)
+        
+        # Тонкая линия над футером (светло-серая)
+        self.set_draw_color(200, 200, 200)
+        self.line(10, self.get_y(), 200, self.get_y())
+        self.set_y(self.get_y() + 2)  # Небольшой отступ после линии
+        
+        # Устанавливаем шрифт для футера
         self.set_font('DejaVu', '', 8)
+        self.set_text_color(80, 80, 80)  # Серый цвет текста для футера
         
         # Текст сайта слева
         self.cell(100, 10, 'www.komfortnyj-dom.ru', 0, 0, 'L')
         
         # Номер страницы справа
         self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'R')
+        
+        # Восстанавливаем цвета по умолчанию
+        self.set_text_color(0, 0, 0)
+        self.set_draw_color(0, 0, 0)
     
     def chapter_title(self, title):
         """Добавляет заголовок раздела"""
