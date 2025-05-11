@@ -2709,8 +2709,8 @@ def create_simple_pdf(pergola_data):
     # Раздел Спецификации перголы, если есть данные
     specification = pergola_data.get("specification", [])
     if specification:
-        # Добавляем разрыв страницы перед спецификацией, чтобы она начиналась с новой страницы
-        elements.append(PageBreak())
+        # Добавляем отступ перед спецификацией (без разрыва страницы)
+        elements.append(Spacer(1, 15))
         
         elements.append(Paragraph("Спецификация перголы:", heading2_style))
         elements.append(Spacer(1, 10))
@@ -2996,8 +2996,8 @@ def create_very_simple_pdf(pergola_data):
             import traceback
             print(traceback.format_exc())
     
-    # Добавляем разрыв страницы перед таблицей стоимости
-    pdf.add_page()
+    # Добавляем отступ перед таблицей стоимости
+    pdf.ln(15)
     
     # Секция стоимости
     if use_dejavu:
@@ -3071,8 +3071,8 @@ def create_very_simple_pdf(pergola_data):
     # Добавляем раздел Спецификации перголы, если есть данные
     specification = pergola_data.get("specification", [])
     if specification:
-        # Добавляем разрыв страницы перед спецификацией
-        pdf.add_page()
+        # Добавляем отступ перед спецификацией (без разрыва страницы)
+        pdf.ln(15)
         
         if use_dejavu:
             pdf.set_font("DejaVu", "B", 12)

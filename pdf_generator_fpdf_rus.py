@@ -127,6 +127,119 @@ class PDF(FPDF):
             self.cell(widths[i], 10, headers[i], 1, 0, 'C', 1)
         self.ln()  # Переход на новую строку
     
+    def multi_cell_row(self, data, widths, aligns=None, min_row_height=7):
+        """
+        Добавляет строку в таблицу с поддержкой многострочного текста в ячейках
+        
+        Args:
+            data (list): Данные для ячеек
+            widths (list): Ширина каждой ячейки
+            aligns (list, optional): Выравнивание для каждой ячейки (L, C, R)
+            min_row_height (int, optional): Минимальная высота строки в мм
+        """
+        # Если выравнивание не указано, используем левое для всех ячеек
+        if aligns is None:
+            aligns = ['L'] * len(data)
+            
+        # Устанавливаем шрифт
+        self.set_font('DejaVu', '', 10)
+        
+        # Сохраняем текущую позицию
+        x_start = self.get_x()
+        y_start = self.get_y()
+        
+        # Вычисляем высоту для каждой ячейки
+        heights = []
+        
+        # Сначала вычислим высоту для каждой ячейки
+        for i, text in enumerate(data):
+            text = str(text)
+            current_x = x_start
+            for j in range(i):
+                current_x += widths[j]
+                
+            self.set_xy(current_x, y_start)
+            
+            # Используем multi_cell для вычисления высоты
+            self.multi_cell(widths[i], min_row_height, text, 1, aligns[i], fill=False)
+            heights.append(self.get_y() - y_start)
+            
+            # Восстанавливаем позицию
+            self.set_xy(x_start, y_start)
+        
+        # Определяем максимальную высоту
+        max_height = max(heights)
+        
+        # Теперь рисуем ячейки с одинаковой высотой
+        for i, text in enumerate(data):
+            text = str(text)
+            
+            # Рисуем ячейку
+            if i == len(data) - 1:
+                # Последняя ячейка с переносом строки
+                self.multi_cell(widths[i], max_height, text, 1, aligns[i], fill=False)
+                # Возвращаемся на начало строки
+                self.set_xy(x_start, y_start + max_height)
+            else:
+                # Создаем прямоугольник для ячейки
+                self.rect(self.get_x(), self.get_y(), widths[i], max_height)
+                
+                # Вычисляем количество строк в тексте
+                lines = self.get_multi_cell_lines(text, widths[i])
+                
+                # Если текст многострочный, обрабатываем его особым образом
+                if len(lines) > 1:
+                    self.multi_cell(widths[i], min_row_height, text, 0, aligns[i], fill=False)
+                    # Восстанавливаем позицию для следующей ячейки
+                    self.set_xy(self.get_x() + widths[i], y_start)
+                else:
+                    # Для однострочного текста используем обычную ячейку
+                    self.cell(widths[i], max_height, text, 0, 0, aligns[i])
+
+    def get_multi_cell_lines(self, text, width):
+        """
+        Возвращает количество строк в многострочной ячейке
+        
+        Args:
+            text (str): Текст для отображения
+            width (float): Ширина ячейки в мм
+            
+        Returns:
+            list: Список строк
+        """
+        # Разбиваем текст на строки по переносам
+        lines = []
+        wmax = width - 4  # Учитываем отступы
+        text_array = text.split('\n')
+        
+        for text_line in text_array:
+            text_width = self.get_string_width(text_line)
+            
+            if text_width <= wmax:
+                # Строка помещается целиком
+                lines.append(text_line)
+            else:
+                # Разбиваем строку на части
+                words = text_line.split(' ')
+                current_line = ''
+                
+                for word in words:
+                    word_width = self.get_string_width(word + ' ')
+                    
+                    if self.get_string_width(current_line + word) <= wmax:
+                        current_line += word + ' '
+                    else:
+                        # Добавляем текущую строку и начинаем новую
+                        if current_line:
+                            lines.append(current_line.strip())
+                        current_line = word + ' '
+                
+                # Добавляем последнюю строку
+                if current_line:
+                    lines.append(current_line.strip())
+        
+        return lines
+    
     def table_row(self, data, widths, aligns=None, row_height=7):
         """
         Добавляет строку в таблицу с адаптивным размером шрифта
@@ -339,8 +452,8 @@ def generate_commercial_offer(pergola_data, user_data=None):
         # Добавляем специификацию, если она есть
         specification = pergola_data.get('specification', [])
         if specification:
-            # Добавляем разрыв страницы перед спецификацией, чтобы она начиналась с новой страницы
-            pdf.add_page()
+            # Добавляем отступ перед спецификацией (без разрыва страницы)
+            pdf.ln(10)
             
             pdf.set_font('DejaVu', 'B', 14)
             pdf.cell(0, 8, "Спецификация:", 0, 1, "L")
@@ -360,11 +473,12 @@ def generate_commercial_offer(pergola_data, user_data=None):
             
             pdf.table_header(table_headers, widths)
             
-            # Данные таблицы
+            # Данные таблицы с улучшенной поддержкой переноса текста
             for i, item in enumerate(specification, 1):
                 name = item.get('name', '')
                 count = item.get('count', '')
-                pdf.table_row([str(i), name, str(count)], widths, aligns=["C", "L", "C"])
+                # Используем multi_cell_row вместо table_row для лучшего переноса текста
+                pdf.multi_cell_row([str(i), name, str(count)], widths, aligns=["C", "L", "C"], min_row_height=8)
             
         # Добавляем стоимость, если она есть
         items = pergola_data.get('items', [])
