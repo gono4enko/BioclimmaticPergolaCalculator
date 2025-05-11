@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="400" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Фон: небо и земля -->
+  <rect x="0" y="0" width="600" height="300" fill="#87CEEB" />
+  <rect x="0" y="300" width="600" height="100" fill="#8B4513" />
+  
+  <!-- Пергола: основание -->
+  <rect x="100" y="120" width="400" height="20" fill="#D2B48C" />
+  <rect x="100" y="140" width="400" height="180" fill="rgba(255,255,255,0.7)" stroke="#D2B48C" stroke-width="10" />
+  
+  <!-- Колонны -->
+  <rect x="110" y="140" width="20" height="180" fill="#D2B48C" />
+  <rect x="470" y="140" width="20" height="180" fill="#D2B48C" />
+  
+  <!-- Ламели (жалюзи) -->
+  <rect x="100" y="140" width="400" height="10" fill="#D2B48C" />
+  <rect x="100" y="160" width="400" height="10" fill="#D2B48C" />
+  <rect x="100" y="180" width="400" height="10" fill="#D2B48C" />
+  <rect x="100" y="200" width="400" height="10" fill="#D2B48C" />
+  <rect x="100" y="220" width="400" height="10" fill="#D2B48C" />
+  <rect x="100" y="240" width="400" height="10" fill="#D2B48C" />
+  <rect x="100" y="260" width="400" height="10" fill="#D2B48C" />
+  <rect x="100" y="280" width="400" height="10" fill="#D2B48C" />
+  <rect x="100" y="300" width="400" height="10" fill="#D2B48C" />
+  
+  <!-- Стол под перголой -->
+  <rect x="200" y="250" width="200" height="10" fill="#8B4513" />
+  <rect x="220" y="260" width="160" height="70" fill="#A0522D" />
+  
+  <!-- Стулья -->
+  <rect x="180" y="280" width="30" height="30" fill="#A0522D" />
+  <rect x="390" y="280" width="30" height="30" fill="#A0522D" />
+  
+  <!-- Солнце -->
+  <circle cx="50" cy="50" r="30" fill="#FFD700" />
+  
+  <!-- Тени -->
+  <rect x="130" y="320" width="340" height="10" fill="rgba(0,0,0,0.3)" />
+</svg>
