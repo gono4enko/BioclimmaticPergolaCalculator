@@ -9,6 +9,7 @@ import json
 import sys
 import time
 import os
+from datetime import datetime
 # Импортируем функции для работы с Яндекс.Метрикой
 from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
 # Импортируем функцию для плавного скролла
@@ -3618,12 +3619,61 @@ def export_to_pdf():
                 
                 # Генерируем PDF
                 print("Запуск generate_commercial_offer...")
-                pdf_file_path = generate_commercial_offer(pergola_data)
-                print(f"PDF файл создан: {pdf_file_path}")
+                try:
+                    # Пробуем стандартный метод с поддержкой кириллицы
+                    pdf_file_path = generate_commercial_offer(pergola_data)
+                    print(f"PDF файл создан основным методом: {pdf_file_path}")
+                except Exception as e:
+                    print(f"Ошибка при использовании основного метода: {e}")
+                    print("Попытка использовать упрощенный метод генерации PDF...")
+                    
+                    # Используем экстра-упрощенный метод без кириллицы
+                    try:
+                        simple_pdf_path = os.path.join("generated_pdf", f"КП_пергола_{options.get('pergola_type', 'B500')}.pdf")
+                        from fpdf import FPDF
+                        
+                        # Создаем директорию если не существует
+                        os.makedirs(os.path.dirname(simple_pdf_path), exist_ok=True)
+                        
+                        # Создаем максимально простой PDF
+                        pdf = FPDF()
+                        pdf.add_page()
+                        pdf.set_font("Helvetica", "B", 16)
+                        pdf.cell(0, 10, "Pergola Calculation Quote", ln=True, align="C")
+                        pdf.ln(5)
+                        
+                        # Базовая информация
+                        pdf.set_font("Helvetica", "", 12)
+                        pdf.cell(0, 8, f"Type: {options.get('pergola_type', 'N/A')}", ln=True)
+                        pdf.cell(0, 8, f"Width: {dimensions.get('width', 'N/A')} m", ln=True)
+                        pdf.cell(0, 8, f"Length: {dimensions.get('length', 'N/A')} m", ln=True)
+                        pdf.cell(0, 8, f"Date: {datetime.now().strftime('%d.%m.%Y')}", ln=True)
+                        pdf.ln(5)
+                        
+                        # Цена и скидка
+                        pdf.set_font("Helvetica", "B", 14)
+                        pdf.cell(0, 10, "Total Price:", ln=True)
+                        pdf.set_font("Helvetica", "", 12)
+                        pdf.cell(0, 8, f"Regular price: {results.get('total_price', 0):,.0f} RUB", ln=True)
+                        pdf.cell(0, 8, f"Discount: {results.get('discount', 0):,.0f} RUB", ln=True)
+                        pdf.set_font("Helvetica", "B", 12)
+                        pdf.cell(0, 8, f"Final price: {results.get('total_price_after_discount', 0):,.0f} RUB", ln=True)
+                        
+                        # Сохраняем PDF
+                        pdf.output(simple_pdf_path)
+                        
+                        pdf_file_path = simple_pdf_path
+                        print(f"PDF файл создан упрощенным методом: {pdf_file_path}")
+                    except Exception as inner_e:
+                        print(f"Ошибка при использовании упрощенного метода: {inner_e}")
+                        import traceback
+                        traceback.print_exc()
+                        pdf_file_path = None
+                
                 logging.info(f"PDF файл создан: {pdf_file_path}")
             except Exception as e:
                 import traceback
-                print(f"ОШИБКА при создании PDF: {e}")
+                print(f"ОБЩАЯ ОШИБКА при создании PDF: {e}")
                 traceback.print_exc()
                 pdf_file_path = None
             
