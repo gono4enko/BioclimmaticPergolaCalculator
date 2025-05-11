@@ -6,12 +6,8 @@
 import os
 import io
 from datetime import datetime
-import pytz
 from fpdf import FPDF
 from PIL import Image
-
-# Определяем временную зону для Ростова-на-Дону (также использует Europe/Moscow)
-ROSTOV_TZ = pytz.timezone('Europe/Moscow')
 
 # Создаем директорию для сохранения сгенерированных PDF
 os.makedirs("generated_pdf", exist_ok=True)
@@ -32,8 +28,8 @@ class PDF(FPDF):
         self.set_author("Pergola Calculator")
         self.set_creator("Pergola Calculator")
         
-        # Устанавливаем отступы (верхний отступ увеличиваем для шапки)
-        self.set_margins(20, 35, 20)
+        # Устанавливаем отступы
+        self.set_margins(20, 20, 20)
         self.set_auto_page_break(True, margin=20)
         
         # Добавляем шрифт с поддержкой кириллицы
@@ -53,75 +49,31 @@ class PDF(FPDF):
         self.set_font('DejaVu', '', 12)
         
     def header(self):
-        """
-        Добавляет шапку в PDF с информацией о компании.
-        Шапка содержит название компании, адрес, телефон и другие контактные данные.
-        Версия без логотипа, только с текстом на синем фоне.
-        """
-        # Устанавливаем координаты для шапки
-        self.set_y(0)
-        
-        # Синий цвет фона шапки (#2A4C7F - темно-синий)
-        self.set_fill_color(42, 76, 127)
-        
-        # Белый цвет текста
-        self.set_text_color(255, 255, 255)
-        
-        # Рисуем прямоугольник по всей ширине страницы
-        self.set_draw_color(42, 76, 127)  # Устанавливаем цвет рамки как фон
-        self.rect(0, 0, 210, 30, style='F')
-        
-        # Добавляем название компании (слева) 
-        self.set_font('DejaVu', 'B', 16)  # Увеличиваем размер шрифта
-        self.set_xy(10, 5)
-        self.cell(100, 10, 'Компания «Комфортный дом»', 0, 1, 'L')
-        
-        # Добавляем слоган или подзаголовок (используем обычный шрифт вместо курсива)
-        self.set_font('DejaVu', '', 10)
-        self.cell(100, 5, 'Биоклиматические перголы премиум-класса', 0, 1, 'L')
-        
-        # Добавляем контактную информацию (справа)
-        self.set_font('DejaVu', '', 9)
-        self.set_xy(120, 5)
-        self.cell(80, 5, 'г.Ростов-на-Дону, ул.Орская, 27\\1', 0, 2, 'R')
-        self.cell(80, 5, 'моб. +7 (906) 429-74-20', 0, 2, 'R')
-        self.cell(80, 5, 'E-mail: zakaz@infopergola.ru', 0, 2, 'R')
-        self.cell(80, 5, 'Сайт: https://pergolamarket.ru/', 0, 2, 'R')
-        
-        # Добавляем разделительную линию под шапкой
-        self.set_draw_color(255, 255, 255)  # Белый цвет линии
-        self.line(10, 28, 200, 28)
-        
-        # Сбрасываем цвет текста на черный для основного содержимого
-        self.set_text_color(0, 0, 0)
-        self.set_draw_color(0, 0, 0)  # Восстанавливаем черный цвет линий
-        
-        # Устанавливаем позицию для начала основного содержимого
-        self.set_xy(20, 35)
+        """Создает верхний колонтитул на каждой странице"""
+        # Ничего не делаем в хедере для первой страницы
+        if self.page_no() > 1:
+            # Логотип в верхнем левом углу
+            self.set_y(10)
+            self.set_font('DejaVu', 'B', 15)
+            self.cell(0, 10, 'Биоклиматические перголы', 0, 0, 'L')
+            
+            # Линия под заголовком
+            self.line(20, 20, 190, 20)
+            
+            # Устанавливаем позицию для начала основного текста
+            self.set_y(25)
     
     def footer(self):
         """Создает нижний колонтитул на каждой странице"""
         # Позиция на 1.5 см от нижнего края
         self.set_y(-15)
-        
-        # Тонкая линия над футером (светло-серая)
-        self.set_draw_color(200, 200, 200)
-        self.line(10, self.get_y(), 200, self.get_y())
-        self.set_y(self.get_y() + 2)  # Небольшой отступ после линии
-        
-        # Устанавливаем шрифт для футера
         self.set_font('DejaVu', '', 8)
-        self.set_text_color(80, 80, 80)  # Серый цвет текста для футера
         
         # Текст сайта слева
-        self.cell(100, 10, 'https://pergolamarket.ru/calculator_bioclimatic_pergola', 0, 0, 'L')
+        self.cell(100, 10, 'www.komfortnyj-dom.ru', 0, 0, 'L')
         
         # Номер страницы справа
         self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'R')
-        
-        # Восстанавливаем цвета по умолчанию
-        self.set_text_color(0, 0, 0)
-        self.set_draw_color(0, 0, 0)
     
     def chapter_title(self, title):
         """Добавляет заголовок раздела"""
@@ -130,7 +82,7 @@ class PDF(FPDF):
         self.cell(0, 9, title, 0, 1, 'L', 1)
         self.ln(3)  # Отступ после заголовка
     
-    def check_table_fit(self, rows_count, row_height=8, additional_height=0):
+    def check_table_fit(self, rows_count, row_height=8):
         """
         Проверяет, поместится ли таблица на текущей странице
         Если не поместится - добавляет новую страницу
@@ -138,21 +90,18 @@ class PDF(FPDF):
         Args:
             rows_count (int): Количество строк в таблице
             row_height (int): Высота одной строки в мм
-            additional_height (int): Дополнительная высота (для учета многострочных ячеек)
             
         Returns:
             bool: True если таблица помещается, False если добавлена новая страница
         """
         # Примерная высота таблицы: высота строки * кол-во строк + запас 15 мм на заголовки и отступы
-        # Добавляем additional_height для учета многострочных ячеек
-        table_height = rows_count * row_height + 15 + additional_height
+        table_height = rows_count * row_height + 15
         
         # Получаем текущую позицию Y (высоту от начала страницы)
         current_y = self.get_y()
         
         # Рассчитываем оставшееся пространство на странице
-        # Увеличим отступ от нижней границы для надежности
-        page_bottom = 272  # Уменьшаем нижнюю границу для большего запаса от футера
+        page_bottom = 277  # Примерная нижняя граница страницы A4 с учетом полей и футера
         available_space = page_bottom - current_y
         
         # Если таблица не помещается, добавляем новую страницу
@@ -173,180 +122,6 @@ class PDF(FPDF):
         for i in range(len(headers)):
             self.cell(widths[i], 10, headers[i], 1, 0, 'C', 1)
         self.ln()  # Переход на новую строку
-    
-    def multi_cell_row(self, data, widths, aligns=None, min_row_height=7):
-        """
-        Добавляет строку в таблицу с поддержкой многострочного текста в ячейках
-        
-        Args:
-            data (list): Данные для ячеек
-            widths (list): Ширина каждой ячейки
-            aligns (list, optional): Выравнивание для каждой ячейки (L, C, R)
-            min_row_height (int, optional): Минимальная высота строки в мм
-        """
-        # Если выравнивание не указано, используем левое для всех ячеек
-        if aligns is None:
-            aligns = ['L'] * len(data)
-            
-        # Устанавливаем шрифт
-        self.set_font('DejaVu', '', 10)
-        
-        # Преобразуем все элементы данных в строки
-        data = [str(item) for item in data]
-        
-        # Сохраняем текущую позицию
-        x_start = self.get_x()
-        y_start = self.get_y()
-        
-        # Вычисляем height для каждой ячейки
-        heights = []
-        line_counts = []
-        
-        # Сначала вычислим высоту для каждой ячейки,
-        # разбивая текст на строки соответствующей ширины
-        for i, text in enumerate(data):
-            lines = self.get_multi_cell_lines(text, widths[i] - 4)  # Отступ 4 мм
-            line_count = len(lines)
-            line_counts.append(line_count)
-            
-            # Вычисляем высоту ячейки (количество строк * высота строки)
-            cell_height = line_count * min_row_height
-            heights.append(cell_height)
-        
-        # Определяем максимальную высоту строки таблицы
-        max_height = max(heights)
-        max_height = max(max_height, min_row_height)  # Минимальная высота
-        
-        # Теперь рисуем ячейки с одинаковой высотой
-        for i, text in enumerate(data):
-            current_x = x_start
-            for j in range(i):
-                current_x += widths[j]
-            
-            # Рисуем границу ячейки
-            self.rect(current_x, y_start, widths[i], max_height)
-            
-            # Если текст состоит из нескольких строк
-            lines = self.get_multi_cell_lines(text, widths[i] - 4)
-            
-            if len(lines) > 1:
-                # Для многострочного текста используем multi_cell
-                self.set_xy(current_x, y_start)
-                
-                # Вычисляем высоту одной строки с учетом равномерного распределения всего текста
-                line_height = max_height / len(lines)
-                
-                # Выводим текст построчно с учетом выравнивания
-                for line in lines:
-                    # Вычисляем x-позицию в зависимости от выравнивания
-                    if aligns[i] == 'C':  # По центру
-                        line_width = self.get_string_width(line)
-                        text_x = current_x + (widths[i] - line_width) / 2
-                    elif aligns[i] == 'R':  # По правому краю
-                        line_width = self.get_string_width(line)
-                        text_x = current_x + widths[i] - line_width - 2
-                    else:  # По левому краю (L)
-                        text_x = current_x + 2
-                    
-                    self.set_xy(text_x, self.get_y())
-                    self.cell(0, line_height, line, 0, 2, '')
-            else:
-                # Для однострочного текста центрируем по вертикали
-                line_height = max_height
-                
-                # Определяем вертикальное положение (по центру ячейки)
-                text_y = y_start + (max_height - min_row_height) / 2
-                
-                self.set_xy(current_x + 2, text_y)
-                self.cell(widths[i] - 4, min_row_height, text, 0, 0, aligns[i])
-        
-        # Переходим на следующую строку
-        self.set_xy(x_start, y_start + max_height)
-
-    def get_multi_cell_lines(self, text, width):
-        """
-        Возвращает список строк, на которые разбивается текст,
-        чтобы поместиться в указанную ширину.
-        
-        Args:
-            text (str): Текст для отображения
-            width (float): Доступная ширина в мм
-            
-        Returns:
-            list: Список строк после разбиения
-        """
-        # Предварительная обработка текста
-        if not text:
-            return [""]
-            
-        # Разбиваем текст по явным переносам строк
-        text_array = text.split('\n')
-        lines = []
-        
-        # Корректируем ширину, добавляя небольшой запас
-        # (это нужно для надежности, чтобы избежать обрезания текста)
-        effective_width = width - 2
-        
-        for text_line in text_array:
-            # Если строка короткая, просто добавляем её
-            if self.get_string_width(text_line) <= effective_width:
-                lines.append(text_line)
-                continue
-                
-            # Разбиваем строку на слова
-            words = text_line.split(' ')
-            current_line = ''
-            
-            for word in words:
-                # Проверяем, поместится ли слово в текущую строку
-                test_line = current_line + (' ' if current_line else '') + word
-                if self.get_string_width(test_line) <= effective_width:
-                    # Слово помещается - добавляем его к текущей строке
-                    current_line = test_line
-                else:
-                    # Слово не помещается - начинаем новую строку
-                    
-                    # Сначала сохраняем текущую строку
-                    if current_line:
-                        lines.append(current_line)
-                    
-                    # Проверяем, поместится ли само слово в строку
-                    if self.get_string_width(word) <= effective_width:
-                        # Слово помещается в новую строку
-                        current_line = word
-                    else:
-                        # Слово слишком длинное - разбиваем его на части
-                        parts = []
-                        current_part = ''
-                        
-                        for char in word:
-                            test_part = current_part + char
-                            if self.get_string_width(test_part) <= effective_width:
-                                current_part = test_part
-                            else:
-                                parts.append(current_part)
-                                current_part = char
-                        
-                        # Добавляем последнюю часть
-                        if current_part:
-                            parts.append(current_part)
-                        
-                        # Первую часть используем для текущей строки
-                        if parts:
-                            current_line = parts[0]
-                            # Остальные части сразу добавляем в список строк
-                            for i in range(1, len(parts)):
-                                lines.append(parts[i])
-            
-            # Добавляем последнюю строку
-            if current_line:
-                lines.append(current_line)
-        
-        # Если ни одной строки не получилось, добавляем пустую
-        if not lines:
-            lines = [""]
-            
-        return lines
     
     def table_row(self, data, widths, aligns=None, row_height=7):
         """
@@ -391,80 +166,6 @@ class PDF(FPDF):
         
         self.ln()  # Переход на новую строку
 
-def get_pergola_images(pergola_type):
-    """
-    Возвращает список путей к изображениям перголы указанного типа для использования в PDF
-    
-    Args:
-        pergola_type (str): Тип перголы (B500NEW, B600, B700NEW)
-        
-    Returns:
-        list: Список путей к изображениям перголы
-    """
-    import os
-    import traceback
-    
-    print("\n=== Поиск изображений для PDF ===")
-    print(f"Тип перголы: {pergola_type}")
-    
-    # Создаем список для хранения путей к изображениям
-    image_paths = []
-    
-    try:
-        # Создаем необходимые директории
-        for dir_path in ["assets", "assets_for_pdf", "generated_pdf"]:
-            os.makedirs(dir_path, exist_ok=True)
-            
-        # Находим несколько изображений пергол для примера (из директории attached_assets)
-        sample_images = []
-        try:
-            if os.path.exists('attached_assets'):
-                for filename in os.listdir('attached_assets'):
-                    if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
-                        sample_images.append(os.path.join('attached_assets', filename))
-                        if len(sample_images) >= 3:  # Находим не более 3 изображений
-                            break
-        except Exception as e:
-            print(f"Ошибка при поиске примеров изображений: {e}")
-        
-        # Добавляем найденные изображения в список
-        if sample_images:
-            image_paths = sample_images
-            for img in image_paths:
-                if os.path.exists(img):
-                    print(f"✓ Изображение найдено: {img}")
-                else:
-                    print(f"✗ Изображение не существует: {img}")
-        else:
-            print("Изображения не найдены")
-            
-    except Exception as e:
-        print(f"Ошибка при поиске изображений: {e}")
-        traceback.print_exc()
-        
-    print(f"Найдено {len(image_paths)} изображений")
-    print("=== Конец поиска изображений ===\n")
-    
-    return image_paths
-
-def get_pergola_image_caption(pergola_type):
-    """
-    Возвращает подпись для галереи изображений в PDF
-    
-    Args:
-        pergola_type (str): Тип перголы (B500NEW, B600, B700NEW)
-        
-    Returns:
-        str: Подпись для галереи изображений
-    """
-    captions = {
-        "B500NEW": "Биоклиматическая пергола серии B500 с поворотными ламелями",
-        "B600": "Биоклиматическая пергола серии B600 со сдвижной крышей",
-        "B700NEW": "Биоклиматическая пергола премиум-класса серии B700 с поворотными ламелями"
-    }
-    
-    return captions.get(pergola_type, "Биоклиматическая пергола")
-
 def format_pergola_data_for_pdf(results, options, dimensions, pergola_description):
     """
     Форматирует данные расчета перголы для использования в генерации PDF
@@ -478,11 +179,6 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
     Returns:
         dict: Отформатированные данные для генерации PDF
     """
-    # Добавляем логирование для отладки
-    import logging
-    logging.info(f"[format_pergola_data_for_pdf] Received dimensions: {dimensions}")
-    logging.info(f"[format_pergola_data_for_pdf] Width from dimensions: {dimensions.get('width', 'No width')}")
-    logging.info(f"[format_pergola_data_for_pdf] Length from dimensions: {dimensions.get('length', 'No length')}")
     pergola_data = {}
     
     # Базовая информация о перголе
@@ -509,59 +205,22 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
     
     # Добавляем позиции для таблицы стоимости
     if "items" in results:
-        # Добавляем подробное логирование для понимания проблемы с разными суммами
-        logging.info(f"[format_pergola_data_for_pdf] Items count: {len(results['items'])}")
-        for i, item in enumerate(results['items']):
-            logging.info(f"[format_pergola_data_for_pdf] Item {i+1}: {item.get('name', 'No name')} - {item.get('price', 0)}")
-        
-        # Получаем все существующие ключи для основного элемента (перголы)
-        if len(results['items']) > 0:
-            base_item = results['items'][0]  # Первый элемент обычно сама пергола
-            logging.info(f"[format_pergola_data_for_pdf] Base item keys: {base_item.keys()}")
-        
-        # Проверяем, есть ли скидка
-        discount = results.get('discount', 0)
-        logging.info(f"[format_pergola_data_for_pdf] Discount: {discount}")
-        
-        # Проверяем итоговую стоимость
-        total_price = results.get('total_price', 0)
-        total_price_after_discount = results.get('total_price_after_discount', 0)
-        logging.info(f"[format_pergola_data_for_pdf] Total price: {total_price}")
-        logging.info(f"[format_pergola_data_for_pdf] Total price after discount: {total_price_after_discount}")
-        
-        # Теперь передаем элементы для PDF
         pergola_data["items"] = results["items"]
-        
-        # Добавляем информацию о скидке, если она есть
-        pergola_data["discount"] = discount
-        pergola_data["total_price_after_discount"] = total_price_after_discount
     
     # Добавляем текстовые описания
     pergola_data["description"] = pergola_description
     
-    # Добавляем все описания для PDF
+    # Дополнительно можно добавить модульное описание и описание системы водоотведения
     from config.pergola_descriptions import (
         get_modular_system_description,
         get_drainage_system_description,
-        get_bansbach_description,
-        get_somfy_description,
-        get_lamella_engineering_description,
-        get_installation_system_description
+        get_pergola_images,
+        get_pergola_image_caption
     )
     
     # Добавляем дополнительные описания
     pergola_data["modular_description"] = get_modular_system_description()
     pergola_data["drainage_description"] = get_drainage_system_description()
-    
-    # Добавляем описания технических характеристик
-    pergola_data["lamella_engineering_description"] = get_lamella_engineering_description()
-    pergola_data["installation_system_description"] = get_installation_system_description()
-    
-    # Добавляем описания приводов в зависимости от типа перголы
-    if options["pergola_type"] == "B500NEW":
-        pergola_data["drive_description"] = get_bansbach_description()
-    elif options["pergola_type"] == "B700NEW":
-        pergola_data["drive_description"] = get_somfy_description()
     
     # Добавляем пути к изображениям
     pergola_data["image_paths"] = get_pergola_images(options["pergola_type"])
@@ -581,86 +240,21 @@ def generate_commercial_offer(pergola_data, user_data=None):
     Returns:
         str: Путь к сгенерированному PDF-файлу
     """
-    # Проверяем наличие необходимых директорий и создаем их при необходимости
-    import os
-    for dir_path in ["fonts", "processed_images", "assets_for_pdf", "generated_pdf"]:
-        os.makedirs(dir_path, exist_ok=True)
-    
-    # Добавляем логирование для отладки
-    import logging
-    import traceback
-    logging.info(f"[generate_commercial_offer] Received pergola_data: {pergola_data}")
-    logging.info(f"[generate_commercial_offer] Width from pergola_data: {pergola_data.get('width', 'No width')}")
-    logging.info(f"[generate_commercial_offer] Length from pergola_data: {pergola_data.get('length', 'No length')}")
-    
-    print("\n" + "="*50)
-    print("ГЕНЕРАЦИЯ PDF - ОТЛАДОЧНАЯ ИНФОРМАЦИЯ")
-    print("="*50)
-    
-    # Печатаем информацию о директориях
-    print(f"Текущая директория: {os.getcwd()}")
-    print(f"Проверка директорий:")
-    for dir_path in ["fonts", "processed_images", "assets_for_pdf", "generated_pdf"]:
-        if os.path.exists(dir_path):
-            print(f"✓ Директория {dir_path} существует")
-            # Если это директория с шрифтами, проверяем наличие шрифтов
-            if dir_path == "fonts":
-                for font_file in ["DejaVuSans.ttf", "DejaVuSans-Bold.ttf"]:
-                    font_path = os.path.join(dir_path, font_file)
-                    if os.path.exists(font_path):
-                        print(f"  ✓ Шрифт {font_file} найден")
-                    else:
-                        print(f"  ✗ Шрифт {font_file} НЕ найден")
-        else:
-            print(f"✗ Директория {dir_path} НЕ существует, создаём...")
-            os.makedirs(dir_path, exist_ok=True)
-    
-    # Печатаем входные данные для PDF
-    print(f"\nДанные перголы:")
-    print(f"Тип перголы: {pergola_data.get('pergola_type', 'Не указан')}")
-    print(f"Ширина: {pergola_data.get('width', 'Не указана')}")
-    print(f"Длина: {pergola_data.get('length', 'Не указана')}")
-    print(f"Модули: {pergola_data.get('modules', 'Не указаны')}")
-    
-    # Проверяем наличие статей
-    for desc_key in ['description', 'modular_description', 'drainage_description', 
-                    'lamella_engineering_description', 'installation_system_description',
-                    'drive_description']:
-        desc = pergola_data.get(desc_key)
-        if desc:
-            print(f"✓ Статья {desc_key} присутствует ({len(desc)} символов)")
-        else:
-            print(f"✗ Статья {desc_key} отсутствует")
-    
-    # Проверяем наличие изображений
-    image_paths = pergola_data.get('image_paths', [])
-    print(f"\nИзображения:")
-    print(f"Количество изображений: {len(image_paths)}")
-    for i, path in enumerate(image_paths):
-        if path and os.path.exists(path):
-            print(f"✓ Изображение {i+1}: {path} (существует)")
-        else:
-            print(f"✗ Изображение {i+1}: {path} (НЕ существует)")
-    
-    print("="*50 + "\n")
-    
     try:
         # Очищаем временные файлы обработанных изображений
-        if os.path.exists("processed_images"):
-            for file in os.listdir("processed_images"):
-                if file.startswith("proc_"):
-                    try:
-                        os.remove(os.path.join("processed_images", file))
-                    except Exception as e:
-                        print(f"Ошибка при удалении временного файла {file}: {e}")
+        for file in os.listdir("processed_images"):
+            if file.startswith("proc_"):
+                try:
+                    os.remove(os.path.join("processed_images", file))
+                except:
+                    pass
         
         # Создаем уникальное имя файла на основе текущей даты и времени
-        now_utc = datetime.now(pytz.utc)
-        now_rostov = now_utc.astimezone(ROSTOV_TZ)
-        timestamp = now_rostov.strftime("%Y%m%d_%H%M%S")
+        now = datetime.now()
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
         
         # Форматируем текущую дату для отображения в документе
-        current_date = now_rostov.strftime("%d.%m.%Y")
+        current_date = now.strftime("%d.%m.%Y")
         
         # Определяем путь для сохранения файла
         if user_data and user_data.get('phone'):
@@ -678,7 +272,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
         
         # Устанавливаем информацию о текущей дате
         pdf.set_font('DejaVu', '', 10)
-        pdf.cell(0, 5, f"г.Ростов-на-Дону, {current_date}", 0, 1, "L")
+        pdf.cell(0, 5, f"Москва, {current_date}", 0, 1, "L")
         
         # Добавляем номер коммерческого предложения
         pdf.ln(5)
@@ -740,28 +334,16 @@ def generate_commercial_offer(pergola_data, user_data=None):
         # Добавляем специификацию, если она есть
         specification = pergola_data.get('specification', [])
         if specification:
-            # Добавляем отступ перед спецификацией (без разрыва страницы)
-            pdf.ln(10)
-            
+            pdf.ln(5)
             pdf.set_font('DejaVu', 'B', 14)
             pdf.cell(0, 8, "Спецификация:", 0, 1, "L")
             
             # Проверяем, поместится ли таблица на текущей странице
-            # Предварительно оцениваем возможную дополнительную высоту из-за многострочного текста
-            # Для длинных названий компонентов (длиннее 80 символов) добавляем дополнительную высоту
-            
-            additional_height = 0
-            for item in specification:
-                name = item.get('name', '')
-                # Если название длинное, добавляем дополнительную высоту
-                if len(name) > 80:
-                    # Примерно +6мм на каждые дополнительные 40 символов
-                    additional_lines = len(name) // 40
-                    additional_height += additional_lines * 6
+            # В среднем строка занимает 6-7 мм, заголовок и отступы - ещё 20 мм
+            table_height = len(specification) * 6 + 20
             
             # Если таблица не помещается, добавляем новую страницу
-            # Передаем дополнительную высоту в качестве параметра
-            if pdf.check_table_fit(len(specification) + 3, additional_height=additional_height):
+            if pdf.check_table_fit(len(specification) + 3):
                 # Таблица поместится (функция возвращает True) - ничего не делаем
                 pass
             
@@ -771,50 +353,24 @@ def generate_commercial_offer(pergola_data, user_data=None):
             
             pdf.table_header(table_headers, widths)
             
-            # Данные таблицы с улучшенной поддержкой переноса текста
+            # Данные таблицы
             for i, item in enumerate(specification, 1):
                 name = item.get('name', '')
                 count = item.get('count', '')
-                # Используем multi_cell_row вместо table_row для лучшего переноса текста
-                pdf.multi_cell_row([str(i), name, str(count)], widths, aligns=["C", "L", "C"], min_row_height=8)
+                pdf.table_row([str(i), name, str(count)], widths, aligns=["C", "L", "C"])
             
         # Добавляем стоимость, если она есть
         items = pergola_data.get('items', [])
         if items:
-            # Проверяем, достаточно ли места для раздела "Стоимость" на текущей странице
-            # Оцениваем необходимое пространство: заголовок (8мм) + отступ (10мм) + 
-            # таблица (высота строки * количество строк + заголовок таблицы)
-            needed_space = 8 + 10 + (len(items) * 8) + 10
-            
-            # Получаем текущую позицию Y и оцениваем оставшееся пространство
-            current_y = pdf.get_y()
-            remaining_space = 272 - current_y  # 272мм - примерная нижняя граница страницы
-            
-            # Если места достаточно, добавляем отступ перед новым разделом
-            # иначе - добавляем новую страницу
-            if remaining_space >= needed_space:
-                pdf.ln(10)  # Отступ перед разделом "Стоимость"
-            else:
-                pdf.add_page()
-            
+            pdf.add_page()
             pdf.set_font('DejaVu', 'B', 14)
             pdf.cell(0, 8, "Стоимость:", 0, 1, "L")
             
             # Проверяем, поместится ли таблица на текущей странице
-            # В среднем строка занимает 8 мм, заголовок и отступы - ещё 20 мм
+            table_height = len(items) * 6 + 20
             
-            # Оцениваем дополнительную высоту для длинных названий
-            additional_height = 0
-            for item in items:
-                name = item.get('name', '')
-                # Если название длинное, добавляем дополнительную высоту
-                if len(name) > 80:
-                    # Примерно +6мм на каждые дополнительные 40 символов
-                    additional_lines = len(name) // 40
-                    additional_height += additional_lines * 6
-                    
             # Если таблица не помещается, добавляем новую страницу
-            if pdf.check_table_fit(len(items) + 2, additional_height=additional_height):
+            if pdf.check_table_fit(len(items) + 3):
                 # Таблица поместится (функция возвращает True) - ничего не делаем
                 pass
             
@@ -843,24 +399,16 @@ def generate_commercial_offer(pergola_data, user_data=None):
                     # Для сотен: 100 ₽
                     price_str = f"{price_value} ₽"
                 
-                # Используем многострочную ячейку вместо обычной для лучшего переноса длинных текстов
-                # Выравниваем текст по левому краю для удобства чтения
-                pdf.multi_cell_row([str(i), name, price_str], widths, aligns=["C", "L", "R"], min_row_height=7)
+                # Используем уменьшенную высоту строки (6 мм вместо 8 мм)
+                # Меняем выравнивание с R (правого) на L (левое) для соответствия таблице спецификации
+                pdf.table_row([str(i), item['name'], price_str], widths, aligns=["C", "L", "L"], row_height=6)
                 
-            # Проверяем есть ли в данных скидка
-            discount = pergola_data.get('discount', 0)
-            total_price_after_discount = pergola_data.get('total_price_after_discount', 0)
-            
-            # Логируем для отладки
-            logging.info(f"[generate_commercial_offer] Discount: {discount}")
-            logging.info(f"[generate_commercial_offer] Total price after discount: {total_price_after_discount}")
-            
-            # 1. Сначала добавляем промежуточный итог (без скидки)
+            # Добавляем итоговую строку
             pdf.set_fill_color(211, 211, 211)  # Светло-серый цвет
             pdf.set_font('DejaVu', 'B', 11)  # Увеличиваем шрифт для итоговой суммы
             pdf.set_text_color(0, 0, 0)  # Черный текст
             
-            # Форматируем промежуточную итоговую цену
+            # Форматируем итоговую цену
             total_price_value = int(total_cost)
             if total_price_value >= 1000000:
                 # Для миллионов форматируем как "1 234 567 ₽"
@@ -869,72 +417,16 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 # Для других значений так же
                 total_price_str = f"{total_price_value:,d}".replace(',', ' ') + " ₽"
             
-            # Строка ИТОГО должна выглядеть как обычная строка, но с другим содержимым
-            # Используем те же ширины столбцов, что и в основной таблице для единообразия
-            pdf.cell(10, 10, "", 1, 0, "C", fill=True)  # Первая колонка - пустая
-            pdf.cell(110, 10, "Итого:", 1, 0, "L", fill=True)  # Вторая колонка - "Итого:" с левым выравниванием
-            pdf.cell(50, 10, total_price_str, 1, 1, "R", fill=True)  # Третья колонка - сумма с правым выравниванием
+            pdf.cell(10, 10, "", 1, 0, "C", fill=True)
+            pdf.cell(83, 10, "ИТОГО:", 1, 0, "R", fill=True)
+            pdf.cell(67, 10, total_price_str, 1, 1, "L", fill=True)
             
-            # 2. Если есть скидка, добавляем строку со скидкой
-            if discount > 0:
-                # Форматируем скидку
-                discount_value = int(discount)
-                if discount_value >= 1000000:
-                    discount_str = f"-{discount_value:,d}".replace(',', ' ') + " ₽"
-                else:
-                    discount_str = f"-{discount_value:,d}".replace(',', ' ') + " ₽"
-                
-                # Задаем светло-зеленый цвет для строки скидки
-                pdf.set_fill_color(200, 255, 200)  # Светло-зеленый
-                
-                # Строка СКИДКА
-                pdf.cell(10, 10, "", 1, 0, "C", fill=True)  # Первая колонка - пустая
-                pdf.cell(110, 10, "Скидка по акции:", 1, 0, "L", fill=True)
-                pdf.cell(50, 10, discount_str, 1, 1, "R", fill=True)
-                
-                # 3. Добавляем строку ИТОГО со скидкой жирным шрифтом
-                pdf.set_fill_color(200, 255, 200)  # Сохраняем тот же цвет
-                pdf.set_font('DejaVu', 'B', 12)  # Увеличиваем шрифт для финальной суммы
-                
-                # Форматируем конечную цену со скидкой
-                final_price_value = int(total_price_after_discount) if total_price_after_discount else total_price_value - discount_value
-                if final_price_value >= 1000000:
-                    final_price_str = f"{final_price_value:,d}".replace(',', ' ') + " ₽"
-                else:
-                    final_price_str = f"{final_price_value:,d}".replace(',', ' ') + " ₽"
-                
-                # Строка финального ИТОГО
-                pdf.cell(10, 10, "", 1, 0, "C", fill=True)  # Первая колонка - пустая
-                pdf.cell(110, 10, "ИТОГО:", 1, 0, "L", fill=True)  # Вторая колонка - "ИТОГО:" с левым выравниванием
-                pdf.cell(50, 10, final_price_str, 1, 1, "R", fill=True)  # Третья колонка - сумма с правым выравниванием
-            
-            # Сброс цвета текста и заливки
-            pdf.set_text_color(0, 0, 0)
-            pdf.set_fill_color(255, 255, 255)
+            # Убрали дублирование итоговой суммы, чтобы не повторяться
         else:
             pdf.set_font('DejaVu', '', 10)
             pdf.cell(0, 7, "Данные о стоимости отсутствуют", 0, 1)
         
-        # Добавляем примечания после таблицы стоимости
-        pdf.ln(10)  # Отступ перед примечаниями
-        pdf.set_font('DejaVu', 'B', 12)
-        pdf.cell(0, 8, "Примечания:", 0, 1, "L")
-        
-        # Настраиваем шрифт для текста примечаний
-        pdf.set_font('DejaVu', '', 10)
-        
-        # Добавляем каждое примечание отдельной строкой с нумерацией
-        remarks = [
-            "Расчет является предварительным и может быть уточнен при обращении в компанию.",
-            "Срок действия предложения: 14 дней с даты расчета.",
-            "Срок поставки: 6 недель с момента подтверждения заказа.",
-            "Условия оплаты: 80% предоплата, 20% после монтажа."
-        ]
-        
-        for i, remark in enumerate(remarks, 1):
-            pdf.cell(0, 7, f"{i}. {remark}", 0, 1, "L")
-        
-        # Добавляем описание перголы и дополнительные разделы на новой странице
+        # Добавляем описание перголы и дополнительные разделы
         pdf.add_page()
         pdf.chapter_title("Описание перголы:")
         
@@ -956,19 +448,9 @@ def generate_commercial_offer(pergola_data, user_data=None):
         if drainage_description:
             descriptions.append(drainage_description)
             
-        # Технические описания ламелей и системы установки
-        lamella_engineering_description = pergola_data.get('lamella_engineering_description', '')
-        if lamella_engineering_description:
-            descriptions.append(lamella_engineering_description)
-            
-        installation_system_description = pergola_data.get('installation_system_description', '')
-        if installation_system_description:
-            descriptions.append(installation_system_description)
-            
-        # Описания приводов (зависят от типа перголы)
-        drive_description = pergola_data.get('drive_description', '')
-        if drive_description:
-            descriptions.append(drive_description)
+        bansbach_description = pergola_data.get('bansbach_description', '')
+        if bansbach_description:
+            descriptions.append(bansbach_description)
             
         # Если описаний не нашлось, создаем базовое описание по умолчанию
         if not descriptions:
@@ -1007,15 +489,10 @@ def generate_commercial_offer(pergola_data, user_data=None):
             if section_index > 0:
                 pdf.add_page()
                 # Если у нас более одного раздела, добавляем заголовки для дополнительных
-                section_titles = {
-                    1: "Модульная система пергол:",
-                    2: "Система водоотведения:",
-                    3: "Инженерные характеристики ламелей:",
-                    4: "Система установки и проектирования:",
-                    5: "Привод и автоматика:"
-                }
-                if section_index in section_titles:
-                    pdf.chapter_title(section_titles[section_index])
+                if section_index == 1:
+                    pdf.chapter_title("Модульная система пергол:")
+                elif section_index == 2:
+                    pdf.chapter_title("Система водоотведения:")
             
             # HTML-описание нужно преобразовать в чистый текст более эффективным способом
             try:
@@ -1153,68 +630,6 @@ def generate_commercial_offer(pergola_data, user_data=None):
             except Exception as e:
                 print(f"Ошибка при обработке HTML: {str(e)}")
         
-        # Добавляем отдельный раздел с изображениями перголы из pergola_data
-        image_paths = pergola_data.get('image_paths', [])
-        image_caption = pergola_data.get('image_caption', '')
-        
-        if image_paths:
-            # Начинаем новую страницу для галереи изображений
-            pdf.add_page()
-            pdf.chapter_title("Галерея изображений:")
-            
-            # Добавляем пояснение с типом перголы
-            if image_caption:
-                pdf.set_font('DejaVu', 'I', 11)
-                pdf.cell(0, 8, image_caption, 0, 1, "C")
-                pdf.ln(5)
-            
-            # Обрабатываем все изображения из списка
-            for img_path in image_paths:
-                if os.path.exists(img_path):
-                    try:
-                        from PIL import Image
-                        
-                        # Открываем изображение и определяем его размеры
-                        img_obj = Image.open(img_path)
-                        width, height = img_obj.size
-                        
-                        # Определяем ширину в миллиметрах для PDF (A4: 210x297 мм)
-                        max_width_mm = 170  # Максимальная ширина в мм (с учетом полей)
-                        max_height_mm = 240  # Максимальная высота в мм (с учетом полей)
-                        
-                        # Рассчитываем размеры с сохранением пропорций
-                        img_width_mm = max_width_mm
-                        img_height_mm = height * (img_width_mm / width)
-                        
-                        # Если высота слишком большая, пересчитываем размеры
-                        if img_height_mm > max_height_mm:
-                            img_height_mm = max_height_mm
-                            img_width_mm = width * (img_height_mm / height)
-                        
-                        # Добавляем отступ перед изображением
-                        pdf.ln(5)
-                        
-                        # Проверяем, поместится ли изображение на текущей странице
-                        if pdf.get_y() + img_height_mm + 10 > 270:  # 270 = 297 - нижнее поле
-                            pdf.add_page()
-                        
-                        # Вставляем изображение с явным указанием ширины и высоты
-                        pdf.image(
-                            img_path,
-                            x=(210 - img_width_mm) / 2,  # центрируем
-                            y=pdf.get_y(),  # текущая позиция Y
-                            w=img_width_mm,  # ширина
-                            h=img_height_mm  # высота, рассчитанная с сохранением пропорций
-                        )
-                        
-                        # Добавляем отступ после изображения
-                        pdf.ln(10)
-                        print(f"Добавлено изображение в PDF: {img_path}")
-                    except Exception as e:
-                        print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
-                else:
-                    print(f"Изображение не найдено: {img_path}")
-        
         # Добавляем контактную информацию - проверяем, может ли она поместиться на текущей странице
         # Примерный размер для контактной информации (6 строк по 7 мм + заголовок и отступы)
         contact_info_height = 60
@@ -1232,10 +647,10 @@ def generate_commercial_offer(pergola_data, user_data=None):
         pdf.ln(3)
         
         contact_info = [
-            "Телефон: +7 (906) 429-74-20",
-            "Email: zakaz@infopergola.ru",
-            "Веб-сайт: https://pergolamarket.ru",
-            "Адрес: г.Ростов-на-Дону, ул.Орская, 27\\1"
+            "Телефон: +7 (495) 123-45-67",
+            "Email: info@komfortnyj-dom.ru",
+            "Веб-сайт: www.komfortnyj-dom.ru",
+            "Адрес: г. Москва, ул. Примерная, д. 123"
         ]
         
         for info in contact_info:
@@ -1245,27 +660,12 @@ def generate_commercial_offer(pergola_data, user_data=None):
         os.makedirs(os.path.dirname(pdf_filename), exist_ok=True)
         
         # Сохраняем PDF
-        # Сохраняем PDF в файл
-        try:
-            pdf.output(pdf_filename)
-            print(f"PDF успешно создан: {pdf_filename}")
-            
-            # Проверяем, что файл действительно создан и имеет размер
-            if os.path.exists(pdf_filename) and os.path.getsize(pdf_filename) > 0:
-                print(f"Подтверждение: файл {pdf_filename} существует и имеет размер {os.path.getsize(pdf_filename)} байт")
-                return pdf_filename
-            else:
-                print(f"Ошибка: файл {pdf_filename} не был создан или имеет нулевой размер")
-                raise Exception(f"Файл PDF не был создан: {pdf_filename}")
-        except Exception as e:
-            print(f"Ошибка при сохранении PDF: {e}")
-            traceback.print_exc()
-            raise
+        pdf.output(pdf_filename)
+        print(f"PDF успешно создан: {pdf_filename}")
+        
+        return pdf_filename
         
     except Exception as e:
-        print(f"Общая ошибка при создании PDF: {e}")
-        print("Детали ошибки:")
-        traceback.print_exc()
         print(f"Ошибка при создании PDF: {str(e)}")
         
         try:
@@ -1332,10 +732,9 @@ def generate_commercial_offer(pergola_data, user_data=None):
             simple_pdf.cell(0, 10, "Контактная информация:", 0, 1)
             
             simple_pdf.set_font('Arial', '', 10)
-            simple_pdf.cell(0, 7, "Телефон: +7 (906) 429-74-20", 0, 1)
-            simple_pdf.cell(0, 7, "Email: zakaz@infopergola.ru", 0, 1)
-            simple_pdf.cell(0, 7, "Веб-сайт: https://pergolamarket.ru", 0, 1)
-            simple_pdf.cell(0, 7, "Адрес: г.Ростов-на-Дону, ул.Орская, 27\\1", 0, 1)
+            simple_pdf.cell(0, 7, "Телефон: +7 (495) 123-45-67", 0, 1)
+            simple_pdf.cell(0, 7, "Email: info@komfortnyj-dom.ru", 0, 1)
+            simple_pdf.cell(0, 7, "Веб-сайт: www.komfortnyj-dom.ru", 0, 1)
             
             # Сохраняем упрощенный PDF в дефолтную директорию
             backup_filename = f"generated_pdf/KP_Pergola_simple_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
