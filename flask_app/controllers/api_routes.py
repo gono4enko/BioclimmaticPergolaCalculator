@@ -4,7 +4,7 @@ API маршруты для взаимодействия с клиентским
 import os
 import json
 import datetime
-from flask import Blueprint, jsonify, request, current_app, send_file
+from flask import Blueprint, jsonify, request, current_app, send_file, url_for
 from werkzeug.exceptions import BadRequest, NotFound
 from ..models.pergola_model import Pergola, db
 from ..services.calculator import (calculate_pergola_price, 
@@ -77,17 +77,16 @@ def save_calculation():
             raise BadRequest("Missing request data")
         
         # Создание новой записи для перголы
-        new_pergola = Pergola(
-            type=data.get('pergola_type'),
-            width=float(data.get('width')),
-            length=float(data.get('length')),
-            modules=int(data.get('modules')),
-            lamella_size=data.get('lamella_size'),
-            options=data.get('options', {}),
-            total_price=float(data.get('total_price')),
-            discount=float(data.get('discount', 0)),
-            total_price_after_discount=float(data.get('total_price_after_discount', 0))
-        )
+        new_pergola = Pergola()
+        new_pergola.type = data.get('pergola_type')
+        new_pergola.width = float(data.get('width'))
+        new_pergola.length = float(data.get('length'))
+        new_pergola.modules = int(data.get('modules'))
+        new_pergola.lamella_size = data.get('lamella_size')
+        new_pergola.options = data.get('options', {})
+        new_pergola.total_price = float(data.get('total_price'))
+        new_pergola.discount = float(data.get('discount', 0))
+        new_pergola.total_price_after_discount = float(data.get('total_price_after_discount', 0))
         
         # Сохранение в базу данных
         db.session.add(new_pergola)

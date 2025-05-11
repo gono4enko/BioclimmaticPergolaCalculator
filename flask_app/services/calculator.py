@@ -266,14 +266,13 @@ def load_price_data(pergola_type, lamella_size):
                 }
                 
                 # Сохраняем данные в базу для будущего использования
-                db_price = PriceData(
-                    pergola_type=pergola_type,
-                    lamella_size=lamella_size,
-                    width=width,
-                    length=length,
-                    price=price,
-                    modules=modules
-                )
+                db_price = PriceData()
+                db_price.pergola_type = pergola_type
+                db_price.lamella_size = lamella_size
+                db_price.width = width
+                db_price.length = length
+                db_price.price = price
+                db_price.modules = modules
                 db.session.add(db_price)
             
             db.session.commit()

@@ -94,14 +94,13 @@ def import_prices():
                             existing.modules = modules
                         else:
                             # Создание новой записи
-                            price_data = PriceData(
-                                pergola_type=pergola_type,
-                                lamella_size=lamella_size,
-                                width=width,
-                                length=length,
-                                price=price,
-                                modules=modules
-                            )
+                            price_data = PriceData()
+                            price_data.pergola_type = pergola_type
+                            price_data.lamella_size = lamella_size
+                            price_data.width = width
+                            price_data.length = length
+                            price_data.price = price
+                            price_data.modules = modules
                             db.session.add(price_data)
                             
                         count += 1
