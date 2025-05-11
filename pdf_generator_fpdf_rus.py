@@ -339,7 +339,9 @@ def generate_commercial_offer(pergola_data, user_data=None):
         # Добавляем специификацию, если она есть
         specification = pergola_data.get('specification', [])
         if specification:
-            pdf.ln(5)
+            # Добавляем разрыв страницы перед спецификацией, чтобы она начиналась с новой страницы
+            pdf.add_page()
+            
             pdf.set_font('DejaVu', 'B', 14)
             pdf.cell(0, 8, "Спецификация:", 0, 1, "L")
             
