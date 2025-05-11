@@ -3379,11 +3379,16 @@ def export_to_pdf():
     try:
         # Сначала пробуем создать простой PDF
         st.info("Создаем PDF-документ...")
+        # Добавляем логирование
+        import logging
+        logging.info("Запускаем создание PDF через create_simple_pdf")
         pdf_file_path = create_simple_pdf(pdf_data)
+        logging.info(f"PDF файл создан: {pdf_file_path}")
         
         if pdf_file_path and os.path.exists(pdf_file_path):
             # Проверяем размер файла
             file_size = os.path.getsize(pdf_file_path)
+            logging.info(f"Размер PDF файла: {file_size} байт")
             if file_size > 0:
                 st.success(f"PDF файл успешно создан: {pdf_file_path}")
                 return pdf_file_path
