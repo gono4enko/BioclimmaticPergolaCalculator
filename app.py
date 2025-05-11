@@ -3480,10 +3480,13 @@ def export_to_pdf():
     
     results = st.session_state.results
     
-    # Проверяем директории для шрифтов и PDF
+    # Подготавливаем директории и используем улучшенное управление PDF-файлами
     os.makedirs("fonts", exist_ok=True)
-    os.makedirs("generated_pdf", exist_ok=True)
     os.makedirs("processed_images", exist_ok=True)
+    
+    # Используем новую функцию для управления директорией PDF-файлов
+    from improved_pdf_export import ensure_pdf_directory
+    ensure_pdf_directory()
     
     options = results.get("options", {})
     pergola_type = options.get("pergola_type", "")
