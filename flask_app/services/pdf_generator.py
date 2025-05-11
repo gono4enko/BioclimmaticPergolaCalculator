@@ -1,364 +1,179 @@
 """
-Сервис для генерации PDF-документов с использованием ReportLab.
+Сервис для генерации PDF файлов с коммерческими предложениями.
 """
 import os
 import time
 import datetime
-import logging
 from flask import current_app
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.lib.units import mm
-from reportlab.platypus import Table, TableStyle
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-
-# Настройка логирования
-logger = logging.getLogger(__name__)
-
-# Регистрация русских шрифтов (при наличии)
-try:
-    # Пути к шрифтам
-    FONT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts')
-    os.makedirs(FONT_DIR, exist_ok=True)
-    
-    # Проверка наличия шрифтов и их регистрация
-    font_files = {
-        'Arial': 'arial.ttf',
-        'ArialBold': 'arialbd.ttf',
-        'ArialItalic': 'ariali.ttf',
-        'ArialBoldItalic': 'arialbi.ttf',
-    }
-    
-    fonts_registered = False
-    for font_name, font_file in font_files.items():
-        font_path = os.path.join(FONT_DIR, font_file)
-        if os.path.exists(font_path):
-            pdfmetrics.registerFont(TTFont(font_name, font_path))
-            fonts_registered = True
-        else:
-            logger.warning(f"Шрифт {font_file} не найден по пути {font_path}")
-    
-    if fonts_registered:
-        logger.info("Шрифты для PDF успешно зарегистрированы")
-    else:
-        logger.warning("Ни один шрифт не был зарегистрирован. PDF будет использовать стандартные шрифты.")
-except Exception as e:
-    logger.error(f"Ошибка при регистрации шрифтов: {str(e)}")
-
-class PDFGenerator:
-    """Базовый класс генератора PDF."""
-    
-    def generate(self, data):
-        """
-        Генерирует PDF на основе данных.
-        
-        Args:
-            data (dict): Данные для генерации PDF
-            
-        Returns:
-            str: Путь к сгенерированному PDF-файлу
-        """
-        raise NotImplementedError("Subclasses must implement generate()")
+from fpdf import FPDF
 
 
-class StandardPDFGenerator(PDFGenerator):
-    """Стандартный генератор PDF для коммерческих предложений по перголам."""
-    
-    def generate(self, data):
-        """
-        Генерирует PDF с коммерческим предложением по перголе.
-        
-        Args:
-            data (dict): Данные для генерации PDF
-            
-        Returns:
-            str: Путь к сгенерированному PDF-файлу
-        """
-        try:
-            # Получение данных
-            pergola_type = data.get('pergola_type', 'B500NEW')
-            width = data.get('width', 3.0)
-            length = data.get('length', 4.0)
-            modules = data.get('modules', 1)
-            items = data.get('items', [])
-            total_price = data.get('total_price', 0)
-            discount = data.get('discount', 0)
-            total_after_discount = data.get('total_price_after_discount', 0)
-            
-            # Генерация имени файла
-            today = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"КП_пергола_{pergola_type}_{width}x{length}м_{today}.pdf"
-            pdf_dir = current_app.config['PDF_FOLDER']
-            pdf_path = os.path.join(pdf_dir, filename)
-            
-            # Создание PDF
-            c = canvas.Canvas(pdf_path, pagesize=A4)
-            width_mm, height_mm = A4[0] / mm, A4[1] / mm
-            
-            # Добавление заголовка
-            font_name = 'Arial' if 'Arial' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'
-            font_name_bold = 'ArialBold' if 'ArialBold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'
-            
-            c.setFont(font_name_bold, 16)
-            c.drawCentredString(width_mm * mm / 2, height_mm * mm - 30, "Коммерческое предложение")
-            c.drawCentredString(width_mm * mm / 2, height_mm * mm - 50, f"Пергола {pergola_type}")
-            
-            # Добавление информации о перголе
-            c.setFont(font_name, 12)
-            y_position = height_mm * mm - 80
-            
-            c.drawString(30, y_position, f"Размеры: {width} x {length} м")
-            y_position -= 20
-            c.drawString(30, y_position, f"Количество модулей: {modules}")
-            y_position -= 40
-            
-            # Добавление таблицы с опциями
-            c.setFont(font_name_bold, 14)
-            c.drawString(30, y_position, "Комплектация:")
-            y_position -= 30
-            
-            # Создание данных для таблицы
-            table_data = [['Наименование', 'Количество', 'Цена, руб.']]
-            for item in items:
-                name = item.get('name', '')
-                quantity = item.get('quantity', '')
-                price = item.get('price', 0)
-                table_data.append([name, str(quantity), f"{price:,.0f}".replace(',', ' ')])
-            
-            # Добавление итогов
-            table_data.append(['', '', ''])
-            table_data.append(['', 'Итого:', f"{total_price:,.0f}".replace(',', ' ')])
-            
-            if discount > 0:
-                discount_amount = total_price - total_after_discount
-                table_data.append(['', f'Скидка {discount}%:', f"-{discount_amount:,.0f}".replace(',', ' ')])
-                table_data.append(['', 'Итого со скидкой:', f"{total_after_discount:,.0f}".replace(',', ' ')])
-            
-            # Создание и стилизация таблицы
-            col_widths = [270, 100, 100]
-            table = Table(table_data, colWidths=col_widths)
-            table.setStyle(TableStyle([
-                ('FONT', (0, 0), (-1, 0), font_name_bold, 12),
-                ('FONT', (0, 1), (-1, -1), font_name, 11),
-                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-                ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('BOX', (0, 0), (-1, -1), 1, colors.black),
-                ('LINEABOVE', (0, -3), (-1, -3), 1, colors.black),
-                ('FONT', (1, -3), (-1, -1), font_name_bold, 11),
-            ]))
-            
-            # Отрисовка таблицы
-            table.wrapOn(c, 30, 0)
-            table.drawOn(c, 30, y_position - 20 * len(table_data))
-            
-            # Добавление даты и комментария
-            y_position = 80
-            c.setFont(font_name, 10)
-            c.drawString(30, y_position, f"Коммерческое предложение действительно в течение 30 дней.")
-            y_position -= 20
-            c.drawString(30, y_position, f"Дата: {datetime.datetime.now().strftime('%d.%m.%Y %H:%M')}")
-            y_position -= 20
-            c.drawString(30, y_position, "Для уточнения деталей и оформления заказа свяжитесь с нами.")
-            
-            # Сохранение PDF
-            c.save()
-            logger.info(f"PDF успешно создан по пути: {pdf_path}")
-            
-            return pdf_path
-            
-        except Exception as e:
-            logger.error(f"Ошибка при создании PDF: {str(e)}", exc_info=True)
-            return None
-
-
-class SimplePDFGenerator(PDFGenerator):
-    """Упрощенный генератор PDF без поддержки кириллицы."""
-    
-    def generate(self, data):
-        """
-        Генерирует упрощенный PDF с коммерческим предложением на латинице.
-        
-        Args:
-            data (dict): Данные для генерации PDF
-            
-        Returns:
-            str: Путь к сгенерированному PDF-файлу
-        """
-        try:
-            # Получение данных
-            pergola_type = data.get('pergola_type', 'B500NEW')
-            width = data.get('width', 3.0)
-            length = data.get('length', 4.0)
-            modules = data.get('modules', 1)
-            items = data.get('items', [])
-            total_price = data.get('total_price', 0)
-            discount = data.get('discount', 0)
-            total_after_discount = data.get('total_price_after_discount', 0)
-            
-            # Генерация имени файла
-            today = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"KP_pergola_{pergola_type}_{width}x{length}m_{today}.pdf"
-            pdf_dir = current_app.config['PDF_FOLDER']
-            pdf_path = os.path.join(pdf_dir, filename)
-            
-            # Создание PDF
-            c = canvas.Canvas(pdf_path, pagesize=A4)
-            width_mm, height_mm = A4[0] / mm, A4[1] / mm
-            
-            # Добавление заголовка
-            c.setFont('Helvetica-Bold', 16)
-            c.drawCentredString(width_mm * mm / 2, height_mm * mm - 30, "Commercial Offer")
-            c.drawCentredString(width_mm * mm / 2, height_mm * mm - 50, f"Pergola {pergola_type}")
-            
-            # Добавление информации о перголе
-            c.setFont('Helvetica', 12)
-            y_position = height_mm * mm - 80
-            
-            c.drawString(30, y_position, f"Dimensions: {width} x {length} m")
-            y_position -= 20
-            c.drawString(30, y_position, f"Modules: {modules}")
-            y_position -= 40
-            
-            # Добавление таблицы с опциями
-            c.setFont('Helvetica-Bold', 14)
-            c.drawString(30, y_position, "Options:")
-            y_position -= 30
-            
-            # Создание данных для таблицы
-            table_data = [['Item', 'Quantity', 'Price, RUB']]
-            for item in items:
-                name = item.get('name', '').replace('Пергола', 'Pergola').replace('Привод', 'Drive')
-                name = name.replace('Пульт управления', 'Remote Control')
-                name = name.replace('Датчик дождя', 'Rain Sensor').replace('Датчик ветра', 'Wind Sensor')
-                name = name.replace('Дополнительные колонны', 'Additional Columns')
-                name = name.replace('Усилитель лотка', 'Gutter Reinforcement')
-                name = name.replace('Светодиодная подсветка', 'LED Lighting')
-                name = name.replace('ламели', 'lamellas').replace('лотка', 'gutters').replace('модуль/-я/-ей', 'modules')
-                
-                quantity = item.get('quantity', '')
-                if isinstance(quantity, str):
-                    quantity = quantity.replace('м', 'm').replace('шт', 'pcs')
-                
-                price = item.get('price', 0)
-                table_data.append([name, str(quantity), f"{price:,.0f}".replace(',', ' ')])
-            
-            # Добавление итогов
-            table_data.append(['', '', ''])
-            table_data.append(['', 'Total:', f"{total_price:,.0f}".replace(',', ' ')])
-            
-            if discount > 0:
-                discount_amount = total_price - total_after_discount
-                table_data.append(['', f'Discount {discount}%:', f"-{discount_amount:,.0f}".replace(',', ' ')])
-                table_data.append(['', 'Final price:', f"{total_after_discount:,.0f}".replace(',', ' ')])
-            
-            # Создание и стилизация таблицы
-            col_widths = [270, 100, 100]
-            table = Table(table_data, colWidths=col_widths)
-            table.setStyle(TableStyle([
-                ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold', 12),
-                ('FONT', (0, 1), (-1, -1), 'Helvetica', 11),
-                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-                ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('BOX', (0, 0), (-1, -1), 1, colors.black),
-                ('LINEABOVE', (0, -3), (-1, -3), 1, colors.black),
-                ('FONT', (1, -3), (-1, -1), 'Helvetica-Bold', 11),
-            ]))
-            
-            # Отрисовка таблицы
-            table.wrapOn(c, 30, 0)
-            table.drawOn(c, 30, y_position - 20 * len(table_data))
-            
-            # Добавление даты и комментария
-            y_position = 80
-            c.setFont('Helvetica', 10)
-            c.drawString(30, y_position, f"This offer is valid for 30 days.")
-            y_position -= 20
-            c.drawString(30, y_position, f"Date: {datetime.datetime.now().strftime('%d.%m.%Y %H:%M')}")
-            y_position -= 20
-            c.drawString(30, y_position, "Contact us for details and ordering.")
-            
-            # Сохранение PDF
-            c.save()
-            logger.info(f"Simple PDF created successfully at: {pdf_path}")
-            
-            return pdf_path
-            
-        except Exception as e:
-            logger.error(f"Error creating simple PDF: {str(e)}", exc_info=True)
-            return None
-
-
-class PDFGeneratorFactory:
-    """Фабрика для создания генераторов PDF."""
-    
-    @staticmethod
-    def get_generator(generator_type='standard'):
-        """
-        Возвращает подходящий генератор PDF.
-        
-        Args:
-            generator_type (str): Тип генератора ('standard', 'simple')
-            
-        Returns:
-            PDFGenerator: Генератор PDF
-        """
-        if generator_type == 'simple':
-            return SimplePDFGenerator()
-        else:
-            return StandardPDFGenerator()
-
-
-def generate_pdf(data, generator_type='standard', fallback=True):
+class PergolaQuotePDF(FPDF):
     """
-    Основная функция для генерации PDF с резервным генератором.
+    Класс для создания PDF с коммерческим предложением на перголу.
+    Расширяет базовый класс FPDF.
+    """
+    
+    def __init__(self, orientation='P', unit='mm', format='A4'):
+        super().__init__(orientation=orientation, unit=unit, format=format)
+        # Используем стандартные шрифты вместо кастомных
+        self.set_font('Helvetica')
+        
+    def header(self):
+        """Верхний колонтитул с логотипом и заголовком."""
+        # Логотип компании
+        logo_path = os.path.join(current_app.root_path, 'static', 'images', 'logo.png')
+        if os.path.exists(logo_path):
+            self.image(logo_path, 10, 8, 50)
+        
+        # Заголовок
+        self.set_font('Helvetica', 'B', 15)
+        self.set_text_color(50, 50, 50)
+        self.cell(0, 10, 'Коммерческое предложение', 0, 1, 'R')
+        
+        # Дата
+        self.set_font('Helvetica', '', 10)
+        today = datetime.datetime.now().strftime('%d.%m.%Y')
+        self.cell(0, 10, f'Дата: {today}', 0, 1, 'R')
+        
+        # Линия под заголовком
+        self.ln(5)
+        self.set_draw_color(200, 200, 200)
+        self.line(10, 30, 200, 30)
+        self.ln(10)
+    
+    def footer(self):
+        """Нижний колонтитул с номером страницы."""
+        self.set_y(-15)
+        self.set_font('Helvetica', '', 8)
+        self.set_text_color(128, 128, 128)
+        
+        # Номер страницы
+        self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
+        
+        # Контактная информация
+        self.set_y(-10)
+        self.cell(0, 10, 'Телефон: +7 (495) 123-45-67 | Email: info@pergola-calc.ru', 0, 0, 'C')
+
+
+def generate_pdf(data):
+    """
+    Генерирует PDF файл с коммерческим предложением.
     
     Args:
         data (dict): Данные для генерации PDF
-        generator_type (str): Тип генератора ('standard', 'simple')
-        fallback (bool): Использовать запасной генератор при ошибке
-        
+    
     Returns:
-        str: Путь к сгенерированному PDF-файлу
+        str: Путь к сгенерированному PDF файлу
     """
     try:
-        # Получение основного генератора
-        generator = PDFGeneratorFactory.get_generator(generator_type)
+        # Создаем экземпляр PDF
+        pdf = PergolaQuotePDF()
+        pdf.add_page()
         
-        # Попытка создания PDF
-        start_time = time.time()
-        pdf_path = generator.generate(data)
-        elapsed_time = time.time() - start_time
+        # Информация о клиенте (если есть)
+        client_info = data.get('client_info', {})
+        if client_info:
+            pdf.set_font('Helvetica', 'B', 12)
+            pdf.cell(0, 10, 'Данные клиента:', 0, 1)
+            
+            pdf.set_font('Helvetica', '', 10)
+            for key, value in client_info.items():
+                pdf.cell(0, 6, f'{key}: {value}', 0, 1)
+            
+            pdf.ln(5)
         
-        # Проверка результата
-        if pdf_path and os.path.exists(pdf_path):
-            logger.info(f"PDF успешно создан за {elapsed_time:.2f} сек: {pdf_path}")
-            return pdf_path
-        else:
-            logger.error(f"Не удалось создать PDF с помощью {generator_type} генератора")
+        # Информация о перголе
+        pdf.set_font('Helvetica', 'B', 12)
+        pdf.cell(0, 10, 'Параметры перголы:', 0, 1)
+        
+        pdf.set_font('Helvetica', '', 10)
+        pdf.cell(0, 6, f'Тип перголы: {data.get("pergola_type", "")}', 0, 1)
+        pdf.cell(0, 6, f'Размеры: {data.get("width", 0)} x {data.get("length", 0)} м', 0, 1)
+        pdf.cell(0, 6, f'Количество модулей: {data.get("modules", 1)}', 0, 1)
+        pdf.cell(0, 6, f'Размер ламелей: {data.get("lamella_size", "")} мм', 0, 1)
+        
+        # Опции
+        options = data.get('options', {})
+        if options:
+            pdf.ln(5)
+            pdf.set_font('Helvetica', 'B', 12)
+            pdf.cell(0, 10, 'Дополнительные опции:', 0, 1)
             
-            # Использование запасного генератора, если разрешено
-            if fallback and generator_type != 'simple':
-                logger.info("Попытка создания PDF с помощью запасного (simple) генератора")
-                return generate_pdf(data, generator_type='simple', fallback=False)
+            pdf.set_font('Arial', '', 10)
+            for key, value in options.items():
+                if value:
+                    pdf.cell(0, 6, f'✓ {key}', 0, 1)
+        
+        # Таблица с позициями и ценами
+        pdf.ln(10)
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, 'Спецификация:', 0, 1)
+        
+        # Заголовки таблицы
+        pdf.set_font('Arial', 'B', 10)
+        pdf.set_fill_color(240, 240, 240)
+        
+        col_width = [100, 30, 30]
+        pdf.cell(col_width[0], 10, 'Наименование', 1, 0, 'C', True)
+        pdf.cell(col_width[1], 10, 'Кол-во', 1, 0, 'C', True)
+        pdf.cell(col_width[2], 10, 'Цена, ₽', 1, 1, 'C', True)
+        
+        # Строки таблицы
+        pdf.set_font('Arial', '', 10)
+        
+        items = data.get('items', [])
+        for item in items:
+            # Разбиваем длинные названия на несколько строк
+            name = item.get('name', '')
+            quantity = item.get('quantity', '')
+            price = item.get('price', 0)
             
-            return None
+            # Форматирование цены
+            formatted_price = f"{int(price):,}".replace(',', ' ')
+            
+            pdf.cell(col_width[0], 8, name, 1, 0)
+            pdf.cell(col_width[1], 8, str(quantity), 1, 0, 'C')
+            pdf.cell(col_width[2], 8, formatted_price, 1, 1, 'R')
+        
+        # Итоговая стоимость
+        pdf.ln(5)
+        pdf.set_font('Arial', 'B', 12)
+        total_price = data.get('total_price', 0)
+        formatted_total = f"{int(total_price):,}".replace(',', ' ')
+        pdf.cell(130, 10, 'Итого:', 0, 0, 'R')
+        pdf.cell(30, 10, f'{formatted_total} ₽', 0, 1, 'R')
+        
+        # Скидка
+        discount = data.get('discount', 0)
+        if discount > 0:
+            pdf.set_font('Arial', '', 10)
+            pdf.cell(130, 8, f'Скидка {discount}%:', 0, 0, 'R')
+            
+            total_after_discount = data.get('total_price_after_discount', 0)
+            formatted_discount_price = f"{int(total_after_discount):,}".replace(',', ' ')
+            pdf.cell(30, 8, f'{formatted_discount_price} ₽', 0, 1, 'R')
+        
+        # Условия и сроки
+        pdf.ln(10)
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, 'Условия:', 0, 1)
+        
+        pdf.set_font('Arial', '', 10)
+        pdf.multi_cell(0, 6, 'Срок изготовления: 4-6 недель с момента предоплаты\n'
+                           'Гарантия: 3 года на конструкцию, 1 год на электронику\n'
+                           'Условия оплаты: 70% предоплата, 30% по готовности к монтажу')
+        
+        # Генерация имени файла
+        timestamp = int(time.time())
+        filename = f"KP_Pergola_{timestamp}.pdf"
+        
+        # Сохранение PDF
+        pdf_path = os.path.join(current_app.config['PDF_FOLDER'], filename)
+        pdf.output(pdf_path)
+        
+        return pdf_path
     
     except Exception as e:
-        logger.error(f"Ошибка при генерации PDF: {str(e)}", exc_info=True)
-        
-        # Использование запасного генератора, если разрешено
-        if fallback and generator_type != 'simple':
-            logger.info("Попытка создания PDF с помощью запасного (simple) генератора")
-            return generate_pdf(data, generator_type='simple', fallback=False)
-        
+        current_app.logger.error(f"Error generating PDF: {str(e)}")
         return None

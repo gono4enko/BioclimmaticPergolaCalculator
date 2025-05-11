@@ -1,81 +1,65 @@
 """
-Основные маршруты веб-приложения.
+Основные маршруты приложения.
 """
-import os
 import datetime
-from flask import Blueprint, render_template, current_app, redirect, url_for, request, jsonify
-from ..models.pergola_model import Pergola, db
-from ..services.cache_service import preload_images, clear_image_cache
+from flask import Blueprint, render_template, current_app, redirect, url_for, request, flash
+from ..services.calculator import get_pergola_types, get_lamella_sizes, load_price_data
+from ..services.cache_service import get_cached_images
 
 bp = Blueprint('main', __name__)
 
+@bp.context_processor
+def inject_now():
+    """Добавляет текущую дату в контекст всех шаблонов."""
+    return {'now': datetime.datetime.now()}
+
 @bp.route('/')
 def index():
-    """Главная страница приложения."""
-    current_year = datetime.datetime.now().year
-    return render_template('index.html', preload_images=preload_images(), now={'year': current_year})
-
-@bp.route('/calculator')
-def calculator():
-    """Страница калькулятора перголы."""
-    current_year = datetime.datetime.now().year
-    return render_template('calculator.html', preload_images=preload_images(), now={'year': current_year})
-
-@bp.route('/catalog')
-def catalog():
-    """Страница каталога пергол."""
-    current_year = datetime.datetime.now().year
-    return render_template('catalog.html', now={'year': current_year})
+    """Главная страница с калькулятором."""
+    pergola_types = get_pergola_types()
+    lamella_sizes = get_lamella_sizes()
+    
+    # Предзагрузка изображений для быстрой работы UI
+    cached_images = get_cached_images()
+    
+    return render_template('index.html', 
+                           pergola_types=pergola_types,
+                           lamella_sizes=lamella_sizes,
+                           cached_images=cached_images)
 
 @bp.route('/about')
 def about():
-    """Страница о компании."""
-    current_year = datetime.datetime.now().year
-    return render_template('about.html', now={'year': current_year})
+    """Страница о перголах."""
+    return render_template('about.html')
 
-@bp.route('/pergolas/<int:pergola_id>')
-def pergola_details(pergola_id):
-    """Страница с деталями конкретной перголы."""
-    current_year = datetime.datetime.now().year
-    pergola = Pergola.query.get_or_404(pergola_id)
-    return render_template('pergola_details.html', pergola=pergola, now={'year': current_year})
+@bp.route('/gallery')
+def gallery():
+    """Галерея установленных пергол."""
+    return render_template('gallery.html')
 
-@bp.route('/clear-cache', methods=['POST'])
-def clear_cache():
-    """Очистка кэша изображений."""
-    try:
-        clear_image_cache()
-        return jsonify({'success': True, 'message': 'Кэш успешно очищен'})
-    except Exception as e:
-        current_app.logger.error(f"Ошибка при очистке кэша: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+@bp.route('/contacts')
+def contacts():
+    """Контактная информация."""
+    return render_template('contacts.html')
 
-@bp.route('/health')
-def health_check():
-    """Проверка работоспособности приложения."""
-    try:
-        # Проверка соединения с базой данных
-        from sqlalchemy import text
-        db.session.execute(text('SELECT 1')).scalar()
-        
-        # Проверка доступа к папкам
-        folders_to_check = [
-            current_app.config['PDF_FOLDER'],
-            current_app.config['UPLOAD_FOLDER']
-        ]
-        
-        for folder in folders_to_check:
-            if not os.path.exists(folder):
-                return jsonify({
-                    'status': 'error',
-                    'message': f'Папка не существует: {folder}'
-                }), 500
-        
-        return jsonify({'status': 'ok', 'message': 'Приложение работает нормально'})
+@bp.route('/iframe')
+def iframe():
+    """Версия калькулятора для встраивания в iframe."""
+    pergola_types = get_pergola_types()
+    lamella_sizes = get_lamella_sizes()
     
-    except Exception as e:
-        current_app.logger.error(f"Ошибка при проверке работоспособности: {str(e)}")
-        return jsonify({
-            'status': 'error',
-            'message': f'Ошибка: {str(e)}'
-        }), 500
+    return render_template('iframe.html', 
+                           pergola_types=pergola_types,
+                           lamella_sizes=lamella_sizes,
+                           iframe_mode=True)
+
+@bp.errorhandler(404)
+def page_not_found(e):
+    """Обработчик ошибки 404."""
+    return render_template('errors/404.html'), 404
+
+@bp.errorhandler(500)
+def server_error(e):
+    """Обработчик ошибки 500."""
+    current_app.logger.error(f'Server error: {e}')
+    return render_template('errors/500.html'), 500
