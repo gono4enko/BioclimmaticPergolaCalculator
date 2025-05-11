@@ -3617,58 +3617,93 @@ def export_to_pdf():
                     if key not in pergola_data or pergola_data[key] is None:
                         print(f"ВНИМАНИЕ: Отсутствует или пустое значение для {key}")
                 
-                # Генерируем PDF
-                print("Запуск generate_commercial_offer...")
+                # Генерируем супер-простой PDF напрямую, без использования сложных модулей
+                print("Генерируем PDF напрямую через FPDF...")
+                
                 try:
-                    # Пробуем стандартный метод с поддержкой кириллицы
-                    pdf_file_path = generate_commercial_offer(pergola_data)
-                    print(f"PDF файл создан основным методом: {pdf_file_path}")
-                except Exception as e:
-                    print(f"Ошибка при использовании основного метода: {e}")
-                    print("Попытка использовать упрощенный метод генерации PDF...")
+                    # Имя файла с метками времени для уникальности
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    pdf_filename = f"pergola_quote_{timestamp}.pdf"
                     
-                    # Используем экстра-упрощенный метод без кириллицы
-                    try:
-                        simple_pdf_path = os.path.join("generated_pdf", f"КП_пергола_{options.get('pergola_type', 'B500')}.pdf")
-                        from fpdf import FPDF
-                        
-                        # Создаем директорию если не существует
-                        os.makedirs(os.path.dirname(simple_pdf_path), exist_ok=True)
-                        
-                        # Создаем максимально простой PDF
-                        pdf = FPDF()
-                        pdf.add_page()
-                        pdf.set_font("Helvetica", "B", 16)
-                        pdf.cell(0, 10, "Pergola Calculation Quote", ln=True, align="C")
-                        pdf.ln(5)
-                        
-                        # Базовая информация
-                        pdf.set_font("Helvetica", "", 12)
-                        pdf.cell(0, 8, f"Type: {options.get('pergola_type', 'N/A')}", ln=True)
-                        pdf.cell(0, 8, f"Width: {dimensions.get('width', 'N/A')} m", ln=True)
-                        pdf.cell(0, 8, f"Length: {dimensions.get('length', 'N/A')} m", ln=True)
-                        pdf.cell(0, 8, f"Date: {datetime.now().strftime('%d.%m.%Y')}", ln=True)
-                        pdf.ln(5)
-                        
-                        # Цена и скидка
-                        pdf.set_font("Helvetica", "B", 14)
-                        pdf.cell(0, 10, "Total Price:", ln=True)
-                        pdf.set_font("Helvetica", "", 12)
-                        pdf.cell(0, 8, f"Regular price: {results.get('total_price', 0):,.0f} RUB", ln=True)
-                        pdf.cell(0, 8, f"Discount: {results.get('discount', 0):,.0f} RUB", ln=True)
-                        pdf.set_font("Helvetica", "B", 12)
-                        pdf.cell(0, 8, f"Final price: {results.get('total_price_after_discount', 0):,.0f} RUB", ln=True)
-                        
-                        # Сохраняем PDF
-                        pdf.output(simple_pdf_path)
-                        
-                        pdf_file_path = simple_pdf_path
-                        print(f"PDF файл создан упрощенным методом: {pdf_file_path}")
-                    except Exception as inner_e:
-                        print(f"Ошибка при использовании упрощенного метода: {inner_e}")
-                        import traceback
-                        traceback.print_exc()
-                        pdf_file_path = None
+                    # Обеспечиваем существование директории
+                    output_dir = "generated_pdf"
+                    os.makedirs(output_dir, exist_ok=True)
+                    
+                    # Полный путь к файлу
+                    pdf_file_path = os.path.join(output_dir, pdf_filename)
+                    
+                    # Используем базовую библиотеку FPDF без дополнительных зависимостей
+                    from fpdf import FPDF
+                    
+                    # Создаем чистый PDF
+                    pdf = FPDF()
+                    pdf.add_page()
+                    
+                    # Заголовок
+                    pdf.set_font("Helvetica", "B", 16)
+                    pdf.cell(0, 10, "Pergola Calculation Quote", 0, 1, "C")
+                    pdf.ln(5)
+                    
+                    # Информация о клиенте
+                    pdf.set_font("Helvetica", "B", 12)
+                    pdf.cell(0, 10, "Client Information", 0, 1)
+                    pdf.set_font("Helvetica", "", 10)
+                    pdf.cell(0, 6, f"Date: {timestamp[:8]}", 0, 1)
+                    pdf.ln(5)
+                    
+                    # Основная информация
+                    pdf.set_font("Helvetica", "B", 12)
+                    pdf.cell(0, 10, "Pergola Specifications", 0, 1)
+                    pdf.set_font("Helvetica", "", 10)
+                    
+                    # Информация о перголе
+                    pdf.cell(60, 6, "Model:", 0, 0)
+                    pdf.cell(0, 6, f"{options.get('pergola_type', 'B500')}", 0, 1)
+                    
+                    pdf.cell(60, 6, "Width:", 0, 0)
+                    pdf.cell(0, 6, f"{dimensions.get('width', '3')} m", 0, 1)
+                    
+                    pdf.cell(60, 6, "Length:", 0, 0)
+                    pdf.cell(0, 6, f"{dimensions.get('length', '4')} m", 0, 1)
+                    
+                    pdf.cell(60, 6, "Modules:", 0, 0)
+                    pdf.cell(0, 6, f"{dimensions.get('modules', '1')}", 0, 1)
+                    
+                    pdf.cell(60, 6, "Color:", 0, 0)
+                    pdf.cell(0, 6, f"{options.get('color', 'White')}", 0, 1)
+                    
+                    pdf.ln(5)
+                    
+                    # Цены
+                    pdf.set_font("Helvetica", "B", 12)
+                    pdf.cell(0, 10, "Price Information", 0, 1)
+                    pdf.set_font("Helvetica", "", 10)
+                    
+                    pdf.cell(60, 6, "Base Price:", 0, 0)
+                    pdf.cell(0, 6, f"{results.get('total_price', 0):,.0f} RUB", 0, 1)
+                    
+                    pdf.cell(60, 6, "Discount:", 0, 0)
+                    pdf.cell(0, 6, f"{results.get('discount', 0):,.0f} RUB", 0, 1)
+                    
+                    pdf.set_font("Helvetica", "B", 12)
+                    pdf.cell(60, 6, "Final Price:", 0, 0)
+                    pdf.cell(0, 6, f"{results.get('total_price_after_discount', 0):,.0f} RUB", 0, 1)
+                    
+                    pdf.ln(10)
+                    
+                    # Примечание
+                    pdf.set_font("Helvetica", "I", 8)
+                    pdf.cell(0, 6, "This quote is valid for 30 days from the date of issue.", 0, 1)
+                    
+                    # Сохраняем PDF
+                    pdf.output(pdf_file_path)
+                    print(f"PDF файл успешно создан: {pdf_file_path}")
+                    
+                except Exception as e:
+                    print(f"Ошибка при генерации PDF: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    pdf_file_path = None
                 
                 logging.info(f"PDF файл создан: {pdf_file_path}")
             except Exception as e:
