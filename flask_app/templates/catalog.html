@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Каталог пергол{% endblock %}
+
+{% block head_extra %}
+<style>
+    .catalog-item {
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .catalog-item:hover {
+        transform: translateY(-5px);
+    }
+    
+    .catalog-item img {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    
+    .catalog-header {
+        background-color: #f8f9fa;
+        padding: 3rem 0;
+        margin-bottom: 3rem;
+        border-radius: 0.5rem;
+    }
+    
+    .filter-card {
+        background-color: #fff;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .badge-feature {
+        background-color: #e7f5ff;
+        color: #0d6efd;
+        font-weight: normal;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="catalog-header text-center">
+    <div class="container">
+        <h1 class="display-4 mb-3">Каталог пергол</h1>
+        <p class="lead">Выберите идеальную перголу для вашего пространства</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-3">
+            <div class="filter-card">
+                <h4 class="mb-3">Фильтры</h4>
+                
+                <div class="mb-4">
+                    <h5>Тип перголы</h5>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="typeB500" checked>
+                        <label class="form-check-label" for="typeB500">B500 NEW</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="typeB700" checked>
+                        <label class="form-check-label" for="typeB700">B700 NEW</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="typeB600" checked>
+                        <label class="form-check-label" for="typeB600">B600</label>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h5>Размер ламелей</h5>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="lamella200" checked>
+                        <label class="form-check-label" for="lamella200">200 мм</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="lamella250" checked>
+                        <label class="form-check-label" for="lamella250">250 мм</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="lamellaPIR" checked>
+                        <label class="form-check-label" for="lamellaPIR">PIR (теплоизоляционные)</label>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h5>Опции</h5>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="optionLED" checked>
+                        <label class="form-check-label" for="optionLED">Светодиодная подсветка</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="optionRainSensor" checked>
+                        <label class="form-check-label" for="optionRainSensor">Датчик дождя</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="optionWindSensor" checked>
+                        <label class="form-check-label" for="optionWindSensor">Датчик ветра</label>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary w-100">Применить фильтры</button>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <div class="row">
+                <div class="col-md-6 catalog-item">
+                    <img src="{{ url_for('static', filename='images/catalog_item1.jpg') }}" alt="Пергола на террасе" class="mb-3">
+                    <h3>Пергола B500 NEW</h3>
+                    <p>Современная компактная пергола для небольших патио и террас. Идеальная защита от солнца и дождя для вашего отдыха.</p>
+                    <div class="mb-3">
+                        <span class="badge badge-feature">Ламели 200 мм</span>
+                        <span class="badge badge-feature">Автоматический привод</span>
+                        <span class="badge badge-feature">Датчик дождя</span>
+                    </div>
+                    <a href="{{ url_for('main.calculator') }}?type=B500NEW" class="btn btn-outline-primary">Рассчитать стоимость</a>
+                </div>
+                
+                <div class="col-md-6 catalog-item">
+                    <img src="{{ url_for('static', filename='images/catalog_item2.jpg') }}" alt="Пергола у бассейна" class="mb-3">
+                    <h3>Пергола B700 NEW Premium</h3>
+                    <p>Премиальная пергола с увеличенной шириной пролета. Идеально подходит для больших террас, ресторанов и зон отдыха.</p>
+                    <div class="mb-3">
+                        <span class="badge badge-feature">Ламели 250 мм</span>
+                        <span class="badge badge-feature">LED подсветка</span>
+                        <span class="badge badge-feature">Тандем-привод</span>
+                    </div>
+                    <a href="{{ url_for('main.calculator') }}?type=B700NEW" class="btn btn-outline-primary">Рассчитать стоимость</a>
+                </div>
+                
+                <div class="col-md-6 catalog-item">
+                    <img src="{{ url_for('static', filename='images/catalog_item3.jpg') }}" alt="Пергола на крыше" class="mb-3">
+                    <h3>Пергола B600 с обогревом</h3>
+                    <p>Универсальная пергола с теплоизоляционными ламелями PIR. Позволяет использовать пространство даже в холодное время года.</p>
+                    <div class="mb-3">
+                        <span class="badge badge-feature">Ламели PIR</span>
+                        <span class="badge badge-feature">Встроенный обогрев</span>
+                        <span class="badge badge-feature">Датчик ветра</span>
+                    </div>
+                    <a href="{{ url_for('main.calculator') }}?type=B600&lamella=PIR" class="btn btn-outline-primary">Рассчитать стоимость</a>
+                </div>
+                
+                <div class="col-md-6 catalog-item">
+                    <img src="{{ url_for('static', filename='images/catalog_item4.jpg') }}" alt="Ресторанная пергола" class="mb-3">
+                    <h3>Ресторанный комплекс B700</h3>
+                    <p>Крупногабаритная пергола для коммерческих пространств. Идеальное решение для ресторанов, кафе и общественных зон.</p>
+                    <div class="mb-3">
+                        <span class="badge badge-feature">Модульная система</span>
+                        <span class="badge badge-feature">Управление со смартфона</span>
+                        <span class="badge badge-feature">Метеостанция</span>
+                    </div>
+                    <a href="{{ url_for('main.calculator') }}?type=B700NEW&modules=3" class="btn btn-outline-primary">Рассчитать стоимость</a>
+                </div>
+                
+                <div class="col-md-6 catalog-item">
+                    <img src="{{ url_for('static', filename='images/catalog_item5.jpg') }}" alt="Пергола с подсветкой" class="mb-3">
+                    <h3>Пергола B500 с подсветкой</h3>
+                    <p>Компактная пергола со стильной интегрированной светодиодной подсветкой. Создает особую атмосферу в вечернее время.</p>
+                    <div class="mb-3">
+                        <span class="badge badge-feature">Ламели 200 мм</span>
+                        <span class="badge badge-feature">RGB подсветка</span>
+                        <span class="badge badge-feature">Пульт ДУ</span>
+                    </div>
+                    <a href="{{ url_for('main.calculator') }}?type=B500NEW&led=true" class="btn btn-outline-primary">Рассчитать стоимость</a>
+                </div>
+                
+                <div class="col-md-6 catalog-item">
+                    <img src="{{ url_for('static', filename='images/catalog_item6.jpg') }}" alt="Угловая пергола" class="mb-3">
+                    <h3>Угловая пергола B600</h3>
+                    <p>Специальная конфигурация для угловых террас. Позволяет эффективно использовать пространство и создать уютную зону отдыха.</p>
+                    <div class="mb-3">
+                        <span class="badge badge-feature">Ламели 250 мм</span>
+                        <span class="badge badge-feature">Угловая конструкция</span>
+                        <span class="badge badge-feature">Умный дом</span>
+                    </div>
+                    <a href="{{ url_for('main.calculator') }}?type=B600&custom=corner" class="btn btn-outline-primary">Рассчитать стоимость</a>
+                </div>
+            </div>
+            
+            <nav aria-label="Pagination" class="mt-5">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Предыдущая</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Следующая</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Анимация появления элементов при прокрутке
+        const catalogItems = document.querySelectorAll('.catalog-item');
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = 1;
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        catalogItems.forEach(item => {
+            item.style.opacity = 0;
+            item.style.transition = 'opacity 0.5s ease-in-out';
+            observer.observe(item);
+        });
+        
+        // Обработка параметров URL для предзаполнения калькулятора
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('type')) {
+            // На странице каталога ничего не делаем,
+            // эти параметры будут обработаны на странице калькулятора
+        }
+    });
+</script>
+{% endblock %}

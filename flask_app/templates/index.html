@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Биоклиматические перголы - Главная{% endblock %}
+
+{% block head_extra %}
+<style>
+    .hero {
+        background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("{{ url_for('static', filename='images/hero-bg.jpg') }}");
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 5rem 0;
+        margin-bottom: 3rem;
+        border-radius: 0.5rem;
+    }
+    
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #0d6efd;
+    }
+    
+    .pergola-type-card {
+        transition: transform 0.3s ease;
+        margin-bottom: 2rem;
+    }
+    
+    .pergola-type-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .testimonial {
+        background-color: #f8f9fa;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .cta-section {
+        background-color: #0d6efd;
+        color: white;
+        padding: 3rem 0;
+        border-radius: 0.5rem;
+        margin: 3rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero text-center">
+    <div class="container">
+        <h1 class="display-4 fw-bold">Биоклиматические перголы</h1>
+        <p class="lead mb-4">Создайте идеальную атмосферу для вашего отдыха с нашими современными перголами</p>
+        <a href="{{ url_for('main.calculator') }}" class="btn btn-primary btn-lg px-4 me-2">Рассчитать стоимость</a>
+        <a href="{{ url_for('main.catalog') }}" class="btn btn-outline-light btn-lg px-4">Каталог</a>
+    </div>
+</section>
+
+<!-- Benefits Section -->
+<section class="container mb-5">
+    <h2 class="text-center mb-4">Преимущества наших пергол</h2>
+    <div class="row">
+        <div class="col-md-4 text-center mb-4">
+            <div class="feature-icon">
+                <i class="bi bi-sun"></i>
+            </div>
+            <h3>Защита от солнца</h3>
+            <p>Наслаждайтесь свежим воздухом без обжигающих лучей солнца. Ламели регулируются в зависимости от погодных условий.</p>
+        </div>
+        <div class="col-md-4 text-center mb-4">
+            <div class="feature-icon">
+                <i class="bi bi-cloud-rain"></i>
+            </div>
+            <h3>Защита от осадков</h3>
+            <p>Закрытые ламели защищают от дождя и снега, позволяя использовать перголу в любое время года.</p>
+        </div>
+        <div class="col-md-4 text-center mb-4">
+            <div class="feature-icon">
+                <i class="bi bi-gear"></i>
+            </div>
+            <h3>Автоматизация</h3>
+            <p>Управляйте ламелями с помощью пульта или мобильного приложения. Датчики осадков и ветра автоматически закроют перголу.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Pergola Types Section -->
+<section class="container mb-5">
+    <h2 class="text-center mb-4">Типы пергол</h2>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card pergola-type-card h-100">
+                <img src="{{ url_for('static', filename='images/b500.jpg') }}" class="card-img-top" alt="Пергола B500">
+                <div class="card-body">
+                    <h3 class="card-title">B500 NEW</h3>
+                    <p class="card-text">Компактная и стильная пергола для небольших пространств. Идеальна для городских условий и балконов.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card pergola-type-card h-100">
+                <img src="{{ url_for('static', filename='images/b700.jpg') }}" class="card-img-top" alt="Пергола B700">
+                <div class="card-body">
+                    <h3 class="card-title">B700 NEW</h3>
+                    <p class="card-text">Премиальная пергола с повышенной прочностью и увеличенной шириной пролета для просторных террас.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card pergola-type-card h-100">
+                <img src="{{ url_for('static', filename='images/b600.jpg') }}" class="card-img-top" alt="Пергола B600">
+                <div class="card-body">
+                    <h3 class="card-title">B600</h3>
+                    <p class="card-text">Универсальное решение с оптимальным соотношением цены и качества для частных домов и коммерческих объектов.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section text-center">
+    <div class="container">
+        <h2 class="mb-4">Готовы создать свою идеальную перголу?</h2>
+        <p class="lead mb-4">Воспользуйтесь нашим онлайн-калькулятором и получите предварительный расчет стоимости за несколько минут</p>
+        <a href="{{ url_for('main.calculator') }}" class="btn btn-light btn-lg px-4">Рассчитать стоимость</a>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="container mb-5">
+    <h2 class="text-center mb-4">Отзывы клиентов</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="testimonial">
+                <p class="lead">"Наслаждаемся нашей перголой B700 уже второй год. Качество превзошло все ожидания, а автоматика работает как часы!"</p>
+                <div class="d-flex align-items-center">
+                    <strong>Александр П., Сочи</strong>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="testimonial">
+                <p class="lead">"Пергола B500 идеально вписалась в дизайн нашей террасы. Теперь мы можем наслаждаться отдыхом на свежем воздухе в любую погоду."</p>
+                <div class="d-flex align-items-center">
+                    <strong>Елена М., Москва</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Анимация появления элементов при прокрутке
+        const animateElements = document.querySelectorAll('.pergola-type-card, .testimonial');
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = 1;
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        animateElements.forEach(el => {
+            el.style.opacity = 0;
+            el.style.transition = 'opacity 0.5s ease-in-out';
+            observer.observe(el);
+        });
+    });
+</script>
+{% endblock %}
