@@ -3219,7 +3219,7 @@ def create_very_simple_pdf(pergola_data):
         pdf.set_font("DejaVu", "B", 12)
     else:
         pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 8, "Notes:", ln=True)
+    pdf.cell(0, 8, "Примечания:" if use_dejavu else "Notes:", ln=True)
     
     # Настраиваем шрифт для текста примечаний
     if use_dejavu:
@@ -3228,12 +3228,22 @@ def create_very_simple_pdf(pergola_data):
         pdf.set_font("Arial", "", 10)
     
     # Добавляем каждое примечание отдельной строкой с нумерацией
-    remarks = [
-        "The calculation is preliminary and may be clarified when contacting the company.",
-        "Offer validity: 14 days from the calculation date.",
-        "Delivery time: 6 weeks from the order confirmation.",
-        "Payment terms: 80% prepayment, 20% after installation."
-    ]
+    if use_dejavu:
+        # Русская версия примечаний при наличии шрифта с кириллицей
+        remarks = [
+            "Расчет является предварительным и может быть уточнен при обращении в компанию.",
+            "Срок действия предложения: 14 дней с даты расчета.",
+            "Срок поставки: 6 недель с момента подтверждения заказа.",
+            "Условия оплаты: 80% предоплата, 20% после монтажа."
+        ]
+    else:
+        # Английская версия для совместимости
+        remarks = [
+            "The calculation is preliminary and may be clarified when contacting the company.",
+            "Offer validity: 14 days from the calculation date.",
+            "Delivery time: 6 weeks from the order confirmation.",
+            "Payment terms: 80% prepayment, 20% after installation."
+        ]
     
     for i, remark in enumerate(remarks, 1):
         pdf.cell(0, 7, f"{i}. {remark}", ln=True)
