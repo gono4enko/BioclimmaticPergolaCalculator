@@ -378,6 +378,11 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
     Returns:
         dict: Отформатированные данные для генерации PDF
     """
+    # Добавляем логирование для отладки
+    import logging
+    logging.info(f"[format_pergola_data_for_pdf] Received dimensions: {dimensions}")
+    logging.info(f"[format_pergola_data_for_pdf] Width from dimensions: {dimensions.get('width', 'No width')}")
+    logging.info(f"[format_pergola_data_for_pdf] Length from dimensions: {dimensions.get('length', 'No length')}")
     pergola_data = {}
     
     # Базовая информация о перголе
