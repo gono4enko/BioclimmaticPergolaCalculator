@@ -584,14 +584,69 @@ def generate_commercial_offer(pergola_data, user_data=None):
     logging.info(f"[generate_commercial_offer] Received pergola_data: {pergola_data}")
     logging.info(f"[generate_commercial_offer] Width from pergola_data: {pergola_data.get('width', 'No width')}")
     logging.info(f"[generate_commercial_offer] Length from pergola_data: {pergola_data.get('length', 'No length')}")
+    # Добавляем подробное логирование с печатью трассировки стека для отладки
+    import traceback
+    
+    print("\n" + "="*50)
+    print("ГЕНЕРАЦИЯ PDF - ОТЛАДОЧНАЯ ИНФОРМАЦИЯ")
+    print("="*50)
+    
+    # Печатаем информацию о директориях
+    print(f"Текущая директория: {os.getcwd()}")
+    print(f"Проверка директорий:")
+    for dir_path in ["fonts", "processed_images", "assets_for_pdf", "generated_pdf"]:
+        if os.path.exists(dir_path):
+            print(f"✓ Директория {dir_path} существует")
+            # Если это директория с шрифтами, проверяем наличие шрифтов
+            if dir_path == "fonts":
+                for font_file in ["DejaVuSans.ttf", "DejaVuSans-Bold.ttf"]:
+                    font_path = os.path.join(dir_path, font_file)
+                    if os.path.exists(font_path):
+                        print(f"  ✓ Шрифт {font_file} найден")
+                    else:
+                        print(f"  ✗ Шрифт {font_file} НЕ найден")
+        else:
+            print(f"✗ Директория {dir_path} НЕ существует, создаём...")
+            os.makedirs(dir_path, exist_ok=True)
+    
+    # Печатаем входные данные для PDF
+    print(f"\nДанные перголы:")
+    print(f"Тип перголы: {pergola_data.get('pergola_type', 'Не указан')}")
+    print(f"Ширина: {pergola_data.get('width', 'Не указана')}")
+    print(f"Длина: {pergola_data.get('length', 'Не указана')}")
+    print(f"Модули: {pergola_data.get('modules', 'Не указаны')}")
+    
+    # Проверяем наличие статей
+    for desc_key in ['description', 'modular_description', 'drainage_description', 
+                    'lamella_engineering_description', 'installation_system_description',
+                    'drive_description']:
+        desc = pergola_data.get(desc_key)
+        if desc:
+            print(f"✓ Статья {desc_key} присутствует ({len(desc)} символов)")
+        else:
+            print(f"✗ Статья {desc_key} отсутствует")
+    
+    # Проверяем наличие изображений
+    image_paths = pergola_data.get('image_paths', [])
+    print(f"\nИзображения:")
+    print(f"Количество изображений: {len(image_paths)}")
+    for i, path in enumerate(image_paths):
+        if path and os.path.exists(path):
+            print(f"✓ Изображение {i+1}: {path} (существует)")
+        else:
+            print(f"✗ Изображение {i+1}: {path} (НЕ существует)")
+    
+    print("="*50 + "\n")
+    
     try:
         # Очищаем временные файлы обработанных изображений
-        for file in os.listdir("processed_images"):
-            if file.startswith("proc_"):
-                try:
-                    os.remove(os.path.join("processed_images", file))
-                except:
-                    pass
+        if os.path.exists("processed_images"):
+            for file in os.listdir("processed_images"):
+                if file.startswith("proc_"):
+                    try:
+                        os.remove(os.path.join("processed_images", file))
+                    except Exception as e:
+                        print(f"Ошибка при удалении временного файла {file}: {e}")
         
         # Создаем уникальное имя файла на основе текущей даты и времени
         now_utc = datetime.now(pytz.utc)
