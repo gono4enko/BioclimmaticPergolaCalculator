@@ -3212,6 +3212,32 @@ def create_very_simple_pdf(pergola_data):
                 pdf.cell(130, 10, name, 1, 0, align="L")
                 pdf.cell(60, 10, count, 1, 1, align="C")
     
+    # Добавляем примечания после таблицы спецификации
+    pdf.ln(15)  # Отступ перед примечаниями
+    
+    if use_dejavu:
+        pdf.set_font("DejaVu", "B", 12)
+    else:
+        pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 8, "Notes:", ln=True)
+    
+    # Настраиваем шрифт для текста примечаний
+    if use_dejavu:
+        pdf.set_font("DejaVu", "", 10)
+    else:
+        pdf.set_font("Arial", "", 10)
+    
+    # Добавляем каждое примечание отдельной строкой с нумерацией
+    remarks = [
+        "The calculation is preliminary and may be clarified when contacting the company.",
+        "Offer validity: 14 days from the calculation date.",
+        "Delivery time: 6 weeks from the order confirmation.",
+        "Payment terms: 80% prepayment, 20% after installation."
+    ]
+    
+    for i, remark in enumerate(remarks, 1):
+        pdf.cell(0, 7, f"{i}. {remark}", ln=True)
+    
     # Дата с использованием московского времени
     from datetime import datetime
     import pytz
