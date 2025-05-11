@@ -9,7 +9,6 @@ import json
 import sys
 import time
 import os
-from datetime import datetime
 # Импортируем функции для работы с Яндекс.Метрикой
 from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
 # Импортируем функцию для плавного скролла
@@ -3507,30 +3506,11 @@ def export_to_pdf():
             sys.path.append(assets_path)
         
         try:
-            # Пытаемся импортировать модуль из assets
-            # Вариант 1: прямой импорт из пакета assets
-            try:
-                from assets.prepare_pdf_assets import prepare_pdf_assets
-                prepare_pdf_assets()
-                print("Подготовка ресурсов для PDF выполнена успешно")
-            # Вариант 2: импорт как файл из директории
-            except ImportError:
-                print("Пытаемся альтернативный импорт...")
-                import importlib.util
-                # Указываем полный путь к файлу
-                spec = importlib.util.spec_from_file_location(
-                    "prepare_pdf_assets", 
-                    os.path.join(assets_path, "prepare_pdf_assets.py")
-                )
-                if spec and spec.loader:
-                    pdf_assets_module = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(pdf_assets_module)
-                    pdf_assets_module.prepare_pdf_assets()
-                    print("Подготовка ресурсов для PDF через прямой импорт выполнена успешно")
-                else:
-                    print("Модуль prepare_pdf_assets не найден по указанному пути")
-        except Exception as e:
-            print(f"Ошибка при импорте модуля prepare_pdf_assets: {e}")
+            from prepare_pdf_assets import prepare_pdf_assets
+            prepare_pdf_assets()
+            print("Подготовка ресурсов для PDF выполнена успешно")
+        except ImportError:
+            print("Модуль prepare_pdf_assets не найден")
     except Exception as e:
         print(f"Ошибка при подготовке ресурсов для PDF: {e}")
         # Продолжаем работу даже в случае ошибки
@@ -3594,123 +3574,10 @@ def export_to_pdf():
             file_name = generate_pdf_file_name(pdf_data)
             
             # Генерируем PDF с шапкой через pdf_generator_fpdf_rus.py
-            try:
-                from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
-                
-                # Создаем директории, если они не существуют
-                for dir_path in ["fonts", "processed_images", "assets_for_pdf", "generated_pdf"]:
-                    os.makedirs(dir_path, exist_ok=True)
-                
-                # Добавляем подробную отладочную информацию
-                print("\n=== ЭКСПОРТ PDF - ДАННЫЕ ДЛЯ ГЕНЕРАЦИИ ===")
-                print(f"Тип перголы: {options.get('pergola_type', 'Не указан')}")
-                print(f"Ширина: {dimensions.get('width', 'Не указана')}")
-                print(f"Длина: {dimensions.get('length', 'Не указана')}")
-                print(f"Модули: {dimensions.get('modules', 'Не указаны')}")
-                print("="*40 + "\n")
-                
-                # Форматируем данные для PDF
-                pergola_data = format_pergola_data_for_pdf(results, options, dimensions, "")
-                
-                # Проверяем, что все основные данные присутствуют
-                for key in ['pergola_type', 'width', 'length', 'modules']:
-                    if key not in pergola_data or pergola_data[key] is None:
-                        print(f"ВНИМАНИЕ: Отсутствует или пустое значение для {key}")
-                
-                # Генерируем супер-простой PDF напрямую, без использования сложных модулей
-                print("Генерируем PDF напрямую через FPDF...")
-                
-                try:
-                    # Имя файла с метками времени для уникальности
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    pdf_filename = f"pergola_quote_{timestamp}.pdf"
-                    
-                    # Обеспечиваем существование директории
-                    output_dir = "generated_pdf"
-                    os.makedirs(output_dir, exist_ok=True)
-                    
-                    # Полный путь к файлу
-                    pdf_file_path = os.path.join(output_dir, pdf_filename)
-                    
-                    # Используем базовую библиотеку FPDF без дополнительных зависимостей
-                    from fpdf import FPDF
-                    
-                    # Создаем чистый PDF
-                    pdf = FPDF()
-                    pdf.add_page()
-                    
-                    # Заголовок
-                    pdf.set_font("Helvetica", "B", 16)
-                    pdf.cell(0, 10, "Pergola Calculation Quote", 0, 1, "C")
-                    pdf.ln(5)
-                    
-                    # Информация о клиенте
-                    pdf.set_font("Helvetica", "B", 12)
-                    pdf.cell(0, 10, "Client Information", 0, 1)
-                    pdf.set_font("Helvetica", "", 10)
-                    pdf.cell(0, 6, f"Date: {timestamp[:8]}", 0, 1)
-                    pdf.ln(5)
-                    
-                    # Основная информация
-                    pdf.set_font("Helvetica", "B", 12)
-                    pdf.cell(0, 10, "Pergola Specifications", 0, 1)
-                    pdf.set_font("Helvetica", "", 10)
-                    
-                    # Информация о перголе
-                    pdf.cell(60, 6, "Model:", 0, 0)
-                    pdf.cell(0, 6, f"{options.get('pergola_type', 'B500')}", 0, 1)
-                    
-                    pdf.cell(60, 6, "Width:", 0, 0)
-                    pdf.cell(0, 6, f"{dimensions.get('width', '3')} m", 0, 1)
-                    
-                    pdf.cell(60, 6, "Length:", 0, 0)
-                    pdf.cell(0, 6, f"{dimensions.get('length', '4')} m", 0, 1)
-                    
-                    pdf.cell(60, 6, "Modules:", 0, 0)
-                    pdf.cell(0, 6, f"{dimensions.get('modules', '1')}", 0, 1)
-                    
-                    pdf.cell(60, 6, "Color:", 0, 0)
-                    pdf.cell(0, 6, f"{options.get('color', 'White')}", 0, 1)
-                    
-                    pdf.ln(5)
-                    
-                    # Цены
-                    pdf.set_font("Helvetica", "B", 12)
-                    pdf.cell(0, 10, "Price Information", 0, 1)
-                    pdf.set_font("Helvetica", "", 10)
-                    
-                    pdf.cell(60, 6, "Base Price:", 0, 0)
-                    pdf.cell(0, 6, f"{results.get('total_price', 0):,.0f} RUB", 0, 1)
-                    
-                    pdf.cell(60, 6, "Discount:", 0, 0)
-                    pdf.cell(0, 6, f"{results.get('discount', 0):,.0f} RUB", 0, 1)
-                    
-                    pdf.set_font("Helvetica", "B", 12)
-                    pdf.cell(60, 6, "Final Price:", 0, 0)
-                    pdf.cell(0, 6, f"{results.get('total_price_after_discount', 0):,.0f} RUB", 0, 1)
-                    
-                    pdf.ln(10)
-                    
-                    # Примечание
-                    pdf.set_font("Helvetica", "I", 8)
-                    pdf.cell(0, 6, "This quote is valid for 30 days from the date of issue.", 0, 1)
-                    
-                    # Сохраняем PDF
-                    pdf.output(pdf_file_path)
-                    print(f"PDF файл успешно создан: {pdf_file_path}")
-                    
-                except Exception as e:
-                    print(f"Ошибка при генерации PDF: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    pdf_file_path = None
-                
-                logging.info(f"PDF файл создан: {pdf_file_path}")
-            except Exception as e:
-                import traceback
-                print(f"ОБЩАЯ ОШИБКА при создании PDF: {e}")
-                traceback.print_exc()
-                pdf_file_path = None
+            from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
+            pergola_data = format_pergola_data_for_pdf(results, options, dimensions, "")
+            pdf_file_path = generate_commercial_offer(pergola_data)
+            logging.info(f"PDF файл создан: {pdf_file_path}")
             
             # Если файл создан успешно
             if pdf_file_path and os.path.exists(pdf_file_path):
@@ -5061,7 +4928,7 @@ def main():
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.7.8</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; font-size: 0.7rem; color: #999;'>© 2025 Комфортный дом | Калькулятор пергол v4.7.7</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Создаем директории, если они не существуют
