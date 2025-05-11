@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}Код для встраивания калькулятора{% endblock %}
+
+{% block content %}
+<div class="embed-code-container">
+    <h1>Код для встраивания калькулятора на сайт</h1>
+    
+    <div class="instruction-block">
+        <h2>Инструкция по встраиванию</h2>
+        <p>Чтобы встроить калькулятор перголы на ваш сайт или платформу Tilda, выполните следующие шаги:</p>
+        
+        <ol>
+            <li>Скопируйте код HTML из блока ниже</li>
+            <li>Вставьте код в нужное место на вашем сайте</li>
+            <li>Адаптируйте размеры iframe (ширину и высоту) под ваш дизайн</li>
+        </ol>
+        
+        <div class="note-block">
+            <h3>Примечание</h3>
+            <p>Калькулятор автоматически адаптируется к размеру iframe и отправляет информацию о своей высоте, чтобы родительская страница могла автоматически подстроить размер.</p>
+            <p>Для правильной работы в Tilda, добавьте дополнительный скрипт, указанный ниже, в раздел "Заголовок/Подвал" вашего сайта.</p>
+        </div>
+    </div>
+    
+    <div class="code-section">
+        <h2>HTML-код для встраивания</h2>
+        <pre><code id="embedHtml">&lt;iframe 
+    src="{{ url_for('main.iframe', _external=True) }}" 
+    width="100%" 
+    height="700" 
+    id="pergola-calculator-iframe" 
+    frameborder="0" 
+    scrolling="no"
+    style="overflow:hidden"&gt;
+&lt;/iframe&gt;
+
+&lt;script&gt;
+// Скрипт для автоматической настройки высоты iframe
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'iframe-height') {
+        const iframe = document.getElementById('pergola-calculator-iframe');
+        if (iframe) {
+            iframe.style.height = event.data.height + 'px';
+        }
+    }
+});
+&lt;/script&gt;</code></pre>
+        <button id="copyHtmlButton" class="copy-button" onclick="copyToClipboard('embedHtml')">Копировать HTML-код</button>
+    </div>
+    
+    <div class="code-section">
+        <h2>Дополнительный скрипт для Tilda</h2>
+        <pre><code id="tildaScript">function resizePergolaiFrame() {
+    const iframe = document.getElementById('pergola-calculator-iframe');
+    if (iframe) {
+        iframe.style.height = (iframe.contentWindow.document.body.scrollHeight + 50) + 'px';
+    }
+}
+
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'iframe-height') {
+        const iframe = document.getElementById('pergola-calculator-iframe');
+        if (iframe) {
+            iframe.style.height = event.data.height + 'px';
+        }
+    }
+});
+
+// Вызываем функцию при загрузке страницы и при изменении размера окна
+window.addEventListener('load', resizePergolaiFrame);
+window.addEventListener('resize', resizePergolaiFrame);
+</code></pre>
+        <button id="copyScriptButton" class="copy-button" onclick="copyToClipboard('tildaScript')">Копировать скрипт для Tilda</button>
+    </div>
+    
+    <div class="preview-section">
+        <h2>Предпросмотр встроенного калькулятора</h2>
+        <div class="iframe-preview">
+            <iframe 
+                src="{{ url_for('main.iframe') }}" 
+                width="100%" 
+                height="700" 
+                id="preview-iframe" 
+                frameborder="0" 
+                scrolling="no"
+                style="overflow:hidden">
+            </iframe>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    const text = element.textContent;
+    
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            const button = document.querySelector(`button[onclick="copyToClipboard('${elementId}')"]`);
+            const originalText = button.textContent;
+            
+            button.textContent = 'Скопировано!';
+            button.classList.add('copied');
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('copied');
+            }, 2000);
+        })
+        .catch(err => {
+            console.error('Не удалось скопировать текст: ', err);
+            alert('Не удалось скопировать текст. Пожалуйста, выделите его вручную и скопируйте (Ctrl+C).');
+        });
+}
+
+// Обработчик сообщений от iframe для автоматической настройки высоты
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'iframe-height') {
+        const iframe = document.getElementById('preview-iframe');
+        if (iframe) {
+            iframe.style.height = event.data.height + 'px';
+        }
+    }
+});
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+.embed-code-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.instruction-block {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.note-block {
+    background-color: #e8f4f8;
+    border-left: 4px solid #3498db;
+    padding: 15px;
+    margin-top: 20px;
+}
+
+.code-section {
+    margin-bottom: 40px;
+}
+
+pre {
+    background-color: #f5f5f5;
+    padding: 15px;
+    border-radius: 5px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family: monospace;
+    border: 1px solid #ddd;
+}
+
+code {
+    font-family: monospace;
+}
+
+.copy-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    margin-top: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.copy-button:hover {
+    background-color: #45a049;
+}
+
+.copy-button.copied {
+    background-color: #2196F3;
+}
+
+.preview-section {
+    margin-top: 40px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.iframe-preview {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+}
+</style>
+{% endblock %}

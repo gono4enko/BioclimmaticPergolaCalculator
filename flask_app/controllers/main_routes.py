@@ -52,6 +52,11 @@ def iframe():
                            pergola_types=pergola_types,
                            lamella_sizes=lamella_sizes,
                            iframe_mode=True)
+                           
+@bp.route('/embed')
+def embed_code():
+    """Страница с кодом для встраивания калькулятора."""
+    return render_template('embed_code.html')
 
 @bp.errorhandler(404)
 def page_not_found(e):

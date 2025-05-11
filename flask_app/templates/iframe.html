@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор пергол - iframe</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #ffffff;
+        }
+        
+        .calculator-container {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+            margin: 0 auto;
+        }
+        
+        .calculator-form {
+            background-color: #ffffff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .form-section {
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        h2 {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        
+        .pergola-types, .lamella-sizes, .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .pergola-type, .lamella-size, .option {
+            flex: 1 0 auto;
+            min-width: 120px;
+        }
+        
+        .dimensions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .dimension {
+            flex: 1 0 auto;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        input[type="radio"], input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        
+        label {
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .form-actions {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .calculate-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .calculate-button:hover {
+            background-color: #45a049;
+        }
+        
+        .results {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .results h2 {
+            margin-top: 0;
+            font-size: 20px;
+            color: #333;
+        }
+        
+        .results-summary {
+            margin-bottom: 15px;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .results-table th, .results-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .results-table th {
+            background-color: #f2f2f2;
+        }
+        
+        .export-actions {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .export-button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .export-button:hover {
+            background-color: #0b7dda;
+        }
+        
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            .pergola-types, .lamella-sizes, .dimensions, .options {
+                flex-direction: column;
+            }
+            
+            .dimension {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <form id="calculatorForm" method="post" action="{{ url_for('api.calculate') }}">
+            <div class="form-section">
+                <h2>Выберите тип перголы:</h2>
+                <div class="pergola-types">
+                    {% for pergola_type in pergola_types %}
+                    <div class="pergola-type">
+                        <input type="radio" name="pergola_type" id="type_{{ pergola_type.id }}" value="{{ pergola_type.id }}" 
+                               {% if loop.first %}checked{% endif %}>
+                        <label for="type_{{ pergola_type.id }}">{{ pergola_type.name }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Выберите размер ламелей:</h2>
+                <div class="lamella-sizes">
+                    {% for lamella_size in lamella_sizes %}
+                    <div class="lamella-size">
+                        <input type="radio" name="lamella_size" id="lamella_{{ lamella_size.id }}" value="{{ lamella_size.id }}"
+                               {% if loop.first %}checked{% endif %}>
+                        <label for="lamella_{{ lamella_size.id }}">{{ lamella_size.name }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Укажите размеры:</h2>
+                <div class="dimensions">
+                    <div class="dimension">
+                        <label for="width">Ширина (м):</label>
+                        <input type="number" id="width" name="width" min="2" max="15" step="0.1" value="4.0">
+                    </div>
+                    <div class="dimension">
+                        <label for="length">Вынос (м):</label>
+                        <input type="number" id="length" name="length" min="2" max="8" step="0.1" value="4.0">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Дополнительные опции:</h2>
+                <div class="options">
+                    <div class="option">
+                        <input type="checkbox" id="led_lighting" name="led_lighting" value="true">
+                        <label for="led_lighting">Светодиодная подсветка</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="rain_sensor" name="rain_sensor" value="true">
+                        <label for="rain_sensor">Датчик дождя</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="wind_sensor" name="wind_sensor" value="true">
+                        <label for="wind_sensor">Датчик ветра</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Скидка:</h2>
+                <div class="discount">
+                    <label for="discount">Скидка (%):</label>
+                    <input type="number" id="discount" name="discount" min="0" max="50" value="0">
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="calculate-button">Рассчитать стоимость</button>
+            </div>
+        </form>
+        
+        <div id="results" class="results" style="display: none;">
+            <h2>Результаты расчета:</h2>
+            <div id="resultsContent" class="results-content">
+                <!-- Результаты будут загружены сюда через JavaScript -->
+            </div>
+            
+            <div class="export-actions">
+                <button id="exportPdf" class="export-button">Скачать PDF</button>
+                <button id="printResults" class="export-button">Распечатать</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('calculatorForm');
+        const results = document.getElementById('results');
+        const resultsContent = document.getElementById('resultsContent');
+        const exportPdfButton = document.getElementById('exportPdf');
+        const printButton = document.getElementById('printResults');
+        
+        // Функция для отправки высоты iframe родительскому окну
+        function sendHeight() {
+            const height = document.body.scrollHeight;
+            if (window.parent && window.parent.postMessage) {
+                window.parent.postMessage({ 
+                    type: 'iframe-height',
+                    height: height
+                }, '*');
+            }
+        }
+        
+        // Отправляем высоту при загрузке и изменении размера окна
+        window.addEventListener('load', sendHeight);
+        window.addEventListener('resize', sendHeight);
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Собираем данные формы
+            const formData = new FormData(form);
+            const data = {};
+            
+            for (const [key, value] of formData.entries()) {
+                if (key === 'led_lighting' || key === 'rain_sensor' || key === 'wind_sensor') {
+                    data[key] = value === 'true';
+                } else {
+                    data[key] = value;
+                }
+            }
+            
+            // Отправляем запрос на расчет
+            fetch('{{ url_for("api.calculate") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Отображаем результаты
+                    displayResults(data.results);
+                    results.style.display = 'block';
+                    
+                    // Обновляем высоту iframe
+                    setTimeout(sendHeight, 100);
+                    
+                    // Прокручиваем страницу к результатам
+                    results.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('Ошибка при расчете: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                alert('Произошла ошибка при отправке запроса');
+            });
+        });
+        
+        function displayResults(results) {
+            // Форматирование цены
+            const formatPrice = price => {
+                return new Intl.NumberFormat('ru-RU').format(Math.round(price));
+            };
+            
+            // Формируем HTML для отображения результатов
+            let html = '<div class="results-summary">';
+            html += `<p>Общая стоимость: <strong>${formatPrice(results.total_price)} ₽</strong></p>`;
+            
+            if (results.discount > 0) {
+                html += `<p>Скидка: <strong>${results.discount}%</strong></p>`;
+                html += `<p>Стоимость со скидкой: <strong>${formatPrice(results.total_price_after_discount)} ₽</strong></p>`;
+            }
+            
+            html += '</div>';
+            
+            // Таблица с позициями
+            html += '<table class="results-table">';
+            html += '<thead><tr><th>Наименование</th><th>Количество</th><th>Цена, ₽</th></tr></thead>';
+            html += '<tbody>';
+            
+            for (const item of results.items) {
+                html += `<tr>
+                    <td>${item.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>${formatPrice(item.price)}</td>
+                </tr>`;
+            }
+            
+            html += '</tbody>';
+            html += '</table>';
+            
+            resultsContent.innerHTML = html;
+        }
+        
+        // Обработчик для экспорта в PDF
+        exportPdfButton.addEventListener('click', function() {
+            window.open('{{ url_for("api.export_pdf") }}', '_blank');
+        });
+        
+        // Обработчик для печати
+        printButton.addEventListener('click', function() {
+            window.print();
+        });
+    });
+    </script>
+</body>
+</html>
