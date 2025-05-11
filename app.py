@@ -2602,11 +2602,11 @@ def create_simple_pdf(pergola_data):
         from datetime import datetime
         import pytz
         
-        # Определяем московскую временную зону
-        moscow_tz = pytz.timezone('Europe/Moscow')
+        # Определяем временную зону Ростова-на-Дону (та же, что и в Москве)
+        rostov_tz = pytz.timezone('Europe/Moscow')
         now_utc = datetime.now(pytz.utc)
-        now_moscow = now_utc.astimezone(moscow_tz)
-        timestamp = now_moscow.strftime("%Y%m%d_%H%M%S")
+        now_rostov = now_utc.astimezone(rostov_tz)
+        timestamp = now_rostov.strftime("%Y%m%d_%H%M%S")
         pdf_path = f"generated_pdf/KP_Pergola_{timestamp}.pdf"
     
     # Создаем документ

@@ -10,8 +10,8 @@ import pytz
 from fpdf import FPDF
 from PIL import Image
 
-# Определяем московскую временную зону
-MOSCOW_TZ = pytz.timezone('Europe/Moscow')
+# Определяем временную зону для Ростова-на-Дону (также использует Europe/Moscow)
+ROSTOV_TZ = pytz.timezone('Europe/Moscow')
 
 # Создаем директорию для сохранения сгенерированных PDF
 os.makedirs("generated_pdf", exist_ok=True)
@@ -448,13 +448,13 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 except:
                     pass
         
-        # Создаем уникальное имя файла на основе текущей даты и времени по московскому времени
+        # Создаем уникальное имя файла на основе текущей даты и времени
         now_utc = datetime.now(pytz.utc)
-        now_moscow = now_utc.astimezone(MOSCOW_TZ)
-        timestamp = now_moscow.strftime("%Y%m%d_%H%M%S")
+        now_rostov = now_utc.astimezone(ROSTOV_TZ)
+        timestamp = now_rostov.strftime("%Y%m%d_%H%M%S")
         
         # Форматируем текущую дату для отображения в документе
-        current_date = now_moscow.strftime("%d.%m.%Y")
+        current_date = now_rostov.strftime("%d.%m.%Y")
         
         # Определяем путь для сохранения файла
         if user_data and user_data.get('phone'):
@@ -472,7 +472,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
         
         # Устанавливаем информацию о текущей дате
         pdf.set_font('DejaVu', '', 10)
-        pdf.cell(0, 5, f"Москва, {current_date}", 0, 1, "L")
+        pdf.cell(0, 5, f"Ростов-на-Дону, {current_date}", 0, 1, "L")
         
         # Добавляем номер коммерческого предложения
         pdf.ln(5)
