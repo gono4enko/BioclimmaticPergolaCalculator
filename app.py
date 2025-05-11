@@ -3572,74 +3572,7 @@ def export_to_pdf():
         st.write(traceback.format_exc())
         return None
 
-def get_pdf_download_link(pdf_path):
-    """
-    Создает ссылку для открытия PDF-файла в новой вкладке браузера.
-    
-    Args:
-        pdf_path (str): Путь к PDF-файлу
-        
-    Returns:
-        str: HTML-код с ссылкой для открытия PDF в новой вкладке
-    """
-    if not pdf_path or not os.path.exists(pdf_path):
-        return ""
-    
-    # Получаем имя файла для отображения
-    file_name = os.path.basename(pdf_path)
-    
-    # Читаем файл в бинарном режиме
-    with open(pdf_path, "rb") as file:
-        pdf_bytes = file.read()
-    
-    # Кодируем в base64
-    b64 = base64.b64encode(pdf_bytes).decode()
-    
-    # Создаем ссылку для открытия в новой вкладке с именем "Сохранить PDF"
-    # Используем встроенный скрипт для отслеживания вместо прямого onclick
-    tracking_script = """
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const pdfLink = document.querySelector('.download-button');
-        if (pdfLink) {
-            pdfLink.addEventListener('click', function() {
-                if (typeof ym !== 'undefined') {
-                    ym(94463245, 'reachGoal', 'pdf_open');
-                }
-            });
-        }
-    });
-    </script>
-    """
-    
-    href = f'''
-    <div style="text-align: center; margin: 20px 0;">
-        <a href="data:application/pdf;base64,{b64}" 
-           target="_blank" 
-           class="download-button">
-           <i class="fas fa-file-pdf"></i> Сохранить PDF
-        </a>
-        <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">
-            PDF откроется в новой вкладке
-        </div>
-        {tracking_script}
-    </div>
-    '''
-    
-    # Добавляем JavaScript для отправки события в Яндекс.Метрику при открытии PDF
-    href += '''
-    <script>
-        // Функция для отслеживания события открытия PDF в Яндекс.Метрике
-        function trackPdfOpen() {
-            if (typeof ym !== 'undefined') {
-                ym(94463245, 'reachGoal', 'pdf_open');
-                console.log('Отправлено событие pdf_open в Яндекс.Метрику');
-            }
-        }
-    </script>
-    '''
-    
-    return href
+
 
 def display_image_with_padding(image_path, caption=None, padding_percent=5):
     """
