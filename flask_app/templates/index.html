@@ -116,14 +116,8 @@
         <p>Рассчитайте стоимость перголы с учетом размеров, типа конструкции и дополнительных опций</p>
     </div>
     
-    <!-- Акция с ограниченным сроком -->
-    <div class="promotion-banner">
-        <div class="promotion-content">
-            <h3>Специальное предложение</h3>
-            <p>Скидка <strong>15%</strong> на перголы серии B700 при заказе до <span class="deadline">31 мая 2025</span></p>
-            <div class="countdown">До конца акции осталось: <span id="countdown-timer">19 дней</span></div>
-        </div>
-    </div>
+    <!-- Комментарий для сохранения структуры -->
+    <!-- Баннер с акцией удален по запросу клиента -->
     
     <div class="calculator-form">
         <form id="calculatorForm" method="post" action="{{ url_for('api.calculate') }}">
@@ -147,7 +141,6 @@
                                 <img src="{{ url_for('static', filename='images/pergolas/b700.jpg') }}" alt="B700 NEW">
                                 <span class="pergola-title">B700 NEW</span>
                                 <span class="pergola-description">Пергола с поворотно-сдвижными ламелями</span>
-                                <span class="promo-badge">-15%</span>
                             </div>
                         </label>
                     </div>
@@ -376,14 +369,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(form);
         const data = {};
         
-        // Проверяем, активна ли акция на B700
+        // Акция на B700 отключена
         const isB700Selected = document.getElementById('type_B700NEW').checked;
-        const hasPromotion = document.querySelector('.promotion-banner').style.display !== 'none';
         let additionalDiscount = 0;
-        
-        if (isB700Selected && hasPromotion) {
-            additionalDiscount = 15; // 15% по акции на B700
-        }
         
         for (const [key, value] of formData.entries()) {
             if (key === 'led_lighting' || key === 'rain_sensor' || key === 'wind_sensor') {
@@ -395,12 +383,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 data[key] = value;
             }
         }
-        
-        // Если применена акционная скидка
-        if (additionalDiscount > 0) {
-            data.promotion_applied = true;
-            data.promotion_name = 'Весенняя акция -15% на B700';
-        }
+        // Акционные скидки отключены
         
         // Отправляем запрос на расчет
         fetch('{{ url_for("api.calculate") }}', {
