@@ -619,6 +619,18 @@ input[type="checkbox"] {
 .about-header {
     text-align: center;
     margin-bottom: 40px;
+    padding: 30px 20px;
+    border-radius: 8px;
+}
+
+.about-header.blue-background {
+    background: linear-gradient(135deg, #0052a3, #0066cc);
+    color: white;
+}
+
+.about-header.blue-background h1,
+.about-header.blue-background .subtitle {
+    color: white;
 }
 
 .about-header .subtitle {
@@ -793,13 +805,15 @@ input[type="checkbox"] {
 }
 
 .cta-section h2 {
-    color: white;
+    color: white !important;
     margin-top: 0;
     margin-bottom: 15px;
     font-size: 1.8rem;
+    text-align: center;
 }
 
 .cta-section p {
+    color: white !important;
     margin-bottom: 25px;
     font-size: 1.1rem;
     opacity: 0.9;
