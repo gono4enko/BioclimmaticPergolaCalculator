@@ -4,64 +4,184 @@
 
 {% block content %}
 <div class="about-container">
-    <h1>О перголах</h1>
+    <header class="about-header">
+        <h1>О биоклиматических перголах</h1>
+        <p class="subtitle">Современное решение для комфортного отдыха на открытом воздухе</p>
+    </header>
     
     <section class="about-section">
-        <h2>Что такое биоклиматическая пергола?</h2>
-        <p>Биоклиматическая пергола - это современное архитектурное решение для организации комфортного пространства на открытом воздухе. Благодаря регулируемым ламелям на крыше, перголы обеспечивают защиту от солнца и дождя, при этом позволяя контролировать уровень вентиляции и освещенности.</p>
-        
-        <p>Перголы - идеальное решение для террас, патио, ресторанов, кафе и других общественных или частных пространств, где требуется создать комфортные условия на открытом воздухе.</p>
-    </section>
-    
-    <section class="about-section">
-        <h2>Типы пергол</h2>
-        <div class="pergola-types-info">
-            <div class="pergola-type-info">
-                <h3>B500 - Пергола с поворотными ламелями</h3>
-                <p>Классическая пергола с поворотными алюминиевыми ламелями, обеспечивающими регулировку угла наклона от 0° до 140°. Позволяет контролировать уровень освещенности и вентиляции под перголой.</p>
-                <ul>
-                    <li>Максимальный размер: до 15x8 метров</li>
-                    <li>Доступные размеры ламелей: 200 мм и 250 мм</li>
-                    <li>Водонепроницаемость: высокая</li>
-                    <li>Снеговая нагрузка: до 100 кг/м²</li>
-                </ul>
+        <div class="section-content">
+            <div class="text-content">
+                <h2>Что такое биоклиматическая пергола?</h2>
+                <p>Биоклиматическая пергола - это инновационное архитектурное решение для организации комфортного пространства на открытом воздухе. Благодаря регулируемым ламелям на крыше, перголы обеспечивают защиту от солнца и дождя, при этом позволяя контролировать уровень вентиляции и освещенности.</p>
+                
+                <p>Эти конструкции позволяют создать идеальный микроклимат в любое время года. Летом пергола защищает от жары, зимой - от снега и дождя, а в межсезонье обеспечивает комфортную температуру.</p>
+                
+                <p>Перголы - идеальное решение для террас, патио, ресторанов, кафе и других общественных или частных пространств, где требуется создать комфортные условия на открытом воздухе.</p>
             </div>
-            
-            <div class="pergola-type-info">
-                <h3>B700 - Пергола с поворотно-сдвижными ламелями</h3>
-                <p>Премиальная модель перголы с инновационным механизмом, позволяющим не только поворачивать, но и сдвигать ламели, полностью открывая крышу в хорошую погоду.</p>
-                <ul>
-                    <li>Максимальный размер: до 15x8 метров</li>
-                    <li>Доступные размеры ламелей: 200 мм и 250 мм</li>
-                    <li>Водонепроницаемость: высокая</li>
-                    <li>Снеговая нагрузка: до 120 кг/м²</li>
-                </ul>
-            </div>
-            
-            <div class="pergola-type-info">
-                <h3>B600 - Пергола со стационарными PIR-панелями</h3>
-                <p>Пергола с теплоизоляционными PIR-панелями для регионов с холодным климатом. Обеспечивает отличную теплоизоляцию и защиту от атмосферных осадков.</p>
-                <ul>
-                    <li>Максимальный размер: до 13.5x8 метров</li>
-                    <li>Толщина PIR-панелей: 50 мм</li>
-                    <li>Теплоизоляция: отличная</li>
-                    <li>Снеговая нагрузка: до 150 кг/м²</li>
-                </ul>
+            <div class="image-container">
+                <img src="{{ url_for('static', filename='images/pergolas/b700.jpg') }}" alt="Биоклиматическая пергола" class="about-image">
+                <div class="image-caption">Биоклиматическая пергола с регулируемыми ламелями</div>
             </div>
         </div>
     </section>
     
-    <section class="about-section">
+    <section class="about-section pergola-types-section">
+        <h2>Типы пергол</h2>
+        <p class="section-intro">Мы предлагаем три основных типа биоклиматических пергол, каждая из которых имеет свои уникальные особенности и преимущества:</p>
+        
+        <div class="pergola-types-info">
+            <div class="pergola-type-card">
+                <div class="pergola-type-image">
+                    <img src="{{ url_for('static', filename='images/pergolas/b500.jpg') }}" alt="B500 Пергола">
+                </div>
+                <div class="pergola-type-content">
+                    <h3>B500 - Пергола с поворотными ламелями</h3>
+                    <p>Классическая пергола с поворотными алюминиевыми ламелями, обеспечивающими регулировку угла наклона от 0° до 140°. Позволяет контролировать уровень освещенности и вентиляции под перголой.</p>
+                    <div class="specs-container">
+                        <div class="spec-item">
+                            <span class="spec-icon">📏</span>
+                            <span class="spec-label">Макс. размер:</span>
+                            <span class="spec-value">до 15x8 м</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-icon">🔍</span>
+                            <span class="spec-label">Ламели:</span>
+                            <span class="spec-value">200/250 мм</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-icon">💧</span>
+                            <span class="spec-label">Водозащита:</span>
+                            <span class="spec-value">высокая</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-icon">❄️</span>
+                            <span class="spec-label">Снег. нагрузка:</span>
+                            <span class="spec-value">до 100 кг/м²</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pergola-type-card">
+                <div class="pergola-type-image">
+                    <img src="{{ url_for('static', filename='images/pergolas/b700.jpg') }}" alt="B700 Пергола">
+                    <div class="promo-badge">-15%</div>
+                </div>
+                <div class="pergola-type-content">
+                    <h3>B700 - Пергола с поворотно-сдвижными ламелями</h3>
+                    <p>Премиальная модель перголы с инновационным механизмом, позволяющим не только поворачивать, но и сдвигать ламели, полностью открывая крышу в хорошую погоду.</p>
+                    <div class="specs-container">
+                        <div class="spec-item">
+                            <span class="spec-icon">📏</span>
+                            <span class="spec-label">Макс. размер:</span>
+                            <span class="spec-value">до 15x8 м</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-icon">🔍</span>
+                            <span class="spec-label">Ламели:</span>
+                            <span class="spec-value">200/250 мм</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-icon">💧</span>
+                            <span class="spec-label">Водозащита:</span>
+                            <span class="spec-value">высокая</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-icon">❄️</span>
+                            <span class="spec-label">Снег. нагрузка:</span>
+                            <span class="spec-value">до 120 кг/м²</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pergola-type-card">
+                <div class="pergola-type-image">
+                    <img src="{{ url_for('static', filename='images/pergolas/b600.jpg') }}" alt="B600 Пергола">
+                </div>
+                <div class="pergola-type-content">
+                    <h3>B600 - Пергола со стационарными PIR-панелями</h3>
+                    <p>Пергола с теплоизоляционными PIR-панелями для регионов с холодным климатом. Обеспечивает отличную теплоизоляцию и защиту от атмосферных осадков.</p>
+                    <div class="specs-container">
+                        <div class="spec-item">
+                            <span class="spec-icon">📏</span>
+                            <span class="spec-label">Макс. размер:</span>
+                            <span class="spec-value">до 13.5x8 м</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-icon">🔍</span>
+                            <span class="spec-label">Толщина PIR:</span>
+                            <span class="spec-value">50 мм</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-icon">🔥</span>
+                            <span class="spec-label">Теплоизоляция:</span>
+                            <span class="spec-value">отличная</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-icon">❄️</span>
+                            <span class="spec-label">Снег. нагрузка:</span>
+                            <span class="spec-value">до 150 кг/м²</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="about-section benefits-section">
         <h2>Преимущества биоклиматических пергол</h2>
-        <ul class="benefits-list">
-            <li>Регулировка уровня естественного освещения и вентиляции</li>
-            <li>Защита от солнца, дождя и снега</li>
-            <li>Продление сезона использования открытых пространств</li>
-            <li>Энергоэффективность и экологичность</li>
-            <li>Возможность интеграции с системами умного дома</li>
-            <li>Долговечность и низкие требования к обслуживанию</li>
-            <li>Современный дизайн, дополняющий архитектуру здания</li>
-        </ul>
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <div class="benefit-icon">☀️</div>
+                <h3>Контроль освещения</h3>
+                <p>Регулировка уровня естественного освещения и вентиляции в зависимости от погоды и ваших предпочтений</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">🌧️</div>
+                <h3>Всепогодность</h3>
+                <p>Надежная защита от солнца, дождя и снега, позволяющая использовать пространство в любую погоду</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">🍁</div>
+                <h3>Круглый год</h3>
+                <p>Продление сезона использования открытых пространств с ранней весны до поздней осени</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">🌱</div>
+                <h3>Экологичность</h3>
+                <p>Энергоэффективность и экологичность конструкции, снижающая потребление электроэнергии</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">📱</div>
+                <h3>Умное управление</h3>
+                <p>Возможность интеграции с системами умного дома и управления со смартфона</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">⚙️</div>
+                <h3>Минимум обслуживания</h3>
+                <p>Долговечность и низкие требования к обслуживанию благодаря качественным материалам</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">🏛️</div>
+                <h3>Дизайн</h3>
+                <p>Современный дизайн, дополняющий архитектуру здания и повышающий его эстетическую ценность</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">💰</div>
+                <h3>Увеличение стоимости</h3>
+                <p>Повышение рыночной стоимости недвижимости за счет создания дополнительной функциональной площади</p>
+            </div>
+        </div>
+    </section>
+    
+    <section class="about-section cta-section">
+        <div class="cta-container">
+            <h2>Готовы создать идеальное пространство на открытом воздухе?</h2>
+            <p>Рассчитайте стоимость вашей перголы с учетом всех желаемых опций и размеров.</p>
+            <a href="{{ url_for('main.index') }}" class="cta-button">Рассчитать стоимость</a>
+        </div>
     </section>
 </div>
 {% endblock %}
