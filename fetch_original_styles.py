@@ -180,7 +180,7 @@ def main():
             }
             """
             
-            save_inline_css(theme_css, output_dir, "theme")
+            save_inline_css(theme_css, output_dir, 99)  # Используем число вместо строки
     
     print("Завершено извлечение стилей.")
 

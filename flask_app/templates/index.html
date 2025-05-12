@@ -2,9 +2,119 @@
 
 {% block title %}Калькулятор пергол - Главная{% endblock %}
 
+{% block head_extra %}
+<style>
+    /* Дополнительные стили для страницы калькулятора */
+    .calculator-container {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        background-color: white;
+    }
+    
+    .calculator-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    
+    .calculator-header h1 {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        margin-bottom: 15px;
+        font-weight: 700;
+    }
+    
+    .calculator-header p {
+        color: #666;
+        font-size: 1.1rem;
+        max-width: 80%;
+        margin: 0 auto;
+    }
+    
+    .form-section {
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease;
+    }
+    
+    .form-section:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Улучшенная анимация появления результатов */
+    @keyframes slideInUp {
+        from {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    .results {
+        animation: slideInUp 0.5s ease-out forwards;
+    }
+    
+    /* Стилизация кнопок и интерактивных элементов */
+    .calculate-button {
+        background: linear-gradient(135deg, #0066cc, #0052a3);
+        box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .calculate-button:hover {
+        background: linear-gradient(135deg, #0052a3, #003d7a);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0, 102, 204, 0.4);
+    }
+    
+    .export-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 20px;
+    }
+    
+    #exportPdf:before {
+        content: "📄";
+    }
+    
+    #printResults:before {
+        content: "🖨️";
+    }
+    
+    /* Улучшенное форматирование для мобильных устройств */
+    @media (max-width: 768px) {
+        .calculator-container {
+            padding: 20px 15px;
+        }
+        
+        .calculator-header h1 {
+            font-size: 2rem;
+        }
+        
+        .form-section {
+            padding: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="calculator-container">
-    <h1>Калькулятор стоимости пергол</h1>
+    <div class="calculator-header">
+        <h1>Калькулятор стоимости пергол</h1>
+        <p>Рассчитайте стоимость перголы с учетом размеров, типа конструкции и дополнительных опций</p>
+    </div>
     
     <div class="calculator-form">
         <form id="calculatorForm" method="post" action="{{ url_for('api.calculate') }}">
@@ -35,7 +145,7 @@
             </div>
             
             <div class="form-section">
-                <h2>Укажите размеры:</h2>
+                <h2>Укажите размеры перголы:</h2>
                 <div class="dimensions">
                     <div class="dimension">
                         <label for="width">Ширина (м):</label>
@@ -46,6 +156,7 @@
                         <input type="number" id="length" name="length" min="2" max="8" step="0.1" value="4.0">
                     </div>
                 </div>
+                <div id="modulesInfo" class="modules-info" style="margin-top: 10px; padding: 8px; background-color: #e6f3ff; border-radius: 5px; font-size: 0.9rem;"></div>
             </div>
             
             <div class="form-section">
@@ -102,9 +213,65 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultsContent = document.getElementById('resultsContent');
     const exportPdfButton = document.getElementById('exportPdf');
     const printButton = document.getElementById('printResults');
+    const modulesInfo = document.getElementById('modulesInfo');
+    
+    // Обновление информации о модулях при изменении размеров
+    const widthInput = document.getElementById('width');
+    const lengthInput = document.getElementById('length');
+    const pergolaTypeRadios = document.querySelectorAll('input[name="pergola_type"]');
+    
+    function updateModulesInfo() {
+        const width = parseFloat(widthInput.value);
+        const length = parseFloat(lengthInput.value);
+        let pergolaType = '';
+        
+        // Получаем выбранный тип перголы
+        pergolaTypeRadios.forEach(radio => {
+            if (radio.checked) {
+                pergolaType = radio.value;
+            }
+        });
+        
+        // Расчет количества модулей на основе ширины
+        let modules = 1;
+        if (width > 4.5) modules = 2;
+        if (width > 9.0) modules = 3;
+        
+        modulesInfo.innerHTML = `При размере ${width.toFixed(1)}×${length.toFixed(1)} м будет автоматически использовано ${modules} ${getPluralForm(modules, 'модуль', 'модуля', 'модулей')}`;
+    }
+    
+    // Функция для получения правильной формы слова
+    function getPluralForm(number, one, two, five) {
+        let n = Math.abs(number) % 100;
+        if (n >= 11 && n <= 19) {
+            return five;
+        }
+        n = n % 10;
+        if (n === 1) {
+            return one;
+        }
+        if (n >= 2 && n <= 4) {
+            return two;
+        }
+        return five;
+    }
+    
+    // Вешаем слушатели событий
+    widthInput.addEventListener('input', updateModulesInfo);
+    lengthInput.addEventListener('input', updateModulesInfo);
+    pergolaTypeRadios.forEach(radio => {
+        radio.addEventListener('change', updateModulesInfo);
+    });
+    
+    // Инициализируем информацию о модулях
+    updateModulesInfo();
     
     form.addEventListener('submit', function(e) {
         e.preventDefault();
+        
+        // Показываем индикатор загрузки
+        resultsContent.innerHTML = '<div class="loading">Выполняем расчет...</div>';
+        results.style.display = 'block';
         
         // Собираем данные формы
         const formData = new FormData(form);
@@ -131,17 +298,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 // Отображаем результаты
                 displayResults(data.results);
-                results.style.display = 'block';
                 
                 // Прокручиваем страницу к результатам
                 results.scrollIntoView({ behavior: 'smooth' });
             } else {
-                alert('Ошибка при расчете: ' + data.error);
+                resultsContent.innerHTML = `<div class="error-message">Ошибка при расчете: ${data.error}</div>`;
             }
         })
         .catch(error => {
             console.error('Ошибка:', error);
-            alert('Произошла ошибка при отправке запроса');
+            resultsContent.innerHTML = '<div class="error-message">Произошла ошибка при отправке запроса</div>';
         });
     });
     
@@ -163,6 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
         html += '</div>';
         
         // Таблица с позициями
+        html += '<h3>Спецификация перголы</h3>';
         html += '<table class="results-table">';
         html += '<thead><tr><th>Наименование</th><th>Количество</th><th>Цена, ₽</th></tr></thead>';
         html += '<tbody>';
@@ -175,8 +342,32 @@ document.addEventListener('DOMContentLoaded', function() {
             </tr>`;
         }
         
+        html += `<tr>
+            <td><strong>Итого</strong></td>
+            <td></td>
+            <td><strong>${formatPrice(results.total_price)}</strong></td>
+        </tr>`;
+        
         html += '</tbody>';
         html += '</table>';
+        
+        // Добавляем информацию о перголе
+        html += '<div class="pergola-info">';
+        html += '<h3>Информация о перголе</h3>';
+        html += '<p>Перголы с биоклиматической крышей – современное решение для создания комфортной зоны отдыха на открытом воздухе. Наша компания предлагает высококачественные перголы с автоматизированным управлением и широким выбором опций.</p>';
+        
+        html += '<div class="advantages">';
+        html += '<h4>Преимущества:</h4>';
+        html += '<ul>';
+        html += '<li>Защита от солнца, осадков и ветра</li>';
+        html += '<li>Современный дизайн и эстетичный внешний вид</li>';
+        html += '<li>Дистанционное управление</li>';
+        html += '<li>Возможность установки дополнительного оборудования</li>';
+        html += '<li>Долговечность и надежность конструкции</li>';
+        html += '</ul>';
+        html += '</div>';
+        
+        html += '</div>';
         
         resultsContent.innerHTML = html;
     }

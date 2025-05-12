@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Калькулятор пергол{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/original_styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
     {% block head_extra %}{% endblock %}
 </head>
 <body>
@@ -17,11 +24,11 @@
             </div>
             <nav>
                 <ul>
-                    <li><a href="{{ url_for('main.index') }}">Калькулятор</a></li>
-                    <li><a href="{{ url_for('main.about') }}">О перголах</a></li>
-                    <li><a href="{{ url_for('main.gallery') }}">Галерея</a></li>
-                    <li><a href="{{ url_for('main.contacts') }}">Контакты</a></li>
-                    <li><a href="{{ url_for('main.embed_code') }}">Встраивание на сайт</a></li>
+                    <li><a href="{{ url_for('main.index') }}" class="{% if request.endpoint == 'main.index' %}active{% endif %}">Калькулятор</a></li>
+                    <li><a href="{{ url_for('main.about') }}" class="{% if request.endpoint == 'main.about' %}active{% endif %}">О перголах</a></li>
+                    <li><a href="{{ url_for('main.gallery') }}" class="{% if request.endpoint == 'main.gallery' %}active{% endif %}">Галерея</a></li>
+                    <li><a href="{{ url_for('main.contacts') }}" class="{% if request.endpoint == 'main.contacts' %}active{% endif %}">Контакты</a></li>
+                    <li><a href="{{ url_for('main.embed_code') }}" class="{% if request.endpoint == 'main.embed_code' %}active{% endif %}">Встраивание на сайт</a></li>
                 </ul>
             </nav>
         </div>
