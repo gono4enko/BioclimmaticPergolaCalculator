@@ -258,24 +258,41 @@ def load_price_data(pergola_type, lamella_size):
         pergola_file_type = pergola_type.replace('NEW', '')  # B500NEW -> B500
         lamella_file_size = lamella_size
         
-        # Путь к актуальному файлу с ценами
-        file_path = os.path.join('attached_assets', f"Price_{pergola_file_type}-{lamella_file_size}.csv")
+        # Путь к актуальному файлу с ценами (английские и русские варианты файлов)
+        file_paths = []
         
-        # Для PIR используем специальный файл
+        # Английские названия файлов
         if lamella_size == 'PIR':
-            file_path = os.path.join('attached_assets', f"Price_{pergola_file_type}_PIR.csv")
+            file_paths.append(os.path.join('attached_assets', f"Price_{pergola_file_type}_PIR.csv"))
+        else:
+            file_paths.append(os.path.join('attached_assets', f"Price_{pergola_file_type}-{lamella_file_size}.csv"))
         
-        logger.info(f"Trying to load prices from: {file_path}")
+        # Русские названия файлов (с буквой В для B500)
+        rus_pergola_type = 'В' + pergola_file_type[1:] if pergola_file_type.startswith('B') else pergola_file_type
+        if lamella_size == 'PIR':
+            file_paths.append(os.path.join('attached_assets', f"Прайс_{rus_pergola_type}_PIR.csv"))
+        else:
+            file_paths.append(os.path.join('attached_assets', f"Прайс_{rus_pergola_type}-{lamella_file_size}.csv"))
         
-        if not os.path.exists(file_path):
-            logger.error(f"Price file not found: {file_path}")
+        # Находим первый существующий файл
+        file_path = ""
+        for path in file_paths:
+            if os.path.exists(path):
+                file_path = path
+                break
+        
+        if not file_path:
+            logger.error(f"Price file not found for {pergola_type} with lamella size {lamella_size}")
             # Пробуем запасной путь (в data/prices)
             backup_path = os.path.join('data', 'prices', f"{pergola_type}_{lamella_size}.csv")
             if os.path.exists(backup_path):
                 file_path = backup_path
                 logger.info(f"Using backup price file: {backup_path}")
             else:
+                logger.warning(f"No price data found for {pergola_type} {lamella_size} with any file pattern")
                 return {}
+                
+        logger.info(f"Using price file: {file_path}")
         
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
