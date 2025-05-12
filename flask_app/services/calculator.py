@@ -165,6 +165,11 @@ class StandardCalculationStrategy(CalculationStrategy):
             'total_price_after_discount': total_after_discount
         }
         
+        # Добавляем информацию об акции, если она применена
+        if options.get('promotion_applied', False):
+            result['promotion_applied'] = True
+            result['promotion_name'] = options.get('promotion_name', 'Акция')
+        
         return result
 
 

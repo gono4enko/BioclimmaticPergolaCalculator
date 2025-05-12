@@ -150,6 +150,13 @@ def generate_pdf(data):
         # Скидка
         discount = data.get('discount', 0)
         if discount > 0:
+            # Если применена акция, выводим информацию о ней
+            if data.get('promotion_applied', False):
+                pdf.set_font('Helvetica', 'B', 10)
+                pdf.set_text_color(255, 107, 0)  # Оранжевый цвет для акции
+                pdf.cell(0, 8, f'Акция: {data.get("promotion_name", "Специальное предложение")}', 0, 1, 'R')
+                pdf.set_text_color(0, 0, 0)  # Возвращаем черный цвет
+            
             pdf.set_font('Helvetica', '', 10)
             pdf.cell(130, 8, f'Скидка {discount}%:', 0, 0, 'R')
             

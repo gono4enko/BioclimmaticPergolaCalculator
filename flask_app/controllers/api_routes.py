@@ -36,8 +36,17 @@ def calculate():
         
         # Добавляем скидку, если указана
         discount = float(data.get('discount', 0))
+        
+        # Проверяем, применена ли акция
+        promotion_applied = data.get('promotion_applied', False)
+        promotion_name = data.get('promotion_name', '')
+        
         if discount > 0:
             options['discount'] = discount
+            
+        if promotion_applied:
+            options['promotion_applied'] = True
+            options['promotion_name'] = promotion_name
         
         # Проверка наличия необходимых параметров
         if not pergola_type or width <= 0 or length <= 0 or not lamella_size:
