@@ -280,32 +280,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const exportPdfButton = document.getElementById('exportPdf');
     const printButton = document.getElementById('printResults');
     const modulesInfo = document.getElementById('modulesInfo');
-    const countdownTimer = document.getElementById('countdown-timer');
+    // Ссылка на удаленный элемент таймера также удалена
     
-    // Обновление счетчика для акции
-    function updateCountdown() {
-        const deadline = new Date('May 31, 2025 23:59:59').getTime();
-        const now = new Date().getTime();
-        const timeLeft = deadline - now;
-        
-        if (timeLeft > 0) {
-            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            
-            // Форматируем текст с правильным склонением
-            const daysText = getPluralForm(days, 'день', 'дня', 'дней');
-            const hoursText = getPluralForm(hours, 'час', 'часа', 'часов');
-            
-            countdownTimer.textContent = `${days} ${daysText} ${hours} ${hoursText}`;
-        } else {
-            countdownTimer.textContent = 'Акция завершена';
-            document.querySelector('.promotion-banner').style.display = 'none';
-        }
-    }
-    
-    // Запускаем обновление счетчика каждый час
-    updateCountdown();
-    setInterval(updateCountdown, 1000 * 60 * 60);
+    // Счетчик акции удален, так как акция больше не действует
     
     // Обновление информации о модулях при изменении размеров
     const widthInput = document.getElementById('width');
@@ -369,23 +346,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(form);
         const data = {};
         
-        // Акция на B700 отключена
-        const isB700Selected = document.getElementById('type_B700NEW').checked;
-        let additionalDiscount = 0;
-        
+        // Обрабатываем данные формы
         for (const [key, value] of formData.entries()) {
             if (key === 'led_lighting' || key === 'rain_sensor' || key === 'wind_sensor') {
                 data[key] = value === 'true';
+            } else if (key === 'width' || key === 'length') {
+                data[key] = parseFloat(value);
             } else if (key === 'discount') {
-                // Добавляем скидку по акции к введенной пользователем
-                data[key] = parseInt(value) + additionalDiscount;
+                data[key] = parseInt(value);
             } else {
                 data[key] = value;
             }
         }
-        // Акционные скидки отключены
         
-        // Отправляем запрос на расчет
+        // Отладочная информация
+        console.log("Отправляемые данные:", data);
+        
+        // Отправляем запрос на расчет с правильным Content-Type
         fetch('{{ url_for("api.calculate") }}', {
             method: 'POST',
             headers: {
