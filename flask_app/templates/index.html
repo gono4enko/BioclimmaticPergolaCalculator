@@ -235,6 +235,46 @@
             <button id="printResults" class="export-button">Распечатать</button>
         </div>
     </div>
+    
+    <!-- Блок с выполненными проектами -->
+    <div class="completed-projects">
+        <h2>Выполненные проекты</h2>
+        <div class="projects-gallery">
+            <div class="project-card">
+                <img src="{{ url_for('static', filename='images/pergolas/07dbd8458c61f3f439f3722e558aa6ee.jpg') }}" alt="Проект 1" class="project-image">
+                <div class="project-info">
+                    <div class="project-title">Пергола B500 в загородном доме</div>
+                    <div class="project-description">Установка перголы с автоматическим управлением и светодиодной подсветкой.</div>
+                    <div class="project-details">
+                        <span>Размер: 4×3 м</span>
+                        <span>Московская область</span>
+                    </div>
+                </div>
+            </div>
+            <div class="project-card">
+                <img src="{{ url_for('static', filename='images/pergolas/IMG_5914.jpg') }}" alt="Проект 2" class="project-image">
+                <div class="project-info">
+                    <div class="project-title">Пергола B700 для ресторана</div>
+                    <div class="project-description">Установка перголы с поворотно-сдвижными ламелями и встроенной системой обогрева.</div>
+                    <div class="project-details">
+                        <span>Размер: 6×4 м</span>
+                        <span>Санкт-Петербург</span>
+                    </div>
+                </div>
+            </div>
+            <div class="project-card">
+                <img src="{{ url_for('static', filename='images/pergolas/Lin gate.jpg') }}" alt="Проект 3" class="project-image">
+                <div class="project-info">
+                    <div class="project-title">Многомодульная пергола B600</div>
+                    <div class="project-description">Проект для частного дома с использованием PIR-панелей и боковым остеклением.</div>
+                    <div class="project-details">
+                        <span>Размер: 8×4 м</span>
+                        <span>Сочи</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -247,6 +287,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const exportPdfButton = document.getElementById('exportPdf');
     const printButton = document.getElementById('printResults');
     const modulesInfo = document.getElementById('modulesInfo');
+    const countdownTimer = document.getElementById('countdown-timer');
+    
+    // Обновление счетчика для акции
+    function updateCountdown() {
+        const deadline = new Date('May 31, 2025 23:59:59').getTime();
+        const now = new Date().getTime();
+        const timeLeft = deadline - now;
+        
+        if (timeLeft > 0) {
+            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            // Форматируем текст с правильным склонением
+            const daysText = getPluralForm(days, 'день', 'дня', 'дней');
+            const hoursText = getPluralForm(hours, 'час', 'часа', 'часов');
+            
+            countdownTimer.textContent = `${days} ${daysText} ${hours} ${hoursText}`;
+        } else {
+            countdownTimer.textContent = 'Акция завершена';
+            document.querySelector('.promotion-banner').style.display = 'none';
+        }
+    }
+    
+    // Запускаем обновление счетчика каждый час
+    updateCountdown();
+    setInterval(updateCountdown, 1000 * 60 * 60);
     
     // Обновление информации о модулях при изменении размеров
     const widthInput = document.getElementById('width');
@@ -310,12 +376,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(form);
         const data = {};
         
+        // Проверяем, активна ли акция на B700
+        const isB700Selected = document.getElementById('type_B700NEW').checked;
+        const hasPromotion = document.querySelector('.promotion-banner').style.display !== 'none';
+        let additionalDiscount = 0;
+        
+        if (isB700Selected && hasPromotion) {
+            additionalDiscount = 15; // 15% по акции на B700
+        }
+        
         for (const [key, value] of formData.entries()) {
             if (key === 'led_lighting' || key === 'rain_sensor' || key === 'wind_sensor') {
                 data[key] = value === 'true';
+            } else if (key === 'discount') {
+                // Добавляем скидку по акции к введенной пользователем
+                data[key] = parseInt(value) + additionalDiscount;
             } else {
                 data[key] = value;
             }
+        }
+        
+        // Если применена акционная скидка
+        if (additionalDiscount > 0) {
+            data.promotion_applied = true;
+            data.promotion_name = 'Весенняя акция -15% на B700';
         }
         
         // Отправляем запрос на расчет
@@ -355,6 +439,9 @@ document.addEventListener('DOMContentLoaded', function() {
         html += `<p>Общая стоимость: <strong>${formatPrice(results.total_price)} ₽</strong></p>`;
         
         if (results.discount > 0) {
+            if (results.promotion_applied) {
+                html += `<p>Акция "<strong>${results.promotion_name}</strong>" активирована</p>`;
+            }
             html += `<p>Скидка: <strong>${results.discount}%</strong></p>`;
             html += `<p>Стоимость со скидкой: <strong>${formatPrice(results.total_price_after_discount)} ₽</strong></p>`;
         }

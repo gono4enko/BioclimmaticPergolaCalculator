@@ -366,3 +366,245 @@ input[type="checkbox"] {
     width: 18px;
     height: 18px;
 }
+
+/* Стили для карточек пергол с изображениями */
+.pergola-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.pergola-type-with-image {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.pergola-type-with-image input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.pergola-image-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    height: 220px;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.pergola-image-container img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.pergola-title {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(0, 102, 204, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.pergola-description {
+    padding: 10px;
+    background-color: white;
+    color: var(--text-color);
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 14px;
+}
+
+.promo-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: var(--accent-color);
+    color: white;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    animation: pulse 1.5s infinite;
+}
+
+.pergola-type-with-image:hover .pergola-image-container {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.pergola-type-with-image:hover img {
+    transform: scale(1.05);
+}
+
+.pergola-type-with-image input[type="radio"]:checked + label .pergola-image-container {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-color), 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Стили для баннера акции */
+.promotion-banner {
+    background: linear-gradient(135deg, #1a5fb4, #0066cc);
+    color: white;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    position: relative;
+}
+
+.promotion-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: url('/static/images/pergolas/b700.jpg') center/cover no-repeat;
+    opacity: 0.15;
+    z-index: 0;
+}
+
+.promotion-content {
+    position: relative;
+    z-index: 1;
+    padding: 20px;
+}
+
+.promotion-banner h3 {
+    margin-top: 0;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.promotion-banner p {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.deadline {
+    font-weight: bold;
+    color: #ffcf4d;
+}
+
+.countdown {
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+#countdown-timer {
+    font-weight: bold;
+    color: #ffeb99;
+}
+
+/* Стили для выполненных проектов */
+.completed-projects {
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+.completed-projects h2 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 25px;
+}
+
+.projects-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.project-card {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.project-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.project-image {
+    height: 200px;
+    width: 100%;
+    object-fit: cover;
+}
+
+.project-info {
+    padding: 15px;
+    background-color: white;
+}
+
+.project-title {
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+}
+
+.project-description {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.project-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #888;
+}
+
+/* Анимация пульсации */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Обновленные стили для текста в синем цвете */
+.calculator-header h1 {
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.calculator-header p {
+    color: #1a5fb4;
+    font-size: 1.2rem;
+}
+
+.form-section h2 {
+    color: var(--primary-color);
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+.results-summary strong {
+    color: var(--primary-color);
+    font-weight: 700;
+}
