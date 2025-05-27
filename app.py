@@ -1372,14 +1372,14 @@ def render_dimensions_form():
         "modules": modules
     }
 
-def render_options_form():
+def render_pergola_type_form():
     """
-    Отображает форму для выбора опций перголы в плиточном дизайне
+    Отображает форму для выбора типа перголы
     
     Returns:
-        dict: Словарь с выбранными опциями
+        str: Выбранный тип перголы
     """
-    st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Параметры перголы</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Выберите тип перголы</h2>", unsafe_allow_html=True)
     
     # Стили для всех заголовков полей
     st.markdown("""
@@ -1544,6 +1544,20 @@ def render_options_form():
     <div style="height: 30px;"></div>
     """, unsafe_allow_html=True)
     
+    return pergola_type
+
+def render_lamella_type_form():
+    """
+    Отображает форму для выбора типа ламелей (зависит от выбранного типа перголы)
+    
+    Returns:
+        str: Выбранный тип ламелей
+    """
+    # Получаем тип перголы из session_state
+    pergola_type = st.session_state.get("pergola_type", "B500NEW")
+    
+    st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Выберите тип ламелей</h2>", unsafe_allow_html=True)
+    
     # Тип ламелей - зависит от выбранного типа перголы
     lamella_options = []
     if pergola_type == "B500NEW":
@@ -1552,9 +1566,6 @@ def render_options_form():
         lamella_options = ["B700-25NEW", "B700-20NEW"]  # Стандартные 250 мм первыми
     elif pergola_type == "B600":
         lamella_options = ["B600-PIR"]
-    
-    # Тип ламелей - заголовок в том же стиле, что и для других разделов
-    st.write("Выберите тип ламелей")
     
     # Получаем размер ламелей из типа для сохранения в session_state
     def get_lamella_size(lamella_type):
@@ -1577,6 +1588,16 @@ def render_options_form():
     
     # Сохраняем размер ламелей в session_state для использования в render_dimensions_form
     st.session_state["lamella_size"] = get_lamella_size(lamella_type)
+    
+    return lamella_type
+
+def render_additional_options_form():
+    """
+    Отображает форму для выбора дополнительных опций перголы
+    
+    Returns:
+        dict: Словарь с выбранными опциями
+    """
     
     # Глобальный CSS для заголовков разделов и выравнивания всех элементов формы
     st.markdown("""
@@ -1660,10 +1681,8 @@ def render_options_form():
     # По умолчанию установка включена
     installation = st.checkbox("С установкой", value=True, key="installation_direct")
     
-    # Возвращаем выбранные опции (не включаем модули, т.к. они рассчитываются автоматически)
+    # Возвращаем выбранные дополнительные опции
     return {
-        "pergola_type": pergola_type,
-        "lamella_type": lamella_type,
         "lighting": lighting_options,
         "installation": installation
     }
@@ -4575,17 +4594,29 @@ def main():
     st.markdown("<h1 style='text-align: center; margin-top: 0px; margin-bottom: 5px; font-size: 2.1rem; font-weight: 600; color: #0066cc;'>Калькулятор расчета стоимости биоклиматических пергол</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
-    # Создаем якорь для перехода к форме параметров
-    st.markdown('<div id="options-form"></div>', unsafe_allow_html=True)
+    # 1. ПЕРВЫМ - Выбор типа перголы
+    st.markdown('<div id="pergola-type-form"></div>', unsafe_allow_html=True)
+    pergola_type = render_pergola_type_form()
     
-    # Получаем опции перголы (тип перголы и ламелей) - ПЕРВЫМ
-    options = render_options_form()
+    # 2. ВТОРЫМ - Выбор типа ламелей (зависит от типа перголы)
+    st.markdown('<div id="lamella-type-form"></div>', unsafe_allow_html=True)
+    lamella_type = render_lamella_type_form()
     
-    # Создаем якорь для перехода к форме размеров
+    # 3. ТРЕТЬИМ - Размеры перголы (после выбора типа перголы и ламелей)
     st.markdown('<div id="dimensions-form"></div>', unsafe_allow_html=True)
-    
-    # Получаем размеры перголы - ТРЕТЬИМ (после выбора типа перголы и ламелей)
     dimensions = render_dimensions_form()
+    
+    # 4. ЧЕТВЕРТЫМ - Дополнительные опции (освещение, установка)
+    st.markdown('<div id="additional-options-form"></div>', unsafe_allow_html=True)
+    additional_options = render_additional_options_form()
+    
+    # Собираем все опции в один словарь
+    options = {
+        "pergola_type": pergola_type,
+        "lamella_type": lamella_type,
+        "lighting": additional_options["lighting"],
+        "installation": additional_options["installation"]
+    }
     
     # Сохраняем размеры в session_state
     st.session_state.dimensions = dimensions
