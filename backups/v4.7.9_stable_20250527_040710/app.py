@@ -4575,20 +4575,17 @@ def main():
     st.markdown("<h1 style='text-align: center; margin-top: 0px; margin-bottom: 5px; font-size: 2.1rem; font-weight: 600; color: #0066cc;'>Калькулятор расчета стоимости биоклиматических пергол</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
-    # Создаем якорь для перехода к форме параметров
-    st.markdown('<div id="options-form"></div>', unsafe_allow_html=True)
-    
-    # Получаем опции перголы (тип перголы и ламелей) - ПЕРВЫМ
-    options = render_options_form()
-    
     # Создаем якорь для перехода к форме размеров
     st.markdown('<div id="dimensions-form"></div>', unsafe_allow_html=True)
     
-    # Получаем размеры перголы - ТРЕТЬИМ (после выбора типа перголы и ламелей)
+    # Получаем размеры перголы
     dimensions = render_dimensions_form()
     
     # Сохраняем размеры в session_state
     st.session_state.dimensions = dimensions
+    
+    # Получаем опции перголы
+    options = render_options_form()
     
     # Добавляем отступ перед кнопкой расчета
     st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
