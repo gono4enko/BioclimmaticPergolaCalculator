@@ -116,8 +116,14 @@
         <p>Рассчитайте стоимость перголы с учетом размеров, типа конструкции и дополнительных опций</p>
     </div>
     
-    <!-- Комментарий для сохранения структуры -->
-    <!-- Баннер с акцией удален по запросу клиента -->
+    <!-- Акция с ограниченным сроком -->
+    <div class="promotion-banner">
+        <div class="promotion-content">
+            <h3>Специальное предложение</h3>
+            <p>Скидка <strong>15%</strong> на перголы серии B700 при заказе до <span class="deadline">31 мая 2025</span></p>
+            <div class="countdown">До конца акции осталось: <span id="countdown-timer">19 дней</span></div>
+        </div>
+    </div>
     
     <div class="calculator-form">
         <form id="calculatorForm" method="post" action="{{ url_for('api.calculate') }}">
@@ -141,6 +147,7 @@
                                 <img src="{{ url_for('static', filename='images/pergolas/b700.jpg') }}" alt="B700 NEW">
                                 <span class="pergola-title">B700 NEW</span>
                                 <span class="pergola-description">Пергола с поворотно-сдвижными ламелями</span>
+                                <span class="promo-badge">-15%</span>
                             </div>
                         </label>
                     </div>
@@ -228,46 +235,6 @@
             <button id="printResults" class="export-button">Распечатать</button>
         </div>
     </div>
-    
-    <!-- Блок с выполненными проектами -->
-    <div class="completed-projects">
-        <h2>Выполненные проекты</h2>
-        <div class="projects-gallery">
-            <div class="project-card">
-                <img src="{{ url_for('static', filename='images/pergolas/07dbd8458c61f3f439f3722e558aa6ee.jpg') }}" alt="Проект 1" class="project-image">
-                <div class="project-info">
-                    <div class="project-title">Пергола B500 в загородном доме</div>
-                    <div class="project-description">Установка перголы с автоматическим управлением и светодиодной подсветкой.</div>
-                    <div class="project-details">
-                        <span>Размер: 4×3 м</span>
-                        <span>Московская область</span>
-                    </div>
-                </div>
-            </div>
-            <div class="project-card">
-                <img src="{{ url_for('static', filename='images/pergolas/IMG_5914.jpg') }}" alt="Проект 2" class="project-image">
-                <div class="project-info">
-                    <div class="project-title">Пергола B700 для ресторана</div>
-                    <div class="project-description">Установка перголы с поворотно-сдвижными ламелями и встроенной системой обогрева.</div>
-                    <div class="project-details">
-                        <span>Размер: 6×4 м</span>
-                        <span>Санкт-Петербург</span>
-                    </div>
-                </div>
-            </div>
-            <div class="project-card">
-                <img src="{{ url_for('static', filename='images/pergolas/Lin gate.jpg') }}" alt="Проект 3" class="project-image">
-                <div class="project-info">
-                    <div class="project-title">Многомодульная пергола B600</div>
-                    <div class="project-description">Проект для частного дома с использованием PIR-панелей и боковым остеклением.</div>
-                    <div class="project-details">
-                        <span>Размер: 8×4 м</span>
-                        <span>Сочи</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
@@ -280,9 +247,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const exportPdfButton = document.getElementById('exportPdf');
     const printButton = document.getElementById('printResults');
     const modulesInfo = document.getElementById('modulesInfo');
-    // Ссылка на удаленный элемент таймера также удалена
-    
-    // Счетчик акции удален, так как акция больше не действует
     
     // Обновление информации о модулях при изменении размеров
     const widthInput = document.getElementById('width');
@@ -346,23 +310,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(form);
         const data = {};
         
-        // Обрабатываем данные формы
         for (const [key, value] of formData.entries()) {
             if (key === 'led_lighting' || key === 'rain_sensor' || key === 'wind_sensor') {
                 data[key] = value === 'true';
-            } else if (key === 'width' || key === 'length') {
-                data[key] = parseFloat(value);
-            } else if (key === 'discount') {
-                data[key] = parseInt(value);
             } else {
                 data[key] = value;
             }
         }
         
-        // Отладочная информация
-        console.log("Отправляемые данные:", data);
-        
-        // Отправляем запрос на расчет с правильным Content-Type
+        // Отправляем запрос на расчет
         fetch('{{ url_for("api.calculate") }}', {
             method: 'POST',
             headers: {
@@ -399,9 +355,6 @@ document.addEventListener('DOMContentLoaded', function() {
         html += `<p>Общая стоимость: <strong>${formatPrice(results.total_price)} ₽</strong></p>`;
         
         if (results.discount > 0) {
-            if (results.promotion_applied) {
-                html += `<p>Акция "<strong>${results.promotion_name}</strong>" активирована</p>`;
-            }
             html += `<p>Скидка: <strong>${results.discount}%</strong></p>`;
             html += `<p>Стоимость со скидкой: <strong>${formatPrice(results.total_price_after_discount)} ₽</strong></p>`;
         }

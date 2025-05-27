@@ -60,6 +60,7 @@ class PriceData(db.Model):
     length = db.Column(db.Float, nullable=False)
     price = db.Column(db.Float, nullable=False)
     modules = db.Column(db.Integer, default=1)
+    updated_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     
     def __repr__(self):
         return f"<PriceData {self.pergola_type}-{self.lamella_size} {self.width}x{self.length}m: {self.price}>"

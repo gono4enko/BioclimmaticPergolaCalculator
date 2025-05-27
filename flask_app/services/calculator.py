@@ -13,11 +13,6 @@ from ..models.pergola_model import PriceData, db
 
 # Настройка логирования
 logger = logging.getLogger(__name__)
-handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
 
 class CalculationStrategy:
     """Базовый класс для стратегии расчета."""
@@ -170,11 +165,6 @@ class StandardCalculationStrategy(CalculationStrategy):
             'total_price_after_discount': total_after_discount
         }
         
-        # Добавляем информацию об акции, если она применена
-        if options.get('promotion_applied', False):
-            result['promotion_applied'] = True
-            result['promotion_name'] = options.get('promotion_name', 'Акция')
-        
         return result
 
 
@@ -252,144 +242,41 @@ def load_price_data(pergola_type, lamella_size):
             }
         return price_data
     
-    # Если в базе нет, загружаем из актуальных файлов (attached_assets)
+    # Если в базе нет, загружаем из файла
     try:
-        # Преобразование типов для соответствия формату файлов
-        pergola_file_type = pergola_type.replace('NEW', '')  # B500NEW -> B500
-        lamella_file_size = lamella_size
+        # Путь к файлу с ценами
+        file_path = os.path.join('data', 'prices', f"{pergola_type}_{lamella_size}.csv")
         
-        # Путь к актуальному файлу с ценами (английские и русские варианты файлов)
-        file_paths = []
-        
-        # Английские названия файлов
-        if lamella_size == 'PIR':
-            file_paths.append(os.path.join('attached_assets', f"Price_{pergola_file_type}_PIR.csv"))
-        else:
-            file_paths.append(os.path.join('attached_assets', f"Price_{pergola_file_type}-{lamella_file_size}.csv"))
-        
-        # Русские названия файлов (с буквой В для B500)
-        rus_pergola_type = 'В' + pergola_file_type[1:] if pergola_file_type.startswith('B') else pergola_file_type
-        if lamella_size == 'PIR':
-            file_paths.append(os.path.join('attached_assets', f"Прайс_{rus_pergola_type}_PIR.csv"))
-        else:
-            file_paths.append(os.path.join('attached_assets', f"Прайс_{rus_pergola_type}-{lamella_file_size}.csv"))
-        
-        # Находим первый существующий файл
-        file_path = ""
-        for path in file_paths:
-            if os.path.exists(path):
-                file_path = path
-                break
-        
-        if not file_path:
-            logger.error(f"Price file not found for {pergola_type} with lamella size {lamella_size}")
-            # Пробуем запасной путь (в data/prices)
-            backup_path = os.path.join('data', 'prices', f"{pergola_type}_{lamella_size}.csv")
-            if os.path.exists(backup_path):
-                file_path = backup_path
-                logger.info(f"Using backup price file: {backup_path}")
-            else:
-                logger.warning(f"No price data found for {pergola_type} {lamella_size} with any file pattern")
-                return {}
-                
-        logger.info(f"Using price file: {file_path}")
+        if not os.path.exists(file_path):
+            logger.error(f"Price file not found: {file_path}")
+            return {}
         
         with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+            reader = csv.DictReader(f)
+            for row in reader:
+                width = float(row['width'])
+                length = float(row['length'])
+                price = float(row['price'])
+                modules = int(row.get('modules', 1))
+                
+                key = f"{width}x{length}"
+                price_data[key] = {
+                    'price': price,
+                    'modules': modules
+                }
+                
+                # Сохраняем данные в базу для будущего использования
+                db_price = PriceData(
+                    pergola_type=pergola_type,
+                    lamella_size=lamella_size,
+                    width=width,
+                    length=length,
+                    price=price,
+                    modules=modules
+                )
+                db.session.add(db_price)
             
-            # Проверяем формат файла (с разделителями ";" или ",")
-            if ';' in content.split('\n')[0]:
-                # Это формат с русской локалью (;)
-                rows = []
-                lines = content.strip().split('\n')
-                headers = lines[0].split(';')
-                
-                # Определяем, есть ли заголовок с информацией о модулях
-                modules_in_header = any('модул' in header.lower() for header in headers)
-                
-                for i in range(2, len(lines)):  # Пропускаем первые две строки (заголовки)
-                    cols = lines[i].split(';')
-                    if len(cols) < 2:
-                        continue
-                        
-                    length = float(cols[0].replace(',', '.'))  # Вылет (первая колонка)
-                    
-                    for j in range(1, len(cols)):
-                        if cols[j] and cols[j].strip():  # Проверка, что ячейка не пустая
-                            try:
-                                price = float(cols[j].replace(' ', '').replace(',', '.'))
-                                width = float(headers[j].replace(',', '.'))
-                                
-                                # Инициализируем модули по умолчанию
-                                modules = 1
-                                
-                                # Определяем количество модулей из заголовка
-                                if modules_in_header:
-                                    if 'модуль' in headers[j].lower() or 'модуля' in headers[j].lower():
-                                        modules_text = headers[j].lower()
-                                        # Извлекаем число модулей из текста
-                                        if '1' in modules_text or 'один' in modules_text:
-                                            modules = 1
-                                        elif '2' in modules_text or 'два' in modules_text:
-                                            modules = 2
-                                        elif '3' in modules_text or 'три' in modules_text:
-                                            modules = 3
-                                else:
-                                    # Определяем модули по ширине
-                                    if width <= 4.5:
-                                        modules = 1
-                                    elif width <= 10.0:
-                                        modules = 2
-                                    else:
-                                        modules = 3
-                                
-                                key = f"{width}x{length}"
-                                price_data[key] = {
-                                    'price': price,
-                                    'modules': modules
-                                }
-                                
-                                # Сохраняем данные в базу для будущего использования
-                                db_price = PriceData()
-                                db_price.pergola_type = pergola_type
-                                db_price.lamella_size = lamella_size
-                                db_price.width = width
-                                db_price.length = length
-                                db_price.price = price
-                                db_price.modules = modules
-                                db.session.add(db_price)
-                            except ValueError:
-                                logger.warning(f"Invalid price value: {cols[j]}")
-                
-            else:
-                # Это стандартный CSV формат (с заголовками)
-                reader = csv.DictReader(f)
-                for row in reader:
-                    width = float(row['width'])
-                    length = float(row['length'])
-                    price = float(row['price'])
-                    modules = int(row.get('modules', 1))
-                    
-                    key = f"{width}x{length}"
-                    price_data[key] = {
-                        'price': price,
-                        'modules': modules
-                    }
-                    
-                    # Сохраняем данные в базу для будущего использования
-                    db_price = PriceData()
-                    db_price.pergola_type = pergola_type
-                    db_price.lamella_size = lamella_size
-                    db_price.width = width
-                    db_price.length = length
-                    db_price.price = price
-                    db_price.modules = modules
-                    db.session.add(db_price)
-                
             db.session.commit()
-            
-            # Логируем загруженные цены для диагностики
-            logger.info(f"Loaded {len(price_data)} prices from {file_path}")
                 
         return price_data
     
