@@ -4,15 +4,10 @@
 :root {
     --primary-color: #0066cc;
     --secondary-color: #238b7e;
-    --background-color: #f5f7fa;
+    --background-color: #f9f9f9;
     --card-background-color: #ffffff;
     --text-color: #333333;
-    --accent-color: #ff6b00;
     --border-color: #dddddd;
-    --success-color: #28a745;
-    --info-color: #17a2b8;
-    --warning-color: #ffc107;
-    --danger-color: #dc3545;
 }
 
 /* Основные стили */
