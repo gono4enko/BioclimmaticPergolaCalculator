@@ -1,6 +1,5 @@
 """
-Основной модуль Flask-приложения калькулятора перголы.
-Содержит фабрику приложения и инициализацию расширений.
+Инициализация Flask-приложения и его зависимостей.
 """
 import os
 from flask import Flask
@@ -13,50 +12,67 @@ migrate = Migrate()
 
 def create_app(test_config=None):
     """
-    Фабричная функция для создания экземпляра Flask приложения.
+    Создает и настраивает экземпляр Flask-приложения.
     
     Args:
-        test_config (dict, optional): Конфигурация для тестирования
+        test_config: Конфигурация для тестирования (если нужна)
         
     Returns:
-        Flask: Экземпляр Flask приложения
+        Flask: Настроенное Flask-приложение
     """
-    # Создание и настройка приложения
-    app = Flask(__name__, 
-                template_folder='templates',
-                static_folder='static')
+    # Создаем экземпляр приложения
+    app = Flask(__name__, instance_relative_config=True)
     
-    # Загрузка конфигурации
-    if test_config is None:
-        app.config.from_mapping(
-            SECRET_KEY=os.environ.get('SECRET_KEY', 'dev'),
-            SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///pergola.db'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            UPLOAD_FOLDER=os.path.join(app.root_path, 'uploads'),
-            PDF_FOLDER=os.path.join(app.root_path, 'generated_pdf'),
-            JSON_AS_ASCII=False  # Для корректной работы с кириллицей
-        )
-    else:
+    # Настройка приложения
+    app.config.from_mapping(
+        SECRET_KEY=os.environ.get('SECRET_KEY', 'dev'),
+        SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///pergola.db'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        PDF_FOLDER=os.path.join(app.root_path, 'generated_pdf'),
+        UPLOAD_FOLDER=os.path.join(app.root_path, 'uploads'),
+        MAX_CONTENT_LENGTH=16 * 1024 * 1024,  # 16 MB лимит загрузки
+        ALLOWED_SCRAPING_DOMAINS=[
+            'pergolamarket.ru', 'pergolas.ru', 'decolife.ru', 'forumhouse.ru', 
+            'stroyka.ru', 'wikipedia.org', 'dizainland.ru', 'houzz.ru', 
+            'inmyroom.ru', 'ivd.ru', 'elitepergola.ru'
+        ]
+    )
+    
+    # Если передан тестовый конфиг, используем его
+    if test_config is not None:
         app.config.from_mapping(test_config)
-    
-    # Создание необходимых папок
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    os.makedirs(app.config['PDF_FOLDER'], exist_ok=True)
+        
+    # Создаем необходимые директории
+    for folder in ['generated_pdf', 'uploads', 'static/images']:
+        os.makedirs(os.path.join(app.root_path, folder), exist_ok=True)
     
     # Инициализация расширений
     db.init_app(app)
     migrate.init_app(app, db)
     
-    from .models import pergola_model  # Импорт моделей
-
-    # Регистрация маршрутов
-    from .controllers import main_routes, api_routes
-    app.register_blueprint(main_routes.bp)
-    app.register_blueprint(api_routes.bp, url_prefix='/api')
-
-    @app.route('/health')
-    def health_check():
-        """Простая проверка работоспособности сервера"""
-        return {'status': 'healthy'}
+    # Регистрация Blueprints
+    from .controllers.main_routes import bp as main_bp
+    app.register_blueprint(main_bp)
     
+    from .controllers.api_routes import bp as api_bp
+    app.register_blueprint(api_bp, url_prefix='/api')
+    
+    # Регистрация блюпринта для скрапера
+    from .controllers.scraper_controller import register_scraper_blueprints
+    register_scraper_blueprints(app)
+    
+    # Регистрация блюпринта для работы с PDF
+    from .controllers.pdf_controller import register_pdf_blueprints
+    register_pdf_blueprints(app)
+    
+    # Регистрация обработчика ошибок
+    @app.errorhandler(404)
+    def page_not_found(error):
+        return {'error': 'Страница не найдена'}, 404
+    
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        return {'error': 'Внутренняя ошибка сервера'}, 500
+    
+    # Возвращаем приложение
     return app

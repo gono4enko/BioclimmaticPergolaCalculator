@@ -20,6 +20,10 @@ author = "agent"
 task = "workflow.run"
 args = "FlaskApp"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "StreamlitApp"
+
 [[workflows.workflow]]
 name = "FlaskApp"
 author = "agent"
@@ -27,6 +31,15 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python -m flask --app app.py run --host=0.0.0.0 --port=5000"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "StreamlitApp"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run app.py --server.port 5000"
 waitForPort = 5000
 
 [[ports]]

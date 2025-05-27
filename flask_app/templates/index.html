@@ -1,386 +1,176 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Калькулятор пергол - Главная{% endblock %}
+{% block title %}Биоклиматические перголы - Главная{% endblock %}
 
 {% block head_extra %}
 <style>
-    /* Дополнительные стили для страницы калькулятора */
-    .calculator-container {
-        max-width: 960px;
-        margin: 0 auto;
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        background-color: white;
+    .hero {
+        background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("{{ url_for('static', filename='images/hero-bg.jpg') }}");
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 5rem 0;
+        margin-bottom: 3rem;
+        border-radius: 0.5rem;
     }
     
-    .calculator-header {
-        text-align: center;
-        margin-bottom: 25px;
-    }
-    
-    .calculator-header h1 {
+    .feature-icon {
         font-size: 2.5rem;
-        color: var(--primary-color);
-        margin-bottom: 15px;
-        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #0d6efd;
     }
     
-    .calculator-header p {
-        color: #666;
-        font-size: 1.1rem;
-        max-width: 80%;
-        margin: 0 auto;
-    }
-    
-    .form-section {
-        background-color: #f9f9f9;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    .pergola-type-card {
         transition: transform 0.3s ease;
+        margin-bottom: 2rem;
     }
     
-    .form-section:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    .pergola-type-card:hover {
+        transform: translateY(-5px);
     }
     
-    /* Улучшенная анимация появления результатов */
-    @keyframes slideInUp {
-        from {
-            transform: translateY(30px);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
+    .testimonial {
+        background-color: #f8f9fa;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem;
     }
     
-    .results {
-        animation: slideInUp 0.5s ease-out forwards;
-    }
-    
-    /* Стилизация кнопок и интерактивных элементов */
-    .calculate-button {
-        background: linear-gradient(135deg, #0066cc, #0052a3);
-        box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);
-        transition: all 0.3s ease;
-    }
-    
-    .calculate-button:hover {
-        background: linear-gradient(135deg, #0052a3, #003d7a);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(0, 102, 204, 0.4);
-    }
-    
-    .export-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 10px 20px;
-    }
-    
-    #exportPdf:before {
-        content: "📄";
-    }
-    
-    #printResults:before {
-        content: "🖨️";
-    }
-    
-    /* Улучшенное форматирование для мобильных устройств */
-    @media (max-width: 768px) {
-        .calculator-container {
-            padding: 20px 15px;
-        }
-        
-        .calculator-header h1 {
-            font-size: 2rem;
-        }
-        
-        .form-section {
-            padding: 15px;
-        }
+    .cta-section {
+        background-color: #0d6efd;
+        color: white;
+        padding: 3rem 0;
+        border-radius: 0.5rem;
+        margin: 3rem 0;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="calculator-container">
-    <div class="calculator-header">
-        <h1>Калькулятор стоимости пергол</h1>
-        <p>Рассчитайте стоимость перголы с учетом размеров, типа конструкции и дополнительных опций</p>
+<!-- Hero Section -->
+<section class="hero text-center">
+    <div class="container">
+        <h1 class="display-4 fw-bold">Биоклиматические перголы</h1>
+        <p class="lead mb-4">Создайте идеальную атмосферу для вашего отдыха с нашими современными перголами</p>
+        <a href="{{ url_for('main.calculator') }}" class="btn btn-primary btn-lg px-4 me-2">Рассчитать стоимость</a>
+        <a href="{{ url_for('main.catalog') }}" class="btn btn-outline-light btn-lg px-4">Каталог</a>
     </div>
-    
-    <div class="calculator-form">
-        <form id="calculatorForm" method="post" action="{{ url_for('api.calculate') }}">
-            <div class="form-section">
-                <h2>Выберите тип перголы:</h2>
-                <div class="pergola-types">
-                    {% for pergola_type in pergola_types %}
-                    <div class="pergola-type">
-                        <input type="radio" name="pergola_type" id="type_{{ pergola_type.id }}" value="{{ pergola_type.id }}" 
-                               {% if loop.first %}checked{% endif %}>
-                        <label for="type_{{ pergola_type.id }}">{{ pergola_type.name }}</label>
-                    </div>
-                    {% endfor %}
-                </div>
+</section>
+
+<!-- Benefits Section -->
+<section class="container mb-5">
+    <h2 class="text-center mb-4">Преимущества наших пергол</h2>
+    <div class="row">
+        <div class="col-md-4 text-center mb-4">
+            <div class="feature-icon">
+                <i class="bi bi-sun"></i>
             </div>
-            
-            <div class="form-section">
-                <h2>Выберите размер ламелей:</h2>
-                <div class="lamella-sizes">
-                    {% for lamella_size in lamella_sizes %}
-                    <div class="lamella-size">
-                        <input type="radio" name="lamella_size" id="lamella_{{ lamella_size.id }}" value="{{ lamella_size.id }}"
-                               {% if loop.first %}checked{% endif %}>
-                        <label for="lamella_{{ lamella_size.id }}">{{ lamella_size.name }}</label>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            
-            <div class="form-section">
-                <h2>Укажите размеры перголы:</h2>
-                <div class="dimensions">
-                    <div class="dimension">
-                        <label for="width">Ширина (м):</label>
-                        <input type="number" id="width" name="width" min="2" max="15" step="0.1" value="4.0">
-                    </div>
-                    <div class="dimension">
-                        <label for="length">Вынос (м):</label>
-                        <input type="number" id="length" name="length" min="2" max="8" step="0.1" value="4.0">
-                    </div>
-                </div>
-                <div id="modulesInfo" class="modules-info" style="margin-top: 10px; padding: 8px; background-color: #e6f3ff; border-radius: 5px; font-size: 0.9rem;"></div>
-            </div>
-            
-            <div class="form-section">
-                <h2>Дополнительные опции:</h2>
-                <div class="options">
-                    <div class="option">
-                        <input type="checkbox" id="led_lighting" name="led_lighting" value="true">
-                        <label for="led_lighting">Светодиодная подсветка</label>
-                    </div>
-                    <div class="option">
-                        <input type="checkbox" id="rain_sensor" name="rain_sensor" value="true">
-                        <label for="rain_sensor">Датчик дождя</label>
-                    </div>
-                    <div class="option">
-                        <input type="checkbox" id="wind_sensor" name="wind_sensor" value="true">
-                        <label for="wind_sensor">Датчик ветра</label>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="form-section">
-                <h2>Скидка:</h2>
-                <div class="discount">
-                    <label for="discount">Скидка (%):</label>
-                    <input type="number" id="discount" name="discount" min="0" max="50" value="0">
-                </div>
-            </div>
-            
-            <div class="form-actions">
-                <button type="submit" class="calculate-button">Рассчитать стоимость</button>
-            </div>
-        </form>
-    </div>
-    
-    <div id="results" class="results" style="display: none;">
-        <h2>Результаты расчета:</h2>
-        <div id="resultsContent" class="results-content">
-            <!-- Результаты будут загружены сюда через JavaScript -->
+            <h3>Защита от солнца</h3>
+            <p>Наслаждайтесь свежим воздухом без обжигающих лучей солнца. Ламели регулируются в зависимости от погодных условий.</p>
         </div>
-        
-        <div class="export-actions">
-            <button id="exportPdf" class="export-button">Скачать PDF</button>
-            <button id="printResults" class="export-button">Распечатать</button>
+        <div class="col-md-4 text-center mb-4">
+            <div class="feature-icon">
+                <i class="bi bi-cloud-rain"></i>
+            </div>
+            <h3>Защита от осадков</h3>
+            <p>Закрытые ламели защищают от дождя и снега, позволяя использовать перголу в любое время года.</p>
+        </div>
+        <div class="col-md-4 text-center mb-4">
+            <div class="feature-icon">
+                <i class="bi bi-gear"></i>
+            </div>
+            <h3>Автоматизация</h3>
+            <p>Управляйте ламелями с помощью пульта или мобильного приложения. Датчики осадков и ветра автоматически закроют перголу.</p>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Pergola Types Section -->
+<section class="container mb-5">
+    <h2 class="text-center mb-4">Типы пергол</h2>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card pergola-type-card h-100">
+                <img src="{{ url_for('static', filename='images/b500.jpg') }}" class="card-img-top" alt="Пергола B500">
+                <div class="card-body">
+                    <h3 class="card-title">B500 NEW</h3>
+                    <p class="card-text">Компактная и стильная пергола для небольших пространств. Идеальна для городских условий и балконов.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card pergola-type-card h-100">
+                <img src="{{ url_for('static', filename='images/b700.jpg') }}" class="card-img-top" alt="Пергола B700">
+                <div class="card-body">
+                    <h3 class="card-title">B700 NEW</h3>
+                    <p class="card-text">Премиальная пергола с повышенной прочностью и увеличенной шириной пролета для просторных террас.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card pergola-type-card h-100">
+                <img src="{{ url_for('static', filename='images/b600.jpg') }}" class="card-img-top" alt="Пергола B600">
+                <div class="card-body">
+                    <h3 class="card-title">B600</h3>
+                    <p class="card-text">Универсальное решение с оптимальным соотношением цены и качества для частных домов и коммерческих объектов.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section text-center">
+    <div class="container">
+        <h2 class="mb-4">Готовы создать свою идеальную перголу?</h2>
+        <p class="lead mb-4">Воспользуйтесь нашим онлайн-калькулятором и получите предварительный расчет стоимости за несколько минут</p>
+        <a href="{{ url_for('main.calculator') }}" class="btn btn-light btn-lg px-4">Рассчитать стоимость</a>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="container mb-5">
+    <h2 class="text-center mb-4">Отзывы клиентов</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="testimonial">
+                <p class="lead">"Наслаждаемся нашей перголой B700 уже второй год. Качество превзошло все ожидания, а автоматика работает как часы!"</p>
+                <div class="d-flex align-items-center">
+                    <strong>Александр П., Сочи</strong>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="testimonial">
+                <p class="lead">"Пергола B500 идеально вписалась в дизайн нашей террасы. Теперь мы можем наслаждаться отдыхом на свежем воздухе в любую погоду."</p>
+                <div class="d-flex align-items-center">
+                    <strong>Елена М., Москва</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('calculatorForm');
-    const results = document.getElementById('results');
-    const resultsContent = document.getElementById('resultsContent');
-    const exportPdfButton = document.getElementById('exportPdf');
-    const printButton = document.getElementById('printResults');
-    const modulesInfo = document.getElementById('modulesInfo');
-    
-    // Обновление информации о модулях при изменении размеров
-    const widthInput = document.getElementById('width');
-    const lengthInput = document.getElementById('length');
-    const pergolaTypeRadios = document.querySelectorAll('input[name="pergola_type"]');
-    
-    function updateModulesInfo() {
-        const width = parseFloat(widthInput.value);
-        const length = parseFloat(lengthInput.value);
-        let pergolaType = '';
+    document.addEventListener('DOMContentLoaded', function() {
+        // Анимация появления элементов при прокрутке
+        const animateElements = document.querySelectorAll('.pergola-type-card, .testimonial');
         
-        // Получаем выбранный тип перголы
-        pergolaTypeRadios.forEach(radio => {
-            if (radio.checked) {
-                pergolaType = radio.value;
-            }
-        });
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = 1;
+                }
+            });
+        }, { threshold: 0.1 });
         
-        // Расчет количества модулей на основе ширины
-        let modules = 1;
-        if (width > 4.5) modules = 2;
-        if (width > 9.0) modules = 3;
-        
-        modulesInfo.innerHTML = `При размере ${width.toFixed(1)}×${length.toFixed(1)} м будет автоматически использовано ${modules} ${getPluralForm(modules, 'модуль', 'модуля', 'модулей')}`;
-    }
-    
-    // Функция для получения правильной формы слова
-    function getPluralForm(number, one, two, five) {
-        let n = Math.abs(number) % 100;
-        if (n >= 11 && n <= 19) {
-            return five;
-        }
-        n = n % 10;
-        if (n === 1) {
-            return one;
-        }
-        if (n >= 2 && n <= 4) {
-            return two;
-        }
-        return five;
-    }
-    
-    // Вешаем слушатели событий
-    widthInput.addEventListener('input', updateModulesInfo);
-    lengthInput.addEventListener('input', updateModulesInfo);
-    pergolaTypeRadios.forEach(radio => {
-        radio.addEventListener('change', updateModulesInfo);
-    });
-    
-    // Инициализируем информацию о модулях
-    updateModulesInfo();
-    
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Показываем индикатор загрузки
-        resultsContent.innerHTML = '<div class="loading">Выполняем расчет...</div>';
-        results.style.display = 'block';
-        
-        // Собираем данные формы
-        const formData = new FormData(form);
-        const data = {};
-        
-        for (const [key, value] of formData.entries()) {
-            if (key === 'led_lighting' || key === 'rain_sensor' || key === 'wind_sensor') {
-                data[key] = value === 'true';
-            } else {
-                data[key] = value;
-            }
-        }
-        
-        // Отправляем запрос на расчет
-        fetch('{{ url_for("api.calculate") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Отображаем результаты
-                displayResults(data.results);
-                
-                // Прокручиваем страницу к результатам
-                results.scrollIntoView({ behavior: 'smooth' });
-            } else {
-                resultsContent.innerHTML = `<div class="error-message">Ошибка при расчете: ${data.error}</div>`;
-            }
-        })
-        .catch(error => {
-            console.error('Ошибка:', error);
-            resultsContent.innerHTML = '<div class="error-message">Произошла ошибка при отправке запроса</div>';
+        animateElements.forEach(el => {
+            el.style.opacity = 0;
+            el.style.transition = 'opacity 0.5s ease-in-out';
+            observer.observe(el);
         });
     });
-    
-    function displayResults(results) {
-        // Форматирование цены
-        const formatPrice = price => {
-            return new Intl.NumberFormat('ru-RU').format(Math.round(price));
-        };
-        
-        // Формируем HTML для отображения результатов
-        let html = '<div class="results-summary">';
-        html += `<p>Общая стоимость: <strong>${formatPrice(results.total_price)} ₽</strong></p>`;
-        
-        if (results.discount > 0) {
-            html += `<p>Скидка: <strong>${results.discount}%</strong></p>`;
-            html += `<p>Стоимость со скидкой: <strong>${formatPrice(results.total_price_after_discount)} ₽</strong></p>`;
-        }
-        
-        html += '</div>';
-        
-        // Таблица с позициями
-        html += '<h3>Спецификация перголы</h3>';
-        html += '<table class="results-table">';
-        html += '<thead><tr><th>Наименование</th><th>Количество</th><th>Цена, ₽</th></tr></thead>';
-        html += '<tbody>';
-        
-        for (const item of results.items) {
-            html += `<tr>
-                <td>${item.name}</td>
-                <td>${item.quantity}</td>
-                <td>${formatPrice(item.price)}</td>
-            </tr>`;
-        }
-        
-        html += `<tr>
-            <td><strong>Итого</strong></td>
-            <td></td>
-            <td><strong>${formatPrice(results.total_price)}</strong></td>
-        </tr>`;
-        
-        html += '</tbody>';
-        html += '</table>';
-        
-        // Добавляем информацию о перголе
-        html += '<div class="pergola-info">';
-        html += '<h3>Информация о перголе</h3>';
-        html += '<p>Перголы с биоклиматической крышей – современное решение для создания комфортной зоны отдыха на открытом воздухе. Наша компания предлагает высококачественные перголы с автоматизированным управлением и широким выбором опций.</p>';
-        
-        html += '<div class="advantages">';
-        html += '<h4>Преимущества:</h4>';
-        html += '<ul>';
-        html += '<li>Защита от солнца, осадков и ветра</li>';
-        html += '<li>Современный дизайн и эстетичный внешний вид</li>';
-        html += '<li>Дистанционное управление</li>';
-        html += '<li>Возможность установки дополнительного оборудования</li>';
-        html += '<li>Долговечность и надежность конструкции</li>';
-        html += '</ul>';
-        html += '</div>';
-        
-        html += '</div>';
-        
-        resultsContent.innerHTML = html;
-    }
-    
-    // Обработчик для экспорта в PDF
-    exportPdfButton.addEventListener('click', function() {
-        window.location.href = '{{ url_for("api.export_pdf") }}';
-    });
-    
-    // Обработчик для печати
-    printButton.addEventListener('click', function() {
-        window.print();
-    });
-});
 </script>
 {% endblock %}

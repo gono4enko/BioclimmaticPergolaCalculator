@@ -7,7 +7,7 @@ import datetime
 from flask import Blueprint, jsonify, request, current_app, send_file, url_for
 from werkzeug.exceptions import BadRequest, NotFound
 from ..models.pergola_model import Pergola, db
-from ..services.calculator import (CalculationFactory, 
+from ..services.calculator import (calculate_pergola_price, 
                                   get_modules_by_dimensions, 
                                   adjust_length_for_lamella_size)
 from ..services.pdf_generator import generate_pdf
@@ -28,16 +28,7 @@ def calculate():
         width = float(data.get('width', 0))
         length = float(data.get('length', 0))
         lamella_size = data.get('lamella_size')
-        
-        # Собираем опции из запроса
-        options = {}
-        for key in ['led_lighting', 'rain_sensor', 'wind_sensor']:
-            options[key] = data.get(key, False)
-        
-        # Добавляем скидку, если указана
-        discount = float(data.get('discount', 0))
-        if discount > 0:
-            options['discount'] = discount
+        options = data.get('options', {})
         
         # Проверка наличия необходимых параметров
         if not pergola_type or width <= 0 or length <= 0 or not lamella_size:
@@ -49,9 +40,8 @@ def calculate():
         # Определение количества модулей
         modules = get_modules_by_dimensions(width, adjusted_length, pergola_type)
         
-        # Выполнение расчета с использованием фабрики и стратегии
-        calculator = CalculationFactory.get_strategy(pergola_type)
-        result = calculator.calculate(
+        # Выполнение расчета
+        result = calculate_pergola_price(
             pergola_type=pergola_type,
             width=width,
             length=adjusted_length,
@@ -63,7 +53,7 @@ def calculate():
         # Формирование ответа
         response = {
             'success': True,
-            'results': result,
+            'result': result,
             'adjusted_length': adjusted_length,
             'modules': modules
         }
@@ -115,33 +105,14 @@ def save_calculation():
             'error': str(e)
         }), 400
 
-@bp.route('/export-pdf', methods=['GET', 'POST'])
+@bp.route('/export-pdf', methods=['POST'])
 def export_pdf():
     """API для экспорта результатов в PDF."""
     try:
-        # Получаем данные из POST-запроса или из сессии
-        if request.method == 'POST':
-            data = request.get_json()
-            if not data:
-                raise BadRequest("Missing request data")
-        else:
-            # При GET-запросе используем данные из последнего расчета
-            # В реальном приложении здесь можно использовать сессию или ID расчета
-            data = {
-                'pergola_type': 'B500NEW',
-                'width': 4.0,
-                'length': 4.0,
-                'lamella_size': '250',
-                'modules': 1,
-                'items': [
-                    {'name': 'Пергола B500NEW, ламели 250 мм', 'quantity': '4.0x4.0 м (1 модуль)', 'price': 150000},
-                    {'name': 'Привод Somfy WT 40 Нм', 'quantity': 1, 'price': 35000},
-                    {'name': 'Пульт управления Somfy Smoove Origin RTS', 'quantity': 1, 'price': 8000}
-                ],
-                'total_price': 193000,
-                'discount': 0,
-                'total_price_after_discount': 193000
-            }
+        data = request.get_json()
+        
+        if not data:
+            raise BadRequest("Missing request data")
         
         # Генерация PDF
         pdf_path = generate_pdf(data)
@@ -149,19 +120,17 @@ def export_pdf():
         if not pdf_path or not os.path.exists(pdf_path):
             raise Exception("Failed to generate PDF")
         
+        # Сохранение пути к PDF в базу данных, если есть ID перголы
+        pergola_id = data.get('pergola_id')
+        if pergola_id:
+            pergola = Pergola.query.get(pergola_id)
+            if pergola:
+                pergola.pdf_path = pdf_path
+                db.session.commit()
+        
         # Формирование имени файла для скачивания
         filename = os.path.basename(pdf_path)
         
-        # Если это GET-запрос, сразу отправляем файл
-        if request.method == 'GET':
-            return send_file(
-                pdf_path,
-                mimetype='application/pdf',
-                as_attachment=True,
-                download_name=f"KP_Pergola_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-            )
-        
-        # Если это POST-запрос, возвращаем URL для скачивания
         return jsonify({
             'success': True,
             'pdf_url': url_for('api.download_pdf', filename=filename),
