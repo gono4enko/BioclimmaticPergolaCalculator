@@ -4351,6 +4351,7 @@ def main():
     """, height=0)
     st.markdown("<h1 style='text-align: center; margin-top: 0px; margin-bottom: 5px; font-size: 2.1rem; font-weight: 600; color: #0066cc;'>Калькулятор расчета стоимости биоклиматических пергол</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
+    st.image("attached_assets/Снимок_экрана_2026-03-02_в_21.56.00_1772477767113.png", use_column_width=True)
     
     # 1. ПЕРВЫМ - Выбор типа перголы
     st.markdown('<div id="pergola-type-form"></div>', unsafe_allow_html=True)
