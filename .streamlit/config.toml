@@ -16,4 +16,4 @@ gatherUsageStats = false
 hideTopBar = true
 
 [logger]
-level = "debug"
+level = "warning"
