@@ -4351,7 +4351,67 @@ def main():
     """, height=0)
     st.markdown("<h1 style='text-align: center; margin-top: 0px; margin-bottom: 5px; font-size: 2.1rem; font-weight: 600; color: #0066cc;'>Калькулятор расчета стоимости биоклиматических пергол</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
-    st.image("attached_assets/Снимок_экрана_2026-03-02_в_21.56.00_1772477767113.png", use_column_width=True)
+    _hero_img = "attached_assets/Снимок_экрана_2026-03-02_в_21.57.59_1772477886433.png"
+    if os.path.exists(_hero_img):
+        import base64
+        with open(_hero_img, "rb") as _f:
+            _b64 = base64.b64encode(_f.read()).decode()
+        st.markdown(f"""
+        <div class="hero-parallax-wrapper">
+            <div class="hero-parallax" style="background-image: url('data:image/png;base64,{_b64}');"></div>
+            <div class="hero-overlay">
+                <div class="hero-tagline">Биоклиматические перголы — комфорт в любое время года</div>
+            </div>
+        </div>
+        <style>
+        .hero-parallax-wrapper {{
+            position: relative;
+            height: 320px;
+            overflow: hidden;
+            border-radius: 14px;
+            margin: 10px 0 24px 0;
+            box-shadow: 0 8px 32px rgba(0,75,154,0.18);
+        }}
+        .hero-parallax {{
+            position: absolute;
+            inset: -60px 0;
+            background-attachment: fixed;
+            background-position: center 40%;
+            background-repeat: no-repeat;
+            background-size: cover;
+            filter: brightness(0.88) saturate(1.15);
+            transition: filter 0.4s ease;
+            will-change: background-position;
+        }}
+        .hero-parallax-wrapper:hover .hero-parallax {{
+            filter: brightness(0.95) saturate(1.25);
+        }}
+        .hero-overlay {{
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                160deg,
+                rgba(0,30,80,0.55) 0%,
+                rgba(0,75,154,0.22) 55%,
+                rgba(0,0,0,0.0) 100%
+            );
+            display: flex;
+            align-items: flex-end;
+            padding: 22px 28px;
+            border-radius: 14px;
+        }}
+        .hero-tagline {{
+            color: #ffffff;
+            font-size: 1.15rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.45);
+            border-left: 3px solid rgba(255,255,255,0.7);
+            padding-left: 12px;
+            line-height: 1.4;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
     
     # 1. ПЕРВЫМ - Выбор типа перголы
     st.markdown('<div id="pergola-type-form"></div>', unsafe_allow_html=True)
