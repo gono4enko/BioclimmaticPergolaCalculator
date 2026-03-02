@@ -205,6 +205,10 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
             })
         pergola_data["specification"] = specification
     
+    if "discount" in results and results["discount"] > 0:
+        pergola_data["discount"] = results["discount"]
+        pergola_data["total_price_after_discount"] = results.get("total_price_after_discount", 0)
+    
     # Добавляем позиции для таблицы стоимости
     if "items" in results:
         pergola_data["items"] = results["items"]
@@ -461,16 +465,28 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 return f"{v:,d}".replace(',', ' ') + " ₽"
             
             discount = pergola_data.get('discount', 0)
-            if discount and discount > 0:
-                cash_total = pergola_data.get('total_price_after_discount', total_cost)
-            else:
-                cash_total = total_cost
-            noncash_total = cash_total * 1.08
-            vat_total = cash_total * 1.15
             
             pdf.set_fill_color(211, 211, 211)
             pdf.set_font('DejaVu', 'B', 10)
             pdf.set_text_color(0, 0, 0)
+            
+            if discount and discount > 0:
+                pdf.cell(10, 10, "", 1, 0, "C", fill=True)
+                pdf.cell(83, 10, "ИТОГО:", 1, 0, "R", fill=True)
+                pdf.cell(67, 10, _format_total(total_cost), 1, 1, "L", fill=True)
+                
+                pdf.set_font('DejaVu', 'B', 9)
+                pdf.cell(10, 10, "", 1, 0, "C", fill=True)
+                pdf.cell(83, 10, "Скидка по акции:", 1, 0, "R", fill=True)
+                pdf.cell(67, 10, "-" + _format_total(discount), 1, 1, "L", fill=True)
+                pdf.set_font('DejaVu', 'B', 10)
+                
+                cash_total = pergola_data.get('total_price_after_discount', total_cost - discount)
+            else:
+                cash_total = total_cost
+            
+            noncash_total = cash_total * 1.08
+            vat_total = cash_total * 1.15
             
             pdf.cell(10, 10, "", 1, 0, "C", fill=True)
             pdf.cell(83, 10, "ИТОГО (Наличный расчёт):", 1, 0, "R", fill=True)
