@@ -120,47 +120,56 @@ class PDF(FPDF):
         self.ln()  # Переход на новую строку
     
     def table_row(self, data, widths, aligns=None, row_height=7):
-        """
-        Добавляет строку в таблицу с адаптивным размером шрифта
-        
-        Args:
-            data (list): Данные для ячеек
-            widths (list): Ширина каждой ячейки
-            aligns (list, optional): Выравнивание для каждой ячейки (L, C, R)
-            row_height (int, optional): Высота строки в мм
-        """
-        # Если выравнивание не указано, используем левое для всех ячеек
         if aligns is None:
             aligns = ['L'] * len(data)
-        
-        # Устанавливаем шрифт для данных таблицы
-        self.set_font('DejaVu', '', 10)
-        
-        # Восстанавливаем цвет текста (черный)
+
+        self.set_font('DejaVu', '', 9)
         self.set_text_color(0, 0, 0)
-        
-        # Устанавливаем высоту строки
-        line_height = row_height
-        
-        # Рассчитываем максимальную длину текста для ячейки
-        # Примерно 15-20 символов на 1 см ширины ячейки с учетом шрифта размером 10
+        lh = row_height
+
+        needs_wrap = False
         for i in range(len(data)):
-            # Проверяем, что длина текста не превышает возможности ячейки
             text = str(data[i])
-            text_width = self.get_string_width(text)
-            
-            # Если текст не помещается, уменьшаем шрифт
-            if text_width > widths[i] - 4:  # 4 мм - отступы внутри ячейки
-                self.set_font_size(9)  # Уменьшаем размер шрифта для компактности
-                
-                # Если даже уменьшенный шрифт не помещается, увеличиваем высоту строки
-                text_width = self.get_string_width(text)
-                if text_width > widths[i] - 4:
-                    line_height = max(line_height, 10)  # Увеличиваем высоту строки
-            
-            self.cell(widths[i], line_height, text, 1, 0, aligns[i])
-        
-        self.ln()  # Переход на новую строку
+            tw = self.get_string_width(text)
+            if tw > widths[i] - 4:
+                needs_wrap = True
+                break
+
+        if not needs_wrap:
+            for i in range(len(data)):
+                self.cell(widths[i], lh, str(data[i]), 1, 0, aligns[i])
+            self.ln()
+            return
+
+        x_start = self.get_x()
+        y_start = self.get_y()
+        max_h = lh
+
+        for i in range(len(data)):
+            text = str(data[i])
+            tw = self.get_string_width(text)
+            if tw > widths[i] - 4:
+                self.set_xy(x_start + sum(widths[:i]), y_start)
+                self.multi_cell(widths[i], lh, text, 0, aligns[i])
+                cell_h = self.get_y() - y_start
+                if cell_h > max_h:
+                    max_h = cell_h
+
+        for i in range(len(data)):
+            text = str(data[i])
+            tw = self.get_string_width(text)
+            cx = x_start + sum(widths[:i])
+            self.set_xy(cx, y_start)
+            if tw > widths[i] - 4:
+                self.rect(cx, y_start, widths[i], max_h)
+                self.set_xy(cx + 1, y_start)
+                self.multi_cell(widths[i] - 2, lh, text, 0, aligns[i])
+            else:
+                self.rect(cx, y_start, widths[i], max_h)
+                self.set_xy(cx, y_start + (max_h - lh) / 2)
+                self.cell(widths[i], lh, text, 0, 0, aligns[i])
+
+        self.set_xy(x_start, y_start + max_h)
 
 def format_pergola_data_for_pdf(results, options, dimensions, pergola_description):
     """
