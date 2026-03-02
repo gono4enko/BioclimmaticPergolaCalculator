@@ -1740,13 +1740,13 @@ def render_additional_options_form():
     if show_led and show_rgb:
         lc1, lc2 = st.columns(2)
         with lc1:
-            st.image(led_img, caption="LED-подсветка", use_container_width=True)
+            st.image(led_img, caption="LED-подсветка", use_column_width=True)
         with lc2:
-            st.image(rgb_img, caption="RGB-подсветка", use_container_width=True)
+            st.image(rgb_img, caption="RGB-подсветка", use_column_width=True)
     elif show_led:
-        st.image(led_img, caption="LED-подсветка", use_container_width=True)
+        st.image(led_img, caption="LED-подсветка", use_column_width=True)
     elif show_rgb:
-        st.image(rgb_img, caption="RGB-подсветка", use_container_width=True)
+        st.image(rgb_img, caption="RGB-подсветка", use_column_width=True)
     
     # Прямой подход к созданию чекбокса для установки - такой же как для освещения
     st.write("Установка")
