@@ -1390,26 +1390,44 @@ def render_dimensions_form():
     </div>
     {js}
     '''
+    combined_html += '''
+    <script>
+    (function hideSync() {
+        var doc = window.parent.document;
+        if (!doc.getElementById('dim-sync-style')) {
+            var s = doc.createElement('style');
+            s.id = 'dim-sync-style';
+            s.textContent = '.dim-sync-hide { height:0 !important; overflow:hidden !important; margin:0 !important; padding:0 !important; opacity:0 !important; position:absolute !important; pointer-events:none !important; }';
+            doc.head.appendChild(s);
+        }
+        var inputs = doc.querySelectorAll('input[type="number"]');
+        var found = 0;
+        inputs.forEach(function(el) {
+            var c = el.closest('[data-testid="stNumberInput"]');
+            if (!c) return;
+            var lbl = c.querySelector('label');
+            if (!lbl) return;
+            var t = lbl.textContent.toLowerCase();
+            if (t.indexOf('ширина') >= 0 || t.indexOf('вынос') >= 0) {
+                var cols = c.closest('[data-testid="stHorizontalBlock"]');
+                if (cols) { cols.classList.add('dim-sync-hide'); found++; }
+            }
+        });
+        if (found < 1) setTimeout(hideSync, 300);
+    })();
+    </script>
+    '''
     html(combined_html, height=110)
     
-    st.markdown("""<style>
-    .hidden-dim-inputs [data-testid="stNumberInput"] { height: 0 !important; overflow: hidden !important; 
-        margin: 0 !important; padding: 0 !important; border: none !important; opacity: 0 !important; 
-        position: absolute !important; pointer-events: none !important; }
-    </style>""", unsafe_allow_html=True)
-    
-    with st.container():
-        st.markdown('<div class="hidden-dim-inputs">', unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        with c1:
-            width = st.number_input("Ширина (м)", min_value=min_width, max_value=max_width,
-                                     value=cur_w, step=0.5, format="%.2f", key=width_key,
-                                     label_visibility="collapsed")
-        with c2:
-            length = st.number_input("Вынос (м)", min_value=min_length, max_value=max_length,
-                                      value=cur_l, step=0.5, format="%.2f", key=length_key,
-                                      label_visibility="collapsed")
-        st.markdown('</div>', unsafe_allow_html=True)
+    c1, c2 = st.columns(2)
+    with c1:
+        width = st.number_input("Ширина (м)", min_value=min_width, max_value=max_width,
+                                 value=cur_w, step=0.5, format="%.2f", key=width_key,
+                                 label_visibility="collapsed")
+    with c2:
+        length = st.number_input("Вынос (м)", min_value=min_length, max_value=max_length,
+                                  value=cur_l, step=0.5, format="%.2f", key=length_key,
+                                  label_visibility="collapsed")
     
     modules = get_modules_by_dimensions(width, length)
     
