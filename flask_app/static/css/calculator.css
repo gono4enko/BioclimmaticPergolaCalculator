@@ -1,0 +1,170 @@
+.hero-section {
+    position: relative;
+    height: 300px;
+    background: url('/static/images/hero_pergola.jpg') center/cover no-repeat;
+    background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,75,154,0.7), rgba(0,40,80,0.5));
+}
+.hero-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    color: #fff;
+}
+.hero-content h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+.hero-content p { font-size: 1.1rem; opacity: 0.9; }
+
+.calc-container { max-width: 820px; margin: -40px auto 0; position: relative; z-index: 2; }
+
+.step-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    padding: 1.5rem 1.8rem;
+    margin-bottom: 1.2rem;
+}
+.step-card h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #004B9A;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5eeff;
+}
+
+.type-option {
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+.type-option:hover { border-color: #004B9A; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,75,154,0.15); }
+.type-option.selected { border-color: #004B9A; background: #f0f6ff; }
+.type-option img { width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 0.6rem; }
+.type-option .type-name { font-weight: 600; font-size: 0.95rem; color: #333; }
+.type-option .type-desc { font-size: 0.8rem; color: #666; margin-top: 0.3rem; }
+
+.lamella-option {
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.lamella-option:hover { border-color: #004B9A; }
+.lamella-option.selected { border-color: #004B9A; background: #f0f6ff; }
+.lamella-option .lamella-name { font-weight: 600; font-size: 0.95rem; }
+
+.dim-input label { font-weight: 500; margin-bottom: 4px; display: block; font-size: 0.9rem; }
+.dim-input .form-control { font-size: 1.1rem; padding: 0.6rem; }
+.dim-hint { font-size: 0.78rem; color: #888; margin-top: 2px; }
+
+.calc-btn {
+    background: #004B9A;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.8rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+}
+.calc-btn:hover { background: #003670; }
+.calc-btn:disabled { background: #aaa; cursor: not-allowed; }
+
+.results-section {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    padding: 1.5rem 1.8rem;
+    margin-top: 1.2rem;
+    animation: fadeIn 0.4s;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.results-section h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #004B9A;
+    text-align: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5eeff;
+}
+
+.spec-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+.spec-table th { background: #f0f6ff; color: #004B9A; font-weight: 600; padding: 0.5rem 0.8rem; font-size: 0.85rem; text-align: left; }
+.spec-table td { padding: 0.45rem 0.8rem; font-size: 0.88rem; border-bottom: 1px solid #f0f0f0; }
+
+.cost-table { width: 100%; border-collapse: collapse; }
+.cost-table td { padding: 0.5rem 0.8rem; font-size: 0.9rem; border-bottom: 1px solid #f0f0f0; }
+.cost-table td:last-child { text-align: right; font-weight: 500; white-space: nowrap; }
+
+.total-row { font-weight: 700; font-size: 1.05rem; border-top: 2px solid #004B9A; }
+.total-row.cash { color: #1b5e20; font-size: 1.15rem; }
+.total-row.non-cash { color: #333; }
+.total-row.vat { color: #333; }
+
+.total-block {
+    text-align: center;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8fafb;
+    border-radius: 8px;
+    border: 1px solid #e0e7ee;
+}
+.total-block .cash-price { font-size: 1.5rem; font-weight: 700; color: #1b5e20; }
+.total-block .other-price { font-size: 0.95rem; color: #555; margin-top: 0.3rem; }
+
+.pdf-btn {
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+    margin-top: 1rem;
+}
+.pdf-btn:hover { background: #218838; }
+.pdf-btn:disabled { background: #aaa; }
+
+.spinner-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.option-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0;
+}
+.option-check label { font-size: 0.95rem; cursor: pointer; margin: 0; }
+
+@media (max-width: 768px) {
+    .hero-section { height: 200px; background-attachment: scroll; }
+    .hero-content h1 { font-size: 1.5rem; }
+    .calc-container { margin: -20px 0.5rem 0; }
+    .step-card { padding: 1rem; }
+    .type-option img { height: 100px; }
+}

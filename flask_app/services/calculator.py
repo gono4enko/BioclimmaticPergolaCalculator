@@ -1,600 +1,596 @@
 """
 Сервис для расчетов стоимости перголы.
-Содержит логику расчета с применением паттерна "Стратегия"
+Бизнес-логика полностью синхронизирована с app.py (Streamlit версия).
+Все цены в CSV — в евро. Конвертация в рубли происходит на уровне API.
 """
 import os
 import csv
 import math
-import json
 import logging
-from functools import lru_cache
-from flask import current_app
-from ..models.pergola_model import PriceData, db
 
-# Настройка логирования
 logger = logging.getLogger(__name__)
 
-class CalculationStrategy:
-    """Базовый класс для стратегии расчета."""
-    
-    def calculate(self, pergola_type, width, length, modules, lamella_size, options):
-        """
-        Базовый метод для расчета стоимости перголы.
-        
-        Args:
-            pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
-            width (float): Ширина перголы в метрах
-            length (float): Длина (вынос) перголы в метрах
-            modules (int): Количество модулей
-            lamella_size (str): Размер ламели (200, 250, PIR)
-            options (dict): Словарь с выбранными опциями
-            
-        Returns:
-            dict: Результаты расчета
-        """
-        raise NotImplementedError("Subclasses must implement calculate()")
+PERGOLA_TYPES = {
+    "B500NEW": "В500 - с поворотными ламелями",
+    "B700NEW": "В700 - с поворотно-сдвижными ламелями",
+    "B600": "В600 PIR - со стационарными панелями"
+}
 
+PERGOLA_TYPE_DESCRIPTIONS = {
+    "B500NEW": "Современная пергола с поворотными алюминиевыми ламелями.",
+    "B700NEW": "Премиальная пергола с поворотно-сдвижными ламелями.",
+    "B600": "Пергола со стационарной крышей из PIR сэндвич-панелей."
+}
 
-class StandardCalculationStrategy(CalculationStrategy):
-    """Стандартная стратегия расчета для всех типов пергол."""
-    
-    def calculate(self, pergola_type, width, length, modules, lamella_size, options):
-        """
-        Реализация стандартного расчета стоимости перголы.
-        
-        Args:
-            pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
-            width (float): Ширина перголы в метрах
-            length (float): Длина (вынос) перголы в метрах
-            modules (int): Количество модулей
-            lamella_size (str): Размер ламели (200, 250, PIR)
-            options (dict): Словарь с выбранными опциями
-            
-        Returns:
-            dict: Результаты расчета
-        """
-        # Получение базовой цены из прайс-листа
-        base_price = get_base_price(pergola_type, lamella_size, width, length)
-        
-        # Проверка, нужны ли дополнительные колонны
-        needs_extra_columns = needs_additional_columns(pergola_type, lamella_size, length)
-        extra_columns_price = 0
-        if needs_extra_columns:
-            extra_columns_price = get_extra_columns_price(pergola_type)
-        
-        # Расчет усилителя лотка
-        needs_insert, gutter_insert_price, gutters_count, total_gutter_length = \
-            calculate_gutter_insert_price(length, modules)
-        
-        # Определение привода
-        drive_name, drive_price, needs_tandem = get_drive_price(pergola_type, width, length, modules)
-        
-        # Определение пульта управления
-        remote_name, remote_price = get_remote_control(1)  # Всегда минимум 1 устройство (привод)
-        
-        # Расчет дополнительных опций
-        options_items = []
-        options_total = 0
-        
-        # LED-подсветка
-        if options.get('led_lighting', False):
-            led_price_per_meter = 5500  # Цена за метр подсветки
-            led_perimeter = calculate_lighting_perimeter(width, length, modules)
-            led_total_price = led_price_per_meter * led_perimeter
-            options_items.append({
-                'name': 'Светодиодная подсветка',
-                'quantity': f"{led_perimeter:.1f} м",
-                'price': led_total_price
-            })
-            options_total += led_total_price
-        
-        # Датчики дождя и ветра
-        if options.get('rain_sensor', False):
-            rain_sensor_price = 18000
-            options_items.append({
-                'name': 'Датчик дождя',
-                'quantity': 1,
-                'price': rain_sensor_price
-            })
-            options_total += rain_sensor_price
-            
-        if options.get('wind_sensor', False):
-            wind_sensor_price = 15000
-            options_items.append({
-                'name': 'Датчик ветра',
-                'quantity': 1,
-                'price': wind_sensor_price
-            })
-            options_total += wind_sensor_price
-        
-        # Расчет скидки, если она указана в опциях
-        discount_percent = float(options.get('discount', 0))
-        
-        # Подготовка базовых элементов
-        items = [
-            {
-                'name': f'Пергола {pergola_type}, ламели {lamella_size} мм',
-                'quantity': f"{width:.1f}x{length:.1f} м ({modules} модуль/-я/-ей)",
-                'price': base_price
-            },
-            {
-                'name': f'Привод {drive_name}' + (' (тандем)' if needs_tandem else ''),
-                'quantity': 1 + (1 if needs_tandem else 0),
-                'price': drive_price
-            },
-            {
-                'name': f'Пульт управления {remote_name}',
-                'quantity': 1,
-                'price': remote_price
-            }
-        ]
-        
-        # Добавление дополнительных колонн, если нужны
-        if needs_extra_columns:
-            items.append({
-                'name': 'Дополнительные колонны',
-                'quantity': 2,  # Всегда добавляется 2 колонны
-                'price': extra_columns_price
-            })
-        
-        # Добавление усилителя лотка, если нужен
-        if needs_insert:
-            items.append({
-                'name': 'Усилитель лотка',
-                'quantity': f"{total_gutter_length:.1f} м ({gutters_count} лотка)",
-                'price': gutter_insert_price
-            })
-        
-        # Добавление дополнительных опций
-        items.extend(options_items)
-        
-        # Расчет итоговой стоимости
-        total_price = base_price + drive_price + remote_price + extra_columns_price + \
-                      gutter_insert_price + options_total
-        
-        # Применение скидки
-        total_after_discount = total_price
-        if discount_percent > 0:
-            total_after_discount = total_price * (1 - discount_percent / 100)
-        
-        # Формирование результата
-        result = {
-            'items': items,
-            'total_price': total_price,
-            'discount': discount_percent,
-            'total_price_after_discount': total_after_discount
-        }
-        
-        return result
+LAMELLA_TYPES = {
+    "B500-20NEW": "Ламели 200 мм (усиленные)",
+    "B500-25NEW": "Ламели 250 мм (стандарт)",
+    "B700-20NEW": "Ламели 200 мм (усиленные)",
+    "B700-25NEW": "Ламели 250 мм (стандарт)",
+    "B600-PIR": "PIR сэндвич-панель",
+    "lamella-200": "Ламели 200 мм (усиленные)",
+    "lamella-250": "Ламели 250 мм (стандарт)"
+}
 
+MAX_DIMENSIONS = {
+    "B500NEW_250": {"width": 13.5, "length": 8.0},
+    "B500NEW_200": {"width": 15.0, "length": 8.0},
+    "B700NEW_250": {"width": 13.5, "length": 8.0},
+    "B700NEW_200": {"width": 15.0, "length": 8.0},
+    "B600": {"width": 13.5, "length": 8.0}
+}
 
-class CalculationFactory:
-    """Фабрика для создания стратегий расчета."""
-    
-    @staticmethod
-    def get_strategy(pergola_type):
-        """
-        Возвращает подходящую стратегию расчета для типа перголы.
-        
-        Args:
-            pergola_type (str): Тип перголы
-            
-        Returns:
-            CalculationStrategy: Стратегия расчета
-        """
-        # В будущем здесь можно добавить разные стратегии для разных типов пергол
-        return StandardCalculationStrategy()
+ADDITIONAL_COLUMNS_RULES = {
+    "B500NEW": {"250": 6.5, "200": 6.85},
+    "B700NEW": {"250": 6.5, "200": 6.85},
+    "B600": {"PIR": 6.5}
+}
 
+COLUMNS_PRICES = {1: 653, 2: 980, 3: 1306}
 
-def get_pergola_types():
-    """
-    Возвращает список доступных типов пергол.
-    
-    Returns:
-        list: Список типов пергол
-    """
-    return [
-        {'id': 'B500NEW', 'name': 'B500 NEW'},
-        {'id': 'B700NEW', 'name': 'B700 NEW'},
-        {'id': 'B600', 'name': 'B600'}
+GUTTER_INSERT_THRESHOLD = 6.5
+GUTTER_INSERT_PRICE_PER_METER = 80
+
+BANSBACH_DRIVE_RULES = {
+    1: [
+        {"width": 2.5, "length": 8.0, "tandem": False},
+        {"width": 3.0, "length": 6.5, "tandem": True},
+        {"width": 3.5, "length": 5.5, "tandem": True},
+        {"width": 4.0, "length": 5.0, "tandem": True},
+        {"width": float('inf'), "length": 5.0, "tandem": True}
+    ],
+    2: [
+        {"width": 5.0, "length": 8.0, "tandem": False},
+        {"width": 6.0, "length": 7.5, "tandem": True},
+        {"width": 7.0, "length": 6.5, "tandem": True},
+        {"width": 8.0, "length": 5.5, "tandem": True},
+        {"width": float('inf'), "length": 5.0, "tandem": True}
+    ],
+    3: [
+        {"width": 7.5, "length": 8.0, "tandem": False},
+        {"width": 9.0, "length": 7.5, "tandem": True},
+        {"width": 10.5, "length": 6.5, "tandem": True},
+        {"width": 12.0, "length": 5.5, "tandem": True},
+        {"width": float('inf'), "length": 5.0, "tandem": True}
     ]
+}
 
-
-def get_lamella_sizes():
-    """
-    Возвращает список доступных размеров ламелей.
-    
-    Returns:
-        list: Список размеров ламелей
-    """
-    return [
-        {'id': '200', 'name': '200 мм'},
-        {'id': '250', 'name': '250 мм'},
-        {'id': 'PIR', 'name': 'PIR (теплоизоляционные)'}
+SOMFY_DRIVE_RULES = {
+    1: [
+        {"width": 3.0, "length": 7.0, "tandem": True},
+        {"width": 3.5, "length": 6.0, "tandem": True},
+        {"width": float('inf'), "length": float('inf'), "tandem": False}
+    ],
+    2: [
+        {"width": 6.0, "length": 7.0, "tandem": True},
+        {"width": 7.0, "length": 6.0, "tandem": True},
+        {"width": float('inf'), "length": float('inf'), "tandem": False}
+    ],
+    3: [
+        {"width": 9.0, "length": 7.0, "tandem": True},
+        {"width": 10.5, "length": 6.0, "tandem": True},
+        {"width": float('inf'), "length": float('inf'), "tandem": False}
     ]
+}
+
+DRIVE_PRICES = {
+    "B500NEW": {"standard": 700, "tandem": 1250},
+    "B700NEW": {"standard": 300, "tandem": 1000}
+}
+
+REMOTE_CONTROL_TYPES = {
+    1: {"name": "Simu 1K", "price": 25},
+    5: {"name": "Simu 5K", "price": 40},
+    15: {"name": "Simu 15K", "price": 90}
+}
+
+LIGHTING_PRICES = {
+    "controller": 300,
+    "white_led": 20,
+    "rgb_led": 20
+}
+
+_price_cache = {}
 
 
-@lru_cache(maxsize=128)
+def _get_plural_form(number, one, two, five):
+    n = abs(number) % 100
+    if 11 <= n <= 19:
+        return five
+    n = n % 10
+    if n == 1:
+        return one
+    if 2 <= n <= 4:
+        return two
+    return five
+
+
 def load_price_data(pergola_type, lamella_size):
-    """
-    Загружает данные о ценах из базы данных или CSV файлов.
-    
-    Args:
-        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
-        lamella_size (str): Размер ламели (200, 250, PIR)
-        
-    Returns:
-        dict: Словарь с ценами для разных размеров перголы
-    """
-    # Проверяем в базе данных
-    price_data = {}
-    db_prices = PriceData.query.filter_by(
-        pergola_type=pergola_type,
-        lamella_size=lamella_size
-    ).all()
-    
-    if db_prices:
-        for price in db_prices:
-            key = f"{price.width}x{price.length}"
-            price_data[key] = {
-                'price': price.price,
-                'modules': price.modules
-            }
-        return price_data
-    
-    # Если в базе нет, загружаем из файла
+    cache_key = (pergola_type, lamella_size)
+    if cache_key in _price_cache:
+        return _price_cache[cache_key]
+
+    file_mapping = {
+        ("B500NEW", "200"): ["data/price_tables/Прайс_В500-20.csv", "attached_assets/Price_B500-20.csv", "attached_assets/Прайс_В500-20.csv"],
+        ("B500NEW", "250"): ["data/price_tables/Прайс_В500-25.csv", "attached_assets/Price_B500-25.csv", "attached_assets/Прайс_В500-25.csv"],
+        ("B700NEW", "200"): ["data/price_tables/Прайс_B700-20.csv", "attached_assets/Price_B700-20.csv", "attached_assets/Прайс_B700-20.csv"],
+        ("B700NEW", "250"): ["data/price_tables/Прайс_B700-25.csv", "attached_assets/Price_B700-25.csv", "attached_assets/Прайс_B700-25.csv"],
+        ("B600", "PIR"): ["data/price_tables/Прайс_В600_PIR.csv", "attached_assets/Price_B600_PIR.csv", "attached_assets/Прайс_В600_PIR.csv"]
+    }
+
+    if cache_key not in file_mapping:
+        logger.error(f"Комбинация {pergola_type}/{lamella_size} не найдена в маппинге")
+        return {}
+
+    file_path = None
+    for path in file_mapping[cache_key]:
+        if os.path.exists(path):
+            file_path = path
+            break
+
+    if not file_path:
+        logger.error(f"Файлы прайса для {pergola_type}/{lamella_size} не найдены")
+        return {}
+
+    prices = {}
     try:
-        # Путь к файлу с ценами
-        file_path = os.path.join('data', 'prices', f"{pergola_type}_{lamella_size}.csv")
-        
-        if not os.path.exists(file_path):
-            logger.error(f"Price file not found: {file_path}")
-            return {}
-        
         with open(file_path, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
+            first_line = f.readline().strip()
+            delimiter = ';' if ';' in first_line else ','
+            f.seek(0)
+            reader = csv.reader(f, delimiter=delimiter)
+
+            first_row = next(reader)
+            modules_row = first_row if "модуль" in ' '.join(first_row).lower() else None
+            header = next(reader) if modules_row else first_row
+
+            length_values = []
+            for val in header[1:]:
+                if val.strip():
+                    try:
+                        length_values.append(float(val.replace(',', '.').strip()))
+                    except ValueError:
+                        continue
+
             for row in reader:
-                width = float(row['width'])
-                length = float(row['length'])
-                price = float(row['price'])
-                modules = int(row.get('modules', 1))
-                
-                key = f"{width}x{length}"
-                price_data[key] = {
-                    'price': price,
-                    'modules': modules
-                }
-                
-                # Сохраняем данные в базу для будущего использования
-                db_price = PriceData()
-                db_price.pergola_type = pergola_type
-                db_price.lamella_size = lamella_size
-                db_price.width = width
-                db_price.length = length
-                db_price.price = price
-                db_price.modules = modules
-                db.session.add(db_price)
-            
-            db.session.commit()
-                
-        return price_data
-    
+                if not row or len(row) <= 1:
+                    continue
+                try:
+                    width = float(row[0].strip().replace(',', '.'))
+                    for i, price_str in enumerate(row[1:]):
+                        if i < len(length_values) and price_str.strip():
+                            length = length_values[i]
+                            try:
+                                price = float(price_str.replace(' ', '').replace(',', '.'))
+                                if width not in prices:
+                                    prices[width] = {}
+                                prices[width][length] = price
+                            except ValueError:
+                                continue
+                except (ValueError, IndexError):
+                    continue
+
+        _price_cache[cache_key] = prices
+        logger.info(f"Загружено {len(prices)} записей из {file_path}")
+        return prices
+
     except Exception as e:
-        logger.error(f"Error loading price data: {str(e)}")
+        logger.error(f"Ошибка загрузки прайса {file_path}: {e}")
         return {}
 
 
-def get_base_price(pergola_type, lamella_size, width, length):
-    """
-    Получает базовую стоимость перголы из прайс-листа.
-    
-    Args:
-        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
-        lamella_size (str): Размер ламели (200, 250, PIR)
-        width (float): Ширина перголы в метрах
-        length (float): Вынос перголы в метрах
-        
-    Returns:
-        float: Базовая стоимость перголы
-    """
-    # Загрузка данных о ценах
-    price_data = load_price_data(pergola_type, lamella_size)
-    
-    # Поиск точного соответствия
-    key = f"{width}x{length}"
-    if key in price_data:
-        return price_data[key]['price']
-    
-    # Если точного соответствия нет, ищем ближайший больший размер
-    best_price = None
-    for size, data in price_data.items():
-        size_width, size_length = map(float, size.split('x'))
-        
-        if size_width >= width and size_length >= length:
-            if best_price is None or data['price'] < best_price:
-                best_price = data['price']
-    
-    if best_price is not None:
-        return best_price
-    
-    # Если нет ни точного, ни ближайшего большего размера, вычисляем цену на основе площади
-    area = width * length
-    prices_per_sqm = []
-    
-    for size, data in price_data.items():
-        size_width, size_length = map(float, size.split('x'))
-        size_area = size_width * size_length
-        price_per_sqm = data['price'] / size_area
-        prices_per_sqm.append(price_per_sqm)
-    
-    if prices_per_sqm:
-        avg_price_per_sqm = sum(prices_per_sqm) / len(prices_per_sqm)
-        return avg_price_per_sqm * area
-    
-    # Если совсем нет данных, возвращаем базовую цену
-    logger.warning(f"No price data found for {pergola_type} {lamella_size} {width}x{length}")
-    return 150000  # Минимальная базовая цена
+def get_modules_info_from_csv(pergola_type, lamella_size):
+    file_mapping = {
+        ("B500NEW", "200"): ["data/price_tables/Прайс_В500-20.csv", "attached_assets/Price_B500-20.csv"],
+        ("B500NEW", "250"): ["data/price_tables/Прайс_В500-25.csv", "attached_assets/Price_B500-25.csv"],
+        ("B700NEW", "200"): ["data/price_tables/Прайс_B700-20.csv", "attached_assets/Price_B700-20.csv"],
+        ("B700NEW", "250"): ["data/price_tables/Прайс_B700-25.csv", "attached_assets/Price_B700-25.csv"],
+        ("B600", "PIR"): ["data/price_tables/Прайс_В600_PIR.csv", "attached_assets/Price_B600_PIR.csv"]
+    }
+    key = (pergola_type, lamella_size)
+    if key not in file_mapping:
+        return None
+
+    file_path = None
+    for path in file_mapping[key]:
+        if os.path.exists(path):
+            file_path = path
+            break
+    if not file_path:
+        return None
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            first_line = f.readline().strip()
+            delimiter = ';' if ';' in first_line else ','
+            f.seek(0)
+            reader = csv.reader(f, delimiter=delimiter)
+            first_row = next(reader)
+            if "модуль" not in ' '.join(first_row).lower():
+                return None
+            header = next(reader)
+            modules_map = {}
+            for i, val in enumerate(header[1:], 1):
+                if val.strip():
+                    try:
+                        w = float(val.replace(',', '.').strip())
+                        mod_info = first_row[i] if i < len(first_row) else ""
+                        if "1 модуль" in mod_info:
+                            modules_map[w] = 1
+                        elif "2 модуля" in mod_info:
+                            modules_map[w] = 2
+                        elif "3 модуля" in mod_info:
+                            modules_map[w] = 3
+                    except (ValueError, IndexError):
+                        continue
+            return modules_map
+    except Exception:
+        return None
 
 
-def needs_additional_columns(pergola_type, lamella_size, length):
-    """
-    Проверяет, нужны ли дополнительные колонны.
-    
-    Args:
-        pergola_type (str): Тип перголы
-        lamella_size (str): Размер ламели
-        length (float): Вынос перголы в метрах
-        
-    Returns:
-        bool: True если нужны дополнительные колонны
-    """
-    if pergola_type == 'B500NEW':
-        if lamella_size == '200' and length > 6.0:
-            return True
-        if lamella_size == '250' and length > 7.0:
-            return True
-        if lamella_size == 'PIR' and length > 6.0:
-            return True
-    elif pergola_type == 'B700NEW':
-        if lamella_size == '200' and length > 7.0:
-            return True
-        if lamella_size == '250' and length > 8.0:
-            return True
-        if lamella_size == 'PIR' and length > 7.0:
-            return True
-    elif pergola_type == 'B600':
-        if lamella_size == '200' and length > 6.0:
-            return True
-        if lamella_size == '250' and length > 7.0:
-            return True
-        if lamella_size == 'PIR' and length > 6.0:
-            return True
-    
-    return False
-
-
-def get_extra_columns_price(pergola_type):
-    """
-    Возвращает стоимость дополнительных колонн.
-    
-    Args:
-        pergola_type (str): Тип перголы
-        
-    Returns:
-        float: Стоимость дополнительных колонн
-    """
-    if pergola_type == 'B500NEW':
-        return 35000
-    elif pergola_type == 'B700NEW':
-        return 45000
-    elif pergola_type == 'B600':
-        return 40000
-    
-    return 35000  # По умолчанию
-
-
-def calculate_gutter_insert_price(length, modules):
-    """
-    Рассчитывает стоимость усилителя лотка.
-    
-    Args:
-        length (float): Вынос перголы в метрах
-        modules (int): Количество модулей
-    
-    Returns:
-        tuple: (нужен ли усилитель, стоимость усилителя, количество лотков, общая длина лотков)
-    """
-    # Проверка, нужен ли усилитель
-    if length <= 4.0:
-        return False, 0, 0, 0
-    
-    # Определение количества лотков
-    gutters_count = modules + 1
-    
-    # Общая длина лотков
-    total_gutter_length = length * gutters_count
-    
-    # Цена за метр усилителя
-    price_per_meter = 3500
-    
-    # Общая стоимость
-    total_price = price_per_meter * total_gutter_length
-    
-    return True, total_price, gutters_count, total_gutter_length
-
-
-def get_drive_price(pergola_type, width, length, modules):
-    """
-    Определяет тип и стоимость привода для перголы.
-    
-    Args:
-        pergola_type (str): Тип перголы
-        width (float): Ширина перголы в метрах
-        length (float): Вынос перголы в метрах
-        modules (int): Количество модулей
-        
-    Returns:
-        tuple: (название привода, цена привода, нужен ли танем-привод)
-    """
-    area = width * length
-    
-    if area <= 16:  # до 16 кв.м
-        return "Somfy WT 40 Нм", 35000, False
-    elif area <= 25:  # до 25 кв.м
-        return "Somfy WT 60 Нм", 40000, False
-    elif area <= 35:  # до 35 кв.м
-        return "Somfy WT 120 Нм", 50000, False
-    else:  # более 35 кв.м или 3+ модуля - тандем
-        return "Somfy WT 120 Нм", 100000, True  # двойная цена за тандем
-
-
-def get_remote_control(devices_count):
-    """
-    Определяет тип и стоимость пульта управления.
-    
-    Args:
-        devices_count (int): Количество устройств для управления
-        
-    Returns:
-        tuple: (название пульта, цена пульта)
-    """
-    if devices_count <= 1:
-        return "Somfy Smoove Origin RTS", 8000
-    elif devices_count <= 4:
-        return "Somfy Situo 5 IO", 12000
-    else:
-        return "Somfy Nina Timer IO", 25000
-
-
-def calculate_lighting_perimeter(width, length, modules=1):
-    """
-    Расчет периметра подсветки по правилам.
-    
-    Args:
-        width (float): Ширина перголы в метрах
-        length (float): Вынос перголы в метрах
-        modules (int): Количество модулей
-        
-    Returns:
-        float: Длина периметра для светодиодной ленты
-    """
-    if modules == 1:
-        # Периметр одного модуля
-        return 2 * (width + length)
-    else:
-        # Для нескольких модулей периметр каждого считается отдельно
-        module_width = width / modules
-        return modules * 2 * (module_width + length)
-
-
-def adjust_length_for_lamella_size(length, lamella_size):
-    """
-    Корректирует размер выноса перголы до ближайшего целого числа ламелей.
-    
-    Args:
-        length (float): Вынос перголы в метрах
-        lamella_size (str): Размер ламели (200, 250, PIR)
-        
-    Returns:
-        float: Скорректированный размер выноса перголы
-    """
+def adjust_length_for_lamella_size(length_m, lamella_size):
     if lamella_size == 'PIR':
-        lamella_size_mm = 250  # PIR ламели имеют размер 250 мм
+        lamella_size_mm = 250
     else:
         lamella_size_mm = int(lamella_size)
-    
-    # Пересчет длины в миллиметры
-    length_mm = length * 1000
-    
-    # Расчет количества ламелей
-    lamellas_count = math.ceil(length_mm / lamella_size_mm)
-    
-    # Пересчет обратно в метры с округлением до 1 знака
-    adjusted_length = round(lamellas_count * lamella_size_mm / 1000, 1)
-    
-    return adjusted_length
-
-
-def get_modules_from_price_data(width, length, pergola_type, lamella_size):
-    """
-    Определяет количество модулей на основе данных из прайс-листа.
-    
-    Args:
-        width (float): Ширина перголы в метрах
-        length (float): Вынос (длина) перголы в метрах
-        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
-        lamella_size (str): Размер ламели (200, 250, PIR)
-        
-    Returns:
-        int: Количество модулей или None, если не удалось определить
-    """
-    price_data = load_price_data(pergola_type, lamella_size)
-    
-    # Поиск точного соответствия
-    key = f"{width}x{length}"
-    if key in price_data and 'modules' in price_data[key]:
-        return price_data[key]['modules']
-    
-    # Если точного соответствия нет, ищем ближайший больший размер
-    best_match = None
-    for size, data in price_data.items():
-        if 'modules' not in data:
-            continue
-            
-        size_width, size_length = map(float, size.split('x'))
-        
-        if size_width >= width and size_length >= length:
-            if best_match is None or size_width * size_length < best_match[0] * best_match[1]:
-                best_match = (size_width, size_length, data['modules'])
-    
-    if best_match is not None:
-        return best_match[2]
-    
-    return None
+    lamella_size_m = lamella_size_mm / 1000
+    num_lamellas = math.ceil(length_m / lamella_size_m)
+    return round(num_lamellas * lamella_size_m, 2)
 
 
 def get_modules_by_dimensions(width, length, pergola_type=None):
-    """
-    Определяет количество модулей в зависимости от размеров перголы и ее типа.
-    
-    Args:
-        width (float): Ширина перголы в метрах
-        length (float): Вынос (длина) перголы в метрах
-        pergola_type (str, optional): Тип перголы
-        
-    Returns:
-        int: Количество модулей
-    """
-    # Если указан тип перголы и размер ламелей, ищем в прайс-листе
-    if pergola_type:
-        for lamella_size in ['200', '250', 'PIR']:
-            modules = get_modules_from_price_data(width, length, pergola_type, lamella_size)
-            if modules is not None:
-                return modules
-    
-    # Если не удалось найти в прайс-листе, используем логику по размерам
-    if width <= 4.0:
+    if width <= 4.5:
         return 1
-    elif width <= 7.0:
+    elif width <= 9.0:
         return 2
     else:
         return 3
 
 
-def calculate_pergola_price(pergola_type, width, length, modules, lamella_size, options):
-    """
-    Расчет стоимости перголы с использованием паттерна "Стратегия".
-    
-    Args:
-        pergola_type (str): Тип перголы (B500NEW, B700NEW, B600)
-        width (float): Ширина перголы в метрах
-        length (float): Длина (вынос) перголы в метрах
-        modules (int): Количество модулей
-        lamella_size (str): Размер ламели (200, 250, PIR)
-        options (dict): Словарь с выбранными опциями
-        
-    Returns:
-        dict: Результаты расчета
-    """
-    strategy = CalculationFactory.get_strategy(pergola_type)
-    return strategy.calculate(pergola_type, width, length, modules, lamella_size, options)
+def get_base_price(pergola_type, lamella_size, width_m, length_m):
+    prices = load_price_data(pergola_type, lamella_size)
+    if not prices:
+        raise ValueError(f"Не удалось загрузить данные о ценах для {pergola_type}/{lamella_size}")
+
+    available_widths = sorted(prices.keys())
+    available_lengths = set()
+    for wd in prices.values():
+        available_lengths.update(wd.keys())
+    available_lengths = sorted(available_lengths)
+
+    lookup_width = length_m
+    lookup_length = width_m
+
+    if lookup_width in available_widths:
+        width_match = lookup_width
+    else:
+        width_match = next((w for w in available_widths if w > lookup_width), max(available_widths))
+
+    if lookup_length in available_lengths:
+        length_match = lookup_length
+    else:
+        length_match = next((l for l in available_lengths if l > lookup_length), max(available_lengths))
+
+    if width_match in prices and length_match in prices[width_match]:
+        return prices[width_match][length_match]
+
+    min_price = None
+    for w in available_widths:
+        if w >= lookup_width:
+            for l in available_lengths:
+                if l >= lookup_length:
+                    if w in prices and l in prices[w]:
+                        p = prices[w][l]
+                        if min_price is None or p < min_price:
+                            min_price = p
+
+    if min_price is not None:
+        return min_price
+
+    raise ValueError(f"Не удалось найти цену для {pergola_type} {width_m}x{length_m}м")
+
+
+def needs_additional_columns(pergola_type, lamella_size, length_m):
+    threshold = ADDITIONAL_COLUMNS_RULES.get(pergola_type, {}).get(lamella_size)
+    if threshold is None:
+        return False
+    return length_m > threshold
+
+
+def calculate_gutter_insert_price(length_m, modules):
+    if length_m <= GUTTER_INSERT_THRESHOLD:
+        return False, 0, 0, 0
+    gutters_count = modules + 1
+    total_length = length_m * gutters_count
+    total_price = GUTTER_INSERT_PRICE_PER_METER * total_length
+    return True, total_price, gutters_count, total_length
+
+
+def get_drive_price(pergola_type, width_m, length_m, modules):
+    if pergola_type == "B500NEW":
+        if abs(width_m - 3.0) < 0.01 and abs(length_m - 8.0) < 0.01:
+            return "Bansbach Tandem, Germany", DRIVE_PRICES["B500NEW"]["tandem"], True
+        rules = BANSBACH_DRIVE_RULES.get(modules, [])
+        for rule in rules:
+            if length_m > 6.0:
+                return "Bansbach Tandem, Germany", DRIVE_PRICES["B500NEW"]["tandem"], True
+            if width_m > rule["width"] and length_m > rule["length"]:
+                if rule["tandem"]:
+                    return "Bansbach Tandem, Germany", DRIVE_PRICES["B500NEW"]["tandem"], True
+                else:
+                    return "Bansbach Т1, Germany", DRIVE_PRICES["B500NEW"]["standard"], False
+        return "Bansbach Т1, Germany", DRIVE_PRICES["B500NEW"]["standard"], False
+
+    elif pergola_type == "B700NEW":
+        rules = SOMFY_DRIVE_RULES.get(modules, [])
+        for rule in rules:
+            width_check = width_m <= rule["width"] if modules == 1 else width_m > rule["width"]
+            if width_check and length_m > rule["length"]:
+                if rule["tandem"]:
+                    return "Somfy M2 TANDEM", DRIVE_PRICES["B700NEW"]["tandem"], True
+                else:
+                    return "Somfy M1", DRIVE_PRICES["B700NEW"]["standard"], False
+        return "Somfy M1", DRIVE_PRICES["B700NEW"]["standard"], False
+
+    return "", 0, False
+
+
+def get_remote_control(devices_count):
+    if devices_count <= 1:
+        return "Simu 1K", REMOTE_CONTROL_TYPES[1]["price"]
+    elif devices_count <= 5:
+        return "Simu 5K", REMOTE_CONTROL_TYPES[5]["price"]
+    else:
+        return "Simu 15K", REMOTE_CONTROL_TYPES[15]["price"]
+
+
+def calculate_lighting_perimeter(width_m, length_m, modules=1):
+    if modules <= 1:
+        return 2 * (width_m + length_m)
+    module_width = width_m / modules
+    return modules * 2 * (module_width + length_m)
+
+
+def perform_calculation(dimensions, options):
+    try:
+        from config import pricing_settings
+
+        width_m = float(dimensions.get("width", 0))
+        length_m = float(dimensions.get("length", 0))
+        pergola_type = options.get("pergola_type", "")
+        lamella_type = options.get("lamella_type", "")
+        lighting_options = options.get("lighting", [])
+        installation = options.get("installation", False)
+
+        lamella_size = options.get("lamella_size", "")
+        if not lamella_size:
+            lamella_size = "PIR" if "PIR" in lamella_type else ("200" if "20" in lamella_type and "200" not in lamella_type else ("200" if "200" in lamella_type else "250"))
+
+        if pergola_type == "B600":
+            dim_key = pergola_type
+        else:
+            dim_key = f"{pergola_type}_{lamella_size}"
+
+        if dim_key in MAX_DIMENSIONS:
+            max_w = MAX_DIMENSIONS[dim_key]["width"]
+            max_l = MAX_DIMENSIONS[dim_key]["length"]
+            if width_m > max_w:
+                raise ValueError(f"Ширина ({width_m} м) превышает максимум ({max_w} м)")
+            if length_m > max_l:
+                raise ValueError(f"Вынос ({length_m} м) превышает максимум ({max_l} м)")
+
+        modules = get_modules_by_dimensions(width_m, length_m, pergola_type)
+
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            lamella_size_mm = 200 if lamella_size == "200" else 250
+            length_m = adjust_length_for_lamella_size(length_m, lamella_size)
+            lamellas_count = int(length_m * 1000 / lamella_size_mm)
+        else:
+            lamellas_count = 0
+
+        base_price = get_base_price(pergola_type, lamella_size, width_m, length_m)
+
+        lamella_display = {"200": "200 мм", "250": "250 мм", "PIR": "PIR"}.get(lamella_size, lamella_size)
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            pergola_name = (f"Пергола серии {pergola_type} - с поворотными ламелями "
+                           f"{width_m:.2f}×{length_m:.2f} м. Ламели {lamella_display} (стандарт), "
+                           f"Количество ламелей - {lamellas_count} шт. ({modules} {_get_plural_form(modules, 'модуль', 'модуля', 'модулей')})")
+        else:
+            pergola_name = (f"Пергола серии {pergola_type} - PIR панели "
+                           f"{width_m:.2f}×{length_m:.2f} м. ({modules} {_get_plural_form(modules, 'модуль', 'модуля', 'модулей')})")
+
+        items = [{"name": pergola_name, "price": base_price}]
+        total_price = base_price
+        specification = []
+
+        lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type)
+        lamellas_text = f", Количество ламелей - {lamellas_count} шт." if lamellas_count > 0 else ""
+        specification.append({
+            "name": f"Пергола серии {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м. {lamella_info}{lamellas_text}",
+            "count": f"{modules} {_get_plural_form(modules, 'модуль', 'модуля', 'модулей')}"
+        })
+
+        need_columns = needs_additional_columns(pergola_type, lamella_size, length_m)
+        if need_columns:
+            columns_price = COLUMNS_PRICES.get(modules, 0)
+            col_count = modules + 1
+            items.append({"name": f"Дополнительные колонны ({col_count} шт.)", "price": columns_price})
+            total_price += columns_price
+            specification.append({"name": "Дополнительные колонны", "count": f"{col_count} шт."})
+
+        gutter_needed, gutter_price, gutters_count, total_gutter_length = calculate_gutter_insert_price(length_m, modules)
+        if gutter_needed:
+            items.append({"name": f"Усилитель лотка ({gutters_count} лотка, {total_gutter_length:.2f} м)", "price": gutter_price})
+            total_price += gutter_price
+            specification.append({
+                "name": "Усилитель лотка",
+                "count": f"{total_gutter_length:.2f} м ({gutters_count} {_get_plural_form(gutters_count, 'лоток', 'лотка', 'лотков')})"
+            })
+
+        devices_count = 0
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            drive_name, drive_price, is_tandem = get_drive_price(pergola_type, width_m, length_m, modules)
+            drive_count = modules
+            total_drive_price = drive_price * drive_count
+            items.append({
+                "name": f"Привод {drive_name} (для {drive_count} {_get_plural_form(drive_count, 'модуль', 'модуля', 'модулей')})",
+                "price": total_drive_price
+            })
+            total_price += total_drive_price
+            specification.append({"name": f"Привод {drive_name}", "count": f"{drive_count} шт."})
+
+            devices_count = drive_count
+            led_controllers = 0
+            if "white_led" in lighting_options:
+                led_controllers += 1
+            if "rgb_led" in lighting_options:
+                led_controllers += 1
+            devices_count += led_controllers
+
+            remote_name, remote_price = get_remote_control(devices_count)
+            items.append({
+                "name": f"Пульт ДУ {remote_name} ({devices_count} {_get_plural_form(devices_count, 'канал', 'канала', 'каналов')})",
+                "price": remote_price
+            })
+            total_price += remote_price
+            specification.append({"name": f"Пульт ДУ {remote_name}", "count": "1 шт."})
+
+        has_lighting = "white_led" in lighting_options or "rgb_led" in lighting_options
+        if has_lighting:
+            lighting_perimeter = calculate_lighting_perimeter(width_m, length_m, modules)
+            controllers_count = 0
+            if "white_led" in lighting_options:
+                controllers_count += 1
+            if "rgb_led" in lighting_options:
+                controllers_count += 1
+
+            controller_price = LIGHTING_PRICES["controller"] * controllers_count
+            items.append({"name": f"Блок управления освещением Somfy RTS Dimmer ({controllers_count} шт.)", "price": controller_price})
+            total_price += controller_price
+            specification.append({"name": "Блок управления освещением Somfy RTS Dimmer", "count": f"{controllers_count} шт."})
+
+            if "white_led" in lighting_options:
+                white_cost = LIGHTING_PRICES["white_led"] * lighting_perimeter
+                items.append({"name": f"Светодиодная лента белая ({lighting_perimeter:.2f} м)", "price": white_cost})
+                total_price += white_cost
+                specification.append({"name": "Светодиодная лента белая", "count": f"{lighting_perimeter:.2f} м"})
+
+            if "rgb_led" in lighting_options:
+                rgb_cost = LIGHTING_PRICES["rgb_led"] * lighting_perimeter
+                items.append({"name": f"Светодиодная лента RGB ({lighting_perimeter:.2f} м)", "price": rgb_cost})
+                total_price += rgb_cost
+                specification.append({"name": "Светодиодная лента RGB", "count": f"{lighting_perimeter:.2f} м"})
+
+            if pergola_type == "B600":
+                lighting_devices = controllers_count
+                remote_name, remote_price = get_remote_control(lighting_devices)
+                items.append({
+                    "name": f"Пульт ДУ {remote_name} для освещения ({lighting_devices} {_get_plural_form(lighting_devices, 'канал', 'канала', 'каналов')})",
+                    "price": remote_price
+                })
+                total_price += remote_price
+                specification.append({
+                    "name": f"Пульт ДУ {remote_name} для освещения",
+                    "count": f"1 шт. ({lighting_devices} {_get_plural_form(lighting_devices, 'канал', 'канала', 'каналов')})"
+                })
+
+        base_total = total_price
+
+        delivery_pct = pricing_settings.get_delivery_markup_percent()
+        delivery_price = round(base_total * delivery_pct / 100, 2)
+        items.append({"name": "Доставка", "price": delivery_price})
+        total_price += delivery_price
+        specification.append({"name": "Доставка", "count": "1"})
+
+        installation_price = 0
+        if installation:
+            install_pct = pricing_settings.get_installation_markup_percent()
+            installation_price = round(base_total * install_pct / 100, 2)
+            items.append({"name": "Установка", "price": installation_price})
+            total_price += installation_price
+            specification.append({"name": "Установка", "count": "1"})
+
+        total_price = round(total_price, 2)
+
+        euro_rate = pricing_settings.get_euro_rate()
+        total_rub = round(total_price * euro_rate)
+
+        results = {
+            "dimensions": {"width": width_m, "length": length_m, "modules": modules},
+            "options": {
+                "pergola_type": pergola_type,
+                "lamella_type": lamella_type,
+                "lamella_size": lamella_size,
+                "lighting": lighting_options,
+                "installation": installation
+            },
+            "items": items,
+            "specification": specification,
+            "total_price_eur": total_price,
+            "euro_rate": euro_rate,
+            "totals": {
+                "cash": total_rub,
+                "non_cash": round(total_rub * 1.08),
+                "with_vat": round(total_rub * 1.15)
+            },
+            "delivery": {"percentage": delivery_pct, "price": delivery_price},
+            "installation": {"selected": installation, "price": installation_price},
+            "lamellas_count": lamellas_count,
+            "pergola_type_name": PERGOLA_TYPES.get(pergola_type, pergola_type),
+            "lamella_type_name": LAMELLA_TYPES.get(lamella_type, lamella_type)
+        }
+
+        return results
+
+    except Exception as e:
+        logger.error(f"Ошибка при расчете: {e}")
+        return {"error": str(e)}
+
+
+def get_pergola_types_list():
+    return [
+        {"id": "B500NEW", "name": PERGOLA_TYPES["B500NEW"], "description": PERGOLA_TYPE_DESCRIPTIONS["B500NEW"], "image": "b500_rotation.png"},
+        {"id": "B700NEW", "name": PERGOLA_TYPES["B700NEW"], "description": PERGOLA_TYPE_DESCRIPTIONS["B700NEW"], "image": "b700_sliding.png"},
+        {"id": "B600", "name": PERGOLA_TYPES["B600"], "description": PERGOLA_TYPE_DESCRIPTIONS["B600"], "image": "b600_sandwich.png"}
+    ]
+
+
+def get_lamella_sizes_for_type(pergola_type):
+    if pergola_type in ["B500NEW", "B700NEW"]:
+        return [
+            {"id": "200", "name": "Ламели 200 мм (усиленные)", "lamella_type": f"{pergola_type.replace('NEW','')}-20NEW"},
+            {"id": "250", "name": "Ламели 250 мм (стандарт)", "lamella_type": f"{pergola_type.replace('NEW','')}-25NEW"}
+        ]
+    elif pergola_type == "B600":
+        return [
+            {"id": "PIR", "name": "PIR сэндвич-панель", "lamella_type": "B600-PIR"}
+        ]
+    return []
+
+
+def get_max_dimensions(pergola_type, lamella_size):
+    if pergola_type == "B600":
+        key = pergola_type
+    else:
+        key = f"{pergola_type}_{lamella_size}"
+    return MAX_DIMENSIONS.get(key, {"width": 13.5, "length": 8.0})
