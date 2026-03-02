@@ -231,14 +231,25 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
     return pergola_data
 
 
-def _compress_image_for_pdf(img_path, max_width=800, quality=60):
-    """Сжимает изображение для PDF, возвращает путь к сжатому файлу."""
+def _compress_image_for_pdf(img_path, max_width=800, quality=60, crop_ratio=None):
+    """Сжимает изображение для PDF, возвращает путь к сжатому файлу.
+    crop_ratio: если задан (w/h), обрезает изображение до этого соотношения сторон."""
     try:
         from PIL import Image as PILImage
         img = PILImage.open(img_path)
         if img.mode == 'RGBA':
             img = img.convert('RGB')
         w, h = img.size
+        if crop_ratio:
+            target_h = int(w / crop_ratio)
+            if target_h > h:
+                target_w = int(h * crop_ratio)
+                left = (w - target_w) // 2
+                img = img.crop((left, 0, left + target_w, h))
+            else:
+                top = (h - target_h) // 2
+                img = img.crop((0, top, w, top + target_h))
+            w, h = img.size
         if w > max_width:
             ratio = max_width / w
             img = img.resize((max_width, int(h * ratio)), PILImage.LANCZOS)
@@ -680,7 +691,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
             pdf.ln(3)
             
             for i in range(0, len(gallery_images), 2):
-                if pdf.get_y() + 95 > 277:
+                if pdf.get_y() + 75 > 277:
                     pdf.add_page()
                 
                 batch = gallery_images[i:i+2]
@@ -691,45 +702,32 @@ def generate_commercial_offer(pergola_data, user_data=None):
                     img_w = 85
                     y_start = pdf.get_y()
                     
+                    gallery_img_w = 85
+                    gallery_img_h = 60
+                    gallery_crop = gallery_img_w / gallery_img_h
+                    
                     for j, (img_path, caption) in enumerate(batch):
                         x = x_left if j == 0 else x_right
                         try:
-                            from PIL import Image as PILImage
-                            compressed = _compress_image_for_pdf(img_path)
-                            img_obj = PILImage.open(compressed)
-                            w, h = img_obj.size
-                            ratio = h / w
-                            img_h = img_w * ratio
-                            if img_h > 80:
-                                img_h = 80
-                                img_w_actual = img_h / ratio
-                            else:
-                                img_w_actual = img_w
-                            pdf.image(compressed, x=x, y=y_start, w=img_w_actual, h=img_h)
-                            pdf.set_xy(x, y_start + img_h + 1)
+                            compressed = _compress_image_for_pdf(img_path, max_width=600, quality=55, crop_ratio=gallery_crop)
+                            pdf.image(compressed, x=x, y=y_start, w=gallery_img_w, h=gallery_img_h)
+                            pdf.set_xy(x, y_start + gallery_img_h + 1)
                             pdf.set_font('DejaVu', '', 7)
-                            pdf.cell(img_w, 4, caption[:60], 0, 0, 'C')
+                            pdf.cell(gallery_img_w, 4, caption[:60], 0, 0, 'C')
                         except Exception as e:
                             print(f"Ошибка добавления фото {img_path}: {e}")
                     
-                    max_h = 85
-                    pdf.set_y(y_start + max_h + 8)
+                    pdf.set_y(y_start + gallery_img_h + 10)
                 else:
                     img_path, caption = batch[0]
                     try:
-                        from PIL import Image as PILImage
-                        compressed = _compress_image_for_pdf(img_path)
-                        img_obj = PILImage.open(compressed)
-                        w, h = img_obj.size
-                        ratio = h / w
-                        img_w = 85
-                        img_h = img_w * ratio
-                        if img_h > 80:
-                            img_h = 80
-                            img_w = img_h / ratio
-                        x = (210 - img_w) / 2
-                        pdf.image(compressed, x=x, y=pdf.get_y(), w=img_w, h=img_h)
-                        pdf.set_y(pdf.get_y() + img_h + 1)
+                        gallery_img_w = 85
+                        gallery_img_h = 60
+                        gallery_crop = gallery_img_w / gallery_img_h
+                        compressed = _compress_image_for_pdf(img_path, max_width=600, quality=55, crop_ratio=gallery_crop)
+                        x = (210 - gallery_img_w) / 2
+                        pdf.image(compressed, x=x, y=pdf.get_y(), w=gallery_img_w, h=gallery_img_h)
+                        pdf.set_y(pdf.get_y() + gallery_img_h + 1)
                         pdf.set_font('DejaVu', '', 7)
                         pdf.cell(0, 4, caption[:60], 0, 1, 'C')
                         pdf.ln(5)
