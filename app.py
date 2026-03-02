@@ -1380,52 +1380,14 @@ def render_dimensions_form():
     cur_w = min(max(cur_w, min_width), max_width)
     cur_l = min(max(cur_l, min_length), max_length)
     
-    w_html = _dimension_input_html("Ширина (м)", "width", cur_w, min_width, max_width)
-    l_html = _dimension_input_html("Вынос (м)", "length", cur_l, min_length, max_length)
-    js = _dimensions_js()
-    
-    combined_html = f'''
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:8px 0;">
-      <div>{w_html}</div>
-      <div>{l_html}</div>
-    </div>
-    {js}
-    '''
-    combined_html += '''
-    <script>
-    (function hideSync() {
-        var doc = window.parent.document;
-        if (!doc.getElementById('dim-sync-style')) {
-            var s = doc.createElement('style');
-            s.id = 'dim-sync-style';
-            s.textContent = '.dim-sync-hide { height:0 !important; overflow:hidden !important; margin:0 !important; padding:0 !important; opacity:0 !important; position:absolute !important; pointer-events:none !important; }';
-            doc.head.appendChild(s);
-        }
-        var inputs = doc.querySelectorAll('input[type="number"]');
-        var found = 0;
-        inputs.forEach(function(el) {
-            var c = el.closest('[data-testid="stNumberInput"]');
-            if (!c) return;
-            var lbl = c.querySelector('label');
-            if (!lbl) return;
-            var t = lbl.textContent.toLowerCase();
-            if (t.indexOf('ширина') >= 0 || t.indexOf('вынос') >= 0) {
-                var cols = c.closest('[data-testid="stHorizontalBlock"]');
-                if (cols) { cols.classList.add('dim-sync-hide'); found++; }
-            }
-        });
-        if (found < 1) setTimeout(hideSync, 300);
-    })();
-    </script>
-    '''
-    html(combined_html, height=110)
-    
     c1, c2 = st.columns(2)
     with c1:
+        st.markdown(f"<div style='display:flex;justify-content:space-between;align-items:baseline;'><span style='font-size:0.9rem;font-weight:600;'>Ширина (м)</span><span style='font-size:0.75rem;color:#888;'>({min_width} — {max_width} м)</span></div>", unsafe_allow_html=True)
         width = st.number_input("Ширина (м)", min_value=min_width, max_value=max_width,
                                  value=cur_w, step=0.5, format="%.2f", key=width_key,
                                  label_visibility="collapsed")
     with c2:
+        st.markdown(f"<div style='display:flex;justify-content:space-between;align-items:baseline;'><span style='font-size:0.9rem;font-weight:600;'>Вынос (м)</span><span style='font-size:0.75rem;color:#888;'>({min_length} — {max_length} м)</span></div>", unsafe_allow_html=True)
         length = st.number_input("Вынос (м)", min_value=min_length, max_value=max_length,
                                   value=cur_l, step=0.5, format="%.2f", key=length_key,
                                   label_visibility="collapsed")
