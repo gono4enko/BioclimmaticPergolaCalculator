@@ -1388,12 +1388,12 @@ def render_dimensions_form():
     
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown(f"<div style='display:flex;justify-content:space-between;align-items:baseline;'><span style='font-size:0.9rem;font-weight:600;'>Ширина (м)</span><span style='font-size:0.75rem;color:#888;'>({min_width} — {max_width} м)</span></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;'><span style='font-size:0.9rem;font-weight:600;'>Ширина (м)</span><span style='font-size:0.75rem;color:#888;'>({min_width} — {max_width} м)</span></div>", unsafe_allow_html=True)
         width = st.number_input("Ширина (м)", min_value=min_width, max_value=max_width,
                                  step=0.5, format="%.2f", key=width_key,
                                  label_visibility="collapsed")
     with c2:
-        st.markdown(f"<div style='display:flex;justify-content:space-between;align-items:baseline;'><span style='font-size:0.9rem;font-weight:600;'>Вынос (м)</span><span style='font-size:0.75rem;color:#888;'>({min_length} — {max_length} м)</span></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;'><span style='font-size:0.9rem;font-weight:600;'>Вынос (м)</span><span style='font-size:0.75rem;color:#888;'>({min_length} — {max_length} м)</span></div>", unsafe_allow_html=True)
         length = st.number_input("Вынос (м)", min_value=min_length, max_value=max_length,
                                   step=0.5, format="%.2f", key=length_key,
                                   label_visibility="collapsed")
@@ -4127,6 +4127,11 @@ def main():
         padding-right: 20px !important;
         margin-top: 2px !important;
         margin-bottom: 2px !important;
+    }
+    
+    /* Отступ между кастомным лейблом и полем ввода в колонках */
+    [data-testid="column"] .element-container + .element-container div.stNumberInput {
+        margin-top: 14px !important;
     }
     
     /* Отступы для секций заголовков */
