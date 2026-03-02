@@ -1294,25 +1294,35 @@ def render_dimensions_form():
     combined_key = f"{current_pergola_type}_{current_lamella_size}"
     if st.session_state.get('_prev_dim_key') != combined_key:
         st.session_state['_prev_dim_key'] = combined_key
-        if width_key in st.session_state:
-            del st.session_state[width_key]
-        if length_key in st.session_state:
-            del st.session_state[length_key]
+        st.session_state[width_key] = 3.0
+        st.session_state[length_key] = 4.0
     
-    current_w = st.session_state.get(width_key, 3.0)
-    current_l = st.session_state.get(length_key, 4.0)
-    current_w = min(max(current_w, min_width), max_width)
-    current_l = min(max(current_l, min_length), max_length)
+    if width_key in st.session_state:
+        stored_w = st.session_state[width_key]
+        if stored_w > max_width:
+            st.session_state[width_key] = max_width
+        elif stored_w < min_width:
+            st.session_state[width_key] = min_width
+    
+    if length_key in st.session_state:
+        stored_l = st.session_state[length_key]
+        if stored_l > max_length:
+            st.session_state[length_key] = max_length
+        elif stored_l < min_length:
+            st.session_state[length_key] = min_length
+    
+    init_w = st.session_state.get(width_key, 3.0)
+    init_l = st.session_state.get(length_key, 4.0)
     
     with col1:
         width = st.number_input(
             "Ширина (м)",
             min_value=min_width,
             max_value=max_width,
-            value=current_w,
+            value=init_w,
             step=0.5,
             format="%.2f",
-            help=f"Ширина перголы в метрах ({min_width} - {max_width} м)",
+            help=f"Ширина перголы ({min_width} - {max_width} м)",
             key=width_key,
         )
     
@@ -1321,10 +1331,10 @@ def render_dimensions_form():
             "Вынос (м)",
             min_value=min_length,
             max_value=max_length,
-            value=current_l,
+            value=init_l,
             step=0.5,
             format="%.2f",
-            help=f"Глубина (вынос) перголы в метрах ({min_length} - {max_length} м)",
+            help=f"Вынос перголы ({min_length} - {max_length} м)",
             key=length_key,
         )
     
@@ -3366,16 +3376,35 @@ def create_very_simple_pdf(pergola_data):
     
     return pdf_path
 
+def _results_hash():
+    """Возвращает хеш текущих результатов для определения необходимости перегенерации PDF."""
+    import hashlib, json
+    results = st.session_state.get('results', {})
+    key_data = json.dumps({
+        'total_price': results.get('total_price', 0),
+        'total_price_after_discount': results.get('total_price_after_discount', 0),
+        'items': str(results.get('items', [])),
+        'dimensions': str(results.get('dimensions', {})),
+        'options': str(results.get('options', {})),
+    }, sort_keys=True)
+    return hashlib.md5(key_data.encode()).hexdigest()
+
+
 def export_to_pdf():
     """
     Генерирует PDF коммерческого предложения на основе данных расчёта.
+    Кэширует результат — перегенерирует только при изменении результатов расчёта.
     
     Returns:
         tuple: (pdf_bytes, file_name) или (None, None) при ошибке
     """
     if 'results' not in st.session_state:
-        st.error("Сначала нужно выполнить расчет!")
         return None, None
+    
+    current_hash = _results_hash()
+    if (st.session_state.get('_pdf_hash') == current_hash 
+            and st.session_state.get('_pdf_cache_bytes')):
+        return st.session_state['_pdf_cache_bytes'], st.session_state['_pdf_cache_name']
     
     results = st.session_state.results
     options = results.get("options", {})
@@ -3391,7 +3420,6 @@ def export_to_pdf():
         pdf_bytes = generate_commercial_offer(pergola_data)
         
         if not pdf_bytes:
-            st.error("Не удалось создать PDF документ")
             return None, None
         
         pergola_type = options.get("pergola_type", "pergola") or "pergola"
@@ -3403,12 +3431,14 @@ def export_to_pdf():
         current_date = datetime.now(pytz.utc).astimezone(rostov_tz).strftime("%d.%m.%Y")
         file_name = f"КП_пергола_{pergola_type}_{width}x{length}м_{current_date}.pdf"
         
+        st.session_state['_pdf_hash'] = current_hash
+        st.session_state['_pdf_cache_bytes'] = pdf_bytes
+        st.session_state['_pdf_cache_name'] = file_name
+        
         return pdf_bytes, file_name
         
     except Exception as e:
-        st.error(f"Ошибка при генерации PDF: {str(e)}")
-        import traceback
-        st.write(traceback.format_exc())
+        print(f"Ошибка при генерации PDF: {str(e)}")
         return None, None
 
 
