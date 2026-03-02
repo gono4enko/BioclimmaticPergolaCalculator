@@ -3,6 +3,7 @@
 Максимально простой подход с использованием стандартных компонентов Streamlit
 """
 import streamlit as st
+from streamlit.components.v1 import html
 import pandas as pd
 import io
 import json
