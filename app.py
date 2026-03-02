@@ -1731,7 +1731,7 @@ def render_additional_options_form():
     if st.checkbox("RGB-подсветка", value=False, key="rgb_led_direct"):
         lighting_options.append("rgb_led")
     
-    led_img = "attached_assets/Снимок_экрана_2026-03-02_в_19.41.36_1772470183662.png"
+    led_img = "attached_assets/led_lighting.png"
     rgb_img = "attached_assets/Снимок_экрана_2026-03-02_в_19.41.21_1772470189184.png"
     
     show_led = "white_led" in lighting_options
