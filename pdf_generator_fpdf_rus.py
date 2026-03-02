@@ -276,12 +276,17 @@ def _add_section_images_grid(pdf, image_paths):
     if not valid:
         return
 
-    pdf.add_page()
     cell_w = 85
-    cell_h = 60
+    cell_h = 55
+    gap = 8
     margin_x = 10
-    gap = 10
-    start_y = pdf.get_y() + 5
+    num_rows = (len(valid) + 1) // 2
+    total_h = num_rows * cell_h + (num_rows - 1) * gap
+
+    if pdf.get_y() + total_h + 5 > 277:
+        pdf.add_page()
+
+    start_y = pdf.get_y() + 3
 
     for idx, img_path in enumerate(valid):
         try:
