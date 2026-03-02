@@ -4362,6 +4362,30 @@ def main():
     """, unsafe_allow_html=True)
     
     # Заголовок с минимальным отступом
+    from streamlit.components.v1 import html as st_html
+    st_html("""
+    <script>
+    (function() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .main .block-container, section.main > div,
+            [data-testid="block-container"] {
+                padding-top: 0.5rem !important;
+            }
+            header[data-testid="stHeader"],
+            [data-testid="stHeader"] {
+                display: none !important;
+                height: 0 !important;
+            }
+            #MainMenu, div[data-testid="stToolbar"],
+            div[data-testid="stDecoration"] {
+                display: none !important;
+            }
+        `;
+        window.parent.document.head.appendChild(style);
+    })();
+    </script>
+    """, height=0)
     st.markdown("<h1 style='text-align: center; margin-top: 0px; margin-bottom: 5px; font-size: 2.1rem; font-weight: 600; color: #0066cc;'>Калькулятор расчета стоимости биоклиматических пергол</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
     
