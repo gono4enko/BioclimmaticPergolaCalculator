@@ -145,6 +145,20 @@ def display_installation_counter():
     """
     count = get_installation_count()
     
+    # Правильное склонение слова "пергола" по правилам русского языка
+    def pluralize_pergola(n):
+        if 11 <= n % 100 <= 14:
+            return "ПЕРГОЛ"
+        elif n % 10 == 1:
+            return "ПЕРГОЛА"
+        elif 2 <= n % 10 <= 4:
+            return "ПЕРГОЛЫ"
+        else:
+            return "ПЕРГОЛ"
+    
+    pergola_word = pluralize_pergola(count)
+    current_year = datetime.now().year
+    
     # Нулевой отступ перед счетчиком
     st.markdown("<div style='height: 0px;'></div>", unsafe_allow_html=True)
     
@@ -158,8 +172,8 @@ def display_installation_counter():
     # Создаем контейнер с красивой анимацией и стилем, согласованным со статьями
     counter_html = f"""
     <div class="installation-counter">
-        <div class="counter-number">{count} ПЕРГОЛ</div>
-        <div class="counter-label">установлено в 2025 году</div>
+        <div class="counter-number">{count} {pergola_word}</div>
+        <div class="counter-label">установлено в {current_year} году</div>
     </div>
     
     <style>
