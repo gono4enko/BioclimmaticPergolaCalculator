@@ -1380,16 +1380,21 @@ def render_dimensions_form():
     cur_w = min(max(cur_w, min_width), max_width)
     cur_l = min(max(cur_l, min_length), max_length)
     
+    if width_key not in st.session_state:
+        st.session_state[width_key] = cur_w
+    if length_key not in st.session_state:
+        st.session_state[length_key] = cur_l
+    
     c1, c2 = st.columns(2)
     with c1:
         st.markdown(f"<div style='display:flex;justify-content:space-between;align-items:baseline;'><span style='font-size:0.9rem;font-weight:600;'>Ширина (м)</span><span style='font-size:0.75rem;color:#888;'>({min_width} — {max_width} м)</span></div>", unsafe_allow_html=True)
         width = st.number_input("Ширина (м)", min_value=min_width, max_value=max_width,
-                                 value=cur_w, step=0.5, format="%.2f", key=width_key,
+                                 step=0.5, format="%.2f", key=width_key,
                                  label_visibility="collapsed")
     with c2:
         st.markdown(f"<div style='display:flex;justify-content:space-between;align-items:baseline;'><span style='font-size:0.9rem;font-weight:600;'>Вынос (м)</span><span style='font-size:0.75rem;color:#888;'>({min_length} — {max_length} м)</span></div>", unsafe_allow_html=True)
         length = st.number_input("Вынос (м)", min_value=min_length, max_value=max_length,
-                                  value=cur_l, step=0.5, format="%.2f", key=length_key,
+                                  step=0.5, format="%.2f", key=length_key,
                                   label_visibility="collapsed")
     
     modules = get_modules_by_dimensions(width, length)
