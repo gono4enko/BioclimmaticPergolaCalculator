@@ -265,34 +265,39 @@ def _compress_image_for_pdf(img_path, max_width=800, quality=60, crop_ratio=None
         return img_path
 
 
-def _add_section_images(pdf, image_paths):
+def _add_section_images_grid(pdf, image_paths):
     from PIL import Image as PILImage
-    for img_path in image_paths:
-        if not os.path.exists(img_path):
-            print(f"Изображение секции не найдено: {img_path}")
-            continue
+    valid = []
+    for p in image_paths:
+        if os.path.exists(p):
+            valid.append(p)
+        else:
+            print(f"Изображение секции не найдено: {p}")
+    if not valid:
+        return
+
+    pdf.add_page()
+    cell_w = 85
+    cell_h = 60
+    margin_x = 10
+    gap = 10
+    start_y = pdf.get_y() + 5
+
+    for idx, img_path in enumerate(valid):
         try:
-            img_obj = PILImage.open(img_path)
-            w, h = img_obj.size
-            max_w_mm = 160
-            ratio = h / w
-            img_w_mm = max_w_mm
-            img_h_mm = max_w_mm * ratio
-            if img_h_mm > 120:
-                img_h_mm = 120
-                img_w_mm = img_h_mm / ratio
+            col = idx % 2
+            row = idx // 2
+            x = margin_x + col * (cell_w + gap)
+            y = start_y + row * (cell_h + gap)
 
-            if pdf.get_y() + img_h_mm + 10 > 277:
-                pdf.add_page()
-
-            pdf.ln(5)
-            compressed = _compress_image_for_pdf(img_path, max_width=1200, quality=70)
-            x_pos = (210 - img_w_mm) / 2
-            pdf.image(compressed, x=x_pos, y=pdf.get_y(), w=img_w_mm, h=img_h_mm)
-            pdf.set_y(pdf.get_y() + img_h_mm + 3)
+            compressed = _compress_image_for_pdf(img_path, max_width=1000, quality=70, crop_ratio=cell_w / cell_h)
+            pdf.image(compressed, x=x, y=y, w=cell_w, h=cell_h)
             print(f"Добавлено изображение секции: {img_path}")
         except Exception as e:
             print(f"Ошибка при добавлении изображения секции {img_path}: {e}")
+
+    last_row = (len(valid) - 1) // 2
+    pdf.set_y(start_y + (last_row + 1) * (cell_h + gap))
 
 
 def _get_gallery_images(max_images=8):
@@ -737,17 +742,13 @@ def generate_commercial_offer(pergola_data, user_data=None):
                         print(f"Изображение не найдено: {img_path}")
                 
                 if section_index == 1:
-                    modular_imgs = [
+                    all_section_imgs = [
                         "attached_assets/Modular_Design_1772474386813.png",
                         "attached_assets/Skyroof_Module_Connectors_1772474386813.jpg",
+                        "attached_assets/Drainage_1772474555236.png",
+                        "attached_assets/Skyroof_Drainage_1772474555236.png",
                     ]
-                    _add_section_images(pdf, modular_imgs)
-                elif section_index == 2:
-                    drainage_imgs = [
-                        "attached_assets/Drainage_1772474386813.png",
-                        "attached_assets/Skyroof_Drainage_1772474386813.png",
-                    ]
-                    _add_section_images(pdf, drainage_imgs)
+                    _add_section_images_grid(pdf, all_section_imgs)
                     
             except Exception as e:
                 print(f"Ошибка при обработке HTML: {str(e)}")
