@@ -1232,45 +1232,122 @@ def get_modules_by_width(width):
     """
     return get_modules_by_dimensions(width, 4.0)  # Используем стандартный вынос 4.0
 
+def _dimension_input_html(label, field_id, value, min_val, max_val, step=0.5):
+    """Генерирует HTML для быстрого поля ввода размера с мгновенными +/- кнопками."""
+    return f'''
+    <div style="margin-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:14px;font-weight:500;color:#333;">{label}</span>
+        <span style="font-size:11px;color:#888;">({min_val} — {max_val} м)</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:0;border:1.5px solid #d0d5dd;border-radius:8px;overflow:hidden;height:48px;background:#fff;">
+        <button id="btn_minus_{field_id}" onclick="dimChange('{field_id}',-{step},{min_val},{max_val})"
+          style="width:52px;height:100%;border:none;background:#f8f9fa;cursor:pointer;font-size:22px;font-weight:600;color:#0066cc;
+                 display:flex;align-items:center;justify-content:center;user-select:none;transition:background 0.1s;"
+          onmousedown="this.style.background='#e0e7ff'" onmouseup="this.style.background='#f8f9fa'"
+          onmouseleave="this.style.background='#f8f9fa'">−</button>
+        <input id="inp_{field_id}" type="text" value="{value:.2f}"
+          style="flex:1;height:100%;border:none;border-left:1px solid #e0e0e0;border-right:1px solid #e0e0e0;
+                 text-align:center;font-size:18px;font-weight:500;color:#1a1a1a;outline:none;background:#fff;
+                 -moz-appearance:textfield;padding:0;"
+          onchange="dimManual('{field_id}',this.value,{min_val},{max_val})"
+          onkeydown="if(event.key==='Enter'){{event.preventDefault();dimManual('{field_id}',this.value,{min_val},{max_val})}}"
+          inputmode="decimal" />
+        <button id="btn_plus_{field_id}" onclick="dimChange('{field_id}',{step},{min_val},{max_val})"
+          style="width:52px;height:100%;border:none;background:#f8f9fa;cursor:pointer;font-size:22px;font-weight:600;color:#0066cc;
+                 display:flex;align-items:center;justify-content:center;user-select:none;transition:background 0.1s;"
+          onmousedown="this.style.background='#e0e7ff'" onmouseup="this.style.background='#f8f9fa'"
+          onmouseleave="this.style.background='#f8f9fa'">+</button>
+      </div>
+    </div>'''
+
+
+def _dimensions_js():
+    """JavaScript для мгновенного управления размерами с debounced синхронизацией."""
+    return '''
+    <script>
+    var dimTimers = {};
+    var dimValues = {};
+    
+    function dimChange(id, delta, mn, mx) {
+      var inp = document.getElementById('inp_' + id);
+      if (!inp) return;
+      var cur = parseFloat(inp.value.replace(',', '.')) || 0;
+      var nv = Math.round((cur + delta) * 100) / 100;
+      if (nv < mn) nv = mn;
+      if (nv > mx) nv = mx;
+      inp.value = nv.toFixed(2);
+      dimValues[id] = nv;
+      dimScheduleSync();
+    }
+    
+    function dimManual(id, rawVal, mn, mx) {
+      var v = parseFloat(rawVal.replace(',', '.'));
+      if (isNaN(v)) return;
+      v = Math.round(v * 100) / 100;
+      if (v < mn) v = mn;
+      if (v > mx) v = mx;
+      var inp = document.getElementById('inp_' + id);
+      inp.value = v.toFixed(2);
+      dimValues[id] = v;
+      dimScheduleSync();
+    }
+    
+    function dimScheduleSync() {
+      if (dimTimers._sync) clearTimeout(dimTimers._sync);
+      dimTimers._sync = setTimeout(function() {
+        dimDoSync();
+      }, 800);
+    }
+    
+    function dimDoSync() {
+      var w = dimValues['width'];
+      var l = dimValues['length'];
+      if (w === undefined && l === undefined) return;
+      
+      var doc = window.parent.document;
+      var inputs = doc.querySelectorAll('input[type="number"]');
+      
+      inputs.forEach(function(el) {
+        var label = '';
+        var container = el.closest('[data-testid="stNumberInput"]');
+        if (container) {
+          var lbl = container.querySelector('label');
+          if (lbl) label = lbl.textContent.toLowerCase();
+        }
+        
+        if (w !== undefined && label.indexOf('ширина') >= 0) {
+          setNativeValue(el, w);
+        }
+        if (l !== undefined && label.indexOf('вынос') >= 0) {
+          setNativeValue(el, l);
+        }
+      });
+      
+      dimValues = {};
+    }
+    
+    function setNativeValue(el, val) {
+      var nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+        window.parent.HTMLInputElement.prototype, 'value').set;
+      nativeInputValueSetter.call(el, val);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    </script>'''
+
+
 def render_dimensions_form():
     """
-    Отображает форму для ввода размеров перголы с оптимизированной производительностью
-    
-    Returns:
-        dict: Словарь с введенными размерами
+    Отображает форму для ввода размеров перголы.
+    Использует кастомный HTML/JS для мгновенного отклика кнопок +/-
+    и скрытые st.number_input для синхронизации с Streamlit.
     """
-    # Оптимизированная стилизация для более быстрой загрузки и отрисовки формы
-    st.markdown("""
-    <style>
-    /* Оптимизируем поля ввода для более быстрой отрисовки */
-    .stNumberInput input {
-        transition: none !important;
-        animation: none !important;
-        font-size: 16px !important; /* Предотвращает зум на мобильных */
-    }
-    /* Предварительно выделяем место для полей ввода */
-    .stNumberInput {
-        min-height: 60px;
-        contain: size layout;
-    }
-    /* Оптимизируем селекторы для более быстрой отрисовки */
-    .stSelectbox {
-        will-change: transform;
-        contain: content;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    from streamlit.components.v1 import html
     
     st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Размеры перголы</h2>", unsafe_allow_html=True)
     
-    # Начало блока с классом dimensions-form с улучшенными атрибутами для производительности
-    st.markdown("<div class='dimensions-form' style='contain: content; will-change: transform;'>", unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    
-    # Получаем текущий тип перголы из session_state, если он уже выбран
     current_pergola_type = st.session_state.get("pergola_type")
-    
     current_lamella_size = st.session_state.get("lamella_size", "250")
     
     if current_pergola_type == "B600":
@@ -1297,58 +1374,49 @@ def render_dimensions_form():
         st.session_state[width_key] = 3.0
         st.session_state[length_key] = 4.0
     
-    if width_key in st.session_state:
-        stored_w = st.session_state[width_key]
-        if stored_w > max_width:
-            st.session_state[width_key] = max_width
-        elif stored_w < min_width:
-            st.session_state[width_key] = min_width
+    cur_w = st.session_state.get(width_key, 3.0)
+    cur_l = st.session_state.get(length_key, 4.0)
+    cur_w = min(max(cur_w, min_width), max_width)
+    cur_l = min(max(cur_l, min_length), max_length)
     
-    if length_key in st.session_state:
-        stored_l = st.session_state[length_key]
-        if stored_l > max_length:
-            st.session_state[length_key] = max_length
-        elif stored_l < min_length:
-            st.session_state[length_key] = min_length
+    w_html = _dimension_input_html("Ширина (м)", "width", cur_w, min_width, max_width)
+    l_html = _dimension_input_html("Вынос (м)", "length", cur_l, min_length, max_length)
+    js = _dimensions_js()
     
-    init_w = st.session_state.get(width_key, 3.0)
-    init_l = st.session_state.get(length_key, 4.0)
+    combined_html = f'''
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:8px 0;">
+      <div>{w_html}</div>
+      <div>{l_html}</div>
+    </div>
+    {js}
+    '''
+    html(combined_html, height=110)
     
-    with col1:
-        width = st.number_input(
-            "Ширина (м)",
-            min_value=min_width,
-            max_value=max_width,
-            value=init_w,
-            step=0.5,
-            format="%.2f",
-            help=f"Ширина перголы ({min_width} - {max_width} м)",
-            key=width_key,
-        )
+    st.markdown("""<style>
+    .hidden-dim-inputs [data-testid="stNumberInput"] { height: 0 !important; overflow: hidden !important; 
+        margin: 0 !important; padding: 0 !important; border: none !important; opacity: 0 !important; 
+        position: absolute !important; pointer-events: none !important; }
+    </style>""", unsafe_allow_html=True)
     
-    with col2:
-        length = st.number_input(
-            "Вынос (м)",
-            min_value=min_length,
-            max_value=max_length,
-            value=init_l,
-            step=0.5,
-            format="%.2f",
-            help=f"Вынос перголы ({min_length} - {max_length} м)",
-            key=length_key,
-        )
+    with st.container():
+        st.markdown('<div class="hidden-dim-inputs">', unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        with c1:
+            width = st.number_input("Ширина (м)", min_value=min_width, max_value=max_width,
+                                     value=cur_w, step=0.5, format="%.2f", key=width_key,
+                                     label_visibility="collapsed")
+        with c2:
+            length = st.number_input("Вынос (м)", min_value=min_length, max_value=max_length,
+                                      value=cur_l, step=0.5, format="%.2f", key=length_key,
+                                      label_visibility="collapsed")
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    # Определяем количество модулей автоматически по обоим параметрам - ширине и выносу
     modules = get_modules_by_dimensions(width, length)
     
-    # Показываем информацию о модулях (только для отображения) с уменьшенным отступом
     if modules > 1:
         st.markdown(f"""<div style="padding: 5px 10px; background-color: #e6f3ff; border-radius: 3px; font-size: 0.85rem; margin: 2px 0;">
         При размере {width:.2f}×{length:.2f} м будет автоматически использовано {modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}
         </div>""", unsafe_allow_html=True)
-    
-    # Закрываем блок с классом dimensions-form
-    st.markdown("</div>", unsafe_allow_html=True)
     
     return {
         "width": width,
