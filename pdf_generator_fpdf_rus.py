@@ -265,6 +265,36 @@ def _compress_image_for_pdf(img_path, max_width=800, quality=60, crop_ratio=None
         return img_path
 
 
+def _add_section_images(pdf, image_paths):
+    from PIL import Image as PILImage
+    for img_path in image_paths:
+        if not os.path.exists(img_path):
+            print(f"Изображение секции не найдено: {img_path}")
+            continue
+        try:
+            img_obj = PILImage.open(img_path)
+            w, h = img_obj.size
+            max_w_mm = 160
+            ratio = h / w
+            img_w_mm = max_w_mm
+            img_h_mm = max_w_mm * ratio
+            if img_h_mm > 120:
+                img_h_mm = 120
+                img_w_mm = img_h_mm / ratio
+
+            if pdf.get_y() + img_h_mm + 10 > 277:
+                pdf.add_page()
+
+            pdf.ln(5)
+            compressed = _compress_image_for_pdf(img_path, max_width=1200, quality=70)
+            x_pos = (210 - img_w_mm) / 2
+            pdf.image(compressed, x=x_pos, y=pdf.get_y(), w=img_w_mm, h=img_h_mm)
+            pdf.set_y(pdf.get_y() + img_h_mm + 3)
+            print(f"Добавлено изображение секции: {img_path}")
+        except Exception as e:
+            print(f"Ошибка при добавлении изображения секции {img_path}: {e}")
+
+
 def _get_gallery_images(max_images=8):
     """Возвращает список (путь, подпись) для галереи в PDF."""
     IMAGES_DIR = "attached_assets"
@@ -705,6 +735,20 @@ def generate_commercial_offer(pergola_data, user_data=None):
                             print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
                     else:
                         print(f"Изображение не найдено: {img_path}")
+                
+                if section_index == 1:
+                    modular_imgs = [
+                        "attached_assets/Modular_Design_1772474386813.png",
+                        "attached_assets/Skyroof_Module_Connectors_1772474386813.jpg",
+                    ]
+                    _add_section_images(pdf, modular_imgs)
+                elif section_index == 2:
+                    drainage_imgs = [
+                        "attached_assets/Drainage_1772474386813.png",
+                        "attached_assets/Skyroof_Drainage_1772474386813.png",
+                    ]
+                    _add_section_images(pdf, drainage_imgs)
+                    
             except Exception as e:
                 print(f"Ошибка при обработке HTML: {str(e)}")
         
