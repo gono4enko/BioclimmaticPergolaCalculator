@@ -1626,7 +1626,8 @@ def render_lamella_type_form():
     # Получаем тип перголы из session_state
     pergola_type = st.session_state.get("pergola_type", "B500NEW")
     
-    st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 15px;'>Выберите тип ламелей</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Выберите тип ламелей</h2>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-bottom: 18px;'></div>", unsafe_allow_html=True)
     
     # Тип ламелей - зависит от выбранного типа перголы
     lamella_options = []
