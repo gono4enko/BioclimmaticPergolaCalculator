@@ -2181,41 +2181,52 @@ def render_results(results, show_articles=False):
     pdf_bytes, file_name = export_to_pdf()
     
     if pdf_bytes:
-        import base64
-        b64_pdf = base64.b64encode(pdf_bytes).decode()
-        st.markdown(f"""
-        <div style="display:flex; justify-content:center; margin: 20px 0;">
-            <a href="data:application/pdf;base64,{b64_pdf}" download="{file_name}"
-               style="
-                   background-color: #0066cc;
-                   color: white !important;
-                   text-decoration: none;
-                   border: none;
-                   padding: 0 1rem;
-                   font-size: 16px;
-                   font-weight: 700;
-                   letter-spacing: 0.5px;
-                   height: 55px;
-                   min-width: 300px;
-                   max-width: 400px;
-                   display: inline-flex;
-                   justify-content: center;
-                   align-items: center;
-                   border-radius: 8px;
-                   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-                   cursor: pointer;
-                   text-transform: uppercase;
-                   animation: pdf-btn-pulse 2s ease-in-out infinite;
-               ">ЭКСПОРТ КП В PDF</a>
-        </div>
-        <style>
-        @keyframes pdf-btn-pulse {{
-            0% {{ transform: scale(1); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); background-color: #0066cc; }}
-            50% {{ transform: scale(1.03); box-shadow: 0 6px 15px rgba(0, 102, 204, 0.4); background-color: #0077dd; }}
-            100% {{ transform: scale(1); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); background-color: #0066cc; }}
-        }}
-        </style>
-        """, unsafe_allow_html=True)
+        st.download_button(
+            label="ЭКСПОРТ КП В PDF",
+            data=pdf_bytes,
+            file_name=file_name,
+            mime="application/pdf",
+            key="export_pdf_button",
+        )
+    else:
+        st.download_button(
+            label="ЭКСПОРТ КП В PDF",
+            data=b"",
+            file_name="empty.pdf",
+            mime="application/pdf",
+            key="export_pdf_button_disabled",
+            disabled=True,
+        )
+    
+    html("""<div style="height:0;overflow:hidden;">
+    <script>
+    (function styleDownloadBtn() {
+        var doc = window.parent.document;
+        var btns = doc.querySelectorAll('button');
+        var found = false;
+        btns.forEach(function(btn) {
+            var txt = btn.textContent || '';
+            if (txt.indexOf('ЭКСПОРТ КП В PDF') >= 0) {
+                btn.style.cssText = 'background-color:#0066cc !important; color:white !important; border:none !important; padding:0 1rem !important; font-size:16px !important; font-weight:700 !important; letter-spacing:0.5px !important; height:55px !important; min-width:300px !important; max-width:400px !important; display:inline-flex !important; justify-content:center !important; align-items:center !important; border-radius:8px !important; box-shadow:0 4px 6px rgba(0,0,0,0.2) !important; cursor:pointer !important; text-transform:uppercase !important; animation:pdf-btn-pulse 2s ease-in-out infinite !important; width:auto !important; margin:0 auto !important;';
+                var wrapper = btn.parentElement;
+                if (wrapper) {
+                    wrapper.style.cssText = 'display:flex !important; justify-content:center !important;';
+                }
+                var p = btn.querySelector('p');
+                if (p) { p.style.cssText = 'color:white !important; margin:0 !important;'; }
+                found = true;
+            }
+        });
+        if (!found) setTimeout(styleDownloadBtn, 300);
+        
+        if (!doc.getElementById('pdf-pulse-style')) {
+            var s = doc.createElement('style');
+            s.id = 'pdf-pulse-style';
+            s.textContent = '@keyframes pdf-btn-pulse { 0% { transform:scale(1); box-shadow:0 4px 6px rgba(0,0,0,0.2); } 50% { transform:scale(1.03); box-shadow:0 6px 15px rgba(0,102,204,0.4); } 100% { transform:scale(1); box-shadow:0 4px 6px rgba(0,0,0,0.2); } }';
+            doc.head.appendChild(s);
+        }
+    })();
+    </script></div>""", height=1)
     
     # Отображаем разделитель между таблицей стоимости и описанием перголы
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
