@@ -5,9 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
         lamellaType: '',
         width: 0,
         length: 0,
-        whiteLed: false,
+        whiteLed: true,
         rgbLed: false,
-        installation: false,
+        installation: true,
         maxWidth: 13.5,
         maxLength: 8.0,
         result: null
