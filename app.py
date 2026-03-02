@@ -4356,14 +4356,16 @@ def main():
     """, height=0)
     st.markdown("<h1 style='text-align: center; margin-top: 0px; margin-bottom: 5px; font-size: 2.1rem; font-weight: 600; color: #0066cc;'>Калькулятор расчета стоимости биоклиматических пергол</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; margin-bottom: 10px; font-size: 1rem;'>Введите размеры и параметры перголы для расчета стоимости в рублях (₽)</p>", unsafe_allow_html=True)
-    _hero_img = "attached_assets/Снимок_экрана_2026-03-02_в_21.57.59_1772477886433.png"
+    _hero_img = "attached_assets/hero_pergola.jpg"
     if os.path.exists(_hero_img):
         import base64
-        with open(_hero_img, "rb") as _f:
-            _b64 = base64.b64encode(_f.read()).decode()
+        if '_hero_b64' not in st.session_state:
+            with open(_hero_img, "rb") as _f:
+                st.session_state['_hero_b64'] = base64.b64encode(_f.read()).decode()
+        _b64 = st.session_state['_hero_b64']
         st.markdown(f"""
         <div class="hero-parallax-wrapper">
-            <div class="hero-parallax" style="background-image: url('data:image/png;base64,{_b64}');"></div>
+            <div class="hero-parallax" style="background-image: url('data:image/jpeg;base64,{_b64}');"></div>
             <div class="hero-overlay">
                 <div class="hero-tagline">Биоклиматические перголы — комфорт в любое время года</div>
             </div>
