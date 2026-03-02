@@ -66,7 +66,12 @@ def create_app(test_config=None):
     from .controllers.pdf_controller import register_pdf_blueprints
     register_pdf_blueprints(app)
     
-    # Регистрация обработчика ошибок
+    @app.after_request
+    def set_iframe_headers(response):
+        response.headers.pop('X-Frame-Options', None)
+        response.headers['Content-Security-Policy'] = response.headers.get('Content-Security-Policy', '').replace('frame-ancestors', '') or "frame-ancestors *"
+        return response
+
     @app.errorhandler(404)
     def page_not_found(error):
         return {'error': 'Страница не найдена'}, 404

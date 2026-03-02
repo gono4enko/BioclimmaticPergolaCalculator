@@ -65,5 +65,18 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     
     {% block scripts %}{% endblock %}
+    <script>
+    (function() {
+        if (window.self === window.top) return;
+        function sendHeight() {
+            var h = document.documentElement.scrollHeight;
+            window.parent.postMessage({ type: 'resize-iframe', height: h }, '*');
+        }
+        sendHeight();
+        new MutationObserver(sendHeight).observe(document.body, { childList: true, subtree: true, attributes: true });
+        window.addEventListener('resize', sendHeight);
+        setInterval(sendHeight, 1000);
+    })();
+    </script>
 </body>
 </html>
