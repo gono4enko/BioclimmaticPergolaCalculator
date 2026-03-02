@@ -99,19 +99,21 @@ def start_proxy():
 
 
 if __name__ == "__main__":
+    proxy_thread = threading.Thread(target=start_proxy, daemon=True)
+    proxy_thread.start()
+
+    print("Health check proxy ready on port 5000", flush=True)
+
     proc = subprocess.Popen(
         [
             sys.executable, "-m", "streamlit", "run", "app.py",
             "--server.port", str(STREAMLIT_PORT),
-            "--server.address", "0.0.0.0",
+            "--server.address", "127.0.0.1",
             "--server.headless", "true",
         ]
     )
 
     threading.Thread(target=check_streamlit_ready, daemon=True).start()
-
-    proxy_thread = threading.Thread(target=start_proxy, daemon=True)
-    proxy_thread.start()
 
     try:
         proc.wait()
