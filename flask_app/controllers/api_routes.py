@@ -18,6 +18,41 @@ from ..services.calculator import (
 bp = Blueprint('api', __name__)
 
 
+@bp.route('/promotions', methods=['GET'])
+def get_promotions():
+    try:
+        import sys, os
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        from config.promotions import get_active_promotions, get_current_season, SEASON_COLORS
+        from datetime import datetime as dt
+
+        promos = get_active_promotions()
+        current_season = get_current_season()
+        bg_color = SEASON_COLORS.get(current_season, "#004B9A")
+
+        current_week = dt.now().isocalendar()[1]
+        install_count = max(1, current_week - 6)
+
+        badges = []
+        for p in promos.values():
+            if p.get("display_badge", True):
+                badges.append({
+                    "text": p.get("badge_text", p.get("name", "")),
+                    "color": p.get("badge_color", bg_color)
+                })
+
+        return jsonify({
+            'success': True,
+            'badges': badges,
+            'install_count': install_count,
+            'year': dt.now().year,
+            'counter_color': bg_color
+        })
+    except Exception as e:
+        current_app.logger.error(f"Promotions error: {e}")
+        return jsonify({'success': True, 'badges': [], 'install_count': 0, 'year': 2025, 'counter_color': '#004B9A'})
+
+
 @bp.route('/calculate', methods=['POST'])
 def calculate():
     try:

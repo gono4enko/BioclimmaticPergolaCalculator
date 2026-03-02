@@ -266,4 +266,33 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> Скачать КП в PDF';
         });
     }
+
+    fetch('/api/promotions')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) return;
+            var promoEl = document.getElementById('promo-container');
+            if (promoEl && data.badges && data.badges.length > 0) {
+                var html = '<div class="promo-badges">';
+                data.badges.forEach(function(b) {
+                    html += '<span class="promo-badge" style="background-color:' + b.color + ';">' + b.text + '</span>';
+                });
+                html += '</div>';
+                promoEl.innerHTML = html;
+            }
+            var counterEl = document.getElementById('install-counter');
+            if (counterEl && data.install_count > 0) {
+                var n = data.install_count;
+                var word;
+                var m100 = n % 100;
+                var m10 = n % 10;
+                if (m100 >= 11 && m100 <= 14) word = 'ПЕРГОЛ';
+                else if (m10 === 1) word = 'ПЕРГОЛА';
+                else if (m10 >= 2 && m10 <= 4) word = 'ПЕРГОЛЫ';
+                else word = 'ПЕРГОЛ';
+                counterEl.style.background = 'linear-gradient(135deg, ' + data.counter_color + ', ' + data.counter_color + 'CC)';
+                counterEl.innerHTML = '<div class="counter-number">' + n + ' ' + word + '</div><div class="counter-label">установлено в ' + data.year + ' году</div>';
+            }
+        })
+        .catch(function() {});
 });

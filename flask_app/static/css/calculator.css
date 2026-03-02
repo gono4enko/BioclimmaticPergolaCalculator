@@ -161,10 +161,83 @@
 }
 .option-check label { font-size: 0.95rem; cursor: pointer; margin: 0; }
 
+.installation-counter {
+    background: linear-gradient(135deg, #004B9A, #0066CC);
+    color: #fff;
+    padding: 1.2rem;
+    border-radius: 10px;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,75,154,0.3);
+    animation: pulse 2.5s infinite;
+}
+.installation-counter .counter-number {
+    font-size: 2.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+.installation-counter .counter-label {
+    font-size: 1.1rem;
+    opacity: 0.95;
+}
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.015); }
+}
+
+.gallery-item {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+}
+.gallery-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+}
+.gallery-item img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+}
+.gallery-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0,40,80,0.85));
+    color: #fff;
+    padding: 2rem 0.6rem 0.5rem;
+    font-size: 0.78rem;
+    line-height: 1.3;
+}
+
+.promo-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+.promo-badge {
+    display: inline-block;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+    animation: pulse 2.5s infinite;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
 @media (max-width: 768px) {
     .hero-section { height: 200px; background-attachment: scroll; }
     .hero-content h1 { font-size: 1.5rem; }
     .calc-container { margin: -20px 0.5rem 0; }
     .step-card { padding: 1rem; }
     .type-option img { height: 100px; }
+    .gallery-item img { height: 150px; }
+    .installation-counter .counter-number { font-size: 2.2rem; }
 }

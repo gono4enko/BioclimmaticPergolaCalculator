@@ -97,6 +97,67 @@
     <div class="results-section" id="results-section" style="display:none;"></div>
 </div>
 
+<section class="promo-section py-4">
+    <div class="container" id="promo-container"></div>
+</section>
+
+<section class="gallery-section py-5 bg-light">
+    <div class="container">
+        <div class="installation-counter" id="install-counter"></div>
+        <h2 class="text-center mb-4">Реализованные проекты</h2>
+        <div class="row g-3" id="gallery-grid">
+            <div class="col-6 col-md-3">
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/gallery/IMG_5914.jpg') }}" alt="Проект" loading="lazy">
+                    <div class="gallery-caption">Премиальная пергола B700 у бассейна, Крым</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/gallery/pergola_b500_garden_view.jpg') }}" alt="Проект" loading="lazy">
+                    <div class="gallery-caption">Пергола B500 с боковыми шторами</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/gallery/pergola_b700_poolside.jpg') }}" alt="Проект" loading="lazy">
+                    <div class="gallery-caption">Пергола B700 у бассейна, Подмосковье</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/gallery/pergola_evening_lighting.jpg') }}" alt="Проект" loading="lazy">
+                    <div class="gallery-caption">Пергола с LED подсветкой</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/gallery/pergola_b500_led_lighting.jpg') }}" alt="Проект" loading="lazy">
+                    <div class="gallery-caption">Пергола B500 с LED подсветкой</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/gallery/pergola_panoramic_glass_walls.jpg') }}" alt="Проект" loading="lazy">
+                    <div class="gallery-caption">Пергола B700 с панорамным остеклением</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/gallery/IMG_0672_2_882acf32.jpg') }}" alt="Проект" loading="lazy">
+                    <div class="gallery-caption">Пергола B500, Москва</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/gallery/IMG_0748_827e14fe.jpg') }}" alt="Проект" loading="lazy">
+                    <div class="gallery-caption">Двухмодульная пергола B700, Сочи</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <div class="spinner-overlay" id="spinner-overlay" style="display:none;">
     <div class="text-center">
         <div class="spinner-border text-primary" style="width:3rem;height:3rem;" role="status"></div>
