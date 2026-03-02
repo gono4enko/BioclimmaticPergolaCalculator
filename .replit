@@ -6,7 +6,7 @@ packages = ["freetype", "glibcLocales", "lcms2", "libimagequant", "libjpeg", "li
 
 [deployment]
 deploymentTarget = "vm"
-run = ["streamlit", "run", "app.py", "--server.port", "5000", "--server.address", "0.0.0.0", "--server.headless", "true"]
+run = ["python", "proxy_start.py"]
 
 [workflows]
 runButton = "Project"
