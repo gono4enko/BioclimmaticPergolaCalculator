@@ -74,6 +74,16 @@
             <input type="checkbox" id="opt-rgb-led" class="form-check-input">
             <label for="opt-rgb-led">Светодиодная подсветка (RGB)</label>
         </div>
+        <div id="lighting-preview" class="row mt-3 mb-3">
+            <div class="col-6" id="led-preview" style="display:none;">
+                <img src="{{ url_for('static', filename='images/led_lighting.png') }}" alt="LED-подсветка" class="img-fluid rounded" style="max-height:200px; object-fit:cover; width:100%;">
+                <p class="text-center text-muted mt-1">LED-подсветка</p>
+            </div>
+            <div class="col-6" id="rgb-preview" style="display:none;">
+                <img src="{{ url_for('static', filename='images/rgb_lighting.png') }}" alt="RGB-подсветка" class="img-fluid rounded" style="max-height:200px; object-fit:cover; width:100%;">
+                <p class="text-center text-muted mt-1">RGB-подсветка</p>
+            </div>
+        </div>
         <div class="option-check">
             <input type="checkbox" id="opt-installation" class="form-check-input" checked>
             <label for="opt-installation">Установка (монтаж)</label>

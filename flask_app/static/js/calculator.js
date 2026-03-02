@@ -109,10 +109,19 @@ document.addEventListener('DOMContentLoaded', function() {
     var whiteLedEl = document.getElementById('opt-white-led');
     var rgbLedEl = document.getElementById('opt-rgb-led');
     var installEl = document.getElementById('opt-installation');
+    var ledPreview = document.getElementById('led-preview');
+    var rgbPreview = document.getElementById('rgb-preview');
 
-    if (whiteLedEl) whiteLedEl.addEventListener('change', function() { state.whiteLed = this.checked; });
-    if (rgbLedEl) rgbLedEl.addEventListener('change', function() { state.rgbLed = this.checked; });
+    function updateLightingPreviews() {
+        if (ledPreview) ledPreview.style.display = state.whiteLed ? 'block' : 'none';
+        if (rgbPreview) rgbPreview.style.display = state.rgbLed ? 'block' : 'none';
+    }
+
+    if (whiteLedEl) whiteLedEl.addEventListener('change', function() { state.whiteLed = this.checked; updateLightingPreviews(); });
+    if (rgbLedEl) rgbLedEl.addEventListener('change', function() { state.rgbLed = this.checked; updateLightingPreviews(); });
     if (installEl) installEl.addEventListener('change', function() { state.installation = this.checked; });
+
+    updateLightingPreviews();
 
     document.getElementById('calc-btn').addEventListener('click', function() {
         if (!state.pergolaType) { alert('Выберите тип перголы'); return; }
