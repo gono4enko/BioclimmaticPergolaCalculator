@@ -13,11 +13,7 @@ import time
 PROXY_PORT = 5000
 STREAMLIT_PORT = 5001
 
-HEALTH_RESPONSE = (
-    b"HTTP/1.1 200 OK\r\n"
-    b"Content-Type: text/html; charset=utf-8\r\n"
-    b"Connection: close\r\n"
-    b"\r\n"
+_HEALTH_BODY = (
     b"<!DOCTYPE html><html><head>"
     b"<meta http-equiv='refresh' content='5'>"
     b"<style>body{display:flex;justify-content:center;align-items:center;"
@@ -32,6 +28,14 @@ HEALTH_RESPONSE = (
     b"<h2>Loading...</h2>"
     b"<p>The application is starting, please wait</p>"
     b"</div></body></html>"
+)
+HEALTH_RESPONSE = (
+    b"HTTP/1.1 200 OK\r\n"
+    b"Content-Type: text/html; charset=utf-8\r\n"
+    b"Content-Length: " + str(len(_HEALTH_BODY)).encode() + b"\r\n"
+    b"Connection: close\r\n"
+    b"\r\n"
+    + _HEALTH_BODY
 )
 
 streamlit_ready = threading.Event()
@@ -130,14 +134,6 @@ if __name__ == "__main__":
     proxy_thread.start()
 
     print("[proxy] Health check proxy ready on port 5000", flush=True)
-
-    print("[proxy] Pre-compiling Python files...", flush=True)
-    subprocess.run(
-        [sys.executable, "-m", "compileall", "-q", "-j", "0", "."],
-        timeout=30,
-        capture_output=True,
-    )
-    print("[proxy] Pre-compilation done", flush=True)
 
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
