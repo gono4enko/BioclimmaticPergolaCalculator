@@ -278,7 +278,7 @@ def _add_section_images_grid(pdf, image_paths):
 
     margin_x = 10
     gap = 5
-    page_bottom = 255
+    page_bottom = 245
     num_rows = (len(valid) + 1) // 2
     start_y = pdf.get_y() + 3
     available_h = page_bottom - start_y
