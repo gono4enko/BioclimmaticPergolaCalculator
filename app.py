@@ -4263,135 +4263,8 @@ def main():
     # Добавляем общий JavaScript скрипт для автоматического изменения высоты и прокрутки
     add_common_script()
     
-    # Проверяем, нужно ли выполнить скролл к элементу "results" после перезагрузки страницы
-    # Используем три разных подхода для максимальной надежности
     if st.session_state.get('set_hash_to_results', False):
-        st.markdown("""
-        <script>
-            (function() {
-                console.log("🔄 DEBUG: Запуск экстремального комбинированного скролла (все методы)");
-                
-                // 1. Устанавливаем хеш в URL для совместимости со старыми механизмами
-                try {
-                    console.log("🔄 DEBUG: Установка хеша #results в URL");
-                    window.location.hash = "results";
-                } catch(e) {
-                    console.error("🔄 DEBUG: Ошибка при установке хеша в URL:", e);
-                }
-                
-                // 2. Прямой скролл к фиксированной координате
-                // Координаты предполагаемого расположения блока результатов
-                const scrollToPosition = (y) => {
-                    try {
-                        window.scrollTo({top: y, behavior: 'auto'});
-                        console.log(`🔄 DEBUG: Выполнен прямой скролл к Y=${y}px`);
-                    } catch(e) {
-                        console.error(`🔄 DEBUG: Ошибка при скролле к Y=${y}px:`, e);
-                    }
-                };
-                
-                // 3. Многоэтапный скролл с визуальным выделением
-                // Для большой надежности запускаем серию скроллов к разным позициям
-                [800, 900, 1000, 1200, 1500, 2000].forEach((pos, index) => {
-                    setTimeout(() => scrollToPosition(pos), 400 + (index * 200));
-                });
-                
-                // 4. Поиск по ID и скролл к элементу
-                setTimeout(() => {
-                    const tryScrollToResults = (attempt) => {
-                        if (attempt > 25) return;
-                        
-                        const resultsBlock = document.getElementById("results");
-                        if (resultsBlock) {
-                            console.log(`🔄 DEBUG: Найден элемент #results (попытка #${attempt})`);
-                            
-                            // Яркое визуальное выделение элемента
-                            resultsBlock.style.backgroundColor = "#FFD700"; // Золотой цвет для заметности
-                            resultsBlock.style.transition = "all 0.5s";
-                            resultsBlock.style.boxShadow = "0 0 25px 15px rgba(255, 215, 0, 0.6)";
-                            resultsBlock.style.borderRadius = "10px";
-                            resultsBlock.style.paddingTop = "10px"; 
-                            
-                            try {
-                                // Скролл с минимальной анимацией для надежности
-                                resultsBlock.scrollIntoView({behavior: 'auto', block: 'start'});
-                                
-                                setTimeout(() => {
-                                    // После короткой задержки делаем второй скролл через window.scrollTo
-                                    try {
-                                        const y = resultsBlock.getBoundingClientRect().top + window.pageYOffset - 30;
-                                        window.scrollTo({top: y, behavior: 'auto'});
-                                    } catch(e) {}
-                                    
-                                    // Убираем выделение через несколько секунд
-                                    setTimeout(() => {
-                                        resultsBlock.style.backgroundColor = "#e6f2ff";
-                                        resultsBlock.style.boxShadow = "0 0 5px rgba(0, 102, 204, 0.3)";
-                                        resultsBlock.style.transition = "all 2s";
-                                    }, 3000);
-                                }, 200);
-                            } catch(e) {
-                                console.error("🔄 DEBUG: Ошибка при скролле:", e);
-                            }
-                        } else {
-                            setTimeout(() => tryScrollToResults(attempt + 1), 200);
-                        }
-                    };
-                    
-                    tryScrollToResults(1);
-                }, 1000);
-                
-                // 5. Поиск по тексту (запасной вариант)
-                setTimeout(() => {
-                    // Ищем заголовок "Результаты расчета" 
-                    const headers = document.querySelectorAll('h1, h2, h3, h4, h5, div');
-                    let resultsHeader = null;
-                    
-                    for (let i = 0; i < headers.length; i++) {
-                        if (headers[i].textContent.includes('Результаты расчета')) {
-                            resultsHeader = headers[i];
-                            break;
-                        }
-                    }
-                    
-                    if (resultsHeader) {
-                        try {
-                            console.log("🔄 DEBUG: Найден заголовок 'Результаты расчета'");
-                            const y = resultsHeader.getBoundingClientRect().top + window.pageYOffset - 50;
-                            window.scrollTo({top: y, behavior: 'auto'});
-                        } catch(e) {}
-                    }
-                }, 1500);
-                
-                // 6. Запускаем устаревшую функцию для совместимости
-                setTimeout(() => {
-                    if (typeof scrollToResultsWhenReady === 'function') {
-                        scrollToResultsWhenReady();
-                    }
-                }, 2000);
-                
-                // Визуальный индикатор прокрутки удален
-            })();
-        </script>
-        """, unsafe_allow_html=True)
-        
-        # Добавляем упрощенный JavaScript для прокрутки к якорю
-        st.markdown("""
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                try {
-                    const target = document.getElementById('scroll-target');
-                    if (target) {
-                        target.scrollIntoView({ behavior: 'auto', block: 'start' });
-                    }
-                } catch(e) {
-                    console.error("Ошибка скролла:", e);
-                }
-            });
-        </script>
-        """, unsafe_allow_html=True)
-        
-        # Сбрасываем флаг, чтобы не устанавливать хеш снова
+        smooth_scroll_to('results')
         st.session_state.set_hash_to_results = False
     
     # Проверяем, нужно ли отправить событие в Яндекс.Метрику
@@ -4866,23 +4739,7 @@ def main():
                 </script>
                 """, unsafe_allow_html=True)
                 
-                # Вместо перезагрузки страницы добавляем JavaScript для скролла к результатам
-                # Это позволит избежать двойной перезагрузки и ускорит работу
-                st.markdown("""
-                <script>
-                    // Дожидаемся полной загрузки документа
-                    document.addEventListener('DOMContentLoaded', (event) => {
-                        // Функция для плавного скролла к результатам
-                        setTimeout(function() {
-                            const resultsElement = document.getElementById('results');
-                            if (resultsElement) {
-                                resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                console.log("⚡ DEBUG: Скролл к результатам через JavaScript");
-                            }
-                        }, 500);
-                    });
-                </script>
-                """, unsafe_allow_html=True)
+                pass
     
     # Добавляем разделитель (компактный)
     st.markdown("<hr style='margin-top: 0.2rem; margin-bottom: 0.2rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
