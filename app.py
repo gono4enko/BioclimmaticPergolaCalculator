@@ -1271,76 +1271,49 @@ def render_dimensions_form():
     # Получаем текущий тип перголы из session_state, если он уже выбран
     current_pergola_type = st.session_state.get("pergola_type")
     
-    # Принудительно обнуляем сохраненные значения при каждом рендере, чтобы избежать проблем с кэшированием
-    st.session_state.setdefault('cached_width', None)
-    st.session_state.setdefault('cached_length', None)
-    
-    # Получаем текущий тип ламелей
     current_lamella_size = st.session_state.get("lamella_size", "250")
     
-    # Формируем ключ для поиска максимальных размеров с учетом типа перголы и размера ламелей
-    # B600 не зависит от размера ламелей, поэтому для него используем просто тип
     if current_pergola_type == "B600":
         dimensions_key = current_pergola_type
     else:
         dimensions_key = f"{current_pergola_type}_{current_lamella_size}"
     
-    # Устанавливаем максимальные размеры согласно константам MAX_DIMENSIONS
-    # Если комбинация типа перголы и ламелей не найдена, используем безопасные значения
     if dimensions_key in MAX_DIMENSIONS:
         max_width = MAX_DIMENSIONS[dimensions_key]["width"]
         max_length = MAX_DIMENSIONS[dimensions_key]["length"]
     else:
-        # Используем безопасные значения по умолчанию
-        max_width = 13.5  # Минимальное из максимальных значений ширины
+        max_width = 13.5
         max_length = 8.0
     
-    # Добавляем проверку минимальных значений для безопасности
     min_width = 2.0
     min_length = 2.0
     
-    # Принудительно обновляем значения session_state при смене типа перголы или размера ламелей
-    # Создаем комбинированный ключ из типа перголы и размера ламелей
+    width_key = "dim_width"
+    length_key = "dim_length"
+    
     combined_key = f"{current_pergola_type}_{current_lamella_size}"
-    if 'prev_combined_key' not in st.session_state or st.session_state.get('prev_combined_key') != combined_key:
-        st.session_state['prev_combined_key'] = combined_key
-        st.session_state['cached_width'] = None
-        st.session_state['cached_length'] = None
-        
-    # Устанавливаем значения по умолчанию или берем из кэша
-    default_width = st.session_state.get('cached_width') or 3.0
-    default_length = st.session_state.get('cached_length') or 4.0
+    if st.session_state.get('_prev_dim_key') != combined_key:
+        st.session_state['_prev_dim_key'] = combined_key
+        if width_key in st.session_state:
+            del st.session_state[width_key]
+        if length_key in st.session_state:
+            del st.session_state[length_key]
     
-    # Обеспечиваем, чтобы значения по умолчанию не выходили за пределы допустимых
-    default_width = min(max(default_width, min_width), max_width)
-    default_length = min(max(default_length, min_length), max_length)
-    
-    # Выводим для отладки
-    print(f"Текущий тип перголы из session_state: {current_pergola_type}")
-    print(f"Установленные максимальные размеры: ширина={max_width}м, длина={max_length}м")
-    
-    # Создаем ключи для полей ввода с учетом типа перголы
-    width_key = f"width_input_{current_pergola_type}"
-    length_key = f"length_input_{current_pergola_type}"
-    
-    # Используем on_change для сохранения значений при их изменении
-    def update_width():
-        st.session_state['cached_width'] = st.session_state[width_key]
-    
-    def update_length():
-        st.session_state['cached_length'] = st.session_state[length_key]
+    current_w = st.session_state.get(width_key, 3.0)
+    current_l = st.session_state.get(length_key, 4.0)
+    current_w = min(max(current_w, min_width), max_width)
+    current_l = min(max(current_l, min_length), max_length)
     
     with col1:
         width = st.number_input(
             "Ширина (м)",
             min_value=min_width,
             max_value=max_width,
-            value=default_width,
+            value=current_w,
             step=0.5,
             format="%.2f",
             help=f"Ширина перголы в метрах ({min_width} - {max_width} м)",
-            key=width_key,  # Уникальный ключ для каждого типа перголы
-            on_change=update_width  # Функция для немедленного обновления значения
+            key=width_key,
         )
     
     with col2:
@@ -1348,17 +1321,12 @@ def render_dimensions_form():
             "Вынос (м)",
             min_value=min_length,
             max_value=max_length,
-            value=default_length,
+            value=current_l,
             step=0.5,
             format="%.2f",
             help=f"Глубина (вынос) перголы в метрах ({min_length} - {max_length} м)",
-            key=length_key,  # Уникальный ключ для каждого типа перголы
-            on_change=update_length  # Функция для немедленного обновления значения
+            key=length_key,
         )
-    
-    # Обновляем кэш на всякий случай (дублирование для надежности)
-    st.session_state['cached_width'] = width
-    st.session_state['cached_length'] = length
     
     # Определяем количество модулей автоматически по обоим параметрам - ширине и выносу
     modules = get_modules_by_dimensions(width, length)
@@ -2112,16 +2080,24 @@ def render_results(results, show_articles=False):
             align-items: center !important;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2) !important;
             white-space: nowrap !important;
+            border-radius: 8px !important;
+            animation: pdf-btn-pulse 2s ease-in-out infinite !important;
         }
         div[data-testid="stDownloadButton"] > button:hover {
             background-color: #0055aa !important;
             box-shadow: 0 6px 15px rgba(0, 102, 204, 0.4) !important;
+            transform: scale(1.03) !important;
         }
         div[data-testid="stDownloadButton"] > button p {
             color: white !important;
             white-space: nowrap !important;
             font-size: 1.1rem !important;
             line-height: 1 !important;
+        }
+        @keyframes pdf-btn-pulse {
+            0% { transform: scale(1); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); background-color: #0066cc; }
+            50% { transform: scale(1.03); box-shadow: 0 6px 15px rgba(0, 102, 204, 0.4); background-color: #0077dd; }
+            100% { transform: scale(1); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); background-color: #0066cc; }
         }
         </style>
         """, unsafe_allow_html=True)
