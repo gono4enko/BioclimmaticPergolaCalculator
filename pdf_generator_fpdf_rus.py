@@ -67,13 +67,9 @@ class PDF(FPDF):
         """Создает нижний колонтитул на каждой странице"""
         # Позиция на 1.5 см от нижнего края
         self.set_y(-15)
-        self.set_font('DejaVu', '', 8)
-        
-        # Текст сайта слева
-        self.cell(100, 10, 'www.komfortnyj-dom.ru', 0, 0, 'L')
-        
-        # Номер страницы справа
-        self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'R')
+        self.set_font('DejaVu', '', 7)
+        self.cell(0, 4, 'Компания «Комфортный дом» | Комплексные решения для обустройства террас, веранд и беседок.', 0, 1, 'C')
+        self.cell(0, 4, 'ИП Гоноченко А.В. ОГРНИП 321619600249231 | Тел.: +7-906-429-74-20 | Сайт: pergolamarket.ru', 0, 0, 'C')
     
     def chapter_title(self, title):
         """Добавляет заголовок раздела"""
@@ -258,22 +254,27 @@ def generate_commercial_offer(pergola_data, user_data=None):
         # Добавляем первую страницу
         pdf.add_page()
         
-        # Устанавливаем информацию о текущей дате
+        pdf.set_font('DejaVu', '', 9)
+        pdf.cell(95, 5, '', 0, 0, 'L')
+        pdf.cell(0, 5, 'г.Ростов-на-Дону, ул.Орская, 27/1', 0, 1, 'R')
+        pdf.cell(95, 5, '', 0, 0, 'L')
+        pdf.cell(0, 5, 'моб. +7 (906) 429-74-20', 0, 1, 'R')
+        
+        pdf.set_font('DejaVu', 'B', 11)
+        pdf.cell(95, 5, 'Компания «Комфортный дом»', 0, 0, 'L')
+        pdf.set_font('DejaVu', '', 9)
+        pdf.cell(0, 5, 'E-mail: zakaz@infopergola.ru', 0, 1, 'R')
+        pdf.cell(95, 5, '', 0, 0, 'L')
+        pdf.cell(0, 5, 'Сайт: https://pergolamarket.ru/', 0, 1, 'R')
+        
+        pdf.ln(8)
+        pdf.set_font('DejaVu', 'B', 14)
+        pdf.cell(0, 10, "Коммерческое предложение о поставке", 0, 1, "C")
+        pdf.cell(0, 8, "биоклиматической перголы", 0, 1, "C")
+        
+        pdf.ln(3)
         pdf.set_font('DejaVu', '', 10)
-        pdf.cell(0, 5, f"Москва, {current_date}", 0, 1, "L")
-        
-        # Добавляем номер коммерческого предложения
-        pdf.ln(5)
-        pdf.cell(0, 5, f"№ {timestamp[:8]}", 0, 1, "L")
-        
-        # Добавляем заголовок коммерческого предложения
-        pdf.ln(10)
-        pdf.set_font('DejaVu', 'B', 16)
-        pdf.cell(0, 10, "КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", 0, 1, "C")
-        
-        # Добавляем подзаголовок
-        pdf.set_font('DejaVu', '', 12)
-        pdf.cell(0, 8, "на поставку и монтаж биоклиматической перголы", 0, 1, "C")
+        pdf.cell(0, 5, f"Дата расчета: {current_date}", 0, 1, "R")
         
         # Добавляем информацию о заказчике, если она предоставлена
         if user_data:
@@ -628,21 +629,28 @@ def generate_commercial_offer(pergola_data, user_data=None):
         else:
             pdf.ln(15)  # Добавляем отступ перед контактной информацией
             
-        pdf.chapter_title("Контактная информация:")
+        pdf.chapter_title("Примечания:")
         
-        pdf.set_font('DejaVu', '', 10)  # Уменьшаем размер шрифта для экономии места
-        pdf.multi_cell(0, 5, "Для получения дополнительной информации или оформления заказа, пожалуйста, свяжитесь с нами:")
-        pdf.ln(3)
-        
-        contact_info = [
-            "Телефон: +7 (495) 123-45-67",
-            "Email: info@komfortnyj-dom.ru",
-            "Веб-сайт: www.komfortnyj-dom.ru",
-            "Адрес: г. Москва, ул. Примерная, д. 123"
+        pdf.set_font('DejaVu', '', 10)
+        notes = [
+            "1. Расчет является предварительным и может быть уточнен при обращении в компанию.",
+            "2. Срок действия предложения: 14 дней с даты расчета.",
+            "3. Срок поставки: 6 недель с момента подтверждения заказа.",
+            "4. Условия оплаты: 80% предоплата, 20% после монтажа.",
         ]
+        for note in notes:
+            pdf.cell(0, 6, note, 0, 1)
         
-        for info in contact_info:
-            pdf.cell(0, 6, info, 0, 1)  # Уменьшаем высоту строк с 7 до 6 мм
+        pdf.ln(10)
+        pdf.line(20, pdf.get_y(), 190, pdf.get_y())
+        pdf.ln(5)
+        
+        pdf.set_font('DejaVu', 'B', 11)
+        pdf.cell(0, 6, 'Компания «Комфортный дом»', 0, 1, 'L')
+        pdf.set_font('DejaVu', '', 9)
+        pdf.cell(0, 5, 'Комплексные решения для обустройства террас, веранд и беседок.', 0, 1, 'L')
+        pdf.cell(0, 5, 'ИП Гоноченко А.В. ОГРНИП 321619600249231', 0, 1, 'L')
+        pdf.cell(0, 5, 'Тел.: +7-906-429-74-20   Сайт: pergolamarket.ru', 0, 1, 'L')
         
         pdf_bytes = pdf.output(dest='S')
         if isinstance(pdf_bytes, str):
