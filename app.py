@@ -4320,14 +4320,35 @@ def main():
     # Добавляем стили для уменьшения отступов страницы
     st.markdown("""
     <style>
-    .main .block-container {
+    .main .block-container,
+    [data-testid="block-container"],
+    .stAppViewBlockContainer,
+    section.main > div {
         padding-top: 1rem !important;
-        margin-top: 0px !important;
+        margin-top: 0 !important;
+        max-width: 100% !important;
     }
-    header[data-testid="stHeader"] {
-        height: 0px !important;
-        min-height: 0px !important;
-        padding: 0 !important;
+    header,
+    header[data-testid="stHeader"],
+    [data-testid="stHeader"],
+    .stApp > header {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+    }
+    #MainMenu {
+        display: none !important;
+    }
+    div[data-testid="stToolbar"] {
+        display: none !important;
+    }
+    div[data-testid="stDecoration"] {
+        display: none !important;
+    }
+    .stApp {
+        margin-top: 0 !important;
     }
     h1 {
         margin-top: 0 !important;
@@ -4336,9 +4357,6 @@ def main():
     .stHeadingContainer {
         margin-top: 0 !important;
         padding-top: 0 !important;
-    }
-    .stAppViewBlockContainer {
-        padding-top: 1rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
