@@ -4004,64 +4004,27 @@ def main():
         initial_sidebar_state="collapsed"  # Боковая панель будет свернута по умолчанию
     )
     
-    # Удаляем лишние отступы вверху страницы после настройки страницы
-    # для минимизации отступа между верхним краем и заголовком
-    remove_padding_top()
-    
-    # Определяем, запущено ли приложение в iframe, и адаптируем интерфейс
-    in_iframe = adapt_for_iframe()
-    
-    # Добавляем дополнительные оптимизации для iframe
-    if in_iframe:
-        # Если в iframe, применяем специальные оптимизации
-        st.session_state['iframe_mode'] = True
-        optimize_for_iframe()
-    
-    # Добавляем CSS-оптимизации для ускорения загрузки контента
-    st.markdown(add_content_visibility_optimizations(), unsafe_allow_html=True)
-    
-    # Добавляем общие оптимизации страницы для быстрой загрузки
-    st.markdown(add_page_speed_optimizations(), unsafe_allow_html=True)
-    
-    # Определяем критически важные изображения для быстрой первоначальной загрузки
+    # Предварительно загружаем критические изображения (без рендеринга в DOM)
     critical_images = [
         "attached_assets/b500_rotation.png",
         "attached_assets/linear_drive_b500.png"
     ]
-    
-    # Второстепенные изображения, загружаемые с задержкой для ускорения отображения формы
     secondary_images = [
         "attached_assets/b700_sliding.png",
         "attached_assets/b600_sandwich.png",
         "attached_assets/somfy_pergola_b700.jpg"
     ]
-    
-    # Добавляем оптимизированную многоуровневую загрузку изображений
-    st.markdown(optimize_images_loading(
-        critical_images=critical_images,
-        secondary_images=secondary_images
-    ), unsafe_allow_html=True)
-    
-    # Предварительно загружаем только критические изображения для быстрого отображения
-    # Используем кэш в памяти для предотвращения повторной обработки при обновлении страницы
     if 'images_preloaded' not in st.session_state:
-        # Загружаем только критические изображения сначала для ускорения начальной загрузки
         for img_path in critical_images:
             if os.path.exists(img_path):
-                # Извлекаем имя файла без пути и расширения
-                file_name = img_path.split('/')[-1]
-                base_name = file_name.split('.')[0]
-                
-                # Используем функцию для предварительной загрузки изображения в кэш
-                # Передаем стандартный тип перголы "B500NEW" для загрузки базовых изображений
                 get_optimized_pergola_images("B500NEW")
         st.session_state['images_preloaded'] = True
     
-    # Добавляем оптимизацию для форм, чтобы пользователь мог быстрее вводить данные
-    st.markdown(optimize_form_rendering(), unsafe_allow_html=True)
-    
-    # Добавляем оптимизацию последовательности загрузки для приоритизации формы ввода
-    st.markdown(optimize_startup_sequence(), unsafe_allow_html=True)
+    # Определяем iframe без рендеринга (только проверка query params)
+    from iframe_detector import is_in_iframe
+    in_iframe = is_in_iframe()
+    if in_iframe:
+        st.session_state['iframe_mode'] = True
     
     # Импортируем компоненты для аутентификации администратора
     from components.admin_auth import admin_login_form
