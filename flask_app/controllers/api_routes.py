@@ -4,6 +4,7 @@ API маршруты для взаимодействия с клиентским
 import os
 import json
 import datetime
+from io import BytesIO
 from flask import Blueprint, jsonify, request, current_app, send_file, url_for
 from werkzeug.exceptions import BadRequest, NotFound
 from ..models.pergola_model import Pergola, db
@@ -107,35 +108,26 @@ def save_calculation():
 
 @bp.route('/export-pdf', methods=['POST'])
 def export_pdf():
-    """API для экспорта результатов в PDF."""
+    """API для экспорта результатов в PDF. Возвращает PDF-файл напрямую."""
     try:
         data = request.get_json()
         
         if not data:
             raise BadRequest("Missing request data")
         
-        # Генерация PDF
-        pdf_path = generate_pdf(data)
+        pdf_bytes = generate_pdf(data)
         
-        if not pdf_path or not os.path.exists(pdf_path):
+        if not pdf_bytes:
             raise Exception("Failed to generate PDF")
         
-        # Сохранение пути к PDF в базу данных, если есть ID перголы
-        pergola_id = data.get('pergola_id')
-        if pergola_id:
-            pergola = Pergola.query.get(pergola_id)
-            if pergola:
-                pergola.pdf_path = pdf_path
-                db.session.commit()
+        filename = data.get('filename', 'КП_пергола.pdf')
         
-        # Формирование имени файла для скачивания
-        filename = os.path.basename(pdf_path)
-        
-        return jsonify({
-            'success': True,
-            'pdf_url': url_for('api.download_pdf', filename=filename),
-            'filename': filename
-        })
+        return send_file(
+            BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
     
     except Exception as e:
         current_app.logger.error(f"Error in export PDF API: {str(e)}")
@@ -143,26 +135,3 @@ def export_pdf():
             'success': False,
             'error': str(e)
         }), 400
-
-@bp.route('/download-pdf/<filename>')
-def download_pdf(filename):
-    """API для скачивания сгенерированного PDF."""
-    try:
-        pdf_path = os.path.join(current_app.config['PDF_FOLDER'], filename)
-        
-        if not os.path.exists(pdf_path):
-            raise NotFound("PDF файл не найден")
-        
-        return send_file(
-            pdf_path,
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name=filename
-        )
-    
-    except Exception as e:
-        current_app.logger.error(f"Error in download PDF API: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 404

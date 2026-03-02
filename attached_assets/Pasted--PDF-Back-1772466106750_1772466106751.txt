@@ -1,0 +1,2257 @@
+Руководство по программной реализации экспорта PDF файлов
+Содержание
+Обзор архитектуры экспорта
+Backend реализация
+Frontend интеграция
+Интеграция с Tilda через iframe
+Обработка файлов и заголовков
+Отладка и тестирование
+Развертывание и эксплуатация
+1. Обзор архитектуры экспорта
+1.1. Компоненты системы экспорта
+[Пользователь] → [Frontend] → [API Backend] → [PDF Generator] → [PDF Response]
+     ↓              ↓             ↓              ↓              ↓
+[Кнопка экспорта] [JS обработка] [Flask маршрут] [ReportLab] [HTTP Response]
+1.2. Поток данных
+sequenceDiagram
+    participant U as Пользователь
+    participant F as Frontend (JS)
+    participant A as API (Flask)
+    participant P as PDF Generator
+    participant B as Browser
+    
+    U->>F: Нажатие "Экспорт PDF"
+    F->>F: Сбор данных расчета
+    F->>A: POST /export_pdf_new
+    A->>A: Валидация данных
+    A->>P: Генерация PDF
+    P->>A: PDF bytes + метаданные
+    A->>F: HTTP Response (PDF)
+    F->>B: Отображение/скачивание
+1.3. Технологические слои
+Слой	Технология	Ответственность
+Пользовательский интерфейс	HTML/CSS/JS	Кнопки, индикаторы загрузки
+Обработка событий	JavaScript ES6+	Сбор данных, API запросы
+API слой	Flask + Python	Валидация, маршрутизация
+Генерация документов	ReportLab	Создание PDF
+Доставка контента	HTTP	Передача файлов клиенту
+2. Backend реализация
+2.1. Основной API маршрут
+# app.py
+import os
+import logging
+from datetime import datetime
+from flask import Flask, request, make_response, jsonify
+from urllib.parse import quote
+import pytz
+@app.route('/export_pdf_new', methods=['POST'])
+def export_pdf_new():
+    """
+    Основной маршрут для экспорта PDF коммерческих предложений
+    
+    Принимает: JSON с данными расчета
+    Возвращает: PDF файл с корректными заголовками
+    """
+    try:
+        # Логирование начала обработки
+        logging.info("📄 Получен запрос на экспорт PDF")
+        
+        # 1. Получение и валидация данных
+        request_data = request.get_json()
+        if not request_data:
+            return jsonify({
+                "success": False,
+                "error": "Отсутствуют данные для генерации PDF"
+            }), 400
+        
+        # 2. Валидация обязательных полей
+        required_fields = ['constructionType', 'model', 'width', 'depth']
+        missing_fields = [field for field in required_fields if field not in request_data]
+        
+        if missing_fields:
+            return jsonify({
+                "success": False,
+                "error": f"Отсутствуют обязательные поля: {', '.join(missing_fields)}"
+            }), 400
+        
+        # 3. Подготовка данных для PDF генератора
+        pdf_data = prepare_pdf_data(request_data)
+        
+        # 4. Генерация PDF документа
+        from simplified_pdf_generator import generate_pdf
+        pdf_bytes = generate_pdf(pdf_data)
+        
+        if not pdf_bytes:
+            return jsonify({
+                "success": False,
+                "error": "Ошибка при генерации PDF документа"
+            }), 500
+        
+        # 5. Формирование имени файла
+        filename = create_pdf_filename(pdf_data)
+        
+        # 6. Создание HTTP ответа с PDF
+        response = make_response(pdf_bytes)
+        
+        # 7. Установка заголовков для корректной обработки браузером
+        setup_pdf_headers(response, filename, len(pdf_bytes))
+        
+        logging.info(f"✅ PDF успешно сгенерирован: {filename} ({len(pdf_bytes)/1024:.1f} КБ)")
+        
+        return response
+        
+    except ValidationError as ve:
+        logging.warning(f"⚠️ Ошибка валидации: {ve}")
+        return jsonify({
+            "success": False,
+            "error": f"Ошибка валидации данных: {str(ve)}"
+        }), 400
+        
+    except Exception as e:
+        logging.error(f"❌ Критическая ошибка при генерации PDF: {e}")
+        
+        # Возвращаем PDF с ошибкой вместо JSON
+        error_pdf = generate_error_pdf(str(e))
+        response = make_response(error_pdf)
+        setup_pdf_headers(response, "error_document.pdf", len(error_pdf))
+        
+        return response
+def prepare_pdf_data(request_data):
+    """
+    Подготавливает данные для PDF генератора
+    
+    Args:
+        request_data (dict): Данные из запроса
+        
+    Returns:
+        dict: Подготовленные данные для PDF
+    """
+    try:
+        # Базовая информация о конструкции
+        construction_info = {
+            'type': get_construction_type_display(request_data['constructionType']),
+            'model': request_data.get('model', 'Basic & Pro New'),
+            'width': float(request_data.get('width', 0)),
+            'depth': float(request_data.get('depth', 0)),
+            'color': request_data.get('color', 'Белый (RAL 9010)'),
+            'area': float(request_data.get('width', 0)) * float(request_data.get('depth', 0))
+        }
+        
+        # Ценовая информация
+        pricing_info = {
+            'base_price': float(request_data.get('basePrice', 0)),
+            'options_price': float(request_data.get('optionsPrice', 0)),
+            'color_surcharge': float(request_data.get('colorSurcharge', 0)),
+            'total_price': float(request_data.get('totalPrice', 0))
+        }
+        
+        # Опции и дополнения
+        options_info = request_data.get('options', {})
+        options_details = request_data.get('optionsDetails', {})
+        
+        return {
+            'construction': construction_info,
+            'pricing': pricing_info,
+            'options': options_info,
+            'options_details': options_details,
+            'metadata': {
+                'creation_date': datetime.now(pytz.timezone('Europe/Moscow')),
+                'source': 'calculator'
+            }
+        }
+        
+    except Exception as e:
+        logging.error(f"Ошибка при подготовке данных PDF: {e}")
+        raise ValidationError(f"Некорректные данные расчета: {e}")
+def create_pdf_filename(pdf_data):
+    """
+    Создает информативное имя файла PDF
+    
+    Args:
+        pdf_data (dict): Данные PDF
+        
+    Returns:
+        str: Имя файла
+    """
+    try:
+        construction = pdf_data['construction']
+        creation_date = pdf_data['metadata']['creation_date']
+        
+        # Формируем базовое имя
+        base_name = (
+            f"КП тентовая пергола "
+            f"{construction['type']} "
+            f"{construction['model']} "
+            f"{construction['width']} м × {construction['depth']} м "
+            f"{creation_date.strftime('%d.%m.%Y')}"
+        )
+        
+        # Очищаем от недопустимых символов
+        clean_name = sanitize_filename(base_name)
+        
+        return f"{clean_name}.pdf"
+        
+    except Exception as e:
+        logging.error(f"Ошибка при создании имени файла: {e}")
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        return f"commercial_proposal_{timestamp}.pdf"
+def setup_pdf_headers(response, filename, file_size):
+    """
+    Настраивает HTTP заголовки для PDF ответа
+    
+    Args:
+        response: Flask response object
+        filename (str): Имя файла
+        file_size (int): Размер файла в байтах
+    """
+    # Основные заголовки
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Length'] = str(file_size)
+    
+    # Content-Disposition с поддержкой Unicode
+    ascii_filename = "commercial_proposal.pdf"  # Fallback для старых браузеров
+    unicode_filename = quote(filename)  # URL-encoded Unicode имя
+    
+    response.headers['Content-Disposition'] = (
+        f'inline; '
+        f'filename="{ascii_filename}"; '
+        f'filename*=UTF-8\'\'{unicode_filename}'
+    )
+    
+    # Дополнительные заголовки для кэширования
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    
+    logging.info(f"Установлены заголовки PDF: {filename}")
+def sanitize_filename(filename):
+    """
+    Очищает имя файла от недопустимых символов
+    
+    Args:
+        filename (str): Исходное имя файла
+        
+    Returns:
+        str: Очищенное имя файла
+    """
+    import re
+    
+    # Заменяем недопустимые символы
+    invalid_chars = r'[\/:*?"<>|]'
+    clean_name = re.sub(invalid_chars, '_', filename)
+    
+    # Заменяем множественные пробелы и подчеркивания
+    clean_name = re.sub(r'\s+', ' ', clean_name)
+    clean_name = re.sub(r'_+', '_', clean_name)
+    
+    # Убираем начальные и конечные пробелы
+    clean_name = clean_name.strip(' _')
+    
+    # Ограничиваем длину
+    if len(clean_name) > 200:
+        clean_name = clean_name[:200]
+    
+    return clean_name
+class ValidationError(Exception):
+    """Исключение для ошибок валидации данных"""
+    pass
+2.2. Дополнительные утилиты
+def get_construction_type_display(construction_type):
+    """
+    Преобразует код типа конструкции в читаемое название
+    
+    Args:
+        construction_type (str): Код типа конструкции
+        
+    Returns:
+        str: Читаемое название
+    """
+    type_mapping = {
+        'wall': 'Пристенная',
+        'standalone': 'Отдельностоящая',
+        'twin': 'Двухскатная',
+        'console': 'Консольная',
+        'wall_fly': 'Пристенная FLY',
+        'solo_fly': 'Отдельностоящая FLY',
+        'twin_fly': 'Двухскатная FLY'
+    }
+    
+    return type_mapping.get(construction_type, construction_type)
+def generate_error_pdf(error_message):
+    """
+    Генерирует PDF документ с сообщением об ошибке
+    
+    Args:
+        error_message (str): Текст ошибки
+        
+    Returns:
+        bytes: PDF документ с ошибкой
+    """
+    try:
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib.pagesizes import A4
+        from io import BytesIO
+        
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        styles = getSampleStyleSheet()
+        
+        elements = [
+            Paragraph("Ошибка генерации коммерческого предложения", styles['Title']),
+            Spacer(1, 20),
+            Paragraph(f"Описание ошибки: {error_message}", styles['Normal']),
+            Spacer(1, 10),
+            Paragraph("Пожалуйста, попробуйте еще раз или обратитесь в техническую поддержку.", styles['Normal']),
+            Spacer(1, 10),
+            Paragraph(f"Время ошибки: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}", styles['Normal'])
+        ]
+        
+        doc.build(elements)
+        return buffer.getvalue()
+        
+    except Exception:
+        # Минимальный PDF в случае критической ошибки
+        return create_minimal_error_pdf()
+def create_minimal_error_pdf():
+    """Создает минимальный PDF с ошибкой"""
+    return b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >>\nendobj\n4 0 obj\n<< /Length 44 >>\nstream\nBT\n/F1 12 Tf\n72 720 Td\n(Error generating PDF) Tj\nET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000207 00000 n \ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n299\n%%EOF'
+3. Frontend интеграция
+3.1. JavaScript класс для экспорта PDF
+// static/js/pdf-exporter.js
+class PDFExporter {
+    constructor() {
+        this.isExporting = false;
+        this.apiEndpoint = '/export_pdf_new';
+        this.init();
+    }
+    
+    init() {
+        this.setupExportButtons();
+        this.injectStyles();
+    }
+    
+    /**
+     * Настраивает кнопки экспорта PDF
+     */
+    setupExportButtons() {
+        // Находим все кнопки экспорта PDF
+        const exportButtons = document.querySelectorAll('.pdf-export-btn, #exportPdfBtn');
+        
+        exportButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleExportClick();
+            });
+        });
+        
+        // Если кнопок нет, создаем их
+        if (exportButtons.length === 0) {
+            this.createExportButton();
+        }
+    }
+    
+    /**
+     * Создает кнопку экспорта PDF
+     */
+    createExportButton() {
+        const button = document.createElement('button');
+        button.id = 'exportPdfBtn';
+        button.className = 'btn btn-primary pdf-export-btn';
+        button.innerHTML = `
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                <path d="M4.603 14.087a.81.81 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.68 7.68 0 0 1 1.482-.645 19.697 19.697 0 0 0 1.062-2.227 7.269 7.269 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a10.954 10.954 0 0 0 .98 1.686 5.753 5.753 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.856.856 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.712 5.712 0 0 1-.911-.95 11.651 11.651 0 0 0-1.997.406 11.307 11.307 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.793.793 0 0 1-.58.029z"/>
+            </svg>
+            Экспортировать PDF
+        `;
+        
+        // Добавляем кнопку в подходящее место
+        const resultsContainer = document.querySelector('.results-section, .calculation-results');
+        if (resultsContainer) {
+            resultsContainer.appendChild(button);
+        } else {
+            document.body.appendChild(button);
+        }
+    }
+    
+    /**
+     * Обрабатывает клик по кнопке экспорта
+     */
+    async handleExportClick() {
+        if (this.isExporting) {
+            return; // Предотвращаем множественные запросы
+        }
+        
+        try {
+            this.isExporting = true;
+            this.showLoadingState();
+            
+            // Собираем данные для экспорта
+            const exportData = this.gatherCalculationData();
+            
+            if (!exportData) {
+                throw new Error('Нет данных для экспорта. Выполните расчет перголы.');
+            }
+            
+            console.log('📊 Отправляем данные для экспорта:', exportData);
+            
+            // Отправляем запрос на сервер
+            const response = await fetch(this.apiEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(exportData)
+            });
+            
+            if (!response.ok) {
+                // Пытаемся получить JSON ошибку
+                let errorMessage;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || `Ошибка сервера: ${response.status}`;
+                } catch {
+                    errorMessage = `HTTP ошибка: ${response.status} ${response.statusText}`;
+                }
+                throw new Error(errorMessage);
+            }
+            
+            // Проверяем тип содержимого
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/pdf')) {
+                throw new Error('Сервер не вернул PDF документ');
+            }
+            
+            // Извлекаем имя файла из заголовков
+            const fileName = this.extractFilename(response.headers);
+            
+            // Получаем PDF как blob
+            const blob = await response.blob();
+            
+            // Создаем URL для blob
+            const blobUrl = URL.createObjectURL(blob);
+            
+            console.log(`📄 PDF успешно получен: ${fileName} (${blob.size} байт)`);
+            
+            // Показываем опции для работы с PDF
+            this.showPDFOptions(blobUrl, fileName);
+            
+        } catch (error) {
+            console.error('❌ Ошибка при экспорте PDF:', error);
+            this.showError(error.message);
+        } finally {
+            this.isExporting = false;
+            this.hideLoadingState();
+        }
+    }
+    
+    /**
+     * Собирает данные расчета для экспорта
+     */
+    gatherCalculationData() {
+        // Приоритет источников данных
+        const dataSources = [
+            () => this.getDataFromGlobalVariable(),
+            () => this.getDataFromLocalStorage(),
+            () => this.getDataFromForm(),
+            () => this.getDataFromResults()
+        ];
+        
+        for (const source of dataSources) {
+            try {
+                const data = source();
+                if (data && this.validateCalculationData(data)) {
+                    console.log('✅ Данные получены из источника:', source.name);
+                    return data;
+                }
+            } catch (error) {
+                console.warn(`⚠️ Ошибка получения данных из ${source.name}:`, error);
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Получает данные из глобальной переменной
+     */
+    getDataFromGlobalVariable() {
+        // Проверяем различные глобальные переменные
+        const globalSources = [
+            'window.lastCalculationData',
+            'window.calculationResult',
+            'window.pergolaData'
+        ];
+        
+        for (const source of globalSources) {
+            try {
+                const data = eval(source);
+                if (data && typeof data === 'object') {
+                    return data;
+                }
+            } catch (error) {
+                // Игнорируем ошибки eval
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Получает данные из localStorage
+     */
+    getDataFromLocalStorage() {
+        const storageKeys = [
+            'lastCalculation',
+            'pergolaCalculation',
+            'calculationData'
+        ];
+        
+        for (const key of storageKeys) {
+            try {
+                const stored = localStorage.getItem(key);
+                if (stored) {
+                    return JSON.parse(stored);
+                }
+            } catch (error) {
+                console.warn(`Ошибка чтения localStorage[${key}]:`, error);
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Получает данные из формы калькулятора
+     */
+    getDataFromForm() {
+        const form = document.querySelector('#calculatorForm, .calculator-form, form');
+        if (!form) return null;
+        
+        const formData = new FormData(form);
+        const data = {};
+        
+        // Преобразуем FormData в объект
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+        
+        // Добавляем данные из скрытых полей и элементов
+        const additionalFields = [
+            'constructionType', 'model', 'width', 'depth', 'color',
+            'basePrice', 'optionsPrice', 'totalPrice', 'numConstructions'
+        ];
+        
+        additionalFields.forEach(field => {
+            const element = document.querySelector(`[name="${field}"], #${field}, .${field}`);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    data[field] = element.checked;
+                } else if (element.type === 'radio') {
+                    if (element.checked) {
+                        data[field] = element.value;
+                    }
+                } else {
+                    data[field] = element.value;
+                }
+            }
+        });
+        
+        return Object.keys(data).length > 0 ? data : null;
+    }
+    
+    /**
+     * Получает данные из результатов на странице
+     */
+    getDataFromResults() {
+        const data = {};
+        
+        // Ищем элементы с результатами
+        const resultElements = {
+            totalPrice: '.total-price, .final-price, .result-total',
+            basePrice: '.base-price, .construction-price',
+            constructionType: '.construction-type, .pergola-type',
+            model: '.model-name, .pergola-model',
+            width: '.width-value, .pergola-width',
+            depth: '.depth-value, .pergola-depth'
+        };
+        
+        for (const [key, selectors] of Object.entries(resultElements)) {
+            for (const selector of selectors.split(', ')) {
+                const element = document.querySelector(selector);
+                if (element) {
+                    let value = element.textContent.trim();
+                    
+                    // Очищаем числовые значения
+                    if (['totalPrice', 'basePrice', 'width', 'depth'].includes(key)) {
+                        const numbers = value.match(/[\d\s,]+/);
+                        if (numbers) {
+                            value = parseFloat(numbers[0].replace(/[\s,]/g, ''));
+                        }
+                    }
+                    
+                    data[key] = value;
+                    break;
+                }
+            }
+        }
+        
+        return Object.keys(data).length > 0 ? data : null;
+    }
+    
+    /**
+     * Валидирует данные расчета
+     */
+    validateCalculationData(data) {
+        const requiredFields = ['constructionType', 'width', 'depth'];
+        
+        for (const field of requiredFields) {
+            if (!data[field]) {
+                console.warn(`❌ Отсутствует обязательное поле: ${field}`);
+                return false;
+            }
+        }
+        
+        // Проверяем числовые значения
+        if (isNaN(parseFloat(data.width)) || isNaN(parseFloat(data.depth))) {
+            console.warn('❌ Некорректные размеры перголы');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Извлекает имя файла из заголовков HTTP
+     */
+    extractFilename(headers) {
+        const contentDisposition = headers.get('content-disposition');
+        if (!contentDisposition) {
+            return 'commercial_proposal.pdf';
+        }
+        
+        // Пробуем извлечь Unicode имя
+        const filenameStarMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+        if (filenameStarMatch) {
+            try {
+                return decodeURIComponent(filenameStarMatch[1]);
+            } catch (e) {
+                console.warn('Ошибка декодирования имени файла:', e);
+            }
+        }
+        
+        // Пробуем обычный параметр filename
+        const filenameMatch = contentDisposition.match(/filename=["']?([^"';\s]+)/i);
+        if (filenameMatch) {
+            return filenameMatch[1];
+        }
+        
+        return 'commercial_proposal.pdf';
+    }
+    
+    /**
+     * Показывает опции для работы с PDF
+     */
+    showPDFOptions(blobUrl, fileName) {
+        // Удаляем предыдущие модальные окна
+        const existingModal = document.querySelector('.pdf-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Создаем модальное окно
+        const modal = document.createElement('div');
+        modal.className = 'pdf-modal';
+        modal.innerHTML = `
+            <div class="pdf-modal-content">
+                <div class="pdf-modal-header">
+                    <h5>PDF документ готов!</h5>
+                    <button class="pdf-close-btn" type="button">&times;</button>
+                </div>
+                <div class="pdf-modal-body">
+                    <p>Коммерческое предложение успешно создано.</p>
+                    <p class="pdf-filename">${fileName}</p>
+                    <div class="pdf-action-buttons">
+                        <button class="btn btn-primary pdf-download-btn">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M8.5 4a.5.5 0 0 0-1 0v5.793L5.354 7.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 9.793V4z"/>
+                            </svg>
+                            Скачать
+                        </button>
+                        <button class="btn btn-outline-primary pdf-view-btn">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                            </svg>
+                            Просмотреть
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Обработчики событий
+        modal.querySelector('.pdf-download-btn').addEventListener('click', () => {
+            this.downloadFile(blobUrl, fileName);
+            modal.remove();
+        });
+        
+        modal.querySelector('.pdf-view-btn').addEventListener('click', () => {
+            window.open(blobUrl, '_blank');
+            modal.remove();
+        });
+        
+        modal.querySelector('.pdf-close-btn').addEventListener('click', () => {
+            modal.remove();
+            URL.revokeObjectURL(blobUrl);
+        });
+        
+        // Закрытие по клику вне модала
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+                URL.revokeObjectURL(blobUrl);
+            }
+        });
+        
+        // Автоматическое закрытие через 30 секунд
+        setTimeout(() => {
+            if (modal.parentNode) {
+                modal.remove();
+                URL.revokeObjectURL(blobUrl);
+            }
+        }, 30000);
+    }
+    
+    /**
+     * Скачивает файл
+     */
+    downloadFile(blobUrl, fileName) {
+        const downloadLink = document.createElement('a');
+        downloadLink.href = blobUrl;
+        downloadLink.download = fileName;
+        downloadLink.style.display = 'none';
+        
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        
+        setTimeout(() => {
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(blobUrl);
+        }, 100);
+    }
+    
+    /**
+     * Показывает состояние загрузки
+     */
+    showLoadingState() {
+        const buttons = document.querySelectorAll('.pdf-export-btn');
+        buttons.forEach(button => {
+            button.disabled = true;
+            button.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                Создание PDF...
+            `;
+        });
+    }
+    
+    /**
+     * Скрывает состояние загрузки
+     */
+    hideLoadingState() {
+        const buttons = document.querySelectorAll('.pdf-export-btn');
+        buttons.forEach(button => {
+            button.disabled = false;
+            button.innerHTML = `
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                    <path d="M4.603 14.087a.81.81 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.68 7.68 0 0 1 1.482-.645 19.697 19.697 0 0 0 1.062-2.227 7.269 7.269 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a10.954 10.954 0 0 0 .98 1.686 5.753 5.753 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.856.856 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.712 5.712 0 0 1-.911-.95 11.651 11.651 0 0 0-1.997.406 11.307 11.307 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.793.793 0 0 1-.58.029z"/>
+                </svg>
+                Экспортировать PDF
+            `;
+        });
+    }
+    
+    /**
+     * Показывает сообщение об ошибке
+     */
+    showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'pdf-error-alert';
+        errorDiv.innerHTML = `
+            <div class="pdf-error-content">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                </svg>
+                <span>${message}</span>
+                <button class="pdf-error-close">&times;</button>
+            </div>
+        `;
+        
+        document.body.appendChild(errorDiv);
+        
+        // Обработчик закрытия
+        errorDiv.querySelector('.pdf-error-close').addEventListener('click', () => {
+            errorDiv.remove();
+        });
+        
+        // Автоматическое удаление через 10 секунд
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.remove();
+            }
+        }, 10000);
+    }
+    
+    /**
+     * Внедряет CSS стили
+     */
+    injectStyles() {
+        if (document.getElementById('pdf-exporter-styles')) {
+            return; // Стили уже добавлены
+        }
+        
+        const styles = document.createElement('style');
+        styles.id = 'pdf-exporter-styles';
+        styles.textContent = `
+            .pdf-export-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-weight: 500;
+                text-decoration: none;
+                transition: all 0.3s ease;
+                cursor: pointer;
+            }
+            
+            .pdf-export-btn:hover {
+                background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                color: white;
+            }
+            
+            .pdf-export-btn:disabled {
+                background: #6c757d;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+            
+            .pdf-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.6);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1050;
+                animation: fadeIn 0.3s ease;
+            }
+            
+            .pdf-modal-content {
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                max-width: 500px;
+                width: 90%;
+                animation: slideIn 0.3s ease;
+            }
+            
+            .pdf-modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px;
+                border-bottom: 1px solid #dee2e6;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-radius: 12px 12px 0 0;
+            }
+            
+            .pdf-modal-header h5 {
+                margin: 0;
+                font-weight: 600;
+            }
+            
+            .pdf-close-btn {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 24px;
+                cursor: pointer;
+                padding: 0;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                transition: background-color 0.2s ease;
+            }
+            
+            .pdf-close-btn:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+            
+            .pdf-modal-body {
+                padding: 20px;
+            }
+            
+            .pdf-filename {
+                font-family: monospace;
+                background: #f8f9fa;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 0.9em;
+                word-break: break-all;
+                margin: 10px 0;
+            }
+            
+            .pdf-action-buttons {
+                display: flex;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            
+            .pdf-action-buttons .btn {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                padding: 10px 16px;
+            }
+            
+            .pdf-error-alert {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f1aeb5;
+                border-radius: 8px;
+                padding: 0;
+                z-index: 1060;
+                animation: slideUp 0.3s ease;
+                max-width: 400px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+            
+            .pdf-error-content {
+                display: flex;
+                align-items: center;
+                padding: 15px;
+                gap: 10px;
+            }
+            
+            .pdf-error-close {
+                background: none;
+                border: none;
+                color: #721c24;
+                font-size: 18px;
+                cursor: pointer;
+                margin-left: auto;
+                padding: 0;
+                width: 24px;
+                height: 24px;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            
+            @keyframes slideIn {
+                from { transform: translateY(-50px) scale(0.9); opacity: 0; }
+                to { transform: translateY(0) scale(1); opacity: 1; }
+            }
+            
+            @keyframes slideUp {
+                from { transform: translateY(100px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+            
+            @media (max-width: 768px) {
+                .pdf-modal-content {
+                    margin: 20px;
+                    width: calc(100% - 40px);
+                }
+                
+                .pdf-action-buttons {
+                    flex-direction: column;
+                }
+                
+                .pdf-error-alert {
+                    left: 20px;
+                    right: 20px;
+                    max-width: none;
+                }
+            }
+        `;
+        
+        document.head.appendChild(styles);
+    }
+}
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    window.pdfExporter = new PDFExporter();
+});
+// Функция для внешнего использования
+window.exportPDF = function(customData = null) {
+    if (window.pdfExporter) {
+        if (customData) {
+            // Сохраняем пользовательские данные в глобальную переменную
+            window.lastCalculationData = customData;
+        }
+        window.pdfExporter.handleExportClick();
+    } else {
+        console.error('PDF Exporter не инициализирован');
+    }
+};
+4. Интеграция с Tilda через iframe
+4.1. Код для встраивания в Tilda
+<!-- HTML блок для вставки в Tilda -->
+<div id="pergola-calculator-container">
+    <iframe 
+        id="pergola-calculator-iframe"
+        src="https://your-calculator-domain.com/embed"
+        frameborder="0"
+        scrolling="no"
+        style="width: 100%; min-height: 800px; border: none;">
+    </iframe>
+</div>
+<script>
+// Скрипт для Tilda - обработка сообщений от iframe
+(function() {
+    const iframe = document.getElementById('pergola-calculator-iframe');
+    
+    if (!iframe) {
+        console.error('Iframe калькулятора не найден');
+        return;
+    }
+    
+    // Обработчик сообщений от iframe
+    window.addEventListener('message', function(event) {
+        // Проверяем источник сообщения
+        if (event.origin !== 'https://your-calculator-domain.com') {
+            return;
+        }
+        
+        const data = event.data;
+        
+        switch (data.type) {
+            case 'HEIGHT_UPDATE':
+                // Обновляем высоту iframe
+                updateIframeHeight(data.height);
+                break;
+                
+            case 'PDF_EXPORT':
+                // Обрабатываем экспорт PDF
+                handlePDFExport(data.pdfData);
+                break;
+                
+            case 'CALCULATION_COMPLETE':
+                // Отслеживаем завершение расчета
+                handleCalculationComplete(data.calculationData);
+                break;
+                
+            default:
+                console.log('Неизвестное сообщение от iframe:', data);
+        }
+    });
+    
+    function updateIframeHeight(height) {
+        const newHeight = Math.max(height, 600); // Минимальная высота
+        iframe.style.height = newHeight + 'px';
+        console.log('Высота iframe обновлена:', newHeight);
+    }
+    
+    function handlePDFExport(pdfData) {
+        console.log('Запрос на экспорт PDF из iframe:', pdfData);
+        
+        // Можно добавить дополнительную обработку для Tilda
+        // Например, отправка события в Google Analytics
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'pdf_export', {
+                'event_category': 'calculator',
+                'event_label': 'pergola_calculation'
+            });
+        }
+    }
+    
+    function handleCalculationComplete(calculationData) {
+        console.log('Расчет завершен:', calculationData);
+        
+        // Отправляем событие в аналитику
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'calculation_complete', {
+                'event_category': 'calculator',
+                'event_label': 'pergola',
+                'value': calculationData.totalPrice
+            });
+        }
+    }
+    
+    // Отправляем сообщение в iframe о готовности
+    iframe.onload = function() {
+        iframe.contentWindow.postMessage({
+            type: 'PARENT_READY',
+            config: {
+                // Можно передать настройки из Tilda
+                theme: 'tilda',
+                analytics: true
+            }
+        }, 'https://your-calculator-domain.com');
+    };
+})();
+</script>
+4.2. Модификация калькулятора для работы в iframe
+// static/js/iframe-integration.js
+class IframeIntegration {
+    constructor() {
+        this.isInIframe = window.self !== window.top;
+        this.parentOrigin = null;
+        this.heightObserver = null;
+        
+        if (this.isInIframe) {
+            this.init();
+        }
+    }
+    
+    init() {
+        this.setupMessageListener();
+        this.setupHeightObserver();
+        this.setupPDFExportHandler();
+        
+        console.log('🖼️ Калькулятор запущен в iframe');
+    }
+    
+    setupMessageListener() {
+        window.addEventListener('message', (event) => {
+            // Сохраняем origin родительского окна
+            if (!this.parentOrigin) {
+                this.parentOrigin = event.origin;
+            }
+            
+            const data = event.data;
+            
+            switch (data.type) {
+                case 'PARENT_READY':
+                    this.handleParentReady(data.config);
+                    break;
+                    
+                case 'CONFIG_UPDATE':
+                    this.handleConfigUpdate(data.config);
+                    break;
+            }
+        });
+    }
+    
+    setupHeightObserver() {
+        // Отслеживаем изменения высоты контента
+        const targetNode = document.body;
+        
+        const observer = new ResizeObserver((entries) => {
+            for (let entry of entries) {
+                const height = entry.contentRect.height;
+                this.sendHeightUpdate(height);
+            }
+        });
+        
+        observer.observe(targetNode);
+        this.heightObserver = observer;
+        
+        // Дополнительно отслеживаем изменения DOM
+        const mutationObserver = new MutationObserver(() => {
+            setTimeout(() => {
+                this.sendHeightUpdate(document.body.scrollHeight);
+            }, 100);
+        });
+        
+        mutationObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true
+        });
+    }
+    
+    setupPDFExportHandler() {
+        // Перехватываем экспорт PDF для отправки в родительское окно
+        if (window.pdfExporter) {
+            const originalHandleExportClick = window.pdfExporter.handleExportClick;
+            
+            window.pdfExporter.handleExportClick = async function() {
+                // Отправляем уведомление в родительское окно
+                if (this.isInIframe) {
+                    this.sendMessage({
+                        type: 'PDF_EXPORT_START',
+                        timestamp: Date.now()
+                    });
+                }
+                
+                try {
+                    // Выполняем оригинальную функцию
+                    await originalHandleExportClick.call(window.pdfExporter);
+                    
+                    // Уведомляем о успешном экспорте
+                    if (this.isInIframe) {
+                        this.sendMessage({
+                            type: 'PDF_EXPORT_SUCCESS',
+                            timestamp: Date.now()
+                        });
+                    }
+                } catch (error) {
+                    // Уведомляем об ошибке
+                    if (this.isInIframe) {
+                        this.sendMessage({
+                            type: 'PDF_EXPORT_ERROR',
+                            error: error.message,
+                            timestamp: Date.now()
+                        });
+                    }
+                    throw error;
+                }
+            }.bind(this);
+        }
+    }
+    
+    sendHeightUpdate(height) {
+        this.sendMessage({
+            type: 'HEIGHT_UPDATE',
+            height: height,
+            timestamp: Date.now()
+        });
+    }
+    
+    sendCalculationComplete(calculationData) {
+        this.sendMessage({
+            type: 'CALCULATION_COMPLETE',
+            calculationData: calculationData,
+            timestamp: Date.now()
+        });
+    }
+    
+    sendMessage(data) {
+        if (this.parentOrigin && window.parent) {
+            window.parent.postMessage(data, this.parentOrigin);
+        }
+    }
+    
+    handleParentReady(config) {
+        console.log('👨‍👩‍👧‍👦 Родительское окно готово, конфигурация:', config);
+        
+        // Применяем конфигурацию от родительского окна
+        if (config.theme === 'tilda') {
+            document.body.classList.add('tilda-theme');
+        }
+        
+        // Отправляем начальную высоту
+        this.sendHeightUpdate(document.body.scrollHeight);
+    }
+    
+    handleConfigUpdate(config) {
+        console.log('⚙️ Обновление конфигурации:', config);
+        // Обрабатываем обновления конфигурации
+    }
+}
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', () => {
+    window.iframeIntegration = new IframeIntegration();
+});
+// Расширяем существующий PDF экспорт для работы в iframe
+if (window.pdfExporter) {
+    const originalShowPDFOptions = window.pdfExporter.showPDFOptions;
+    
+    window.pdfExporter.showPDFOptions = function(blobUrl, fileName) {
+        // В iframe показываем упрощенные опции
+        if (window.iframeIntegration && window.iframeIntegration.isInIframe) {
+            this.showIframePDFOptions(blobUrl, fileName);
+        } else {
+            originalShowPDFOptions.call(this, blobUrl, fileName);
+        }
+    };
+    
+    window.pdfExporter.showIframePDFOptions = function(blobUrl, fileName) {
+        // Автоматически скачиваем файл в iframe
+        this.downloadFile(blobUrl, fileName);
+        
+        // Показываем краткое уведомление
+        const notification = document.createElement('div');
+        notification.className = 'iframe-pdf-notification';
+        notification.innerHTML = `
+            <div class="notification-content">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                </svg>
+                <span>PDF скачан: ${fileName}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    };
+}
+4.3. CSS стили для iframe
+/* static/css/iframe-styles.css */
+/* Стили для работы в iframe */
+.iframe-mode {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+.iframe-mode .header,
+.iframe-mode .footer {
+    display: none; /* Скрываем шапку и подвал в iframe */
+}
+.iframe-mode .container {
+    max-width: 100%;
+    padding: 10px;
+}
+/* Уведомления в iframe */
+.iframe-pdf-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    padding: 0;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.iframe-pdf-notification .notification-content {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 8px;
+}
+/* Стили для Tilda темы */
+.tilda-theme {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+.tilda-theme .btn {
+    border-radius: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+.tilda-theme .pdf-export-btn {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+}
+.tilda-theme .pdf-export-btn:hover {
+    background: linear-gradient(135deg, #ff5252 0%, #e55100 100%);
+}
+/* Адаптивность в iframe */
+@media (max-width: 768px) {
+    .iframe-mode .container {
+        padding: 5px;
+    }
+    
+    .iframe-pdf-notification {
+        left: 10px;
+        right: 10px;
+        top: 10px;
+    }
+}
+5. Обработка файлов и заголовков
+5.1. HTTP заголовки для PDF
+def setup_pdf_response_headers(response, filename, file_size):
+    """
+    Настраивает все необходимые HTTP заголовки для PDF ответа
+    
+    Args:
+        response: Flask response object
+        filename (str): Имя файла PDF
+        file_size (int): Размер файла в байтах
+    """
+    # Основные заголовки
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Length'] = str(file_size)
+    
+    # Content-Disposition с поддержкой Unicode
+    from urllib.parse import quote
+    
+    # ASCII fallback для старых браузеров
+    ascii_filename = "document.pdf"
+    
+    # URL-encoded Unicode имя для современных браузеров
+    unicode_filename = quote(filename)
+    
+    # Комбинированный заголовок
+    response.headers['Content-Disposition'] = (
+        f'inline; '
+        f'filename="{ascii_filename}"; '
+        f'filename*=UTF-8\'\'{unicode_filename}'
+    )
+    
+    # Заголовки кэширования
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    
+    # Заголовки безопасности
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    
+    # CORS заголовки (если нужно)
+    if request.headers.get('Origin'):
+        response.headers['Access-Control-Allow-Origin'] = request.headers['Origin']
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+    
+    return response
+5.2. Обработка различных браузеров
+// Детекция браузера и адаптация поведения
+class BrowserCompatibility {
+    static detectBrowser() {
+        const userAgent = navigator.userAgent;
+        
+        if (userAgent.includes('Chrome')) {
+            return 'chrome';
+        } else if (userAgent.includes('Firefox')) {
+            return 'firefox';
+        } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+            return 'safari';
+        } else if (userAgent.includes('Edge')) {
+            return 'edge';
+        } else {
+            return 'other';
+        }
+    }
+    
+    static adaptPDFHandling(blobUrl, fileName) {
+        const browser = this.detectBrowser();
+        
+        switch (browser) {
+            case 'safari':
+                // Safari требует особой обработки
+                return this.handleSafariPDF(blobUrl, fileName);
+                
+            case 'firefox':
+                // Firefox хорошо работает с blob URLs
+                return this.handleStandardPDF(blobUrl, fileName);
+                
+            case 'chrome':
+            case 'edge':
+                // Chrome и Edge поддерживают все современные функции
+                return this.handleStandardPDF(blobUrl, fileName);
+                
+            default:
+                // Консервативный подход для неизвестных браузеров
+                return this.handleLegacyPDF(blobUrl, fileName);
+        }
+    }
+    
+    static handleSafariPDF(blobUrl, fileName) {
+        // Safari может некорректно обрабатывать Unicode имена файлов
+        // Используем метод через создание ссылки
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName.replace(/[^\w\s.-]/g, '_'); // Упрощаем имя файла
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        
+        setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
+        }, 100);
+        
+        return true;
+    }
+    
+    static handleStandardPDF(blobUrl, fileName) {
+        // Стандартная обработка для современных браузеров
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        
+        setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
+        }, 100);
+        
+        return true;
+    }
+    
+    static handleLegacyPDF(blobUrl, fileName) {
+        // Консервативный подход для старых браузеров
+        try {
+            // Пробуем стандартный метод
+            if (this.handleStandardPDF(blobUrl, fileName)) {
+                return true;
+            }
+        } catch (error) {
+            console.warn('Стандартный метод не работает, используем fallback');
+        }
+        
+        // Fallback: открываем в новой вкладке
+        window.open(blobUrl, '_blank');
+        
+        setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+        }, 5000);
+        
+        return true;
+    }
+}
+// Интеграция в основной класс экспорта
+if (window.PDFExporter) {
+    const originalDownloadFile = window.PDFExporter.prototype.downloadFile;
+    
+    window.PDFExporter.prototype.downloadFile = function(blobUrl, fileName) {
+        return BrowserCompatibility.adaptPDFHandling(blobUrl, fileName);
+    };
+}
+6. Отладка и тестирование
+6.1. Отладочные утилиты
+# debug_pdf_export.py
+import logging
+import time
+import json
+from datetime import datetime
+class PDFExportDebugger:
+    """Класс для отладки процесса экспорта PDF"""
+    
+    def __init__(self):
+        self.logs = []
+        self.start_time = None
+        
+    def start_debug_session(self):
+        """Начинает сессию отладки"""
+        self.start_time = time.time()
+        self.logs = []
+        self.log("DEBUG_SESSION_START", "Начата сессия отладки PDF экспорта")
+        
+    def log(self, event_type, message, data=None):
+        """Записывает событие в лог отладки"""
+        log_entry = {
+            'timestamp': datetime.now().isoformat(),
+            'elapsed': time.time() - self.start_time if self.start_time else 0,
+            'event_type': event_type,
+            'message': message,
+            'data': data
+        }
+        
+        self.logs.append(log_entry)
+        logging.debug(f"[PDF_DEBUG] {event_type}: {message}")
+        
+    def log_request_data(self, request_data):
+        """Логирует данные запроса"""
+        self.log("REQUEST_DATA", "Получены данные запроса", {
+            'data_size': len(str(request_data)),
+            'keys': list(request_data.keys()) if isinstance(request_data, dict) else None,
+            'sample_data': str(request_data)[:200] + '...' if len(str(request_data)) > 200 else str(request_data)
+        })
+        
+    def log_validation_result(self, is_valid, errors=None):
+        """Логирует результат валидации"""
+        self.log("VALIDATION_RESULT", 
+                f"Валидация {'прошла' if is_valid else 'не прошла'}", 
+                {'is_valid': is_valid, 'errors': errors})
+                
+    def log_pdf_generation(self, pdf_size, generation_time):
+        """Логирует результат генерации PDF"""
+        self.log("PDF_GENERATION", 
+                f"PDF сгенерирован за {generation_time:.2f}с", 
+                {'pdf_size': pdf_size, 'generation_time': generation_time})
+                
+    def log_error(self, error_type, error_message, traceback_info=None):
+        """Логирует ошибку"""
+        self.log("ERROR", f"{error_type}: {error_message}", {
+            'error_type': error_type,
+            'error_message': error_message,
+            'traceback': traceback_info
+        })
+        
+    def get_debug_report(self):
+        """Возвращает отчет отладки"""
+        total_time = time.time() - self.start_time if self.start_time else 0
+        
+        return {
+            'session_info': {
+                'start_time': self.start_time,
+                'total_duration': total_time,
+                'events_count': len(self.logs)
+            },
+            'events': self.logs,
+            'summary': self._generate_summary()
+        }
+        
+    def _generate_summary(self):
+        """Генерирует сводку по сессии отладки"""
+        event_types = {}
+        errors = []
+        
+        for log_entry in self.logs:
+            event_type = log_entry['event_type']
+            event_types[event_type] = event_types.get(event_type, 0) + 1
+            
+            if event_type == 'ERROR':
+                errors.append(log_entry)
+                
+        return {
+            'event_types': event_types,
+            'errors_count': len(errors),
+            'errors': errors
+        }
+# Глобальный экземпляр дебаггера
+pdf_debugger = PDFExportDebugger()
+# Декоратор для автоматической отладки
+def debug_pdf_export(func):
+    """Декоратор для отладки функций экспорта PDF"""
+    def wrapper(*args, **kwargs):
+        pdf_debugger.start_debug_session()
+        
+        try:
+            result = func(*args, **kwargs)
+            pdf_debugger.log("FUNCTION_SUCCESS", f"Функция {func.__name__} выполнена успешно")
+            return result
+            
+        except Exception as e:
+            import traceback
+            pdf_debugger.log_error(
+                type(e).__name__, 
+                str(e), 
+                traceback.format_exc()
+            )
+            raise
+            
+        finally:
+            # Сохраняем отчет отладки
+            debug_report = pdf_debugger.get_debug_report()
+            save_debug_report(debug_report)
+            
+    return wrapper
+def save_debug_report(report):
+    """Сохраняет отчет отладки в файл"""
+    try:
+        import os
+        debug_dir = 'debug_reports'
+        os.makedirs(debug_dir, exist_ok=True)
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"pdf_export_debug_{timestamp}.json"
+        filepath = os.path.join(debug_dir, filename)
+        
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(report, f, ensure_ascii=False, indent=2)
+            
+        logging.info(f"Отчет отладки сохранен: {filepath}")
+        
+    except Exception as e:
+        logging.error(f"Ошибка сохранения отчета отладки: {e}")
+# Модификация основного маршрута для отладки
+@debug_pdf_export
+def export_pdf_new_with_debug():
+    """Версия маршрута экспорта с отладкой"""
+    pdf_debugger.log("ROUTE_START", "Начало обработки запроса экспорта PDF")
+    
+    # ... остальной код маршрута ...
+    
+    return export_pdf_new()
+6.2. Тестирование в браузере
+// static/js/pdf-export-test.js
+class PDFExportTester {
+    constructor() {
+        this.testResults = [];
+    }
+    
+    async runAllTests() {
+        console.log('🧪 Запуск тестов PDF экспорта...');
+        
+        const tests = [
+            this.testDataGathering,
+            this.testAPIRequest,
+            this.testFileDownload,
+            this.testErrorHandling,
+            this.testBrowserCompatibility
+        ];
+        
+        for (const test of tests) {
+            try {
+                await test.call(this);
+            } catch (error) {
+                console.error(`❌ Тест ${test.name} не прошел:`, error);
+            }
+        }
+        
+        this.printTestResults();
+    }
+    
+    async testDataGathering() {
+        console.log('📊 Тест сбора данных...');
+        
+        // Создаем тестовые данные
+        window.lastCalculationData = {
+            constructionType: 'wall',
+            model: 'Basic & Pro New',
+            width: 4,
+            depth: 3,
+            basePrice: 150000,
+            totalPrice: 175000
+        };
+        
+        const exporter = new PDFExporter();
+        const data = exporter.gatherCalculationData();
+        
+        if (data && data.constructionType === 'wall') {
+            this.addTestResult('testDataGathering', true, 'Данные успешно собраны');
+        } else {
+            this.addTestResult('testDataGathering', false, 'Не удалось собрать данные');
+        }
+    }
+    
+    async testAPIRequest() {
+        console.log('🌐 Тест API запроса...');
+        
+        const testData = {
+            constructionType: 'wall',
+            model: 'Test Model',
+            width: 3,
+            depth: 3,
+            basePrice: 100000,
+            totalPrice: 120000
+        };
+        
+        try {
+            const response = await fetch('/export_pdf_new', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(testData)
+            });
+            
+            if (response.ok && response.headers.get('content-type').includes('application/pdf')) {
+                this.addTestResult('testAPIRequest', true, 'API запрос успешен');
+            } else {
+                this.addTestResult('testAPIRequest', false, `API вернул статус: ${response.status}`);
+            }
+            
+        } catch (error) {
+            this.addTestResult('testAPIRequest', false, `Ошибка API: ${error.message}`);
+        }
+    }
+    
+    async testFileDownload() {
+        console.log('💾 Тест скачивания файла...');
+        
+        try {
+            // Создаем тестовый blob
+            const testBlob = new Blob(['Test PDF content'], { type: 'application/pdf' });
+            const blobUrl = URL.createObjectURL(testBlob);
+            
+            // Тестируем скачивание
+            const exporter = new PDFExporter();
+            exporter.downloadFile(blobUrl, 'test.pdf');
+            
+            this.addTestResult('testFileDownload', true, 'Механизм скачивания работает');
+            
+            URL.revokeObjectURL(blobUrl);
+            
+        } catch (error) {
+            this.addTestResult('testFileDownload', false, `Ошибка скачивания: ${error.message}`);
+        }
+    }
+    
+    async testErrorHandling() {
+        console.log('⚠️ Тест обработки ошибок...');
+        
+        try {
+            // Отправляем запрос с некорректными данными
+            const response = await fetch('/export_pdf_new', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}) // Пустые данные
+            });
+            
+            if (response.status === 400) {
+                this.addTestResult('testErrorHandling', true, 'Ошибки корректно обрабатываются');
+            } else {
+                this.addTestResult('testErrorHandling', false, 'Неожиданный ответ на некорректные данные');
+            }
+            
+        } catch (error) {
+            this.addTestResult('testErrorHandling', false, `Ошибка теста: ${error.message}`);
+        }
+    }
+    
+    async testBrowserCompatibility() {
+        console.log('🌍 Тест совместимости браузера...');
+        
+        const features = {
+            fetch: typeof fetch !== 'undefined',
+            blob: typeof Blob !== 'undefined',
+            url: typeof URL !== 'undefined' && typeof URL.createObjectURL !== 'undefined',
+            download: 'download' in document.createElement('a')
+        };
+        
+        const allSupported = Object.values(features).every(Boolean);
+        
+        this.addTestResult('testBrowserCompatibility', allSupported, 
+            allSupported ? 'Браузер поддерживает все функции' : `Не поддерживается: ${Object.keys(features).filter(k => !features[k]).join(', ')}`);
+    }
+    
+    addTestResult(testName, passed, message) {
+        this.testResults.push({
+            test: testName,
+            passed: passed,
+            message: message,
+            timestamp: new Date().toISOString()
+        });
+        
+        const icon = passed ? '✅' : '❌';
+        console.log(`${icon} ${testName}: ${message}`);
+    }
+    
+    printTestResults() {
+        console.log('\n📋 Результаты тестирования PDF экспорта:');
+        console.log('='.repeat(50));
+        
+        const passedTests = this.testResults.filter(r => r.passed).length;
+        const totalTests = this.testResults.length;
+        
+        console.log(`Пройдено тестов: ${passedTests}/${totalTests}`);
+        
+        this.testResults.forEach(result => {
+            const icon = result.passed ? '✅' : '❌';
+            console.log(`${icon} ${result.test}: ${result.message}`);
+        });
+        
+        if (passedTests === totalTests) {
+            console.log('\n🎉 Все тесты прошли успешно!');
+        } else {
+            console.log('\n⚠️ Некоторые тесты не прошли. Требуется диагностика.');
+        }
+    }
+}
+// Функция для запуска тестов
+window.runPDFExportTests = function() {
+    const tester = new PDFExportTester();
+    tester.runAllTests();
+};
+// Автоматический запуск тестов в development режиме
+if (window.location.hostname === 'localhost' || window.location.hostname.includes('replit')) {
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('🔧 Development режим обнаружен. Для запуска тестов PDF экспорта выполните: runPDFExportTests()');
+    });
+}
+7. Развертывание и эксплуатация
+7.1. Конфигурация production
+# config.py
+import os
+from urllib.parse import quote
+class ProductionConfig:
+    """Конфигурация для production среды"""
+    
+    # Основные настройки
+    DEBUG = False
+    TESTING = False
+    
+    # PDF настройки
+    PDF_CACHE_ENABLED = True
+    PDF_CACHE_TTL = 3600  # 1 час
+    PDF_MAX_SIZE = 10 * 1024 * 1024  # 10 МБ
+    
+    # Пути к ресурсам
+    FONTS_DIR = os.path.join(os.path.dirname(__file__), 'static', 'fonts')
+    IMAGES_DIR = os.path.join(os.path.dirname(__file__), 'static', 'images')
+    DEBUG_PDFS_DIR = os.path.join(os.path.dirname(__file__), 'debug_pdfs')
+    
+    # Безопасность
+    PDF_ALLOWED_ORIGINS = [
+        'https://your-domain.com',
+        'https://www.your-domain.com',
+        'https://tilda.ws',
+        'https://project123456.tilda.ws'
+    ]
+    
+    # Логирование
+    LOG_LEVEL = 'INFO'
+    LOG_FILE = 'pdf_export.log'
+    
+    # Мониторинг
+    SENTRY_DSN = os.environ.get('SENTRY_DSN')
+    
+    @staticmethod
+    def init_app(app):
+        """Инициализирует приложение с production настройками"""
+        
+        # Настройка логирования
+        import logging
+        from logging.handlers import RotatingFileHandler
+        
+        if not app.debug:
+            file_handler = RotatingFileHandler(
+                ProductionConfig.LOG_FILE,
+                maxBytes=10240000,
+                backupCount=10
+            )
+            file_handler.setFormatter(logging.Formatter(
+                '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+            ))
+            file_handler.setLevel(logging.INFO)
+            app.logger.addHandler(file_handler)
+            app.logger.setLevel(logging.INFO)
+            app.logger.info('PDF Export service startup')
+        
+        # Инициализация Sentry для мониторинга ошибок
+        if ProductionConfig.SENTRY_DSN:
+            import sentry_sdk
+            from sentry_sdk.integrations.flask import FlaskIntegration
+            
+            sentry_sdk.init(
+                dsn=ProductionConfig.SENTRY_DSN,
+                integrations=[FlaskIntegration()],
+                traces_sample_rate=0.1
+            )
+class DevelopmentConfig:
+    """Конфигурация для development среды"""
+    
+    DEBUG = True
+    TESTING = False
+    
+    # PDF настройки для разработки
+    PDF_CACHE_ENABLED = False
+    PDF_DEBUG_MODE = True
+    
+    LOG_LEVEL = 'DEBUG'
+# Выбор конфигурации
+config = {
+    'development': DevelopmentConfig,
+    'production': ProductionConfig,
+    'default': DevelopmentConfig
+}
+7.2. Deployment скрипт
+#!/bin/bash
+# deploy_pdf_export.sh
+echo "🚀 Развертывание PDF Export системы"
+# Установка зависимостей
+echo "📦 Установка системных зависимостей..."
+sudo apt-get update
+sudo apt-get install -y python3-dev python3-pip libfreetype6-dev libjpeg-dev
+# Установка Python пакетов
+echo "🐍 Установка Python пакетов..."
+pip3 install -r requirements.txt
+# Создание необходимых директорий
+echo "📁 Создание директорий..."
+mkdir -p static/fonts
+mkdir -p static/images/pergolas
+mkdir -p debug_pdfs
+mkdir -p logs
+mkdir -p debug_reports
+# Скачивание шрифтов
+echo "🔤 Скачивание шрифтов Roboto..."
+cd static/fonts
+fonts=(
+    "https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Regular.ttf"
+    "https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Bold.ttf"
+    "https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Italic.ttf"
+    "https://github.com/google/fonts/raw/main/apache/roboto/Roboto-BoldItalic.ttf"
+)
+for font_url in "${fonts[@]}"; do
+    filename=$(basename "$font_url")
+    if [ ! -f "$filename" ]; then
+        echo "⬇️ Скачиваем $filename..."
+        wget -q "$font_url" -O "$filename"
+        if [ $? -eq 0 ]; then
+            echo "✅ $filename загружен"
+        else
+            echo "❌ Ошибка загрузки $filename"
+        fi
+    else
+        echo "📋 $filename уже существует"
+    fi
+done
+cd ../..
+# Настройка прав доступа
+echo "🔐 Настройка прав доступа..."
+chmod -R 755 static/fonts
+chmod -R 755 static/images
+chmod -R 777 debug_pdfs
+chmod -R 777 logs
+chmod -R 777 debug_reports
+# Проверка установки
+echo "🧪 Проверка установки..."
+python3 -c "
+import sys
+try:
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    print('✅ ReportLab импортирован успешно')
+    
+    # Проверяем шрифты
+    import os
+    font_path = 'static/fonts/Roboto-Regular.ttf'
+    if os.path.exists(font_path):
+        pdfmetrics.registerFont(TTFont('Roboto', font_path))
+        print('✅ Шрифт Roboto зарегистрирован успешно')
+    else:
+        print('❌ Файл шрифта не найден')
+        sys.exit(1)
+        
+except ImportError as e:
+    print(f'❌ Ошибка импорта: {e}')
+    sys.exit(1)
+except Exception as e:
+    print(f'❌ Ошибка: {e}')
+    sys.exit(1)
+"
+if [ $? -eq 0 ]; then
+    echo "✅ Установка завершена успешно!"
+    echo "🔍 Для тестирования запустите:"
+    echo "   python3 -c 'from test_pdf_export import run_tests; run_tests()'"
+else
+    echo "❌ Обнаружены ошибки при установке"
+    exit 1
+fi
+7.3. Мониторинг и алерты
+# monitoring.py
+import time
+import psutil
+import logging
+from datetime import datetime, timedelta
+from collections import defaultdict, deque
+class PDFExportMonitor:
+    """Система мониторинга PDF экспорта"""
+    
+    def __init__(self):
+        self.metrics = defaultdict(lambda: deque(maxlen=1000))
+        self.alerts = []
+        self.start_time = time.time()
+        
+    def record_request(self, request_data):
+        """Записывает метрики запроса"""
+        self.metrics['requests'].append({
+            'timestamp': time.time(),
+            'data_size': len(str(request_data)),
+            'has_required_fields': self._check_required_fields(request_data)
+        })
+        
+    def record_generation(self, duration, pdf_size, success=True):
+        """Записывает метрики генерации PDF"""
+        self.metrics['generations'].append({
+            'timestamp': time.time(),
+            'duration': duration,
+            'pdf_size': pdf_size,
+            'success': success
+        })
+        
+        # Проверяем на аномалии
+        self._check_performance_alerts(duration, pdf_size)
+        
+    def record_error(self, error_type, error_message):
+        """Записывает ошибку"""
+        self.metrics['errors'].append({
+            'timestamp': time.time(),
+            'error_type': error_type,
+            'error_message': error_message
+        })
+        
+        # Проверяем на критические ошибки
+        self._check_error_alerts(error_type)
+        
+    def get_health_status(self):
+        """Возвращает статус здоровья системы"""
+        now = time.time()
+        last_hour = now - 3600
+        
+        # Метрики за последний час
+        recent_requests = [r for r in self.metrics['requests'] if r['timestamp'] > last_hour]
+        recent_generations = [g for g in self.metrics['generations'] if g['timestamp'] > last_hour]
+        recent_errors = [e for e in self.metrics['errors'] if e['timestamp'] > last_hour]
+        
+        # Вычисляем показатели
+        total_requests = len(recent_requests)
+        successful_generations = len([g for g in recent_generations if g['success']])
+        success_rate = (successful_generations / total_requests) if total_requests > 0 else 1.0
+        
+        avg_response_time = (
+            sum(g['duration'] for g in recent_generations) / len(recent_generations)
+            if recent_generations else 0
+        )
+        
+        # Системные ресурсы
+        system_stats = {
+            'cpu_percent': psutil.cpu_percent(interval=1),
+            'memory_percent': psutil.virtual_memory().percent,
+            'disk_percent': psutil.disk_usage('/').percent
+        }
+        
+        health_status = 'healthy'
+        if success_rate < 0.95:
+            health_status = 'degraded'
+        if success_rate < 0.8 or len(recent_errors) > 10:
+            health_status = 'unhealthy'
+            
+        return {
+            'status': health_status,
+            'uptime': now - self.start_time,
+            'metrics': {
+                'requests_last_hour': total_requests,
+                'success_rate': success_rate,
+                'avg_response_time': avg_response_time,
+                'errors_last_hour': len(recent_errors)
+            },
+            'system': system_stats,
+            'alerts': self.get_active_alerts()
+        }
+        
+    def _check_required_fields(self, request_data):
+        """Проверяет наличие обязательных полей"""
+        required_fields = ['constructionType', 'width', 'depth']
+        return all(field in request_data for field in required_fields)
+        
+    def _check_performance_alerts(self, duration, pdf_size):
+        """Проверяет на проблемы с производительностью"""
+        if duration > 5.0:  # Более 5 секунд
+            self._add_alert('SLOW_GENERATION', f'Медленная генерация PDF: {duration:.2f}с')
+            
+        if pdf_size > 10 * 1024 * 1024:  # Более 10 МБ
+            self._add_alert('LARGE_PDF', f'Большой размер PDF: {pdf_size/1024/1024:.1f} МБ')
+            
+    def _check_error_alerts(self, error_type):
+        """Проверяет на критические ошибки"""
+        error_counts = defaultdict(int)
+        now = time.time()
+        last_5_minutes = now - 300
+        
+        # Считаем ошибки за последние 5 минут
+        for error in self.metrics['errors']:
+            if error['timestamp'] > last_5_minutes:
+                error_counts[error['error_type']] += 1
+                
+        # Алерт при более чем 5 ошибок одного типа за 5 минут
+        if error_counts[error_type] > 5:
+            self._add_alert('HIGH_ERROR_RATE', 
+                          f'Высокая частота ошибок {error_type}: {error_counts[error_type]} за 5 мин')
+            
+    def _add_alert(self, alert_type, message):
+        """Добавляет алерт"""
+        alert = {
+            'timestamp': time.time(),
+            'type': alert_type,
+            'message': message,
+            'resolved': False
+        }
+        
+        self.alerts.append(alert)
+        logging.warning(f"ALERT [{alert_type}]: {message}")
+        
+        # Отправляем в систему мониторинга
+        self._send_to_monitoring_system(alert)
+        
+    def get_active_alerts(self):
+        """Возвращает активные алерты"""
+        return [alert for alert in self.alerts if not alert['resolved']]
+        
+    def resolve_alert(self, alert_index):
+        """Помечает алерт как решенный"""
+        if 0 <= alert_index < len(self.alerts):
+            self.alerts[alert_index]['resolved'] = True
+            
+    def _send_to_monitoring_system(self, alert):
+        """Отправляет алерт в систему мониторинга"""
+        try:
+            # Интеграция с внешними системами мониторинга
+            # Например, Sentry, DataDog, или собственная система
+            pass
+        except Exception as e:
+            logging.error(f"Ошибка отправки алерта в систему мониторинга: {e}")
+# Глобальный экземпляр монитора
+pdf_monitor = PDFExportMonitor()
+# Endpoint для проверки здоровья
+@app.route('/health')
+def health_check():
+    """Endpoint для проверки состояния системы"""
+    try:
+        health_status = pdf_monitor.get_health_status()
+        
+        status_code = 200
+        if health_status['status'] == 'degraded':
+            status_code = 200  # Все еще работает
+        elif health_status['status'] == 'unhealthy':
+            status_code = 503  # Service Unavailable
+            
+        return jsonify(health_status), status_code
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+# Endpoint для метрик
+@app.route('/metrics')
+def metrics():
+    """Endpoint для получения метрик (совместим с Prometheus)"""
+    try:
+        health = pdf_monitor.get_health_status()
+        
+        metrics_text = f"""
+# HELP pdf_requests_total Total number of PDF requests
+# TYPE pdf_requests_total counter
+pdf_requests_total {health['metrics']['requests_last_hour']}
+# HELP pdf_success_rate Success rate of PDF generation
+# TYPE pdf_success_rate gauge
+pdf_success_rate {health['metrics']['success_rate']}
+# HELP pdf_response_time_seconds Average response time
+# TYPE pdf_response_time_seconds gauge
+pdf_response_time_seconds {health['metrics']['avg_response_time']}
+# HELP pdf_errors_total Total number of errors
+# TYPE pdf_errors_total counter
+pdf_errors_total {health['metrics']['errors_last_hour']}
+# HELP system_cpu_percent CPU usage percentage
+# TYPE system_cpu_percent gauge
+system_cpu_percent {health['system']['cpu_percent']}
+# HELP system_memory_percent Memory usage percentage
+# TYPE system_memory_percent gauge
+system_memory_percent {health['system']['memory_percent']}
+"""
+        
+        response = make_response(metrics_text)
+        response.headers['Content-Type'] = 'text/plain; charset=utf-8'
+        return response
+        
+    except Exception as e:
+        return str(e), 500
+Заключение
+Данное руководство представляет полную реализацию системы экспорта PDF для калькулятора пергол, включая:
+
+✅ Реализованные компоненты:
+Backend API - надежный Flask маршрут с валидацией и обработкой ошибок
+Frontend интеграция - современный JavaScript класс с поддержкой различных браузеров
+Iframe интеграция - полная поддержка встраивания в Tilda и другие платформы
+Обработка файлов - корректные HTTP заголовки с поддержкой Unicode имен
+Отладка и тестирование - комплексные инструменты диагностики
+Production развертывание - готовые скрипты и мониторинг
+🔧 Ключевые особенности:
+Универсальность: Работает как standalone, так и в iframe
+Надежность: Множественные fallback механизмы и обработка ошибок
+Производительность: Оптимизированные запросы и кэширование
+Совместимость: Поддержка всех современных браузеров
+Мониторинг: Детальная аналитика и система алертов
+🚀 Готовность к использованию:
+Система полностью готова к развертыванию в production среде и обеспечивает профессиональную генерацию PDF коммерческих предложений с поддержкой кириллицы и современным пользовательским интерфейсом.

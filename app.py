@@ -2127,74 +2127,31 @@ def render_results(results, show_articles=False):
         """
         st.markdown(button_style, unsafe_allow_html=True)
         
-        # Проверяем, есть ли уже сгенерированный PDF в сессии
-        pdf_already_generated = 'pdf_file_path' in st.session_state and os.path.exists(st.session_state.pdf_file_path)
+        if 'pdf_bytes' in st.session_state and st.session_state.pdf_bytes:
+            st.download_button(
+                label="📥 Скачать PDF",
+                data=st.session_state.pdf_bytes,
+                file_name=st.session_state.get('pdf_file_name', 'КП_пергола.pdf'),
+                mime="application/pdf",
+                key="download_pdf_cached",
+                use_container_width=True,
+            )
         
         if st.button(
             "📄 Экспорт КП в PDF", 
             key="export_pdf_button", 
-            help="Экспортировать коммерческое предложение в PDF в формате для печати",
+            help="Экспортировать коммерческое предложение в PDF",
             use_container_width=True
         ):
-            # Показываем индикатор загрузки с более подробным сообщением
             with st.spinner("Создаем PDF-документ..."):
-                # Если PDF уже был сгенерирован ранее, используем его
-                if pdf_already_generated:
-                    pdf_path = st.session_state.pdf_file_path
-                    st.success("PDF найден в кэше, загружаем...")
-                else:
-                    # Создаем последовательный список статусов для пользователя
-                    status_container = st.empty()
-                    status_container.info("Подготавливаем данные для экспорта...")
-                    time.sleep(0.5)  # Небольшая задержка для лучшего UX
-                    
-                    # Иначе создаем новый PDF
-                    status_container.info("Генерируем PDF-документ...")
-                    pdf_path = export_to_pdf()
-                    
-                    if pdf_path:
-                        st.session_state.pdf_file_path = pdf_path
-                        status_container.success(f"PDF успешно создан: {os.path.basename(pdf_path)}")
-                    else:
-                        status_container.error("Ошибка при создании PDF")
+                pdf_bytes, file_name = export_to_pdf()
                 
-                # Если PDF успешно сгенерирован, показываем ссылку для скачивания
-                if pdf_path:
-                    # Отображаем информацию об успешном создании
-                    st.success(f"PDF файл успешно создан")
-                    
-                    # Получаем размер файла
-                    file_size_bytes = os.path.getsize(pdf_path)
-                    file_size_kb = file_size_bytes / 1024
-                    file_size_str = f"{file_size_kb:.1f} Кб"
-                    
-                    # Отображаем информацию о файле
-                    file_info = f"""
-                    <div style="margin: 15px 0; padding: 10px; background-color: #f8f9fa; border-radius: 5px; border-left: 4px solid #3f6daa;">
-                        <div style="font-weight: bold; margin-bottom: 5px;">Информация о документе:</div>
-                        <div>Имя файла: {os.path.basename(pdf_path)}</div>
-                        <div>Размер: {file_size_str}</div>
-                        <div>Создан: {datetime.now().strftime('%d.%m.%Y %H:%M')}</div>
-                    </div>
-                    """
-                    st.markdown(file_info, unsafe_allow_html=True)
-                    
-                    # Получаем улучшенный компонент для скачивания PDF
-                    from improved_pdf_export import get_streamlit_download_component
-                    get_streamlit_download_component(pdf_path)
-                    
-                    # Отправляем событие в Яндекс.Метрику
-                    st.markdown("""
-                    <script>
-                    // Отправка события экспорта PDF в Яндекс.Метрику
-                    if (typeof ym !== 'undefined') {
-                        ym(94463245, 'reachGoal', 'pdf_export');
-                        console.log('Отправлено событие pdf_export в Яндекс.Метрику');
-                    }
-                    </script>
-                    """, unsafe_allow_html=True)
+                if pdf_bytes:
+                    st.session_state.pdf_bytes = pdf_bytes
+                    st.session_state.pdf_file_name = file_name
+                    st.rerun()
                 else:
-                    st.error("Не удалось сгенерировать PDF. Пожалуйста, попробуйте еще раз.")
+                    st.error("Не удалось сгенерировать PDF. Попробуйте еще раз.")
     
     # Отображаем разделитель между таблицей стоимости и описанием перголы
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
@@ -3442,122 +3399,48 @@ def create_very_simple_pdf(pergola_data):
 
 def export_to_pdf():
     """
-    Формирует данные для экспорта и генерирует PDF-файл с улучшенным скачиванием.
-    Использует improved_pdf_export для правильного именования файлов при скачивании.
+    Генерирует PDF коммерческого предложения на основе данных расчёта.
     
     Returns:
-        str: Путь к сгенерированному PDF-файлу
+        tuple: (pdf_bytes, file_name) или (None, None) при ошибке
     """
-    # Подготовка ресурсов для PDF
-    try:
-        # Проверяем, существует ли модуль prepare_pdf_assets
-        import sys
-        import os
-        
-        # Добавляем директорию assets в путь для импорта
-        assets_path = 'assets'
-        if assets_path not in sys.path and os.path.exists(assets_path):
-            sys.path.append(assets_path)
-        
-        try:
-            from prepare_pdf_assets import prepare_pdf_assets
-            prepare_pdf_assets()
-            print("Подготовка ресурсов для PDF выполнена успешно")
-        except ImportError:
-            print("Модуль prepare_pdf_assets не найден")
-    except Exception as e:
-        print(f"Ошибка при подготовке ресурсов для PDF: {e}")
-        # Продолжаем работу даже в случае ошибки
     if 'results' not in st.session_state:
         st.error("Сначала нужно выполнить расчет!")
-        return None
+        return None, None
     
     results = st.session_state.results
+    options = results.get("options", {})
+    dimensions = results.get("dimensions", {})
     
-    # Подготавливаем директории и используем улучшенное управление PDF-файлами
     os.makedirs("fonts", exist_ok=True)
     os.makedirs("processed_images", exist_ok=True)
     
-    # Используем новую функцию для управления директорией PDF-файлов
-    from improved_pdf_export import ensure_pdf_directory
-    ensure_pdf_directory()
-    
-    options = results.get("options", {})
-    pergola_type = options.get("pergola_type", "")
-    dimensions = results.get("dimensions", {})
-    
-    # Подготавливаем данные для PDF - добавляем более подробное логирование
-    import logging
-    default_width = st.session_state.get('cached_width') or 3.0
-    default_length = st.session_state.get('cached_length') or 4.0
-    logging.info(f"Default dimensions from session: width={default_width}, length={default_length}")
-    
-    # Важно: используем полное логирование до создания pdf_data
-    logging.info(f"PDF Export - Original dimensions in results: {dimensions}")
-    logging.info(f"PDF Export - Width from dimensions: {dimensions.get('width', 'Not Found')}")
-    logging.info(f"PDF Export - Length from dimensions: {dimensions.get('length', 'Not Found')}")
-    
-    # Создаем pdf_data с явными значениями (без использования None или 0)
-    pdf_data = {
-        "pergola_type": pergola_type,
-        "width": dimensions.get("width", default_width),  # Используем значения из dimensions с захватом из default если отсутствуют
-        "length": dimensions.get("length", default_length),
-        "modules": dimensions.get("modules", 1),
-        "items": results.get("items", []),
-        "specification": results.get("specification", []),
-        "total_price": results.get("total_price", 0),
-        "discount": results.get("discount", 0),
-        "total_price_after_discount": results.get("total_price_after_discount", 0),
-        "euro_rate": 110  # Фиксированный курс евро для расчетов
-    }
-    
-    # Проверяем финальные значения
-    logging.info(f"PDF Export - Final pdf_data: {pdf_data}")
-    logging.info(f"PDF Export - Final Width in pdf_data: {pdf_data['width']}")
-    logging.info(f"PDF Export - Final Length in pdf_data: {pdf_data['length']}")
-    
     try:
-        # Показываем индикатор загрузки
-        with st.spinner("Создание PDF-документа..."):
-            # Используем улучшенный модуль для создания PDF с синей шапкой
-            import logging
-            logging.info("Запускаем создание PDF через generate_commercial_offer")
-            
-            # Создаем более информативное имя файла
-            from improved_pdf_export import generate_pdf_file_name
-            file_name = generate_pdf_file_name(pdf_data)
-            
-            # Генерируем PDF с шапкой через pdf_generator_fpdf_rus.py
-            from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
-            pergola_data = format_pergola_data_for_pdf(results, options, dimensions, "")
-            pdf_file_path = generate_commercial_offer(pergola_data)
-            logging.info(f"PDF файл создан: {pdf_file_path}")
-            
-            # Если файл создан успешно
-            if pdf_file_path and os.path.exists(pdf_file_path):
-                # Проверяем размер файла
-                file_size = os.path.getsize(pdf_file_path)
-                logging.info(f"Размер PDF файла: {file_size} байт")
-                
-                if file_size > 0:
-                    # ВАЖНО: Не добавляем кнопку скачивания здесь, так как она будет добавлена в основном коде
-                    # Возвращаем путь к файлу PDF для скачивания в основном коде
-                    return pdf_file_path
-                else:
-                    # Если размер файла равен 0, считаем что PDF не создался
-                    st.error("PDF файл был создан, но имеет нулевой размер")
-            else:
-                # Если файл не создался вообще
-                st.error("Не удалось создать PDF файл")
-            
-            # В этом случае мы НЕ пытаемся создать второй PDF-файл, чтобы избежать дублирования кнопок
-            return None
+        from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
+        
+        pergola_data = format_pergola_data_for_pdf(results, options, dimensions, "")
+        pdf_bytes = generate_commercial_offer(pergola_data)
+        
+        if not pdf_bytes:
+            st.error("Не удалось создать PDF документ")
+            return None, None
+        
+        pergola_type = options.get("pergola_type", "pergola") or "pergola"
+        width = round(float(dimensions.get("width", 0) or 0), 1)
+        length = round(float(dimensions.get("length", 0) or 0), 1)
+        
+        import pytz
+        rostov_tz = pytz.timezone('Europe/Moscow')
+        current_date = datetime.now(pytz.utc).astimezone(rostov_tz).strftime("%d.%m.%Y")
+        file_name = f"КП_пергола_{pergola_type}_{width}x{length}м_{current_date}.pdf"
+        
+        return pdf_bytes, file_name
         
     except Exception as e:
         st.error(f"Ошибка при генерации PDF: {str(e)}")
         import traceback
         st.write(traceback.format_exc())
-        return None
+        return None, None
 
 
 
@@ -4624,13 +4507,6 @@ def main():
     # Обрабатываем нажатие на кнопку
     if calculate_button:
         with st.spinner("Выполняется расчет..."):
-            # Выводим отладочное сообщение 
-            st.markdown("""
-            <script>
-                console.log("🔄 DEBUG: Нажата кнопка 'Рассчитать стоимость'");
-            </script>
-            """, unsafe_allow_html=True)
-            
             # Проверяем, что у нас есть данные для расчета
             if dimensions and options:
                 # Выполняем расчет
@@ -4641,10 +4517,10 @@ def main():
                 if 'results' not in locals():
                     results = {}
                 
-                # Сохраняем результаты в session_state
                 st.session_state.results = results
+                st.session_state.pdf_bytes = None
+                st.session_state.pdf_file_name = None
                 
-                # Включаем отображение плавающих кнопок навигации
                 st.session_state.show_floating_buttons = True
                 st.session_state.options = options
                 

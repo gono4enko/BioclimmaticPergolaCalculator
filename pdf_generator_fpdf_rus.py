@@ -238,31 +238,19 @@ def generate_commercial_offer(pergola_data, user_data=None):
         user_data (dict, optional): Словарь с данными пользователя (имя, телефон и т.д.)
         
     Returns:
-        str: Путь к сгенерированному PDF-файлу
+        bytes: Байты PDF-документа (или None при ошибке)
     """
     try:
-        # Очищаем временные файлы обработанных изображений
-        for file in os.listdir("processed_images"):
-            if file.startswith("proc_"):
+        for f in os.listdir("processed_images"):
+            if f.startswith("proc_"):
                 try:
-                    os.remove(os.path.join("processed_images", file))
+                    os.remove(os.path.join("processed_images", f))
                 except:
                     pass
         
-        # Создаем уникальное имя файла на основе текущей даты и времени
         now = datetime.now()
         timestamp = now.strftime("%Y%m%d_%H%M%S")
-        
-        # Форматируем текущую дату для отображения в документе
         current_date = now.strftime("%d.%m.%Y")
-        
-        # Определяем путь для сохранения файла
-        if user_data and user_data.get('phone'):
-            # Если есть телефон, используем его в имени файла (без специальных символов)
-            phone = ''.join(filter(str.isdigit, user_data['phone']))
-            pdf_filename = f"generated_pdf/KP_Pergola_{phone}_{timestamp}.pdf"
-        else:
-            pdf_filename = f"generated_pdf/KP_Pergola_{timestamp}.pdf"
         
         # Создаем экземпляр PDF с поддержкой кириллицы
         pdf = PDF()
@@ -656,93 +644,45 @@ def generate_commercial_offer(pergola_data, user_data=None):
         for info in contact_info:
             pdf.cell(0, 6, info, 0, 1)  # Уменьшаем высоту строк с 7 до 6 мм
         
-        # Создаем директорию для сохранения PDF
-        os.makedirs(os.path.dirname(pdf_filename), exist_ok=True)
-        
-        # Сохраняем PDF
-        pdf.output(pdf_filename)
-        print(f"PDF успешно создан: {pdf_filename}")
-        
-        return pdf_filename
+        pdf_bytes = pdf.output(dest='S')
+        if isinstance(pdf_bytes, str):
+            pdf_bytes = pdf_bytes.encode('latin-1')
+        print(f"PDF успешно создан в памяти ({len(pdf_bytes)} байт)")
+        return pdf_bytes
         
     except Exception as e:
         print(f"Ошибка при создании PDF: {str(e)}")
         
         try:
-            # Создаем упрощенный PDF без кириллицы в случае ошибки
             from fpdf import FPDF
             
-            # Получаем данные из словаря
-            p_type = pergola_data.get('pergola_type', 'пергола') if pergola_data else 'пергола'
+            p_type = pergola_data.get('pergola_type', '') if pergola_data else ''
             p_width = pergola_data.get('width', 0) if pergola_data else 0
             p_length = pergola_data.get('length', 0) if pergola_data else 0
             p_cost = pergola_data.get('total_cost', 0) if pergola_data else 0
             
-            # Создаем упрощенный PDF
             simple_pdf = FPDF()
             simple_pdf.add_page()
-            
-            # Заголовок документа
             simple_pdf.set_font('Arial', 'B', 16)
-            simple_pdf.cell(0, 10, "КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", 0, 1, 'C')
+            simple_pdf.cell(0, 10, "Commercial Proposal - Pergola", 0, 1, 'C')
             simple_pdf.set_font('Arial', '', 12)
-            simple_pdf.cell(0, 10, "на поставку и монтаж биоклиматической перголы", 0, 1, 'C')
             simple_pdf.ln(10)
-            
-            # Основная информация
-            simple_pdf.set_font('Arial', 'B', 14)
-            simple_pdf.cell(0, 10, "Параметры перголы:", 0, 1, 'L')
-            
-            # Таблица параметров
-            simple_pdf.set_font('Arial', '', 12)
-            simple_pdf.cell(70, 10, "Модель:", 0, 0)
-            simple_pdf.cell(0, 10, p_type, 0, 1)
-            
-            simple_pdf.cell(70, 10, "Ширина:", 0, 0)
-            simple_pdf.cell(0, 10, f"{p_width} м", 0, 1)
-            
-            simple_pdf.cell(70, 10, "Вынос (длина):", 0, 0)
-            simple_pdf.cell(0, 10, f"{p_length} м", 0, 1)
-            
-            # Стоимость
+            simple_pdf.cell(70, 10, "Model:", 0, 0)
+            simple_pdf.cell(0, 10, str(p_type), 0, 1)
+            simple_pdf.cell(70, 10, "Width:", 0, 0)
+            simple_pdf.cell(0, 10, f"{p_width} m", 0, 1)
+            simple_pdf.cell(70, 10, "Length:", 0, 0)
+            simple_pdf.cell(0, 10, f"{p_length} m", 0, 1)
             simple_pdf.ln(5)
-            simple_pdf.set_fill_color(240, 240, 240)
             simple_pdf.set_font('Arial', 'B', 14)
+            price_str = f"{int(p_cost):,d}".replace(',', ' ')
+            simple_pdf.cell(0, 10, f"Total: {price_str} RUB", 1, 1, 'C', fill=True)
             
-            # Форматируем стоимость в полном формате
-            price_value = int(p_cost)
-            if price_value >= 1000000:
-                # Для миллионов форматируем как "1 234 567 рублей"
-                price_str = f"{price_value:,d}".replace(',', ' ') + " рублей"
-            else:
-                # Для других значений так же
-                price_str = f"{price_value:,d}".replace(',', ' ') + " рублей"
-                
-            simple_pdf.cell(0, 10, f"Общая стоимость: {price_str}", 1, 1, 'C', fill=True)
-            
-            # Заметка о версии документа
-            simple_pdf.ln(15)
-            simple_pdf.set_font('Arial', 'I', 10)
-            simple_pdf.cell(0, 10, "Данный документ является упрощенной версией коммерческого предложения.", 0, 1)
-            simple_pdf.cell(0, 10, "Для получения полного предложения с детальным описанием, пожалуйста, свяжитесь с нами.", 0, 1)
-            
-            # Контактная информация
-            simple_pdf.ln(10)
-            simple_pdf.set_font('Arial', 'B', 12)
-            simple_pdf.cell(0, 10, "Контактная информация:", 0, 1)
-            
-            simple_pdf.set_font('Arial', '', 10)
-            simple_pdf.cell(0, 7, "Телефон: +7 (495) 123-45-67", 0, 1)
-            simple_pdf.cell(0, 7, "Email: info@komfortnyj-dom.ru", 0, 1)
-            simple_pdf.cell(0, 7, "Веб-сайт: www.komfortnyj-dom.ru", 0, 1)
-            
-            # Сохраняем упрощенный PDF в дефолтную директорию
-            backup_filename = f"generated_pdf/KP_Pergola_simple_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-            os.makedirs(os.path.dirname(backup_filename), exist_ok=True)
-            simple_pdf.output(backup_filename)
-            print(f"Упрощенный PDF создан: {backup_filename}")
-            
-            return backup_filename
+            fallback_bytes = simple_pdf.output(dest='S')
+            if isinstance(fallback_bytes, str):
+                fallback_bytes = fallback_bytes.encode('latin-1')
+            print(f"Упрощенный PDF создан в памяти ({len(fallback_bytes)} байт)")
+            return fallback_bytes
             
         except Exception as e2:
             print(f"Ошибка при создании упрощенного PDF: {str(e2)}")
