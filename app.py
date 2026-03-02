@@ -2127,31 +2127,26 @@ def render_results(results, show_articles=False):
         """
         st.markdown(button_style, unsafe_allow_html=True)
         
-        if 'pdf_bytes' in st.session_state and st.session_state.pdf_bytes:
+        pdf_bytes, file_name = export_to_pdf()
+        
+        if pdf_bytes:
             st.download_button(
-                label="📥 Скачать PDF",
-                data=st.session_state.pdf_bytes,
-                file_name=st.session_state.get('pdf_file_name', 'КП_пергола.pdf'),
+                label="📄 Экспорт КП в PDF",
+                data=pdf_bytes,
+                file_name=file_name,
                 mime="application/pdf",
-                key="download_pdf_cached",
+                key="export_pdf_button",
+                help="Скачать коммерческое предложение в PDF",
                 use_container_width=True,
             )
-        
-        if st.button(
-            "📄 Экспорт КП в PDF", 
-            key="export_pdf_button", 
-            help="Экспортировать коммерческое предложение в PDF",
-            use_container_width=True
-        ):
-            with st.spinner("Создаем PDF-документ..."):
-                pdf_bytes, file_name = export_to_pdf()
-                
-                if pdf_bytes:
-                    st.session_state.pdf_bytes = pdf_bytes
-                    st.session_state.pdf_file_name = file_name
-                    st.rerun()
-                else:
-                    st.error("Не удалось сгенерировать PDF. Попробуйте еще раз.")
+        else:
+            st.button(
+                "📄 Экспорт КП в PDF",
+                key="export_pdf_button_disabled",
+                use_container_width=True,
+                disabled=True,
+                help="Ошибка генерации PDF",
+            )
     
     # Отображаем разделитель между таблицей стоимости и описанием перголы
     st.markdown("<hr style='margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
@@ -4518,8 +4513,6 @@ def main():
                     results = {}
                 
                 st.session_state.results = results
-                st.session_state.pdf_bytes = None
-                st.session_state.pdf_file_name = None
                 
                 st.session_state.show_floating_buttons = True
                 st.session_state.options = options
