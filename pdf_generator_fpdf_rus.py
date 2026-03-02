@@ -276,38 +276,71 @@ def _add_section_images_grid(pdf, image_paths):
     if not valid:
         return
 
-    margin_x = 10
-    gap = 5
+    page_w = 190
     page_bottom = 245
-    num_rows = (len(valid) + 1) // 2
-    start_y = pdf.get_y() + 3
+    gap = 4
+    start_y = pdf.get_y() + 2
     available_h = page_bottom - start_y
-    max_cell_h = min(55, (available_h - (num_rows - 1) * gap) / num_rows)
-    
-    if max_cell_h < 25:
-        pdf.add_page()
-        start_y = pdf.get_y() + 3
-        available_h = page_bottom - start_y
-        max_cell_h = min(55, (available_h - (num_rows - 1) * gap) / num_rows)
-    
-    cell_h = max_cell_h
-    cell_w = cell_h * (85 / 55)
 
-    for idx, img_path in enumerate(valid):
+    layout = []
+    for img_path in valid:
         try:
-            col = idx % 2
-            row = idx // 2
-            x = margin_x + col * (cell_w + gap)
-            y = start_y + row * (cell_h + gap)
+            img_obj = PILImage.open(img_path)
+            w, h = img_obj.size
+            layout.append((img_path, w / h))
+        except Exception:
+            layout.append((img_path, 1.5))
 
-            compressed = _compress_image_for_pdf(img_path, max_width=1000, quality=70, crop_ratio=cell_w / cell_h)
-            pdf.image(compressed, x=x, y=y, w=cell_w, h=cell_h)
-            print(f"Добавлено изображение секции: {img_path}")
-        except Exception as e:
-            print(f"Ошибка при добавлении изображения секции {img_path}: {e}")
+    row1_h = 70
+    row2_h = 55
+    total_needed = row1_h + row2_h + gap
 
-    last_row = (len(valid) - 1) // 2
-    pdf.set_y(start_y + (last_row + 1) * (cell_h + gap))
+    if total_needed > available_h:
+        scale = available_h / total_needed
+        row1_h *= scale
+        row2_h *= scale
+
+    if row1_h < 15:
+        pdf.add_page()
+        start_y = pdf.get_y() + 2
+        available_h = page_bottom - start_y
+        scale = min(1.0, available_h / (70 + 55 + gap))
+        row1_h = 70 * scale
+        row2_h = 55 * scale
+
+    cur_y = start_y
+
+    if len(layout) >= 1:
+        path0, ratio0 = layout[0]
+        w0 = min(row1_h * ratio0, page_w * 0.55)
+        compressed = _compress_image_for_pdf(path0, max_width=1000, quality=70)
+        x0 = 10 + (page_w * 0.55 - w0) / 2
+        pdf.image(compressed, x=x0, y=cur_y, w=w0, h=row1_h)
+
+    if len(layout) >= 2:
+        path1, ratio1 = layout[1]
+        w1 = min(row1_h * ratio1, page_w * 0.42)
+        compressed = _compress_image_for_pdf(path1, max_width=1000, quality=70)
+        x1 = 10 + page_w * 0.58 + (page_w * 0.42 - w1) / 2
+        pdf.image(compressed, x=x1, y=cur_y, w=w1, h=row1_h)
+
+    cur_y += row1_h + gap
+
+    if len(layout) >= 3:
+        path2, ratio2 = layout[2]
+        w2 = min(row2_h * ratio2, page_w * 0.48)
+        compressed = _compress_image_for_pdf(path2, max_width=1000, quality=70)
+        pdf.image(compressed, x=10, y=cur_y, w=w2, h=row2_h)
+
+    if len(layout) >= 4:
+        path3, ratio3 = layout[3]
+        w3 = min(row2_h * ratio3, page_w * 0.48)
+        compressed = _compress_image_for_pdf(path3, max_width=1000, quality=70)
+        x3 = 10 + page_w - w3
+        pdf.image(compressed, x=x3, y=cur_y, w=w3, h=row2_h)
+
+    cur_y += row2_h + gap
+    pdf.set_y(cur_y)
 
 
 def _get_gallery_images(max_images=8):
