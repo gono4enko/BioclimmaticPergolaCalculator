@@ -1,79 +1,71 @@
 """
-Модуль для плавного скроллинга к элементам страницы
+Модуль для плавного скроллинга к элементам страницы в Streamlit.
+Использует <img onload> внутри st.markdown(unsafe_allow_html=True),
+что выполняет JS в контексте основного документа Streamlit (без iframe).
+Если st.markdown блокирует onload, fallback на html() с height=1.
 """
 import streamlit as st 
 from streamlit.components.v1 import html
 
-def smooth_scroll_to(target_id, fixed_y_position=None):
-    """
-    Выполняет плавный скролл к элементу с указанным ID.
-    Работает через window.parent для доступа к DOM Streamlit из iframe html().
-    Пробует несколько скроллируемых контейнеров Streamlit.
-    """
-    scroll_code = f"""
-    <script type="text/javascript">
-        (function() {{
-            try {{
-                var doc = window.parent.document;
-                
-                var findTarget = function() {{
-                    var target = doc.getElementById("{target_id}");
-                    if (target) return target;
-                    
-                    var headers = doc.querySelectorAll('h1, h2, h3, h4');
-                    for (var i = 0; i < headers.length; i++) {{
-                        if (headers[i].textContent.indexOf('Результаты расчета') !== -1) {{
-                            return headers[i];
-                        }}
-                    }}
-                    return null;
-                }};
-                
-                var doScroll = function(attempt) {{
-                    if (attempt > 20) return;
-                    
-                    var target = findTarget();
-                    if (!target) {{
-                        setTimeout(function() {{ doScroll(attempt + 1); }}, 300);
-                        return;
-                    }}
-                    
-                    var containers = [
-                        doc.querySelector('[data-testid="stAppViewContainer"]'),
-                        doc.querySelector('section.main'),
-                        doc.querySelector('.main'),
-                        doc.querySelector('[data-testid="stVerticalBlock"]'),
-                        doc.documentElement
-                    ];
-                    
-                    var scrolled = false;
-                    for (var i = 0; i < containers.length; i++) {{
-                        var c = containers[i];
-                        if (c && c.scrollHeight > c.clientHeight) {{
-                            var rect = target.getBoundingClientRect();
-                            var newTop = c.scrollTop + rect.top - 100;
-                            c.scrollTo({{top: newTop, behavior: 'smooth'}});
-                            scrolled = true;
-                            break;
-                        }}
-                    }}
-                    
-                    if (!scrolled) {{
-                        target.scrollIntoView({{behavior: 'smooth', block: 'start'}});
-                    }}
-                    
-                    try {{
-                        window.parent.scrollTo({{
-                            top: target.getBoundingClientRect().top + window.parent.pageYOffset - 100,
-                            behavior: 'smooth'
-                        }});
-                    }} catch(e) {{}}
-                }};
-                
-                setTimeout(function() {{ doScroll(1); }}, 500);
-                setTimeout(function() {{ doScroll(1); }}, 1500);
-            }} catch(e) {{}}
-        }})();
-    </script>
-    """
-    html(scroll_code, height=0)
+
+def smooth_scroll_to(target_id, offset_px=80):
+    js = _build_scroll_js(target_id, offset_px)
+
+    st.markdown(
+        f'<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" '
+        f'onload="{js}" style="display:none;height:0;width:0;" />',
+        unsafe_allow_html=True,
+    )
+
+    _scroll_via_html(target_id, offset_px)
+
+
+def _build_scroll_js(target_id, offset_px):
+    return (
+        "var d=document;"
+        f"var t=d.getElementById('{target_id}');"
+        "if(!t){{var h=d.querySelectorAll('h2,h3,h4');"
+        "for(var i=0;i<h.length;i++){{if(h[i].textContent.indexOf('Результаты')>=0){{t=h[i];break;}}}}}}"
+        "if(t){{"
+        "var p=t;while(p&&p!==d.documentElement){{"
+        "var s=getComputedStyle(p);"
+        "if((s.overflowY==='auto'||s.overflowY==='scroll')&&p.scrollHeight>p.clientHeight+5){{"
+        f"p.scrollTo({{top:p.scrollTop+t.getBoundingClientRect().top-p.getBoundingClientRect().top-{offset_px},behavior:'smooth'}});"
+        "break;}}p=p.parentElement;}}"
+        "if(!p||p===d.documentElement){{t.scrollIntoView({{behavior:'smooth',block:'start'}})}}"
+        "}}"
+    )
+
+
+def _scroll_via_html(target_id, offset_px):
+    code = """<script>
+    (function(){
+        var pdoc = window.parent.document;
+        var attempts = 0;
+        function go() {
+            attempts++;
+            if (attempts > 15) return;
+            var t = pdoc.getElementById('""" + target_id + """');
+            if (!t) {
+                var h = pdoc.querySelectorAll('h2,h3,h4');
+                for (var i = 0; i < h.length; i++) {
+                    if (h[i].textContent.indexOf('Результаты') >= 0) { t = h[i]; break; }
+                }
+            }
+            if (!t) { setTimeout(go, 300); return; }
+
+            var p = t;
+            while (p && p !== pdoc.documentElement) {
+                var s = window.parent.getComputedStyle(p);
+                if ((s.overflowY === 'auto' || s.overflowY === 'scroll') && p.scrollHeight > p.clientHeight + 5) {
+                    p.scrollTo({top: p.scrollTop + t.getBoundingClientRect().top - p.getBoundingClientRect().top - """ + str(offset_px) + """, behavior: 'smooth'});
+                    return;
+                }
+                p = p.parentElement;
+            }
+            t.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+        setTimeout(go, 500);
+    })();
+    </script>"""
+    html(code, height=1)

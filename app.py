@@ -1760,77 +1760,6 @@ def render_results(results, show_articles=False):
     # Импортируем модуль отображения акций
     from components.promotion_display import promotions_section
     
-    # Выводим отладочное сообщение при генерации блока результатов
-    st.markdown("""
-    <script>
-        console.log("🎯 DEBUG: render_results вызван, создаю якорь #results");
-    </script>
-    """, unsafe_allow_html=True)
-    
-    # Создаем скрытый якорь для скролла
-    # Якорь невидим, но доступен для JavaScript скриптов
-    st.markdown('''
-    <div id="results" name="results"
-         style="position:relative;
-                width:100%;
-                height:1px;  /* Минимальная высота, чтобы якорь не занимал место */
-                margin-top:50px; /* Увеличенный верхний отступ для предотвращения наложения плавающих элементов */
-                padding:0;
-                opacity:0;  /* Полностью прозрачный */
-                visibility:hidden;" /* Скрытый, но доступный для скриптов */
-         class="results-marker" 
-         data-testid="results-anchor">
-    </div>
-    
-    <!-- Дополнительные якоря с разными ID для большей надежности -->
-    <div id="pergola-results" class="results-marker" style="position:relative;height:1px;"></div>
-    <div id="calculation-results" class="results-marker" style="position:relative;height:1px;"></div>
-    <a name="results-section" id="results-section" class="results-marker"></a>
-    ''', unsafe_allow_html=True)
-    
-    # Добавляем JavaScript для дополнительной обработки блока результатов
-    st.markdown("""
-    <script>
-        // Улучшаем видимость блока результатов и добавляем анимацию
-        (function enhanceResultsVisibility() {
-            setTimeout(function() {
-                const resultsBlock = document.getElementById('results');
-                if (resultsBlock) {
-                    // Пульсирующая анимация для привлечения внимания
-                    resultsBlock.style.animation = 'pulse 2s infinite';
-                    
-                    // Добавляем стиль анимации
-                    const style = document.createElement('style');
-                    style.textContent = `
-                        @keyframes pulse {
-                            0% { box-shadow: 0 0 20px 5px rgba(0,102,204,0.5); }
-                            50% { box-shadow: 0 0 30px 10px rgba(0,102,204,0.7); }
-                            100% { box-shadow: 0 0 20px 5px rgba(0,102,204,0.5); }
-                        }
-                    `;
-                    document.head.appendChild(style);
-                    
-                    // Через 5 секунд убираем анимацию
-                    setTimeout(function() {
-                        resultsBlock.style.animation = 'none';
-                        resultsBlock.style.transition = 'all 1s ease';
-                        resultsBlock.style.backgroundColor = '#e6f2ff';
-                        resultsBlock.style.boxShadow = '0 0 10px rgba(0,102,204,0.3)';
-                    }, 5000);
-                }
-            }, 500);
-        })();
-    </script>
-    """, unsafe_allow_html=True)
-    
-    # Добавляем дополнительную отметку для надежности
-    st.markdown("""
-    <script>
-        console.log("🔍 DEBUG: Создан якорь #results");
-    </script>
-    """, unsafe_allow_html=True)
-    
-    # Добавляем JavaScript для отправки высоты страницы родительскому окну после загрузки результатов
     send_page_height_to_parent()
     
     if "error" in results:
@@ -4264,7 +4193,6 @@ def main():
     add_common_script()
     
     if st.session_state.get('set_hash_to_results', False):
-        smooth_scroll_to('results')
         st.session_state.set_hash_to_results = False
     
     # Проверяем, нужно ли отправить событие в Яндекс.Метрику
@@ -4748,34 +4676,13 @@ def main():
         
     # Отображаем результаты (если есть)
     if 'results' in st.session_state:
-        # Добавляем якорь для прокрутки
-        st.markdown('<div id="results"></div>', unsafe_allow_html=True)
+        st.markdown('<div id="scroll-target-results" style="height:0;margin:0;padding:0;"></div>', unsafe_allow_html=True)
         
-        # Показываем общий результат и детальную информацию
         render_results(st.session_state.results, show_articles=False)
         
-        # Если был запрос на скролл к результатам, используем компонент smooth_scroll_to
         if st.session_state.get('scroll_to_results', False):
-            # Используем компонент из модуля scroll.py для скролла к якорю #results
-            smooth_scroll_to('results')
-            
-            # Сбрасываем флаг, чтобы не выполнять скролл при каждом обновлении страницы
+            smooth_scroll_to('scroll-target-results')
             st.session_state.scroll_to_results = False
-            
-        # Добавляем отладочную информацию о состоянии флага плавающих кнопок
-        st.markdown(f"""
-        <script>
-            console.log("🔍 DEBUG: show_floating_buttons = {st.session_state.get('show_floating_buttons', False)}");
-        </script>
-        """, unsafe_allow_html=True)
-        
-        # Всегда добавляем плавающие кнопки, независимо от флага
-        # Выводим отладочное сообщение о добавлении кнопок
-        st.markdown("""
-        <script>
-            console.log("🎯 DEBUG: Всегда добавляем плавающие кнопки");
-        </script>
-        """, unsafe_allow_html=True)
         
         # Добавляем кнопку навигации к результатам расчета
         add_results_navigation_button()
