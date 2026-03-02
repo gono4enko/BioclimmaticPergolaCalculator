@@ -3,11 +3,12 @@
 {% block title %}Калькулятор стоимости перголы{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=4">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=5">
 {% endblock %}
 
 {% block content %}
 <section class="hero-section">
+    <div class="hero-bg" id="hero-bg"></div>
     <div class="hero-overlay"></div>
     <div class="hero-content">
         <h1>Калькулятор биоклиматических пергол</h1>
@@ -156,5 +157,17 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=4"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=5"></script>
+<script>
+(function() {
+    var bg = document.getElementById('hero-bg');
+    if (!bg) return;
+    function onScroll() {
+        var scrollY = window.pageYOffset || document.documentElement.scrollTop;
+        bg.style.transform = 'translateY(' + (scrollY * 0.4) + 'px)';
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+})();
+</script>
 {% endblock %}
