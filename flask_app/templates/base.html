@@ -24,42 +24,10 @@
     <!-- Навигационная панель -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.calculator') }}">
                 <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Логотип" height="40" class="me-2">
                 <span>КомфортПергола</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}">
-                            <i class="bi bi-house-door"></i> Главная
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.calculator') }}">
-                            <i class="bi bi-calculator"></i> Калькулятор
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.catalog') }}">
-                            <i class="bi bi-grid-3x3-gap"></i> Каталог
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('scraper.scraper_page') }}">
-                            <i class="bi bi-search"></i> Анализ рынка
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.about') }}">
-                            <i class="bi bi-info-circle"></i> О нас
-                        </a>
-                    </li>
-                </ul>
-            </div>
         </div>
     </nav>
 

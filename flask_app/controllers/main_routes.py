@@ -11,34 +11,12 @@ bp = Blueprint('main', __name__)
 
 @bp.route('/')
 def index():
-    """Главная страница приложения."""
-    current_year = datetime.datetime.now().year
-    return render_template('index.html', preload_images=preload_images(), now={'year': current_year})
+    return redirect(url_for('main.calculator'))
 
 @bp.route('/calculator')
 def calculator():
-    """Страница калькулятора перголы."""
     current_year = datetime.datetime.now().year
-    return render_template('calculator.html', preload_images=preload_images(), now={'year': current_year})
-
-@bp.route('/catalog')
-def catalog():
-    """Страница каталога пергол."""
-    current_year = datetime.datetime.now().year
-    return render_template('catalog.html', now={'year': current_year})
-
-@bp.route('/about')
-def about():
-    """Страница о компании."""
-    current_year = datetime.datetime.now().year
-    return render_template('about.html', now={'year': current_year})
-
-@bp.route('/pergolas/<int:pergola_id>')
-def pergola_details(pergola_id):
-    """Страница с деталями конкретной перголы."""
-    current_year = datetime.datetime.now().year
-    pergola = Pergola.query.get_or_404(pergola_id)
-    return render_template('pergola_details.html', pergola=pergola, now={'year': current_year})
+    return render_template('calculator.html', now={'year': current_year})
 
 @bp.route('/clear-cache', methods=['POST'])
 def clear_cache():
