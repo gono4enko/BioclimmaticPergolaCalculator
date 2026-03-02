@@ -28,6 +28,7 @@ def create_app(test_config=None):
         SECRET_KEY=os.environ.get('SECRET_KEY', 'dev'),
         SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///pergola.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SEND_FILE_MAX_AGE_DEFAULT=31536000,
         PDF_FOLDER=os.path.join(app.root_path, 'generated_pdf'),
         UPLOAD_FOLDER=os.path.join(app.root_path, 'uploads'),
         MAX_CONTENT_LENGTH=16 * 1024 * 1024,  # 16 MB лимит загрузки
