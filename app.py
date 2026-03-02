@@ -1731,7 +1731,22 @@ def render_additional_options_form():
     if st.checkbox("RGB-подсветка", value=False, key="rgb_led_direct"):
         lighting_options.append("rgb_led")
     
-    # Удаляем преобразование, так как теперь чекбоксы напрямую добавляют правильные значения
+    led_img = "attached_assets/Снимок_экрана_2026-03-02_в_19.41.36_1772470183662.png"
+    rgb_img = "attached_assets/Снимок_экрана_2026-03-02_в_19.41.21_1772470189184.png"
+    
+    show_led = "white_led" in lighting_options
+    show_rgb = "rgb_led" in lighting_options
+    
+    if show_led and show_rgb:
+        lc1, lc2 = st.columns(2)
+        with lc1:
+            st.image(led_img, caption="LED-подсветка", use_container_width=True)
+        with lc2:
+            st.image(rgb_img, caption="RGB-подсветка", use_container_width=True)
+    elif show_led:
+        st.image(led_img, caption="LED-подсветка", use_container_width=True)
+    elif show_rgb:
+        st.image(rgb_img, caption="RGB-подсветка", use_container_width=True)
     
     # Прямой подход к созданию чекбокса для установки - такой же как для освещения
     st.write("Установка")
