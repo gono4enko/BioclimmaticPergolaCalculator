@@ -373,7 +373,7 @@ def get_all_gallery_images(images_dir):
     Returns:
         list: Список имен файлов изображений
     """
-    image_extensions = ('.jpg', '.jpeg', '.png', '.heic', '.heif')
+    image_extensions = ('.jpg', '.jpeg', '.png')
     images = []
     
     try:

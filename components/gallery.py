@@ -371,46 +371,40 @@ def display_projects_gallery():
     """
     Отображает галерею реализованных проектов с описаниями.
     Использует систему администрирования для фильтрации изображений.
+    Результаты кэшируются в session_state для ускорения повторных загрузок.
     """
-    # Заголовок и информационный текст теперь добавляются в функции display_gallery_section
-    
-    # Получаем полные пути к изображениям
+    if 'gallery_cache' in st.session_state:
+        cached = st.session_state['gallery_cache']
+        _render_gallery_images(cached['image_paths'], cached['captions'])
+        return
+
     image_paths = []
     available_images = []
-    image_hashes = {}  # Словарь для хранения хешей изображений для прямого сравнения
+    image_hashes = {}
     captions = []
     
-    # Загружаем конфигурацию галереи
     config = gallery_admin.load_gallery_config()
     
-    # Если есть список явно включенных изображений, используем его
     if config["manual_include"]:
-        # Получаем все активные изображения через функцию администрирования галереи
         active_images = gallery_admin.get_active_gallery_images(IMAGES_DIR)
         
-        # Проверяем наличие файлов и добавляем их в список
-        processed_images = set()  # Множество для отслеживания уже обработанных изображений
+        processed_images = set()
         for img_name in active_images:
             img_path = os.path.join(IMAGES_DIR, img_name)
             if not os.path.exists(img_path):
                 continue
                 
-            # Пропускаем, если это изображение уже обработано или найден его дубликат
             if img_name in processed_images:
                 continue
                 
-            # Получаем хеш изображения для точного сравнения
             current_hash = heic_converter.get_image_hash(img_path)
             if not current_hash:
-                logging.warning(f"Не удалось получить хеш для {img_name}, пропускаем")
                 continue
                 
-            # Прямое сравнение хешей с уже добавленными изображениями
             is_duplicate = False
             for existing_hash in image_hashes.values():
                 if current_hash == existing_hash:
                     is_duplicate = True
-                    logging.info(f"Обнаружен точный дубликат изображения: {img_name} по хешу {current_hash}")
                     processed_images.add(img_name)
                     break
                     
@@ -504,47 +498,33 @@ def display_projects_gallery():
                     caption = PROJECT_DESCRIPTIONS.get(img_name, "Реализованный проект перголы")
                     captions.append(caption)
     
-    # Отображаем галерею, если есть доступные изображения
+    st.session_state['gallery_cache'] = {
+        'image_paths': image_paths,
+        'captions': captions
+    }
+
+    _render_gallery_images(image_paths, captions)
+
+
+def _render_gallery_images(image_paths, captions):
     if image_paths:
-        # Создаем список для хранения URL изображений в Streamlit
         image_urls = []
         
-        # Загружаем и отображаем изображения через Streamlit для получения URL
         for img_path in image_paths:
             img = load_and_resize_image(img_path, max_width=800, max_height=600, fixed_height=True)
             if img:
-                # Используем контейнер для скрытия стандартного отображения
                 with st.container():
-                    col = st.columns([0.01, 0.98, 0.01])[1]  # Используем колонки для центрирования
+                    col = st.columns([0.01, 0.98, 0.01])[1]
                     with col:
-                        # Отображаем изображение и получаем его URL
-                        img_placeholder = st.image(img, use_column_width=True)
-                        # Получаем URL изображения из DOM
-                        # В реальном приложении здесь был бы код для получения URL
-                        # В данном случае используем путь как заменитель URL
-                        img_url = img_path  # Это будет заменено на актуальный URL в рабочей версии
+                        st.image(img, use_column_width=True)
+                        img_url = img_path
                         image_urls.append(img_url)
-                        
-                        # Скрываем отображенное изображение, так как оно будет показано в галерее
-                        # st.markdown(
-                        #     f"""
-                        #     <style>
-                        #         [data-testid="stImage"]:nth-of-type({len(image_urls)}) {{
-                        #             display: none;
-                        #         }}
-                        #     </style>
-                        #     """, 
-                        #     unsafe_allow_html=True
-                        # )
         
-        # Создаем и отображаем HTML-галерею с анимацией
         gallery_html = create_gallery_html(image_urls, captions)
         
-        # Добавляем анимацию и сразу отображаем
         animated_gallery = animations.animate_section(gallery_html, animation_type='fadeInUp', delay=0)
         st.markdown(animated_gallery, unsafe_allow_html=True)
     else:
-        # Изображения недоступны, отображаем сообщение с анимацией
         animations.animate_text("Изображения проектов временно недоступны", tag="p", css_class="fadeIn", delay=0, additional_style="color: #666; font-style: italic; text-align: center;")
 
 def display_gallery_section():
