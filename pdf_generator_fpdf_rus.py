@@ -278,19 +278,20 @@ def _add_section_images_grid(pdf, image_paths):
 
     margin_x = 10
     gap = 5
+    page_bottom = 255
     num_rows = (len(valid) + 1) // 2
-    available_h = 277 - pdf.get_y() - 10
+    start_y = pdf.get_y() + 3
+    available_h = page_bottom - start_y
     max_cell_h = min(55, (available_h - (num_rows - 1) * gap) / num_rows)
     
     if max_cell_h < 25:
         pdf.add_page()
-        available_h = 277 - pdf.get_y() - 10
+        start_y = pdf.get_y() + 3
+        available_h = page_bottom - start_y
         max_cell_h = min(55, (available_h - (num_rows - 1) * gap) / num_rows)
     
     cell_h = max_cell_h
     cell_w = cell_h * (85 / 55)
-    
-    start_y = pdf.get_y() + 3
 
     for idx, img_path in enumerate(valid):
         try:
