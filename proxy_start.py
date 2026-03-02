@@ -104,18 +104,30 @@ if __name__ == "__main__":
 
     print("Health check proxy ready on port 5000", flush=True)
 
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+
     proc = subprocess.Popen(
         [
             sys.executable, "-m", "streamlit", "run", "app.py",
             "--server.port", str(STREAMLIT_PORT),
             "--server.address", "127.0.0.1",
             "--server.headless", "true",
-        ]
+        ],
+        stdout=sys.stdout,
+        stderr=sys.stderr,
+        env=env,
     )
 
     threading.Thread(target=check_streamlit_ready, daemon=True).start()
 
     try:
-        proc.wait()
+        exit_code = proc.wait()
+        print(f"Streamlit exited with code {exit_code}", flush=True)
+        if exit_code != 0:
+            print("Streamlit crashed — restarting in 5 seconds...", flush=True)
+            import time
+            time.sleep(5)
+            os.execv(sys.executable, [sys.executable] + sys.argv)
     except KeyboardInterrupt:
         proc.terminate()
