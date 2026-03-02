@@ -39,9 +39,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!data.success) return;
                 var container = document.getElementById('lamella-options');
                 container.innerHTML = '';
+                var defaultIdx = 0;
+                data.sizes.forEach(function(s, i) {
+                    if (s.id === '250') defaultIdx = i;
+                });
                 data.sizes.forEach(function(s, i) {
                     var div = document.createElement('div');
-                    div.className = 'lamella-option col-12 col-md-6 mb-2' + (i === 0 ? ' selected' : '');
+                    div.className = 'lamella-option col-12 col-md-6 mb-2' + (i === defaultIdx ? ' selected' : '');
                     div.dataset.size = s.id;
                     div.dataset.lamellaType = s.lamella_type;
                     div.innerHTML = '<div class="lamella-name">' + s.name + '</div>';
@@ -56,8 +60,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 if (data.sizes.length > 0) {
-                    state.lamellaSize = data.sizes[0].id;
-                    state.lamellaType = data.sizes[0].lamella_type;
+                    var def = data.sizes[defaultIdx];
+                    state.lamellaSize = def.id;
+                    state.lamellaType = def.lamella_type;
                 }
                 if (data.max_dimensions) {
                     state.maxWidth = data.max_dimensions.width;
