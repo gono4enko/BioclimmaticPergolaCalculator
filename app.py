@@ -4320,20 +4320,25 @@ def main():
     # Добавляем стили для уменьшения отступов страницы
     st.markdown("""
     <style>
-    /* Уменьшаем отступы в начале страницы */
     .main .block-container {
-        padding-top: 0px !important;
+        padding-top: 1rem !important;
         margin-top: 0px !important;
     }
-    /* Уменьшаем отступы для заголовков */
+    header[data-testid="stHeader"] {
+        height: 0px !important;
+        min-height: 0px !important;
+        padding: 0 !important;
+    }
     h1 {
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
-    /* Уменьшаем отступы для всех элементов Streamlit */
     .stHeadingContainer {
         margin-top: 0 !important;
         padding-top: 0 !important;
+    }
+    .stAppViewBlockContainer {
+        padding-top: 1rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
