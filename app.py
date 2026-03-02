@@ -1347,6 +1347,7 @@ def render_dimensions_form():
     from streamlit.components.v1 import html
     
     st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Размеры перголы</h2>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-bottom: 18px;'></div>", unsafe_allow_html=True)
     
     current_pergola_type = st.session_state.get("pergola_type")
     current_lamella_size = st.session_state.get("lamella_size", "250")
@@ -1661,8 +1662,8 @@ def render_additional_options_form():
     </style>
     """, unsafe_allow_html=True)
     
-    # Прямой подход к созданию чекбоксов для освещения с фиксированными отступами
-    st.write("Освещение")
+    st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Освещение</h2>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-bottom: 18px;'></div>", unsafe_allow_html=True)
     
     # Добавляем CSS для установки точных отступов как у radio buttons
     st.markdown("""
@@ -1722,8 +1723,8 @@ def render_additional_options_form():
         with lc1:
             st.image(rgb_img, caption="RGB-подсветка", use_column_width=True)
     
-    # Прямой подход к созданию чекбокса для установки - такой же как для освещения
-    st.write("Установка")
+    st.markdown("<h2 class='section-header' style='text-align: center; margin-bottom: 5px;'>Установка</h2>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-bottom: 18px;'></div>", unsafe_allow_html=True)
     
     # Добавляем CSS для чекбокса установки с теми же стилями, что у освещения
     st.markdown("""
