@@ -149,9 +149,8 @@ class PDF(FPDF):
             text = str(data[i])
             tw = self.get_string_width(text)
             if tw > widths[i] - 4:
-                self.set_xy(x_start + sum(widths[:i]), y_start)
-                self.multi_cell(widths[i], lh, text, 0, aligns[i])
-                cell_h = self.get_y() - y_start
+                lines = self.multi_cell(widths[i] - 2, lh, text, 0, 'L', split_only=True)
+                cell_h = len(lines) * lh
                 if cell_h > max_h:
                     max_h = cell_h
 
@@ -159,13 +158,11 @@ class PDF(FPDF):
             text = str(data[i])
             tw = self.get_string_width(text)
             cx = x_start + sum(widths[:i])
-            self.set_xy(cx, y_start)
+            self.rect(cx, y_start, widths[i], max_h)
             if tw > widths[i] - 4:
-                self.rect(cx, y_start, widths[i], max_h)
                 self.set_xy(cx + 1, y_start)
                 self.multi_cell(widths[i] - 2, lh, text, 0, aligns[i])
             else:
-                self.rect(cx, y_start, widths[i], max_h)
                 self.set_xy(cx, y_start + (max_h - lh) / 2)
                 self.cell(widths[i], lh, text, 0, 0, aligns[i])
 
@@ -232,6 +229,25 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
     pergola_data["image_caption"] = get_pergola_image_caption(options["pergola_type"])
     
     return pergola_data
+
+
+def _compress_image_for_pdf(img_path, max_width=800, quality=60):
+    """Сжимает изображение для PDF, возвращает путь к сжатому файлу."""
+    try:
+        from PIL import Image as PILImage
+        img = PILImage.open(img_path)
+        if img.mode == 'RGBA':
+            img = img.convert('RGB')
+        w, h = img.size
+        if w > max_width:
+            ratio = max_width / w
+            img = img.resize((max_width, int(h * ratio)), PILImage.LANCZOS)
+        import tempfile
+        tmp = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
+        img.save(tmp.name, 'JPEG', quality=quality, optimize=True)
+        return tmp.name
+    except Exception:
+        return img_path
 
 
 def _get_gallery_images(max_images=8):
@@ -641,12 +657,13 @@ def generate_commercial_offer(pergola_data, user_data=None):
                             
                             # Вставляем изображение с явным указанием ширины и высоты
                             # для гарантии сохранения пропорций
+                            compressed = _compress_image_for_pdf(img_path, max_width=1000, quality=65)
                             pdf.image(
-                                img_path,
-                                x=(210 - img_width_mm) / 2,  # центрируем
-                                y=pdf.get_y(),  # текущая позиция Y
-                                w=img_width_mm,  # ширина
-                                h=img_height_mm  # высота, рассчитанная с сохранением пропорций
+                                compressed,
+                                x=(210 - img_width_mm) / 2,
+                                y=pdf.get_y(),
+                                w=img_width_mm,
+                                h=img_height_mm
                             )
                             print(f"Добавлено изображение в PDF: {img_path}")
                         except Exception as e:
@@ -678,7 +695,8 @@ def generate_commercial_offer(pergola_data, user_data=None):
                         x = x_left if j == 0 else x_right
                         try:
                             from PIL import Image as PILImage
-                            img_obj = PILImage.open(img_path)
+                            compressed = _compress_image_for_pdf(img_path)
+                            img_obj = PILImage.open(compressed)
                             w, h = img_obj.size
                             ratio = h / w
                             img_h = img_w * ratio
@@ -687,7 +705,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
                                 img_w_actual = img_h / ratio
                             else:
                                 img_w_actual = img_w
-                            pdf.image(img_path, x=x, y=y_start, w=img_w_actual, h=img_h)
+                            pdf.image(compressed, x=x, y=y_start, w=img_w_actual, h=img_h)
                             pdf.set_xy(x, y_start + img_h + 1)
                             pdf.set_font('DejaVu', '', 7)
                             pdf.cell(img_w, 4, caption[:60], 0, 0, 'C')
@@ -700,7 +718,8 @@ def generate_commercial_offer(pergola_data, user_data=None):
                     img_path, caption = batch[0]
                     try:
                         from PIL import Image as PILImage
-                        img_obj = PILImage.open(img_path)
+                        compressed = _compress_image_for_pdf(img_path)
+                        img_obj = PILImage.open(compressed)
                         w, h = img_obj.size
                         ratio = h / w
                         img_w = 85
@@ -709,7 +728,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
                             img_h = 80
                             img_w = img_h / ratio
                         x = (210 - img_w) / 2
-                        pdf.image(img_path, x=x, y=pdf.get_y(), w=img_w, h=img_h)
+                        pdf.image(compressed, x=x, y=pdf.get_y(), w=img_w, h=img_h)
                         pdf.set_y(pdf.get_y() + img_h + 1)
                         pdf.set_font('DejaVu', '', 7)
                         pdf.cell(0, 4, caption[:60], 0, 1, 'C')
