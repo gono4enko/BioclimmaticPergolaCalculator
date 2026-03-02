@@ -84,21 +84,48 @@ def export_pdf():
         if not data:
             return jsonify({'success': False, 'error': 'Отсутствуют данные'}), 400
 
-        from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
+        from pdf_generator_fpdf_rus import generate_commercial_offer
+        from config.pergola_descriptions import (
+            get_modular_system_description,
+            get_drainage_system_description,
+            get_pergola_images,
+            get_pergola_image_caption
+        )
 
         result = data.get('result', {})
         options = result.get('options', {})
         dimensions = result.get('dimensions', {})
+        totals = result.get('totals', {})
+        euro_rate = result.get('euro_rate', 110)
 
-        pdf_result = dict(result)
-        if 'total_price_eur' in pdf_result:
-            euro_rate = pdf_result.get('euro_rate', 110)
-            pdf_result['base_price'] = pdf_result['total_price_eur'] * euro_rate
-            pdf_result['total_price'] = pdf_result.get('totals', {}).get('cash', pdf_result['base_price'])
-            for item in pdf_result.get('items', []):
-                item['price'] = round(item['price'] * euro_rate)
+        rub_items = []
+        for item in result.get('items', []):
+            rub_items.append({
+                'name': item['name'],
+                'price': round(item['price'] * euro_rate)
+            })
 
-        pergola_data = format_pergola_data_for_pdf(pdf_result, options, dimensions, "")
+        pergola_data = {
+            'pergola_type': options.get('pergola_type', ''),
+            'lamella_type': options.get('lamella_type', ''),
+            'width': dimensions.get('width', 0),
+            'length': dimensions.get('length', 0),
+            'modules': dimensions.get('modules', 1),
+            'euro_rate': 1,
+            'items': rub_items,
+            'specification': result.get('specification', []),
+            'base_price': totals.get('cash', 0),
+            'total_cost': totals.get('cash', 0),
+            'cash_total': totals.get('cash', 0),
+            'noncash_total': totals.get('non_cash', 0),
+            'vat_total': totals.get('with_vat', 0),
+            'description': '',
+            'modular_description': get_modular_system_description(),
+            'drainage_description': get_drainage_system_description(),
+            'image_paths': get_pergola_images(options.get('pergola_type', '')),
+            'image_caption': get_pergola_image_caption(options.get('pergola_type', ''))
+        }
+
         pdf_bytes = generate_commercial_offer(pergola_data)
 
         if not pdf_bytes:
