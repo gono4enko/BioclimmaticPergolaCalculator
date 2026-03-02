@@ -456,25 +456,33 @@ def generate_commercial_offer(pergola_data, user_data=None):
                 # Меняем выравнивание с R (правого) на L (левое) для соответствия таблице спецификации
                 pdf.table_row([str(i), item['name'], price_str], widths, aligns=["C", "L", "L"], row_height=6)
                 
-            # Добавляем итоговую строку
-            pdf.set_fill_color(211, 211, 211)  # Светло-серый цвет
-            pdf.set_font('DejaVu', 'B', 11)  # Увеличиваем шрифт для итоговой суммы
-            pdf.set_text_color(0, 0, 0)  # Черный текст
+            def _format_total(val):
+                v = round(val)
+                return f"{v:,d}".replace(',', ' ') + " ₽"
             
-            # Форматируем итоговую цену
-            total_price_value = int(total_cost)
-            if total_price_value >= 1000000:
-                # Для миллионов форматируем как "1 234 567 ₽"
-                total_price_str = f"{total_price_value:,d}".replace(',', ' ') + " ₽"
+            discount = pergola_data.get('discount', 0)
+            if discount and discount > 0:
+                cash_total = pergola_data.get('total_price_after_discount', total_cost)
             else:
-                # Для других значений так же
-                total_price_str = f"{total_price_value:,d}".replace(',', ' ') + " ₽"
+                cash_total = total_cost
+            noncash_total = cash_total * 1.08
+            vat_total = cash_total * 1.15
+            
+            pdf.set_fill_color(211, 211, 211)
+            pdf.set_font('DejaVu', 'B', 10)
+            pdf.set_text_color(0, 0, 0)
             
             pdf.cell(10, 10, "", 1, 0, "C", fill=True)
-            pdf.cell(83, 10, "ИТОГО:", 1, 0, "R", fill=True)
-            pdf.cell(67, 10, total_price_str, 1, 1, "L", fill=True)
+            pdf.cell(83, 10, "ИТОГО (Наличный расчёт):", 1, 0, "R", fill=True)
+            pdf.cell(67, 10, _format_total(cash_total), 1, 1, "L", fill=True)
             
-            # Убрали дублирование итоговой суммы, чтобы не повторяться
+            pdf.cell(10, 10, "", 1, 0, "C", fill=True)
+            pdf.cell(83, 10, "ИТОГО (Безналичный расчёт):", 1, 0, "R", fill=True)
+            pdf.cell(67, 10, _format_total(noncash_total), 1, 1, "L", fill=True)
+            
+            pdf.cell(10, 10, "", 1, 0, "C", fill=True)
+            pdf.cell(83, 10, "ИТОГО (С НДС 22%):", 1, 0, "R", fill=True)
+            pdf.cell(67, 10, _format_total(vat_total), 1, 1, "L", fill=True)
         else:
             pdf.set_font('DejaVu', '', 10)
             pdf.cell(0, 7, "Данные о стоимости отсутствуют", 0, 1)

@@ -1880,7 +1880,7 @@ def render_results(results, show_articles=False):
             <strong>Количество модулей:</strong> {modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}
         </p>
         <div id="scroll-target-price" style='font-size: 1.4rem; font-weight: 700; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0; text-align: center;'>
-            {f'Итоговая стоимость со скидкой:' if total_discount > 0 else 'Итоговая стоимость:'} <span style='font-size: 1.5rem; color: {"#1b5e20" if total_discount > 0 else "#0066cc"};'>{formatted_price} ₽</span>
+            {f'Итого (Наличный расчёт) со скидкой:' if total_discount > 0 else 'Итого (Наличный расчёт):'} <span style='font-size: 1.5rem; color: {"#1b5e20" if total_discount > 0 else "#0066cc"};'>{formatted_price} ₽</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -2007,17 +2007,18 @@ def render_results(results, show_articles=False):
     
     # Условие: если есть скидка > 0
     if "discount" in results and results["discount"] > 0:
-        # Итоговая строка БЕЗ учета скидки (если есть скидка)
         items_data.append(["Итого:", format_price(rub_total)])
-        
-        # Добавляем строку со скидкой (скидка отображается зеленым цветом)
         items_data.append(["Скидка по акции:", f"-{format_price(discount_amount)}"])
-        
-        # Добавляем строку с итоговой ценой после скидки
-        items_data.append(["Итого:", format_price(final_price)])
+        cash_price = final_price
+        items_data.append(["Итого (Наличный расчёт):", format_price(cash_price)])
     else:
-        # Если скидки нет, показываем только итоговую строку
-        items_data.append(["Итоговая стоимость:", format_price(rub_total)])
+        cash_price = rub_total
+        items_data.append(["Итого (Наличный расчёт):", format_price(cash_price)])
+    
+    noncash_price = cash_price * 1.08
+    vat_price = cash_price * 1.15
+    items_data.append(["Итого (Безналичный расчёт):", format_price(noncash_price)])
+    items_data.append(["Итого (С НДС 22%):", format_price(vat_price)])
     
     # Создаем HTML-таблицу напрямую для обхода проблем с шириной
     html_table = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px;">'
@@ -2030,60 +2031,41 @@ def render_results(results, show_articles=False):
     
     # Добавляем строки с данными
     for i, item in enumerate(items_data):
-        # Особое форматирование для итоговой строки
-        if i == len(items_data) - 1:
-            # Проверяем, является ли это итоговая строка со скидкой или без
-            is_final_with_discount = item[0] == "Итого:" and i == len(items_data) - 1
-            is_final_without_discount = "Итоговая стоимость:" in item[0]
-            
-            if is_final_with_discount:
-                # Стиль для итоговой строки СО скидкой (зеленый)
-                html_table += '<tr style="background-color:#e0ffea;">'
-                html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #1b5e20; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
-                
-                # Применяем специальный класс для значения "Итоговая стоимость со скидкой"
-                html_table += f"""
-                <td style="text-align:right; padding:8px 5px; border-bottom:2px solid #1b5e20; font-weight:bold; color:#1b5e20; white-space:nowrap;" class="responsive-total">
-                    <div style="display:inline-block; width:100%;">{item[1]}</div>
-                </td>
-                """
-            elif is_final_without_discount:
-                # Стиль для итоговой строки БЕЗ скидки (синий)
-                html_table += '<tr style="background-color:#e0f0ff;">'
-                html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #3f6daa; word-wrap:break-word; font-weight:bold; font-size:1.35rem; white-space:nowrap;">{item[0]}</td>'
-                
-                # Применяем специальный класс для значения "Итоговая стоимость" (без скидки)
-                html_table += f"""
-                <td style="text-align:right; padding:8px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; color:#0066cc; white-space:nowrap;" class="responsive-total">
-                    <div style="display:inline-block; width:100%;">{item[1]}</div>
-                </td>
-                """
-            else:
-                # Стиль для строки "Итого" (нейтральный серый)
-                html_table += '<tr style="background-color:#f5f5f5;">'
-                html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #cccccc; word-wrap:break-word; font-weight:bold; font-size:1.1rem; white-space:nowrap;">{item[0]}</td>'
-                
-                # Применяем специальный класс для значения "Итого" 
-                html_table += f"""
-                <td style="text-align:right; padding:8px 5px; border-bottom:1px solid #cccccc; font-weight:bold; color:#333333; white-space:nowrap;" class="responsive-total">
-                    <div style="display:inline-block; width:100%;">{item[1]}</div>
-                </td>
-                """
+        is_discount = item[0] == "Скидка по акции:" or item[1].startswith("-")
+        is_cash_total = "Наличный расчёт" in item[0]
+        is_noncash_total = "Безналичный расчёт" in item[0]
+        is_vat_total = "С НДС" in item[0]
+        is_plain_total = item[0] == "Итого:" and not is_cash_total
+        
+        if is_cash_total:
+            html_table += '<tr style="background-color:#e0ffea;">'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #1b5e20; font-weight:bold; font-size:1.15rem; white-space:nowrap;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 5px; border-bottom:2px solid #1b5e20; font-weight:bold; color:#1b5e20; white-space:nowrap; font-size:1.3rem;">{item[1]}</td>'
+            html_table += '</tr>'
+        elif is_noncash_total:
+            html_table += '<tr style="background-color:#e8f0fe;">'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; font-size:1.1rem; white-space:nowrap;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 5px; border-bottom:2px solid #3f6daa; font-weight:bold; color:#0066cc; white-space:nowrap; font-size:1.2rem;">{item[1]}</td>'
+            html_table += '</tr>'
+        elif is_vat_total:
+            html_table += '<tr style="background-color:#fff8e1;">'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:2px solid #f57f17; font-weight:bold; font-size:1.1rem; white-space:nowrap;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 5px; border-bottom:2px solid #f57f17; font-weight:bold; color:#e65100; white-space:nowrap; font-size:1.2rem;">{item[1]}</td>'
+            html_table += '</tr>'
+        elif is_plain_total:
+            html_table += '<tr style="background-color:#f5f5f5;">'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #ccc; font-weight:bold; font-size:1.05rem; white-space:nowrap;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 5px; border-bottom:1px solid #ccc; font-weight:bold; color:#333; white-space:nowrap; font-size:1.1rem;">{item[1]}</td>'
+            html_table += '</tr>'
+        elif is_discount:
+            html_table += '<tr style="background-color:#eaffea;">'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; font-size:0.9rem; color:#2e7d32; font-weight:500;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem; color:#2e7d32; font-weight:500;">{item[1]}</td>'
             html_table += '</tr>'
         else:
-            # Проверяем, является ли строка скидкой (скидки начинаются с минуса)
-            is_discount = item[0] == "Скидка по акции:" or item[1].startswith("-")
-            
-            # Применяем специальные стили для скидок
-            if is_discount:
-                html_table += '<tr style="background-color:#eaffea;">' # Светло-зеленый фон для скидок
-                html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem; color:#2e7d32; font-weight:500;">{item[0]}</td>'
-                html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem; color:#2e7d32; font-weight:500;">{item[1]}</td>'
-            else:
-                html_table += '<tr>'
-                html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; word-wrap:break-word; font-size:0.9rem;">{item[0]}</td>'
-                html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem;">{item[1]}</td>'
-            
+            html_table += '<tr>'
+            html_table += f'<td style="text-align:left; padding:8px 5px; border-bottom:1px solid #eee; font-size:0.9rem;">{item[0]}</td>'
+            html_table += f'<td style="text-align:right; padding:8px 10px; border-bottom:1px solid #eee; font-size:0.9rem;">{item[1]}</td>'
             html_table += '</tr>'
     
     html_table += '</table>'
@@ -2739,19 +2721,29 @@ def create_simple_pdf(pergola_data):
         # Добавляем строку в таблицу
         table_data.append([name, price_str])
     
-    # Итоговая строка 
-    total_str = f"{total_cost:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
-    table_data.append(["ИТОГО:", total_str])
-    
-    # Если есть скидка, добавляем строку со скидкой и итоговую сумму со скидкой
     discount = pergola_data.get("discount", 0)
     if discount > 0:
+        total_str = f"{total_cost:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
+        table_data.append(["ИТОГО:", total_str])
+        
         discount_str = f"{discount:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
         table_data.append(["СКИДКА:", discount_str])
         
         total_after_discount = pergola_data.get("total_price_after_discount", total_cost)
-        total_after_discount_str = f"{total_after_discount:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
-        table_data.append(["ИТОГО СО СКИДКОЙ:", total_after_discount_str])
+        cash_total = total_after_discount
+    else:
+        cash_total = total_cost
+    
+    cash_str = f"{cash_total:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
+    table_data.append(["ИТОГО (Наличный расчёт):", cash_str])
+    
+    noncash_total = cash_total * 1.08
+    noncash_str = f"{noncash_total:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
+    table_data.append(["ИТОГО (Безналичный расчёт):", noncash_str])
+    
+    vat_total = cash_total * 1.15
+    vat_str = f"{vat_total:,.2f}".replace(",", " ").replace(".", ",") + " ₽"
+    table_data.append(["ИТОГО (С НДС 22%):", vat_str])
     
     # Создаем таблицу
     table = Table(table_data, colWidths=[350, 150])
@@ -2762,11 +2754,11 @@ def create_simple_pdf(pergola_data):
         ('TEXTCOLOR', (0, 0), (1, 0), colors.black),
         ('ALIGN', (0, 0), (0, -1), 'LEFT'),
         ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-        ('FONTNAME', (0, 0), (1, 0), 'DejaVuSans-Bold'),  # Используем кириллический шрифт
-        ('FONTNAME', (0, 1), (-1, -2), 'DejaVuSans'),     # Используем кириллический шрифт
-        ('FONTNAME', (0, -1), (1, -1), 'DejaVuSans-Bold'), # Используем кириллический шрифт для итоговой строки
+        ('FONTNAME', (0, 0), (1, 0), 'DejaVuSans-Bold'),
+        ('FONTNAME', (0, 1), (-1, -4), 'DejaVuSans'),
+        ('FONTNAME', (0, -3), (1, -1), 'DejaVuSans-Bold'),
         ('BOTTOMPADDING', (0, 0), (1, 0), 12),
-        ('BACKGROUND', (0, -1), (1, -1), colors.lightgrey),
+        ('BACKGROUND', (0, -3), (1, -1), colors.lightgrey),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
     ])
     
