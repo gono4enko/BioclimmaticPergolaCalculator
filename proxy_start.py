@@ -131,6 +131,14 @@ if __name__ == "__main__":
 
     print("[proxy] Health check proxy ready on port 5000", flush=True)
 
+    print("[proxy] Pre-compiling Python files...", flush=True)
+    subprocess.run(
+        [sys.executable, "-m", "compileall", "-q", "-j", "0", "."],
+        timeout=30,
+        capture_output=True,
+    )
+    print("[proxy] Pre-compilation done", flush=True)
+
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
 

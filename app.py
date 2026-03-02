@@ -3,46 +3,48 @@
 Максимально простой подход с использованием стандартных компонентов Streamlit
 """
 import streamlit as st
-from streamlit.components.v1 import html
-import pandas as pd
 import io
 import json
 import sys
-import time
-import os
-# Импортируем функции для работы с Яндекс.Метрикой
-from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
-# Импортируем функцию для плавного скролла
-from scroll import smooth_scroll_to
-# Импортируем функцию для виртуального скролла
-from auto_scroll import create_growing_spacer
-# Импортируем модуль для анимаций и визуальных эффектов
-import animations
-# Импортируем модуль для плавающих кнопок навигации
-from floating_buttons import add_results_navigation_button, add_dimensions_edit_button
-# Импортируем модуль кэширования и оптимизации изображений
-from image_cache import preload_all_pergola_images, get_optimized_pergola_images, preload_images_js
-# Импортируем модуль для генерации PDF
-from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
-# Импортируем модуль оптимизации производительности
-from performance_optimizations import optimize_images_loading, optimize_form_rendering, add_page_speed_optimizations
-# Импортируем модуль оптимизации для iframe
-from iframe_optimizer import optimize_for_iframe, add_content_visibility_optimizations, optimize_startup_sequence
-# Импортируем модуль определения iframe
-from iframe_detector import adapt_for_iframe
-# Импортируем модуль для исправления отступов вверху страницы
-from fix_top_padding import remove_padding_top
 import os
 import math
 import csv
-import time
 import base64
 import uuid
 from datetime import datetime
-# Импортируем модуль для отображения галереи проектов
-from components.gallery import display_gallery_section
-# Импортируем модуль настроек цен и наценок
 from config import pricing_settings
+
+_lazy_cache = {}
+
+def _lazy_import_gallery():
+    if 'gallery' not in _lazy_cache:
+        from components.gallery import display_gallery_section
+        _lazy_cache['gallery'] = display_gallery_section
+    return _lazy_cache['gallery']
+
+def _lazy_import_pdf():
+    if 'pdf' not in _lazy_cache:
+        from pdf_generator_fpdf_rus import generate_commercial_offer, format_pergola_data_for_pdf
+        _lazy_cache['pdf'] = (generate_commercial_offer, format_pergola_data_for_pdf)
+    return _lazy_cache['pdf']
+
+def _lazy_import_image_cache():
+    if 'img' not in _lazy_cache:
+        from image_cache import get_optimized_pergola_images
+        _lazy_cache['img'] = get_optimized_pergola_images
+    return _lazy_cache['img']
+
+def _lazy_import_yandex():
+    if 'ya' not in _lazy_cache:
+        from add_yandex_metrika import add_yandex_metrika, send_calc_success_event
+        _lazy_cache['ya'] = (add_yandex_metrika, send_calc_success_event)
+    return _lazy_cache['ya']
+
+def _lazy_import_floating_buttons():
+    if 'fb' not in _lazy_cache:
+        from floating_buttons import add_results_navigation_button, add_dimensions_edit_button
+        _lazy_cache['fb'] = (add_results_navigation_button, add_dimensions_edit_button)
+    return _lazy_cache['fb']
 
 def get_plural_form(number, one, two, five):
     """
@@ -1522,7 +1524,7 @@ def render_pergola_type_form():
             
         # Создаем контейнер с изображениями в две колонки с использованием оптимизированного кэша
         # Получаем оптимизированные HTML-теги для изображений перголы из кэша
-        left_image_html, right_image_html = get_optimized_pergola_images(pergola_type)
+        left_image_html, right_image_html = _lazy_import_image_cache()(pergola_type)
         
         if left_image_html:
             # Добавляем стили для изображений и контейнеров
@@ -3991,9 +3993,6 @@ def add_smart_device_adaptation():
 
 def main():
     """Основная функция приложения"""
-    # Импортируем модуль для плавающих кнопок
-    from floating_buttons import add_results_navigation_button, add_dimensions_edit_button
-    # Импортируем модуль для прямого внедрения кнопок
     from direct_buttons import inject_direct_buttons
     
     # Настраиваем страницу - это должно быть первой командой Streamlit
@@ -4017,7 +4016,7 @@ def main():
     if 'images_preloaded' not in st.session_state:
         for img_path in critical_images:
             if os.path.exists(img_path):
-                get_optimized_pergola_images("B500NEW")
+                _lazy_import_image_cache()("B500NEW")
         st.session_state['images_preloaded'] = True
     
     # Определяем iframe без рендеринга (только проверка query params)
@@ -4079,7 +4078,7 @@ def main():
     add_smart_device_adaptation()
     
     # Добавляем код счетчика Яндекс.Метрики
-    add_yandex_metrika()
+    _lazy_import_yandex()[0]()
     
     # Добавляем прямые плавающие кнопки навигации (новый метод)
     # Проверяем, что мы не на странице администрирования
@@ -4102,7 +4101,7 @@ def main():
     # Проверяем, нужно ли отправить событие в Яндекс.Метрику
     if st.session_state.get('send_ya_metrika_event', False):
         # Отправляем событие через JavaScript
-        send_calc_success_event()
+        _lazy_import_yandex()[1]()
         # Сбрасываем флаг, чтобы не отправлять событие снова
         st.session_state.send_ya_metrika_event = False
     
@@ -4691,19 +4690,39 @@ def main():
         render_results(st.session_state.results, show_articles=False)
         
         if st.session_state.get('scroll_to_results', False):
-            st.markdown("""<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" 
-                onload="(function(){
-                    var t = document.getElementById('scroll-target-price');
-                    if(!t){var h=document.querySelectorAll('h2,h3,h4');for(var i=0;i<h.length;i++){if(h[i].textContent.indexOf('Итоговая стоимость')>=0||h[i].textContent.indexOf('Спецификация')>=0){t=h[i];break;}}}
-                    if(t){setTimeout(function(){t.scrollIntoView({behavior:'smooth',block:'center'});},600);}
-                })()" style="height:0;width:0;position:absolute;opacity:0">""", unsafe_allow_html=True)
+            from streamlit.components.v1 import html as st_html
+            st_html("""
+            <script>
+            (function(){
+                var doc;
+                try { doc = window.parent.document; } catch(e) { doc = document; }
+                var attempts = 0;
+                function tryScroll(){
+                    try {
+                        var t = doc.getElementById('scroll-target-price');
+                        if(!t){
+                            var divs = doc.querySelectorAll('div[id*="scroll-target"]');
+                            if(divs.length > 0) t = divs[divs.length - 1];
+                        }
+                        if(t){
+                            t.scrollIntoView({behavior:'smooth', block:'center'});
+                            return;
+                        }
+                    } catch(e){}
+                    if(attempts < 30){
+                        attempts++;
+                        setTimeout(tryScroll, 200);
+                    }
+                }
+                setTimeout(tryScroll, 400);
+            })();
+            </script>
+            """, height=0)
             st.session_state.scroll_to_results = False
         
-        # Добавляем кнопку навигации к результатам расчета
-        add_results_navigation_button()
-        
-        # Добавляем кнопку для возврата к форме размеров
-        add_dimensions_edit_button()
+        _nav_btn, _dim_btn = _lazy_import_floating_buttons()
+        _nav_btn()
+        _dim_btn()
     
     # Добавляем стили для уменьшения вертикального пробела между результатами и галереей
     st.markdown("""
@@ -4753,7 +4772,7 @@ def main():
     """, unsafe_allow_html=True)
     
     # Всегда отображаем галерею проектов и счетчик установленных пергол
-    display_gallery_section()
+    _lazy_import_gallery()()
     
     # Добавляем информацию о версии внизу страницы (компактно)
     st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.3rem; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
