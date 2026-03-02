@@ -19,16 +19,14 @@ logger = logging.getLogger(__name__)
 
 # Регистрация русских шрифтов (при наличии)
 try:
-    # Пути к шрифтам
-    FONT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts')
+    FONT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'fonts')
     os.makedirs(FONT_DIR, exist_ok=True)
     
-    # Проверка наличия шрифтов и их регистрация
     font_files = {
-        'Arial': 'arial.ttf',
-        'ArialBold': 'arialbd.ttf',
-        'ArialItalic': 'ariali.ttf',
-        'ArialBoldItalic': 'arialbi.ttf',
+        'Arial': 'DejaVuSans.ttf',
+        'ArialBold': 'DejaVuSans-Bold.ttf',
+        'ArialItalic': 'DejaVuSansCondensed-Oblique.ttf',
+        'ArialBoldItalic': 'DejaVuSansCondensed-Bold.ttf',
     }
     
     fonts_registered = False

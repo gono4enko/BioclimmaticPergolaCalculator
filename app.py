@@ -628,10 +628,19 @@ def perform_calculation(dimensions, options):
         pergola_type = options.get("pergola_type", "")
         lamella_type = options.get("lamella_type", "")
         
+        # Определяем размер ламели для проверки максимальных размеров
+        check_lamella_size = "PIR" if "PIR" in lamella_type else ("200" if "200" in lamella_type else "250")
+        
+        # Формируем ключ для MAX_DIMENSIONS с учётом типа перголы и размера ламелей
+        if pergola_type == "B600":
+            dimensions_check_key = pergola_type
+        else:
+            dimensions_check_key = f"{pergola_type}_{check_lamella_size}"
+        
         # Проверяем, не превышает ли размер максимально допустимый для данного типа перголы
-        if pergola_type in MAX_DIMENSIONS:
-            max_width = MAX_DIMENSIONS[pergola_type]["width"]
-            max_length = MAX_DIMENSIONS[pergola_type]["length"]
+        if dimensions_check_key in MAX_DIMENSIONS:
+            max_width = MAX_DIMENSIONS[dimensions_check_key]["width"]
+            max_length = MAX_DIMENSIONS[dimensions_check_key]["length"]
             
             if width_m > max_width:
                 raise ValueError(f"Ширина перголы ({width_m} м) превышает максимально допустимую ({max_width} м) для типа {pergola_type}")
@@ -1230,9 +1239,6 @@ def render_dimensions_form():
     Returns:
         dict: Словарь с введенными размерами
     """
-    # Добавляем ID-якорь для возможности скролла к этой секции
-    st.markdown('<div id="dimensions-form"></div>', unsafe_allow_html=True)
-    
     # Оптимизированная стилизация для более быстрой загрузки и отрисовки формы
     st.markdown("""
     <style>
