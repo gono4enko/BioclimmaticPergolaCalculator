@@ -224,6 +224,34 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
     
     return pergola_data
 
+
+def _get_gallery_images(max_images=8):
+    """Возвращает список (путь, подпись) для галереи в PDF."""
+    IMAGES_DIR = "attached_assets"
+    gallery_list = [
+        ("IMG_5914.jpg", "Пергола B700 у бассейна, Крым"),
+        ("pergola_b500_led_lighting.jpg", "Пергола B500 с LED подсветкой"),
+        ("pergola_b700_poolside.jpg", "Пергола B700 у бассейна"),
+        ("pergola_b500_garden_view.jpg", "Пергола B500 с видом на сад"),
+        ("pergola_evening_lighting.jpg", "Пергола с вечерним освещением"),
+        ("07dbd8458c61f3f439f3722e558aa6ee.jpg", "Пергола B700, загородный дом"),
+        ("5bb7bcac6f5c8462c9cf10d78d650e57.jpg", "Пергола B600 с остеклением"),
+        ("dji_fly_20230928_141856_69_1695900255932_photo_optimized_7813c639.jpg", "Аэрофотосъемка проекта"),
+        ("IMG_0672_2_882acf32.jpg", "Проект перголы B500"),
+        ("IMG_0676_52ddd353.jpg", "Проект перголы B700"),
+        ("IMG_0748_827e14fe.jpg", "Проект перголы B700"),
+        ("IMG_0782_da126d8f.jpg", "Проект перголы B600"),
+    ]
+    result = []
+    for filename, caption in gallery_list:
+        path = os.path.join(IMAGES_DIR, filename)
+        if os.path.exists(path):
+            result.append((path, caption))
+            if len(result) >= max_images:
+                break
+    return result
+
+
 def generate_commercial_offer(pergola_data, user_data=None):
     """
     Генерирует коммерческое предложение в формате PDF на основе 
@@ -619,15 +647,73 @@ def generate_commercial_offer(pergola_data, user_data=None):
             except Exception as e:
                 print(f"Ошибка при обработке HTML: {str(e)}")
         
-        # Добавляем контактную информацию - проверяем, может ли она поместиться на текущей странице
-        # Примерный размер для контактной информации (6 строк по 7 мм + заголовок и отступы)
-        contact_info_height = 60
+        gallery_images = _get_gallery_images()
+        if gallery_images:
+            pdf.add_page()
+            pdf.chapter_title("Галерея наших работ:")
+            pdf.ln(3)
+            
+            for i in range(0, len(gallery_images), 2):
+                if pdf.get_y() + 95 > 277:
+                    pdf.add_page()
+                
+                batch = gallery_images[i:i+2]
+                
+                if len(batch) == 2:
+                    x_left = 15
+                    x_right = 108
+                    img_w = 85
+                    y_start = pdf.get_y()
+                    
+                    for j, (img_path, caption) in enumerate(batch):
+                        x = x_left if j == 0 else x_right
+                        try:
+                            from PIL import Image as PILImage
+                            img_obj = PILImage.open(img_path)
+                            w, h = img_obj.size
+                            ratio = h / w
+                            img_h = img_w * ratio
+                            if img_h > 80:
+                                img_h = 80
+                                img_w_actual = img_h / ratio
+                            else:
+                                img_w_actual = img_w
+                            pdf.image(img_path, x=x, y=y_start, w=img_w_actual, h=img_h)
+                            pdf.set_xy(x, y_start + img_h + 1)
+                            pdf.set_font('DejaVu', '', 7)
+                            pdf.cell(img_w, 4, caption[:60], 0, 0, 'C')
+                        except Exception as e:
+                            print(f"Ошибка добавления фото {img_path}: {e}")
+                    
+                    max_h = 85
+                    pdf.set_y(y_start + max_h + 8)
+                else:
+                    img_path, caption = batch[0]
+                    try:
+                        from PIL import Image as PILImage
+                        img_obj = PILImage.open(img_path)
+                        w, h = img_obj.size
+                        ratio = h / w
+                        img_w = 85
+                        img_h = img_w * ratio
+                        if img_h > 80:
+                            img_h = 80
+                            img_w = img_h / ratio
+                        x = (210 - img_w) / 2
+                        pdf.image(img_path, x=x, y=pdf.get_y(), w=img_w, h=img_h)
+                        pdf.set_y(pdf.get_y() + img_h + 1)
+                        pdf.set_font('DejaVu', '', 7)
+                        pdf.cell(0, 4, caption[:60], 0, 1, 'C')
+                        pdf.ln(5)
+                    except Exception as e:
+                        print(f"Ошибка добавления фото {img_path}: {e}")
         
-        # Проверяем, поместится ли контактная информация на текущей странице
+        contact_info_height = 80
+        
         if 297 - pdf.get_y() < contact_info_height:
             pdf.add_page()
         else:
-            pdf.ln(15)  # Добавляем отступ перед контактной информацией
+            pdf.ln(10)
             
         pdf.chapter_title("Примечания:")
         

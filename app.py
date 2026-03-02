@@ -2096,42 +2096,41 @@ def render_results(results, show_articles=False):
     # Добавляем кнопку для экспорта PDF
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        # Определяем стиль кнопки с улучшенным внешним видом
-        button_style = """
+        st.markdown("""
         <style>
-        .pdf-button {
-            background-color: #3f6daa;
-            color: white;
-            padding: 12px 20px;
-            font-size: 16px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            display: inline-block;
-            text-align: center;
-            margin: 10px auto;
-            width: 100%;
-            transition: background-color 0.3s, transform 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        div[data-testid="stDownloadButton"] > button {
+            background-color: #0066cc !important;
+            color: white !important;
+            border: none !important;
+            padding: 0.8rem 1rem !important;
+            font-size: 1.1rem !important;
+            height: 60px !important;
+            min-width: 300px !important;
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2) !important;
+            white-space: nowrap !important;
         }
-        .pdf-button:hover {
-            background-color: #2c4b75;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        div[data-testid="stDownloadButton"] > button:hover {
+            background-color: #0055aa !important;
+            box-shadow: 0 6px 15px rgba(0, 102, 204, 0.4) !important;
         }
-        .pdf-button:active {
-            transform: translateY(0);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        div[data-testid="stDownloadButton"] > button p {
+            color: white !important;
+            white-space: nowrap !important;
+            font-size: 1.1rem !important;
+            line-height: 1 !important;
         }
         </style>
-        """
-        st.markdown(button_style, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
         
         pdf_bytes, file_name = export_to_pdf()
         
         if pdf_bytes:
             st.download_button(
-                label="📄 Экспорт КП в PDF",
+                label="📄 ЭКСПОРТ КП В PDF",
                 data=pdf_bytes,
                 file_name=file_name,
                 mime="application/pdf",
@@ -2141,11 +2140,10 @@ def render_results(results, show_articles=False):
             )
         else:
             st.button(
-                "📄 Экспорт КП в PDF",
+                "📄 ЭКСПОРТ КП В PDF",
                 key="export_pdf_button_disabled",
                 use_container_width=True,
                 disabled=True,
-                help="Ошибка генерации PDF",
             )
     
     # Отображаем разделитель между таблицей стоимости и описанием перголы
