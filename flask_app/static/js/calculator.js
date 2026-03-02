@@ -271,15 +271,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(function(r) { return r.json(); })
         .then(function(data) {
             if (!data.success) return;
-            var promoEl = document.getElementById('promo-container');
-            if (promoEl && data.badges && data.badges.length > 0) {
-                var html = '<div class="promo-badges">';
-                data.badges.forEach(function(b) {
-                    html += '<span class="promo-badge" style="background-color:' + b.color + ';">' + b.text + '</span>';
-                });
-                html += '</div>';
-                promoEl.innerHTML = html;
-            }
             var counterEl = document.getElementById('install-counter');
             if (counterEl && data.install_count > 0) {
                 var n = data.install_count;
