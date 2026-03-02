@@ -11,7 +11,7 @@ SETTINGS_FILE = os.path.join(os.path.dirname(__file__), "pricing_settings.json")
 
 # Значения по умолчанию
 DEFAULT_SETTINGS = {
-    "euro_rate": 110,                    # 1 евро = 110 рублей
+    "euro_rate": 100,                    # 1 евро = 100 рублей
     "delivery_markup_percent": 7,        # 7% наценка за доставку
     "installation_markup_percent": 13,   # 13% наценка за установку
     "content_order": {                   # Порядок отображения блоков контента
