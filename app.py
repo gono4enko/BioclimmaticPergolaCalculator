@@ -1827,7 +1827,7 @@ def render_results(results, show_articles=False):
         <p style='font-size: 1.1rem; margin-bottom: 5px;'>
             <strong>Количество модулей:</strong> {modules} {get_plural_form(modules, 'модуль', 'модуля', 'модулей')}
         </p>
-        <div style='font-size: 1.4rem; font-weight: 700; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0; text-align: center;'>
+        <div id="scroll-target-price" style='font-size: 1.4rem; font-weight: 700; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0; text-align: center;'>
             {f'Итоговая стоимость со скидкой:' if total_discount > 0 else 'Итоговая стоимость:'} <span style='font-size: 1.5rem; color: {"#1b5e20" if total_discount > 0 else "#0066cc"};'>{formatted_price} ₽</span>
         </div>
     </div>
@@ -4681,7 +4681,7 @@ def main():
         render_results(st.session_state.results, show_articles=False)
         
         if st.session_state.get('scroll_to_results', False):
-            smooth_scroll_to('scroll-target-results')
+            smooth_scroll_to('scroll-target-price', center=True)
             st.session_state.scroll_to_results = False
         
         # Добавляем кнопку навигации к результатам расчета
