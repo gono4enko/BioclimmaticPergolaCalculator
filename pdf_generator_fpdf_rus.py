@@ -785,13 +785,23 @@ def generate_commercial_offer(pergola_data, user_data=None):
                         print(f"Изображение не найдено: {img_path}")
                 
                 if section_index == 1:
-                    all_section_imgs = [
-                        "attached_assets/Modular_Design_1772474386813.png",
-                        "attached_assets/Skyroof_Module_Connectors_1772474386813.jpg",
-                        "attached_assets/Drainage_1772474555236.png",
-                        "attached_assets/Skyroof_Drainage_1772474555236.png",
-                    ]
-                    _add_section_images_grid(pdf, all_section_imgs)
+                    section_img = "attached_assets/Снимок_экрана_2026-03-02_в_21.21.46_1772475709699.png"
+                    if os.path.exists(section_img):
+                        from PIL import Image as PILImage
+                        img_obj = PILImage.open(section_img)
+                        w, h = img_obj.size
+                        ratio = h / w
+                        img_w = 170
+                        img_h = img_w * ratio
+                        space_left = 245 - pdf.get_y() - 5
+                        if img_h > space_left:
+                            img_h = space_left
+                            img_w = img_h / ratio
+                        compressed = _compress_image_for_pdf(section_img, max_width=1200, quality=70)
+                        x_pos = (210 - img_w) / 2
+                        pdf.ln(3)
+                        pdf.image(compressed, x=x_pos, y=pdf.get_y(), w=img_w, h=img_h)
+                        pdf.set_y(pdf.get_y() + img_h + 3)
                     
             except Exception as e:
                 print(f"Ошибка при обработке HTML: {str(e)}")
