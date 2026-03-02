@@ -4691,7 +4691,12 @@ def main():
         render_results(st.session_state.results, show_articles=False)
         
         if st.session_state.get('scroll_to_results', False):
-            smooth_scroll_to('scroll-target-price', center=True)
+            st.markdown("""<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" 
+                onload="(function(){
+                    var t = document.getElementById('scroll-target-price');
+                    if(!t){var h=document.querySelectorAll('h2,h3,h4');for(var i=0;i<h.length;i++){if(h[i].textContent.indexOf('Итоговая стоимость')>=0||h[i].textContent.indexOf('Спецификация')>=0){t=h[i];break;}}}
+                    if(t){setTimeout(function(){t.scrollIntoView({behavior:'smooth',block:'center'});},600);}
+                })()" style="height:0;width:0;position:absolute;opacity:0">""", unsafe_allow_html=True)
             st.session_state.scroll_to_results = False
         
         # Добавляем кнопку навигации к результатам расчета
