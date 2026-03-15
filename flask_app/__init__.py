@@ -5,6 +5,7 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_compress import Compress
 
 # Инициализация расширений
 db = SQLAlchemy()
@@ -47,7 +48,13 @@ def create_app(test_config=None):
     for folder in ['generated_pdf', 'uploads', 'static/images']:
         os.makedirs(os.path.join(app.root_path, folder), exist_ok=True)
     
-    # Инициализация расширений
+    app.config['COMPRESS_MIMETYPES'] = [
+        'text/html', 'text/css', 'text/javascript',
+        'application/javascript', 'application/json', 'image/svg+xml'
+    ]
+    app.config['COMPRESS_MIN_SIZE'] = 500
+
+    Compress(app)
     db.init_app(app)
     migrate.init_app(app, db)
     
