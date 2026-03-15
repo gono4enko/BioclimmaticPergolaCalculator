@@ -73,6 +73,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 stepsEl.step3.style.display = 'block';
                 stepsEl.step4.style.display = 'block';
                 stepsEl.calcBtn.style.display = 'block';
+                setTimeout(function() {
+                    stepsEl.step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 80);
             });
     }
 
