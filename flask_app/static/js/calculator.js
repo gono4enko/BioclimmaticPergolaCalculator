@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     div.className = 'lamella-option col-12 col-md-6 mb-2' + (i === defaultIdx ? ' selected' : '');
                     div.dataset.size = s.id;
                     div.dataset.lamellaType = s.lamella_type;
-                    div.innerHTML = '<div class="lamella-name">' + s.name + '</div>';
+                    div.innerHTML = '<span class="check-mark"><svg viewBox="0 0 14 14" fill="none" width="12" height="12"><path d="M2 7.5L5.5 11L12 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div class="lamella-name">' + s.name + '</div>';
                     div.addEventListener('click', function() {
                         container.querySelectorAll('.lamella-option').forEach(function(o) { o.classList.remove('selected'); });
                         div.classList.add('selected');
