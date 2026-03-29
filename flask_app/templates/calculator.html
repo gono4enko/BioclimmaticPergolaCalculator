@@ -3,9 +3,9 @@
 {% block title %}Калькулятор стоимости перголы{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=9">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=10">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=8" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=10" as="script">
 {% endblock %}
 
 {% block content %}
@@ -104,6 +104,59 @@
     </button>
 
     <div class="results-section" id="results-section" style="display:none;"></div>
+
+    <!-- КНОПКА ОТКРЫТИЯ ФОРМЫ — показывается после расчёта -->
+    <button class="ch-submit" id="openLeadBtn" style="display:none;"
+            onclick="document.getElementById('leadForm').classList.add('visible');this.style.display='none';">
+        Обсудить расчёт с менеджером →
+    </button>
+
+    <!-- ФОРМА ЗАЯВКИ -->
+    <div class="lead-form" id="leadForm">
+        <div class="lead-title">Обсудить расчёт с менеджером</div>
+        <div class="lead-sub" id="leadSub">Ваш расчёт: <strong>готов</strong> — выберите удобный способ связи</div>
+        <div class="lead-channels">
+            <a id="btnWhatsapp" class="lead-channel-btn ch-wa" href="#" target="_blank">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.112 1.523 5.836L0 24l6.335-1.507A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.947 0-3.772-.53-5.338-1.452l-.383-.227-3.964.943.999-3.875-.25-.399A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                WhatsApp
+            </a>
+            <a id="btnTelegram" class="lead-channel-btn ch-tg" href="#" target="_blank">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.247l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L6.922 14.06l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.894.525z"/></svg>
+                Telegram
+            </a>
+            <a id="btnMax" class="lead-channel-btn ch-max"
+               href="https://max.ru/u/f9LHodD0cOI8Gt2Q_jFHYB84JqGSuTC8ZI5-nNEqEEwBt4fNRLpoE4bDvCs"
+               target="_blank">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path fill="#fff" d="M7 9l5 5 5-5"/></svg>
+                Max
+            </a>
+            <button class="lead-channel-btn"
+                    onclick="var b=document.getElementById('callbackBlock');b.style.display=b.style.display==='none'?'block':'none'">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z"/></svg>
+                Перезвонить
+            </button>
+        </div>
+        <div id="callbackBlock" style="display:none">
+            <div class="lead-divider"><span>введите номер для звонка</span></div>
+            <div class="lead-row">
+                <input type="tel" class="lead-phone" id="leadPhone" placeholder="+7 (___) ___-__-__" autocomplete="tel">
+                <button class="lead-btn" id="leadBtn" onclick="submitLead()">Жду звонка</button>
+            </div>
+        </div>
+        <p class="lead-privacy" style="margin-top:14px">
+            Нажимая кнопку или переходя в мессенджер, я даю
+            <a href="https://pergolamarket.ru/soglasie-na-obrabotku-pd" target="_blank">согласие на обработку персональных данных</a>
+        </p>
+    </div>
+
+    <!-- ЭКРАН УСПЕХА -->
+    <div class="lead-success" id="leadSuccess" style="display:none">
+        <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="success-title">Заявка принята!</div>
+        <div class="success-sub" id="successSub">Менеджер перезвонит в течение 15 минут.</div>
+    </div>
 </div>
 
 
@@ -165,7 +218,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=10"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');

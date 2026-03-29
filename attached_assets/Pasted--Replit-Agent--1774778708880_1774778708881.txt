@@ -1,0 +1,558 @@
+# Задание для Replit Agent: Интеграция мультиканальной формы заявки в калькуляторы
+
+## Контекст
+
+В проекте есть несколько калькуляторов на Python (Flask/FastAPI + Jinja2 или чистый HTML).
+Нужно добавить во все калькуляторы единую мультиканальную форму заявки — такую же как в калькуляторе маркиз.
+
+---
+
+## Что нужно сделать
+
+Заменить существующую форму обратного звонка (если она есть) или добавить новую форму после блока с результатом расчёта.
+
+---
+
+## Точная структура формы (скопировать HTML как есть)
+
+```html
+<!-- КНОПКА ОТКРЫТИЯ ФОРМЫ — показывается после расчёта -->
+<button class="ch-submit" id="openLeadBtn" onclick="document.getElementById('leadForm').classList.add('visible')">
+  Обсудить расчёт с менеджером →
+</button>
+
+<!-- ФОРМА ЗАЯВКИ -->
+<div class="lead-form" id="leadForm">
+  <div class="lead-title">Обсудить расчёт с менеджером</div>
+  <div class="lead-sub" id="leadSub">Ваш расчёт: <strong>готов</strong> — выберите удобный способ связи</div>
+
+  <div class="lead-channels">
+    <!-- WhatsApp -->
+    <a id="btnWhatsapp" class="lead-channel-btn ch-wa" href="#" target="_blank">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.112 1.523 5.836L0 24l6.335-1.507A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.947 0-3.772-.53-5.338-1.452l-.383-.227-3.964.943.999-3.875-.25-.399A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+      </svg>
+      WhatsApp
+    </a>
+
+    <!-- Telegram -->
+    <a id="btnTelegram" class="lead-channel-btn ch-tg" href="#" target="_blank">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.247l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L6.922 14.06l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.894.525z"/>
+      </svg>
+      Telegram
+    </a>
+
+    <!-- Max -->
+    <a id="btnMax" class="lead-channel-btn ch-max"
+       href="https://max.ru/u/f9LHodD0cOI8Gt2Q_jFHYB84JqGSuTC8ZI5-nNEqEEwBt4fNRLpoE4bDvCs"
+       target="_blank">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="12" r="10"/>
+        <path fill="#fff" d="M7 9l5 5 5-5"/>
+      </svg>
+      Max
+    </a>
+
+    <!-- Перезвонить -->
+    <button class="lead-channel-btn"
+      onclick="var b=document.getElementById('callbackBlock');b.style.display=b.style.display==='none'?'block':'none'">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z"/>
+      </svg>
+      Перезвонить
+    </button>
+  </div>
+
+  <!-- Блок ввода телефона (скрыт по умолчанию) -->
+  <div id="callbackBlock" style="display:none">
+    <div class="lead-divider"><span>введите номер для звонка</span></div>
+    <div class="lead-row">
+      <input type="tel" class="lead-phone" id="leadPhone"
+             placeholder="+7 (___) ___-__-__" autocomplete="tel">
+      <button class="lead-btn" id="leadBtn" onclick="submitLead()">Жду звонка</button>
+    </div>
+  </div>
+
+  <p class="lead-privacy" style="margin-top:14px">
+    Нажимая кнопку или переходя в мессенджер, я даю
+    <a href="https://pergolamarket.ru/soglasie-na-obrabotku-pd" target="_blank">
+      согласие на обработку персональных данных
+    </a>
+  </p>
+</div>
+
+<!-- ЭКРАН УСПЕХА (показывается после отправки заявки на звонок) -->
+<div class="lead-success" id="leadSuccess" style="display:none">
+  <div class="success-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  </div>
+  <div class="success-title">Заявка принята!</div>
+  <div class="success-sub" id="successSub">Менеджер перезвонит в течение 15 минут.</div>
+</div>
+```
+
+---
+
+## CSS (добавить в `<style>` или в отдельный файл)
+
+```css
+/* ===== КНОПКА ОТКРЫТИЯ ФОРМЫ ===== */
+.ch-submit {
+  width: 100%;
+  padding: 14px;
+  background: #e8622a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 16px;
+  font-family: 'Arial', sans-serif;
+  transition: background 0.2s;
+}
+.ch-submit:hover { background: #d4521e; }
+
+/* ===== ФОРМА ЗАЯВКИ ===== */
+.lead-form {
+  background: #1e2a3a;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 16px;
+  display: none;
+}
+.lead-form.visible { display: block; }
+
+.lead-title {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.lead-sub {
+  color: rgba(255,255,255,0.65);
+  font-size: 13px;
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+.lead-sub strong { color: #fff; }
+
+/* Сетка каналов связи */
+.lead-channels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.lead-channel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 10px;
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Arial', sans-serif;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+}
+.lead-channel-btn:hover {
+  background: rgba(255,255,255,0.13);
+  border-color: rgba(255,255,255,0.3);
+}
+/* WhatsApp */
+.ch-wa { border-color: #25D366; color: #25D366; }
+.ch-wa:hover { background: rgba(37,211,102,0.15); }
+/* Telegram */
+.ch-tg { border-color: #229ED9; color: #229ED9; }
+.ch-tg:hover { background: rgba(34,158,217,0.15); }
+/* Max */
+.ch-max { border-color: #A78BFA; color: #A78BFA; }
+.ch-max:hover { background: rgba(167,139,250,0.15); }
+
+/* Разделитель перед телефоном */
+.lead-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 10px;
+}
+.lead-divider::before,
+.lead-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.15);
+}
+.lead-divider span {
+  color: rgba(255,255,255,0.4);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* Строка ввода телефона */
+.lead-row {
+  display: flex;
+  gap: 8px;
+}
+.lead-phone {
+  flex: 1;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 15px;
+  font-family: 'Arial', sans-serif;
+  outline: none;
+}
+.lead-phone::placeholder { color: rgba(255,255,255,0.35); }
+.lead-phone:focus { border-color: #e8622a; }
+.lead-phone.err { border-color: #ff4d4f; animation: shake 0.3s; }
+
+.lead-btn {
+  padding: 10px 16px;
+  background: #e8622a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: 'Arial', sans-serif;
+  transition: background 0.2s;
+}
+.lead-btn:hover { background: #d4521e; }
+.lead-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* Согласие на обработку данных */
+.lead-privacy {
+  color: rgba(255,255,255,0.35);
+  font-size: 11px;
+  line-height: 1.4;
+  margin-top: 12px;
+}
+.lead-privacy a { color: rgba(255,255,255,0.5); }
+
+/* Экран успеха */
+.lead-success {
+  background: #1e2a3a;
+  border-radius: 12px;
+  padding: 32px 24px;
+  margin-top: 16px;
+  text-align: center;
+}
+.success-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(46,213,115,0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  color: #2ed573;
+}
+.success-title {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.success-sub {
+  color: rgba(255,255,255,0.6);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.success-sub strong { color: #fff; }
+
+/* Анимация встряхивания при ошибке */
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+/* Мобильная адаптация */
+@media (max-width: 400px) {
+  .lead-channels { grid-template-columns: 1fr; }
+  .lead-form { padding: 18px 14px; }
+}
+```
+
+---
+
+## JavaScript (добавить перед `</body>` или в отдельный файл)
+
+**Важно:** замени константы `TG_TOKEN`, `TG_CHAT`, `EMAIL`, `CALC_NAME`, `CALC_TYPE`, `YM_ID` на значения конкретного калькулятора.
+
+```javascript
+// ===== КОНФИГУРАЦИЯ (менять для каждого калькулятора) =====
+const TG_TOKEN = '8658950389:AAGmL1Ii4BFzce0EpYuhQHEY0V-hCBSkGgE';
+const TG_CHAT  = '-5258227787';
+const EMAIL    = 'zakaz@infopergola.ru';
+const YM_ID    = 65714473;
+const CALC_TYPE = 'panorama';   // ← менять: panorama / frameless / awning / etc.
+const CALC_NAME = 'Панорамное остекление';  // ← менять: название калькулятора
+
+// Глобальная переменная: текст расчёта для отправки в мессенджер
+// Эту переменную нужно заполнять при расчёте (см. ниже)
+window._calcText = '';
+window._userCity = 'Не определён';
+
+// ===== ГЕОЛОКАЦИЯ (запускается при загрузке страницы) =====
+(function() {
+  if (window._geoDone) return;
+  window._geoDone = true;
+  var gx = new XMLHttpRequest();
+  gx.timeout = 4000;
+  gx.open('GET', 'https://ipapi.co/json/');
+  gx.onload = function() {
+    try {
+      var g = JSON.parse(gx.responseText);
+      window._userCity = g.city
+        ? (g.city + (g.region && g.region !== g.city ? ' (' + g.region + ')' : ''))
+        : g.region || 'Не определён';
+    } catch(e) {}
+  };
+  gx.onerror = gx.ontimeout = function() {};
+  gx.send();
+})();
+
+// ===== ОТПРАВКА ЗАЯВКИ НА ЗВОНОК =====
+window.submitLead = function() {
+  var inp = document.getElementById('leadPhone');
+  var raw = inp.value.replace(/\D/g, '');
+  if (raw.length !== 11) {
+    inp.classList.add('err');
+    inp.focus();
+    setTimeout(function() { inp.classList.remove('err'); }, 600);
+    return;
+  }
+  var phone = '+' + raw;
+  var btn = document.getElementById('leadBtn');
+  btn.textContent = 'Отправляем...';
+  btn.disabled = true;
+
+  var done = setTimeout(function() { showOk(phone); }, 10000);
+
+  // Получаем город и отправляем
+  var gx = new XMLHttpRequest();
+  gx.timeout = 4000;
+  gx.open('GET', 'https://ipapi.co/json/');
+  gx.onload = function() {
+    try {
+      var g = JSON.parse(gx.responseText);
+      var city = g.city
+        ? (g.city + (g.region && g.region !== g.city ? ' (' + g.region + ')' : ''))
+        : g.region || 'Не определён';
+      clearTimeout(done);
+      sendCallback(phone, city);
+    } catch(e) {
+      clearTimeout(done);
+      sendCallback(phone, window._userCity || 'Не определён');
+    }
+  };
+  gx.onerror = gx.ontimeout = function() {
+    clearTimeout(done);
+    sendCallback(phone, window._userCity || 'Не определён');
+  };
+  gx.send();
+};
+
+function sendCallback(phone, city) {
+  var done = setTimeout(function() { showOk(phone); }, 10000);
+
+  // Текст для Telegram
+  var tgText = '📞 Заявка на звонок — ' + CALC_NAME + '\n\n'
+    + '📞 Телефон: ' + phone + '\n'
+    + '📍 Город: ' + city + '\n\n'
+    + (window._calcText || '');
+
+  // Отправка в Telegram
+  var tx = new XMLHttpRequest();
+  tx.timeout = 8000;
+  tx.open('POST', 'https://api.telegram.org/bot' + TG_TOKEN + '/sendMessage');
+  tx.setRequestHeader('Content-Type', 'application/json');
+  tx.onload = function() { clearTimeout(done); showOk(phone); };
+  tx.onerror = tx.ontimeout = function() { clearTimeout(done); showOk(phone); };
+  tx.send(JSON.stringify({ chat_id: TG_CHAT, text: tgText, parse_mode: 'HTML' }));
+
+  // Отправка на email через FormSubmit
+  var fd = new FormData();
+  fd.append('Телефон', phone);
+  fd.append('Город', city);
+  fd.append('Расчёт', window._calcText || '');
+  fd.append('_subject', '📞 Заявка на звонок — ' + CALC_NAME);
+  fd.append('_captcha', 'false');
+  fd.append('_template', 'table');
+  var ex = new XMLHttpRequest();
+  ex.timeout = 8000;
+  ex.open('POST', 'https://formsubmit.co/ajax/' + EMAIL);
+  ex.send(fd);
+
+  // Яндекс Метрика
+  try {
+    if (typeof ym === 'function') ym(YM_ID, 'reachGoal', 'calculator_lead', {
+      channel: 'callback',
+      calculator_type: CALC_TYPE
+    });
+  } catch(e) {}
+}
+
+// ===== КЛИК ПО МЕССЕНДЖЕРАМ =====
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('#btnWhatsapp, #btnTelegram, #btnMax');
+  if (!btn) return;
+
+  var ch = btn.id === 'btnWhatsapp' ? 'whatsapp'
+         : btn.id === 'btnTelegram' ? 'telegram'
+         : 'max';
+
+  // Яндекс Метрика
+  try {
+    if (typeof ym === 'function') ym(YM_ID, 'reachGoal', 'calculator_lead', {
+      channel: ch,
+      calculator_type: CALC_TYPE
+    });
+  } catch(e) {}
+
+  var city = window._userCity || 'Не определён';
+  var calcText = window._calcText || '';
+
+  // WhatsApp и Telegram — подставляем текст расчёта
+  if ((btn.id === 'btnWhatsapp' || btn.id === 'btnTelegram') && calcText) {
+    e.preventDefault();
+    var txt = '📍 Город: ' + city + '\n\nДобрый день! Хочу обсудить расчёт:\n' + calcText;
+    var enc = encodeURIComponent(txt);
+    var url = btn.id === 'btnWhatsapp'
+      ? 'https://api.whatsapp.com/send?phone=79064297420&text=' + enc
+      : 'https://t.me/comfort_dom_andrey?text=' + enc;
+    window.open(url, '_blank');
+  }
+
+  // Max — fire-and-forget в Telegram + FormSubmit
+  if (btn.id === 'btnMax' && calcText) {
+    var tgText = '📊 Заявка через Max — ' + CALC_NAME + '\n\n'
+      + '📍 Город: ' + city + '\n\n' + calcText;
+    var tx = new XMLHttpRequest();
+    tx.timeout = 8000;
+    tx.open('POST', 'https://api.telegram.org/bot' + TG_TOKEN + '/sendMessage');
+    tx.setRequestHeader('Content-Type', 'application/json');
+    tx.send(JSON.stringify({ chat_id: TG_CHAT, text: tgText, parse_mode: 'HTML' }));
+
+    var fd = new FormData();
+    fd.append('Канал', 'Max');
+    fd.append('Город', city);
+    fd.append('Расчёт', calcText);
+    fd.append('_subject', '📊 Заявка через Max — ' + CALC_NAME);
+    fd.append('_captcha', 'false');
+    fd.append('_template', 'table');
+    var ex = new XMLHttpRequest();
+    ex.timeout = 8000;
+    ex.open('POST', 'https://formsubmit.co/ajax/' + EMAIL);
+    ex.send(fd);
+  }
+});
+
+// ===== ПОКАЗ ЭКРАНА УСПЕХА =====
+function showOk(phone) {
+  document.getElementById('leadForm').style.display = 'none';
+  var s = document.getElementById('leadSuccess');
+  document.getElementById('successSub').innerHTML =
+    'Перезвоним на <strong>' + phone + '</strong> в течение 15 минут.';
+  s.style.display = 'block';
+}
+
+// Закрытие формы по Enter в поле телефона
+document.addEventListener('keydown', function(e) {
+  if (e.target.id === 'leadPhone' && e.key === 'Enter') {
+    e.preventDefault();
+    submitLead();
+  }
+});
+```
+
+---
+
+## Как подставлять текст расчёта `window._calcText`
+
+Это **самое важное** — текст расчёта нужно формировать в JS при нажатии кнопки «Рассчитать» и записывать в `window._calcText`. Пример:
+
+```javascript
+// Вызывается при нажатии кнопки "Рассчитать"
+function calculate() {
+  var width  = parseFloat(document.getElementById('width').value);
+  var height = parseFloat(document.getElementById('height').value);
+  var price  = width * height * PRICE_PER_SQM;
+
+  // Формируем текст расчёта для мессенджеров и Telegram
+  window._calcText = [
+    '📐 Ширина: ' + width + ' м',
+    '📐 Высота: ' + height + ' м',
+    '💰 Стоимость: от ' + price.toLocaleString('ru') + ' ₽',
+  ].join('\n');
+
+  // Показываем результат пользователю
+  document.getElementById('result').textContent = price.toLocaleString('ru') + ' ₽';
+
+  // Показываем кнопку открытия формы
+  document.getElementById('openLeadBtn').style.display = 'block';
+}
+```
+
+---
+
+## Checklist для каждого калькулятора
+
+- [ ] Добавить CSS (скопировать из раздела выше)
+- [ ] Добавить HTML формы после блока результатов
+- [ ] Добавить JS (скопировать из раздела выше)
+- [ ] Изменить константы `CALC_TYPE` и `CALC_NAME` под конкретный калькулятор
+- [ ] В функции `calculate()` заполнять `window._calcText` текстом расчёта
+- [ ] Убедиться что `openLeadBtn` показывается только после расчёта
+- [ ] Проверить на мобильном (форма должна быть одна колонка при ширине < 400px)
+
+---
+
+## Значения констант для каждого калькулятора
+
+| Калькулятор | CALC_TYPE | CALC_NAME |
+|---|---|---|
+| Панорамное остекление S500 | `panorama` | `Панорамное остекление S500` |
+| Безрамное остекление S150 | `frameless` | `Безрамное остекление S150` |
+| Маркизы | `awning` | `Маркизы` |
+| Биоклиматическая пергола | `bioclimatic` | `Биоклиматическая пергола` |
+| Маркиза-тент | `tent_pergola` | `Маркиза-тент` |
+| Гильотина | `guillotine` | `Гильотина` |
+
+Остальные константы одинаковы для всех:
+- `TG_TOKEN = '8658950389:AAGmL1Ii4BFzce0EpYuhQHEY0V-hCBSkGgE'`
+- `TG_CHAT = '-5258227787'`
+- `EMAIL = 'zakaz@infopergola.ru'`
+- `YM_ID = 65714473`
+- Яндекс Метрика цель: `calculator_lead`
+
+---
+
+## Важные замечания
+
+1. **FormSubmit** — сервис используется для отправки email без бэкенда. Первый запрос на новый email потребует подтверждения — нужно проверить почту `zakaz@infopergola.ru`.
+
+2. **ipapi.co** — геолокация по IP, бесплатно до 1000 запросов/день. Если лимит исчерпан — город будет «Не определён», это нормально.
+
+3. **Порядок отображения**: кнопка «Обсудить расчёт» показывается только после того как пользователь нажал «Рассчитать». До расчёта кнопку не показывать.
+
+4. **Max** — всегда открывает ссылку (href на кнопке не меняется), но параллельно fire-and-forget отправляет расчёт в Telegram менеджеру.
+
+5. **WhatsApp/Telegram** — перехватываем клик через `e.preventDefault()`, формируем URL с текстом расчёта и открываем в новой вкладке.
