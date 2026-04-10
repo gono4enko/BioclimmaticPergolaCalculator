@@ -1,0 +1,96 @@
+Промт для агента Replit:
+
+В приложении Flask с генерацией PDF через ReportLab нужно реализовать стилизованный блок «Стоимость по вариантам оплаты» — одинаковый в веб-версии (HTML/CSS) и в PDF.
+
+Требования
+1. Веб-версия (HTML + CSS)
+Создай блок с тремя вариантами оплаты в виде карточки:
+
+Заголовок «Стоимость по вариантам оплаты:» на тёмно-синем фоне (#1a3a6b), белый текст, жирный шрифт
+Три строки на голубом фоне (#f0f4ff): «Наличные», «Безналичный расчёт», «Безналичный с НДС 22%»
+Цена наличных — зелёным (#28a745), остальные — тёмно-синим (#1a3a6b), все жирным
+Разделители между строками: 1px solid #c7d4f5
+Рамка вокруг блока: 1px solid #c7d4f5, скругление 8px
+Пример HTML:
+
+<div class="payment-variants-block">
+    <div class="payment-variants-title">Стоимость по вариантам оплаты:</div>
+    <div class="payment-variant-row">
+        <span class="payment-variant-label">Наличные</span>
+        <span class="payment-variant-price pv-cash" id="result-total-price">-</span>
+    </div>
+    <div class="payment-variant-row">
+        <span class="payment-variant-label">Безналичный расчёт</span>
+        <span class="payment-variant-price" id="result-total-price-noncash">-</span>
+    </div>
+    <div class="payment-variant-row pv-last">
+        <span class="payment-variant-label">Безналичный с НДС 22%</span>
+        <span class="payment-variant-price" id="result-total-price-vat">-</span>
+    </div>
+</div>
+
+2. Расчёт цен (JavaScript)
+Формулы для трёх вариантов оплаты от базовой цены totalCash:
+
+const totalCash = results.totalPrice;                // наличные (базовая цена)
+const totalNoncash = totalCash / 0.92;               // безналичный (+8%)
+const totalVat = totalCash / 0.85;                   // с НДС 22%
+
+Важно: деление, а не умножение — чтобы после вычета налога из выручки осталась именно базовая цена.
+
+3. PDF-генерация (ReportLab)
+Создай аналогичный стилизованный блок через Table + TableStyle:
+
+total_price_rub = total_price_eur * EXCHANGE_RATE    # конвертация EUR → RUB
+noncash = total_price_rub / 0.92
+vat     = total_price_rub / 0.85
+def fmt(v):
+    return f"{int(round(v)):,}".replace(',', ' ') + ' ₽'
+pay_data = [
+    ["Стоимость по вариантам оплаты:"],              # заголовок (SPAN на всю ширину)
+    ["Наличные",              fmt(total_price_rub)],
+    ["Безналичный расчёт",    fmt(noncash)],
+    ["Безналичный с НДС 22%", fmt(vat)],
+]
+pay_table = Table(pay_data, colWidths=[310, 140])
+pay_table.setStyle(TableStyle([
+    # Заголовок: тёмно-синий фон, белый текст
+    ('SPAN',          (0, 0), (-1, 0)),
+    ('BACKGROUND',    (0, 0), (-1, 0), colors.HexColor('#1a3a6b')),
+    ('TEXTCOLOR',     (0, 0), (-1, 0), colors.white),
+    ('FONT',          (0, 0), (-1, 0), bold_font, 11),
+    ('ALIGN',         (0, 0), (-1, 0), 'LEFT'),
+    ('TOPPADDING',    (0, 0), (-1, 0), 8),
+    ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+    ('LEFTPADDING',   (0, 0), (-1, 0), 10),
+    # Строки с ценами: голубой фон
+    ('BACKGROUND',    (0, 1), (-1, -1), colors.HexColor('#f0f4ff')),
+    ('FONT',          (0, 1), (0, -1),  base_font, 11),
+    ('FONT',          (1, 1), (1, -1),  bold_font, 11),
+    ('TOPPADDING',    (0, 1), (-1, -1), 8),
+    ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+    ('LEFTPADDING',   (0, 1), (-1, -1), 10),
+    ('RIGHTPADDING',  (0, 1), (-1, -1), 10),
+    ('ALIGN',         (1, 1), (1, -1),  'RIGHT'),
+    # Цвета цен: наличные — зелёный, остальные — тёмно-синий
+    ('TEXTCOLOR',     (1, 1), (1, 1),   colors.HexColor('#28a745')),
+    ('TEXTCOLOR',     (1, 2), (1, -1),  colors.HexColor('#1a3a6b')),
+    # Разделители и рамка
+    ('LINEBELOW',     (0, 0), (-1, -2), 0.5, colors.HexColor('#c7d4f5')),
+    ('BOX',           (0, 0), (-1, -1), 0.5, colors.HexColor('#c7d4f5')),
+]))
+elements.append(pay_table)
+
+4. Важные нюансы
+Конвертация валюты: totalPrice может приходить в EUR — обязательно умножай на курс (EXCHANGE_RATE) перед отображением в рублях.
+Формула налога: используй деление (/ 0.92, / 0.85), а НЕ умножение (* 1.08, * 1.15).
+Синглтон стилей ReportLab: getSampleStyleSheet() возвращает глобальный объект. При повторном вызове styles.add() упадёт с KeyError. Решение — проверяй if name in styles: перед добавлением, или обновляй существующий стиль через setattr.
+Кириллические шрифты: регистрируй TTF-шрифты (Roboto) через pdfmetrics.registerFont(), иначе кириллица не отобразится.
+5. Ожидаемый результат
+Для перголы стоимостью 560 015 ₽ (наличные):
+
+Вариант оплаты	Сумма
+Наличные	560 015 ₽ (зелёный)
+Безналичный расчёт	608 712 ₽ (тёмно-синий)
+Безналичный с НДС 22%	658 841 ₽ (тёмно-синий)
+Блок должен выглядеть одинаково в веб-версии и в PDF.

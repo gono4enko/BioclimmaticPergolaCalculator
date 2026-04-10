@@ -197,10 +197,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         costHtml += '</tbody></table>';
 
-        var totalHtml = '<div class="total-block">' +
-            '<div class="cash-price">Наличный расчёт: ' + formatPrice(totals.cash) + ' ₽</div>' +
-            '<div class="other-price">Безналичный расчёт: ' + formatPrice(totals.non_cash) + ' ₽</div>' +
-            '<div class="other-price">С НДС 22%: ' + formatPrice(totals.with_vat) + ' ₽</div>' +
+        var totalHtml =
+            '<div class="payment-variants-block">' +
+                '<div class="payment-variants-title">Стоимость по вариантам оплаты:</div>' +
+                '<div class="payment-variant-row">' +
+                    '<span class="payment-variant-label">Наличные</span>' +
+                    '<span class="payment-variant-price pv-cash" id="result-total-price">' + formatPrice(totals.cash) + ' ₽</span>' +
+                '</div>' +
+                '<div class="payment-variant-row">' +
+                    '<span class="payment-variant-label">Безналичный расчёт</span>' +
+                    '<span class="payment-variant-price" id="result-total-price-noncash">' + formatPrice(totals.non_cash) + ' ₽</span>' +
+                '</div>' +
+                '<div class="payment-variant-row pv-last">' +
+                    '<span class="payment-variant-label">Безналичный с НДС 22%</span>' +
+                    '<span class="payment-variant-price" id="result-total-price-vat">' + formatPrice(totals.with_vat) + ' ₽</span>' +
+                '</div>' +
             '</div>';
 
         var infoHtml = '<div style="text-align:center;margin-bottom:0.8rem;color:#555;font-size:0.9rem;">' +

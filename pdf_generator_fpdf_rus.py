@@ -574,17 +574,45 @@ def generate_commercial_offer(pergola_data, user_data=None):
             else:
                 vat_total = round(cash_total / 0.85)
             
-            pdf.cell(10, 10, "", 1, 0, "C", fill=True)
-            pdf.cell(83, 10, "ИТОГО (Наличный расчёт):", 1, 0, "R", fill=True)
-            pdf.cell(67, 10, _format_total(cash_total), 1, 1, "L", fill=True)
-            
-            pdf.cell(10, 10, "", 1, 0, "C", fill=True)
-            pdf.cell(83, 10, "ИТОГО (Безналичный расчёт):", 1, 0, "R", fill=True)
-            pdf.cell(67, 10, _format_total(noncash_total), 1, 1, "L", fill=True)
-            
-            pdf.cell(10, 10, "", 1, 0, "C", fill=True)
-            pdf.cell(83, 10, "ИТОГО (С НДС 22%):", 1, 0, "R", fill=True)
-            pdf.cell(67, 10, _format_total(vat_total), 1, 1, "L", fill=True)
+            # --- Стилизованный блок «Стоимость по вариантам оплаты» ---
+            pdf.ln(4)
+            block_x = pdf.get_x()
+            block_w = 170  # ширина блока (A4 минус поля)
+            label_w = 120
+            price_w = 50
+            row_h = 10
+
+            # Заголовок: тёмно-синий фон, белый текст
+            pdf.set_fill_color(26, 58, 107)   # #1a3a6b
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_draw_color(199, 212, 245)  # #c7d4f5
+            pdf.set_font('DejaVu', 'B', 10)
+            pdf.cell(block_w, row_h, "  Стоимость по вариантам оплаты:", border=1, ln=1, align='L', fill=True)
+
+            # Строки с ценами: голубой фон
+            pay_rows = [
+                ("Наличные",                 _format_total(cash_total),    True),
+                ("Безналичный расчёт",       _format_total(noncash_total), False),
+                ("Безналичный с НДС 22%",    _format_total(vat_total),     False),
+            ]
+            pdf.set_fill_color(240, 244, 255)  # #f0f4ff
+            for label, price, is_cash in pay_rows:
+                pdf.set_text_color(80, 80, 80)
+                pdf.set_font('DejaVu', '', 10)
+                pdf.cell(label_w, row_h, "  " + label, border='LBR', ln=0, align='L', fill=True)
+                if is_cash:
+                    pdf.set_text_color(40, 167, 69)   # #28a745 зелёный
+                else:
+                    pdf.set_text_color(26, 58, 107)   # #1a3a6b тёмно-синий
+                pdf.set_font('DejaVu', 'B', 10)
+                pdf.cell(price_w, row_h, price + "  ", border='LBR', ln=1, align='R', fill=True)
+
+            # Восстанавливаем цвета
+            pdf.set_text_color(0, 0, 0)
+            pdf.set_draw_color(0, 0, 0)
+            pdf.set_fill_color(255, 255, 255)
+            pdf.set_font('DejaVu', '', 10)
+            pdf.ln(2)
         else:
             pdf.set_font('DejaVu', '', 10)
             pdf.cell(0, 7, "Данные о стоимости отсутствуют", 0, 1)

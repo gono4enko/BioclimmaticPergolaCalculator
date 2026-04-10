@@ -156,16 +156,40 @@
 .total-row.non-cash { color: #333; }
 .total-row.vat { color: #333; }
 
-.total-block {
-    text-align: center;
-    margin-top: 1rem;
-    padding: 1rem;
-    background: #f8fafb;
+.payment-variants-block {
+    margin-top: 1.2rem;
+    border: 1px solid #c7d4f5;
     border-radius: 8px;
-    border: 1px solid #e0e7ee;
+    overflow: hidden;
 }
-.total-block .cash-price { font-size: 1.5rem; font-weight: 700; color: #1b5e20; }
-.total-block .other-price { font-size: 0.95rem; color: #555; margin-top: 0.3rem; }
+.payment-variants-title {
+    background: #1a3a6b;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.7rem 1rem;
+}
+.payment-variant-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f0f4ff;
+    padding: 0.65rem 1rem;
+    border-top: 1px solid #c7d4f5;
+}
+.payment-variant-label {
+    font-size: 0.97rem;
+    color: #333;
+}
+.payment-variant-price {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #1a3a6b;
+}
+.payment-variant-price.pv-cash {
+    color: #28a745;
+    font-size: 1.2rem;
+}
 
 .pdf-btn {
     background: #28a745;
