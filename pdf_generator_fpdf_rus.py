@@ -568,11 +568,11 @@ def generate_commercial_offer(pergola_data, user_data=None):
             if 'noncash_total' in pergola_data:
                 noncash_total = pergola_data['noncash_total']
             else:
-                noncash_total = cash_total * 1.08
+                noncash_total = round(cash_total / 0.92)
             if 'vat_total' in pergola_data:
                 vat_total = pergola_data['vat_total']
             else:
-                vat_total = cash_total * 1.15
+                vat_total = round(cash_total / 0.85)
             
             pdf.cell(10, 10, "", 1, 0, "C", fill=True)
             pdf.cell(83, 10, "ИТОГО (Наличный расчёт):", 1, 0, "R", fill=True)

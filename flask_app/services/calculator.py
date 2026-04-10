@@ -550,8 +550,8 @@ def perform_calculation(dimensions, options):
             "euro_rate": euro_rate,
             "totals": {
                 "cash": total_rub,
-                "non_cash": round(total_rub * 1.08),
-                "with_vat": round(total_rub * 1.15)
+                "non_cash": round(total_rub / 0.92),
+                "with_vat": round(total_rub / 0.85)
             },
             "delivery": {"percentage": delivery_pct, "price": delivery_price},
             "installation": {"selected": installation, "price": installation_price},
