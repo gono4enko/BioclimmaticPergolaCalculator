@@ -28,6 +28,7 @@ def clear_cache():
         current_app.logger.error(f"Ошибка при очистке кэша: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@bp.route('/ping')
 @bp.route('/health')
 def health_check():
     """Проверка работоспособности приложения."""
