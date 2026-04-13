@@ -4,6 +4,8 @@ API маршруты для калькулятора пергол.
 import os
 import json
 import datetime
+import threading
+import time
 from io import BytesIO
 from flask import Blueprint, jsonify, request, current_app, send_file
 from ..services.calculator import (
@@ -188,3 +190,78 @@ def export_pdf():
     except Exception as e:
         current_app.logger.error(f"PDF export error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# Rate-limit: {ip: [timestamp, ...]}
+_lead_rate = {}
+_lead_rate_lock = threading.Lock()
+
+TG_BOT_TOKEN = os.environ.get('TG_BOT_TOKEN', '8658950389:AAGmL1Ii4BFzce0EpYuhQHEY0V-hCBSkGgE')
+TG_CHAT_ID   = os.environ.get('TG_CHAT_ID',   '-5258227787')
+
+
+def _send_telegram_lead(text):
+    try:
+        import urllib.request as ur
+        payload = json.dumps({'chat_id': TG_CHAT_ID, 'text': text}).encode()
+        req = ur.Request(
+            f'https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage',
+            data=payload,
+            headers={'Content-Type': 'application/json'}
+        )
+        ur.urlopen(req, timeout=8)
+    except Exception as e:
+        pass
+
+
+def _save_lead_db(phone, city, calc_text, channel, ip):
+    try:
+        import psycopg2
+        db_url = os.environ.get('DATABASE_URL', '')
+        if not db_url:
+            return
+        conn = psycopg2.connect(db_url)
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO leads (phone, city, calc_text, channel, ip) VALUES (%s, %s, %s, %s, %s)",
+            (phone, city, calc_text, channel, ip)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        pass
+
+
+@bp.route('/submit-lead', methods=['POST'])
+def submit_lead():
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr or '').split(',')[0].strip()
+
+    # Rate-limit: 5 заявок / IP / 10 минут
+    now = time.time()
+    with _lead_rate_lock:
+        times = [t for t in _lead_rate.get(ip, []) if now - t < 600]
+        if len(times) >= 5:
+            return jsonify({'success': False, 'error': 'rate_limit'}), 429
+        times.append(now)
+        _lead_rate[ip] = times
+
+    data = request.get_json(silent=True) or {}
+    phone     = str(data.get('phone', ''))[:30]
+    city      = str(data.get('city', 'Не определён'))[:100]
+    calc_text = str(data.get('calc_text', ''))[:4000]
+    channel   = str(data.get('channel', 'callback'))[:20]
+
+    channel_label = {'telegram': 'Telegram', 'max': 'Max', 'callback': '📞 Звонок'}.get(channel, channel)
+    tg_text = (
+        f"🏗 Заявка — Биоклиматическая пергола\n"
+        f"Канал: {channel_label}\n"
+        f"Телефон: {phone}\n"
+        f"Город: {city}\n\n"
+        f"{calc_text}"
+    )
+
+    threading.Thread(target=_send_telegram_lead, args=(tg_text,), daemon=True).start()
+    threading.Thread(target=_save_lead_db, args=(phone, city, calc_text, channel, ip), daemon=True).start()
+
+    return jsonify({'success': True})

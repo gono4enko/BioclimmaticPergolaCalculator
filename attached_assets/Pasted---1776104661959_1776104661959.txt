@@ -1,0 +1,265 @@
+Промпт: Блок «Обсудить расчёт с менеджером» — Эталонная реализация
+Ниже описана рабочая реализация из основного калькулятора локтевых маркиз (templates/index.html + static/js/calculator.js + app.py). Используй её для реализации идентичного блока в калькуляторах Twin, ERA и Screen.
+
+1. БЭКЕНД (app.py) — уже реализован, общий для всех
+Эндпоинт POST /api/submit-lead принимает JSON:
+
+{
+  "phone": "+79991234567",
+  "city": "Москва",
+  "calc_text": "=== Локтевая маркиза G200 ...\nИТОГО: 250 000 руб.",
+  "channel": "callback"  // или "telegram", "max"
+}
+
+Что делает (в фоновом потоке threading.Thread):
+
+Telegram — _send_telegram(text): отправляет через Bot API (TG_BOT_TOKEN, TG_CHAT_ID)
+Email — _send_email(phone, city, calc_text): через SMTP (Gmail) на zakaz@infopergola.ru
+БД — _save_lead(phone, city, calc_text, channel): запись в PostgreSQL таблицу leads
+Rate-limit: 5 заявок / IP / 10 минут.
+
+Секреты (Replit Secrets):
+
+SMTP_HOST = smtp.gmail.com
+SMTP_USER = (Gmail-адрес)
+SMTP_PASSWORD = (16-символьный App Password)
+EMAIL_TO = zakaz@infopergola.ru
+TG_BOT_TOKEN = (токен бота)
+TG_CHAT_ID = (ID чата менеджера)
+2. HTML — Блок формы заявки (вставляется после блока результатов расчёта)
+<!-- ФОРМА ЗАЯВКИ -->
+<div class="lead-form" id="leadForm">
+  <div class="lead-title">Обсудить расчёт с менеджером</div>
+  <div class="lead-sub" id="leadSub">Ваш расчёт: <strong>готов</strong> — выберите удобный способ связи с менеджером</div>
+  <div class="lead-channels">
+    <a id="btnTelegram" class="lead-channel-btn ch-tg" href="#" target="_blank">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.247l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L6.922 14.06l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.894.525z"/></svg>
+      Telegram
+    </a>
+    <a id="btnMax" class="lead-channel-btn ch-max" href="https://max.ru/u/f9LHodD0cOI8Gt2Q_jFHYB84JqGSuTC8ZI5-nNEqEEwBt4fNRLpoE4bDvCs" target="_blank">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path fill="#fff" d="M7 9l5 5 5-5"/></svg>
+      Max
+    </a>
+    <button class="lead-channel-btn" onclick="(function(){var b=document.getElementById('callbackBlock');var show=b.style.display!=='block';b.style.display=show?'block':'none';if(show){setTimeout(function(){var el=document.getElementById('leadPhone');el.scrollIntoView({behavior:'smooth',block:'nearest'});el.focus();},80);}})()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z"/></svg>
+      Перезвонить
+    </button>
+  </div>
+  <div id="callbackBlock" style="display:none">
+    <div class="lead-divider"><span>введите номер для звонка</span></div>
+    <div class="lead-row">
+      <input type="tel" class="lead-phone" id="leadPhone" placeholder="+7 (___) ___-__-__" autocomplete="tel">
+      <button class="lead-btn" id="leadBtn" onclick="submitLead()">Жду звонка</button>
+    </div>
+  </div>
+  <p class="lead-privacy" style="margin-top:14px">
+    Нажимая кнопку или переходя в мессенджер, я даю <a href="https://pergolamarket.ru/soglasie-na-obrabotku-pd" target="_blank">согласие на обработку персональных данных</a>
+  </p>
+</div>
+<!-- УСПЕХ -->
+<div class="lead-success" id="leadSuccess">
+  <div class="success-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+  <div class="success-title">Заявка принята!</div>
+  <div class="success-sub" id="successSub">Менеджер перезвонит в течение 15 минут.</div>
+</div>
+
+3. CSS — Стили формы заявки
+.lead-form{background:var(--ch-dark);border-radius:var(--ch-radius);padding:24px;margin-top:16px;display:none;animation:chSlide 0.4s ease}
+.lead-form.visible{display:block}
+.lead-title{color:#fff;font-size:18px;font-weight:800;margin-bottom:4px}
+.lead-sub{color:rgba(255,255,255,0.65);font-size:12px;margin-bottom:14px}
+.lead-channels{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.lead-channel-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 10px;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15);border-radius:var(--ch-radius-sm);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Arial',sans-serif;transition:var(--ch-trans);text-decoration:none}
+.lead-channel-btn:hover{background:rgba(255,255,255,0.13);border-color:rgba(255,255,255,0.3)}
+.lead-channel-btn.ch-tg{border-color:#229ED9;color:#229ED9}
+.lead-channel-btn.ch-tg:hover{background:rgba(34,158,217,0.15)}
+.lead-channel-btn.ch-max{border-color:#A78BFA;color:#A78BFA}
+.lead-channel-btn.ch-max:hover{background:rgba(167,139,250,0.15)}
+.lead-divider{text-align:center;margin:12px 0 10px;font-size:11px;color:rgba(255,255,255,0.4);border-top:1px solid rgba(255,255,255,0.1);padding-top:10px}
+.lead-row{display:flex;gap:8px}
+.lead-phone{flex:1;padding:11px 14px;border:1.5px solid rgba(255,255,255,0.18);border-radius:var(--ch-radius-sm);background:rgba(255,255,255,0.06);color:#fff;font-size:14px;outline:none}
+.lead-phone:focus{border-color:var(--ch-orange)}
+.lead-phone.err{border-color:#e74c3c;animation:shake 0.35s}
+.lead-btn{background:var(--ch-orange);color:#fff;border:none;border-radius:var(--ch-radius-sm);padding:11px 18px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.lead-btn:hover{background:#c7531e}
+.lead-privacy{font-size:10px;color:rgba(255,255,255,0.4);line-height:1.5}
+.lead-privacy a{color:rgba(255,255,255,0.6);text-decoration:underline}
+.lead-success{background:#10b981;border-radius:var(--ch-radius);padding:28px;text-align:center;display:none;animation:chSlide 0.4s ease}
+.lead-success.visible{display:block}
+.success-icon{width:40px;height:40px;margin:0 auto 10px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.success-icon svg{width:22px;height:22px;fill:none;stroke:#10b981;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.success-title{color:#fff;font-size:18px;font-weight:800;margin-bottom:4px}
+.success-sub{color:rgba(255,255,255,0.85);font-size:13px}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@media(max-width:480px){.lead-channels{grid-template-columns:1fr}}
+
+4. JavaScript — Логика отправки заявок
+Обязательные глобальные переменные (инициализируются при получении результата расчёта):
+
+window._calcText = '';       // текстовое описание расчёта (заполняется при renderResult)
+window._userCity = '';        // определяется геолокацией (см. ниже)
+
+4.1. Функция submitLead() — отправка заявки «Перезвонить»
+window.submitLead = function () {
+  var inp = document.getElementById('leadPhone');
+  var raw = inp.value.replace(/\D/g, '');
+  if (raw.length !== 11) { inp.classList.add('err'); inp.focus(); return; }
+  var phone = '+' + raw;
+  var btn = document.getElementById('leadBtn');
+  btn.textContent = 'Отправляем…';
+  btn.disabled = true;
+  var city = window._userCity || 'Не определён';
+  var calcText = window._calcText || '';
+  // Отправляем на сервер (SMTP + Telegram + БД)
+  fetch('/api/submit-lead', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: phone, city: city, calc_text: calcText, channel: 'callback' }),
+  }).catch(function () {});
+  showOk(phone);
+};
+
+4.2. Обработчик кликов по Telegram и Max
+document.addEventListener('click', function (e) {
+  var btn = e.target.closest('#btnTelegram,#btnMax');
+  if (!btn) return;
+  var ch = btn.id === 'btnTelegram' ? 'telegram' : 'max';
+  // Яндекс.Метрика (если подключена)
+  try {
+    var ymId = window._YM_ID;
+    if (typeof ym === 'function' && ymId) ym(ymId, 'reachGoal', 'calculator_lead', { channel: ch, calculator_type: 'ТИКАЛЬКУЛЯТОРА' });
+  } catch (er) {}
+  if (btn.id === 'btnTelegram') {
+    e.preventDefault();
+    var city = window._userCity || 'Не определён';
+    var enc;
+    if (window._calcText) {
+      // ЗАМЕНИ текст приветствия под конкретный калькулятор:
+      var txt = '\u{1F4CD} Город: ' + city + '\n\nДобрый день! Хочу обсудить расчёт:\n' + window._calcText;
+      enc = encodeURIComponent(txt);
+    } else {
+      enc = encodeURIComponent('Добрый день! Хочу обсудить расчёт маркизы.');
+    }
+    // Deep-link: сначала пробуем нативное приложение, потом web
+    var tgApp = 'tg://resolve?domain=comfort_dom_andrey&text=' + enc;
+    var tgWeb = 'https://t.me/comfort_dom_andrey?text=' + enc;
+    var _tgFallback = setTimeout(function () { window.open(tgWeb, '_blank'); }, 750);
+    window.addEventListener('blur', function _tgBlur() {
+      clearTimeout(_tgFallback);
+      window.removeEventListener('blur', _tgBlur);
+    }, { once: true });
+    try { window.location.href = tgApp; } catch (ignore) {}
+    // Фиксируем заявку в бэкенде
+    fetch('/api/submit-lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: '(Telegram)', city: city, calc_text: window._calcText || '', channel: ch }),
+    }).catch(function () {});
+  }
+  // Max — href уже ведёт на max.ru, дополнительно фиксируем заявку
+  if (btn.id === 'btnMax') {
+    fetch('/api/submit-lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: '(Max)', city: window._userCity || 'Не определён', calc_text: window._calcText || '', channel: ch }),
+    }).catch(function () {});
+  }
+});
+
+4.3. Функция showOk() — успешная отправка
+function showOk(phone) {
+  var lf = document.getElementById('leadForm');
+  if (lf) { lf.classList.remove('visible'); lf.style.display = 'none'; }
+  var s = document.getElementById('leadSuccess');
+  var sub = document.getElementById('successSub');
+  if (s && sub) {
+    sub.textContent = 'Перезвоним на ';
+    var st = document.createElement('strong');
+    st.textContent = phone;
+    sub.appendChild(st);
+    sub.appendChild(document.createTextNode(' в течение 15 минут. Расчёт уже у менеджера.'));
+    s.classList.add('visible');
+  }
+  try {
+    var ymId = window._YM_ID;
+    if (typeof ym === 'function' && ymId) ym(ymId, 'reachGoal', 'calculator_lead', { calculator_type: 'ТИКАЛЬКУЛЯТОРА' });
+  } catch (er) {}
+}
+
+4.4. Маска телефона
+(function () {
+  var inp = document.getElementById('leadPhone');
+  if (!inp) return;
+  function digits(v) { return v.replace(/\D/g, ''); }
+  function mask(raw) {
+    if (!raw) return '';
+    var d = raw.startsWith('8') ? '7' + raw.slice(1) : raw;
+    var m = '+' + d[0];
+    if (d.length > 1) m += ' (' + d.substring(1, 4);
+    if (d.length > 4) m += ') ' + d.substring(4, 7);
+    if (d.length > 7) m += '-' + d.substring(7, 9);
+    if (d.length > 9) m += '-' + d.substring(9, 11);
+    return m;
+  }
+  inp.addEventListener('input', function () {
+    var raw = digits(inp.value).slice(0, 11);
+    inp.value = mask(raw);
+    inp.classList.remove('err');
+  });
+  inp.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); submitLead(); }
+  });
+})();
+
+4.5. Определение города (геолокация по IP)
+(function () {
+  try {
+    fetch('https://get.geojs.io/v1/ip/geo.json')
+      .then(function (r) { return r.json(); })
+      .then(function (g) {
+        if (g && g.city) window._userCity = g.city + (g.region ? ', ' + g.region : '');
+      })
+      .catch(function () {});
+  } catch (e) {}
+})();
+
+4.6. Показ формы при получении результата
+В функции renderResult() после отображения результатов расчёта:
+
+// Сохраняем текст расчёта для заявки
+window._calcText = data.text || '';
+// Показываем форму заявки
+var lf = document.getElementById('leadForm');
+if (lf) {
+  lf.style.display = '';
+  lf.classList.add('visible');
+}
+// Сбрасываем успех и callback-блок для повторного расчёта
+document.getElementById('leadSuccess').classList.remove('visible');
+document.getElementById('callbackBlock').style.display = 'none';
+var leadBtn = document.getElementById('leadBtn');
+if (leadBtn) { leadBtn.textContent = 'Жду звонка'; leadBtn.disabled = false; }
+
+5. ВАЖНО: Что НЕ нужно
+НЕ использовать FormSubmit (_sendFormSubmit) — всё идёт через /api/submit-lead
+НЕ подключать lead_helper.js — это устаревший файл для FormSubmit
+НЕ отправлять заявки напрямую из браузера через сторонние сервисы
+6. Чеклист для каждого калькулятора
+Шаг	Описание
+1	HTML блока leadForm + leadSuccess добавлен после результатов
+2	CSS стили lead-form, lead-channels, lead-success присутствуют
+3	JS: window._calcText заполняется при renderResult
+4	JS: window._userCity определяется через geojs.io
+5	JS: submitLead() отправляет на /api/submit-lead
+6	JS: Клик по Telegram → deep-link tg://resolve + fallback web + запись в бэкенд
+7	JS: Клик по Max → href ведёт на max.ru + запись в бэкенд
+8	JS: showOk(phone) — скрывает форму, показывает успех
+9	JS: Маска телефона на #leadPhone
+10	Удалены все вызовы _sendFormSubmit и подключение lead_helper.js
+11	Текст Telegram-сообщения адаптирован под тип калькулятора
+7. Адаптация под конкретный калькулятор
+Менять нужно только:
+
+Текст приветствия в Telegram — вместо "Хочу обсудить расчёт маркизы" → "Хочу обсудить расчёт Twin G200:" / "Хочу обсудить расчёт маркизы ERA:" / etc.
+calculator_type в Яндекс.Метрике — 'twin', 'era', 'screen'
+window._calcText — должен заполняться из ответа сервера (поле data.text в ответе /api/calculate)
