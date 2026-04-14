@@ -65,6 +65,9 @@ def create_app(test_config=None):
     from .controllers.api_routes import bp as api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
     
+    from .controllers.admin_routes import bp as admin_bp
+    app.register_blueprint(admin_bp)
+
     # Регистрация блюпринта для скрапера
     from .controllers.scraper_controller import register_scraper_blueprints
     register_scraper_blueprints(app)

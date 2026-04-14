@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ — Управление ценами</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f7fa}
+.top-bar{background:#1a3a6b;color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between}
+.top-bar h1{font-size:18px;font-weight:700;margin:0}
+.top-bar a{color:rgba(255,255,255,.7);font-size:13px;text-decoration:none}
+.top-bar a:hover{color:#fff}
+.main{max-width:1400px;margin:20px auto;padding:0 16px}
+.card{border:none;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);margin-bottom:20px}
+.card-header{background:#fff;border-bottom:1px solid #eee;font-weight:600;font-size:15px;padding:14px 20px;border-radius:10px 10px 0 0}
+.card-body{padding:20px}
+.sel-row{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+.sel-row .form-group{display:flex;flex-direction:column;gap:4px}
+.sel-row label{font-size:12px;font-weight:600;color:#666}
+.sel-row select{padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;min-width:180px}
+.sel-row .btn{padding:8px 20px;font-size:14px}
+.upload-area{border:2px dashed #c7d4f5;border-radius:10px;padding:40px 20px;text-align:center;cursor:pointer;transition:.2s;background:#fafbfd}
+.upload-area:hover,.upload-area.dragover{border-color:#1a3a6b;background:#f0f4ff}
+.upload-area p{margin:6px 0;color:#888;font-size:13px}
+.upload-area .icon{font-size:36px;color:#1a3a6b}
+.price-table-wrap{overflow-x:auto;margin-top:16px}
+.price-table{border-collapse:collapse;font-size:12px;width:100%}
+.price-table th,.price-table td{border:1px solid #dce3ed;padding:5px 7px;text-align:center;white-space:nowrap}
+.price-table th{background:#1a3a6b;color:#fff;font-weight:600;position:sticky;top:0;z-index:2}
+.price-table th.depth-header{background:#2d5a9e}
+.price-table td.depth-cell{background:#f0f4ff;font-weight:700;color:#1a3a6b;position:sticky;left:0;z-index:1}
+.price-table td input{width:60px;border:1px solid #ddd;border-radius:4px;padding:2px 4px;text-align:center;font-size:12px}
+.price-table td input:focus{border-color:#1a3a6b;outline:none}
+.mod-row th{background:#e8edf5;color:#1a3a6b;font-size:11px;font-weight:600}
+.status-msg{padding:10px 16px;border-radius:8px;margin-top:12px;font-size:13px}
+.status-msg.ok{background:#d4edda;color:#155724}
+.status-msg.err{background:#f8d7da;color:#721c24}
+.status-msg.info{background:#d1ecf1;color:#0c5460}
+.spinner{display:none;text-align:center;padding:30px}
+.spinner .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#1a3a6b;margin:0 4px;animation:bounce .6s infinite alternate}
+.spinner .dot:nth-child(2){animation-delay:.2s}
+.spinner .dot:nth-child(3){animation-delay:.4s}
+@keyframes bounce{to{transform:translateY(-12px);opacity:.3}}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+    <h1>Управление ценами</h1>
+    <div>
+        <a href="/" style="margin-right:16px">← Калькулятор</a>
+        <a href="{{ url_for('admin.logout') }}">Выйти</a>
+    </div>
+</div>
+
+<div class="main">
+
+<div class="card">
+    <div class="card-header">Выбор модели</div>
+    <div class="card-body">
+        <div class="sel-row">
+            <div class="form-group">
+                <label>Тип перголы</label>
+                <select id="pergolaType">
+                    <option value="B500NEW">B500 — поворотные ламели</option>
+                    <option value="B700NEW">B700 — поворотно-сдвижные</option>
+                    <option value="B600">B600 — сэндвич PIR</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Размер ламели</label>
+                <select id="lamellaSize">
+                    <option value="250">250 мм</option>
+                    <option value="200">200 мм</option>
+                    <option value="PIR">PIR (сэндвич)</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="loadCurrentPrices()">Показать текущие цены</button>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Текущие цены в базе</div>
+    <div class="card-body">
+        <div id="currentPricesWrap">
+            <p style="color:#888;font-size:13px">Выберите модель и нажмите «Показать текущие цены»</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Загрузка нового прайс-листа (изображение)</div>
+    <div class="card-body">
+        <div class="upload-area" id="uploadArea">
+            <div class="icon">📄</div>
+            <p><strong>Перетащите изображение</strong> или нажмите для выбора</p>
+            <p>PNG, JPG, WEBP — скриншот таблицы прайс-листа</p>
+            <input type="file" id="fileInput" accept="image/*" style="display:none">
+        </div>
+        <div id="uploadPreview" style="display:none;margin-top:12px;text-align:center">
+            <img id="previewImg" style="max-height:200px;border-radius:8px;border:1px solid #ddd">
+            <div style="margin-top:8px">
+                <button class="btn btn-warning btn-sm" onclick="parseImage()">🤖 Распознать цены через ИИ</button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="clearUpload()">Отмена</button>
+            </div>
+        </div>
+        <div class="spinner" id="parseSpinner">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <p style="margin-top:12px;color:#666;font-size:13px">Распознавание цен… Обычно 15–30 секунд</p>
+        </div>
+        <div id="parseStatus"></div>
+    </div>
+</div>
+
+<div class="card" id="parsedCard" style="display:none">
+    <div class="card-header">Распознанные цены — проверьте и примените</div>
+    <div class="card-body">
+        <div id="parsedPricesWrap"></div>
+        <div style="margin-top:16px;display:flex;gap:10px">
+            <button class="btn btn-success" onclick="applyParsedPrices()">✅ Применить и сохранить</button>
+            <button class="btn btn-outline-secondary" onclick="document.getElementById('parsedCard').style.display='none'">Отмена</button>
+        </div>
+        <div id="applyStatus"></div>
+    </div>
+</div>
+
+</div>
+
+<script>
+var parsedData = null;
+
+var pergolaType = document.getElementById('pergolaType');
+var lamellaSize = document.getElementById('lamellaSize');
+
+var lamellaOptions = {
+    'B500NEW': [['250','250 мм'],['200','200 мм']],
+    'B700NEW': [['250','250 мм'],['200','200 мм']],
+    'B600':    [['PIR','PIR (сэндвич)']]
+};
+
+pergolaType.addEventListener('change', function() {
+    var opts = lamellaOptions[this.value] || [];
+    lamellaSize.innerHTML = '';
+    opts.forEach(function(o) {
+        var opt = document.createElement('option');
+        opt.value = o[0]; opt.textContent = o[1];
+        lamellaSize.appendChild(opt);
+    });
+});
+
+function loadCurrentPrices() {
+    var pt = pergolaType.value;
+    var ls = lamellaSize.value;
+    var wrap = document.getElementById('currentPricesWrap');
+    wrap.innerHTML = '<p style="color:#888">Загрузка…</p>';
+
+    fetch('/admin/get-prices?pergola_type=' + pt + '&lamella_size=' + ls)
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (!d.ok || !d.data) {
+                wrap.innerHTML = '<p style="color:#888">Нет данных для этой комбинации</p>';
+                return;
+            }
+            wrap.innerHTML = buildPriceTable(d.data, false);
+        })
+        .catch(function(e) {
+            wrap.innerHTML = '<div class="status-msg err">' + e.message + '</div>';
+        });
+}
+
+function buildPriceTable(data, editable) {
+    var widths = data.widths || [];
+    var depths = data.depths || [];
+    var prices = data.prices || {};
+    var modules = data.modules || {};
+
+    if (!widths.length || !depths.length) return '<p style="color:#888">Нет данных</p>';
+
+    var html = '<div class="price-table-wrap"><table class="price-table">';
+
+    if (Object.keys(modules).length) {
+        html += '<tr class="mod-row"><th></th>';
+        widths.forEach(function(w) {
+            var m = modules[w] || '';
+            html += '<th>' + (m ? m + ' мод' : '') + '</th>';
+        });
+        html += '</tr>';
+    }
+
+    html += '<tr><th class="depth-header">Вынос \\ Ширина</th>';
+    widths.forEach(function(w) {
+        html += '<th>' + w + '</th>';
+    });
+    html += '</tr>';
+
+    depths.forEach(function(d) {
+        html += '<tr><td class="depth-cell">' + d + '</td>';
+        var row = prices[d] || {};
+        widths.forEach(function(w) {
+            var val = row[w];
+            if (editable) {
+                var v = val !== null && val !== undefined ? val : '';
+                html += '<td><input type="number" data-d="' + d + '" data-w="' + w + '" value="' + v + '"></td>';
+            } else {
+                html += '<td>' + (val !== null && val !== undefined ? formatNum(val) : '—') + '</td>';
+            }
+        });
+        html += '</tr>';
+    });
+
+    html += '</table></div>';
+    var filled = 0, total = widths.length * depths.length;
+    for (var dk in prices) { for (var wk in prices[dk]) { if (prices[dk][wk] !== null) filled++; } }
+    html += '<p style="font-size:12px;color:#888;margin-top:8px">Заполнено: ' + filled + ' из ' + total + ' ячеек</p>';
+    return html;
+}
+
+function formatNum(n) {
+    return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+var uploadArea = document.getElementById('uploadArea');
+var fileInput = document.getElementById('fileInput');
+var selectedFile = null;
+
+uploadArea.addEventListener('click', function() { fileInput.click(); });
+uploadArea.addEventListener('dragover', function(e) { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', function() { uploadArea.classList.remove('dragover'); });
+uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault(); uploadArea.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', function() { if (this.files.length) handleFile(this.files[0]); });
+
+function handleFile(file) {
+    selectedFile = file;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('previewImg').src = e.target.result;
+        document.getElementById('uploadPreview').style.display = 'block';
+        uploadArea.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearUpload() {
+    selectedFile = null;
+    document.getElementById('uploadPreview').style.display = 'none';
+    uploadArea.style.display = 'block';
+    fileInput.value = '';
+}
+
+function parseImage() {
+    if (!selectedFile) return;
+    var spinner = document.getElementById('parseSpinner');
+    var status = document.getElementById('parseStatus');
+    spinner.style.display = 'block';
+    status.innerHTML = '';
+    document.getElementById('parsedCard').style.display = 'none';
+
+    var fd = new FormData();
+    fd.append('image', selectedFile);
+
+    fetch('/admin/parse-price-image', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            spinner.style.display = 'none';
+            if (d.error) {
+                status.innerHTML = '<div class="status-msg err">' + d.error + '</div>';
+                return;
+            }
+            parsedData = d.data;
+            status.innerHTML = '<div class="status-msg ok">Распознано ' + d.filled + ' из ' + d.total + ' ячеек</div>';
+            document.getElementById('parsedPricesWrap').innerHTML = buildPriceTable(d.data, true);
+            document.getElementById('parsedCard').style.display = 'block';
+        })
+        .catch(function(e) {
+            spinner.style.display = 'none';
+            status.innerHTML = '<div class="status-msg err">Ошибка: ' + e.message + '</div>';
+        });
+}
+
+function applyParsedPrices() {
+    if (!parsedData) return;
+    var applyStatus = document.getElementById('applyStatus');
+    applyStatus.innerHTML = '<div class="status-msg info">Сохранение…</div>';
+
+    var inputs = document.querySelectorAll('#parsedCard input[type="number"]');
+    var prices = {};
+    inputs.forEach(function(inp) {
+        var d = inp.dataset.d;
+        var w = inp.dataset.w;
+        var val = inp.value.trim();
+        if (!prices[d]) prices[d] = {};
+        prices[d][w] = val ? parseInt(val) : null;
+    });
+
+    var body = {
+        pergola_type: pergolaType.value,
+        lamella_size: lamellaSize.value,
+        widths: parsedData.widths,
+        depths: parsedData.depths,
+        prices: prices,
+        modules: parsedData.modules || {}
+    };
+
+    fetch('/admin/apply-parsed-prices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.error) {
+            applyStatus.innerHTML = '<div class="status-msg err">' + d.error + '</div>';
+            return;
+        }
+        applyStatus.innerHTML = '<div class="status-msg ok">Сохранено ' + d.inserted + ' ячеек. Кэш калькулятора сброшен.</div>';
+        loadCurrentPrices();
+    })
+    .catch(function(e) {
+        applyStatus.innerHTML = '<div class="status-msg err">' + e.message + '</div>';
+    });
+}
+</script>
+</body>
+</html>

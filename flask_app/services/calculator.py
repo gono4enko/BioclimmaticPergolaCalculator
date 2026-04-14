@@ -10,6 +10,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+def clear_price_cache():
+    _price_cache.clear()
+
 PERGOLA_TYPES = {
     "B500NEW": "В500 - с поворотными ламелями",
     "B700NEW": "В700 - с поворотно-сдвижными ламелями",
@@ -125,11 +129,35 @@ def _get_plural_form(number, one, two, five):
     return five
 
 
-def load_price_data(pergola_type, lamella_size):
-    cache_key = (pergola_type, lamella_size)
-    if cache_key in _price_cache:
-        return _price_cache[cache_key]
+def _load_prices_from_db(pergola_type, lamella_size):
+    try:
+        import psycopg2
+        db_url = os.environ.get('DATABASE_URL', '')
+        if not db_url:
+            return None
+        conn = psycopg2.connect(db_url)
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT width, length, price FROM price_data WHERE pergola_type=%s AND lamella_size=%s",
+            (pergola_type, lamella_size)
+        )
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        if not rows:
+            return None
+        prices = {}
+        for w, l, p in rows:
+            if w not in prices:
+                prices[w] = {}
+            prices[w][l] = p
+        return prices
+    except Exception as e:
+        logger.warning(f"Ошибка загрузки цен из БД: {e}")
+        return None
 
+
+def _load_prices_from_csv(pergola_type, lamella_size):
     file_mapping = {
         ("B500NEW", "200"): ["data/price_tables/Прайс_В500-20.csv", "attached_assets/Price_B500-20.csv", "attached_assets/Прайс_В500-20.csv"],
         ("B500NEW", "250"): ["data/price_tables/Прайс_В500-25.csv", "attached_assets/Price_B500-25.csv", "attached_assets/Прайс_В500-25.csv"],
@@ -138,9 +166,9 @@ def load_price_data(pergola_type, lamella_size):
         ("B600", "PIR"): ["data/price_tables/Прайс_В600_PIR.csv", "attached_assets/Price_B600_PIR.csv", "attached_assets/Прайс_В600_PIR.csv"]
     }
 
+    cache_key = (pergola_type, lamella_size)
     if cache_key not in file_mapping:
-        logger.error(f"Комбинация {pergola_type}/{lamella_size} не найдена в маппинге")
-        return {}
+        return None
 
     file_path = None
     for path in file_mapping[cache_key]:
@@ -149,8 +177,7 @@ def load_price_data(pergola_type, lamella_size):
             break
 
     if not file_path:
-        logger.error(f"Файлы прайса для {pergola_type}/{lamella_size} не найдены")
-        return {}
+        return None
 
     prices = {}
     try:
@@ -190,13 +217,31 @@ def load_price_data(pergola_type, lamella_size):
                 except (ValueError, IndexError):
                     continue
 
-        _price_cache[cache_key] = prices
-        logger.info(f"Загружено {len(prices)} записей из {file_path}")
+        logger.info(f"Загружено {len(prices)} записей из CSV {file_path}")
         return prices
-
     except Exception as e:
         logger.error(f"Ошибка загрузки прайса {file_path}: {e}")
-        return {}
+        return None
+
+
+def load_price_data(pergola_type, lamella_size):
+    cache_key = (pergola_type, lamella_size)
+    if cache_key in _price_cache:
+        return _price_cache[cache_key]
+
+    prices = _load_prices_from_db(pergola_type, lamella_size)
+    if prices:
+        _price_cache[cache_key] = prices
+        logger.info(f"Цены {pergola_type}/{lamella_size}: {len(prices)} строк из PostgreSQL")
+        return prices
+
+    prices = _load_prices_from_csv(pergola_type, lamella_size)
+    if prices:
+        _price_cache[cache_key] = prices
+        return prices
+
+    logger.error(f"Цены для {pergola_type}/{lamella_size} не найдены ни в БД, ни в CSV")
+    return {}
 
 
 def get_modules_info_from_csv(pergola_type, lamella_size):
