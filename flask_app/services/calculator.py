@@ -242,7 +242,31 @@ def load_price_data(pergola_type, lamella_size):
     return {}
 
 
-def get_modules_info_from_csv(pergola_type, lamella_size):
+def _get_modules_info_from_db(pergola_type, lamella_size):
+    try:
+        import psycopg2
+        db_url = os.environ.get('DATABASE_URL', '')
+        if not db_url:
+            return None
+        with psycopg2.connect(db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT DISTINCT length, modules FROM price_data WHERE pergola_type=%s AND lamella_size=%s AND modules IS NOT NULL ORDER BY length",
+                    (pergola_type, lamella_size)
+                )
+                rows = cur.fetchall()
+        if not rows:
+            return None
+        modules_map = {}
+        for length_val, mod in rows:
+            modules_map[float(length_val)] = int(mod)
+        return modules_map
+    except Exception as e:
+        logger.warning(f"Ошибка загрузки модулей из БД: {e}")
+        return None
+
+
+def _get_modules_info_from_csv(pergola_type, lamella_size):
     file_mapping = {
         ("B500NEW", "200"): ["data/price_tables/Прайс_В500-20.csv", "attached_assets/Price_B500-20.csv"],
         ("B500NEW", "250"): ["data/price_tables/Прайс_В500-25.csv", "attached_assets/Price_B500-25.csv"],
@@ -289,6 +313,13 @@ def get_modules_info_from_csv(pergola_type, lamella_size):
             return modules_map
     except Exception:
         return None
+
+
+def get_modules_info_from_csv(pergola_type, lamella_size):
+    result = _get_modules_info_from_db(pergola_type, lamella_size)
+    if result:
+        return result
+    return _get_modules_info_from_csv(pergola_type, lamella_size)
 
 
 def adjust_length_for_lamella_size(length_m, lamella_size):

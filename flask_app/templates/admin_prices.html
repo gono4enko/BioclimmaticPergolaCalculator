@@ -82,10 +82,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <div class="card">
-    <div class="card-header">Текущие цены в базе</div>
+    <div class="card-header">Текущие цены в базе <span id="editModeLabel" style="font-size:12px;color:#888;margin-left:8px"></span></div>
     <div class="card-body">
         <div id="currentPricesWrap">
             <p style="color:#888;font-size:13px">Выберите модель и нажмите «Показать текущие цены»</p>
+        </div>
+        <div id="editControls" style="display:none;margin-top:12px;gap:10px">
+            <button class="btn btn-outline-primary btn-sm" id="toggleEditBtn" onclick="toggleEditMode()">Редактировать</button>
+            <button class="btn btn-success btn-sm" id="saveAllBtn" style="display:none" onclick="saveAllEdits()">Сохранить изменения</button>
+            <span id="editStatus" style="font-size:12px;line-height:32px;color:#888"></span>
         </div>
     </div>
 </div>
@@ -150,24 +155,90 @@ pergolaType.addEventListener('change', function() {
     });
 });
 
+var currentData = null;
+var editMode = false;
+
 function loadCurrentPrices() {
     var pt = pergolaType.value;
     var ls = lamellaSize.value;
     var wrap = document.getElementById('currentPricesWrap');
     wrap.innerHTML = '<p style="color:#888">Загрузка…</p>';
+    editMode = false;
+    document.getElementById('toggleEditBtn').textContent = 'Редактировать';
+    document.getElementById('saveAllBtn').style.display = 'none';
+    document.getElementById('editModeLabel').textContent = '';
+    document.getElementById('editStatus').textContent = '';
 
     fetch('/admin/get-prices?pergola_type=' + pt + '&lamella_size=' + ls)
         .then(function(r) { return r.json(); })
         .then(function(d) {
             if (!d.ok || !d.data) {
                 wrap.innerHTML = '<p style="color:#888">Нет данных для этой комбинации</p>';
+                document.getElementById('editControls').style.display = 'none';
                 return;
             }
+            currentData = d.data;
             wrap.innerHTML = buildPriceTable(d.data, false);
+            document.getElementById('editControls').style.display = 'flex';
         })
         .catch(function(e) {
             wrap.innerHTML = '<div class="status-msg err">' + e.message + '</div>';
         });
+}
+
+function toggleEditMode() {
+    if (!currentData) return;
+    editMode = !editMode;
+    var wrap = document.getElementById('currentPricesWrap');
+    wrap.innerHTML = buildPriceTable(currentData, editMode);
+    document.getElementById('toggleEditBtn').textContent = editMode ? 'Отмена' : 'Редактировать';
+    document.getElementById('saveAllBtn').style.display = editMode ? 'inline-block' : 'none';
+    document.getElementById('editModeLabel').textContent = editMode ? '(режим редактирования)' : '';
+    document.getElementById('editStatus').textContent = '';
+}
+
+function saveAllEdits() {
+    var inputs = document.querySelectorAll('#currentPricesWrap input[type="number"]');
+    var pt = pergolaType.value;
+    var ls = lamellaSize.value;
+    var changes = [];
+    inputs.forEach(function(inp) {
+        var d = inp.dataset.d;
+        var w = inp.dataset.w;
+        var origVal = inp.dataset.orig;
+        var newVal = inp.value.trim();
+        if (newVal && newVal !== origVal) {
+            changes.push({depth: d, width: w, price: parseInt(newVal)});
+        }
+    });
+    if (!changes.length) {
+        document.getElementById('editStatus').textContent = 'Нет изменений';
+        return;
+    }
+    document.getElementById('editStatus').textContent = 'Сохранение ' + changes.length + ' ячеек…';
+    var done = 0;
+    var errors = 0;
+    changes.forEach(function(c) {
+        fetch('/admin/save-cell', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({pergola_type: pt, lamella_size: ls, depth: c.depth, width: c.width, price: c.price})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { if (!d.ok) errors++; })
+        .catch(function() { errors++; })
+        .finally(function() {
+            done++;
+            if (done === changes.length) {
+                if (errors) {
+                    document.getElementById('editStatus').textContent = 'Ошибка при сохранении ' + errors + ' ячеек';
+                } else {
+                    document.getElementById('editStatus').textContent = 'Сохранено ' + changes.length + ' ячеек';
+                    loadCurrentPrices();
+                }
+            }
+        });
+    });
 }
 
 function buildPriceTable(data, editable) {
@@ -202,7 +273,7 @@ function buildPriceTable(data, editable) {
             var val = row[w];
             if (editable) {
                 var v = val !== null && val !== undefined ? val : '';
-                html += '<td><input type="number" data-d="' + d + '" data-w="' + w + '" value="' + v + '"></td>';
+                html += '<td><input type="number" data-d="' + d + '" data-w="' + w + '" data-orig="' + v + '" value="' + v + '"></td>';
             } else {
                 html += '<td>' + (val !== null && val !== undefined ? formatNum(val) : '—') + '</td>';
             }
