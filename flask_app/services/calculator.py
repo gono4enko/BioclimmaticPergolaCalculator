@@ -146,13 +146,16 @@ def _load_prices_from_db(pergola_type, lamella_size):
             return None
         prices = {}
         for w, l, p, m in rows:
-            if w not in prices:
-                prices[w] = {}
-            expected_mod = get_modules_by_dimensions(float(l), None)
-            if l not in prices[w]:
-                prices[w][l] = p
+            wf = float(w)
+            lf = float(l)
+            pf = float(p)
+            if wf not in prices:
+                prices[wf] = {}
+            expected_mod = get_modules_by_dimensions(lf, None)
+            if lf not in prices[wf]:
+                prices[wf][lf] = pf
             elif m and int(m) == expected_mod:
-                prices[w][l] = p
+                prices[wf][lf] = pf
         return prices
     except Exception as e:
         logger.warning(f"Ошибка загрузки цен из БД: {e}")
@@ -263,12 +266,13 @@ def _get_modules_info_from_db(pergola_type, lamella_size):
             return None
         modules_map = {}
         for length_val, mod in rows:
-            lf = float(length_val)
+            lf = round(float(length_val), 2)
+            mi = int(mod)
             expected = get_modules_by_dimensions(lf, None)
             if lf not in modules_map:
-                modules_map[lf] = int(mod)
-            elif int(mod) == expected:
-                modules_map[lf] = int(mod)
+                modules_map[lf] = mi
+            elif mi == expected:
+                modules_map[lf] = mi
         return modules_map
     except Exception as e:
         logger.warning(f"Ошибка загрузки модулей из БД: {e}")
