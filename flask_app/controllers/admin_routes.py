@@ -227,6 +227,58 @@ Outer key of "prices" = depth/вынос row. Inner key = width/ширина col
                 else:
                     normalized[d_key][w_key] = None
 
+        boundary_widths = [w for w in widths_sorted if w.endswith('+')]
+        if boundary_widths:
+            verify_prompt = f"""You are verifying OCR results for a price table. Look at the image again.
+BOUNDARY COLUMNS to verify: {', '.join(boundary_widths)}
+These are duplicate width columns at module boundaries (e.g. 4.5 appears in both 1-module and 2-module groups).
+The "+" suffix means the column belongs to the HIGHER module group.
+
+For each boundary width, verify the prices in the FIRST 3 depth rows.
+First-pass extracted these values:
+"""
+            for bw in boundary_widths[:4]:
+                bw_base = bw.rstrip('+')
+                verify_prompt += f"\nWidth {bw_base} (lower module) vs {bw} (higher module):\n"
+                for d in depths_sorted[:3]:
+                    p_base = normalized.get(d, {}).get(bw_base, 'null')
+                    p_plus = normalized.get(d, {}).get(bw, 'null')
+                    verify_prompt += f"  depth {d}: base={p_base}, plus={p_plus}\n"
+
+            verify_prompt += """
+Return ONLY valid JSON with corrections (or empty corrections if all correct):
+{"corrections": {"depth_key": {"width_key": corrected_price, ...}, ...}}
+Only include cells that need correction. Return {"corrections": {}} if all values are correct."""
+
+            try:
+                verify_resp = client.messages.create(
+                    model='claude-sonnet-4-20250514',
+                    max_tokens=2048,
+                    messages=[{
+                        'role': 'user',
+                        'content': [
+                            {'type': 'image', 'source': {'type': 'base64', 'media_type': media_type, 'data': b64}},
+                            {'type': 'text', 'text': verify_prompt}
+                        ]
+                    }]
+                )
+                vraw = verify_resp.content[0].text.strip()
+                if vraw.startswith('```'):
+                    vraw = re.sub(r'^```[a-z]*\n?', '', vraw)
+                    vraw = re.sub(r'\n?```$', '', vraw.strip())
+                corrections = json.loads(vraw).get('corrections', {})
+                applied_corrections = 0
+                for d_key, row_corr in corrections.items():
+                    fd = fmt_depth(d_key)
+                    if fd in normalized:
+                        for w_key, new_price in row_corr.items():
+                            fw = fmt_width(w_key)
+                            if new_price is not None:
+                                normalized[fd][fw] = int(float(str(new_price).replace(' ', '')))
+                                applied_corrections += 1
+            except Exception:
+                pass
+
         filled = sum(1 for row in normalized.values() for v in row.values() if v is not None)
         total = len(depths_sorted) * len(widths_sorted)
 
@@ -242,10 +294,10 @@ Outer key of "prices" = depth/вынос row. Inner key = width/ширина col
             'total': total,
         })
 
-    except json.JSONDecodeError as e:
-        return jsonify({'error': f'Ошибка разбора ответа ИИ: {e}', 'raw': raw[:600]}), 422
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except json.JSONDecodeError:
+        return jsonify({'error': 'Ошибка разбора ответа ИИ'}), 422
+    except Exception:
+        return jsonify({'error': 'Ошибка обработки изображения'}), 500
 
 
 @bp.route('/apply-parsed-prices', methods=['POST'])

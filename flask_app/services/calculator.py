@@ -138,17 +138,21 @@ def _load_prices_from_db(pergola_type, lamella_size):
         with psycopg2.connect(db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT width, length, price FROM price_data WHERE pergola_type=%s AND lamella_size=%s",
+                    "SELECT width, length, price, modules FROM price_data WHERE pergola_type=%s AND lamella_size=%s ORDER BY width, length, modules",
                     (pergola_type, lamella_size)
                 )
                 rows = cur.fetchall()
         if not rows:
             return None
         prices = {}
-        for w, l, p in rows:
+        for w, l, p, m in rows:
             if w not in prices:
                 prices[w] = {}
-            prices[w][l] = p
+            expected_mod = get_modules_by_dimensions(float(l), None)
+            if l not in prices[w]:
+                prices[w][l] = p
+            elif m and int(m) == expected_mod:
+                prices[w][l] = p
         return prices
     except Exception as e:
         logger.warning(f"Ошибка загрузки цен из БД: {e}")
@@ -251,7 +255,7 @@ def _get_modules_info_from_db(pergola_type, lamella_size):
         with psycopg2.connect(db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT DISTINCT length, modules FROM price_data WHERE pergola_type=%s AND lamella_size=%s AND modules IS NOT NULL ORDER BY length",
+                    "SELECT length, modules FROM price_data WHERE pergola_type=%s AND lamella_size=%s AND modules IS NOT NULL ORDER BY length, modules",
                     (pergola_type, lamella_size)
                 )
                 rows = cur.fetchall()
@@ -259,7 +263,12 @@ def _get_modules_info_from_db(pergola_type, lamella_size):
             return None
         modules_map = {}
         for length_val, mod in rows:
-            modules_map[float(length_val)] = int(mod)
+            lf = float(length_val)
+            expected = get_modules_by_dimensions(lf, None)
+            if lf not in modules_map:
+                modules_map[lf] = int(mod)
+            elif int(mod) == expected:
+                modules_map[lf] = int(mod)
         return modules_map
     except Exception as e:
         logger.warning(f"Ошибка загрузки модулей из БД: {e}")
