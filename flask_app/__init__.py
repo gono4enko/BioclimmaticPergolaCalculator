@@ -2,6 +2,7 @@
 Инициализация Flask-приложения и его зависимостей.
 """
 import os
+import hashlib
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -10,6 +11,15 @@ from flask_compress import Compress
 # Инициализация расширений
 db = SQLAlchemy()
 migrate = Migrate()
+
+_DEV_KEY_CACHE = None
+
+def _stable_dev_key():
+    global _DEV_KEY_CACHE
+    if _DEV_KEY_CACHE is None:
+        seed = os.environ.get('REPL_ID', '') + os.environ.get('REPL_SLUG', '') + 'pergola-dev-key'
+        _DEV_KEY_CACHE = hashlib.sha256(seed.encode()).hexdigest()
+    return _DEV_KEY_CACHE
 
 def create_app(test_config=None):
     """
@@ -26,7 +36,7 @@ def create_app(test_config=None):
     
     # Настройка приложения
     app.config.from_mapping(
-        SECRET_KEY=os.environ.get('SECRET_KEY', os.urandom(32).hex()),
+        SECRET_KEY=os.environ.get('SECRET_KEY') or _stable_dev_key(),
         SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///pergola.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SEND_FILE_MAX_AGE_DEFAULT=31536000,

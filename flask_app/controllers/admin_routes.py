@@ -71,24 +71,61 @@ def get_prices():
         if not rows:
             return jsonify({'ok': True, 'data': None, 'message': 'Нет данных'})
 
-        widths_set = sorted(set(r[1] for r in rows))
-        depths_set = sorted(set(r[0] for r in rows))
+        def fnum(v):
+            return f"{float(v):.1f}" if float(v) == int(float(v)) else f"{float(v):.2f}"
+
+        length_module_pairs = {}
+        for w, l, p, m in rows:
+            lk = fnum(l)
+            mi = int(m) if m else 1
+            if lk not in length_module_pairs:
+                length_module_pairs[lk] = set()
+            length_module_pairs[lk].add(mi)
+
+        boundary_lengths = {lk for lk, mods in length_module_pairs.items() if len(mods) > 1}
+
+        depths_set = sorted(set(fnum(r[0]) for r in rows), key=lambda x: float(x))
+        widths_keys = []
+        seen_width_keys = set()
         modules_map = {}
         prices = {}
-        for w, l, p, m in rows:
-            dk = f"{w:.1f}" if w == int(w) else f"{w:.2f}"
-            wk = f"{l:.1f}" if l == int(l) else f"{l:.2f}"
+
+        for w, l, p, m in sorted(rows, key=lambda r: (float(r[1]), int(r[3]) if r[3] else 1)):
+            dk = fnum(w)
+            lk = fnum(l)
+            mi = int(m) if m else 1
+
+            if lk in boundary_lengths:
+                min_mod = min(length_module_pairs[lk])
+                if mi == min_mod:
+                    wk = lk
+                else:
+                    wk = lk + '+'
+            else:
+                wk = lk
+
+            if wk not in seen_width_keys:
+                seen_width_keys.add(wk)
+                widths_keys.append(wk)
+            modules_map[wk] = mi
+
             if dk not in prices:
                 prices[dk] = {}
-            prices[dk][wk] = int(round(p)) if p else None
-            if wk not in modules_map and m:
-                modules_map[wk] = m
+            prices[dk][wk] = int(round(float(p))) if p else None
+
+        def width_sort_key(w):
+            s = str(w).strip()
+            if s.endswith('+'):
+                return (float(s[:-1]), 1)
+            return (float(s), 0)
+
+        widths_sorted = sorted(widths_keys, key=width_sort_key)
 
         return jsonify({
             'ok': True,
             'data': {
-                'widths': [f"{w:.1f}" if w == int(w) else f"{w:.2f}" for w in widths_set],
-                'depths': [f"{d:.1f}" if d == int(d) else f"{d:.2f}" for d in depths_set],
+                'widths': widths_sorted,
+                'depths': depths_set,
                 'prices': prices,
                 'modules': modules_map,
             }
