@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 def clear_price_cache():
     _price_cache.clear()
+    _variant_price_cache.clear()
 
 PERGOLA_TYPES = {
     "B500NEW": "В500 - с поворотными ламелями",
@@ -115,6 +116,7 @@ LIGHTING_PRICES = {
 }
 
 _price_cache = {}
+_variant_price_cache = {}
 
 
 def _get_plural_form(number, one, two, five):
@@ -160,6 +162,129 @@ def _load_prices_from_db(pergola_type, lamella_size):
     except Exception as e:
         logger.warning(f"Ошибка загрузки цен из БД: {e}")
         return None
+
+
+def _load_variant_prices_from_db(pergola_type, lamella_size):
+    try:
+        import psycopg2
+        db_url = os.environ.get('DATABASE_URL', '')
+        if not db_url:
+            return None
+        with psycopg2.connect(db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT variant, width, length, price, modules FROM price_data "
+                    "WHERE pergola_type=%s AND lamella_size=%s AND variant IS NOT NULL "
+                    "ORDER BY variant, modules, width, length",
+                    (pergola_type, lamella_size)
+                )
+                rows = cur.fetchall()
+        if not rows:
+            return None
+        variants = {}
+        for variant, w, l, p, m in rows:
+            if variant not in variants:
+                variants[variant] = {}
+            mod = int(m) if m else 1
+            if mod not in variants[variant]:
+                variants[variant][mod] = {}
+            wf = float(w)
+            lf = float(l)
+            pf = float(p)
+            if wf not in variants[variant][mod]:
+                variants[variant][mod][wf] = {}
+            variants[variant][mod][wf][lf] = pf
+        return variants
+    except Exception as e:
+        logger.warning(f"Ошибка загрузки вариантных цен из БД: {e}")
+        return None
+
+
+def load_variant_prices(pergola_type, lamella_size):
+    cache_key = (pergola_type, lamella_size, 'variants')
+    if cache_key in _variant_price_cache:
+        return _variant_price_cache[cache_key]
+    variants = _load_variant_prices_from_db(pergola_type, lamella_size)
+    if variants:
+        _variant_price_cache[cache_key] = variants
+        logger.info(f"Вариантные цены {pergola_type}/{lamella_size}: {list(variants.keys())}")
+    return variants
+
+
+def _find_price_in_variant(variant_data, mod, depth, width):
+    if mod not in variant_data:
+        return None
+    mod_data = variant_data[mod]
+    available_depths = sorted(mod_data.keys())
+    available_widths = set()
+    for d in mod_data.values():
+        available_widths.update(d.keys())
+    available_widths = sorted(available_widths)
+
+    if not available_depths or not available_widths:
+        return None
+
+    depth_match = None
+    for d in available_depths:
+        if d >= depth - 0.01:
+            depth_match = d
+            break
+    if depth_match is None:
+        depth_match = available_depths[-1]
+
+    width_match = None
+    for w in available_widths:
+        if w >= width - 0.01:
+            width_match = w
+            break
+    if width_match is None:
+        width_match = available_widths[-1]
+
+    if depth_match in mod_data and width_match in mod_data[depth_match]:
+        return mod_data[depth_match][width_match]
+    return None
+
+
+def _get_valid_module_counts(variant_data, width):
+    valid = []
+    for mod in [1, 2, 3]:
+        if mod not in variant_data:
+            continue
+        mod_widths = set()
+        for depth_data in variant_data[mod].values():
+            mod_widths.update(depth_data.keys())
+        if not mod_widths:
+            continue
+        min_w = min(mod_widths)
+        max_w = max(mod_widths)
+        if width >= min_w - 0.01 and width <= max_w + 0.01:
+            valid.append(mod)
+    return valid
+
+
+def get_best_variant_price(pergola_type, lamella_size, width_m, length_m):
+    variants = load_variant_prices(pergola_type, lamella_size)
+    if not variants:
+        return None, None, None
+
+    lookup_depth = length_m
+    lookup_width = width_m
+
+    best_price = None
+    best_variant = None
+    best_modules = None
+
+    for variant_name, variant_data in variants.items():
+        valid_mods = _get_valid_module_counts(variant_data, lookup_width)
+        for mod in valid_mods:
+            price = _find_price_in_variant(variant_data, mod, lookup_depth, lookup_width)
+            if price is not None:
+                if best_price is None or price < best_price:
+                    best_price = price
+                    best_variant = variant_name
+                    best_modules = mod
+
+    return best_price, best_variant, best_modules
 
 
 def _load_prices_from_csv(pergola_type, lamella_size):
@@ -495,7 +620,20 @@ def perform_calculation(dimensions, options):
         else:
             lamellas_count = 0
 
-        base_price = get_base_price(pergola_type, lamella_size, width_m, length_m)
+        selected_variant = None
+        if pergola_type == "B500NEW":
+            variant_price, variant_name, variant_modules = get_best_variant_price(
+                pergola_type, lamella_size, width_m, length_m
+            )
+            if variant_price is not None:
+                base_price = variant_price
+                selected_variant = variant_name
+                modules = variant_modules
+                logger.info(f"B500 вариант: {variant_name}, модулей: {variant_modules}, цена: {variant_price}€")
+            else:
+                base_price = get_base_price(pergola_type, lamella_size, width_m, length_m)
+        else:
+            base_price = get_base_price(pergola_type, lamella_size, width_m, length_m)
 
         lamella_display = {"200": "200 мм", "250": "250 мм", "PIR": "PIR"}.get(lamella_size, lamella_size)
         if pergola_type in ["B500NEW", "B700NEW"]:
@@ -644,7 +782,8 @@ def perform_calculation(dimensions, options):
             "installation": {"selected": installation, "price": installation_price},
             "lamellas_count": lamellas_count,
             "pergola_type_name": PERGOLA_TYPES.get(pergola_type, pergola_type),
-            "lamella_type_name": LAMELLA_TYPES.get(lamella_type, lamella_type)
+            "lamella_type_name": LAMELLA_TYPES.get(lamella_type, lamella_type),
+            "selected_variant": selected_variant
         }
 
         return results

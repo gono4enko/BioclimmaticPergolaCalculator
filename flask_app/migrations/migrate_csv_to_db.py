@@ -44,6 +44,12 @@ def run_migration(db_url=None):
                 EXCEPTION WHEN duplicate_column THEN NULL;
                 END $$;
             """)
+            cur.execute("""
+                DO $$ BEGIN
+                    ALTER TABLE price_data ADD COLUMN variant VARCHAR(20) DEFAULT NULL;
+                EXCEPTION WHEN duplicate_column THEN NULL;
+                END $$;
+            """)
         conn.commit()
 
     total_inserted = 0
