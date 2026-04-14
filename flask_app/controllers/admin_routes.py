@@ -414,35 +414,23 @@ def save_cell():
         p_val = float(str(price).replace(' ', ''))
 
         from ..services.calculator import get_modules_by_dimensions
+        base_mod = get_modules_by_dimensions(w_val, None)
         if is_boundary_plus:
-            expected_mod = get_modules_by_dimensions(w_val, None)
-            target_mod = expected_mod + 1 if expected_mod < 3 else 3
+            target_mod = base_mod + 1 if base_mod < 3 else 3
         else:
-            target_mod = None
+            target_mod = base_mod
 
         with psycopg2.connect(os.environ.get('DATABASE_URL', '')) as conn:
             with conn.cursor() as cur:
-                if target_mod is not None:
+                cur.execute(
+                    "UPDATE price_data SET price=%s, updated_at=NOW() WHERE pergola_type=%s AND lamella_size=%s AND width=%s AND length=%s AND modules=%s",
+                    (p_val, pergola_type, lamella_size, d_val, w_val, target_mod)
+                )
+                if cur.rowcount == 0:
                     cur.execute(
-                        "UPDATE price_data SET price=%s, updated_at=NOW() WHERE pergola_type=%s AND lamella_size=%s AND width=%s AND length=%s AND modules=%s",
-                        (p_val, pergola_type, lamella_size, d_val, w_val, target_mod)
+                        "INSERT INTO price_data (pergola_type, lamella_size, width, length, price, modules, updated_at) VALUES (%s,%s,%s,%s,%s,%s,NOW())",
+                        (pergola_type, lamella_size, d_val, w_val, p_val, target_mod)
                     )
-                    if cur.rowcount == 0:
-                        cur.execute(
-                            "INSERT INTO price_data (pergola_type, lamella_size, width, length, price, modules, updated_at) VALUES (%s,%s,%s,%s,%s,%s,NOW())",
-                            (pergola_type, lamella_size, d_val, w_val, p_val, target_mod)
-                        )
-                else:
-                    cur.execute(
-                        "UPDATE price_data SET price=%s, updated_at=NOW() WHERE pergola_type=%s AND lamella_size=%s AND width=%s AND length=%s",
-                        (p_val, pergola_type, lamella_size, d_val, w_val)
-                    )
-                    if cur.rowcount == 0:
-                        mod = get_modules_by_dimensions(w_val, None)
-                        cur.execute(
-                            "INSERT INTO price_data (pergola_type, lamella_size, width, length, price, modules, updated_at) VALUES (%s,%s,%s,%s,%s,%s,NOW())",
-                            (pergola_type, lamella_size, d_val, w_val, p_val, mod)
-                        )
             conn.commit()
 
         from ..services.calculator import clear_price_cache
