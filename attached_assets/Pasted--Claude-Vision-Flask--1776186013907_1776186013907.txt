@@ -1,0 +1,421 @@
+Промпт: Загрузка цен из изображения прайс-листа через Claude Vision
+
+Реализуй в Flask-приложении функцию автоматического распознавания цен из скриншота табличного прайс-листа с помощью Claude Vision API. Результат — цены записываются в JSON-файл, кэш сбрасывается.
+
+1. Зависимости
+pip install anthropic
+
+В .env / Replit Secrets:
+
+ANTHROPIC_API_KEY = sk-ant-...
+
+2. Структура данных
+Файл с ценами: static/data/pricing.json
+
+{
+  "models": {
+    "НазваниеМодели": {
+      "wall": {
+        "4.0": { "3.0": 2500, "3.5": 2800 },
+        "4.5": { "3.0": 3100, "3.5": 3400 }
+      }
+    }
+  }
+}
+
+Структура: data["models"][model][тип_конструкции][ширина][глубина] = цена
+
+ВАЖНО: Дублирующиеся ключи. В прайс-листе Decolife таблица разбита на группы по числу модулей. На границе групп одна ширина встречается дважды с разными ценами:
+
+Первое вхождение ширины 4.5м → ключ "4.5" (меньшая цена)
+Второе вхождение ширины 4.5м → ключ "4.5+" (большая цена)
+Аналогично для 9.0м → "9.0" и "9.0+"
+3. Бэкенд — два эндпоинта
+3.1. /admin/parse-price-image — POST, multipart/form-data
+Принимает файл image (PNG/JPG/WEBP). Отправляет в Claude два запроса и возвращает распознанные цены.
+
+import anthropic, base64, json, re, os
+from flask import request, jsonify
+@app.route('/admin/parse-price-image', methods=['POST'])
+@admin_required
+def admin_parse_price_image():
+    import anthropic
+    if 'image' not in request.files:
+        return jsonify({'error': 'Файл не прикреплён'}), 400
+    img_file = request.files['image']
+    ext = img_file.filename.rsplit('.', 1)[-1].lower()
+    if ext not in {'png', 'jpg', 'jpeg', 'webp'}:
+        return jsonify({'error': f'Формат {ext} не поддерживается'}), 400
+    img_bytes = img_file.read()
+    b64 = base64.b64encode(img_bytes).decode()
+    media_type = 'image/jpeg' if ext in ('jpg','jpeg') else f'image/{ext}'
+    # ── ПРОМПТ ДЛЯ ВАШЕЙ ТАБЛИЦЫ ─────────────────────────────────
+    # ОБЯЗАТЕЛЬНО адаптируй под свою структуру прайс-листа.
+    # Ниже — пример для Decolife с дублирующимися столбцами модулей.
+    prompt = """You are a precise OCR engine for price tables.
+TASK: Extract ALL prices from this price table image.
+TABLE STRUCTURE:
+- LEFT column: depth/вынос values in meters (rows)
+- TOP row: width/ширина values in meters (columns)
+- Each cell may contain TWO numbers:
+  * MAIN price (larger number, shown first) — extract this
+  * Secondary price with asterisk *NNN — IGNORE completely
+DUPLICATE WIDTH COLUMNS AT MODULE BOUNDARIES:
+- Width 4.5m appears TWICE: plain key "4.5" (lower-module group) and "4.5+" (higher-module group)
+- Width 9.0m appears TWICE: plain key "9.0" and "9.0+"
+- Extract BOTH prices separately
+GENERAL RULES:
+1. Numbers use space as thousand separator: "4 512" = 4512
+2. All prices are positive integers
+3. If a cell is empty, use null
+OUTPUT FORMAT — return ONLY valid JSON, no markdown:
+{
+  "widths": ["3.0","3.5","4.0","4.5","4.5+","5.0",...,"9.0","9.0+",...],
+  "depths": ["2.5","3.0","3.5","4.0","4.5","5.0"],
+  "prices": {
+    "3.0": {"3.0": 2759, "3.5": 2964, "4.5": 3382, "4.5+": 4130, ...},
+    "3.5": {...}
+  }
+}
+Outer key of "prices" = depth/вынос row. Inner key = width/ширина column."""
+    try:
+        client = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
+        # ── Первый проход: полное распознавание таблицы ──────────
+        response = client.messages.create(
+            model='claude-opus-4-5',
+            max_tokens=8192,
+            messages=[{
+                'role': 'user',
+                'content': [
+                    {'type': 'image', 'source': {'type': 'base64', 'media_type': media_type, 'data': b64}},
+                    {'type': 'text', 'text': prompt}
+                ]
+            }]
+        )
+        raw = response.content[0].text.strip()
+        # Убираем markdown-обёртку, если Claude добавил ```json ... ```
+        if raw.startswith('```'):
+            raw = re.sub(r'^```[a-z]*\n?', '', raw)
+            raw = re.sub(r'\n?```$', '', raw.strip())
+        parsed = json.loads(raw)
+        if 'prices' not in parsed or 'widths' not in parsed or 'depths' not in parsed:
+            return jsonify({'error': 'Неожиданный формат ответа', 'raw': raw}), 422
+        # ── Нормализация ключей ───────────────────────────────────
+        def fmt_depth(v):
+            try: return f"{float(v):.1f}"
+            except: return str(v)
+        def fmt_width(v):
+            s = str(v).strip()
+            if s.endswith('+'):
+                try: return f"{float(s[:-1]):.1f}+"
+                except: return s
+            try: return f"{float(s):.1f}"
+            except: return s
+        def width_sort_key(w):
+            s = str(w).strip()
+            if s.endswith('+'): return (float(s[:-1]), 1)
+            try: return (float(s), 0)
+            except: return (999, 0)
+        widths_sorted = sorted([str(w) for w in parsed['widths']], key=width_sort_key)
+        depths_sorted = sorted([str(d) for d in parsed['depths']], key=lambda d: float(d))
+        normalized = {}
+        for d_raw, row in parsed['prices'].items():
+            d_key = fmt_depth(d_raw)
+            normalized[d_key] = {}
+            for w_raw, price in row.items():
+                w_key = fmt_width(w_raw)
+                if price is not None:
+                    try:
+                        normalized[d_key][w_key] = int(float(
+                            str(price).replace(' ', '').replace('\u00a0', '')
+                        ))
+                    except: normalized[d_key][w_key] = None
+                else:
+                    normalized[d_key][w_key] = None
+        # ── Второй проход: верификация граничных ячеек ───────────
+        # (ячейки 4.5/4.5+, 9.0/9.0+ и соседи — самые ошибкоопасные)
+        corrections_applied = 0
+        try:
+            boundary = {'4.5','4.5+','9.0','9.0+','5.0','10.0'}
+            verify_cells = {}
+            for d in depths_sorted:
+                row = normalized.get(d, {})
+                for w in widths_sorted:
+                    if fmt_width(w) in boundary and row.get(fmt_width(w)) is not None:
+                        verify_cells[(d, fmt_width(w))] = row[fmt_width(w)]
+                if widths_sorted:
+                    for corner in [widths_sorted[0], widths_sorted[-1]]:
+                        wk = fmt_width(corner)
+                        if row.get(wk) is not None:
+                            verify_cells[(d, wk)] = row[wk]
+            if verify_cells:
+                cell_lines = "\n".join(
+                    f"  вынос={d}м, ширина={w}м → extracted: {p}"
+                    for (d,w),p in sorted(verify_cells.items())
+                )
+                verify_prompt = f"""I extracted prices from a price table. Please verify these cell values.
+"4.5" = first 4.5m column (1-module group, SMALLER price)
+"4.5+" = second 4.5m column (2-module group, LARGER price)
+"9.0" = first 9.0m column, "9.0+" = second (LARGER price)
+Cells to verify:
+{cell_lines}
+Ignore asterisk (*) prices. Numbers may use spaces as thousand separators.
+Return ONLY valid JSON (no markdown):
+{{"corrections": [{{"depth":"3.0","width":"4.5","correct_price":3614}}, ...]}}
+If all correct: {{"corrections": []}}"""
+                vresp = client.messages.create(
+                    model='claude-opus-4-5',
+                    max_tokens=2048,
+                    messages=[{
+                        'role': 'user',
+                        'content': [
+                            {'type': 'image', 'source': {'type': 'base64', 'media_type': media_type, 'data': b64}},
+                            {'type': 'text', 'text': verify_prompt}
+                        ]
+                    }]
+                )
+                vraw = vresp.content[0].text.strip()
+                if vraw.startswith('```'):
+                    vraw = re.sub(r'^```[a-z]*\n?', '', vraw)
+                    vraw = re.sub(r'\n?```$', '', vraw.strip())
+                vdata = json.loads(vraw)
+                for corr in vdata.get('corrections', []):
+                    dk = fmt_depth(corr.get('depth',''))
+                    wk = fmt_width(corr.get('width',''))
+                    cp = corr.get('correct_price')
+                    if dk and wk and cp is not None:
+                        try:
+                            cpi = int(float(str(cp)))
+                            if dk in normalized and wk in normalized[dk]:
+                                if normalized[dk][wk] != cpi:
+                                    normalized[dk][wk] = cpi
+                                    corrections_applied += 1
+                        except: pass
+        except Exception as ve:
+            pass  # Второй проход не критичен, продолжаем
+        filled = sum(1 for row in normalized.values() for v in row.values() if v is not None)
+        total  = len(depths_sorted) * len(widths_sorted)
+        return jsonify({
+            'ok': True,
+            'data': {'widths': widths_sorted, 'depths': depths_sorted, 'prices': normalized},
+            'filled': filled, 'total': total,
+            'corrections_applied': corrections_applied
+        })
+    except json.JSONDecodeError as e:
+        return jsonify({'error': f'Ошибка разбора ответа ИИ: {e}', 'raw': raw[:600]}), 422
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+3.2. /admin/apply-parsed-prices — POST, JSON
+Принимает распознанные данные и записывает в файл.
+
+@app.route('/admin/apply-parsed-prices', methods=['POST'])
+@admin_required
+def admin_apply_parsed_prices():
+    global PRICING_DATA, CALCULATION_CACHE
+    body = request.get_json(silent=True) or {}
+    model     = body.get('model','').strip()
+    ptype     = body.get('type','').strip()
+    widths_in = body.get('widths', [])
+    depths_in = body.get('depths', [])
+    prices_in = body.get('prices', {})   # {depth: {width: price}}
+    if not model or not ptype or not widths_in or not depths_in or not prices_in:
+        return jsonify({'error': 'Недостаточно данных'}), 400
+    def fmt_w(v):
+        s = str(v).strip()
+        if s.endswith('+'):
+            try: return f"{float(s[:-1]):.1f}+"
+            except: return s
+        try: return f"{float(s):.1f}"
+        except: return s
+    def fmt_d(v):
+        try: return f"{float(v):.1f}"
+        except: return str(v)
+    def w_sort(w):
+        s = str(w).strip()
+        if s.endswith('+'): return (float(s[:-1]), 1)
+        try: return (float(s), 0)
+        except: return (999,0)
+    widths_sorted = sorted([str(w) for w in widths_in], key=w_sort)
+    depths_sorted = sorted([str(d) for d in depths_in], key=lambda d: float(d))
+    try:
+        with open('static/data/pricing.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        # Строим новую таблицу: структура [ширина][глубина] = цена
+        new_table = {}
+        for w in widths_sorted:
+            wk = fmt_w(w)
+            new_table[wk] = {}
+            for d in depths_sorted:
+                dk = fmt_d(d)
+                price = (prices_in.get(dk) or {}).get(wk)
+                if price is not None:
+                    try: new_table[wk][dk] = float(int(float(str(price).replace(' ',''))))
+                    except: new_table[wk][dk] = None
+                else:
+                    new_table[wk][dk] = None
+        # Полная замена таблицы
+        data['models'][model][ptype] = new_table
+        with open('static/data/pricing.json', 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        # Сброс кэша расчётов
+        if 'CALCULATION_CACHE' in globals():
+            CALCULATION_CACHE.clear()
+        # Перезагрузка данных в памяти
+        PRICING_DATA = load_pricing_data()
+        filled = sum(1 for row in new_table.values() for v in row.values() if v is not None)
+        total  = len(widths_sorted) * len(depths_sorted)
+        return jsonify({'ok': True, 'filled': filled, 'total': total,
+                        'depths': len(depths_sorted), 'widths': len(widths_sorted)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+4. Фронтенд — блок в admin-шаблоне
+<!-- Вставляется в admin-панель, до таблицы цен -->
+<div id="parseCard" style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:20px;">
+    <div style="padding:14px 20px; cursor:pointer; display:flex; align-items:center; gap:8px;"
+         onclick="document.getElementById('parseBody').style.display = document.getElementById('parseBody').style.display==='none'?'block':'none'">
+        <span style="font-weight:700; color:#1a3a5c;">🖼 Загрузить прайс из изображения</span>
+        <span style="font-size:0.8rem; color:#6c757d;">— ИИ распознает цены автоматически</span>
+    </div>
+    <div id="parseBody" style="display:none; padding:18px 20px; border-top:1px solid #f0f4ff;">
+        <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start;">
+            <!-- Дропзона -->
+            <div id="dropzone" style="flex:1; min-width:260px; border:2px dashed #c8d6e5; border-radius:10px;
+                 padding:24px; text-align:center; cursor:pointer; background:#f8fafc;"
+                 onclick="document.getElementById('parseFileInput').click()"
+                 ondragover="event.preventDefault(); this.style.borderColor='#2d6a9f';"
+                 ondragleave="this.style.borderColor='#c8d6e5';"
+                 ondrop="handleParseDrop(event)">
+                <div style="font-size:2rem;">🖼</div>
+                <div style="font-size:0.85rem; color:#374151; margin-top:6px;">
+                    Перетащите скриншот прайс-листа<br>
+                    или <span style="color:#2d6a9f; text-decoration:underline;">нажмите для выбора</span>
+                </div>
+                <div style="font-size:0.75rem; color:#9ca3af; margin-top:4px;">PNG, JPG, WEBP</div>
+            </div>
+            <input type="file" id="parseFileInput" accept="image/*" style="display:none"
+                   onchange="onParseFileSelected(this)">
+            <!-- Кнопки и статус -->
+            <div style="display:flex; flex-direction:column; gap:10px; min-width:200px;">
+                <button id="parseBtn" onclick="runParse()" disabled
+                    style="background:#1a3a5c; color:#fff; border:none; padding:10px 20px;
+                           border-radius:8px; font-weight:600; opacity:0.5; cursor:not-allowed;">
+                    🔍 Распознать цены
+                </button>
+                <div id="parseStatus" style="font-size:0.8rem; color:#6c757d;"></div>
+                <div id="parseResult" style="display:none; font-size:0.8rem; padding:10px;
+                     background:#d1f2e1; border-radius:8px; color:#0a6640;"></div>
+                <div id="parseError" style="display:none; font-size:0.8rem; padding:10px;
+                     background:#fde8e8; border-radius:8px; color:#9b1c1c;"></div>
+                <button id="applyBtn" onclick="applyParsed()" style="display:none;
+                    background:#0a6640; color:#fff; border:none; padding:10px 20px;
+                    border-radius:8px; font-weight:600; cursor:pointer;">
+                    ✓ Применить изменения
+                </button>
+            </div>
+        </div>
+        <div style="margin-top:8px; font-size:0.75rem; color:#9ca3af;">
+            ⚠ «Применить» полностью заменяет текущую таблицу данными из изображения.
+        </div>
+    </div>
+</div>
+<script>
+var _parsedData = null;
+var _parseFile  = null;
+function onParseFileSelected(inp) {
+    if (!inp.files[0]) return;
+    _parseFile = inp.files[0];
+    document.getElementById('parseBtn').disabled = false;
+    document.getElementById('parseBtn').style.opacity = '1';
+    document.getElementById('parseBtn').style.cursor = 'pointer';
+    document.getElementById('parseStatus').textContent = '📎 ' + _parseFile.name;
+}
+function handleParseDrop(e) {
+    e.preventDefault();
+    document.getElementById('dropzone').style.borderColor = '#c8d6e5';
+    var file = e.dataTransfer.files[0];
+    if (!file) return;
+    _parseFile = file;
+    document.getElementById('parseBtn').disabled = false;
+    document.getElementById('parseBtn').style.opacity = '1';
+    document.getElementById('parseBtn').style.cursor = 'pointer';
+    document.getElementById('parseStatus').textContent = '📎 ' + file.name;
+}
+async function runParse() {
+    if (!_parseFile) return;
+    var btn = document.getElementById('parseBtn');
+    btn.textContent = '⏳ Распознаю...';
+    btn.disabled = true;
+    document.getElementById('parseResult').style.display = 'none';
+    document.getElementById('parseError').style.display = 'none';
+    document.getElementById('applyBtn').style.display = 'none';
+    document.getElementById('parseStatus').textContent = 'Отправляю изображение в ИИ (~15–30 сек)...';
+    var fd = new FormData();
+    fd.append('image', _parseFile);
+    try {
+        var resp = await fetch('/admin/parse-price-image', { method:'POST', body:fd });
+        var json = await resp.json();
+        if (!resp.ok || !json.ok) throw new Error(json.error || 'Ошибка сервера');
+        _parsedData = json.data;
+        var info = document.getElementById('parseResult');
+        info.style.display = 'block';
+        info.textContent = `✅ Распознано ${json.filled} из ${json.total} ячеек`
+            + (json.corrections_applied ? ` (исправлено ${json.corrections_applied} ячеек)` : '');
+        document.getElementById('applyBtn').style.display = 'block';
+        document.getElementById('parseStatus').textContent = 'Проверьте данные и нажмите «Применить»';
+    } catch (err) {
+        var el = document.getElementById('parseError');
+        el.style.display = 'block';
+        el.textContent = '❌ ' + (err.message || err);
+        document.getElementById('parseStatus').textContent = '';
+    }
+    btn.textContent = '🔍 Распознать снова';
+    btn.disabled = false;
+}
+async function applyParsed() {
+    if (!_parsedData) return;
+    var btn = document.getElementById('applyBtn');
+    btn.textContent = '⏳ Сохраняю...';
+    btn.disabled = true;
+    // ЗАМЕНИ на актуальные model и type для вашего прайс-листа
+    // Можно брать из URL-параметров: new URLSearchParams(location.search).get('model')
+    var model = new URLSearchParams(location.search).get('model') || 'BasicProNew';
+    var type  = new URLSearchParams(location.search).get('type') || 'wall';
+    try {
+        var resp = await fetch('/admin/apply-parsed-prices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model, type, ..._parsedData })
+        });
+        var json = await resp.json();
+        if (!resp.ok || !json.ok) throw new Error(json.error || 'Ошибка');
+        alert(`✅ Сохранено: ${json.filled}/${json.total} ячеек. Страница перезагрузится.`);
+        location.reload();
+    } catch (err) {
+        alert('❌ Ошибка: ' + (err.message || err));
+        btn.textContent = '✓ Применить изменения';
+        btn.disabled = false;
+    }
+}
+</script>
+
+5. Что нужно адаптировать под свой прайс-лист
+Что менять	Где
+Описание структуры таблицы	Промпт (prompt = """...""")
+Наличие/отсутствие дублирующихся столбцов	Промпт + список boundary в верификации
+Путь к JSON-файлу с ценами	'static/data/pricing.json' → ваш путь
+Структура JSON (как хранятся цены)	Функция apply-parsed-prices, блок «Строим новую таблицу»
+Перезагрузка данных после записи	PRICING_DATA = load_pricing_data() → ваша функция
+6. Ключевые особенности реализации
+Два прохода Claude — первый читает всю таблицу, второй перепроверяет только граничные ячейки (самые ошибкоопасные). Это существенно повышает точность.
+
+Зачистка markdown-обёртки — Claude иногда возвращает ответ в json . Регулярным выражением убирается перед json.loads().
+
+Нормализация тысяч — "4 512" → .replace(' ', '') → 4512.
+
+Суффикс + — ключи "4.5+" и "9.0+" нельзя конвертировать в float. Всегда обрабатывай как строку, проверяй через s.endswith('+').
+
+Полная замена таблицы — при применении старые ключи не мержатся, а полностью заменяются новой матрицей.
+
+Сброс кэша — обязателен, иначе сервер продолжит отдавать старые расчёты из памяти.
