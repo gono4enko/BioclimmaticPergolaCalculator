@@ -17,6 +17,8 @@ _DEV_KEY_CACHE = None
 def _stable_dev_key():
     global _DEV_KEY_CACHE
     if _DEV_KEY_CACHE is None:
+        import logging
+        logging.getLogger(__name__).warning("SECRET_KEY not set — using deterministic dev key. Set SECRET_KEY env var for production!")
         seed = os.environ.get('REPL_ID', '') + os.environ.get('REPL_SLUG', '') + 'pergola-dev-key'
         _DEV_KEY_CACHE = hashlib.sha256(seed.encode()).hexdigest()
     return _DEV_KEY_CACHE

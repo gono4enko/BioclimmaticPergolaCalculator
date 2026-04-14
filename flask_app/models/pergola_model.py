@@ -67,6 +67,7 @@ class PriceData(db.Model):
     length = db.Column(db.Float, nullable=False)
     price = db.Column(db.Float, nullable=False)
     modules = db.Column(db.Integer, nullable=False, default=1)
+    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
     
     def __init__(self, **kwargs):
         super(PriceData, self).__init__(**kwargs)

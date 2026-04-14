@@ -162,6 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             state.result = data.result;
             renderResults(data.result);
+            try { if (typeof ym === 'function') ym(YM_ID, 'reachGoal', 'calc_success', { calculator_type: CALC_TYPE }); } catch(e) {}
             setTimeout(function() {
                 stepsEl.resultsSection.scrollIntoView({behavior: 'smooth', block: 'center'});
             }, 200);
@@ -344,6 +345,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 else word = 'ПЕРГОЛ';
                 counterEl.style.background = 'linear-gradient(135deg, ' + data.counter_color + ', ' + data.counter_color + 'CC)';
                 counterEl.innerHTML = '<div class="counter-number">' + n + ' ' + word + '</div><div class="counter-label">установлено в ' + data.year + ' году</div>';
+            }
+            if (data.badges && data.badges.length > 0) {
+                var container = document.getElementById('promo-badges-container');
+                if (container) {
+                    var html = '';
+                    data.badges.forEach(function(b) {
+                        html += '<span class="promo-badge" style="background:' + (b.color || '#004B9A') + ';">' + b.text + '</span>';
+                    });
+                    container.innerHTML = html;
+                    container.style.display = 'flex';
+                }
             }
         })
         .catch(function() {});
