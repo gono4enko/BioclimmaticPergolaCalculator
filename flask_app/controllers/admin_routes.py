@@ -9,7 +9,7 @@ from flask import Blueprint, request, jsonify, session, redirect, url_for, rende
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin2024')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
 
 
 def admin_required(f):
@@ -28,10 +28,13 @@ def login_page():
     error = None
     if request.method == 'POST':
         password = request.form.get('password', '')
-        if password == ADMIN_PASSWORD:
+        if not ADMIN_PASSWORD:
+            error = 'ADMIN_PASSWORD не настроен'
+        elif password == ADMIN_PASSWORD:
             session['admin_logged_in'] = True
             return redirect(url_for('admin.prices_page'))
-        error = 'Неверный пароль'
+        else:
+            error = 'Неверный пароль'
     return render_template('admin_login.html', error=error)
 
 
@@ -57,15 +60,13 @@ def get_prices():
 
     try:
         import psycopg2
-        conn = psycopg2.connect(os.environ.get('DATABASE_URL', ''))
-        cur = conn.cursor()
-        cur.execute(
-            "SELECT width, length, price, modules FROM price_data WHERE pergola_type=%s AND lamella_size=%s ORDER BY width, length",
-            (pergola_type, lamella_size)
-        )
-        rows = cur.fetchall()
-        cur.close()
-        conn.close()
+        with psycopg2.connect(os.environ.get('DATABASE_URL', '')) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT width, length, price, modules FROM price_data WHERE pergola_type=%s AND lamella_size=%s ORDER BY width, length",
+                    (pergola_type, lamella_size)
+                )
+                rows = cur.fetchall()
 
         if not rows:
             return jsonify({'ok': True, 'data': None, 'message': 'Нет данных'})
@@ -92,8 +93,8 @@ def get_prices():
                 'modules': modules_map,
             }
         })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return jsonify({'error': 'Ошибка загрузки цен'}), 500
 
 
 @bp.route('/parse-price-image', methods=['POST'])
@@ -263,45 +264,42 @@ def apply_parsed_prices():
 
     try:
         import psycopg2
-        conn = psycopg2.connect(os.environ.get('DATABASE_URL', ''))
-        cur = conn.cursor()
+        with psycopg2.connect(os.environ.get('DATABASE_URL', '')) as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM price_data WHERE pergola_type=%s AND lamella_size=%s",
+                            (pergola_type, lamella_size))
 
-        cur.execute("DELETE FROM price_data WHERE pergola_type=%s AND lamella_size=%s",
-                    (pergola_type, lamella_size))
+                inserted = 0
+                for d_str in depths_in:
+                    d_val = float(str(d_str).replace(',', '.').rstrip('+'))
+                    row = prices_in.get(str(d_str), {})
+                    for w_str in widths_in:
+                        price = row.get(str(w_str))
+                        if price is None:
+                            continue
+                        try:
+                            price_val = float(str(price).replace(' ', ''))
+                        except:
+                            continue
 
-        inserted = 0
-        for d_str in depths_in:
-            d_val = float(str(d_str).replace(',', '.').rstrip('+'))
-            row = prices_in.get(str(d_str), {})
-            for w_str in widths_in:
-                price = row.get(str(w_str))
-                if price is None:
-                    continue
-                try:
-                    price_val = float(str(price).replace(' ', ''))
-                except:
-                    continue
+                        w_val = float(str(w_str).replace(',', '.').rstrip('+'))
+                        mod = modules_in.get(str(w_str), 1)
 
-                w_val = float(str(w_str).replace(',', '.').rstrip('+'))
-                mod = modules_in.get(str(w_str), 1)
+                        cur.execute(
+                            "INSERT INTO price_data (pergola_type, lamella_size, width, length, price, modules, updated_at) VALUES (%s,%s,%s,%s,%s,%s,NOW())",
+                            (pergola_type, lamella_size, d_val, w_val, price_val, mod)
+                        )
+                        inserted += 1
 
-                cur.execute(
-                    "INSERT INTO price_data (pergola_type, lamella_size, width, length, price, modules, updated_at) VALUES (%s,%s,%s,%s,%s,%s,NOW())",
-                    (pergola_type, lamella_size, d_val, w_val, price_val, mod)
-                )
-                inserted += 1
-
-        conn.commit()
-        cur.close()
-        conn.close()
+            conn.commit()
 
         from ..services.calculator import clear_price_cache
         clear_price_cache()
 
         return jsonify({'ok': True, 'inserted': inserted})
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return jsonify({'error': 'Ошибка сохранения цен'}), 500
 
 
 @bp.route('/save-cell', methods=['POST'])
@@ -323,24 +321,22 @@ def save_cell():
         w_val = float(str(width).replace(',', '.'))
         p_val = float(str(price).replace(' ', ''))
 
-        conn = psycopg2.connect(os.environ.get('DATABASE_URL', ''))
-        cur = conn.cursor()
-        cur.execute(
-            "UPDATE price_data SET price=%s, updated_at=NOW() WHERE pergola_type=%s AND lamella_size=%s AND width=%s AND length=%s",
-            (p_val, pergola_type, lamella_size, d_val, w_val)
-        )
-        if cur.rowcount == 0:
-            cur.execute(
-                "INSERT INTO price_data (pergola_type, lamella_size, width, length, price, modules, updated_at) VALUES (%s,%s,%s,%s,%s,1,NOW())",
-                (pergola_type, lamella_size, d_val, w_val, p_val)
-            )
-        conn.commit()
-        cur.close()
-        conn.close()
+        with psycopg2.connect(os.environ.get('DATABASE_URL', '')) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE price_data SET price=%s, updated_at=NOW() WHERE pergola_type=%s AND lamella_size=%s AND width=%s AND length=%s",
+                    (p_val, pergola_type, lamella_size, d_val, w_val)
+                )
+                if cur.rowcount == 0:
+                    cur.execute(
+                        "INSERT INTO price_data (pergola_type, lamella_size, width, length, price, modules, updated_at) VALUES (%s,%s,%s,%s,%s,1,NOW())",
+                        (pergola_type, lamella_size, d_val, w_val, p_val)
+                    )
+            conn.commit()
 
         from ..services.calculator import clear_price_cache
         clear_price_cache()
 
         return jsonify({'ok': True})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return jsonify({'error': 'Ошибка сохранения'}), 500

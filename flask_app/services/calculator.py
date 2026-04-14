@@ -135,15 +135,13 @@ def _load_prices_from_db(pergola_type, lamella_size):
         db_url = os.environ.get('DATABASE_URL', '')
         if not db_url:
             return None
-        conn = psycopg2.connect(db_url)
-        cur = conn.cursor()
-        cur.execute(
-            "SELECT width, length, price FROM price_data WHERE pergola_type=%s AND lamella_size=%s",
-            (pergola_type, lamella_size)
-        )
-        rows = cur.fetchall()
-        cur.close()
-        conn.close()
+        with psycopg2.connect(db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT width, length, price FROM price_data WHERE pergola_type=%s AND lamella_size=%s",
+                    (pergola_type, lamella_size)
+                )
+                rows = cur.fetchall()
         if not rows:
             return None
         prices = {}

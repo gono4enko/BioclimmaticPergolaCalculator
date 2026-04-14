@@ -56,6 +56,19 @@
 
 ## База данных
 PostgreSQL через DATABASE_URL
+- `price_data` — прайс-листы (pergola_type, lamella_size, width=вылет, length=ширина, price EUR, modules, updated_at). 896 строк мигрировано из CSV
+- `leads` — заявки с лид-формы (phone, city, calc_text, channel, ip, created_at)
+- Калькулятор читает цены из PostgreSQL (приоритет), fallback на CSV-файлы
+
+## Админ-панель (/admin)
+- `/admin/login` — авторизация по паролю (env `ADMIN_PASSWORD`)
+- `/admin/prices` — просмотр/редактирование цен по моделям
+- `/admin/parse-price-image` — загрузка скриншота прайс-листа → распознавание через Claude Vision (env `ANTHROPIC_API_KEY`)
+- `/admin/apply-parsed-prices` — сохранение распознанных цен в БД + сброс кэша калькулятора
+- `/admin/save-cell` — сохранение одной ячейки
+- `/admin/get-prices` — получение текущих цен из БД
+- Blueprint: `flask_app/controllers/admin_routes.py`
+- Шаблоны: `admin_login.html`, `admin_prices.html`
 
 ## Деплой
 - `deploymentTarget: autoscale`
