@@ -18,6 +18,11 @@ def calculator():
     current_year = datetime.datetime.now().year
     return render_template('calculator.html', now={'year': current_year})
 
+@bp.route('/kp/<calc_id>')
+def view_kp(calc_id):
+    current_year = datetime.datetime.now().year
+    return render_template('calculator.html', now={'year': current_year}, calc_id=calc_id)
+
 @bp.route('/clear-cache', methods=['POST'])
 def clear_cache():
     """Очистка кэша изображений."""

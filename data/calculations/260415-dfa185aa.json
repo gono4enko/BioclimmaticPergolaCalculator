@@ -1,0 +1,91 @@
+{
+  "mode": "single",
+  "result": {
+    "dimensions": {
+      "width": 3.0,
+      "length": 4.0,
+      "modules": 1
+    },
+    "options": {
+      "pergola_type": "B500NEW",
+      "lamella_type": "",
+      "lamella_size": "250",
+      "lighting": [],
+      "installation": true
+    },
+    "items": [
+      {
+        "name": "Пергола серии B500NEW Light - с поворотными ламелями 3.00×4.00 м. Ламели 250 мм (Light). Количество ламелей - 16 шт. (1 модуль)",
+        "price": 6594.0
+      },
+      {
+        "name": "Привод Bansbach Т1, Germany (для 1 модуль)",
+        "price": 700
+      },
+      {
+        "name": "Пульт ДУ Simu 1K (1 канал)",
+        "price": 25
+      },
+      {
+        "name": "Доставка",
+        "price": 512.33
+      },
+      {
+        "name": "Установка",
+        "price": 951.47
+      }
+    ],
+    "specification": [
+      {
+        "name": "Пергола серии В500 Light - с поворотными ламелями 3.00×4.00 м. Ламели 250 мм (Light), Количество ламелей - 16 шт.",
+        "count": "1 модуль"
+      },
+      {
+        "name": "Привод Bansbach Т1, Germany",
+        "count": "1 шт."
+      },
+      {
+        "name": "Пульт ДУ Simu 1K",
+        "count": "1 шт."
+      },
+      {
+        "name": "Доставка",
+        "count": "1"
+      },
+      {
+        "name": "Установка",
+        "count": "1"
+      }
+    ],
+    "total_price_eur": 8782.8,
+    "euro_rate": 100,
+    "totals": {
+      "cash": 878280,
+      "non_cash": 954652,
+      "with_vat": 1033271
+    },
+    "delivery": {
+      "percentage": 7,
+      "price": 512.33
+    },
+    "installation": {
+      "selected": true,
+      "price": 951.47
+    },
+    "lamellas_count": 16,
+    "pergola_type_name": "В500 - с поворотными ламелями",
+    "lamella_type_name": "",
+    "selected_variant": "Light"
+  },
+  "kp_number": "B500-150426-9491",
+  "deadline": "29.04.2026",
+  "client_name": "Тест",
+  "created_at": "2026-04-15T20:51:54.872222",
+  "request": {
+    "pergola_type": "B500NEW",
+    "width": 3.0,
+    "length": 4.0,
+    "lamella_size": "250",
+    "selected_variant": "auto"
+  }
+}

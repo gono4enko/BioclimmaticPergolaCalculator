@@ -650,6 +650,31 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                 else:
                     pdf.table_row([str(i), name, str(count)], widths, aligns=["C", "L", "C"])
 
+        try:
+            from flask_app.utils import generate_top_view_svg, svg_to_png_path
+            svg_content = generate_top_view_svg(
+                width=width, length=length, modules=modules,
+                is_pir=(hero_img_key == 'b600'),
+                lamella_count=pergola_data.get('lamellas_count') or pergola_data.get('lamella_count')
+            )
+            png_path = svg_to_png_path(svg_content)
+            if png_path and os.path.exists(png_path):
+                if pdf.get_y() > 200:
+                    pdf.add_page()
+                pdf.ln(6)
+                pdf.set_font('DejaVu', 'B', 11)
+                pdf.cell(0, 7, "Схема перголы (вид сверху):", 0, 1, "L")
+                img_w = 100
+                img_x = (210 - img_w) / 2
+                pdf.image(png_path, x=img_x, y=pdf.get_y(), w=img_w)
+                pdf.ln(img_w * 0.73 + 4)
+                try:
+                    os.unlink(png_path)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
         # ===== PAGE 3: PRICING + PAYMENT VARIANTS =====
         items = pergola_data.get('items', [])
         if items:
@@ -1080,7 +1105,30 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         pdf.cell(0, 5, 'Комплексные решения для обустройства террас, веранд и беседок.', 0, 1, 'L')
         pdf.cell(0, 5, 'ИП Гоноченко А.В. ОГРНИП 321619600249231', 0, 1, 'L')
         pdf.cell(0, 5, 'Тел.: +7-906-429-74-20   Сайт: pergolamarket.ru', 0, 1, 'L')
-        
+
+        try:
+            from flask_app.utils import generate_qr_image
+            calc_id = pergola_data.get('calc_id', '')
+            qr_url = f'https://pergolamarket.ru/kp/{calc_id}' if calc_id else 'https://pergolamarket.ru'
+            qr_path = generate_qr_image(qr_url, size=150)
+            if qr_path and os.path.exists(qr_path):
+                qr_size = 30
+                qr_x = 160
+                qr_y = pdf.get_y() + 2
+                if qr_y + qr_size + 10 > 280:
+                    qr_y = pdf.get_y() - 40
+                pdf.image(qr_path, x=qr_x, y=qr_y, w=qr_size, h=qr_size)
+                pdf.set_xy(qr_x - 5, qr_y + qr_size + 1)
+                pdf.set_font('DejaVu', '', 6)
+                qr_label = 'Ваше КП онлайн' if calc_id else 'pergolamarket.ru'
+                pdf.cell(qr_size + 10, 4, qr_label, 0, 1, 'C')
+                try:
+                    os.unlink(qr_path)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
         pdf_bytes = pdf.output(dest='S')
         if isinstance(pdf_bytes, str):
             pdf_bytes = pdf_bytes.encode('latin-1')

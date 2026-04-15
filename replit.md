@@ -14,8 +14,9 @@
 ## Структура проекта
 - `flask_app/` — Flask-приложение
   - `__init__.py` — фабрика приложения `create_app()`
-  - `controllers/api_routes.py` — API: `/api/calculate`, `/api/pergola-types`, `/api/lamella-sizes/<type>`, `/api/max-dimensions`, `/api/export-pdf`
-  - `controllers/main_routes.py` — HTML-страницы: `/`, `/calculator`, `/catalog`, `/about`, `/health`
+  - `controllers/api_routes.py` — API: `/api/calculate`, `/api/pergola-types`, `/api/lamella-sizes/<type>`, `/api/max-dimensions`, `/api/export-pdf`, `/api/kp/<calc_id>`
+  - `controllers/main_routes.py` — HTML-страницы: `/`, `/calculator`, `/kp/<calc_id>`, `/catalog`, `/about`, `/health`
+  - `utils.py` — утилиты: generate_calc_id(), save/load_calculation(), generate_top_view_svg(), svg_to_png_path(), generate_qr_image()
   - `services/calculator.py` — бизнес-логика расчёта (порт из app.py)
   - `templates/calculator.html` — страница калькулятора (Bootstrap 5)
   - `static/js/calculator.js` — клиентская логика формы
@@ -100,7 +101,11 @@ PostgreSQL через DATABASE_URL
 - **Decolife fetcher**: `scripts/fetch_decolife.py` — загрузка/обновление контента, fallback на встроенные данные; автобутстрап+persist при старте
 - **Счётчик на главной**: `index.html` → `#install-counter` в Hero секции + fetch `/api/promotions`
 - **CSS**: `.kp-section`, `.kp-block`, `.kp-price-hero`, `.kp-urgency-banner`, `.kp-upsell-grid`, `.kp-gallery-grid`, `.kp-payment-terms`
-- **Static cache**: CSS/JS v22
+- **Постоянная ссылка на КП**: `/kp/<calc_id>` — загружает сохранённый расчёт из `data/calculations/{calc_id}.json`
+- **Кнопка «Поделиться»**: копирует ссылку `/kp/{id}` в буфер обмена
+- **SVG-схема в PDF**: вид сверху с размерами, ламелями/PIR-панелями, модулями (page 2)
+- **QR-код в PDF**: на последней странице, ссылка на конкретный расчёт `/kp/<calc_id>`
+- **Static cache**: CSS/JS v28
 
 ## Визуальные компоненты
 - Hero-секция с параллакс-эффектом (`hero_pergola.jpg`)

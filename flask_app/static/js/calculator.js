@@ -243,6 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
             state.kpNumber = data.kp_number || '';
             state.pergolaCount = data.pergola_count || 0;
             state.deadline = data.deadline || '';
+            state.calcId = data.calc_id || '';
             if (data.mode === 'all') {
                 state.allResults = data.results;
                 state.result = data.results[0];
@@ -487,10 +488,12 @@ document.addEventListener('DOMContentLoaded', function() {
         sec.innerHTML = '<h3>\u0421\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u0435 \u0432\u0430\u0440\u0438\u0430\u043D\u0442\u043E\u0432</h3>' +
             infoHtml + tableHtml + specsHtml +
             '<div id="variant-detail-container"></div>' +
-            '<button class="pdf-btn" id="pdf-btn"><i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF</button>' +
+            '<div class="kp-actions-row"><button class="pdf-btn" id="pdf-btn"><i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF</button>' +
+            '<button class="share-btn" id="share-btn" title="\u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F"><i class="bi bi-share"></i> \u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F</button></div>' +
             '<div id="marketing-kp-container"></div>';
 
         document.getElementById('pdf-btn').addEventListener('click', exportPdf);
+        document.getElementById('share-btn').addEventListener('click', shareKp);
 
         var rows = sec.querySelectorAll('.compare-row-clickable');
         rows.forEach(function(row) {
@@ -622,10 +625,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         state._variantSpecHtml = variantSpecHtml;
 
-        sec.innerHTML = '<button class="pdf-btn" id="pdf-btn"><i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF</button>' +
+        sec.innerHTML = '<div class="kp-actions-row"><button class="pdf-btn" id="pdf-btn"><i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF</button>' +
+            '<button class="share-btn" id="share-btn" title="\u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F"><i class="bi bi-share"></i> \u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F</button></div>' +
             '<div id="marketing-kp-container"></div>';
 
         document.getElementById('pdf-btn').addEventListener('click', exportPdf);
+        document.getElementById('share-btn').addEventListener('click', shareKp);
 
         var lightingList = [];
         if (result.items) {
@@ -892,9 +897,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var pdfBody = {};
         if (state.allResults) {
-            pdfBody = {results: state.allResults, mode: 'all', client_name: state.clientName, kp_number: state.kpNumber, deadline: state.deadline};
+            pdfBody = {results: state.allResults, mode: 'all', client_name: state.clientName, kp_number: state.kpNumber, deadline: state.deadline, calc_id: state.calcId};
         } else {
-            pdfBody = {result: state.result, mode: 'single', client_name: state.clientName, kp_number: state.kpNumber, deadline: state.deadline};
+            pdfBody = {result: state.result, mode: 'single', client_name: state.clientName, kp_number: state.kpNumber, deadline: state.deadline, calc_id: state.calcId};
         }
 
         fetch('/api/export-pdf', {
@@ -929,6 +934,54 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF';
         });
+    }
+
+    function shareKp() {
+        if (!state.calcId) { alert('Сначала выполните расчёт'); return; }
+        var url = window.location.origin + '/kp/' + state.calcId;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(function() {
+                var btn = document.getElementById('share-btn');
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> Скопировано!';
+                setTimeout(function() { btn.innerHTML = '<i class="bi bi-share"></i> Поделиться'; }, 2000);
+            });
+        } else {
+            var ta = document.createElement('textarea');
+            ta.value = url;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            var btn = document.getElementById('share-btn');
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Скопировано!';
+            setTimeout(function() { btn.innerHTML = '<i class="bi bi-share"></i> Поделиться'; }, 2000);
+        }
+    }
+
+    if (window.__CALC_ID__) {
+        fetch('/api/kp/' + window.__CALC_ID__)
+        .then(function(r) { return r.json(); })
+        .then(function(resp) {
+            if (!resp.success || !resp.data) return;
+            var d = resp.data;
+            state.calcId = window.__CALC_ID__;
+            state.kpNumber = d.kp_number || '';
+            state.deadline = d.deadline || '';
+            state.clientName = d.client_name || '';
+            if (stepsEl.step1) stepsEl.step1.style.display = 'none';
+            if (stepsEl.step2) stepsEl.step2.style.display = 'none';
+            if (stepsEl.step3) stepsEl.step3.style.display = 'none';
+            if (stepsEl.step4) stepsEl.step4.style.display = 'none';
+            if (d.mode === 'all' && d.results) {
+                state.allResults = d.results;
+                state.result = d.results[0];
+                renderAllResults(d.results);
+            } else if (d.result) {
+                state.result = d.result;
+                renderResults(d.result);
+            }
+        })
+        .catch(function() {});
     }
 
     (function() {

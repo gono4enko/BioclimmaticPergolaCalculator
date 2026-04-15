@@ -85,17 +85,31 @@ def calculate():
             "selected_variant": selected_variant
         }
 
-        from ..utils import generate_kp_number, get_pergola_count, get_deadline_str
+        from ..utils import generate_kp_number, get_pergola_count, get_deadline_str, generate_calc_id, save_calculation
 
         kp_number = generate_kp_number(pergola_type)
         pergola_count = get_pergola_count()
         deadline = get_deadline_str()
+        calc_id = generate_calc_id()
 
         if selected_variant == 'all':
             all_results = perform_all_variants_calculation(dimensions, options)
             if not all_results:
                 return jsonify({'success': False, 'error': 'Нет доступных вариантов для данных размеров'}), 400
-            return jsonify({'success': True, 'mode': 'all', 'results': all_results, 'kp_number': kp_number, 'pergola_count': pergola_count, 'deadline': deadline})
+            resp = {'success': True, 'mode': 'all', 'results': all_results, 'kp_number': kp_number, 'pergola_count': pergola_count, 'deadline': deadline, 'calc_id': calc_id}
+            try:
+                save_calculation(calc_id, {
+                    'mode': 'all', 'results': all_results,
+                    'kp_number': kp_number, 'deadline': deadline,
+                    'client_name': data.get('client_name', ''),
+                    'created_at': datetime.datetime.now().isoformat(),
+                    'request': {'pergola_type': pergola_type, 'width': width, 'length': length,
+                                'lamella_size': lamella_size, 'selected_variant': selected_variant}
+                })
+            except Exception as save_err:
+                current_app.logger.warning(f"Failed to save calculation {calc_id}: {save_err}")
+                resp['calc_id'] = ''
+            return jsonify(resp)
 
         if selected_variant == 'auto':
             options['selected_variant'] = ''
@@ -105,11 +119,33 @@ def calculate():
         if "error" in result:
             return jsonify({'success': False, 'error': result['error']}), 400
 
-        return jsonify({'success': True, 'mode': 'single', 'result': result, 'kp_number': kp_number, 'pergola_count': pergola_count, 'deadline': deadline})
+        resp = {'success': True, 'mode': 'single', 'result': result, 'kp_number': kp_number, 'pergola_count': pergola_count, 'deadline': deadline, 'calc_id': calc_id}
+        try:
+            save_calculation(calc_id, {
+                'mode': 'single', 'result': result,
+                'kp_number': kp_number, 'deadline': deadline,
+                'client_name': data.get('client_name', ''),
+                'created_at': datetime.datetime.now().isoformat(),
+                'request': {'pergola_type': pergola_type, 'width': width, 'length': length,
+                            'lamella_size': lamella_size, 'selected_variant': selected_variant}
+            })
+        except Exception as save_err:
+            current_app.logger.warning(f"Failed to save calculation {calc_id}: {save_err}")
+            resp['calc_id'] = ''
+        return jsonify(resp)
 
     except Exception as e:
         current_app.logger.error(f"Calculate error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 400
+
+
+@bp.route('/kp/<calc_id>', methods=['GET'])
+def get_saved_kp(calc_id):
+    from ..utils import load_calculation
+    data = load_calculation(calc_id)
+    if not data:
+        return jsonify({'success': False, 'error': 'КП не найдено'}), 404
+    return jsonify({'success': True, 'data': data})
 
 
 @bp.route('/pergola-types', methods=['GET'])
@@ -224,6 +260,7 @@ def export_pdf():
 
         kp_number_from_web = data.get('kp_number', '')
         deadline_from_web = data.get('deadline', '')
+        calc_id_from_web = data.get('calc_id', '')
 
         if mode == 'all':
             results_list = data.get('results', [])
@@ -234,6 +271,7 @@ def export_pdf():
             kp_number = kp_number_from_web or generate_kp_number(pt)
             all_pergola_data[0]['kp_number'] = kp_number
             all_pergola_data[0]['deadline'] = deadline_from_web
+            all_pergola_data[0]['calc_id'] = calc_id_from_web
             decolife_data = _load_decolife(pt)
             all_pergola_data[0]['decolife'] = decolife_data
             pdf_bytes = generate_commercial_offer(all_pergola_data[0], user_data=user_data, all_variants=all_pergola_data)
@@ -247,6 +285,7 @@ def export_pdf():
             kp_number = kp_number_from_web or generate_kp_number(pt)
             pergola_data['kp_number'] = kp_number
             pergola_data['deadline'] = deadline_from_web
+            pergola_data['calc_id'] = calc_id_from_web
             decolife_data = _load_decolife(pt)
             pergola_data['decolife'] = decolife_data
             pdf_bytes = generate_commercial_offer(pergola_data, user_data=user_data)
