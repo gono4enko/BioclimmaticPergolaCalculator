@@ -636,12 +636,12 @@
 }
 .kp-gallery-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.5rem;
 }
 .kp-gallery-item img {
     width: 100%;
-    height: 120px;
+    height: 140px;
     object-fit: cover;
     border-radius: 8px;
 }
@@ -668,5 +668,5 @@
     .kp-trust-stats { grid-template-columns: 1fr; }
     .kp-price-hero .kp-price-amount { font-size: 1.6rem; }
     .kp-upsell-grid { grid-template-columns: 1fr; }
-    .kp-gallery-grid { grid-template-columns: 1fr; }
+    .kp-gallery-grid { grid-template-columns: repeat(2, 1fr); }
 }

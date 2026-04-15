@@ -3,9 +3,9 @@
 {% block title %}Калькулятор стоимости перголы{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=23">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=24">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=23" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=24" as="script">
 {% endblock %}
 
 {% block content %}
@@ -153,56 +153,6 @@
     </div>
 </div>
 
-
-<section class="gallery-section py-5 bg-light">
-    <div class="container">
-        <div class="installation-counter" id="install-counter"></div>
-        <h2 class="text-center mb-4">Реализованные проекты</h2>
-        <div class="row g-3" id="gallery-grid">
-            <div class="col-6 col-md-3">
-                <div class="gallery-item">
-                    <img src="{{ url_for('static', filename='images/gallery/IMG_5914.jpg') }}?v=4" alt="Проект" loading="lazy">
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="gallery-item">
-                    <img src="{{ url_for('static', filename='images/gallery/pergola_b500_garden_view.jpg') }}?v=4" alt="Проект" loading="lazy">
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="gallery-item">
-                    <img src="{{ url_for('static', filename='images/gallery/pergola_b700_poolside.jpg') }}?v=5" alt="Проект" loading="lazy">
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="gallery-item">
-                    <img src="{{ url_for('static', filename='images/gallery/pergola_evening_lighting.jpg') }}?v=4" alt="Проект" loading="lazy">
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="gallery-item">
-                    <img src="{{ url_for('static', filename='images/gallery/pergola_b500_led_lighting.jpg') }}?v=4" alt="Проект" loading="lazy">
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="gallery-item">
-                    <img src="{{ url_for('static', filename='images/gallery/pergola_panoramic_glass_walls.jpg') }}?v=4" alt="Проект" loading="lazy">
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="gallery-item">
-                    <img src="{{ url_for('static', filename='images/gallery/IMG_0672_2_882acf32.jpg') }}?v=4" alt="Проект" loading="lazy">
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="gallery-item">
-                    <img src="{{ url_for('static', filename='images/gallery/IMG_0748_827e14fe.jpg') }}?v=4" alt="Проект" loading="lazy">
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
 <div class="spinner-overlay" id="spinner-overlay" style="display:none;">
     <div class="text-center">
         <div class="spinner-border text-primary" style="width:3rem;height:3rem;" role="status"></div>
@@ -212,7 +162,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=23"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=24"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');

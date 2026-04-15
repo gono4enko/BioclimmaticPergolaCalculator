@@ -821,10 +821,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         /* Block 10: Gallery + CTA */
         var galleryImages = [
+            'IMG_5914.jpg',
             'pergola_b500_garden_view.jpg',
             'pergola_b700_poolside.jpg',
+            'pergola_evening_lighting.jpg',
             'pergola_b500_led_lighting.jpg',
-            'pergola_evening_lighting.jpg'
+            'pergola_panoramic_glass_walls.jpg',
+            'IMG_0672_2_882acf32.jpg',
+            'IMG_0748_827e14fe.jpg'
         ];
         html += '<div class="kp-block">' +
             '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83D\uDCF7</div><div class="kp-block-title">\u0420\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u043F\u0440\u043E\u0435\u043A\u0442\u044B</div></div>' +
