@@ -799,8 +799,8 @@ document.addEventListener('DOMContentLoaded', function() {
             '<hr style="margin:0.7rem 0;border-color:#eee;">' +
             '<div class="kp-trust-stats">' +
             '<div class="kp-stat"><div class="kp-stat-number">8+</div><div class="kp-stat-label">\u043B\u0435\u0442 \u043D\u0430 \u0440\u044B\u043D\u043A\u0435</div></div>' +
-            '<div class="kp-stat"><div class="kp-stat-number">' + (pergolaCount > 0 ? pergolaCount + '+' : '200+') + '</div><div class="kp-stat-label">\u043F\u0440\u043E\u0435\u043A\u0442\u043E\u0432</div></div>' +
-            '<div class="kp-stat"><div class="kp-stat-number">12</div><div class="kp-stat-label">\u0440\u0435\u0433\u0438\u043E\u043D\u043E\u0432</div></div>' +
+            '<div class="kp-stat"><div class="kp-stat-number">200+</div><div class="kp-stat-label">\u043F\u0440\u043E\u0435\u043A\u0442\u043E\u0432</div></div>' +
+            '<div class="kp-stat"><div class="kp-stat-number">8</div><div class="kp-stat-label">\u0440\u0435\u0433\u0438\u043E\u043D\u043E\u0432</div></div>' +
             '</div></div>';
 
         /* Block 9: Work stages + upsell (merged) */
@@ -813,9 +813,9 @@ document.addEventListener('DOMContentLoaded', function() {
             '<hr style="margin:0.7rem 0;border-color:#eee;">' +
             '<div style="font-weight:600;margin-bottom:0.4rem;">\u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u043E\u043F\u0446\u0438\u0438:</div>' +
             '<div class="kp-upsell-grid">' +
-            '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83C\uDF21</div><div class="kp-upsell-title">\u041E\u0431\u043E\u0433\u0440\u0435\u0432\u0430\u0442\u0435\u043B\u0438</div></div>' +
+            '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83C\uDF21</div><div class="kp-upsell-title">\u0418\u041A \u043E\u0431\u043E\u0433\u0440\u0435\u0432\u0430\u0442\u0435\u043B\u0438</div></div>' +
             '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83E\uDE9F</div><div class="kp-upsell-title">\u041E\u0441\u0442\u0435\u043A\u043B\u0435\u043D\u0438\u0435</div></div>' +
-            '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83D\uDCA1</div><div class="kp-upsell-title">LED</div></div>' +
+            '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83D\uDCA1</div><div class="kp-upsell-title">LED \u043E\u0441\u0432\u0435\u0449\u0435\u043D\u0438\u0435</div></div>' +
             '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83C\uDFB5</div><div class="kp-upsell-title">\u0410\u043A\u0443\u0441\u0442\u0438\u043A\u0430</div></div>' +
             '</div></div>';
 
