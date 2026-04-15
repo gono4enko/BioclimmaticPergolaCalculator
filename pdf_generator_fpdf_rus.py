@@ -1032,6 +1032,57 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     except Exception as e:
                         print(f"Ошибка добавления фото {img_path}: {e}")
         
+        pdf.add_page()
+        pdf.chapter_title("Гарантии и преимущества:")
+        pdf.ln(3)
+
+        pdf.set_font('DejaVu', 'B', 10)
+        pdf.cell(0, 7, "Гарантийные обязательства:", 0, 1, "L")
+        pdf.set_font('DejaVu', '', 9)
+        warranty_items = [
+            "5 лет гарантии на конструкцию перголы",
+            "2 года гарантии на автоматику и моторы",
+            "Сервисное обслуживание на весь срок эксплуатации",
+        ]
+        for wi in warranty_items:
+            pdf.cell(5, 5, "\u2022", 0, 0, "L")
+            pdf.cell(0, 5, wi, 0, 1, "L")
+
+        pdf.ln(5)
+        pdf.set_font('DejaVu', 'B', 10)
+        pdf.cell(0, 7, "Дополнительные опции:", 0, 1, "L")
+        pdf.set_font('DejaVu', '', 9)
+        upsell_items = [
+            "Инфракрасные обогреватели — комфорт в прохладные вечера",
+            "Раздвижное остекление — защита от ветра и осадков",
+            "LED-подсветка (белая / RGB) — атмосферное вечернее освещение",
+            "Встроенная акустическая система с Bluetooth-управлением",
+            "Боковые маркизы и шторы — дополнительная приватность",
+        ]
+        for ui in upsell_items:
+            pdf.cell(5, 5, "\u2022", 0, 0, "L")
+            pdf.cell(0, 5, ui, 0, 1, "L")
+
+        pdf.ln(5)
+        pdf.set_fill_color(255, 243, 224)
+        pdf.set_font('DejaVu', 'B', 10)
+        pdf.cell(170, 8, "  \u23F0 Цены действительны 14 дней с даты расчёта", 1, 1, "L", fill=True)
+        pdf.set_fill_color(255, 255, 255)
+
+        pdf.ln(5)
+        pdf.set_font('DejaVu', 'B', 10)
+        pdf.cell(0, 7, "О компании «Комфортный дом»:", 0, 1, "L")
+        pdf.set_font('DejaVu', '', 9)
+        company_info = [
+            "Более 8 лет на рынке биоклиматических пергол",
+            "Официальный дилер Decolife в России",
+            "Работаем в 12 регионах РФ",
+            "Комплексные решения: проект, поставка, монтаж",
+        ]
+        for ci in company_info:
+            pdf.cell(5, 5, "\u2022", 0, 0, "L")
+            pdf.cell(0, 5, ci, 0, 1, "L")
+
         contact_info_height = 80
         
         if 297 - pdf.get_y() < contact_info_height:

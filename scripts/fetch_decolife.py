@@ -4,11 +4,19 @@
 Если сайт недоступен — сохраняет данные из встроенного fallback.
 """
 import os
+import re
 import json
 import sys
+import urllib.request
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DECOLIFE_DIR = os.path.join(BASE_DIR, 'flask_app', 'static', 'decolife')
+
+URLS = {
+    "b500": "https://decolife.pro/bioklimaticheskie-pergoly/b500/",
+    "b700": "https://decolife.pro/bioklimaticheskie-pergoly/b700/",
+    "b600": "https://decolife.pro/bioklimaticheskie-pergoly/b600/",
+}
 
 FALLBACK_DATA = {
     "b500": {
@@ -32,6 +40,7 @@ FALLBACK_DATA = {
             "Увеличение площади жилого пространства",
             "Повышение стоимости недвижимости"
         ],
+        "images": [],
         "warranty": "5 лет на конструкцию, 2 года на автоматику",
         "production": "Производство Decolife (Турция), сертификация CE"
     },
@@ -56,6 +65,7 @@ FALLBACK_DATA = {
             "Увеличивает полезную площадь объекта круглый год",
             "Премиальный внешний вид и высокая надёжность"
         ],
+        "images": [],
         "warranty": "5 лет на конструкцию, 2 года на автоматику",
         "production": "Производство Decolife (Турция), сертификация CE"
     },
@@ -80,34 +90,116 @@ FALLBACK_DATA = {
             "Два варианта: Standard и Light",
             "Долговечность и минимальное обслуживание"
         ],
+        "images": [],
         "warranty": "5 лет на конструкцию, 2 года на автоматику",
         "production": "Производство Decolife (Турция), сертификация CE"
     }
 }
 
+MIN_IMG_SIZE = 200
 
-def fetch_from_decolife():
+
+def _strip_tags(html_str):
+    return re.sub(r'<[^>]+>', '', html_str).strip()
+
+
+def _extract_text_blocks(html, tag='p'):
+    return [_strip_tags(m) for m in re.findall(rf'<{tag}[^>]*>(.*?)</{tag}>', html, re.DOTALL) if len(_strip_tags(m)) > 20]
+
+
+def _extract_h1(html):
+    m = re.search(r'<h1[^>]*>(.*?)</h1>', html, re.DOTALL)
+    return _strip_tags(m.group(1)) if m else ''
+
+
+def _extract_images(html, base_url, max_count=6):
+    img_urls = []
+    for m in re.finditer(r'<img[^>]+src=["\']([^"\']+)["\']', html):
+        src = m.group(1)
+        if src.startswith('data:'):
+            continue
+        if not src.startswith('http'):
+            if src.startswith('//'):
+                src = 'https:' + src
+            elif src.startswith('/'):
+                from urllib.parse import urlparse
+                parsed = urlparse(base_url)
+                src = f"{parsed.scheme}://{parsed.netloc}{src}"
+            else:
+                src = base_url.rstrip('/') + '/' + src
+        skip_patterns = ['logo', 'icon', 'favicon', 'sprite', 'svg', 'thumb_small']
+        if any(pat in src.lower() for pat in skip_patterns):
+            continue
+        img_urls.append(src)
+        if len(img_urls) >= max_count:
+            break
+    return img_urls
+
+
+def _download_image(url, save_path):
     try:
-        import urllib.request
-        urls = {
-            "b500": "https://decolife.pro/bioklimaticheskie-pergoly/b500/",
-            "b700": "https://decolife.pro/bioklimaticheskie-pergoly/b700/",
-            "b600": "https://decolife.pro/bioklimaticheskie-pergoly/b600/",
-        }
-        fetched = {}
-        for key, url in urls.items():
-            try:
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-                resp = urllib.request.urlopen(req, timeout=10)
-                html = resp.read().decode("utf-8", errors="replace")
-                fetched[key] = html
-                print(f"  [{key}] Загружено {len(html)} символов")
-            except Exception as e:
-                print(f"  [{key}] Ошибка загрузки: {e}")
-        return fetched if fetched else None
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        resp = urllib.request.urlopen(req, timeout=15)
+        data = resp.read()
+        if len(data) < 5000:
+            return False
+        with open(save_path, 'wb') as f:
+            f.write(data)
+        try:
+            from PIL import Image
+            img = Image.open(save_path)
+            w, h = img.size
+            if w < MIN_IMG_SIZE or h < MIN_IMG_SIZE:
+                os.remove(save_path)
+                return False
+        except ImportError:
+            pass
+        return True
     except Exception as e:
-        print(f"Ошибка при запросе: {e}")
-        return None
+        print(f"    Ошибка загрузки {url}: {e}")
+        return False
+
+
+def _parse_html(html, key, base_url):
+    result = dict(FALLBACK_DATA[key])
+
+    h1 = _extract_h1(html)
+    if h1:
+        result['title'] = h1
+
+    paragraphs = _extract_text_blocks(html, 'p')
+    if paragraphs:
+        long_paragraphs = [p for p in paragraphs if len(p) > 80]
+        if long_paragraphs:
+            result['description'] = long_paragraphs[0]
+
+    li_items = [_strip_tags(m) for m in re.findall(r'<li[^>]*>(.*?)</li>', html, re.DOTALL) if len(_strip_tags(m)) > 10]
+    if len(li_items) >= 3:
+        result['advantages'] = li_items[:8]
+
+    img_urls = _extract_images(html, base_url)
+    result['_image_urls'] = img_urls
+
+    return result
+
+
+def _download_model_images(key, image_urls):
+    img_dir = os.path.join(DECOLIFE_DIR, key, 'images')
+    os.makedirs(img_dir, exist_ok=True)
+
+    saved = []
+    for idx, url in enumerate(image_urls[:6]):
+        ext = '.jpg'
+        if '.png' in url.lower():
+            ext = '.png'
+        elif '.webp' in url.lower():
+            ext = '.webp'
+        fname = f"product_{idx + 1}{ext}"
+        fpath = os.path.join(img_dir, fname)
+        if _download_image(url, fpath):
+            saved.append(fname)
+            print(f"    Сохранено: {fname}")
+    return saved
 
 
 def ensure_data_files():
@@ -121,23 +213,43 @@ def ensure_data_files():
                 json.dump(FALLBACK_DATA[folder], f, ensure_ascii=False, indent=2)
 
 
+def fetch_and_parse():
+    results = {}
+    for key, url in URLS.items():
+        print(f"\n  [{key.upper()}] Загрузка {url} ...")
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (compatible; PergolaBot/1.0)"})
+            resp = urllib.request.urlopen(req, timeout=15)
+            html = resp.read().decode("utf-8", errors="replace")
+            print(f"  [{key.upper()}] Получено {len(html)} символов")
+            parsed = _parse_html(html, key, url)
+            image_urls = parsed.pop('_image_urls', [])
+            if image_urls:
+                print(f"  [{key.upper()}] Найдено {len(image_urls)} изображений, загрузка...")
+                saved_images = _download_model_images(key, image_urls)
+                parsed['images'] = saved_images
+            results[key] = parsed
+        except Exception as e:
+            print(f"  [{key.upper()}] Ошибка: {e}")
+    return results
+
+
 def main():
     print("=== Decolife Content Fetcher ===")
     ensure_data_files()
 
-    print("\nПопытка загрузки с decolife.pro...")
-    fetched = fetch_from_decolife()
+    print("\nПопытка загрузки и парсинга с decolife.pro...")
+    fetched = fetch_and_parse()
 
     if not fetched:
         print("Сайт недоступен. Используем локальные данные (fallback).")
         return
 
-    for key, html_content in fetched.items():
+    for key, data in fetched.items():
         data_path = os.path.join(DECOLIFE_DIR, key, "data.json")
-        existing = FALLBACK_DATA.get(key, {})
         with open(data_path, "w", encoding="utf-8") as f:
-            json.dump(existing, f, ensure_ascii=False, indent=2)
-        print(f"  [{key}] Данные сохранены в {data_path}")
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"  [{key.upper()}] Данные сохранены в {data_path}")
 
     print("\nГотово!")
 

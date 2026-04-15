@@ -221,13 +221,15 @@ def export_pdf():
             except Exception:
                 return {}
 
+        kp_number_from_web = data.get('kp_number', '')
+
         if mode == 'all':
             results_list = data.get('results', [])
             if not results_list:
                 return jsonify({'success': False, 'error': 'Нет данных для PDF'}), 400
             all_pergola_data = [_build_pergola_data(r) for r in results_list]
             pt = results_list[0].get('options', {}).get('pergola_type', 'B500')
-            kp_number = generate_kp_number(pt)
+            kp_number = kp_number_from_web or generate_kp_number(pt)
             all_pergola_data[0]['kp_number'] = kp_number
             decolife_data = _load_decolife(pt)
             all_pergola_data[0]['decolife'] = decolife_data
@@ -239,7 +241,7 @@ def export_pdf():
             result = data.get('result', {})
             pergola_data = _build_pergola_data(result)
             pt = result.get('options', {}).get('pergola_type', 'B500')
-            kp_number = generate_kp_number(pt)
+            kp_number = kp_number_from_web or generate_kp_number(pt)
             pergola_data['kp_number'] = kp_number
             decolife_data = _load_decolife(pt)
             pergola_data['decolife'] = decolife_data

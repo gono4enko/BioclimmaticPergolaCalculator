@@ -783,12 +783,18 @@ document.addEventListener('DOMContentLoaded', function() {
             '</div></div>';
 
         /* Block 10: Gallery (project photos) */
+        var galleryImages = [
+            'pergola_b500_garden_view.jpg',
+            'pergola_b700_poolside.jpg',
+            'pergola_b500_led_lighting.jpg',
+            'pergola_evening_lighting.jpg'
+        ];
         html += '<div class="kp-block">' +
             '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83D\uDCF7</div><div class="kp-block-title">\u0420\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u043F\u0440\u043E\u0435\u043A\u0442\u044B</div></div>' +
             '<div class="kp-gallery-grid">';
-        for (var gi = 1; gi <= 4; gi++) {
-            html += '<div class="kp-gallery-item"><img src="/static/images/gallery/project' + gi + '.jpg" alt="\u041F\u0440\u043E\u0435\u043A\u0442 ' + gi + '" onerror="this.parentElement.style.display=\'none\'"></div>';
-        }
+        galleryImages.forEach(function(img, idx) {
+            html += '<div class="kp-gallery-item"><img src="/static/images/gallery/' + img + '" alt="\u041F\u0440\u043E\u0435\u043A\u0442 ' + (idx+1) + '" onerror="this.parentElement.style.display=\'none\'"></div>';
+        });
         html += '</div></div>';
 
         /* Block 11: Guarantees */
@@ -864,9 +870,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var pdfBody = {};
         if (state.allResults) {
-            pdfBody = {results: state.allResults, mode: 'all', client_name: state.clientName};
+            pdfBody = {results: state.allResults, mode: 'all', client_name: state.clientName, kp_number: state.kpNumber};
         } else {
-            pdfBody = {result: state.result, mode: 'single', client_name: state.clientName};
+            pdfBody = {result: state.result, mode: 'single', client_name: state.clientName, kp_number: state.kpNumber};
         }
 
         fetch('/api/export-pdf', {
