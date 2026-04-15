@@ -1,0 +1,604 @@
+════════════════════════════════════════════════
+ МАСТЕР-ПРОМТ ДЛЯ REPLIT AI AGENT — v3 ФИНАЛ
+ Калькулятор биоклиматических пергол
+ Сайт: bioclimmatic-pergola-calculator-gono4enko.replit.app
+════════════════════════════════════════════════
+
+КОНТЕКСТ:
+Приложение Flask. Три модели пергол: B500NEW, B700NEW, B600.
+Проведён анализ трёх PDF-КП. Найдены критические баги и недочёты.
+Реализуй ВСЕ блоки по порядку. Не трогай: логику расчёта цен,
+шаги калькулятора 1–4, логику выбора модификаций, прайс-листы.
+
+════════════════════════════════════════
+ БЛОК 1 — КРИТИЧЕСКИЕ БАГИ С ФОТО (делать ПЕРВЫМ)
+════════════════════════════════════════
+
+БАГ 1.1 — B600: ПУСТАЯ ОБЛОЖКА (нет фото на стр.1 PDF)
+────────────────────────────────────────────────────────
+Проблема: страница 1 PDF для B600 не содержит изображения — белый прямоугольник.
+
+Исправление:
+1. Проверь наличие файла: static/images/b600_sandwich.jpg
+2. Если есть → использовать как cover_image для B600
+3. Если нет → скачать с сайта производителя:
+   URL: https://decolife.pro/products/pergolas/bioclimatic-pergolas/bioclimatic-with-pir-sandwich-panels/
+   Код:
+     import requests
+     from bs4 import BeautifulSoup
+     HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+     r = requests.get(url, headers=HEADERS, timeout=15)
+     soup = BeautifulSoup(r.text, 'lxml')
+     main = soup.find('main') or soup.find('article') or soup.body
+     for img in main.find_all('img'):
+         src = img.get('src', '')
+         if any(x in src.lower() for x in ['pergola','product','b600','bioclimatic']):
+             # скачать → static/images/b600_cover.jpg
+             break
+4. В коде PDF: привязать cover_image по модели:
+   COVER_IMAGES = {
+     'B500': 'pergola_b500_led_lighting.jpg',  # или b500_cover.jpg
+     'B700': 'IMG_5914.jpg',                    # текущее — работает
+     'B600': 'b600_cover.jpg',                  # новое
+   }
+   Fallback для B500: если pergola_b500_led_lighting.jpg не найден →
+   попробовать pergola_b500_garden_view.jpg → затем скачать с decolife.pro
+
+БАГ 1.2 — B500: ОБЛОЖКА ПОКАЗЫВАЕТ ФОТО B700
+────────────────────────────────────────────────────────
+Проблема: для B500 используется фото «Пергола B700 у бассейна, Крым».
+B500 — поворотные ламели, визуально отличаются от B700.
+
+Исправление:
+Применить COVER_IMAGES из пункта выше.
+Для B500 приоритет файлов (проверять по порядку):
+  1. static/images/pergola_b500_led_lighting.jpg
+  2. static/images/pergola_b500_garden_view.jpg
+  3. static/decolife/b500/img_0.jpg  (если парсер уже запускался)
+  4. Скачать: https://decolife.pro/.../bioclimatic-with-rotating-lamellas/
+
+════════════════════════════════════════
+ БЛОК 2 — ПРАВИЛЬНАЯ ГАЛЕРЕЯ ПО МОДЕЛИ
+════════════════════════════════════════
+
+Проблема: все три КП показывают одинаковую галерею — 6 фото (только B500/B700).
+Для B600 нет ни одного релевантного изображения PIR-крыши.
+
+Создать словарь привязки фото к моделям в конфигурации:
+
+GALLERY_BY_MODEL = {
+  'B500': [
+    'pergola_b500_led_lighting.jpg',
+    'pergola_b500_garden_view.jpg',
+    'pergola_evening_lighting.jpg',
+    'IMG_0672_2_882acf32.jpg',
+    'IMG_5914.jpg',
+    'pergola_b700_poolside.jpg',
+  ],
+  'B700': [
+    'IMG_5914.jpg',
+    'pergola_b700_poolside.jpg',
+    'pergola_panoramic_glass_walls.jpg',
+    'pergola_evening_lighting.jpg',
+    'IMG_0748_827e14fe.jpg',
+    'pergola_b500_garden_view.jpg',
+  ],
+  'B600': [
+    # Если есть b600_cover.jpg → ставить первым
+    'pergola_panoramic_glass_walls.jpg',  # ближе к закрытой конструкции
+    'IMG_0672_2_882acf32.jpg',
+    'IMG_0748_827e14fe.jpg',
+    'pergola_evening_lighting.jpg',
+    'IMG_5914.jpg',
+    'pergola_b700_poolside.jpg',
+  ],
+}
+
+Подписи к фото сделать динамическими:
+GALLERY_CAPTIONS = {
+  'IMG_5914.jpg':                   'Пергола B700 у бассейна, Крым',
+  'pergola_b500_led_lighting.jpg':  'Пергола B500 с LED подсветкой',
+  'pergola_b700_poolside.jpg':      'Пергола B700 у бассейна',
+  'pergola_b500_garden_view.jpg':   'Пергола B500, вид на сад',
+  'pergola_evening_lighting.jpg':   'Вечернее освещение',
+  'pergola_panoramic_glass_walls.jpg': 'Пергола с раздвижным остеклением',
+  'IMG_0672_2_882acf32.jpg':        'Реализованный проект',
+  'IMG_0748_827e14fe.jpg':          'Реализованный проект',
+}
+
+В шаблоне PDF галереи:
+  {% for photo in gallery_photos %}
+    
+    
+
+{{ photo.caption }}
+
+
+  {% endfor %}
+
+════════════════════════════════════════
+ БЛОК 3 — B600: ИСПРАВИТЬ «ТИП ЛАМЕЛЕЙ» И СТРАНИЦУ 4
+════════════════════════════════════════
+
+БАГ 3.1 — Поле «Тип ламелей» для B600
+────────────────────────────────────────────────────────
+Проблема: в параметрах B600 написано «Тип ламелей: B600-PIR».
+У B600 НЕТ ламелей — есть стационарная кровля.
+
+В шаблонах PDF и веб-КП:
+  {% if pergola_type == 'B600' %}
+    Тип кровлиPIR сэндвич-панели, 100 мм
+    
+  {% else %}
+    Тип ламелей{{ lamella_type }}
+    Количество ламелей{{ num_lamellas }} шт.
+  {% endif %}
+
+БАГ 3.2 — Страница 4 PDF одинакова для всех моделей
+────────────────────────────────────────────────────────
+Проблема: блок «Масштабируемость пергол» с CAD-схемами — одинаков
+для B500, B600 и B700 дословно. Для B600 — неуместен (показывает ламели).
+
+Исправление — три отдельных шаблона блока:
+
+Для B500 и B700:
+  Заголовок: «Модульная система — масштаб без ограничений»
+  Текст: [текущий — оставить]
+  УБРАТЬ: технические CAD-схемы (чертежи деталей)
+  ДОБАВИТЬ: 1 живое фото после текста:
+    B500 → pergola_b500_garden_view.jpg
+    B700 → pergola_b700_poolside.jpg
+
+Для B600 — полностью новый текст:
+  Заголовок: «B600 — всесезонная терраса с PIR-кровлей»
+  Текст:
+  «Пергола B600 со стационарной крышей из PIR сэндвич-панелей
+  толщиной 100 мм обеспечивает полную защиту от осадков, ветра и
+  холода круглый год. Снеговая нагрузка до 200 кг/м² — подходит
+  для любого региона России.
+  Интегрированная система водоотведения скрыта внутри колонн.»
+  Список:
+  • 100% герметичность — защита даже при сильном ливне
+  • Теплоизоляция PIR — снижает затраты на обогрев
+  • Снеговая нагрузка 200 кг/м² — надёжнее обычных навесов
+  • Водоотвод внутри колонн — без внешних труб, эстетично
+  • До 15 м в ширину без центральных опор (модуль Standard)
+  Фото: b600_cover.jpg
+
+════════════════════════════════════════
+ БЛОК 4 — ДИНАМИЧЕСКИЙ СЧЁТЧИК ПЕРГОЛ
+════════════════════════════════════════
+
+Проблема: везде статичное «10 ПЕРГОЛ» — не меняется.
+По формуле на 15.04.2026 должно быть 25 пергол.
+
+В utils.py добавить:
+  from datetime import date
+
+  def get_pergola_count():
+      base_date = date(2026, 1, 1)
+      base_count = 10
+      weeks = (date.today() - base_date).days // 7
+      return base_count + weeks
+
+  def get_current_year():
+      return date.today().year
+
+Передавать в контекст ВСЕХ шаблонов:
+  @app.context_processor
+  def inject_globals():
+      return {
+          'pergola_count': get_pergola_count(),
+          'current_year': get_current_year(),
+      }
+
+Заменить в шаблонах:
+  «10 ПЕРГОЛ»         → {{ pergola_count }} ПЕРГОЛ
+  «в 2026 году»       → в {{ current_year }} году
+  «10 пергол»         → {{ pergola_count }} пергол
+
+Где встречается (найти и заменить во всех файлах):
+  - calculator.html (зелёный баннер)
+  - index.html (если есть)
+  - pdf_template.html (страница гарантий/о компании)
+  - kp.html (блок доверия)
+
+════════════════════════════════════════
+ БЛОК 5 — КОНКРЕТНАЯ ДАТА СРОЧНОСТИ
+════════════════════════════════════════
+
+Проблема: «Действительно 14 дней с даты формирования» — абстрактно.
+Клиент должен видеть: «Действительно до 29.04.2026».
+
+В utils.py добавить:
+  from datetime import timedelta
+
+  def get_deadline_str(calc_date=None):
+      if calc_date is None:
+          calc_date = date.today()
+      return (calc_date + timedelta(days=14)).strftime('%d.%m.%Y')
+
+Использовать как: deadline = get_deadline_str()
+
+На ОБЛОЖКЕ PDF заменить:
+  БЫЛО:  «Действительно 14 дней с даты формирования»
+  СТАЛО: «Действительно до: {{ deadline }}»
+
+На странице СТОИМОСТИ (стр.3 PDF и в веб-КП) добавить янтарный блок:
+  ⚠ Цена действительна до {{ deadline }}.
+  Включена весенняя скидка 5%.
+  После этой даты возможен пересчёт по курсу поставщика.
+
+Стиль блока: background #fffbeb, border-left 3px solid #f59e0b,
+padding 8px 12px, font-size 11px (в PDF) / 13px (веб).
+
+════════════════════════════════════════
+ БЛОК 6 — МИКРО-ПОЯСНЕНИЯ В СПЕЦИФИКАЦИИ
+════════════════════════════════════════
+
+Проблема: таблица спецификации без объяснения ценности каждой позиции.
+«Привод Somfy M1 — 60 000 ₽» — клиент не понимает за что платит.
+
+Создать словарь пояснений (сопоставление по подстроке в названии):
+
+ITEM_NOTES = {
+  'bansbach':       'Немецкий привод, тихий ход, 50 000 циклов, гарантия 5 лет',
+  'somfy m1':       'Французская автоматика, управление со смартфона и датчик дождя',
+  'somfy':          'Французская автоматика Somfy — лидер рынка умных домов',
+  'simu':           'Пульт 5 каналов + управление через приложение Simu',
+  'dimmer':         'Плавная регулировка яркости LED без мерцания',
+  'лента белая':    'Встроена в ламели/карниз — равномерный свет без лишних проводов',
+  'лента rgb':      'Цветная подсветка 16 млн оттенков, управление через приложение',
+  'доставка':       'Доставка до объекта — включена в стоимость',
+  'установка':      'Монтаж за 1–2 дня, бригада 2–3 чел, без сварки и грязи',
+}
+
+Логика сопоставления:
+  def get_item_note(item_name: str) -> str:
+      name_lower = item_name.lower()
+      for key, note in ITEM_NOTES.items():
+          if key in name_lower:
+              return note
+      return ''
+
+Отображение в PDF:
+  Вариант А (если таблица помещается):
+    Добавить 4-ю колонку «Примечание» — серый курсив, font-size 8px
+
+  Вариант Б (если таблица узкая):
+    После таблицы — блок сносок:
+    * ¹ Привод Bansbach T1: Немецкий привод...
+      ² Пульт Simu 5K: Пульт 5 каналов...
+      и т.д.
+
+════════════════════════════════════════
+ БЛОК 7 — ПОЯСНЕНИЯ К ВАРИАНТАМ ОПЛАТЫ
+════════════════════════════════════════
+
+Проблема: три суммы (наличные / безнал / НДС) без объяснения.
+Для частного клиента — выглядит как ценовая ловушка.
+
+В блоке «Стоимость по вариантам оплаты» — под каждой суммой добавить
+мелкую подпись (font-size 9px в PDF, 11px в вебе, цвет серый):
+
+  Наличные:           X ₽
+  ↳ «для физических лиц»
+
+  Безналичный расчёт: X ₽
+  ↳ «для ИП и ООО без НДС (+8.66%)»
+
+  С НДС 22%:          X ₽
+  ↳ «для ООО — плательщиков НДС»
+
+После таблицы вариантов — блок условий оплаты:
+
+  БЫЛО:  «Оплата: 80% предоплата, 20% после монтажа»
+  СТАЛО:
+  ┌──────────────────────────────────────────────────┐
+  │ Условия оплаты                                   │
+  │ 80% после подтверждения заказа                   │
+  │    → мы запускаем производство под ваши размеры │
+  │ 20% после завершения монтажа и вашей приёмки     │
+  └──────────────────────────────────────────────────┘
+
+════════════════════════════════════════
+ БЛОК 8 — SVG-СХЕМА РАЗМЕРОВ ЗАКАЗА (стр.2 PDF)
+════════════════════════════════════════
+
+Добавить схему вида сверху после таблицы параметров на стр.2.
+
+В utils.py создать функцию:
+
+  def generate_top_view_svg(width_m, depth_m, num_lamellas, model_type):
+      SVG_W, SVG_H = 400, 260
+      MARGIN = 45
+      scale = min((SVG_W-2*MARGIN)/width_m, (SVG_H-2*MARGIN)/depth_m)
+      rw = width_m * scale
+      rh = depth_m * scale
+      x0 = (SVG_W - rw) / 2
+      y0 = (SVG_H - rh) / 2
+
+      out = [f'
+' f'{width_m} м
+' f'{depth_m} м
+{area:.0f} м²
+{num_lamellas} ламелей
+PIR сэндвич-панели 100 мм
+')
+      return '\n'.join(out)
+
+Передавать в шаблон:
+  svg_scheme = generate_top_view_svg(width, depth, num_lamellas, model_type)
+Вставлять в PDF: {{ svg_scheme | safe }}
+
+════════════════════════════════════════
+ БЛОК 9 — ПАРСЕР ИЗОБРАЖЕНИЙ С DECOLIFE
+════════════════════════════════════════
+
+Создать/обновить scripts/fetch_decolife.py:
+
+  import requests, json, os
+  from bs4 import BeautifulSoup
+  from urllib.parse import urljoin
+
+  HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+
+  SOURCES = {
+    'b500': 'https://decolife.pro/products/pergolas/bioclimatic-pergolas/bioclimatic-with-rotating-lamellas/',
+    'b700': 'https://decolife.pro/products/pergolas/bioclimatic-pergolas/bioclimatic-with-sliding-lamellas/',
+    'b600': 'https://decolife.pro/products/pergolas/bioclimatic-pergolas/bioclimatic-with-pir-sandwich-panels/',
+  }
+
+  def fetch_model(model_key, url):
+      os.makedirs(f'static/decolife/{model_key}', exist_ok=True)
+      r = requests.get(url, headers=HEADERS, timeout=15)
+      soup = BeautifulSoup(r.text, 'lxml')
+
+      # Описание
+      title = soup.find('h1')
+      title_text = title.get_text(strip=True) if title else ''
+      main = soup.find('main') or soup.find('article') or soup.body
+      paras = [p.get_text(strip=True) for p in main.find_all('p') if len(p.get_text()) > 60]
+      description = paras[0] if paras else ''
+      features = [li.get_text(strip=True) for li in main.find_all('li') if len(li.get_text()) > 15][:8]
+
+      # Изображения
+      imgs_saved = []
+      count = 0
+      for img in main.find_all('img'):
+          if count >= 6:
+              break
+          src = img.get('src') or img.get('data-src', '')
+          if not src:
+              continue
+          # Пропускать иконки, логотипы, флаги
+          skip_words = ['icon','logo','flag','arrow','close','menu','social']
+          if any(w in src.lower() for w in skip_words):
+              continue
+          if not any(src.lower().endswith(ext) for ext in ['.jpg','.jpeg','.png','.webp']):
+              continue
+          abs_url = urljoin('https://decolife.pro', src)
+          try:
+              img_r = requests.get(abs_url, headers=HEADERS, timeout=10)
+              if len(img_r.content) < 10000:  # пропускать маленькие (иконки)
+                  continue
+              fname = f'img_{count}.jpg'
+              fpath = f'static/decolife/{model_key}/{fname}'
+              with open(fpath, 'wb') as f:
+                  f.write(img_r.content)
+              imgs_saved.append({'url': abs_url, 'local': fname, 'alt': img.get('alt','')})
+              count += 1
+          except Exception:
+              continue
+
+      data = {
+          'model': model_key.upper(),
+          'title': title_text,
+          'description': description,
+          'features': features,
+          'images': imgs_saved,
+          'cover': imgs_saved[0]['local'] if imgs_saved else None,
+      }
+      with open(f'static/decolife/{model_key}/data.json', 'w', encoding='utf-8') as f:
+          json.dump(data, f, ensure_ascii=False, indent=2)
+      print(f'[OK] {model_key}: {len(imgs_saved)} фото, описание {len(description)} симв.')
+
+  def fetch_all():
+      for key, url in SOURCES.items():
+          try:
+              fetch_model(key, url)
+          except Exception as e:
+              print(f'[ERR] {key}: {e}')
+
+  if __name__ == '__main__':
+      fetch_all()
+
+Запуск при старте app.py:
+  import os
+  if not os.path.exists('static/decolife/b600'):
+      from scripts.fetch_decolife import fetch_all
+      fetch_all()
+
+Использование в шаблонах:
+  Загружать data.json для модели → показывать:
+  - cover: первое фото в шапке блока «О перголе от производителя»
+  - description: текст описания
+  - features: список преимуществ (3–5 пунктов)
+  - Подпись: «Описание и фото: decolife.pro — официальный производитель»
+
+  Fallback если static/decolife не заполнен:
+  → использовать COVER_IMAGES и GALLERY_BY_MODEL из Блока 1 и 2
+
+════════════════════════════════════════
+ БЛОК 10 — ПРОДАЮЩИЙ ВЕБ-КП ПОСЛЕ РАСЧЁТА
+════════════════════════════════════════
+
+Текущая проблема: после «Рассчитать» показывается только таблица цен.
+Нужно превратить в полноценное продающее КП.
+
+Структура страницы (шаблон kp.html или inline в calculator.html):
+
+[1] ШАПКА
+    Лого слева | «Коммерческое предложение» по центру | Дата справа
+    Номер КП: {{ kp_number }}
+    «Действительно до: {{ deadline }}» — красным
+    Кнопка «Скачать PDF» — зелёная справа
+
+[2] HERO-ЗАГОЛОВОК (по модели)
+    B500: «Пользуйтесь террасой {{ W }}×{{ D }} м круглый год»
+    B700: «Премиальная терраса {{ W }}×{{ D }} м — поворот и сдвиг»
+    B600: «Закрытая терраса под ключ — PIR-крыша на {{ W }}×{{ D }} м»
+    Метрики: [{{ W*D }} м²] [{{ num_lamellas }} ламелей / PIR] [6 нед. поставка]
+
+[3] ФОТО + ОПИСАНИЕ ОТ ПРОИЗВОДИТЕЛЯ
+    2 фото из static/decolife/{model}/ (или fallback)
+    Текст description из data.json
+    Список features (3–5 пунктов)
+    Мелко: «Источник: decolife.pro»
+
+[4] СПЕЦИФИКАЦИЯ С ПОЯСНЕНИЯМИ
+    Таблица: Позиция | Кол-во | Цена | Примечание (серый курсив)
+    Используй ITEM_NOTES из Блока 6
+
+[5] ИТОГОВАЯ СТОИМОСТЬ
+    Наличные: {{ price_cash }} ₽ — КРУПНО зелёным — «для физлиц»
+    Безнал:   {{ price_noncash }} ₽ — «для ИП/ООО без НДС»
+    С НДС:    {{ price_vat }} ₽ — «для ООО с НДС»
+    Блок условий оплаты из Блока 7
+
+[6] ЯНТАРНЫЙ БАННЕР СРОЧНОСТИ
+    ⚠ Цена действительна до {{ deadline }}
+    Включена весенняя скидка 5%
+
+[7] БЛОК ДОВЕРИЯ (4 карточки в сетке 2×2)
+    ① {{ pergola_count }} пергол установлено в {{ current_year }} году
+    ② Гарантия 5 лет на конструкцию / 2 года на автоматику
+    ③ Производство Decolife (Беларусь) · Автоматика: Somfy/Simu (Франция)
+    ④ Монтаж за 1–2 дня, без сварки, под ключ
+
+[8] UPSELL «Расширьте возможности террасы»
+    Карточки (кнопка «Узнать цену» → Telegram):
+    - Боковое ZIP-остекление: от 85 000 ₽
+    - ИК-обогреватель потолочный: от 18 000 ₽/шт
+    - Система охлаждения туманом: от 45 000 ₽
+    - Рулонный экран-шторка: от 12 000 ₽
+
+[9] ГАЛЕРЕЯ (используй GALLERY_BY_MODEL из Блока 2)
+    Заголовок: «{{ pergola_count }} пергол установлено»
+    4–6 фото по модели с подписями
+
+[10] CTA-БЛОК (тёмно-синий фон #1a3a6e)
+    «Ваш расчёт готов — выберите способ связи»
+    Кнопки: Telegram | Max | Перезвонить
+
+════════════════════════════════════════
+ БЛОК 11 — QR-КОД НА ПОСЛЕДНЕЙ СТРАНИЦЕ PDF
+════════════════════════════════════════
+
+Установить: pip install qrcode[pil]
+
+В utils.py добавить:
+  import qrcode, io, base64
+
+  def generate_qr_base64(url='https://pergolamarket.ru'):
+      qr = qrcode.QRCode(box_size=4, border=2)
+      qr.add_data(url)
+      qr.make(fit=True)
+      img = qr.make_image(fill_color='black', back_color='white')
+      buf = io.BytesIO()
+      img.save(buf, format='PNG')
+      return base64.b64encode(buf.getvalue()).decode()
+
+В шаблоне последней страницы PDF:
+  
+
+      
+
+Сканируйте для перехода на сайт
+
+
+      
+
+pergolamarket.ru
+
+
+    
+
+
+════════════════════════════════════════
+ БЛОК 12 — ПОСТОЯННАЯ ССЫЛКА НА КП
+════════════════════════════════════════
+
+При нажатии «Рассчитать» — сохранять параметры расчёта.
+
+Вариант реализации (простой, без БД):
+  import json, os, random, string
+  from datetime import datetime
+
+  def save_calculation(data: dict) -> str:
+      os.makedirs('data/calculations', exist_ok=True)
+      calc_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+      data['saved_at'] = datetime.now().isoformat()
+      with open(f'data/calculations/{calc_id}.json', 'w') as f:
+          json.dump(data, f, ensure_ascii=False)
+      return calc_id
+
+  Маршрут для загрузки КП по ссылке:
+  @app.route('/kp/')
+  def view_kp(calc_id):
+      path = f'data/calculations/{calc_id}.json'
+      if not os.path.exists(path):
+          return 'КП не найдено', 404
+      with open(path) as f:
+          data = json.load(f)
+      return render_template('kp.html', **data,
+                             pergola_count=get_pergola_count(),
+                             current_year=get_current_year())
+
+  Кнопка «Поделиться» в веб-КП:
+  Поделиться ↗
+  
+
+════════════════════════════════════════
+ БЛОК 13 — ПОРЯДОК ВЫПОЛНЕНИЯ И ПРОВЕРКА
+════════════════════════════════════════
+
+ПОРЯДОК (от критичного к улучшениям):
+
+  1.  Блок 1   — Исправить обложки (B600 пустая, B500 чужое фото)  [~20 мин]
+  2.  Блок 2   — Галерея по модели + подписи                        [~15 мин]
+  3.  Блок 3   — B600: «тип кровли» + новая страница 4              [~20 мин]
+  4.  Блок 4   — Счётчик пергол get_pergola_count()                 [~10 мин]
+  5.  Блок 5   — Конкретная дата срочности + баннер                 [~10 мин]
+  6.  Блок 6   — Микро-пояснения в спецификации                     [~20 мин]
+  7.  Блок 7   — Пояснения к вариантам оплаты 80/20                 [~10 мин]
+  8.  Блок 8   — SVG-схема размеров заказа                          [~30 мин]
+  9.  Блок 9   — Парсер Decolife                                     [~30 мин]
+  10. Блок 10  — Продающий веб-КП kp.html                           [~60 мин]
+  11. Блок 11  — QR-код в PDF                                        [~15 мин]
+  12. Блок 12  — Постоянная ссылка /kp/                          [~20 мин]
+
+ПРОВЕРКА ПОСЛЕ КАЖДОГО БЛОКА 1–3:
+  Сгенерировать PDF для:
+  ✓ B500NEW 5×5м — обложка pergola_b500_led_lighting.jpg (НЕ b700!)
+  ✓ B600 5×5м — обложка b600_cover.jpg (НЕ пустая!)
+  ✓ B700NEW 5×5м — обложка IMG_5914.jpg (как сейчас)
+  ✓ B600 стр.2 — поле «Тип кровли: PIR...» (не «Тип ламелей»)
+  ✓ B600 стр.4 — текст про PIR-крышу (не про модульную систему с ламелями)
+  ✓ B600 стр.5 — галерея содержит pergola_panoramic_glass_walls.jpg первым
+
+ФИНАЛЬНАЯ ПРОВЕРКА (после всех блоков):
+  ✓ Счётчик на сайте > 10 (должно быть 25 на 15.04.2026)
+  ✓ На обложке «Действительно до: 29.04.2026» (а не «14 дней»)
+  ✓ В спецификации есть колонка/сноски с пояснениями
+  ✓ Под суммами «для физлиц», «для ИП», «для ООО»
+  ✓ SVG-схема на стр.2 с правильными размерами
+  ✓ QR-код на последней странице
+  ✓ URL /kp/XXXX открывается без логина
+
+НЕ ТРОГАТЬ:
+  - Логику расчёта цен и прайс-листы
+  - Шаги калькулятора 1–4
+  - Логику выбора модификаций (Light/Basic/Pro)
+  - Формулы расчёта количества ламелей и модулей
+  - Файлы в static/images/gallery/ (только добавлять, не удалять)
