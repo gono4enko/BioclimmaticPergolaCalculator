@@ -812,6 +812,36 @@ def perform_calculation(dimensions, options):
         return {"error": str(e)}
 
 
+def perform_all_variants_calculation(dimensions, options):
+    from config.variant_specs import VARIANT_DISPLAY_ORDER
+    pergola_type = options.get("pergola_type", "")
+    variants_order = VARIANT_DISPLAY_ORDER.get(pergola_type, [])
+    all_results = []
+
+    for vo in variants_order:
+        variant_name = vo["variant"]
+        ls = vo["lamella_size"]
+        label = vo["label"]
+
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            lt = f"{pergola_type.replace('NEW','')}-{('20' if ls == '200' else '25')}NEW"
+        else:
+            lt = "B600-PIR"
+
+        opts = dict(options)
+        opts["selected_variant"] = variant_name
+        opts["lamella_size"] = ls
+        opts["lamella_type"] = lt
+
+        result = perform_calculation(dimensions, opts)
+        if "error" not in result:
+            result["variant_label"] = label
+            all_results.append(result)
+
+    all_results.sort(key=lambda r: r["totals"]["cash"])
+    return all_results
+
+
 def get_pergola_types_list():
     return [
         {"id": "B500NEW", "name": PERGOLA_TYPES["B500NEW"], "description": PERGOLA_TYPE_DESCRIPTIONS["B500NEW"], "image": "b500_rotation.png"},

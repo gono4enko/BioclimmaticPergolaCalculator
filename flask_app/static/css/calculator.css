@@ -109,6 +109,33 @@
 .variant-specs .spec-overhang { margin-top: 2px; color: #2a7d2a; }
 .variant-specs strong { color: #222; }
 
+.variant-special { background: linear-gradient(135deg, #f8fbff 0%, #eef4ff 100%); border-color: #b3cde8; }
+.variant-special:hover { border-color: #004B9A; background: linear-gradient(135deg, #eef4ff 0%, #dde9ff 100%); }
+.variant-special.selected { border-color: #004B9A; background: linear-gradient(135deg, #e0edff 0%, #d0e2ff 100%); }
+.variant-label-special { display: flex; align-items: center; gap: 6px; }
+.variant-label-special .special-icon { font-size: 1.1rem; color: #e8a900; }
+.variant-special-desc { font-size: 0.82rem; color: #555; line-height: 1.4; padding-right: 30px; }
+
+.compare-table-wrap { overflow-x: auto; margin-bottom: 1rem; }
+.compare-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.compare-table th { background: #004B9A; color: #fff; padding: 0.6rem 0.8rem; text-align: left; font-weight: 600; white-space: nowrap; }
+.compare-table td { padding: 0.55rem 0.8rem; border-bottom: 1px solid #e8e8e8; white-space: nowrap; }
+.compare-table tr:hover { background: #f8fbff; }
+.compare-row-best td { background: #f0f8e8; }
+.compare-diff { font-size: 0.75rem; color: #b44; margin-top: 2px; }
+.compare-best { font-size: 0.75rem; color: #2a7d2a; margin-top: 2px; font-weight: 600; }
+
+.compare-specs-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.compare-specs-table th { background: #f0f6ff; color: #004B9A; padding: 0.5rem 0.6rem; text-align: center; font-weight: 600; font-size: 0.8rem; }
+.compare-specs-table th:first-child { text-align: left; }
+.compare-specs-table td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #f0f0f0; text-align: center; font-size: 0.8rem; }
+.compare-specs-table td:first-child { text-align: left; }
+
+.variant-tech-block { margin-top: 1rem; padding: 0.8rem 1rem; background: #f8fbff; border-radius: 8px; border: 1px solid #e0e8f0; }
+.variant-tech-title { font-weight: 600; color: #004B9A; font-size: 0.9rem; margin-bottom: 0.5rem; }
+.variant-tech-specs { font-size: 0.82rem; color: #444; line-height: 1.7; }
+.variant-tech-specs strong { color: #222; }
+
 .dim-input label { font-weight: 500; margin-bottom: 4px; display: block; font-size: 0.9rem; }
 .dim-input .form-control { font-size: 1.1rem; padding: 0.6rem; }
 .dim-hint { font-size: 0.78rem; color: #888; margin-top: 2px; }

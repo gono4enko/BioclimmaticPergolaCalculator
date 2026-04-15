@@ -370,7 +370,7 @@ def _get_gallery_images(max_images=8):
     return result
 
 
-def generate_commercial_offer(pergola_data, user_data=None):
+def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
     """
     Генерирует коммерческое предложение в формате PDF на основе 
     данных о перголе, полученных из калькулятора.
@@ -378,6 +378,7 @@ def generate_commercial_offer(pergola_data, user_data=None):
     Args:
         pergola_data (dict): Словарь с данными о перголе, ее размерах, конфигурации и стоимости
         user_data (dict, optional): Словарь с данными пользователя (имя, телефон и т.д.)
+        all_variants (list, optional): Список dict-ов для режима "Все варианты"
         
     Returns:
         bytes: Байты PDF-документа (или None при ошибке)
@@ -617,7 +618,97 @@ def generate_commercial_offer(pergola_data, user_data=None):
             pdf.set_font('DejaVu', '', 10)
             pdf.cell(0, 7, "Данные о стоимости отсутствуют", 0, 1)
         
-        # Добавляем описание перголы и дополнительные разделы
+        if all_variants and len(all_variants) > 1:
+            pdf.ln(6)
+            pdf.set_font('DejaVu', 'B', 12)
+            pdf.cell(0, 8, "Сравнение модификаций:", 0, 1, "L")
+            pdf.ln(2)
+
+            block_w = 170
+            col_label = 52
+            col_price = (block_w - col_label) / 3
+            row_h = 9
+
+            pdf.set_fill_color(26, 58, 107)
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_font('DejaVu', 'B', 8)
+            pdf.cell(col_label, row_h, "  Модификация", 1, 0, 'L', fill=True)
+            pdf.cell(col_price, row_h, "Наличные", 1, 0, 'C', fill=True)
+            pdf.cell(col_price, row_h, "Безналичный", 1, 0, 'C', fill=True)
+            pdf.cell(col_price, row_h, "С НДС 22%", 1, 1, 'C', fill=True)
+
+            for idx, v in enumerate(all_variants):
+                v_cash = v.get('cash_total', 0)
+                v_noncash = v.get('noncash_total', 0)
+                v_vat = v.get('vat_total', 0)
+                v_label = v.get('variant_label', '') or v.get('selected_variant', '') or f"Вариант {idx+1}"
+
+                if idx == 0:
+                    pdf.set_fill_color(240, 248, 232)
+                else:
+                    pdf.set_fill_color(240, 244, 255)
+
+                pdf.set_text_color(0, 0, 0)
+                pdf.set_font('DejaVu', 'B' if idx == 0 else '', 8)
+                pdf.cell(col_label, row_h, "  " + v_label, 1, 0, 'L', fill=True)
+                pdf.set_font('DejaVu', 'B' if idx == 0 else '', 8)
+                pdf.cell(col_price, row_h, _format_total(v_cash), 1, 0, 'C', fill=True)
+                pdf.cell(col_price, row_h, _format_total(v_noncash), 1, 0, 'C', fill=True)
+                pdf.cell(col_price, row_h, _format_total(v_vat), 1, 1, 'C', fill=True)
+
+            pdf.set_text_color(0, 0, 0)
+            pdf.set_draw_color(0, 0, 0)
+            pdf.set_fill_color(255, 255, 255)
+
+            try:
+                from config.variant_specs import get_variant_options
+                pt = pergola_data.get('pergola_type', '')
+                specs = get_variant_options(pt)
+                if specs:
+                    pdf.ln(4)
+                    pdf.set_font('DejaVu', 'B', 10)
+                    pdf.cell(0, 7, "Технические характеристики модификаций:", 0, 1, "L")
+                    pdf.ln(1)
+
+                    spec_params = [
+                        ('lamella', 'Ламель'),
+                        ('column', 'Колонна'),
+                        ('beam', 'Балка'),
+                        ('beam_double', 'Балка двухст.'),
+                        ('max_overhang', 'Макс. вылет'),
+                    ]
+                    n_cols = len(specs)
+                    param_w = 30
+                    val_w = (block_w - param_w) / n_cols
+
+                    pdf.set_fill_color(26, 58, 107)
+                    pdf.set_text_color(255, 255, 255)
+                    pdf.set_font('DejaVu', 'B', 7)
+                    pdf.cell(param_w, row_h, "  Параметр", 1, 0, 'L', fill=True)
+                    for s in specs:
+                        pdf.cell(val_w, row_h, s.get('label', ''), 1, 0, 'C', fill=True)
+                    pdf.ln()
+
+                    pdf.set_text_color(0, 0, 0)
+                    pdf.set_fill_color(248, 251, 255)
+                    pdf.set_font('DejaVu', '', 7)
+                    for key, label in spec_params:
+                        pdf.set_font('DejaVu', 'B', 7)
+                        pdf.cell(param_w, row_h, "  " + label, 1, 0, 'L', fill=True)
+                        pdf.set_font('DejaVu', '', 7)
+                        for s in specs:
+                            val = s.get(key, '')
+                            if key == 'max_overhang':
+                                val = f"{val} м" if val else "—"
+                            pdf.cell(val_w, row_h, str(val) if val else "—", 1, 0, 'C', fill=True)
+                        pdf.ln()
+
+                    pdf.set_fill_color(255, 255, 255)
+            except Exception:
+                pass
+
+            pdf.ln(3)
+
         pdf.add_page()
         pdf.chapter_title("Описание перголы:")
         
