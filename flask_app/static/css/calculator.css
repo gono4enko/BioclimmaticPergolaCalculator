@@ -136,6 +136,13 @@
 .compare-specs-table td:nth-child(2) { text-align: left; }
 .spec-img-cell { width: 36px; padding: 0.3rem !important; }
 .spec-img { width: 28px; height: 28px; vertical-align: middle; opacity: 0.85; }
+.spec-photo-cell { padding: 0.5rem 0.4rem !important; text-align: center !important; vertical-align: middle; }
+.spec-photo { max-width: 120px; max-height: 70px; object-fit: contain; border-radius: 4px; }
+.spec-photo-label { font-size: 0.72rem; color: #555; display: block; margin-top: 2px; }
+.tech-photos-row { display: flex; gap: 12px; margin-bottom: 0.8rem; flex-wrap: wrap; justify-content: center; }
+.tech-photo-item { text-align: center; flex: 0 1 140px; }
+.tech-photo { width: 100%; max-width: 130px; height: auto; border-radius: 6px; border: 1px solid #e0e8f0; }
+.tech-photo-caption { font-size: 0.72rem; color: #555; margin-top: 4px; line-height: 1.2; }
 
 .variant-detail-panel { margin-top: 1.5rem; padding: 1.2rem; background: #fafcff; border: 2px solid #004B9A; border-radius: 10px; animation: detailSlideIn 0.3s ease; }
 .variant-detail-header { font-size: 1.1rem; font-weight: 700; color: #004B9A; margin-bottom: 0.8rem; text-align: center; padding-bottom: 0.6rem; border-bottom: 2px solid #e0e8f0; }

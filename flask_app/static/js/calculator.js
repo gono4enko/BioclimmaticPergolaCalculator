@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     }
 
-    var SPEC_IMAGES = {
+    var SPEC_ICONS = {
         lamella: '/static/images/specs/lamella.svg',
         column: '/static/images/specs/column.svg',
         beam: '/static/images/specs/beam.svg',
@@ -270,11 +270,35 @@ document.addEventListener('DOMContentLoaded', function() {
     function buildSpecsTable(variantsData) {
         if (!variantsData) return '';
         var specsHtml = '<h4 style="font-size:1rem;font-weight:600;color:#004B9A;margin-top:1.2rem;">\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0445\u0430\u0440\u0430\u043A\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043A\u0438</h4>';
+
+        var hasImages = variantsData.some(function(v) { return v.images && (v.images.skl || v.images.lamella); });
+        if (hasImages) {
+            specsHtml += '<div class="compare-table-wrap"><table class="compare-specs-table">';
+            specsHtml += '<thead><tr><th colspan="2">\u0421\u0438\u0441\u0442\u0435\u043C\u0430 \u043A\u0440\u0435\u043F\u043B\u0435\u043D\u0438\u044F \u043B\u0430\u043C\u0435\u043B\u0438</th>';
+            variantsData.forEach(function(v) { specsHtml += '<th>' + v.label + '</th>'; });
+            specsHtml += '</tr></thead><tbody><tr><td colspan="2"></td>';
+            variantsData.forEach(function(v) {
+                var img = (v.images && v.images.skl) || '';
+                specsHtml += '<td class="spec-photo-cell">' + (img ? '<img src="' + img + '" class="spec-photo" alt="\u0421\u041A\u041B">' : '\u2014') + '</td>';
+            });
+            specsHtml += '</tr>';
+            specsHtml += '<tr><td colspan="2"><strong>\u041B\u0430\u043C\u0435\u043B\u044C</strong></td>';
+            variantsData.forEach(function(v) {
+                var img = (v.images && v.images.lamella) || '';
+                specsHtml += '<td class="spec-photo-cell">' + (img ? '<img src="' + img + '" class="spec-photo" alt="\u041B\u0430\u043C\u0435\u043B\u044C"><br>' : '') + '<span class="spec-photo-label">' + (v.lamella || '\u2014') + '</span></td>';
+            });
+            specsHtml += '</tr>';
+            specsHtml += '<tr><td colspan="2"><strong>\u0411\u0430\u043B\u043A\u0430 \u0441 \u0438\u043D\u0442\u0435\u0433\u0440. \u043B\u043E\u0442\u043A\u043E\u043C</strong></td>';
+            variantsData.forEach(function(v) {
+                var img = (v.images && v.images.beam) || '';
+                specsHtml += '<td class="spec-photo-cell">' + (img ? '<img src="' + img + '" class="spec-photo" alt="\u0411\u0430\u043B\u043A\u0430"><br>' : '') + '<span class="spec-photo-label">' + (v.beam || '\u2014') + '</span></td>';
+            });
+            specsHtml += '</tr></tbody></table></div>';
+        }
+
         specsHtml += '<div class="compare-table-wrap"><table class="compare-specs-table">';
-        specsHtml += '<thead><tr><th></th><th>\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440</th>';
-        variantsData.forEach(function(v) {
-            specsHtml += '<th>' + v.label + '</th>';
-        });
+        specsHtml += '<thead><tr><th>\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440</th>';
+        variantsData.forEach(function(v) { specsHtml += '<th>' + v.label + '</th>'; });
         specsHtml += '</tr></thead><tbody>';
 
         var specRows = [
@@ -282,16 +306,18 @@ document.addEventListener('DOMContentLoaded', function() {
             {key: 'column', label: '\u041A\u043E\u043B\u043E\u043D\u043D\u0430'},
             {key: 'beam', label: '\u0411\u0430\u043B\u043A\u0430'},
             {key: 'beam_double', label: '\u0411\u0430\u043B\u043A\u0430 \u0434\u0432\u0443\u0445\u0441\u0442.'},
-            {key: 'max_overhang', label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442'}
+            {key: 'max_overhang', label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442', suffix: ' \u043C'},
+            {key: 'max_module_width', label: '\u041C\u0430\u043A\u0441. \u0448\u0438\u0440\u0438\u043D\u0430 \u043C\u043E\u0434\u0443\u043B\u044F', suffix: ' \u043C'},
+            {key: 'weight', label: '\u041E\u0431\u0449\u0438\u0439 \u0432\u0435\u0441 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438'},
+            {key: 'snow_wind_load', label: '\u0421\u043D\u0435\u0433\u043E\u0432\u0430\u044F \u0438 \u0432\u0435\u0442\u0440\u043E\u0432\u0430\u044F \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430'},
+            {key: 'hermiticity', label: '\u0413\u0435\u0440\u043C\u0435\u0442\u0438\u0447\u043D\u043E\u0441\u0442\u044C'},
+            {key: 'heat_protection', label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430'}
         ];
         specRows.forEach(function(sr) {
-            var imgSrc = SPEC_IMAGES[sr.key] || '';
-            specsHtml += '<tr>';
-            specsHtml += '<td class="spec-img-cell">' + (imgSrc ? '<img src="' + imgSrc + '" alt="' + sr.label + '" class="spec-img">' : '') + '</td>';
-            specsHtml += '<td><strong>' + sr.label + '</strong></td>';
+            specsHtml += '<tr><td><strong>' + sr.label + '</strong></td>';
             variantsData.forEach(function(v) {
                 var val = v[sr.key];
-                if (sr.key === 'max_overhang') val = val ? val + ' \u043C' : '\u2014';
+                if (sr.suffix && val && typeof val === 'number') val = val + sr.suffix;
                 specsHtml += '<td>' + (val || '\u2014') + '</td>';
             });
             specsHtml += '</tr>';
@@ -354,19 +380,32 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             if (matchedSpec) {
                 html += '<div class="variant-tech-block">' +
-                    '<div class="variant-tech-title">\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0445\u0430\u0440\u0430\u043A\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043A\u0438 (' + matchedSpec.label + ')</div>' +
-                    '<div class="variant-tech-specs">';
+                    '<div class="variant-tech-title">\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0445\u0430\u0440\u0430\u043A\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043A\u0438 (' + matchedSpec.label + ')</div>';
+                var imgs = matchedSpec.images || {};
+                if (imgs.skl || imgs.lamella || imgs.beam) {
+                    html += '<div class="tech-photos-row">';
+                    if (imgs.skl) html += '<div class="tech-photo-item"><img src="' + imgs.skl + '" class="tech-photo" alt="\u0421\u041A\u041B"><div class="tech-photo-caption">\u0421\u0438\u0441\u0442\u0435\u043C\u0430 \u043A\u0440\u0435\u043F\u043B\u0435\u043D\u0438\u044F</div></div>';
+                    if (imgs.lamella) html += '<div class="tech-photo-item"><img src="' + imgs.lamella + '" class="tech-photo" alt="\u041B\u0430\u043C\u0435\u043B\u044C"><div class="tech-photo-caption">\u041B\u0430\u043C\u0435\u043B\u044C ' + matchedSpec.lamella + '</div></div>';
+                    if (imgs.beam) html += '<div class="tech-photo-item"><img src="' + imgs.beam + '" class="tech-photo" alt="\u0411\u0430\u043B\u043A\u0430"><div class="tech-photo-caption">\u0411\u0430\u043B\u043A\u0430 ' + matchedSpec.beam + '</div></div>';
+                    html += '</div>';
+                }
+                html += '<div class="variant-tech-specs">';
                 var techItems = [
-                    {img: SPEC_IMAGES.lamella, label: '\u041B\u0430\u043C\u0435\u043B\u044C', val: matchedSpec.lamella},
-                    {img: SPEC_IMAGES.column, label: '\u041A\u043E\u043B\u043E\u043D\u043D\u0430', val: matchedSpec.column},
-                    {img: SPEC_IMAGES.beam, label: '\u0411\u0430\u043B\u043A\u0430', val: matchedSpec.beam},
-                    {img: SPEC_IMAGES.beam_double, label: '\u0411\u0430\u043B\u043A\u0430 \u0434\u0432\u0443\u0445\u0441\u0442.', val: matchedSpec.beam_double},
-                    {img: SPEC_IMAGES.max_overhang, label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442', val: matchedSpec.max_overhang ? matchedSpec.max_overhang + ' \u043C' : ''}
+                    {icon: SPEC_ICONS.lamella, label: '\u041B\u0430\u043C\u0435\u043B\u044C', val: matchedSpec.lamella},
+                    {icon: SPEC_ICONS.column, label: '\u041A\u043E\u043B\u043E\u043D\u043D\u0430', val: matchedSpec.column},
+                    {icon: SPEC_ICONS.beam, label: '\u0411\u0430\u043B\u043A\u0430', val: matchedSpec.beam},
+                    {icon: SPEC_ICONS.beam_double, label: '\u0411\u0430\u043B\u043A\u0430 \u0434\u0432\u0443\u0445\u0441\u0442.', val: matchedSpec.beam_double},
+                    {icon: SPEC_ICONS.max_overhang, label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442', val: matchedSpec.max_overhang ? matchedSpec.max_overhang + ' \u043C' : ''},
+                    {icon: '', label: '\u041C\u0430\u043A\u0441. \u0448\u0438\u0440\u0438\u043D\u0430 \u043C\u043E\u0434\u0443\u043B\u044F', val: matchedSpec.max_module_width ? matchedSpec.max_module_width + ' \u043C' : ''},
+                    {icon: '', label: '\u0412\u0435\u0441 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438', val: matchedSpec.weight},
+                    {icon: '', label: '\u0421\u043D\u0435\u0433./\u0432\u0435\u0442\u0440. \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430', val: matchedSpec.snow_wind_load},
+                    {icon: '', label: '\u0413\u0435\u0440\u043C\u0435\u0442\u0438\u0447\u043D\u043E\u0441\u0442\u044C', val: matchedSpec.hermiticity},
+                    {icon: '', label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430', val: matchedSpec.heat_protection}
                 ];
                 techItems.forEach(function(ti) {
                     if (ti.val) {
                         html += '<div class="tech-spec-row">';
-                        if (ti.img) html += '<img src="' + ti.img + '" alt="' + ti.label + '" class="tech-spec-icon">';
+                        if (ti.icon) html += '<img src="' + ti.icon + '" alt="' + ti.label + '" class="tech-spec-icon">';
                         html += '<span>' + ti.label + ': <strong>' + ti.val + '</strong></span></div>';
                     }
                 });
@@ -513,19 +552,32 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             if (matchedSpec) {
                 variantSpecHtml = '<div class="variant-tech-block">' +
-                    '<div class="variant-tech-title">\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0445\u0430\u0440\u0430\u043A\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043A\u0438 (' + matchedSpec.label + ')</div>' +
-                    '<div class="variant-tech-specs">';
+                    '<div class="variant-tech-title">\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0445\u0430\u0440\u0430\u043A\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043A\u0438 (' + matchedSpec.label + ')</div>';
+                var sImgs = matchedSpec.images || {};
+                if (sImgs.skl || sImgs.lamella || sImgs.beam) {
+                    variantSpecHtml += '<div class="tech-photos-row">';
+                    if (sImgs.skl) variantSpecHtml += '<div class="tech-photo-item"><img src="' + sImgs.skl + '" class="tech-photo" alt="\u0421\u041A\u041B"><div class="tech-photo-caption">\u0421\u0438\u0441\u0442\u0435\u043C\u0430 \u043A\u0440\u0435\u043F\u043B\u0435\u043D\u0438\u044F</div></div>';
+                    if (sImgs.lamella) variantSpecHtml += '<div class="tech-photo-item"><img src="' + sImgs.lamella + '" class="tech-photo" alt="\u041B\u0430\u043C\u0435\u043B\u044C"><div class="tech-photo-caption">\u041B\u0430\u043C\u0435\u043B\u044C ' + matchedSpec.lamella + '</div></div>';
+                    if (sImgs.beam) variantSpecHtml += '<div class="tech-photo-item"><img src="' + sImgs.beam + '" class="tech-photo" alt="\u0411\u0430\u043B\u043A\u0430"><div class="tech-photo-caption">\u0411\u0430\u043B\u043A\u0430 ' + matchedSpec.beam + '</div></div>';
+                    variantSpecHtml += '</div>';
+                }
+                variantSpecHtml += '<div class="variant-tech-specs">';
                 var techItems = [
-                    {img: SPEC_IMAGES.lamella, label: '\u041B\u0430\u043C\u0435\u043B\u044C', val: matchedSpec.lamella},
-                    {img: SPEC_IMAGES.column, label: '\u041A\u043E\u043B\u043E\u043D\u043D\u0430', val: matchedSpec.column},
-                    {img: SPEC_IMAGES.beam, label: '\u0411\u0430\u043B\u043A\u0430', val: matchedSpec.beam},
-                    {img: SPEC_IMAGES.beam_double, label: '\u0411\u0430\u043B\u043A\u0430 \u0434\u0432\u0443\u0445\u0441\u0442.', val: matchedSpec.beam_double},
-                    {img: SPEC_IMAGES.max_overhang, label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442', val: matchedSpec.max_overhang ? matchedSpec.max_overhang + ' \u043C' : ''}
+                    {icon: SPEC_ICONS.lamella, label: '\u041B\u0430\u043C\u0435\u043B\u044C', val: matchedSpec.lamella},
+                    {icon: SPEC_ICONS.column, label: '\u041A\u043E\u043B\u043E\u043D\u043D\u0430', val: matchedSpec.column},
+                    {icon: SPEC_ICONS.beam, label: '\u0411\u0430\u043B\u043A\u0430', val: matchedSpec.beam},
+                    {icon: SPEC_ICONS.beam_double, label: '\u0411\u0430\u043B\u043A\u0430 \u0434\u0432\u0443\u0445\u0441\u0442.', val: matchedSpec.beam_double},
+                    {icon: SPEC_ICONS.max_overhang, label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442', val: matchedSpec.max_overhang ? matchedSpec.max_overhang + ' \u043C' : ''},
+                    {icon: '', label: '\u041C\u0430\u043A\u0441. \u0448\u0438\u0440\u0438\u043D\u0430 \u043C\u043E\u0434\u0443\u043B\u044F', val: matchedSpec.max_module_width ? matchedSpec.max_module_width + ' \u043C' : ''},
+                    {icon: '', label: '\u0412\u0435\u0441 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438', val: matchedSpec.weight},
+                    {icon: '', label: '\u0421\u043D\u0435\u0433./\u0432\u0435\u0442\u0440. \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430', val: matchedSpec.snow_wind_load},
+                    {icon: '', label: '\u0413\u0435\u0440\u043C\u0435\u0442\u0438\u0447\u043D\u043E\u0441\u0442\u044C', val: matchedSpec.hermiticity},
+                    {icon: '', label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430', val: matchedSpec.heat_protection}
                 ];
                 techItems.forEach(function(ti) {
                     if (ti.val) {
                         variantSpecHtml += '<div class="tech-spec-row">';
-                        if (ti.img) variantSpecHtml += '<img src="' + ti.img + '" alt="' + ti.label + '" class="tech-spec-icon">';
+                        if (ti.icon) variantSpecHtml += '<img src="' + ti.icon + '" alt="' + ti.label + '" class="tech-spec-icon">';
                         variantSpecHtml += '<span>' + ti.label + ': <strong>' + ti.val + '</strong></span></div>';
                     }
                 });

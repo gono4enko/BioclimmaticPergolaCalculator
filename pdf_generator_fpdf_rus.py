@@ -676,6 +676,11 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                         ('beam', 'Балка'),
                         ('beam_double', 'Балка двухст.'),
                         ('max_overhang', 'Макс. вылет'),
+                        ('max_module_width', 'Макс. шир. модуля'),
+                        ('weight', 'Вес конструкции'),
+                        ('snow_wind_load', 'Снег./ветр. нагр.'),
+                        ('hermiticity', 'Герметичность'),
+                        ('heat_protection', 'Защита от нагрева'),
                     ]
                     n_cols = len(specs)
                     param_w = 30
@@ -698,7 +703,7 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                         pdf.set_font('DejaVu', '', 7)
                         for s in specs:
                             val = s.get(key, '')
-                            if key == 'max_overhang':
+                            if key in ('max_overhang', 'max_module_width'):
                                 val = f"{val} м" if val else "—"
                             pdf.cell(val_w, row_h, str(val) if val else "—", 1, 0, 'C', fill=True)
                         pdf.ln()

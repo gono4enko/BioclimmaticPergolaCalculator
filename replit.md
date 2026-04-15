@@ -47,7 +47,7 @@
   - Конфиг: `config/variant_specs.py` — `VARIANT_SPECS`, `VARIANT_DISPLAY_ORDER`, `get_variant_options()`
   - API: `/api/variant-options/<pergola_type>` — возвращает варианты с характеристиками
   - Спец. режимы: `Автовыбор` (auto — cheapest), `Все варианты` (all — comparison table)
-- **PDF export "Все варианты"**: `generate_commercial_offer(data, all_variants=list)` — сравнительная таблица модификаций + тех. характеристики
+- **PDF export "Все варианты"**: `generate_commercial_offer(data, all_variants=list)` — сравнительная таблица модификаций + тех. характеристики (вес, снег/ветер, герметичность, макс. ширина модуля, защита от нагрева)
 - Доп. колонны: порог 6.5м (ламели 250/PIR) или 6.85м (ламели 200)
 - Усилитель лотка: порог >6.5м, цена 80 €/м, кол-во лотков = модули+1
 - Привод B500: Bansbach (Т1=700€, Tandem=1250€); длина>6м всегда Tandem
