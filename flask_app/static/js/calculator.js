@@ -259,6 +259,125 @@ document.addEventListener('DOMContentLoaded', function() {
         return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     }
 
+    var SPEC_IMAGES = {
+        lamella: '/static/images/specs/lamella.svg',
+        column: '/static/images/specs/column.svg',
+        beam: '/static/images/specs/beam.svg',
+        beam_double: '/static/images/specs/beam_double.svg',
+        max_overhang: '/static/images/specs/max_overhang.svg'
+    };
+
+    function buildSpecsTable(variantsData) {
+        if (!variantsData) return '';
+        var specsHtml = '<h4 style="font-size:1rem;font-weight:600;color:#004B9A;margin-top:1.2rem;">\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0445\u0430\u0440\u0430\u043A\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043A\u0438</h4>';
+        specsHtml += '<div class="compare-table-wrap"><table class="compare-specs-table">';
+        specsHtml += '<thead><tr><th></th><th>\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440</th>';
+        variantsData.forEach(function(v) {
+            specsHtml += '<th>' + v.label + '</th>';
+        });
+        specsHtml += '</tr></thead><tbody>';
+
+        var specRows = [
+            {key: 'lamella', label: '\u041B\u0430\u043C\u0435\u043B\u044C'},
+            {key: 'column', label: '\u041A\u043E\u043B\u043E\u043D\u043D\u0430'},
+            {key: 'beam', label: '\u0411\u0430\u043B\u043A\u0430'},
+            {key: 'beam_double', label: '\u0411\u0430\u043B\u043A\u0430 \u0434\u0432\u0443\u0445\u0441\u0442.'},
+            {key: 'max_overhang', label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442'}
+        ];
+        specRows.forEach(function(sr) {
+            var imgSrc = SPEC_IMAGES[sr.key] || '';
+            specsHtml += '<tr>';
+            specsHtml += '<td class="spec-img-cell">' + (imgSrc ? '<img src="' + imgSrc + '" alt="' + sr.label + '" class="spec-img">' : '') + '</td>';
+            specsHtml += '<td><strong>' + sr.label + '</strong></td>';
+            variantsData.forEach(function(v) {
+                var val = v[sr.key];
+                if (sr.key === 'max_overhang') val = val ? val + ' \u043C' : '\u2014';
+                specsHtml += '<td>' + (val || '\u2014') + '</td>';
+            });
+            specsHtml += '</tr>';
+        });
+        specsHtml += '</tbody></table></div>';
+        return specsHtml;
+    }
+
+    function buildVariantDetail(result) {
+        var dims = result.dimensions;
+        var totals = result.totals;
+        var euroRate = result.euro_rate;
+        var label = result.variant_label || result.selected_variant || '';
+
+        var html = '<div class="variant-detail-panel">';
+        html += '<div class="variant-detail-header">\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u044B \u0440\u0430\u0441\u0447\u0451\u0442\u0430: ' + label + '</div>';
+
+        html += '<div style="text-align:center;margin-bottom:0.6rem;color:#555;font-size:0.85rem;">' +
+            '<strong>' + result.pergola_type_name + '</strong> | ' +
+            dims.width.toFixed(2) + ' \u00D7 ' + dims.length.toFixed(2) + ' \u043C | ' +
+            dims.modules + ' ' + pluralModule(dims.modules) +
+            '</div>';
+
+        html += '<h4 style="font-size:0.95rem;font-weight:600;color:#004B9A;margin-top:0.8rem;">\u0421\u043F\u0435\u0446\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u044F</h4>';
+        html += '<table class="spec-table"><thead><tr><th>\u041D\u0430\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D\u0438\u0435</th><th>\u041A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E</th></tr></thead><tbody>';
+        result.specification.forEach(function(s) {
+            html += '<tr><td>' + s.name + '</td><td>' + s.count + '</td></tr>';
+        });
+        html += '</tbody></table>';
+
+        html += '<h4 style="font-size:0.95rem;font-weight:600;color:#004B9A;margin-top:0.8rem;">\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C</h4>';
+        html += '<table class="cost-table"><tbody>';
+        result.items.forEach(function(item) {
+            var priceRub = Math.round(item.price * euroRate);
+            html += '<tr><td>' + item.name + '</td><td>' + formatPrice(priceRub) + ' \u20BD</td></tr>';
+        });
+        html += '</tbody></table>';
+
+        html += '<div class="payment-variants-block">' +
+            '<div class="payment-variants-title">\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C \u043F\u043E \u0432\u0430\u0440\u0438\u0430\u043D\u0442\u0430\u043C \u043E\u043F\u043B\u0430\u0442\u044B:</div>' +
+            '<div class="payment-variant-row">' +
+                '<span class="payment-variant-label">\u041D\u0430\u043B\u0438\u0447\u043D\u044B\u0435</span>' +
+                '<span class="payment-variant-price pv-cash">' + formatPrice(totals.cash) + ' \u20BD</span>' +
+            '</div>' +
+            '<div class="payment-variant-row">' +
+                '<span class="payment-variant-label">\u0411\u0435\u0437\u043D\u0430\u043B\u0438\u0447\u043D\u044B\u0439 \u0440\u0430\u0441\u0447\u0451\u0442</span>' +
+                '<span class="payment-variant-price">' + formatPrice(totals.non_cash) + ' \u20BD</span>' +
+            '</div>' +
+            '<div class="payment-variant-row pv-last">' +
+                '<span class="payment-variant-label">\u0411\u0435\u0437\u043D\u0430\u043B\u0438\u0447\u043D\u044B\u0439 \u0441 \u041D\u0414\u0421 22%</span>' +
+                '<span class="payment-variant-price">' + formatPrice(totals.with_vat) + ' \u20BD</span>' +
+            '</div>' +
+        '</div>';
+
+        if (result.selected_variant && state.variantsData) {
+            var sv = result.selected_variant;
+            var matchedSpec = null;
+            state.variantsData.forEach(function(v) {
+                if (v.variant === sv) matchedSpec = v;
+            });
+            if (matchedSpec) {
+                html += '<div class="variant-tech-block">' +
+                    '<div class="variant-tech-title">\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0445\u0430\u0440\u0430\u043A\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043A\u0438 (' + matchedSpec.label + ')</div>' +
+                    '<div class="variant-tech-specs">';
+                var techItems = [
+                    {img: SPEC_IMAGES.lamella, label: '\u041B\u0430\u043C\u0435\u043B\u044C', val: matchedSpec.lamella},
+                    {img: SPEC_IMAGES.column, label: '\u041A\u043E\u043B\u043E\u043D\u043D\u0430', val: matchedSpec.column},
+                    {img: SPEC_IMAGES.beam, label: '\u0411\u0430\u043B\u043A\u0430', val: matchedSpec.beam},
+                    {img: SPEC_IMAGES.beam_double, label: '\u0411\u0430\u043B\u043A\u0430 \u0434\u0432\u0443\u0445\u0441\u0442.', val: matchedSpec.beam_double},
+                    {img: SPEC_IMAGES.max_overhang, label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442', val: matchedSpec.max_overhang ? matchedSpec.max_overhang + ' \u043C' : ''}
+                ];
+                techItems.forEach(function(ti) {
+                    if (ti.val) {
+                        html += '<div class="tech-spec-row">';
+                        if (ti.img) html += '<img src="' + ti.img + '" alt="' + ti.label + '" class="tech-spec-icon">';
+                        html += '<span>' + ti.label + ': <strong>' + ti.val + '</strong></span></div>';
+                    }
+                });
+                html += '</div></div>';
+            }
+        }
+
+        html += '</div>';
+        return html;
+    }
+
     function renderAllResults(results) {
         var sec = stepsEl.resultsSection;
         sec.style.display = 'block';
@@ -289,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 diffHtml = '<div class="compare-best">\u041C\u0438\u043D\u0438\u043C\u0430\u043B\u044C\u043D\u0430\u044F \u0446\u0435\u043D\u0430</div>';
             }
-            tableHtml += '<tr class="' + (idx === 0 ? 'compare-row-best' : '') + '">';
+            tableHtml += '<tr class="compare-row-clickable' + (idx === 0 ? ' compare-row-best' : '') + '" data-variant-idx="' + idx + '">';
             tableHtml += '<td><strong>' + label + '</strong>' + diffHtml + '</td>';
             tableHtml += '<td>' + formatPrice(r.totals.cash) + ' \u20BD</td>';
             tableHtml += '<td>' + formatPrice(r.totals.non_cash) + ' \u20BD</td>';
@@ -297,41 +416,32 @@ document.addEventListener('DOMContentLoaded', function() {
             tableHtml += '</tr>';
         });
         tableHtml += '</tbody></table></div>';
+        tableHtml += '<div class="compare-hint">\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043D\u0430 \u0441\u0442\u0440\u043E\u043A\u0443, \u0447\u0442\u043E\u0431\u044B \u0443\u0432\u0438\u0434\u0435\u0442\u044C \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u044B\u0439 \u0440\u0430\u0441\u0447\u0451\u0442</div>';
 
-        var specsHtml = '';
-        if (state.variantsData) {
-            specsHtml = '<h4 style="font-size:1rem;font-weight:600;color:#004B9A;margin-top:1.2rem;">\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0445\u0430\u0440\u0430\u043A\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043A\u0438</h4>';
-            specsHtml += '<div class="compare-table-wrap"><table class="compare-specs-table">';
-            specsHtml += '<thead><tr><th>\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440</th>';
-            state.variantsData.forEach(function(v) {
-                specsHtml += '<th>' + v.label + '</th>';
-            });
-            specsHtml += '</tr></thead><tbody>';
-
-            var specRows = [
-                {key: 'lamella', label: '\u041B\u0430\u043C\u0435\u043B\u044C'},
-                {key: 'column', label: '\u041A\u043E\u043B\u043E\u043D\u043D\u0430'},
-                {key: 'beam', label: '\u0411\u0430\u043B\u043A\u0430'},
-                {key: 'beam_double', label: '\u0411\u0430\u043B\u043A\u0430 \u0434\u0432\u0443\u0445\u0441\u0442.'},
-                {key: 'max_overhang', label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442'}
-            ];
-            specRows.forEach(function(sr) {
-                specsHtml += '<tr><td><strong>' + sr.label + '</strong></td>';
-                state.variantsData.forEach(function(v) {
-                    var val = v[sr.key];
-                    if (sr.key === 'max_overhang') val = val ? val + ' \u043C' : '\u2014';
-                    specsHtml += '<td>' + (val || '\u2014') + '</td>';
-                });
-                specsHtml += '</tr>';
-            });
-            specsHtml += '</tbody></table></div>';
-        }
+        var specsHtml = buildSpecsTable(state.variantsData);
 
         sec.innerHTML = '<h3>\u0421\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u0435 \u0432\u0430\u0440\u0438\u0430\u043D\u0442\u043E\u0432</h3>' +
             infoHtml + tableHtml + specsHtml +
+            '<div id="variant-detail-container"></div>' +
             '<button class="pdf-btn" id="pdf-btn"><i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF</button>';
 
         document.getElementById('pdf-btn').addEventListener('click', exportPdf);
+
+        var rows = sec.querySelectorAll('.compare-row-clickable');
+        rows.forEach(function(row) {
+            row.addEventListener('click', function() {
+                var idx = parseInt(this.dataset.variantIdx);
+                var r = results[idx];
+                rows.forEach(function(rw) { rw.classList.remove('compare-row-active'); });
+                this.classList.add('compare-row-active');
+                state.result = r;
+                var container = document.getElementById('variant-detail-container');
+                container.innerHTML = buildVariantDetail(r);
+                setTimeout(function() {
+                    container.scrollIntoView({behavior: 'smooth', block: 'start'});
+                }, 100);
+            });
+        });
 
         var bestResult = results[0];
         window._calcText = [
@@ -404,13 +514,22 @@ document.addEventListener('DOMContentLoaded', function() {
             if (matchedSpec) {
                 variantSpecHtml = '<div class="variant-tech-block">' +
                     '<div class="variant-tech-title">\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0445\u0430\u0440\u0430\u043A\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043A\u0438 (' + matchedSpec.label + ')</div>' +
-                    '<div class="variant-tech-specs">' +
-                    '<div>\u25AC \u041B\u0430\u043C\u0435\u043B\u044C: <strong>' + matchedSpec.lamella + '</strong></div>' +
-                    '<div>\u25AE \u041A\u043E\u043B\u043E\u043D\u043D\u0430: <strong>' + matchedSpec.column + '</strong></div>' +
-                    '<div>\u2501 \u0411\u0430\u043B\u043A\u0430: <strong>' + matchedSpec.beam + '</strong></div>' +
-                    '<div>\u2550 \u0411\u0430\u043B\u043A\u0430 \u0434\u0432\u0443\u0445\u0441\u0442.: <strong>' + matchedSpec.beam_double + '</strong></div>' +
-                    (matchedSpec.max_overhang ? '<div>\u2194 \u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442: <strong>' + matchedSpec.max_overhang + ' \u043C</strong></div>' : '') +
-                    '</div></div>';
+                    '<div class="variant-tech-specs">';
+                var techItems = [
+                    {img: SPEC_IMAGES.lamella, label: '\u041B\u0430\u043C\u0435\u043B\u044C', val: matchedSpec.lamella},
+                    {img: SPEC_IMAGES.column, label: '\u041A\u043E\u043B\u043E\u043D\u043D\u0430', val: matchedSpec.column},
+                    {img: SPEC_IMAGES.beam, label: '\u0411\u0430\u043B\u043A\u0430', val: matchedSpec.beam},
+                    {img: SPEC_IMAGES.beam_double, label: '\u0411\u0430\u043B\u043A\u0430 \u0434\u0432\u0443\u0445\u0441\u0442.', val: matchedSpec.beam_double},
+                    {img: SPEC_IMAGES.max_overhang, label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442', val: matchedSpec.max_overhang ? matchedSpec.max_overhang + ' \u043C' : ''}
+                ];
+                techItems.forEach(function(ti) {
+                    if (ti.val) {
+                        variantSpecHtml += '<div class="tech-spec-row">';
+                        if (ti.img) variantSpecHtml += '<img src="' + ti.img + '" alt="' + ti.label + '" class="tech-spec-icon">';
+                        variantSpecHtml += '<span>' + ti.label + ': <strong>' + ti.val + '</strong></span></div>';
+                    }
+                });
+                variantSpecHtml += '</div></div>';
             }
         }
 
