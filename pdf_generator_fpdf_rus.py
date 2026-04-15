@@ -5,6 +5,7 @@
 """
 import os
 import io
+import re
 from datetime import datetime
 from fpdf import FPDF
 from PIL import Image
@@ -670,6 +671,10 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     pdf.cell(0, 7, "Технические характеристики модификаций:", 0, 1, "L")
                     pdf.ln(1)
 
+                    p_w = pergola_data.get('width', 0)
+                    p_l = pergola_data.get('length', 0)
+                    p_area = p_w * p_l if p_w and p_l else 0
+
                     spec_params = [
                         ('lamella', 'Ламель'),
                         ('column', 'Колонна'),
@@ -677,7 +682,8 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                         ('beam_double', 'Балка двухст.'),
                         ('max_overhang', 'Макс. вылет'),
                         ('max_module_width', 'Макс. шир. модуля'),
-                        ('weight', 'Вес конструкции'),
+                        ('weight', 'Вес (кг/м²)'),
+                        ('_total_weight', 'Вес модели'),
                         ('snow_wind_load', 'Снег./ветр. нагр.'),
                         ('hermiticity', 'Герметичность'),
                         ('heat_protection', 'Защита от нагрева'),
@@ -702,9 +708,18 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                         pdf.cell(param_w, row_h, "  " + label, 1, 0, 'L', fill=True)
                         pdf.set_font('DejaVu', '', 7)
                         for s in specs:
-                            val = s.get(key, '')
-                            if key in ('max_overhang', 'max_module_width'):
-                                val = f"{val} м" if val else "—"
+                            if key == '_total_weight':
+                                w_str = s.get('weight', '')
+                                m = re.search(r'([\d.,]+)', w_str) if w_str else None
+                                if m and p_area > 0:
+                                    kg_m2 = float(m.group(1).replace(',', '.'))
+                                    val = f"{round(kg_m2 * p_area)} кг"
+                                else:
+                                    val = ''
+                            else:
+                                val = s.get(key, '')
+                                if key in ('max_overhang', 'max_module_width'):
+                                    val = f"{val} м" if val else "—"
                             pdf.cell(val_w, row_h, str(val) if val else "—", 1, 0, 'C', fill=True)
                         pdf.ln()
 

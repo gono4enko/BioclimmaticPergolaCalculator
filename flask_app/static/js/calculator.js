@@ -267,6 +267,16 @@ document.addEventListener('DOMContentLoaded', function() {
         max_overhang: '/static/images/specs/max_overhang.svg'
     };
 
+    function calcTotalWeight(weightStr, w, l) {
+        if (!weightStr || !w || !l) return '';
+        var m = weightStr.match(/([\d.,]+)/);
+        if (!m) return '';
+        var kgPerM2 = parseFloat(m[1].replace(',', '.'));
+        if (isNaN(kgPerM2)) return '';
+        var total = Math.round(kgPerM2 * w * l);
+        return total + ' \u043A\u0433';
+    }
+
     function buildSpecsTable(variantsData) {
         if (!variantsData) return '';
         var specsHtml = '<h4 style="font-size:1rem;font-weight:600;color:#004B9A;margin-top:1.2rem;">\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0445\u0430\u0440\u0430\u043A\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043A\u0438</h4>';
@@ -308,7 +318,8 @@ document.addEventListener('DOMContentLoaded', function() {
             {key: 'beam_double', label: '\u0411\u0430\u043B\u043A\u0430 \u0434\u0432\u0443\u0445\u0441\u0442.'},
             {key: 'max_overhang', label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442', suffix: ' \u043C'},
             {key: 'max_module_width', label: '\u041C\u0430\u043A\u0441. \u0448\u0438\u0440\u0438\u043D\u0430 \u043C\u043E\u0434\u0443\u043B\u044F', suffix: ' \u043C'},
-            {key: 'weight', label: '\u041E\u0431\u0449\u0438\u0439 \u0432\u0435\u0441 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438'},
+            {key: 'weight', label: '\u0412\u0435\u0441 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438 (\u043A\u0433/\u043C\u00B2)'},
+            {key: '_total_weight', label: '\u0412\u0435\u0441 \u0440\u0430\u0441\u0441\u0447\u0438\u0442\u0430\u043D\u043D\u043E\u0439 \u043C\u043E\u0434\u0435\u043B\u0438', computed: true},
             {key: 'snow_wind_load', label: '\u0421\u043D\u0435\u0433\u043E\u0432\u0430\u044F \u0438 \u0432\u0435\u0442\u0440\u043E\u0432\u0430\u044F \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430'},
             {key: 'hermiticity', label: '\u0413\u0435\u0440\u043C\u0435\u0442\u0438\u0447\u043D\u043E\u0441\u0442\u044C'},
             {key: 'heat_protection', label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430'}
@@ -316,8 +327,13 @@ document.addEventListener('DOMContentLoaded', function() {
         specRows.forEach(function(sr) {
             specsHtml += '<tr><td><strong>' + sr.label + '</strong></td>';
             variantsData.forEach(function(v) {
-                var val = v[sr.key];
-                if (sr.suffix && val && typeof val === 'number') val = val + sr.suffix;
+                var val;
+                if (sr.computed && sr.key === '_total_weight') {
+                    val = calcTotalWeight(v.weight, state.width, state.length);
+                } else {
+                    val = v[sr.key];
+                    if (sr.suffix && val && typeof val === 'number') val = val + sr.suffix;
+                }
                 specsHtml += '<td>' + (val || '\u2014') + '</td>';
             });
             specsHtml += '</tr>';
@@ -398,6 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     {icon: SPEC_ICONS.max_overhang, label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442', val: matchedSpec.max_overhang ? matchedSpec.max_overhang + ' \u043C' : ''},
                     {icon: '', label: '\u041C\u0430\u043A\u0441. \u0448\u0438\u0440\u0438\u043D\u0430 \u043C\u043E\u0434\u0443\u043B\u044F', val: matchedSpec.max_module_width ? matchedSpec.max_module_width + ' \u043C' : ''},
                     {icon: '', label: '\u0412\u0435\u0441 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438', val: matchedSpec.weight},
+                    {icon: '', label: '\u0412\u0435\u0441 \u043C\u043E\u0434\u0435\u043B\u0438', val: calcTotalWeight(matchedSpec.weight, dims.width, dims.length)},
                     {icon: '', label: '\u0421\u043D\u0435\u0433./\u0432\u0435\u0442\u0440. \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430', val: matchedSpec.snow_wind_load},
                     {icon: '', label: '\u0413\u0435\u0440\u043C\u0435\u0442\u0438\u0447\u043D\u043E\u0441\u0442\u044C', val: matchedSpec.hermiticity},
                     {icon: '', label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430', val: matchedSpec.heat_protection}
@@ -570,6 +587,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     {icon: SPEC_ICONS.max_overhang, label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442', val: matchedSpec.max_overhang ? matchedSpec.max_overhang + ' \u043C' : ''},
                     {icon: '', label: '\u041C\u0430\u043A\u0441. \u0448\u0438\u0440\u0438\u043D\u0430 \u043C\u043E\u0434\u0443\u043B\u044F', val: matchedSpec.max_module_width ? matchedSpec.max_module_width + ' \u043C' : ''},
                     {icon: '', label: '\u0412\u0435\u0441 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438', val: matchedSpec.weight},
+                    {icon: '', label: '\u0412\u0435\u0441 \u043C\u043E\u0434\u0435\u043B\u0438', val: calcTotalWeight(matchedSpec.weight, dims.width, dims.length)},
                     {icon: '', label: '\u0421\u043D\u0435\u0433./\u0432\u0435\u0442\u0440. \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430', val: matchedSpec.snow_wind_load},
                     {icon: '', label: '\u0413\u0435\u0440\u043C\u0435\u0442\u0438\u0447\u043D\u043E\u0441\u0442\u044C', val: matchedSpec.hermiticity},
                     {icon: '', label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430', val: matchedSpec.heat_protection}
