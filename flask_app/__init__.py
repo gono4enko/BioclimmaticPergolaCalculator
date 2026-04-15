@@ -86,8 +86,9 @@ def create_app(test_config=None):
                             os.makedirs(os.path.dirname(dp), exist_ok=True)
                             with open(dp, 'w', encoding='utf-8') as f:
                                 _json.dump(data, f, ensure_ascii=False, indent=2)
-                except Exception:
-                    pass
+                        print(f"[decolife] Updated {len(results)} model(s)")
+                except Exception as e:
+                    print(f"[decolife] Background fetch failed: {e}")
             threading.Thread(target=_bg_fetch, daemon=True).start()
         except Exception:
             pass

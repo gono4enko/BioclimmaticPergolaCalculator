@@ -494,7 +494,7 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             pdf.cell(0, 7, model_title, 0, 1, "L")
 
             deco_key = pergola_type_name.lower().replace(' new', '').replace(' basic', '').replace(' light', '').replace(' pro', '').strip()
-            deco_img_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'flask_app', 'static', 'decolife', deco_key.replace('b', 'b'), 'images')
+            deco_img_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'flask_app', 'static', 'decolife', deco_key, 'images')
             deco_img_placed = False
             if os.path.isdir(deco_img_dir):
                 deco_imgs = [f for f in os.listdir(deco_img_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))]
@@ -513,7 +513,6 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             if deco_img_placed:
                 pdf.set_xy(105, pdf.get_y())
                 pdf.multi_cell(85, 4.5, desc)
-                pdf.set_y(max(pdf.get_y(), pdf.get_y()))
             else:
                 pdf.multi_cell(0, 5, desc)
 

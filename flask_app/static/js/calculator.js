@@ -681,6 +681,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var html = '<div class="kp-section">';
 
         var kpDate = new Date().toLocaleDateString('ru-RU');
+        var decoKeyMap = {'B500NEW': 'b500', 'B700NEW': 'b700', 'B600': 'b600'};
+        var decoKey = decoKeyMap[state.pergolaType] || '';
         var modelImgMap = {'B500NEW': 'b500.jpg', 'B700NEW': 'b700.jpg', 'B600': 'b600.jpg'};
         var modelImg = modelImgMap[state.pergolaType] || 'hero_pergola.jpg';
 
@@ -708,7 +710,7 @@ document.addEventListener('DOMContentLoaded', function() {
         /* Block 3: Model info with product photo from Decolife */
         html += '<div class="kp-block">' +
             '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\u2139</div><div class="kp-block-title">\u041E \u043C\u043E\u0434\u0435\u043B\u0438 ' + escHtml(dd.model || pType) + '</div></div>' +
-            '<div class="kp-model-photo"><img src="/static/images/' + modelImg + '" alt="' + escHtml(dd.model || pType) + '" onerror="this.parentElement.style.display=\'none\'" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:0.8rem;"></div>';
+            '<div class="kp-model-photo"><img src="' + (decoKey ? '/static/decolife/' + decoKey + '/images/product.jpg' : '/static/images/' + modelImg) + '" alt="' + escHtml(dd.model || pType) + '" onerror="this.src=\'/static/images/' + modelImg + '\';this.onerror=function(){this.parentElement.style.display=\'none\';}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:0.8rem;"></div>';
         if (dd.description) {
             html += '<p>' + escHtml(dd.description) + '</p>';
         }
