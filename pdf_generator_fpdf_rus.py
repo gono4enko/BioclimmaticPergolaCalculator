@@ -396,54 +396,96 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         timestamp = now.strftime("%Y%m%d_%H%M%S")
         current_date = now.strftime("%d.%m.%Y")
         
-        # Создаем экземпляр PDF с поддержкой кириллицы
         pdf = PDF()
-        
-        # Добавляем первую страницу
+
+        # ===== PAGE 1: HERO COVER =====
         pdf.add_page()
-        
+
+        pdf.set_fill_color(26, 58, 110)
+        pdf.rect(0, 0, 210, 55, 'F')
+        pdf.set_text_color(255, 255, 255)
+        pdf.set_font('DejaVu', 'B', 20)
+        pdf.set_y(15)
+        pdf.cell(0, 10, "КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", 0, 1, "C")
+        pdf.set_font('DejaVu', '', 12)
+        pdf.cell(0, 8, "о поставке биоклиматической перголы", 0, 1, "C")
+
+        kp_number = pergola_data.get('kp_number', '')
+        if kp_number:
+            pdf.set_font('DejaVu', '', 9)
+            pdf.cell(0, 6, f"КП № {kp_number}", 0, 1, "C")
+
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_y(60)
+
+        pergola_type_name = pergola_data.get('pergola_type', 'Биоклиматическая пергола')
+        p_w = pergola_data.get('width', 0)
+        p_l = pergola_data.get('length', 0)
+        hero_img_key = pergola_type_name.lower().replace(' new', '').replace(' basic', '').replace(' light', '').replace(' pro', '').strip()
+        hero_img_map = {'b500': 'b500.jpg', 'b700': 'b700.jpg', 'b600': 'b600.jpg'}
+        hero_img_name = hero_img_map.get(hero_img_key, 'hero_pergola.jpg')
+        hero_img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'flask_app', 'static', 'images', hero_img_name)
+        if not os.path.exists(hero_img_path):
+            hero_img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'flask_app', 'static', 'images', 'hero_pergola.jpg')
+
+        if os.path.exists(hero_img_path):
+            try:
+                compressed = _compress_image_for_pdf(hero_img_path, max_width=1000, quality=70)
+                img_w = 170
+                img_h = 90
+                x_pos = (210 - img_w) / 2
+                pdf.image(compressed, x=x_pos, y=pdf.get_y(), w=img_w, h=img_h)
+                pdf.set_y(pdf.get_y() + img_h + 5)
+            except Exception:
+                pdf.ln(10)
+
+        pdf.set_font('DejaVu', 'B', 16)
+        pdf.cell(0, 10, pergola_type_name, 0, 1, "C")
+
+        if p_w and p_l:
+            pdf.set_font('DejaVu', '', 11)
+            area = round(p_w * p_l, 1)
+            pdf.cell(0, 7, f"Размер: {p_w} × {p_l} м ({area} м²)", 0, 1, "C")
+
+        cash_total = pergola_data.get('cash_total', 0) or pergola_data.get('total_cost', 0) or 0
+        if cash_total:
+            pdf.ln(5)
+            pdf.set_font('DejaVu', 'B', 14)
+            price_str = f"{int(cash_total):,d}".replace(',', ' ')
+            pdf.cell(0, 10, f"от {price_str} ₽", 0, 1, "C")
+
+        pdf.ln(5)
+        pdf.set_font('DejaVu', '', 10)
+        pdf.cell(0, 5, f"Дата расчёта: {current_date}", 0, 1, "C")
+        pdf.set_font('DejaVu', '', 9)
+        pdf.cell(0, 5, "Действительно 14 дней с даты формирования", 0, 1, "C")
+
+        pdf.ln(8)
+        pdf.set_font('DejaVu', 'B', 11)
+        pdf.cell(0, 6, 'Компания «Комфортный дом»', 0, 1, 'C')
+        pdf.set_font('DejaVu', '', 9)
+        pdf.cell(0, 5, 'г.Ростов-на-Дону | +7 (906) 429-74-20 | pergolamarket.ru', 0, 1, 'C')
+
+        if user_data and user_data.get('name'):
+            pdf.ln(5)
+            pdf.set_font('DejaVu', '', 10)
+            pdf.cell(0, 5, f"Подготовлено для: {user_data['name']}", 0, 1, "C")
+
+        # ===== PAGE 2: PRODUCT + FEATURES (Decolife) =====
+        pdf.add_page()
+
         pdf.set_font('DejaVu', '', 9)
         pdf.cell(95, 5, '', 0, 0, 'L')
         pdf.cell(0, 5, 'г.Ростов-на-Дону, ул.Орская, 27/1', 0, 1, 'R')
         pdf.cell(95, 5, '', 0, 0, 'L')
         pdf.cell(0, 5, 'моб. +7 (906) 429-74-20', 0, 1, 'R')
-        
         pdf.set_font('DejaVu', 'B', 11)
         pdf.cell(95, 5, 'Компания «Комфортный дом»', 0, 0, 'L')
         pdf.set_font('DejaVu', '', 9)
         pdf.cell(0, 5, 'E-mail: zakaz@infopergola.ru', 0, 1, 'R')
         pdf.cell(95, 5, '', 0, 0, 'L')
         pdf.cell(0, 5, 'Сайт: https://pergolamarket.ru/', 0, 1, 'R')
-        
-        pdf.ln(8)
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, "Коммерческое предложение о поставке", 0, 1, "C")
-        pdf.cell(0, 8, "биоклиматической перголы", 0, 1, "C")
-        
-        kp_number = pergola_data.get('kp_number', '')
-        if kp_number:
-            pdf.set_font('DejaVu', '', 9)
-            pdf.cell(0, 5, f"КП № {kp_number}", 0, 1, "R")
-        
-        pdf.ln(3)
-        pdf.set_font('DejaVu', '', 10)
-        pdf.cell(0, 5, f"Дата расчета: {current_date}", 0, 1, "R")
-        
-        # Добавляем информацию о заказчике, если она предоставлена
-        if user_data:
-            pdf.ln(5)
-            pdf.set_font('DejaVu', 'B', 11)
-            pdf.cell(0, 7, "Данные заказчика:", 0, 1, "L")
-            
-            pdf.set_font('DejaVu', '', 10)
-            if user_data.get('name'):
-                pdf.cell(0, 5, f"ФИО: {user_data['name']}", 0, 1, "L")
-            if user_data.get('phone'):
-                pdf.cell(0, 5, f"Телефон: {user_data['phone']}", 0, 1, "L")
-            if user_data.get('email'):
-                pdf.cell(0, 5, f"Email: {user_data['email']}", 0, 1, "L")
-            if user_data.get('address'):
-                pdf.cell(0, 5, f"Адрес: {user_data['address']}", 0, 1, "L")
+        pdf.ln(5)
                 
         decolife = pergola_data.get('decolife', {})
         if decolife and decolife.get('description'):

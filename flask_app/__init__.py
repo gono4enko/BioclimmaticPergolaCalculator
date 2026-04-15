@@ -59,18 +59,30 @@ def create_app(test_config=None):
     for folder in ['generated_pdf', 'uploads', 'static/images']:
         os.makedirs(os.path.join(app.root_path, folder), exist_ok=True)
 
+    _deco_missing = False
     for deco_folder in ['b500', 'b700', 'b600']:
         deco_dir = os.path.join(app.root_path, 'static', 'decolife', deco_folder)
         deco_file = os.path.join(deco_dir, 'data.json')
         if not os.path.exists(deco_file):
-            os.makedirs(deco_dir, exist_ok=True)
-            try:
-                import sys
-                sys.path.insert(0, os.path.dirname(app.root_path))
-                from scripts.fetch_decolife import ensure_data_files
-                ensure_data_files()
-            except Exception:
-                pass
+            _deco_missing = True
+            break
+    if _deco_missing:
+        try:
+            import sys
+            proj_root = os.path.dirname(app.root_path)
+            if proj_root not in sys.path:
+                sys.path.insert(0, proj_root)
+            from scripts.fetch_decolife import ensure_data_files, fetch_and_parse
+            ensure_data_files()
+            import threading
+            def _bg_fetch():
+                try:
+                    fetch_and_parse()
+                except Exception:
+                    pass
+            threading.Thread(target=_bg_fetch, daemon=True).start()
+        except Exception:
+            pass
     
     app.config['COMPRESS_MIMETYPES'] = [
         'text/html', 'text/css', 'text/javascript',

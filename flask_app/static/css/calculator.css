@@ -581,6 +581,12 @@
     font-size: 0.85rem;
     color: #333;
 }
+.kp-spec-hint {
+    font-size: 0.75rem;
+    color: #888;
+    font-weight: 400;
+    margin-top: 2px;
+}
 .kp-urgency-banner {
     background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
     color: #fff;
