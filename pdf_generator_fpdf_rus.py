@@ -344,26 +344,55 @@ def _add_section_images_grid(pdf, image_paths):
     pdf.set_y(cur_y)
 
 
-def _get_gallery_images(max_images=8):
-    """Возвращает список (путь, подпись) для галереи в PDF."""
-    IMAGES_DIR = "attached_assets"
-    gallery_list = [
-        ("IMG_5914.jpg", "Пергола B700 у бассейна, Крым"),
-        ("pergola_b500_led_lighting.jpg", "Пергола B500 с LED подсветкой"),
-        ("pergola_b700_poolside.jpg", "Пергола B700 у бассейна"),
-        ("pergola_b500_garden_view.jpg", "Пергола B500 с видом на сад"),
-        ("pergola_evening_lighting.jpg", "Пергола с вечерним освещением"),
-        ("07dbd8458c61f3f439f3722e558aa6ee.jpg", "Пергола B700, загородный дом"),
-        ("5bb7bcac6f5c8462c9cf10d78d650e57.jpg", "Пергола B600 с остеклением"),
-        ("dji_fly_20230928_141856_69_1695900255932_photo_optimized_7813c639.jpg", "Аэрофотосъемка проекта"),
-        ("IMG_0672_2_882acf32.jpg", "Проект перголы B500"),
-        ("IMG_0676_52ddd353.jpg", "Проект перголы B700"),
-        ("IMG_0748_827e14fe.jpg", "Проект перголы B700"),
-        ("IMG_0782_da126d8f.jpg", "Проект перголы B600"),
-    ]
+GALLERY_BY_MODEL = {
+    'b500': [
+        'pergola_b500_led_lighting.jpg',
+        'pergola_b500_garden_view.jpg',
+        'pergola_evening_lighting.jpg',
+        'IMG_0672_2_882acf32.jpg',
+        'IMG_5914.jpg',
+        'pergola_b700_poolside.jpg',
+    ],
+    'b700': [
+        'IMG_5914.jpg',
+        'pergola_b700_poolside.jpg',
+        'pergola_panoramic_glass_walls.jpg',
+        'pergola_evening_lighting.jpg',
+        'IMG_0748_827e14fe.jpg',
+        'pergola_b500_garden_view.jpg',
+    ],
+    'b600': [
+        'pergola_panoramic_glass_walls.jpg',
+        'IMG_0672_2_882acf32.jpg',
+        'IMG_0748_827e14fe.jpg',
+        'pergola_evening_lighting.jpg',
+        'IMG_5914.jpg',
+        'pergola_b700_poolside.jpg',
+    ],
+}
+
+GALLERY_CAPTIONS = {
+    'IMG_5914.jpg':                     'Пергола B700 у бассейна, Крым',
+    'pergola_b500_led_lighting.jpg':    'Пергола B500 с LED подсветкой',
+    'pergola_b700_poolside.jpg':        'Пергола B700 у бассейна',
+    'pergola_b500_garden_view.jpg':     'Пергола B500, вид на сад',
+    'pergola_evening_lighting.jpg':     'Вечернее освещение',
+    'pergola_panoramic_glass_walls.jpg':'Пергола с раздвижным остеклением',
+    'IMG_0672_2_882acf32.jpg':          'Реализованный проект',
+    'IMG_0748_827e14fe.jpg':            'Реализованный проект',
+}
+
+def _get_gallery_images(max_images=6, model_key='b500'):
+    """Возвращает список (путь, подпись) для галереи в PDF по модели."""
+    GALLERY_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'flask_app', 'static', 'images', 'gallery')
+    ASSETS_DIR = "attached_assets"
+    model_list = GALLERY_BY_MODEL.get(model_key, GALLERY_BY_MODEL['b500'])
     result = []
-    for filename, caption in gallery_list:
-        path = os.path.join(IMAGES_DIR, filename)
+    for filename in model_list:
+        caption = GALLERY_CAPTIONS.get(filename, 'Реализованный проект')
+        path = os.path.join(GALLERY_DIR, filename)
+        if not os.path.exists(path):
+            path = os.path.join(ASSETS_DIR, filename)
         if os.path.exists(path):
             result.append((path, caption))
             if len(result) >= max_images:
@@ -422,11 +451,31 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         p_w = pergola_data.get('width', 0)
         p_l = pergola_data.get('length', 0)
         hero_img_key = pergola_type_name.lower().replace(' new', '').replace(' basic', '').replace(' light', '').replace(' pro', '').strip()
-        hero_img_map = {'b500': 'b500.jpg', 'b700': 'b700.jpg', 'b600': 'b600.jpg'}
-        hero_img_name = hero_img_map.get(hero_img_key, 'hero_pergola.jpg')
-        hero_img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'flask_app', 'static', 'images', hero_img_name)
-        if not os.path.exists(hero_img_path):
-            hero_img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'flask_app', 'static', 'images', 'hero_pergola.jpg')
+        base_img_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'flask_app', 'static', 'images')
+        gallery_img_dir = os.path.join(base_img_dir, 'gallery')
+        COVER_IMAGES = {
+            'b500': [
+                os.path.join(gallery_img_dir, 'pergola_b500_led_lighting.jpg'),
+                os.path.join(gallery_img_dir, 'pergola_b500_garden_view.jpg'),
+                os.path.join(base_img_dir, 'b500.jpg'),
+            ],
+            'b700': [
+                os.path.join(gallery_img_dir, 'IMG_5914.jpg'),
+                os.path.join(gallery_img_dir, 'pergola_b700_poolside.jpg'),
+                os.path.join(base_img_dir, 'b700.jpg'),
+            ],
+            'b600': [
+                os.path.join(base_img_dir, 'b600_sandwich.jpg'),
+                os.path.join(base_img_dir, 'b600.jpg'),
+            ],
+        }
+        hero_img_path = None
+        for candidate in COVER_IMAGES.get(hero_img_key, []):
+            if os.path.exists(candidate):
+                hero_img_path = candidate
+                break
+        if not hero_img_path:
+            hero_img_path = os.path.join(base_img_dir, 'hero_pergola.jpg')
 
         if os.path.exists(hero_img_path):
             try:
@@ -548,7 +597,10 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         pdf.cell(50, 6, "Ширина:", 0, 0, "L"); pdf.cell(0, 6, f"{width} м", 0, 1, "L")
         pdf.cell(50, 6, "Вынос (длина):", 0, 0, "L"); pdf.cell(0, 6, f"{length} м", 0, 1, "L")
         pdf.cell(50, 6, "Модулей:", 0, 0, "L"); pdf.cell(0, 6, f"{modules}", 0, 1, "L")
-        pdf.cell(50, 6, "Тип ламелей:", 0, 0, "L"); pdf.cell(0, 6, lamella_type, 0, 1, "L")
+        if hero_img_key == 'b600':
+            pdf.cell(50, 6, "Тип кровли:", 0, 0, "L"); pdf.cell(0, 6, "PIR сэндвич-панели, 100 мм", 0, 1, "L")
+        else:
+            pdf.cell(50, 6, "Тип ламелей:", 0, 0, "L"); pdf.cell(0, 6, lamella_type, 0, 1, "L")
 
         specification = pergola_data.get('specification', [])
         if specification:
@@ -798,74 +850,125 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
 
         # ===== PAGE 4: PRODUCT DESCRIPTION (condensed, single page) =====
         pdf.add_page()
-        pdf.chapter_title("Описание перголы:")
 
-        descriptions = []
-        pergola_description = pergola_data.get('description', '')
-        if pergola_description:
-            descriptions.append(pergola_description)
-        modular_description = pergola_data.get('modular_description', '')
-        if modular_description:
-            descriptions.append(modular_description)
-
-        if not descriptions:
-            descriptions.append(
-                "<p>Биоклиматическая пергола — современное решение для обустройства открытых пространств. "
-                "Поворотные алюминиевые ламели регулируют свет и вентиляцию, создавая комфортный микроклимат.</p>"
-                "<p>Конструкция из экструдированного алюминия с порошковым покрытием обеспечивает долговечность. "
-                "Автоматический привод управляется с пульта ДУ.</p>"
-            )
-
-        try:
-            from bs4 import BeautifulSoup
-            combined_html = ' '.join(descriptions[:2])
-            soup = BeautifulSoup(combined_html, 'html.parser')
-            title_tag = soup.find(['h2', 'h3'])
-            if title_tag:
-                pdf.set_font('DejaVu', 'B', 12)
-                pdf.multi_cell(0, 5, title_tag.get_text().strip())
-                pdf.ln(3)
+        if hero_img_key == 'b600':
+            pdf.chapter_title("B600 — всесезонная терраса с PIR-кровлей")
             pdf.set_font('DejaVu', '', 10)
-            for p in soup.find_all('p'):
-                text = p.get_text().strip()[:400]
-                if text:
-                    pdf.multi_cell(0, 5, text)
-                    pdf.ln(2)
-            for lst in soup.find_all(['ul', 'ol']):
-                for li in lst.find_all('li'):
-                    text = li.get_text().strip()[:200]
-                    if text:
-                        pdf.cell(5, 5, "\u2022", 0, 0, "L")
-                        pdf.multi_cell(0, 5, text)
-        except Exception:
-            pass
+            pdf.multi_cell(0, 5,
+                "Пергола B600 со стационарной крышей из PIR сэндвич-панелей "
+                "толщиной 100 мм обеспечивает полную защиту от осадков, ветра и "
+                "холода круглый год. Снеговая нагрузка до 200 кг/м² — подходит "
+                "для любого региона России."
+            )
+            pdf.ln(3)
+            pdf.multi_cell(0, 5,
+                "Интегрированная система водоотведения скрыта внутри колонн. "
+                "Конструкция из экструдированного алюминия с порошковым покрытием "
+                "обеспечивает долговечность и минимальное обслуживание."
+            )
+            pdf.ln(5)
+            pdf.set_font('DejaVu', 'B', 11)
+            pdf.cell(0, 6, "Преимущества B600:", 0, 1, "L")
+            pdf.set_font('DejaVu', '', 10)
+            b600_features = [
+                "100% герметичность — защита даже при сильном ливне",
+                "Теплоизоляция PIR — снижает затраты на обогрев",
+                "Снеговая нагрузка 200 кг/м² — надёжнее обычных навесов",
+                "Водоотвод внутри колонн — без внешних труб, эстетично",
+                "До 15 м в ширину без центральных опор (модуль Standard)",
+            ]
+            for feat in b600_features:
+                pdf.cell(5, 5, "\u2022", 0, 0, "L")
+                pdf.multi_cell(0, 5, f" {feat}")
+                pdf.ln(1)
 
-        section_img = "attached_assets/Снимок_экрана_2026-03-02_в_21.21.46_1772475709699.png"
-        if os.path.exists(section_img):
+            cover_photo = os.path.join(base_img_dir, 'b600_sandwich.jpg')
+            if os.path.exists(cover_photo):
+                try:
+                    space_left = 260 - pdf.get_y()
+                    if space_left > 50:
+                        compressed = _compress_image_for_pdf(cover_photo, max_width=1000, quality=70)
+                        img_w = 150
+                        img_h = 80
+                        if img_h > space_left - 5:
+                            img_h = space_left - 5
+                            img_w = img_h * 1.875
+                        pdf.ln(5)
+                        pdf.image(compressed, x=(210 - img_w) / 2, y=pdf.get_y(), w=img_w, h=img_h)
+                except Exception:
+                    pass
+        else:
+            if hero_img_key == 'b700':
+                pdf.chapter_title("Модульная система — масштаб без ограничений")
+            else:
+                pdf.chapter_title("Модульная система — масштаб без ограничений")
+
+            descriptions = []
+            pergola_description = pergola_data.get('description', '')
+            if pergola_description:
+                descriptions.append(pergola_description)
+            modular_description = pergola_data.get('modular_description', '')
+            if modular_description:
+                descriptions.append(modular_description)
+
+            if not descriptions:
+                descriptions.append(
+                    "<p>Биоклиматическая пергола — современное решение для обустройства открытых пространств. "
+                    "Поворотные алюминиевые ламели регулируют свет и вентиляцию, создавая комфортный микроклимат.</p>"
+                    "<p>Конструкция из экструдированного алюминия с порошковым покрытием обеспечивает долговечность. "
+                    "Автоматический привод управляется с пульта ДУ.</p>"
+                )
+
             try:
-                space_left = 260 - pdf.get_y()
-                if space_left > 40:
-                    from PIL import Image as PILImage
-                    img_obj = PILImage.open(section_img)
-                    w, h = img_obj.size
-                    ratio = h / w
-                    img_w = min(170, space_left / ratio)
-                    img_h = img_w * ratio
-                    if img_h > space_left:
-                        img_h = space_left
-                        img_w = img_h / ratio
-                    compressed = _compress_image_for_pdf(section_img, max_width=1200, quality=70)
+                from bs4 import BeautifulSoup
+                combined_html = ' '.join(descriptions[:2])
+                soup = BeautifulSoup(combined_html, 'html.parser')
+                title_tag = soup.find(['h2', 'h3'])
+                if title_tag:
+                    pdf.set_font('DejaVu', 'B', 12)
+                    pdf.multi_cell(0, 5, title_tag.get_text().strip())
                     pdf.ln(3)
-                    pdf.image(compressed, x=(210 - img_w) / 2, y=pdf.get_y(), w=img_w, h=img_h)
+                pdf.set_font('DejaVu', '', 10)
+                for p in soup.find_all('p'):
+                    text = p.get_text().strip()[:400]
+                    if text:
+                        pdf.multi_cell(0, 5, text)
+                        pdf.ln(2)
+                for lst in soup.find_all(['ul', 'ol']):
+                    for li in lst.find_all('li'):
+                        text = li.get_text().strip()[:200]
+                        if text:
+                            pdf.cell(5, 5, "\u2022", 0, 0, "L")
+                            pdf.multi_cell(0, 5, text)
             except Exception:
                 pass
+
+            model_photo_map = {
+                'b500': os.path.join(gallery_img_dir, 'pergola_b500_garden_view.jpg'),
+                'b700': os.path.join(gallery_img_dir, 'pergola_b700_poolside.jpg'),
+            }
+            model_photo = model_photo_map.get(hero_img_key)
+            if model_photo and os.path.exists(model_photo):
+                try:
+                    space_left = 260 - pdf.get_y()
+                    if space_left > 50:
+                        compressed = _compress_image_for_pdf(model_photo, max_width=1000, quality=70)
+                        img_w = 150
+                        img_h = 80
+                        if img_h > space_left - 5:
+                            img_h = space_left - 5
+                            img_w = img_h * 1.875
+                        pdf.ln(5)
+                        pdf.image(compressed, x=(210 - img_w) / 2, y=pdf.get_y(), w=img_w, h=img_h)
+                except Exception:
+                    pass
 
         # ===== PAGE 5: GALLERY (single page, no pagination) =====
         pdf.add_page()
         pdf.chapter_title("Галерея наших работ:")
         pdf.ln(3)
 
-        gallery_images = _get_gallery_images(max_images=6)
+        gallery_images = _get_gallery_images(max_images=6, model_key=hero_img_key)
         if gallery_images:
             for i in range(0, min(len(gallery_images), 6), 2):
                 batch = gallery_images[i:i+2]
