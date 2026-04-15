@@ -28,13 +28,13 @@ def get_promotions():
         sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         from config.promotions import get_active_promotions, get_current_season, SEASON_COLORS
         from datetime import datetime as dt
+        from ..utils import get_pergola_count
 
         promos = get_active_promotions()
         current_season = get_current_season()
         bg_color = SEASON_COLORS.get(current_season, "#004B9A")
 
-        current_week = dt.now().isocalendar()[1]
-        install_count = max(1, current_week - 6)
+        install_count = get_pergola_count()
 
         badges = []
         for p in promos.values():
@@ -118,6 +118,19 @@ def lamella_sizes(pergola_type):
     return jsonify({'success': True, 'sizes': sizes, 'max_dimensions': max_dims})
 
 
+@bp.route('/decolife-data/<pergola_type>', methods=['GET'])
+def decolife_data(pergola_type):
+    type_map = {'B500NEW': 'b500', 'B700NEW': 'b700', 'B600': 'b600'}
+    folder = type_map.get(pergola_type, 'b500')
+    data_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static', 'decolife', folder, 'data.json')
+    try:
+        with open(data_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 @bp.route('/variant-options/<pergola_type>', methods=['GET'])
 def variant_options(pergola_type):
     from config.variant_specs import get_variant_options
@@ -184,22 +197,33 @@ def export_pdf():
             return jsonify({'success': False, 'error': 'Отсутствуют данные'}), 400
 
         from pdf_generator_fpdf_rus import generate_commercial_offer
+        from ..utils import generate_kp_number
 
         mode = data.get('mode', 'single')
+        client_name = data.get('client_name', '')
+        user_data = None
+        if client_name:
+            user_data = {'name': client_name}
 
         if mode == 'all':
             results_list = data.get('results', [])
             if not results_list:
                 return jsonify({'success': False, 'error': 'Нет данных для PDF'}), 400
             all_pergola_data = [_build_pergola_data(r) for r in results_list]
-            pdf_bytes = generate_commercial_offer(all_pergola_data[0], all_variants=all_pergola_data)
+            pt = results_list[0].get('options', {}).get('pergola_type', 'B500')
+            kp_number = generate_kp_number(pt)
+            all_pergola_data[0]['kp_number'] = kp_number
+            pdf_bytes = generate_commercial_offer(all_pergola_data[0], user_data=user_data, all_variants=all_pergola_data)
             first = results_list[0]
             options = first.get('options', {})
             dimensions = first.get('dimensions', {})
         else:
             result = data.get('result', {})
             pergola_data = _build_pergola_data(result)
-            pdf_bytes = generate_commercial_offer(pergola_data)
+            pt = result.get('options', {}).get('pergola_type', 'B500')
+            kp_number = generate_kp_number(pt)
+            pergola_data['kp_number'] = kp_number
+            pdf_bytes = generate_commercial_offer(pergola_data, user_data=user_data)
             options = result.get('options', {})
             dimensions = result.get('dimensions', {})
 

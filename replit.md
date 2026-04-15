@@ -89,11 +89,21 @@ PostgreSQL через DATABASE_URL
 - Blueprint: `flask_app/controllers/admin_routes.py`
 - Шаблоны: `admin_login.html`, `admin_prices.html`
 
+## Маркетинговое КП
+- **Динамический счётчик**: `flask_app/utils.py` → `get_pergola_count()` = base(10) + weeks_since(2026-01-01)
+- **КП номер**: `generate_kp_number(pergola_type)` → формат B{тип}-{DDMMYY}-{random4}
+- **Decolife контент**: `flask_app/static/decolife/{b500,b700,b600}/data.json` — описания, особенности, преимущества
+- **API**: `/api/decolife-data/<pergola_type>` — возвращает JSON с маркетинговым контентом
+- **Имя заказчика**: необязательное поле в Step 4, передаётся в PDF и отображается в KP
+- **Маркетинговые блоки**: после расчёта отображаются 10 продающих блоков (KP-заголовок, цена-герой, о модели, особенности, преимущества, спецификация, стоимость, гарантии, о компании, этапы, CTA)
+- **CSS**: `.kp-section`, `.kp-block`, `.kp-price-hero`, `.kp-features-grid`, `.kp-trust-stats`, `.kp-warranty-row`, `.kp-cta-block`
+- **Static cache**: CSS/JS v20
+
 ## Визуальные компоненты
 - Hero-секция с параллакс-эффектом (`hero_pergola.jpg`)
 - Промо-бейджи: загружаются через `/api/promotions`, рендерятся в `#promo-badges-container`
 - Галерея: 8 фото проектов в секции «Реализованные проекты»
-- Счётчик установок: анимированный, данные из `/api/promotions`
+- Счётчик установок: анимированный, данные из `/api/promotions` (dynamic via `get_pergola_count()`)
 - Лид-форма: Telegram, Max, Перезвонить — с маской телефона и rate-limiting
 - Iframe-детект: баннер «Открыть полную версию» при встраивании
 - Yandex Metrika: счётчик 65714473 в base.html, цели `calc_success`, `calculator_lead`

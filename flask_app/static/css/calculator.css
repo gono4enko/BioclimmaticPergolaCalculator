@@ -444,3 +444,163 @@
     .lead-channels { grid-template-columns: 1fr; }
     .lead-form { padding: 18px 14px; }
 }
+
+.kp-section {
+    margin-top: 1.5rem;
+    animation: fadeIn 0.5s ease;
+}
+.kp-block {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 1rem;
+}
+.kp-block-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.8rem;
+}
+.kp-block-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    color: #fff;
+}
+.kp-block-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1a3a6e;
+    line-height: 1.3;
+}
+.kp-block p, .kp-block li {
+    font-size: 0.88rem;
+    color: #444;
+    line-height: 1.6;
+    margin-bottom: 0.3rem;
+}
+.kp-block ul {
+    padding-left: 1.2rem;
+    margin: 0.4rem 0;
+}
+.kp-block ul li::marker {
+    color: #2e7d32;
+}
+.kp-number-badge {
+    display: inline-block;
+    background: #1a3a6e;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 0.8rem;
+    letter-spacing: 0.5px;
+}
+.kp-price-hero {
+    background: linear-gradient(135deg, #1a3a6e 0%, #2563eb 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+.kp-price-hero .kp-price-amount {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0.3rem 0;
+}
+.kp-price-hero .kp-price-label {
+    font-size: 0.85rem;
+    opacity: 0.85;
+}
+.kp-features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.kp-feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #f8fbff;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: #333;
+}
+.kp-feature-check {
+    color: #2e7d32;
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.kp-trust-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    text-align: center;
+}
+.kp-stat {
+    background: #f0f6ff;
+    border-radius: 10px;
+    padding: 12px 8px;
+}
+.kp-stat-number {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1a3a6e;
+}
+.kp-stat-label {
+    font-size: 0.72rem;
+    color: #555;
+    margin-top: 2px;
+}
+.kp-warranty-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #f0faf0;
+    border-radius: 8px;
+    border-left: 3px solid #2e7d32;
+    margin-bottom: 6px;
+}
+.kp-warranty-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+.kp-warranty-text {
+    font-size: 0.85rem;
+    color: #333;
+}
+.kp-cta-block {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+}
+.kp-cta-block h4 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+.kp-cta-block p {
+    font-size: 0.88rem;
+    opacity: 0.9;
+    color: #fff;
+    margin-bottom: 0;
+}
+@media (max-width: 576px) {
+    .kp-features-grid { grid-template-columns: 1fr; }
+    .kp-trust-stats { grid-template-columns: 1fr; }
+    .kp-price-hero .kp-price-amount { font-size: 1.6rem; }
+}

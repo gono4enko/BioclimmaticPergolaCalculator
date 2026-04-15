@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', function() {
         maxLength: 8.0,
         result: null,
         allResults: null,
-        variantsData: null
+        variantsData: null,
+        clientName: ''
     };
 
     var stepsEl = {
@@ -210,6 +211,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (state.whiteLed) lighting.push('white_led');
         if (state.rgbLed) lighting.push('rgb_led');
 
+        var nameInput = document.getElementById('input-client-name');
+        state.clientName = nameInput ? nameInput.value.trim() : '';
+
         var body = {
             pergola_type: state.pergolaType,
             width: state.width,
@@ -218,7 +222,8 @@ document.addEventListener('DOMContentLoaded', function() {
             lamella_type: state.lamellaType,
             lighting: lighting,
             installation: state.installation,
-            selected_variant: state.selectedVariant
+            selected_variant: state.selectedVariant,
+            client_name: state.clientName
         };
 
         stepsEl.spinner.style.display = 'flex';
@@ -479,7 +484,8 @@ document.addEventListener('DOMContentLoaded', function() {
         sec.innerHTML = '<h3>\u0421\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u0435 \u0432\u0430\u0440\u0438\u0430\u043D\u0442\u043E\u0432</h3>' +
             infoHtml + tableHtml + specsHtml +
             '<div id="variant-detail-container"></div>' +
-            '<button class="pdf-btn" id="pdf-btn"><i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF</button>';
+            '<button class="pdf-btn" id="pdf-btn"><i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF</button>' +
+            '<div id="marketing-kp-container"></div>';
 
         document.getElementById('pdf-btn').addEventListener('click', exportPdf);
 
@@ -520,6 +526,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (ls) ls.classList.remove('visible');
         if (cb) cb.style.display = 'none';
         if (lb) { lb.textContent = '\u0416\u0434\u0443 \u0437\u0432\u043E\u043D\u043A\u0430'; lb.disabled = false; }
+
+        loadDecoDataAndRender(results);
     }
 
     function renderResults(result) {
@@ -617,7 +625,8 @@ document.addEventListener('DOMContentLoaded', function() {
             costHtml +
             totalHtml +
             variantSpecHtml +
-            '<button class="pdf-btn" id="pdf-btn"><i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF</button>';
+            '<button class="pdf-btn" id="pdf-btn"><i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF</button>' +
+            '<div id="marketing-kp-container"></div>';
 
         document.getElementById('pdf-btn').addEventListener('click', exportPdf);
 
@@ -646,6 +655,149 @@ document.addEventListener('DOMContentLoaded', function() {
         if (ls) ls.classList.remove('visible');
         if (cb) cb.style.display = 'none';
         if (lb) { lb.textContent = '\u0416\u0434\u0443 \u0437\u0432\u043E\u043D\u043A\u0430'; lb.disabled = false; }
+
+        loadDecoDataAndRender(result);
+    }
+
+    function escHtml(s) {
+        if (!s) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function buildMarketingKP(resultOrResults, decoData) {
+        var isAll = Array.isArray(resultOrResults);
+        var mainResult = isAll ? resultOrResults[0] : resultOrResults;
+        var dims = mainResult.dimensions;
+        var totals = mainResult.totals;
+        var pType = mainResult.pergola_type_name || state.pergolaType;
+        var area = (dims.width * dims.length).toFixed(1);
+        var clientName = escHtml(state.clientName || '');
+        var greeting = clientName ? (clientName + ', ') : '';
+        var dd = decoData || {};
+        var html = '<div class="kp-section">';
+
+        html += '<div class="kp-block" style="text-align:center;">' +
+            '<div class="kp-number-badge">KP-' + state.pergolaType.replace('NEW','') + '-' + new Date().toLocaleDateString('ru-RU').replace(/\./g,'') + '</div>' +
+            '<h3 style="font-size:1.2rem;font-weight:700;color:#1a3a6e;margin:0.5rem 0 0.3rem;">' + greeting + 'ваше коммерческое предложение</h3>' +
+            '<p style="font-size:0.88rem;color:#666;margin:0;">' + pType + ' | ' + dims.width.toFixed(2) + ' \u00D7 ' + dims.length.toFixed(2) + ' \u043C (' + area + ' \u043C\u00B2)</p>' +
+            '</div>';
+
+        html += '<div class="kp-price-hero">' +
+            '<div class="kp-price-label">\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C \u043F\u0435\u0440\u0433\u043E\u043B\u044B (\u043D\u0430\u043B\u0438\u0447\u043D\u044B\u0439 \u0440\u0430\u0441\u0447\u0451\u0442)</div>' +
+            '<div class="kp-price-amount">' + formatPrice(totals.cash) + ' \u20BD</div>' +
+            '<div class="kp-price-label" style="margin-top:6px;">\u0411\u0435\u0437\u043D\u0430\u043B: ' + formatPrice(totals.non_cash) + ' \u20BD | \u0421 \u041D\u0414\u0421: ' + formatPrice(totals.with_vat) + ' \u20BD</div>' +
+            '</div>';
+
+        if (dd.description) {
+            html += '<div class="kp-block">' +
+                '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\u2139</div><div class="kp-block-title">\u041E \u043C\u043E\u0434\u0435\u043B\u0438 ' + (dd.model || pType) + '</div></div>' +
+                '<p>' + dd.description + '</p>' +
+                '</div>';
+        }
+
+        if (dd.features && dd.features.length) {
+            html += '<div class="kp-block">' +
+                '<div class="kp-block-header"><div class="kp-block-icon" style="background:#2e7d32;">\u2605</div><div class="kp-block-title">\u041A\u043B\u044E\u0447\u0435\u0432\u044B\u0435 \u043E\u0441\u043E\u0431\u0435\u043D\u043D\u043E\u0441\u0442\u0438</div></div>' +
+                '<div class="kp-features-grid">';
+            dd.features.forEach(function(f) {
+                html += '<div class="kp-feature-item"><span class="kp-feature-check">\u2713</span><div><strong>' + f.title + '</strong><br>' + f.text + '</div></div>';
+            });
+            html += '</div></div>';
+        }
+
+        if (dd.advantages && dd.advantages.length) {
+            html += '<div class="kp-block">' +
+                '<div class="kp-block-header"><div class="kp-block-icon" style="background:#f59e0b;">\u2B50</div><div class="kp-block-title">\u041F\u0440\u0435\u0438\u043C\u0443\u0449\u0435\u0441\u0442\u0432\u0430</div></div>' +
+                '<ul>';
+            dd.advantages.forEach(function(a) { html += '<li>' + a + '</li>'; });
+            html += '</ul></div>';
+        }
+
+        if (!isAll && mainResult.specification) {
+            html += '<div class="kp-block">' +
+                '<div class="kp-block-header"><div class="kp-block-icon" style="background:#7c3aed;">\u2630</div><div class="kp-block-title">\u0421\u043F\u0435\u0446\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u044F \u0432\u0430\u0448\u0435\u0433\u043E \u043F\u0440\u043E\u0435\u043A\u0442\u0430</div></div>' +
+                '<table class="spec-table"><thead><tr><th>\u041D\u0430\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D\u0438\u0435</th><th>\u041A\u043E\u043B-\u0432\u043E</th></tr></thead><tbody>';
+            mainResult.specification.forEach(function(s) {
+                html += '<tr><td>' + s.name + '</td><td>' + s.count + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+
+        if (!isAll && mainResult.items) {
+            html += '<div class="kp-block">' +
+                '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\u20BD</div><div class="kp-block-title">\u0414\u0435\u0442\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u0441\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u0438</div></div>' +
+                '<table class="cost-table"><tbody>';
+            mainResult.items.forEach(function(item) {
+                var priceRub = Math.round(item.price * mainResult.euro_rate);
+                html += '<tr><td>' + item.name + '</td><td>' + formatPrice(priceRub) + ' \u20BD</td></tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+
+        if (isAll) {
+            html += '<div class="kp-block">' +
+                '<div class="kp-block-header"><div class="kp-block-icon" style="background:#7c3aed;">\u2261</div><div class="kp-block-title">\u0421\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u0435 \u0432\u0430\u0440\u0438\u0430\u043D\u0442\u043E\u0432</div></div>' +
+                '<div class="compare-table-wrap"><table class="compare-table"><thead><tr><th>\u041C\u043E\u0434\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u044F</th><th>\u041D\u0430\u043B\u0438\u0447\u043D\u044B\u0435</th><th>\u0411\u0435\u0437\u043D\u0430\u043B.</th><th>\u0421 \u041D\u0414\u0421</th></tr></thead><tbody>';
+            resultOrResults.forEach(function(r, idx) {
+                var label = r.variant_label || r.selected_variant || '';
+                html += '<tr' + (idx === 0 ? ' class="compare-row-best"' : '') + '><td><strong>' + label + '</strong></td>' +
+                    '<td>' + formatPrice(r.totals.cash) + ' \u20BD</td>' +
+                    '<td>' + formatPrice(r.totals.non_cash) + ' \u20BD</td>' +
+                    '<td>' + formatPrice(r.totals.with_vat) + ' \u20BD</td></tr>';
+            });
+            html += '</tbody></table></div></div>';
+        }
+
+        html += '<div class="kp-block">' +
+            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#2e7d32;">\u2714</div><div class="kp-block-title">\u0413\u0430\u0440\u0430\u043D\u0442\u0438\u0438 \u0438 \u043A\u0430\u0447\u0435\u0441\u0442\u0432\u043E</div></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">\uD83D\uDEE1</span><span class="kp-warranty-text"><strong>5 \u043B\u0435\u0442</strong> \u0433\u0430\u0440\u0430\u043D\u0442\u0438\u044F \u043D\u0430 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u044E</span></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">\u2699</span><span class="kp-warranty-text"><strong>2 \u0433\u043E\u0434\u0430</strong> \u0433\u0430\u0440\u0430\u043D\u0442\u0438\u044F \u043D\u0430 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u043A\u0443</span></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">\uD83C\uDFED</span><span class="kp-warranty-text">\u041F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0441\u0442\u0432\u043E <strong>Decolife</strong> (\u0422\u0443\u0440\u0446\u0438\u044F), \u0441\u0435\u0440\u0442\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u044F CE</span></div>' +
+            '</div>';
+
+        html += '<div class="kp-block">' +
+            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\u2605</div><div class="kp-block-title">\u041E \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u0438 \u00AB\u041A\u043E\u043C\u0444\u043E\u0440\u0442\u043D\u044B\u0439 \u0434\u043E\u043C\u00BB</div></div>' +
+            '<div class="kp-trust-stats">' +
+            '<div class="kp-stat"><div class="kp-stat-number">8+</div><div class="kp-stat-label">\u043B\u0435\u0442 \u043D\u0430 \u0440\u044B\u043D\u043A\u0435</div></div>' +
+            '<div class="kp-stat"><div class="kp-stat-number" id="kp-counter-val">200+</div><div class="kp-stat-label">\u0440\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u043D\u043D\u044B\u0445 \u043F\u0440\u043E\u0435\u043A\u0442\u043E\u0432</div></div>' +
+            '<div class="kp-stat"><div class="kp-stat-number">12</div><div class="kp-stat-label">\u0440\u0435\u0433\u0438\u043E\u043D\u043E\u0432 \u0420\u043E\u0441\u0441\u0438\u0438</div></div>' +
+            '</div>' +
+            '<p style="margin-top:0.7rem;">\u041A\u043E\u043C\u043F\u043B\u0435\u043A\u0441\u043D\u044B\u0435 \u0440\u0435\u0448\u0435\u043D\u0438\u044F \u0434\u043B\u044F \u043E\u0431\u0443\u0441\u0442\u0440\u043E\u0439\u0441\u0442\u0432\u0430 \u0442\u0435\u0440\u0440\u0430\u0441, \u0432\u0435\u0440\u0430\u043D\u0434 \u0438 \u0431\u0435\u0441\u0435\u0434\u043E\u043A. \u041E\u0444\u0438\u0446\u0438\u0430\u043B\u044C\u043D\u044B\u0439 \u0434\u0438\u043B\u0435\u0440 Decolife \u0432 \u0420\u043E\u0441\u0441\u0438\u0438.</p>' +
+            '</div>';
+
+        html += '<div class="kp-block">' +
+            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#f59e0b;">\u23F1</div><div class="kp-block-title">\u042D\u0442\u0430\u043F\u044B \u0440\u0430\u0431\u043E\u0442\u044B</div></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">1\uFE0F\u20E3</span><span class="kp-warranty-text"><strong>\u0417\u0430\u043C\u0435\u0440 \u0438 \u043F\u0440\u043E\u0435\u043A\u0442</strong> \u2014 \u0432\u044B\u0435\u0437\u0434 \u0441\u043F\u0435\u0446\u0438\u0430\u043B\u0438\u0441\u0442\u0430, \u0443\u0442\u043E\u0447\u043D\u0435\u043D\u0438\u0435 \u0440\u0430\u0437\u043C\u0435\u0440\u043E\u0432</span></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">2\uFE0F\u20E3</span><span class="kp-warranty-text"><strong>\u0414\u043E\u0433\u043E\u0432\u043E\u0440 \u0438 \u043F\u0440\u0435\u0434\u043E\u043F\u043B\u0430\u0442\u0430</strong> \u2014 50% \u043F\u0440\u0435\u0434\u043E\u043F\u043B\u0430\u0442\u0430, \u0437\u0430\u043A\u0430\u0437 \u043D\u0430 \u043F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0441\u0442\u0432\u043E</span></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">3\uFE0F\u20E3</span><span class="kp-warranty-text"><strong>\u041F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0441\u0442\u0432\u043E</strong> \u2014 45\u201360 \u0434\u043D\u0435\u0439 \u0438\u0437\u0433\u043E\u0442\u043E\u0432\u043B\u0435\u043D\u0438\u0435 + \u0434\u043E\u0441\u0442\u0430\u0432\u043A\u0430</span></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">4\uFE0F\u20E3</span><span class="kp-warranty-text"><strong>\u041C\u043E\u043D\u0442\u0430\u0436</strong> \u2014 3\u20137 \u0434\u043D\u0435\u0439 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430 \u043D\u0430 \u043E\u0431\u044A\u0435\u043A\u0442\u0435</span></div>' +
+            '</div>';
+
+        html += '<div class="kp-cta-block">' +
+            '<h4>\u0413\u043E\u0442\u043E\u0432\u044B \u043E\u0431\u0441\u0443\u0434\u0438\u0442\u044C \u043F\u0440\u043E\u0435\u043A\u0442?</h4>' +
+            '<p>\u0421\u0432\u044F\u0436\u0438\u0442\u0435\u0441\u044C \u0441 \u043D\u0430\u043C\u0438 \u0443\u0434\u043E\u0431\u043D\u044B\u043C \u0441\u043F\u043E\u0441\u043E\u0431\u043E\u043C \u043D\u0438\u0436\u0435 \u2014 \u043E\u0442\u0432\u0435\u0442\u0438\u043C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B \u0438 \u043F\u043E\u043C\u043E\u0436\u0435\u043C \u0441 \u0432\u044B\u0431\u043E\u0440\u043E\u043C</p>' +
+            '</div>';
+
+        html += '</div>';
+        return html;
+    }
+
+    function loadDecoDataAndRender(resultOrResults) {
+        fetch('/api/decolife-data/' + state.pergolaType)
+            .then(function(r) { return r.json(); })
+            .then(function(resp) {
+                var decoData = (resp.success && resp.data) ? resp.data : {};
+                var kpContainer = document.getElementById('marketing-kp-container');
+                if (kpContainer) {
+                    kpContainer.innerHTML = buildMarketingKP(resultOrResults, decoData);
+                }
+            })
+            .catch(function() {
+                var kpContainer = document.getElementById('marketing-kp-container');
+                if (kpContainer) {
+                    kpContainer.innerHTML = buildMarketingKP(resultOrResults, {});
+                }
+            });
     }
 
     function pluralModule(n) {
@@ -665,9 +817,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var pdfBody = {};
         if (state.allResults) {
-            pdfBody = {results: state.allResults, mode: 'all'};
+            pdfBody = {results: state.allResults, mode: 'all', client_name: state.clientName};
         } else {
-            pdfBody = {result: state.result, mode: 'single'};
+            pdfBody = {result: state.result, mode: 'single', client_name: state.clientName};
         }
 
         fetch('/api/export-pdf', {

@@ -420,6 +420,11 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         pdf.cell(0, 10, "Коммерческое предложение о поставке", 0, 1, "C")
         pdf.cell(0, 8, "биоклиматической перголы", 0, 1, "C")
         
+        kp_number = pergola_data.get('kp_number', '')
+        if kp_number:
+            pdf.set_font('DejaVu', '', 9)
+            pdf.cell(0, 5, f"КП № {kp_number}", 0, 1, "R")
+        
         pdf.ln(3)
         pdf.set_font('DejaVu', '', 10)
         pdf.cell(0, 5, f"Дата расчета: {current_date}", 0, 1, "R")
