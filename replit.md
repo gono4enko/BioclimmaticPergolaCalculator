@@ -53,9 +53,11 @@
 - 3 ИТОГО строки: Наличный (base RUB), Безналичный (÷0.92), С НДС (÷0.85)
 
 ## Типы пергол
-- B500NEW — поворотные ламели (200/250 мм)
-- B700NEW — поворотно-сдвижные ламели (200/250 мм)
-- B600 — стационарные PIR-панели
+- B500NEW — поворотные ламели (200/250 мм), варианты: Basic/Light/Pro
+- B700NEW — поворотно-сдвижные ламели (200/250 мм), варианты: Basic/Light/Pro
+- B600 — стационарные PIR-панели, варианты: Standard/Light
+  - Standard: 1мод 2.5-5.0м, 2мод 6.0-10.0м, 3мод 10.5-15.0м (max ширина 15.0м)
+  - Light: 1мод 2.5-4.0м, 2мод 5.0-8.0м, 3мод 7.5-12.0м (max ширина 12.0м)
 
 ## MAX_DIMENSIONS ключи
 Формат: `{тип_перголы}_{размер_ламели}` — например `B500NEW_250`, `B700NEW_200`, `B600`
@@ -68,7 +70,7 @@
 
 ## База данных
 PostgreSQL через DATABASE_URL
-- `price_data` — прайс-листы (pergola_type, lamella_size, variant, width=вылет, length=ширина, price EUR, modules, updated_at). B500NEW: 729 строк, B700NEW: 699 строк — оба с вариантами (Basic/Light/Pro). B600: без вариантов
+- `price_data` — прайс-листы (pergola_type, lamella_size, variant, width=вылет, length=ширина, price EUR, modules, updated_at). B500NEW: 729 строк, B700NEW: 699 строк (Basic/Light/Pro), B600: 318 строк (Standard/Light)
 - `leads` — заявки с лид-формы (phone, city, calc_text, channel, ip, created_at)
 - Калькулятор читает цены из PostgreSQL (приоритет), fallback на CSV-файлы
 
