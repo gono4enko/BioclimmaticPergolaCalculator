@@ -3,9 +3,9 @@
 {% block title %}Калькулятор стоимости перголы{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=13">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=14">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=13" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=14" as="script">
 {% endblock %}
 
 {% block content %}
@@ -54,12 +54,12 @@
     </div>
 
     <div class="step-card" id="step-2" style="display:none;">
-        <h3>2. Тип ламелей</h3>
-        <div class="row g-2" id="lamella-options"></div>
+        <h3>2. Модификация</h3>
+        <div class="row g-2" id="variant-options"></div>
     </div>
 
     <div class="step-card" id="step-3" style="display:none;">
-        <h3>3. Размеры перголы</h3>
+        <h3>3. Размеры</h3>
         <div class="row g-3">
             <div class="col-6 dim-input">
                 <label for="input-width">Ширина (м)</label>
@@ -75,7 +75,7 @@
     </div>
 
     <div class="step-card" id="step-4" style="display:none;">
-        <h3>4. Дополнительные опции</h3>
+        <h3>4. Опции</h3>
         <div class="option-check">
             <input type="checkbox" id="opt-white-led" class="form-check-input" checked>
             <label for="opt-white-led">Светодиодная подсветка (белая)</label>
@@ -208,7 +208,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=13"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=14"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');

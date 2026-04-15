@@ -262,13 +262,22 @@ def _get_valid_module_counts(variant_data, width):
     return valid
 
 
-def get_best_variant_price(pergola_type, lamella_size, width_m, length_m):
+def get_best_variant_price(pergola_type, lamella_size, width_m, length_m, requested_variant=None):
     variants = load_variant_prices(pergola_type, lamella_size)
     if not variants:
         return None, None, None
 
     lookup_depth = length_m
     lookup_width = width_m
+
+    if requested_variant and requested_variant in variants:
+        variant_data = variants[requested_variant]
+        valid_mods = _get_valid_module_counts(variant_data, lookup_width)
+        for mod in valid_mods:
+            price = _find_price_in_variant(variant_data, mod, lookup_depth, lookup_width)
+            if price is not None:
+                return price, requested_variant, mod
+        return None, None, None
 
     best_price = None
     best_variant = None
@@ -620,9 +629,10 @@ def perform_calculation(dimensions, options):
         else:
             lamellas_count = 0
 
+        requested_variant = options.get('selected_variant', '')
         selected_variant = None
         variant_price, variant_name, variant_modules = get_best_variant_price(
-            pergola_type, lamella_size, width_m, length_m
+            pergola_type, lamella_size, width_m, length_m, requested_variant=requested_variant or None
         )
         if variant_price is not None:
             base_price = variant_price

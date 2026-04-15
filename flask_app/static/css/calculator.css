@@ -80,29 +80,34 @@
 .type-option .type-desc { font-size: 0.8rem; color: #666; margin-top: 0.3rem; flex: 1; }
 .type-option .click-hint { margin-top: auto; }
 
-.lamella-option {
+.variant-option {
     position: relative;
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    padding: 1rem 1rem 0.8rem 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
-.lamella-option .check-mark {
-    position: absolute; top: 8px; right: 8px; width: 22px; height: 22px;
+.variant-option:hover { border-color: #004B9A; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,75,154,0.12); }
+.variant-option.selected { border-color: #004B9A; background: #f0f6ff; box-shadow: 0 4px 16px rgba(0,75,154,0.18); }
+.variant-option .check-mark {
+    position: absolute; top: 10px; right: 10px; width: 24px; height: 24px;
     border-radius: 50%; border: 2px solid #ccc; background: #fff;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.3s; z-index: 2;
 }
-.lamella-option .check-mark svg { opacity: 0; transition: opacity 0.2s; width: 12px; height: 12px; }
-.lamella-option.selected .check-mark { border-color: #004B9A; background: #004B9A; }
-.lamella-option.selected .check-mark svg { opacity: 1; }
-
-.lamella-option {
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    padding: 0.8rem 1rem 0.8rem 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
+.variant-option .check-mark svg { opacity: 0; transition: opacity 0.2s; }
+.variant-option.selected .check-mark { border-color: #004B9A; background: #004B9A; }
+.variant-option.selected .check-mark svg { opacity: 1; }
+.variant-option .variant-label {
+    font-weight: 700; font-size: 1.05rem; color: #004B9A;
+    margin-bottom: 0.5rem; padding-right: 30px;
 }
-.lamella-option:hover { border-color: #004B9A; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,75,154,0.12); }
-.lamella-option.selected { border-color: #004B9A; background: #f0f6ff; }
-.lamella-option .lamella-name { font-weight: 600; font-size: 0.95rem; }
+.variant-specs { font-size: 0.82rem; color: #444; line-height: 1.6; }
+.variant-specs .spec-row { display: flex; align-items: baseline; gap: 4px; }
+.variant-specs .spec-icon { color: #004B9A; font-size: 0.7rem; min-width: 14px; text-align: center; }
+.variant-specs .spec-overhang { margin-top: 2px; color: #2a7d2a; }
+.variant-specs strong { color: #222; }
 
 .dim-input label { font-weight: 500; margin-bottom: 4px; display: block; font-size: 0.9rem; }
 .dim-input .form-control { font-size: 1.1rem; padding: 0.6rem; }

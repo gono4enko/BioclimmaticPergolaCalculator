@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const state = {
+    var state = {
         pergolaType: '',
         lamellaSize: '',
         lamellaType: '',
+        selectedVariant: '',
         width: 0,
         length: 0,
         whiteLed: true,
@@ -13,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
         result: null
     };
 
-    const stepsEl = {
+    var stepsEl = {
         step1: document.getElementById('step-1'),
         step2: document.getElementById('step-2'),
         step3: document.getElementById('step-3'),
@@ -28,51 +29,71 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.type-option').forEach(function(o) { o.classList.remove('selected'); });
             el.classList.add('selected');
             state.pergolaType = el.dataset.type;
-            loadLamellaSizes(state.pergolaType);
+            stepsEl.step3.style.display = 'none';
+            stepsEl.step4.style.display = 'none';
+            stepsEl.calcBtn.style.display = 'none';
+            stepsEl.resultsSection.style.display = 'none';
+            loadVariantOptions(state.pergolaType);
         });
     });
 
-    function loadLamellaSizes(pergolaType) {
-        fetch('/api/lamella-sizes/' + pergolaType)
+    function loadVariantOptions(pergolaType) {
+        fetch('/api/variant-options/' + pergolaType)
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                if (!data.success) return;
-                var container = document.getElementById('lamella-options');
+                if (!data.success || !data.variants.length) return;
+                var container = document.getElementById('variant-options');
                 container.innerHTML = '';
-                var defaultIdx = 0;
-                data.sizes.forEach(function(s, i) {
-                    if (s.id === '250') defaultIdx = i;
-                });
-                data.sizes.forEach(function(s, i) {
+                state.selectedVariant = '';
+                state.lamellaSize = '';
+                state.lamellaType = '';
+
+                data.variants.forEach(function(v) {
                     var div = document.createElement('div');
-                    div.className = 'lamella-option col-12 col-md-6 mb-2' + (i === defaultIdx ? ' selected' : '');
-                    div.dataset.size = s.id;
-                    div.dataset.lamellaType = s.lamella_type;
-                    div.innerHTML = '<span class="check-mark"><svg viewBox="0 0 14 14" fill="none" width="12" height="12"><path d="M2 7.5L5.5 11L12 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div class="lamella-name">' + s.name + '</div>';
+                    div.className = 'variant-option col-12 col-md-6 mb-2';
+                    div.dataset.variant = v.variant;
+                    div.dataset.lamellaSize = v.lamella_size;
+
+                    var specsHtml = '<div class="variant-specs">';
+                    specsHtml += '<div class="spec-row"><span class="spec-icon">▬</span> Ламель: <strong>' + v.lamella + '</strong></div>';
+                    specsHtml += '<div class="spec-row"><span class="spec-icon">▮</span> Колонна: <strong>' + v.column + '</strong></div>';
+                    specsHtml += '<div class="spec-row"><span class="spec-icon">━</span> Балка: <strong>' + v.beam + '</strong></div>';
+                    specsHtml += '<div class="spec-row"><span class="spec-icon">═</span> Балка двухст.: <strong>' + v.beam_double + '</strong></div>';
+                    if (v.max_overhang) {
+                        specsHtml += '<div class="spec-row spec-overhang"><span class="spec-icon">↔</span> Макс. вылет без доп. колонны: <strong>' + v.max_overhang + ' м</strong></div>';
+                    }
+                    specsHtml += '</div>';
+
+                    div.innerHTML = '<span class="check-mark"><svg viewBox="0 0 14 14" fill="none" width="12" height="12"><path d="M2 7.5L5.5 11L12 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+                        '<div class="variant-label">' + v.label + '</div>' +
+                        specsHtml;
+
                     div.addEventListener('click', function() {
-                        container.querySelectorAll('.lamella-option').forEach(function(o) { o.classList.remove('selected'); });
+                        container.querySelectorAll('.variant-option').forEach(function(o) { o.classList.remove('selected'); });
                         div.classList.add('selected');
-                        state.lamellaSize = s.id;
-                        state.lamellaType = s.lamella_type;
+                        state.selectedVariant = v.variant;
+                        state.lamellaSize = v.lamella_size;
+
+                        if (pergolaType === 'B500NEW') {
+                            state.lamellaType = 'B500-' + (v.lamella_size === '200' ? '20' : '25') + 'NEW';
+                        } else if (pergolaType === 'B700NEW') {
+                            state.lamellaType = 'B700-' + (v.lamella_size === '200' ? '20' : '25') + 'NEW';
+                        } else {
+                            state.lamellaType = 'B600-PIR';
+                        }
+
                         updateMaxDimensions();
+                        stepsEl.step3.style.display = 'block';
+                        stepsEl.step4.style.display = 'block';
+                        stepsEl.calcBtn.style.display = 'block';
+                        setTimeout(function() {
+                            stepsEl.step3.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 80);
                     });
                     container.appendChild(div);
                 });
 
-                if (data.sizes.length > 0) {
-                    var def = data.sizes[defaultIdx];
-                    state.lamellaSize = def.id;
-                    state.lamellaType = def.lamella_type;
-                }
-                if (data.max_dimensions) {
-                    state.maxWidth = data.max_dimensions.width;
-                    state.maxLength = data.max_dimensions.length;
-                }
-                updateDimensionHints();
                 stepsEl.step2.style.display = 'block';
-                stepsEl.step3.style.display = 'block';
-                stepsEl.step4.style.display = 'block';
-                stepsEl.calcBtn.style.display = 'block';
                 setTimeout(function() {
                     stepsEl.step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 80);
@@ -128,6 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('calc-btn').addEventListener('click', function() {
         if (!state.pergolaType) { alert('Выберите тип перголы'); return; }
+        if (!state.selectedVariant) { alert('Выберите модификацию'); return; }
         if (state.width <= 0 || state.length <= 0) { alert('Укажите размеры перголы'); return; }
         if (state.width > state.maxWidth) { alert('Ширина превышает максимум (' + state.maxWidth + ' м)'); return; }
         if (state.length > state.maxLength) { alert('Вынос превышает максимум (' + state.maxLength + ' м)'); return; }
@@ -143,7 +165,8 @@ document.addEventListener('DOMContentLoaded', function() {
             lamella_size: state.lamellaSize,
             lamella_type: state.lamellaType,
             lighting: lighting,
-            installation: state.installation
+            installation: state.installation,
+            selected_variant: state.selectedVariant
         };
 
         stepsEl.spinner.style.display = 'flex';
@@ -232,7 +255,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('pdf-btn').addEventListener('click', exportPdf);
 
-        // Формируем текст расчёта для мессенджеров
         var lightingList = [];
         if (result.items) {
             result.items.forEach(function(item) {
@@ -250,7 +272,6 @@ document.addEventListener('DOMContentLoaded', function() {
             '📋 С НДС 22%: ' + formatPrice(totals.with_vat) + ' ₽',
         ].filter(Boolean).join('\n');
 
-        // Показываем форму заявки
         var lf = document.getElementById('leadForm');
         var ls = document.getElementById('leadSuccess');
         var cb = document.getElementById('callbackBlock');
@@ -310,7 +331,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ===== ГЕОЛОКАЦИЯ =====
     (function() {
         if (window._geoDone) return;
         window._geoDone = true;
@@ -361,7 +381,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(function() {});
 });
 
-// ===== КОНФИГУРАЦИЯ ФОРМЫ =====
 var YM_ID     = 65714473;
 var CALC_TYPE = 'bioclimatic';
 var CALC_NAME = 'Биоклиматическая пергола';
@@ -369,7 +388,6 @@ var CALC_NAME = 'Биоклиматическая пергола';
 window._calcText = '';
 window._userCity = 'Не определён';
 
-// Определение города по IP через geojs.io
 (function() {
     try {
         fetch('https://get.geojs.io/v1/ip/geo.json')
@@ -381,7 +399,6 @@ window._userCity = 'Не определён';
     } catch(e) {}
 })();
 
-// ===== ОТПРАВКА ЗАЯВКИ НА ЗВОНОК =====
 window.submitLead = function() {
     var inp = document.getElementById('leadPhone');
     var raw = inp.value.replace(/\D/g, '');
@@ -429,7 +446,6 @@ function showOk(phone) {
     }
 }
 
-// ===== КЛИК ПО МЕССЕНДЖЕРАМ =====
 document.addEventListener('click', function(e) {
     var btn = e.target.closest('#btnTelegram, #btnMax');
     if (!btn) return;
@@ -470,7 +486,6 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// ===== МАСКА ТЕЛЕФОНА =====
 (function() {
     var inp = document.getElementById('leadPhone');
     if (!inp) return;

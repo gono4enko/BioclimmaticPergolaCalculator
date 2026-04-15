@@ -69,6 +69,7 @@ def calculate():
         lamella_type = data.get('lamella_type', '')
         lighting = data.get('lighting', [])
         installation = data.get('installation', False)
+        selected_variant = data.get('selected_variant', '')
 
         if not pergola_type or width <= 0 or length <= 0:
             return jsonify({'success': False, 'error': 'Некорректные параметры'}), 400
@@ -79,7 +80,8 @@ def calculate():
             "lamella_type": lamella_type,
             "lamella_size": lamella_size,
             "lighting": lighting,
-            "installation": installation
+            "installation": installation,
+            "selected_variant": selected_variant
         }
 
         result = perform_calculation(dimensions, options)
@@ -104,6 +106,13 @@ def lamella_sizes(pergola_type):
     sizes = get_lamella_sizes_for_type(pergola_type)
     max_dims = get_max_dimensions(pergola_type, sizes[0]['id'] if sizes else '250')
     return jsonify({'success': True, 'sizes': sizes, 'max_dimensions': max_dims})
+
+
+@bp.route('/variant-options/<pergola_type>', methods=['GET'])
+def variant_options(pergola_type):
+    from config.variant_specs import get_variant_options
+    options = get_variant_options(pergola_type)
+    return jsonify({'success': True, 'variants': options})
 
 
 @bp.route('/max-dimensions', methods=['GET'])
