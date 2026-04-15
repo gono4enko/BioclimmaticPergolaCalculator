@@ -972,11 +972,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (stepsEl.step2) stepsEl.step2.style.display = 'none';
             if (stepsEl.step3) stepsEl.step3.style.display = 'none';
             if (stepsEl.step4) stepsEl.step4.style.display = 'none';
+            var req = d.request || {};
+            if (req.pergola_type) state.pergolaType = req.pergola_type;
             if (d.mode === 'all' && d.results) {
+                if (d.results[0] && d.results[0].options) state.pergolaType = d.results[0].options.pergola_type || state.pergolaType;
                 state.allResults = d.results;
                 state.result = d.results[0];
                 renderAllResults(d.results);
             } else if (d.result) {
+                if (d.result.options) state.pergolaType = d.result.options.pergola_type || state.pergolaType;
                 state.result = d.result;
                 renderResults(d.result);
             }

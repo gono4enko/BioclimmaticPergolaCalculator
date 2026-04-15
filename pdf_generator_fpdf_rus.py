@@ -1120,7 +1120,7 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                 pdf.image(qr_path, x=qr_x, y=qr_y, w=qr_size, h=qr_size)
                 pdf.set_xy(qr_x - 5, qr_y + qr_size + 1)
                 pdf.set_font('DejaVu', '', 6)
-                qr_label = 'Ваше КП онлайн' if calc_id else 'pergolamarket.ru'
+                qr_label = 'Сканируйте для перехода на сайт'
                 pdf.cell(qr_size + 10, 4, qr_label, 0, 1, 'C')
                 try:
                     os.unlink(qr_path)
