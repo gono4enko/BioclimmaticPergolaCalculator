@@ -507,7 +507,11 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         pdf.set_font('DejaVu', '', 10)
         pdf.cell(0, 5, f"Дата расчёта: {current_date}", 0, 1, "C")
         pdf.set_font('DejaVu', '', 9)
-        pdf.cell(0, 5, "Действительно 14 дней с даты формирования", 0, 1, "C")
+        deadline_str = pergola_data.get('deadline', '')
+        if deadline_str:
+            pdf.cell(0, 5, f"Действительно до {deadline_str}", 0, 1, "C")
+        else:
+            pdf.cell(0, 5, "Действительно 14 дней с даты формирования", 0, 1, "C")
 
         pdf.ln(8)
         pdf.set_font('DejaVu', 'B', 11)
@@ -603,6 +607,23 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             pdf.cell(50, 6, "Тип ламелей:", 0, 0, "L"); pdf.cell(0, 6, lamella_type, 0, 1, "L")
 
         specification = pergola_data.get('specification', [])
+        spec_hints = {
+            'Колонна': 'Несущие опоры из алюминия, окрашенные порошковым методом',
+            'Балка': 'Основной несущий элемент с интегрированным водоотводом',
+            'Ламел': 'Поворотные элементы крыши для регулировки света и вентиляции',
+            'Лоток': 'Элемент системы водоотведения между модулями',
+            'Привод': 'Электромотор для автоматического управления ламелями',
+            'Пульт': 'Беспроводное дистанционное управление',
+            'Подсветка': 'Встроенные LED-ленты в профилях балок',
+            'Усилитель': 'Дополнительное усиление для больших пролётов',
+            'Bansbach': 'Газовые пружины Bansbach (Германия)',
+            'Somfy': 'Электропривод Somfy (Франция) — мировой лидер автоматики',
+            'Simu': 'Электропривод Simu (Франция) — надёжная автоматика',
+            'Диммер': 'Регулировка яркости LED-подсветки пультом',
+            'лента': 'LED-лента IP65 с защитой от влаги',
+            'Доставка': 'Доставка до объекта в пределах РФ',
+            'Монтаж': 'Профессиональная установка бригадой Decolife',
+        }
         if specification:
             pdf.ln(4)
             pdf.set_font('DejaVu', 'B', 12)
@@ -613,7 +634,21 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             for i, item in enumerate(specification, 1):
                 name = item.get('name', '')
                 count = item.get('count', '')
-                pdf.table_row([str(i), name, str(count)], widths, aligns=["C", "L", "C"])
+                hint = ''
+                for k, v in spec_hints.items():
+                    if k in name:
+                        hint = v
+                        break
+                if hint:
+                    pdf.table_row([str(i), name, str(count)], widths, aligns=["C", "L", "C"])
+                    pdf.set_font('DejaVu', '', 7)
+                    pdf.set_text_color(140, 140, 140)
+                    pdf.cell(widths[0], 4, '', 0, 0)
+                    pdf.cell(widths[1], 4, hint, 0, 1)
+                    pdf.set_text_color(0, 0, 0)
+                    pdf.set_font('DejaVu', '', 10)
+                else:
+                    pdf.table_row([str(i), name, str(count)], widths, aligns=["C", "L", "C"])
 
         # ===== PAGE 3: PRICING + PAYMENT VARIANTS =====
         items = pergola_data.get('items', [])
@@ -712,21 +747,25 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
 
             # Строки с ценами: голубой фон
             pay_rows = [
-                ("Наличные",                 _format_total(cash_total),    True),
-                ("Безналичный расчёт",       _format_total(noncash_total), False),
-                ("Безналичный с НДС 22%",    _format_total(vat_total),     False),
+                ("Наличные",                 "для физических лиц",               _format_total(cash_total),    True),
+                ("Безналичный расчёт",       "для ИП и ООО без НДС",             _format_total(noncash_total), False),
+                ("Безналичный с НДС 22%",    "для ООО — плательщиков НДС",       _format_total(vat_total),     False),
             ]
-            pdf.set_fill_color(240, 244, 255)  # #f0f4ff
-            for label, price, is_cash in pay_rows:
+            pdf.set_fill_color(240, 244, 255)
+            for label, sublabel, price, is_cash in pay_rows:
+                y_before = pdf.get_y()
                 pdf.set_text_color(80, 80, 80)
                 pdf.set_font('DejaVu', '', 10)
                 pdf.cell(label_w, row_h, "  " + label, border='LBR', ln=0, align='L', fill=True)
                 if is_cash:
-                    pdf.set_text_color(40, 167, 69)   # #28a745 зелёный
+                    pdf.set_text_color(40, 167, 69)
                 else:
-                    pdf.set_text_color(26, 58, 107)   # #1a3a6b тёмно-синий
+                    pdf.set_text_color(26, 58, 107)
                 pdf.set_font('DejaVu', 'B', 10)
                 pdf.cell(price_w, row_h, price + "  ", border='LBR', ln=1, align='R', fill=True)
+                pdf.set_text_color(140, 140, 140)
+                pdf.set_font('DejaVu', '', 7)
+                pdf.cell(label_w, 4, "    " + sublabel, border=0, ln=1, align='L')
 
             # Восстанавливаем цвета
             pdf.set_text_color(0, 0, 0)
@@ -1011,7 +1050,10 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         pdf.ln(4)
         pdf.set_fill_color(255, 243, 224)
         pdf.set_font('DejaVu', 'B', 10)
-        pdf.cell(170, 8, "  \u23F0 Цены действительны 14 дней с даты расчёта", 1, 1, "L", fill=True)
+        if deadline_str:
+            pdf.cell(170, 8, f"  \u23F0 Цены действительны до {deadline_str}", 1, 1, "L", fill=True)
+        else:
+            pdf.cell(170, 8, "  \u23F0 Цены действительны 14 дней с даты расчёта", 1, 1, "L", fill=True)
         pdf.set_fill_color(255, 255, 255)
 
         pdf.ln(4)
@@ -1025,7 +1067,8 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         pdf.ln(6)
         pdf.chapter_title("Примечания:")
         pdf.set_font('DejaVu', '', 9)
-        for note in ["1. Расчет предварительный, уточняется при обращении.", "2. Срок действия: 14 дней.", "3. Срок поставки: 6 недель.", "4. Оплата: 80% предоплата, 20% после монтажа."]:
+        deadline_note = f"2. Срок действия: до {deadline_str}." if deadline_str else "2. Срок действия: 14 дней."
+        for note in ["1. Расчет предварительный, уточняется при обращении.", deadline_note, "3. Срок поставки: 6 недель.", "4. Оплата: 80% после подтверждения заказа, 20% после монтажа и приёмки."]:
             pdf.cell(0, 5, note, 0, 1)
 
         pdf.ln(6)

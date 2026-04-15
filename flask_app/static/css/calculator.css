@@ -520,6 +520,17 @@
     font-size: 0.85rem;
     opacity: 0.85;
 }
+.kp-price-sublabel {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.7;
+    font-weight: 400;
+    margin-top: 2px;
+}
+.kp-price-hero .kp-price-label .kp-price-sublabel {
+    display: inline;
+    margin-left: 4px;
+}
 .kp-features-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
