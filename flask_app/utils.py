@@ -4,14 +4,8 @@ from datetime import datetime, date
 
 
 def get_pergola_count():
-    base_count = 10
-    start_date = date(2026, 1, 1)
-    today = date.today()
-    if today < start_date:
-        weeks = 0
-    else:
-        weeks = (today - start_date).days // 7
-    return base_count + weeks
+    current_week = datetime.now().isocalendar()[1]
+    return max(1, current_week - 6)
 
 
 def generate_kp_number(pergola_type="B500"):
