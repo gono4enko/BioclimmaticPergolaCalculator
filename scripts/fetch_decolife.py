@@ -42,7 +42,7 @@ FALLBACK_DATA = {
         ],
         "images": [],
         "warranty": "5 лет на конструкцию, 2 года на автоматику",
-        "production": "Производство Decolife (Турция), сертификация CE"
+        "production": "Производство Decolife (Беларусь)"
     },
     "b700": {
         "model": "B700 NEW",
@@ -67,7 +67,7 @@ FALLBACK_DATA = {
         ],
         "images": [],
         "warranty": "5 лет на конструкцию, 2 года на автоматику",
-        "production": "Производство Decolife (Турция), сертификация CE"
+        "production": "Производство Decolife (Беларусь)"
     },
     "b600": {
         "model": "B600",
@@ -92,7 +92,7 @@ FALLBACK_DATA = {
         ],
         "images": [],
         "warranty": "5 лет на конструкцию, 2 года на автоматику",
-        "production": "Производство Decolife (Турция), сертификация CE"
+        "production": "Производство Decolife (Беларусь)"
     }
 }
 

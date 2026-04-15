@@ -604,9 +604,9 @@
 .kp-payment-terms {
     margin-top: 0.7rem;
     padding-top: 0.7rem;
-    border-top: 1px solid rgba(26,58,110,0.15);
+    border-top: 1px solid rgba(255,255,255,0.3);
     font-size: 0.82rem;
-    color: #555;
+    color: rgba(255,255,255,0.9);
 }
 .kp-upsell-grid {
     display: grid;

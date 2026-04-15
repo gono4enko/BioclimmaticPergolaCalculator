@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             try { if (typeof ym === 'function') ym(YM_ID, 'reachGoal', 'calc_success', { calculator_type: CALC_TYPE }); } catch(e) {}
             setTimeout(function() {
-                stepsEl.resultsSection.scrollIntoView({behavior: 'smooth', block: 'center'});
+                stepsEl.resultsSection.scrollIntoView({behavior: 'smooth', block: 'start'});
             }, 200);
         })
         .catch(function(err) {
@@ -619,15 +619,9 @@ document.addEventListener('DOMContentLoaded', function() {
             dims.modules + ' ' + pluralModule(dims.modules) +
             '</div>';
 
-        sec.innerHTML = '<h3>\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u044B \u0440\u0430\u0441\u0447\u0451\u0442\u0430</h3>' +
-            infoHtml +
-            '<h4 style="font-size:1rem;font-weight:600;color:#004B9A;margin-top:1rem;">\u0421\u043F\u0435\u0446\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u044F</h4>' +
-            specHtml +
-            '<h4 style="font-size:1rem;font-weight:600;color:#004B9A;margin-top:1rem;">\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C</h4>' +
-            costHtml +
-            totalHtml +
-            variantSpecHtml +
-            '<button class="pdf-btn" id="pdf-btn"><i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF</button>' +
+        state._variantSpecHtml = variantSpecHtml;
+
+        sec.innerHTML = '<button class="pdf-btn" id="pdf-btn"><i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF</button>' +
             '<div id="marketing-kp-container"></div>';
 
         document.getElementById('pdf-btn').addEventListener('click', exportPdf);
@@ -791,12 +785,17 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</tbody></table></div></div>';
         }
 
-        /* Block 8: Guarantees + Company info with dynamic counter (merged) */
+        /* Block 8: Technical specifications (from variant specs) */
+        if (state._variantSpecHtml) {
+            html += '<div class="kp-block">' + state._variantSpecHtml + '</div>';
+        }
+
+        /* Block 9: Guarantees + Company info with dynamic counter (merged) */
         html += '<div class="kp-block">' +
             '<div class="kp-block-header"><div class="kp-block-icon" style="background:#2e7d32;">\u2714</div><div class="kp-block-title">\u0413\u0430\u0440\u0430\u043D\u0442\u0438\u0438 \u0438 \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u044F</div></div>' +
             '<div class="kp-warranty-row"><span class="kp-warranty-icon">\uD83D\uDEE1</span><span class="kp-warranty-text"><strong>5 \u043B\u0435\u0442</strong> \u0433\u0430\u0440\u0430\u043D\u0442\u0438\u044F \u043D\u0430 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u044E</span></div>' +
             '<div class="kp-warranty-row"><span class="kp-warranty-icon">\u2699</span><span class="kp-warranty-text"><strong>2 \u0433\u043E\u0434\u0430</strong> \u0433\u0430\u0440\u0430\u043D\u0442\u0438\u044F \u043D\u0430 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u043A\u0443</span></div>' +
-            '<div class="kp-warranty-row"><span class="kp-warranty-icon">\uD83C\uDFED</span><span class="kp-warranty-text">\u041F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0441\u0442\u0432\u043E <strong>Decolife</strong> (\u0422\u0443\u0440\u0446\u0438\u044F), \u0441\u0435\u0440\u0442\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u044F CE</span></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">\uD83C\uDFED</span><span class="kp-warranty-text">\u041F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0441\u0442\u0432\u043E <strong>Decolife</strong> (\u0411\u0435\u043B\u0430\u0440\u0443\u0441\u044C)</span></div>' +
             '<hr style="margin:0.7rem 0;border-color:#eee;">' +
             '<div class="kp-trust-stats">' +
             '<div class="kp-stat"><div class="kp-stat-number">8+</div><div class="kp-stat-label">\u043B\u0435\u0442 \u043D\u0430 \u0440\u044B\u043D\u043A\u0435</div></div>' +
