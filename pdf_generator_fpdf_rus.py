@@ -445,6 +445,30 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             if user_data.get('address'):
                 pdf.cell(0, 5, f"Адрес: {user_data['address']}", 0, 1, "L")
                 
+        decolife = pergola_data.get('decolife', {})
+        if decolife and decolife.get('description'):
+            pdf.ln(8)
+            pdf.set_font('DejaVu', 'B', 12)
+            model_title = decolife.get('title', decolife.get('model', 'О модели'))
+            pdf.cell(0, 7, model_title, 0, 1, "L")
+            pdf.set_font('DejaVu', '', 9)
+            desc = decolife.get('description', '')
+            pdf.multi_cell(0, 5, desc)
+            if decolife.get('features'):
+                pdf.ln(3)
+                pdf.set_font('DejaVu', 'B', 10)
+                pdf.cell(0, 6, "Ключевые особенности:", 0, 1, "L")
+                pdf.set_font('DejaVu', '', 9)
+                for feat in decolife['features']:
+                    ftitle = feat.get('title', '')
+                    ftext = feat.get('text', '')
+                    pdf.cell(5, 5, "\u2022", 0, 0, "L")
+                    pdf.cell(0, 5, f"{ftitle} — {ftext}", 0, 1, "L")
+            if decolife.get('production'):
+                pdf.ln(2)
+                pdf.set_font('DejaVu', '', 8)
+                pdf.cell(0, 5, decolife['production'], 0, 1, "L")
+
         # Добавляем основную информацию о перголе
         pdf.ln(10)
         pdf.set_font('DejaVu', 'B', 14)

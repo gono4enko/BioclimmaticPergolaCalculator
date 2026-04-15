@@ -56,9 +56,21 @@ def create_app(test_config=None):
     if test_config is not None:
         app.config.from_mapping(test_config)
         
-    # Создаем необходимые директории
     for folder in ['generated_pdf', 'uploads', 'static/images']:
         os.makedirs(os.path.join(app.root_path, folder), exist_ok=True)
+
+    for deco_folder in ['b500', 'b700', 'b600']:
+        deco_dir = os.path.join(app.root_path, 'static', 'decolife', deco_folder)
+        deco_file = os.path.join(deco_dir, 'data.json')
+        if not os.path.exists(deco_file):
+            os.makedirs(deco_dir, exist_ok=True)
+            try:
+                import sys
+                sys.path.insert(0, os.path.dirname(app.root_path))
+                from scripts.fetch_decolife import ensure_data_files
+                ensure_data_files()
+            except Exception:
+                pass
     
     app.config['COMPRESS_MIMETYPES'] = [
         'text/html', 'text/css', 'text/javascript',

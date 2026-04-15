@@ -95,9 +95,11 @@ PostgreSQL через DATABASE_URL
 - **Decolife контент**: `flask_app/static/decolife/{b500,b700,b600}/data.json` — описания, особенности, преимущества
 - **API**: `/api/decolife-data/<pergola_type>` — возвращает JSON с маркетинговым контентом
 - **Имя заказчика**: необязательное поле в Step 4, передаётся в PDF и отображается в KP
-- **Маркетинговые блоки**: после расчёта отображаются 10 продающих блоков (KP-заголовок, цена-герой, о модели, особенности, преимущества, спецификация, стоимость, гарантии, о компании, этапы, CTA)
-- **CSS**: `.kp-section`, `.kp-block`, `.kp-price-hero`, `.kp-features-grid`, `.kp-trust-stats`, `.kp-warranty-row`, `.kp-cta-block`
-- **Static cache**: CSS/JS v20
+- **Маркетинговые блоки**: KP-заголовок, urgency-баннер (14 дней), цена-герой (80/20), о модели, особенности, преимущества, спецификация, стоимость, upsell-карточки, галерея, гарантии, о компании (счётчик), этапы, CTA
+- **Decolife в PDF**: описание модели + особенности из data.json включены в PDF
+- **Decolife fetcher**: `scripts/fetch_decolife.py` — загрузка/обновление контента, fallback на встроенные данные; автобутстрап при старте
+- **CSS**: `.kp-section`, `.kp-block`, `.kp-price-hero`, `.kp-urgency-banner`, `.kp-upsell-grid`, `.kp-gallery-grid`, `.kp-payment-terms`
+- **Static cache**: CSS/JS v21
 
 ## Визуальные компоненты
 - Hero-секция с параллакс-эффектом (`hero_pergola.jpg`)

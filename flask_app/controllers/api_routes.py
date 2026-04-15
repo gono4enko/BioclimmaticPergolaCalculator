@@ -85,11 +85,16 @@ def calculate():
             "selected_variant": selected_variant
         }
 
+        from ..utils import generate_kp_number, get_pergola_count
+
+        kp_number = generate_kp_number(pergola_type)
+        pergola_count = get_pergola_count()
+
         if selected_variant == 'all':
             all_results = perform_all_variants_calculation(dimensions, options)
             if not all_results:
                 return jsonify({'success': False, 'error': 'Нет доступных вариантов для данных размеров'}), 400
-            return jsonify({'success': True, 'mode': 'all', 'results': all_results})
+            return jsonify({'success': True, 'mode': 'all', 'results': all_results, 'kp_number': kp_number, 'pergola_count': pergola_count})
 
         if selected_variant == 'auto':
             options['selected_variant'] = ''
@@ -99,7 +104,7 @@ def calculate():
         if "error" in result:
             return jsonify({'success': False, 'error': result['error']}), 400
 
-        return jsonify({'success': True, 'mode': 'single', 'result': result})
+        return jsonify({'success': True, 'mode': 'single', 'result': result, 'kp_number': kp_number, 'pergola_count': pergola_count})
 
     except Exception as e:
         current_app.logger.error(f"Calculate error: {e}")
@@ -205,6 +210,17 @@ def export_pdf():
         if client_name:
             user_data = {'name': client_name}
 
+        def _load_decolife(ptype):
+            key = ptype.replace('NEW', '').lower()
+            deco_map = {'b500': 'b500', 'b700': 'b700', 'b600': 'b600'}
+            folder = deco_map.get(key, key)
+            deco_path = os.path.join(current_app.static_folder, 'decolife', folder, 'data.json')
+            try:
+                with open(deco_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception:
+                return {}
+
         if mode == 'all':
             results_list = data.get('results', [])
             if not results_list:
@@ -213,6 +229,8 @@ def export_pdf():
             pt = results_list[0].get('options', {}).get('pergola_type', 'B500')
             kp_number = generate_kp_number(pt)
             all_pergola_data[0]['kp_number'] = kp_number
+            decolife_data = _load_decolife(pt)
+            all_pergola_data[0]['decolife'] = decolife_data
             pdf_bytes = generate_commercial_offer(all_pergola_data[0], user_data=user_data, all_variants=all_pergola_data)
             first = results_list[0]
             options = first.get('options', {})
@@ -223,6 +241,8 @@ def export_pdf():
             pt = result.get('options', {}).get('pergola_type', 'B500')
             kp_number = generate_kp_number(pt)
             pergola_data['kp_number'] = kp_number
+            decolife_data = _load_decolife(pt)
+            pergola_data['decolife'] = decolife_data
             pdf_bytes = generate_commercial_offer(pergola_data, user_data=user_data)
             options = result.get('options', {})
             dimensions = result.get('dimensions', {})
