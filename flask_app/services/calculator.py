@@ -42,7 +42,7 @@ MAX_DIMENSIONS = {
     "B500NEW_200": {"width": 15.0, "length": 8.0},
     "B700NEW_250": {"width": 13.5, "length": 8.0},
     "B700NEW_200": {"width": 15.0, "length": 8.0},
-    "B600": {"width": 13.5, "length": 8.0}
+    "B600": {"width": 15.0, "length": 8.0}
 }
 
 ADDITIONAL_COLUMNS_RULES = {
@@ -621,17 +621,14 @@ def perform_calculation(dimensions, options):
             lamellas_count = 0
 
         selected_variant = None
-        if pergola_type in ("B500NEW", "B700NEW"):
-            variant_price, variant_name, variant_modules = get_best_variant_price(
-                pergola_type, lamella_size, width_m, length_m
-            )
-            if variant_price is not None:
-                base_price = variant_price
-                selected_variant = variant_name
-                modules = variant_modules
-                logger.info(f"{pergola_type} вариант: {variant_name}, модулей: {variant_modules}, цена: {variant_price}€")
-            else:
-                base_price = get_base_price(pergola_type, lamella_size, width_m, length_m)
+        variant_price, variant_name, variant_modules = get_best_variant_price(
+            pergola_type, lamella_size, width_m, length_m
+        )
+        if variant_price is not None:
+            base_price = variant_price
+            selected_variant = variant_name
+            modules = variant_modules
+            logger.info(f"{pergola_type} вариант: {variant_name}, модулей: {variant_modules}, цена: {variant_price}€")
         else:
             base_price = get_base_price(pergola_type, lamella_size, width_m, length_m)
 
@@ -644,7 +641,8 @@ def perform_calculation(dimensions, options):
                            f"{width_m:.2f}×{length_m:.2f} м. Ламели {lamella_display}{variant_lamella}. "
                            f"Количество ламелей - {lamellas_count} шт. ({modules} {_get_plural_form(modules, 'модуль', 'модуля', 'модулей')})")
         else:
-            pergola_name = (f"Пергола серии {pergola_type} - PIR панели "
+            variant_pir = f" {selected_variant}" if selected_variant else ""
+            pergola_name = (f"Пергола серии {pergola_type}{variant_pir} - PIR панели "
                            f"{width_m:.2f}×{length_m:.2f} м. ({modules} {_get_plural_form(modules, 'модуль', 'модуля', 'модулей')})")
 
         items = [{"name": pergola_name, "price": base_price}]
@@ -659,6 +657,7 @@ def perform_calculation(dimensions, options):
         if selected_variant:
             pergola_type_display = pergola_type_display.replace("В500", f"В500 {selected_variant}")
             pergola_type_display = pergola_type_display.replace("В700", f"В700 {selected_variant}")
+            pergola_type_display = pergola_type_display.replace("В600 PIR", f"В600 PIR {selected_variant}")
         lamellas_text = f", Количество ламелей - {lamellas_count} шт." if lamellas_count > 0 else ""
         specification.append({
             "name": f"Пергола серии {pergola_type_display} {width_m:.2f}×{length_m:.2f} м. {lamella_info}{lamellas_text}",
