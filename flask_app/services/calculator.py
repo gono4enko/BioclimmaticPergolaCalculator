@@ -636,9 +636,11 @@ def perform_calculation(dimensions, options):
             base_price = get_base_price(pergola_type, lamella_size, width_m, length_m)
 
         lamella_display = {"200": "200 мм", "250": "250 мм", "PIR": "PIR"}.get(lamella_size, lamella_size)
+        variant_suffix = f" {selected_variant}" if selected_variant else ""
+        variant_lamella = f" ({selected_variant})" if selected_variant else " (стандарт)"
         if pergola_type in ["B500NEW", "B700NEW"]:
-            pergola_name = (f"Пергола серии {pergola_type} - с поворотными ламелями "
-                           f"{width_m:.2f}×{length_m:.2f} м. Ламели {lamella_display} (стандарт), "
+            pergola_name = (f"Пергола серии {pergola_type}{variant_suffix} - с поворотными ламелями "
+                           f"{width_m:.2f}×{length_m:.2f} м. Ламели {lamella_display}{variant_lamella}. "
                            f"Количество ламелей - {lamellas_count} шт. ({modules} {_get_plural_form(modules, 'модуль', 'модуля', 'модулей')})")
         else:
             pergola_name = (f"Пергола серии {pergola_type} - PIR панели "
@@ -648,10 +650,16 @@ def perform_calculation(dimensions, options):
         total_price = base_price
         specification = []
 
-        lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type)
+        if selected_variant:
+            lamella_info = f"Ламели {lamella_display} ({selected_variant})"
+        else:
+            lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type)
+        pergola_type_display = PERGOLA_TYPES.get(pergola_type, pergola_type)
+        if selected_variant:
+            pergola_type_display = pergola_type_display.replace("В500", f"В500 {selected_variant}")
         lamellas_text = f", Количество ламелей - {lamellas_count} шт." if lamellas_count > 0 else ""
         specification.append({
-            "name": f"Пергола серии {PERGOLA_TYPES.get(pergola_type, pergola_type)} {width_m:.2f}×{length_m:.2f} м. {lamella_info}{lamellas_text}",
+            "name": f"Пергола серии {pergola_type_display} {width_m:.2f}×{length_m:.2f} м. {lamella_info}{lamellas_text}",
             "count": f"{modules} {_get_plural_form(modules, 'модуль', 'модуля', 'модулей')}"
         })
 
