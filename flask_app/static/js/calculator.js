@@ -680,41 +680,44 @@ document.addEventListener('DOMContentLoaded', function() {
         var pergolaCount = state.pergolaCount || 0;
         var html = '<div class="kp-section">';
 
-        /* Block 1: KP header with server-synced number */
+        var kpDate = new Date().toLocaleDateString('ru-RU');
+        var modelImgMap = {'B500NEW': 'b500.jpg', 'B700NEW': 'b700.jpg', 'B600': 'b600.jpg'};
+        var modelImg = modelImgMap[state.pergolaType] || 'hero_pergola.jpg';
+
+        /* Block 1: KP header — number, date, greeting */
         html += '<div class="kp-block" style="text-align:center;">' +
             '<div class="kp-number-badge">' + escHtml(kpNum) + '</div>' +
             '<h3 style="font-size:1.2rem;font-weight:700;color:#1a3a6e;margin:0.5rem 0 0.3rem;">' + greeting + '\u0432\u0430\u0448\u0435 \u043A\u043E\u043C\u043C\u0435\u0440\u0447\u0435\u0441\u043A\u043E\u0435 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435</h3>' +
             '<p style="font-size:0.88rem;color:#666;margin:0;">' + pType + ' | ' + dims.width.toFixed(2) + ' \u00D7 ' + dims.length.toFixed(2) + ' \u043C (' + area + ' \u043C\u00B2)</p>' +
+            '<p style="font-size:0.82rem;color:#999;margin:0.3rem 0 0;">\u0414\u0430\u0442\u0430: ' + kpDate + ' | \u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043B\u044C\u043D\u043E 14 \u0434\u043D\u0435\u0439</p>' +
             '</div>';
 
-        /* Block 2: Urgency banner — 14 days validity */
-        html += '<div class="kp-urgency-banner">' +
-            '<span class="kp-urgency-icon">\u23F0</span>' +
-            '<span>\u0426\u0435\u043D\u044B \u0432 \u044D\u0442\u043E\u043C \u041A\u041F \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043B\u044C\u043D\u044B <strong>14 \u0434\u043D\u0435\u0439</strong> \u0441 \u043C\u043E\u043C\u0435\u043D\u0442\u0430 \u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F</span>' +
-            '</div>';
-
-        /* Block 3: Price hero */
+        /* Block 2: Price hero with urgency + 80/20 */
         html += '<div class="kp-price-hero">' +
+            '<div class="kp-urgency-banner" style="margin-bottom:0.8rem;">' +
+            '<span class="kp-urgency-icon">\u23F0</span>' +
+            '<span>\u0426\u0435\u043D\u044B \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043B\u044C\u043D\u044B <strong>14 \u0434\u043D\u0435\u0439</strong></span>' +
+            '</div>' +
             '<div class="kp-price-label">\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C \u043F\u0435\u0440\u0433\u043E\u043B\u044B (\u043D\u0430\u043B\u0438\u0447\u043D\u044B\u0439 \u0440\u0430\u0441\u0447\u0451\u0442)</div>' +
             '<div class="kp-price-amount">' + formatPrice(totals.cash) + ' \u20BD</div>' +
             '<div class="kp-price-label" style="margin-top:6px;">\u0411\u0435\u0437\u043D\u0430\u043B: ' + formatPrice(totals.non_cash) + ' \u20BD | \u0421 \u041D\u0414\u0421: ' + formatPrice(totals.with_vat) + ' \u20BD</div>' +
             '<div class="kp-payment-terms">' +
-            '<strong>\u0423\u0441\u043B\u043E\u0432\u0438\u044F \u043E\u043F\u043B\u0430\u0442\u044B:</strong> 80% \u043F\u0440\u0435\u0434\u043E\u043F\u043B\u0430\u0442\u0430 \u043F\u0440\u0438 \u0437\u0430\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0438 \u0434\u043E\u0433\u043E\u0432\u043E\u0440\u0430, 20% \u043F\u043E\u0441\u043B\u0435 \u043C\u043E\u043D\u0442\u0430\u0436\u0430' +
-            '</div>' +
-            '</div>';
+            '<strong>\u0423\u0441\u043B\u043E\u0432\u0438\u044F:</strong> 80% \u043F\u0440\u0435\u0434\u043E\u043F\u043B\u0430\u0442\u0430 \u043F\u0440\u0438 \u0437\u0430\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0438 \u0434\u043E\u0433\u043E\u0432\u043E\u0440\u0430, 20% \u043F\u043E\u0441\u043B\u0435 \u043C\u043E\u043D\u0442\u0430\u0436\u0430' +
+            '</div></div>';
 
-        /* Block 4: About the model (from Decolife data) */
+        /* Block 3: Model info with product photo from Decolife */
+        html += '<div class="kp-block">' +
+            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\u2139</div><div class="kp-block-title">\u041E \u043C\u043E\u0434\u0435\u043B\u0438 ' + escHtml(dd.model || pType) + '</div></div>' +
+            '<div class="kp-model-photo"><img src="/static/images/' + modelImg + '" alt="' + escHtml(dd.model || pType) + '" onerror="this.parentElement.style.display=\'none\'" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:0.8rem;"></div>';
         if (dd.description) {
-            html += '<div class="kp-block">' +
-                '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\u2139</div><div class="kp-block-title">\u041E \u043C\u043E\u0434\u0435\u043B\u0438 ' + escHtml(dd.model || pType) + '</div></div>' +
-                '<p>' + escHtml(dd.description) + '</p>';
-            if (dd.production) {
-                html += '<p style="margin-top:0.5rem;font-size:0.85rem;color:#555;"><em>' + escHtml(dd.production) + '</em></p>';
-            }
-            html += '</div>';
+            html += '<p>' + escHtml(dd.description) + '</p>';
         }
+        if (dd.production) {
+            html += '<p style="margin-top:0.5rem;font-size:0.85rem;color:#555;"><em>' + escHtml(dd.production) + '</em></p>';
+        }
+        html += '</div>';
 
-        /* Block 5: Key features */
+        /* Block 4: Key features */
         if (dd.features && dd.features.length) {
             html += '<div class="kp-block">' +
                 '<div class="kp-block-header"><div class="kp-block-icon" style="background:#2e7d32;">\u2605</div><div class="kp-block-title">\u041A\u043B\u044E\u0447\u0435\u0432\u044B\u0435 \u043E\u0441\u043E\u0431\u0435\u043D\u043D\u043E\u0441\u0442\u0438</div></div>' +
@@ -725,7 +728,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</div></div>';
         }
 
-        /* Block 6: Advantages */
+        /* Block 5: Advantages */
         if (dd.advantages && dd.advantages.length) {
             html += '<div class="kp-block">' +
                 '<div class="kp-block-header"><div class="kp-block-icon" style="background:#f59e0b;">\u2B50</div><div class="kp-block-title">\u041F\u0440\u0435\u0438\u043C\u0443\u0449\u0435\u0441\u0442\u0432\u0430</div></div>' +
@@ -786,17 +789,36 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</tbody></table></div></div>';
         }
 
-        /* Block 9: Upsell cards — complementary products */
+        /* Block 8: Guarantees + Company info with dynamic counter (merged) */
         html += '<div class="kp-block">' +
-            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#7c3aed;">\u2795</div><div class="kp-block-title">\u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u043E\u043F\u0446\u0438\u0438</div></div>' +
-            '<div class="kp-upsell-grid">' +
-            '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83C\uDF21</div><div class="kp-upsell-title">\u0418\u043D\u0444\u0440\u0430\u043A\u0440\u0430\u0441\u043D\u044B\u0435 \u043E\u0431\u043E\u0433\u0440\u0435\u0432\u0430\u0442\u0435\u043B\u0438</div><div class="kp-upsell-text">\u041A\u043E\u043C\u0444\u043E\u0440\u0442\u043D\u043E\u0435 \u0442\u0435\u043F\u043B\u043E \u0432 \u043F\u0440\u043E\u0445\u043B\u0430\u0434\u043D\u044B\u0435 \u0432\u0435\u0447\u0435\u0440\u0430</div></div>' +
-            '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83E\uDE9F</div><div class="kp-upsell-title">\u041E\u0441\u0442\u0435\u043A\u043B\u0435\u043D\u0438\u0435</div><div class="kp-upsell-text">\u0420\u0430\u0437\u0434\u0432\u0438\u0436\u043D\u044B\u0435 \u0441\u0442\u0435\u043A\u043B\u044F\u043D\u043D\u044B\u0435 \u043F\u0430\u043D\u0435\u043B\u0438 \u0434\u043B\u044F \u0437\u0430\u0449\u0438\u0442\u044B \u043E\u0442 \u0432\u0435\u0442\u0440\u0430</div></div>' +
-            '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83D\uDCA1</div><div class="kp-upsell-title">LED-\u043F\u043E\u0434\u0441\u0432\u0435\u0442\u043A\u0430</div><div class="kp-upsell-text">\u0411\u0435\u043B\u0430\u044F \u0438\u043B\u0438 RGB \u043F\u043E\u0434\u0441\u0432\u0435\u0442\u043A\u0430 \u0434\u043B\u044F \u0430\u0442\u043C\u043E\u0441\u0444\u0435\u0440\u044B</div></div>' +
-            '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83C\uDFB5</div><div class="kp-upsell-title">\u0410\u043A\u0443\u0441\u0442\u0438\u043A\u0430</div><div class="kp-upsell-text">\u0412\u0441\u0442\u0440\u043E\u0435\u043D\u043D\u044B\u0435 \u0434\u0438\u043D\u0430\u043C\u0438\u043A\u0438 \u0441 Bluetooth-\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435\u043C</div></div>' +
+            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#2e7d32;">\u2714</div><div class="kp-block-title">\u0413\u0430\u0440\u0430\u043D\u0442\u0438\u0438 \u0438 \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u044F</div></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">\uD83D\uDEE1</span><span class="kp-warranty-text"><strong>5 \u043B\u0435\u0442</strong> \u0433\u0430\u0440\u0430\u043D\u0442\u0438\u044F \u043D\u0430 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u044E</span></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">\u2699</span><span class="kp-warranty-text"><strong>2 \u0433\u043E\u0434\u0430</strong> \u0433\u0430\u0440\u0430\u043D\u0442\u0438\u044F \u043D\u0430 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u043A\u0443</span></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">\uD83C\uDFED</span><span class="kp-warranty-text">\u041F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0441\u0442\u0432\u043E <strong>Decolife</strong> (\u0422\u0443\u0440\u0446\u0438\u044F), \u0441\u0435\u0440\u0442\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u044F CE</span></div>' +
+            '<hr style="margin:0.7rem 0;border-color:#eee;">' +
+            '<div class="kp-trust-stats">' +
+            '<div class="kp-stat"><div class="kp-stat-number">8+</div><div class="kp-stat-label">\u043B\u0435\u0442 \u043D\u0430 \u0440\u044B\u043D\u043A\u0435</div></div>' +
+            '<div class="kp-stat"><div class="kp-stat-number">' + (pergolaCount > 0 ? pergolaCount + '+' : '200+') + '</div><div class="kp-stat-label">\u043F\u0440\u043E\u0435\u043A\u0442\u043E\u0432</div></div>' +
+            '<div class="kp-stat"><div class="kp-stat-number">12</div><div class="kp-stat-label">\u0440\u0435\u0433\u0438\u043E\u043D\u043E\u0432</div></div>' +
             '</div></div>';
 
-        /* Block 10: Gallery (project photos) */
+        /* Block 9: Work stages + upsell (merged) */
+        html += '<div class="kp-block">' +
+            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#f59e0b;">\u23F1</div><div class="kp-block-title">\u042D\u0442\u0430\u043F\u044B \u0440\u0430\u0431\u043E\u0442\u044B</div></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">1\uFE0F\u20E3</span><span class="kp-warranty-text"><strong>\u0417\u0430\u043C\u0435\u0440 \u0438 \u043F\u0440\u043E\u0435\u043A\u0442</strong> \u2014 \u0432\u044B\u0435\u0437\u0434 \u0441\u043F\u0435\u0446\u0438\u0430\u043B\u0438\u0441\u0442\u0430</span></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">2\uFE0F\u20E3</span><span class="kp-warranty-text"><strong>\u0414\u043E\u0433\u043E\u0432\u043E\u0440</strong> \u2014 80% \u043F\u0440\u0435\u0434\u043E\u043F\u043B\u0430\u0442\u0430</span></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">3\uFE0F\u20E3</span><span class="kp-warranty-text"><strong>\u041F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0441\u0442\u0432\u043E</strong> \u2014 45\u201360 \u0434\u043D\u0435\u0439</span></div>' +
+            '<div class="kp-warranty-row"><span class="kp-warranty-icon">4\uFE0F\u20E3</span><span class="kp-warranty-text"><strong>\u041C\u043E\u043D\u0442\u0430\u0436</strong> \u2014 3\u20137 \u0434\u043D\u0435\u0439, 20% \u043F\u043E \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u0438</span></div>' +
+            '<hr style="margin:0.7rem 0;border-color:#eee;">' +
+            '<div style="font-weight:600;margin-bottom:0.4rem;">\u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u043E\u043F\u0446\u0438\u0438:</div>' +
+            '<div class="kp-upsell-grid">' +
+            '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83C\uDF21</div><div class="kp-upsell-title">\u041E\u0431\u043E\u0433\u0440\u0435\u0432\u0430\u0442\u0435\u043B\u0438</div></div>' +
+            '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83E\uDE9F</div><div class="kp-upsell-title">\u041E\u0441\u0442\u0435\u043A\u043B\u0435\u043D\u0438\u0435</div></div>' +
+            '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83D\uDCA1</div><div class="kp-upsell-title">LED</div></div>' +
+            '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83C\uDFB5</div><div class="kp-upsell-title">\u0410\u043A\u0443\u0441\u0442\u0438\u043A\u0430</div></div>' +
+            '</div></div>';
+
+        /* Block 10: Gallery + CTA */
         var galleryImages = [
             'pergola_b500_garden_view.jpg',
             'pergola_b700_poolside.jpg',
@@ -809,40 +831,10 @@ document.addEventListener('DOMContentLoaded', function() {
         galleryImages.forEach(function(img, idx) {
             html += '<div class="kp-gallery-item"><img src="/static/images/gallery/' + img + '" alt="\u041F\u0440\u043E\u0435\u043A\u0442 ' + (idx+1) + '" onerror="this.parentElement.style.display=\'none\'"></div>';
         });
-        html += '</div></div>';
-
-        /* Block 11: Guarantees */
-        html += '<div class="kp-block">' +
-            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#2e7d32;">\u2714</div><div class="kp-block-title">\u0413\u0430\u0440\u0430\u043D\u0442\u0438\u0438 \u0438 \u043A\u0430\u0447\u0435\u0441\u0442\u0432\u043E</div></div>' +
-            '<div class="kp-warranty-row"><span class="kp-warranty-icon">\uD83D\uDEE1</span><span class="kp-warranty-text"><strong>5 \u043B\u0435\u0442</strong> \u0433\u0430\u0440\u0430\u043D\u0442\u0438\u044F \u043D\u0430 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u044E</span></div>' +
-            '<div class="kp-warranty-row"><span class="kp-warranty-icon">\u2699</span><span class="kp-warranty-text"><strong>2 \u0433\u043E\u0434\u0430</strong> \u0433\u0430\u0440\u0430\u043D\u0442\u0438\u044F \u043D\u0430 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u043A\u0443</span></div>' +
-            '<div class="kp-warranty-row"><span class="kp-warranty-icon">\uD83C\uDFED</span><span class="kp-warranty-text">\u041F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0441\u0442\u0432\u043E <strong>Decolife</strong> (\u0422\u0443\u0440\u0446\u0438\u044F), \u0441\u0435\u0440\u0442\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u044F CE</span></div>' +
-            '</div>';
-
-        /* Block 12: Company info with dynamic counter */
-        html += '<div class="kp-block">' +
-            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\u2605</div><div class="kp-block-title">\u041E \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u0438 \u00AB\u041A\u043E\u043C\u0444\u043E\u0440\u0442\u043D\u044B\u0439 \u0434\u043E\u043C\u00BB</div></div>' +
-            '<div class="kp-trust-stats">' +
-            '<div class="kp-stat"><div class="kp-stat-number">8+</div><div class="kp-stat-label">\u043B\u0435\u0442 \u043D\u0430 \u0440\u044B\u043D\u043A\u0435</div></div>' +
-            '<div class="kp-stat"><div class="kp-stat-number">' + (pergolaCount > 0 ? pergolaCount + '+' : '200+') + '</div><div class="kp-stat-label">\u0440\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u043D\u043D\u044B\u0445 \u043F\u0440\u043E\u0435\u043A\u0442\u043E\u0432</div></div>' +
-            '<div class="kp-stat"><div class="kp-stat-number">12</div><div class="kp-stat-label">\u0440\u0435\u0433\u0438\u043E\u043D\u043E\u0432 \u0420\u043E\u0441\u0441\u0438\u0438</div></div>' +
-            '</div>' +
-            '<p style="margin-top:0.7rem;">\u041A\u043E\u043C\u043F\u043B\u0435\u043A\u0441\u043D\u044B\u0435 \u0440\u0435\u0448\u0435\u043D\u0438\u044F \u0434\u043B\u044F \u043E\u0431\u0443\u0441\u0442\u0440\u043E\u0439\u0441\u0442\u0432\u0430 \u0442\u0435\u0440\u0440\u0430\u0441, \u0432\u0435\u0440\u0430\u043D\u0434 \u0438 \u0431\u0435\u0441\u0435\u0434\u043E\u043A. \u041E\u0444\u0438\u0446\u0438\u0430\u043B\u044C\u043D\u044B\u0439 \u0434\u0438\u043B\u0435\u0440 Decolife \u0432 \u0420\u043E\u0441\u0441\u0438\u0438.</p>' +
-            '</div>';
-
-        /* Block 13: Work stages */
-        html += '<div class="kp-block">' +
-            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#f59e0b;">\u23F1</div><div class="kp-block-title">\u042D\u0442\u0430\u043F\u044B \u0440\u0430\u0431\u043E\u0442\u044B</div></div>' +
-            '<div class="kp-warranty-row"><span class="kp-warranty-icon">1\uFE0F\u20E3</span><span class="kp-warranty-text"><strong>\u0417\u0430\u043C\u0435\u0440 \u0438 \u043F\u0440\u043E\u0435\u043A\u0442</strong> \u2014 \u0432\u044B\u0435\u0437\u0434 \u0441\u043F\u0435\u0446\u0438\u0430\u043B\u0438\u0441\u0442\u0430, \u0443\u0442\u043E\u0447\u043D\u0435\u043D\u0438\u0435 \u0440\u0430\u0437\u043C\u0435\u0440\u043E\u0432</span></div>' +
-            '<div class="kp-warranty-row"><span class="kp-warranty-icon">2\uFE0F\u20E3</span><span class="kp-warranty-text"><strong>\u0414\u043E\u0433\u043E\u0432\u043E\u0440 \u0438 \u043F\u0440\u0435\u0434\u043E\u043F\u043B\u0430\u0442\u0430</strong> \u2014 80% \u043F\u0440\u0435\u0434\u043E\u043F\u043B\u0430\u0442\u0430, \u0437\u0430\u043A\u0430\u0437 \u043D\u0430 \u043F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0441\u0442\u0432\u043E</span></div>' +
-            '<div class="kp-warranty-row"><span class="kp-warranty-icon">3\uFE0F\u20E3</span><span class="kp-warranty-text"><strong>\u041F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0441\u0442\u0432\u043E</strong> \u2014 45\u201360 \u0434\u043D\u0435\u0439 \u0438\u0437\u0433\u043E\u0442\u043E\u0432\u043B\u0435\u043D\u0438\u0435 + \u0434\u043E\u0441\u0442\u0430\u0432\u043A\u0430</span></div>' +
-            '<div class="kp-warranty-row"><span class="kp-warranty-icon">4\uFE0F\u20E3</span><span class="kp-warranty-text"><strong>\u041C\u043E\u043D\u0442\u0430\u0436 \u0438 \u043E\u043F\u043B\u0430\u0442\u0430 \u043E\u0441\u0442\u0430\u0442\u043A\u0430</strong> \u2014 3\u20137 \u0434\u043D\u0435\u0439 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430, 20% \u043F\u043E \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u0438</span></div>' +
-            '</div>';
-
-        /* Block 14: CTA */
-        html += '<div class="kp-cta-block">' +
+        html += '</div></div>' +
+            '<div class="kp-cta-block">' +
             '<h4>\u0413\u043E\u0442\u043E\u0432\u044B \u043E\u0431\u0441\u0443\u0434\u0438\u0442\u044C \u043F\u0440\u043E\u0435\u043A\u0442?</h4>' +
-            '<p>\u0421\u0432\u044F\u0436\u0438\u0442\u0435\u0441\u044C \u0441 \u043D\u0430\u043C\u0438 \u0443\u0434\u043E\u0431\u043D\u044B\u043C \u0441\u043F\u043E\u0441\u043E\u0431\u043E\u043C \u043D\u0438\u0436\u0435 \u2014 \u043E\u0442\u0432\u0435\u0442\u0438\u043C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B \u0438 \u043F\u043E\u043C\u043E\u0436\u0435\u043C \u0441 \u0432\u044B\u0431\u043E\u0440\u043E\u043C</p>' +
+            '<p>\u0421\u0432\u044F\u0436\u0438\u0442\u0435\u0441\u044C \u0441 \u043D\u0430\u043C\u0438 \u2014 \u043E\u0442\u0432\u0435\u0442\u0438\u043C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B</p>' +
             '</div>';
 
         html += '</div>';

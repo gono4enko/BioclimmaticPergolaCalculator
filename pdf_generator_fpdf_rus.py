@@ -471,7 +471,7 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             pdf.set_font('DejaVu', '', 10)
             pdf.cell(0, 5, f"Подготовлено для: {user_data['name']}", 0, 1, "C")
 
-        # ===== PAGE 2: PRODUCT + FEATURES (Decolife) =====
+        # ===== PAGE 2: PRODUCT + FEATURES (Decolife) + SPEC =====
         pdf.add_page()
 
         pdf.set_font('DejaVu', '', 9)
@@ -486,88 +486,85 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         pdf.cell(95, 5, '', 0, 0, 'L')
         pdf.cell(0, 5, 'Сайт: https://pergolamarket.ru/', 0, 1, 'R')
         pdf.ln(5)
-                
+
         decolife = pergola_data.get('decolife', {})
         if decolife and decolife.get('description'):
-            pdf.ln(8)
             pdf.set_font('DejaVu', 'B', 12)
             model_title = decolife.get('title', decolife.get('model', 'О модели'))
             pdf.cell(0, 7, model_title, 0, 1, "L")
+
+            deco_key = pergola_type_name.lower().replace(' new', '').replace(' basic', '').replace(' light', '').replace(' pro', '').strip()
+            deco_img_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'flask_app', 'static', 'decolife', deco_key.replace('b', 'b'), 'images')
+            deco_img_placed = False
+            if os.path.isdir(deco_img_dir):
+                deco_imgs = [f for f in os.listdir(deco_img_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))]
+                if deco_imgs:
+                    deco_img_path = os.path.join(deco_img_dir, deco_imgs[0])
+                    try:
+                        compressed = _compress_image_for_pdf(deco_img_path, max_width=600, quality=55)
+                        pdf.image(compressed, x=20, y=pdf.get_y(), w=80, h=50)
+                        pdf.set_xy(105, pdf.get_y())
+                        deco_img_placed = True
+                    except Exception:
+                        pass
+
             pdf.set_font('DejaVu', '', 9)
-            desc = decolife.get('description', '')
-            pdf.multi_cell(0, 5, desc)
+            desc = decolife.get('description', '')[:500]
+            if deco_img_placed:
+                pdf.set_xy(105, pdf.get_y())
+                pdf.multi_cell(85, 4.5, desc)
+                pdf.set_y(max(pdf.get_y(), pdf.get_y()))
+            else:
+                pdf.multi_cell(0, 5, desc)
+
+            if deco_img_placed:
+                pdf.set_y(max(pdf.get_y(), 95))
+
             if decolife.get('features'):
-                pdf.ln(3)
+                pdf.ln(2)
                 pdf.set_font('DejaVu', 'B', 10)
                 pdf.cell(0, 6, "Ключевые особенности:", 0, 1, "L")
-                pdf.set_font('DejaVu', '', 9)
-                for feat in decolife['features']:
+                pdf.set_font('DejaVu', '', 8)
+                for feat in decolife['features'][:6]:
                     ftitle = feat.get('title', '')
                     ftext = feat.get('text', '')
-                    pdf.cell(5, 5, "\u2022", 0, 0, "L")
-                    pdf.cell(0, 5, f"{ftitle} — {ftext}", 0, 1, "L")
+                    pdf.cell(5, 4.5, "\u2022", 0, 0, "L")
+                    pdf.cell(0, 4.5, f"{ftitle} — {ftext}"[:90], 0, 1, "L")
             if decolife.get('production'):
-                pdf.ln(2)
+                pdf.ln(1)
                 pdf.set_font('DejaVu', '', 8)
-                pdf.cell(0, 5, decolife['production'], 0, 1, "L")
+                pdf.cell(0, 4, decolife['production'][:120], 0, 1, "L")
 
-        # Добавляем основную информацию о перголе
-        pdf.ln(10)
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 8, "Параметры перголы:", 0, 1, "L")
-        
         pergola_type = pergola_data.get('pergola_type', 'Биоклиматическая пергола')
         width = pergola_data.get('width', 0)
         length = pergola_data.get('length', 0)
-        
-        pdf.set_font('DejaVu', '', 11)
-        pdf.cell(50, 7, "Модель:", 0, 0, "L")
-        pdf.cell(0, 7, pergola_type, 0, 1, "L")
-        
-        pdf.cell(50, 7, "Ширина:", 0, 0, "L")
-        pdf.cell(0, 7, f"{width} м", 0, 1, "L")
-        
-        pdf.cell(50, 7, "Вынос (длина):", 0, 0, "L")
-        pdf.cell(0, 7, f"{length} м", 0, 1, "L")
-        
         modules = pergola_data.get('modules', 1)
         lamella_type = pergola_data.get('lamella_type', 'стандартные')
-        
-        pdf.cell(50, 7, "Количество модулей:", 0, 0, "L")
-        pdf.cell(0, 7, f"{modules}", 0, 1, "L")
-        
-        pdf.cell(50, 7, "Тип ламелей:", 0, 0, "L")
-        pdf.cell(0, 7, lamella_type, 0, 1, "L")
-        
-        # Добавляем специификацию, если она есть
+
+        pdf.ln(5)
+        pdf.set_font('DejaVu', 'B', 12)
+        pdf.cell(0, 7, "Параметры перголы:", 0, 1, "L")
+        pdf.set_font('DejaVu', '', 10)
+        pdf.cell(50, 6, "Модель:", 0, 0, "L"); pdf.cell(0, 6, pergola_type, 0, 1, "L")
+        pdf.cell(50, 6, "Ширина:", 0, 0, "L"); pdf.cell(0, 6, f"{width} м", 0, 1, "L")
+        pdf.cell(50, 6, "Вынос (длина):", 0, 0, "L"); pdf.cell(0, 6, f"{length} м", 0, 1, "L")
+        pdf.cell(50, 6, "Модулей:", 0, 0, "L"); pdf.cell(0, 6, f"{modules}", 0, 1, "L")
+        pdf.cell(50, 6, "Тип ламелей:", 0, 0, "L"); pdf.cell(0, 6, lamella_type, 0, 1, "L")
+
         specification = pergola_data.get('specification', [])
         if specification:
-            pdf.ln(5)
-            pdf.set_font('DejaVu', 'B', 14)
-            pdf.cell(0, 8, "Спецификация:", 0, 1, "L")
-            
-            # Проверяем, поместится ли таблица на текущей странице
-            # В среднем строка занимает 6-7 мм, заголовок и отступы - ещё 20 мм
-            table_height = len(specification) * 6 + 20
-            
-            # Если таблица не помещается, добавляем новую страницу
-            if pdf.check_table_fit(len(specification) + 3):
-                # Таблица поместится (функция возвращает True) - ничего не делаем
-                pass
-            
-            # Заголовки таблицы
+            pdf.ln(4)
+            pdf.set_font('DejaVu', 'B', 12)
+            pdf.cell(0, 7, "Спецификация:", 0, 1, "L")
             table_headers = ["№", "Наименование", "Количество"]
-            widths = [10, 100, 60]  # Ширины колонок в мм
-            
+            widths = [10, 100, 60]
             pdf.table_header(table_headers, widths)
-            
-            # Данные таблицы
             for i, item in enumerate(specification, 1):
                 name = item.get('name', '')
                 count = item.get('count', '')
                 pdf.table_row([str(i), name, str(count)], widths, aligns=["C", "L", "C"])
-            
-        # Добавляем стоимость, если она есть
+
+        # ===== PAGE 3: PRICING + PAYMENT VARIANTS =====
         items = pergola_data.get('items', [])
         if items:
             pdf.add_page()
@@ -800,280 +797,96 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
 
             pdf.ln(3)
 
+        # ===== PAGE 4: PRODUCT DESCRIPTION (condensed, single page) =====
         pdf.add_page()
         pdf.chapter_title("Описание перголы:")
-        
-        # Собираем все типы описаний
+
         descriptions = []
-        
-        # Основное описание перголы
         pergola_description = pergola_data.get('description', '')
-        pergola_type = pergola_data.get('pergola_type', 'биоклиматическая')
         if pergola_description:
             descriptions.append(pergola_description)
-            
-        # Дополнительные описания
         modular_description = pergola_data.get('modular_description', '')
         if modular_description:
             descriptions.append(modular_description)
-            
-        drainage_description = pergola_data.get('drainage_description', '')
-        if drainage_description:
-            descriptions.append(drainage_description)
-            
-        bansbach_description = pergola_data.get('bansbach_description', '')
-        if bansbach_description:
-            descriptions.append(bansbach_description)
-            
-        # Если описаний не нашлось, создаем базовое описание по умолчанию
+
         if not descriptions:
-            pergola_description = """
-            <div style='margin-top: 10px;'>
-            <h2 style='font-size: 1.2rem;'>Биоклиматические перголы премиум-качества</h2>
-            <div>
-                <p>
-                Биоклиматическая пергола представляет собой современное решение для обустройства открытых пространств, 
-                сочетающее в себе элегантный дизайн и практичную функциональность. Ключевой элемент перголы - поворотные 
-                алюминиевые ламели, которые позволяют регулировать поступление солнечного света и воздуха, создавая 
-                комфортный микроклимат в любое время года.
-                </p>
-                <p>
-                Конструкция перголы выполнена из высококачественного экструдированного алюминия с порошковым покрытием, 
-                что обеспечивает долговечность и устойчивость к коррозии. Система оснащена автоматическим приводом, который 
-                позволяет управлять положением ламелей с помощью пульта дистанционного управления.
-                </p>
-                <div>
-                <strong>Технические характеристики:</strong><br/>
-                • Алюминиевый профиль: экструдированный алюминий с порошковым покрытием (322х260 мм)<br/>
-                • Размеры колонны: 164x164 мм, используется 7 различных типов алюминиевых профилей<br/>
-                • Система автоматизации: приводной механизм высокого качества, работающий от электросети
-                </div>
-                </div>
-                </div>
-                """
-        
-        # Печатаем весь HTML-текст для отладки
-        print("ПОЛНОЕ ОПИСАНИЕ ПЕРГОЛЫ:")
-        print(pergola_description)
-        
-        # Обрабатываем все блоки описаний последовательно
-        for section_index, html_description in enumerate(descriptions):
-            # Добавляем разрыв страницы между разными описаниями (кроме первого)
-            if section_index > 0:
-                pdf.add_page()
-                # Если у нас более одного раздела, добавляем заголовки для дополнительных
-                if section_index == 1:
-                    pdf.chapter_title("Модульная система пергол:")
-                elif section_index == 2:
-                    pdf.chapter_title("Система водоотведения:")
-            
-            # HTML-описание нужно преобразовать в чистый текст более эффективным способом
+            descriptions.append(
+                "<p>Биоклиматическая пергола — современное решение для обустройства открытых пространств. "
+                "Поворотные алюминиевые ламели регулируют свет и вентиляцию, создавая комфортный микроклимат.</p>"
+                "<p>Конструкция из экструдированного алюминия с порошковым покрытием обеспечивает долговечность. "
+                "Автоматический привод управляется с пульта ДУ.</p>"
+            )
+
+        try:
+            from bs4 import BeautifulSoup
+            combined_html = ' '.join(descriptions[:2])
+            soup = BeautifulSoup(combined_html, 'html.parser')
+            title_tag = soup.find(['h2', 'h3'])
+            if title_tag:
+                pdf.set_font('DejaVu', 'B', 12)
+                pdf.multi_cell(0, 5, title_tag.get_text().strip())
+                pdf.ln(3)
+            pdf.set_font('DejaVu', '', 10)
+            for p in soup.find_all('p'):
+                text = p.get_text().strip()[:400]
+                if text:
+                    pdf.multi_cell(0, 5, text)
+                    pdf.ln(2)
+            for lst in soup.find_all(['ul', 'ol']):
+                for li in lst.find_all('li'):
+                    text = li.get_text().strip()[:200]
+                    if text:
+                        pdf.cell(5, 5, "\u2022", 0, 0, "L")
+                        pdf.multi_cell(0, 5, text)
+        except Exception:
+            pass
+
+        section_img = "attached_assets/Снимок_экрана_2026-03-02_в_21.21.46_1772475709699.png"
+        if os.path.exists(section_img):
             try:
-                from bs4 import BeautifulSoup
-                soup = BeautifulSoup(html_description, 'html.parser')
-                
-                # Сначала обрабатываем заголовок и печатаем его для отладки
-                pdf.set_font('DejaVu', 'B', 12)  # Больший размер шрифта для заголовка
-                
-                # Проверяем, есть ли заголовок h2 или h3 в описании
-                title_tag = soup.find(['h2', 'h3'])
-                if title_tag:
-                    title_text = title_tag.get_text().strip()
-                    print(f"Заголовок описания: {title_text}")
-                    pdf.multi_cell(0, 5, title_text)
+                space_left = 260 - pdf.get_y()
+                if space_left > 40:
+                    from PIL import Image as PILImage
+                    img_obj = PILImage.open(section_img)
+                    w, h = img_obj.size
+                    ratio = h / w
+                    img_w = min(170, space_left / ratio)
+                    img_h = img_w * ratio
+                    if img_h > space_left:
+                        img_h = space_left
+                        img_w = img_h / ratio
+                    compressed = _compress_image_for_pdf(section_img, max_width=1200, quality=70)
                     pdf.ln(3)
-                elif section_index == 0:  # Только для первого раздела используем тип перголы
-                    # Если заголовка нет, используем тип перголы как заголовок
-                    if "B500" in pergola_type:
-                        title_text = "Серия B500NEW (с поворотными ламелями)"
-                    elif "B700" in pergola_type:
-                        title_text = "Серия B700NEW (со сдвижными ламелями)"
-                    elif "B600" in pergola_type:
-                        title_text = "Серия B600 (с PIR-панелями)"
-                    else:
-                        title_text = f"Пергола {pergola_type}"
-                    
-                    pdf.multi_cell(0, 5, title_text)
-                    pdf.ln(3)
-                
-                # Перерабатываем обычный текст
-                pdf.set_font('DejaVu', '', 10)  # Обычный размер для основного текста
-                
-                # Получаем все параграфы
-                paragraphs = soup.find_all('p')
-                for p in paragraphs:
-                    text = p.get_text().strip()
-                    if text:  # Проверяем, что текст не пустой
-                        # Разбиваем длинные параграфы на части для лучшей обработки
-                        while len(text) > 0:
-                            chunk = text[:400]  # Берем часть текста
-                            text = text[400:]   # Оставшийся текст
-                            pdf.multi_cell(0, 5, chunk)
-                        pdf.ln(3)  # Отступ после параграфа
-                
-                # Получаем все списки
-                lists = soup.find_all(['ul', 'ol'])
-                for lst in lists:
-                    pdf.ln(2)  # Небольшой отступ перед списком
-                    
-                    # Определяем тип списка
-                    is_ordered = lst.name == 'ol'
-                    
-                    # Получаем все элементы списка
-                    list_items = lst.find_all('li')
-                    for i, li in enumerate(list_items, 1):
-                        text = li.get_text().strip()
-                        if is_ordered:
-                            text = f"{i}. {text}"
-                        else:
-                            text = f"• {text}"
-                            
-                        # Разбиваем длинные элементы списка на части
-                        first_line = True
-                        while len(text) > 0:
-                            chunk = text[:400]  # Берем часть текста
-                            text = text[400:]   # Оставшийся текст
-                            
-                            if first_line:
-                                pdf.multi_cell(0, 5, chunk)
-                                first_line = False
-                            else:
-                                # Для второй и последующих строк делаем отступ
-                                pdf.multi_cell(0, 5, f"  {chunk}")
-                        
-                    pdf.ln(3)  # Отступ после списка
-                
-                # Обрабатываем изображения
-                images = soup.find_all('img')
-                for img in images:
-                    img_path = img.get('src', '')
-                    # Проверяем, существует ли путь и доступен ли он
-                    if img_path and os.path.exists(img_path):
-                        # Получаем подпись к изображению из атрибута alt
-                        caption = img.get('alt', '')
-                        
-                        # Обрабатываем изображение
-                        try:
-                            from PIL import Image
-                            
-                            # Открываем изображение и определяем его размеры
-                            img_obj = Image.open(img_path)
-                            width, height = img_obj.size
-                            
-                            # Вычисляем размеры для PDF (в мм)
-                            max_width_mm = 170  # Максимальная ширина изображения в PDF (A4 - поля)
-                            ratio = height / width
-                            
-                            # Если изображение шире максимума, масштабируем
-                            if width > max_width_mm * 3:  # Умножаем на 3 для примерного перевода из мм в пиксели
-                                img_width_mm = max_width_mm
-                                img_height_mm = max_width_mm * ratio
-                            else:
-                                # Используем реальные размеры, переведенные в мм (примерно)
-                                img_width_mm = width / 3
-                                img_height_mm = height / 3
-                            
-                            # Проверяем, поместится ли изображение на текущей странице
-                            if pdf.get_y() + img_height_mm + 20 > 277:  # 277 мм - высота страницы A4 с учетом полей
-                                pdf.add_page()
-                            
-                            # Добавляем отступ перед изображением
-                            pdf.ln(5)
-                            
-                            # Добавляем подпись к изображению
-                            if caption:
-                                pdf.set_font('DejaVu', 'B', 11)
-                                pdf.cell(0, 8, caption, 0, 1, "C")
-                                pdf.ln(5)
-                            
-                            # Вставляем изображение с явным указанием ширины и высоты
-                            # для гарантии сохранения пропорций
-                            compressed = _compress_image_for_pdf(img_path, max_width=1000, quality=65)
-                            pdf.image(
-                                compressed,
-                                x=(210 - img_width_mm) / 2,
-                                y=pdf.get_y(),
-                                w=img_width_mm,
-                                h=img_height_mm
-                            )
-                            print(f"Добавлено изображение в PDF: {img_path}")
-                        except Exception as e:
-                            print(f"Ошибка при обработке изображения {img_path}: {str(e)}")
-                    else:
-                        print(f"Изображение не найдено: {img_path}")
-                
-                if section_index == 1:
-                    section_img = "attached_assets/Снимок_экрана_2026-03-02_в_21.21.46_1772475709699.png"
-                    if os.path.exists(section_img):
-                        from PIL import Image as PILImage
-                        img_obj = PILImage.open(section_img)
-                        w, h = img_obj.size
-                        ratio = h / w
-                        img_w = 170
-                        img_h = img_w * ratio
-                        space_left = 245 - pdf.get_y() - 5
-                        if img_h > space_left:
-                            img_h = space_left
-                            img_w = img_h / ratio
-                        compressed = _compress_image_for_pdf(section_img, max_width=1200, quality=70)
-                        x_pos = (210 - img_w) / 2
-                        pdf.ln(3)
-                        pdf.image(compressed, x=x_pos, y=pdf.get_y(), w=img_w, h=img_h)
-                        pdf.set_y(pdf.get_y() + img_h + 3)
-                    
-            except Exception as e:
-                print(f"Ошибка при обработке HTML: {str(e)}")
-        
-        gallery_images = _get_gallery_images()
+                    pdf.image(compressed, x=(210 - img_w) / 2, y=pdf.get_y(), w=img_w, h=img_h)
+            except Exception:
+                pass
+
+        # ===== PAGE 5: GALLERY (single page, no pagination) =====
+        pdf.add_page()
+        pdf.chapter_title("Галерея наших работ:")
+        pdf.ln(3)
+
+        gallery_images = _get_gallery_images(max_images=6)
         if gallery_images:
-            pdf.add_page()
-            pdf.chapter_title("Галерея наших работ:")
-            pdf.ln(3)
-            
-            for i in range(0, len(gallery_images), 2):
-                if pdf.get_y() + 75 > 277:
-                    pdf.add_page()
-                
+            for i in range(0, min(len(gallery_images), 6), 2):
                 batch = gallery_images[i:i+2]
-                
-                if len(batch) == 2:
-                    x_left = 15
-                    x_right = 108
-                    img_w = 85
-                    y_start = pdf.get_y()
-                    
-                    gallery_img_w = 85
-                    gallery_img_h = 60
-                    gallery_crop = gallery_img_w / gallery_img_h
-                    
-                    for j, (img_path, caption) in enumerate(batch):
-                        x = x_left if j == 0 else x_right
-                        try:
-                            compressed = _compress_image_for_pdf(img_path, max_width=600, quality=55, crop_ratio=gallery_crop)
-                            pdf.image(compressed, x=x, y=y_start, w=gallery_img_w, h=gallery_img_h)
-                            pdf.set_xy(x, y_start + gallery_img_h + 1)
-                            pdf.set_font('DejaVu', '', 7)
-                            pdf.cell(gallery_img_w, 4, caption[:60], 0, 0, 'C')
-                        except Exception as e:
-                            print(f"Ошибка добавления фото {img_path}: {e}")
-                    
-                    pdf.set_y(y_start + gallery_img_h + 10)
-                else:
-                    img_path, caption = batch[0]
+                y_start = pdf.get_y()
+                gallery_img_w = 85
+                gallery_img_h = 60
+                gallery_crop = gallery_img_w / gallery_img_h
+                for j, (img_path, caption) in enumerate(batch):
+                    x = 15 if j == 0 else 108
                     try:
-                        gallery_img_w = 85
-                        gallery_img_h = 60
-                        gallery_crop = gallery_img_w / gallery_img_h
                         compressed = _compress_image_for_pdf(img_path, max_width=600, quality=55, crop_ratio=gallery_crop)
-                        x = (210 - gallery_img_w) / 2
-                        pdf.image(compressed, x=x, y=pdf.get_y(), w=gallery_img_w, h=gallery_img_h)
-                        pdf.set_y(pdf.get_y() + gallery_img_h + 1)
+                        pdf.image(compressed, x=x, y=y_start, w=gallery_img_w, h=gallery_img_h)
+                        pdf.set_xy(x, y_start + gallery_img_h + 1)
                         pdf.set_font('DejaVu', '', 7)
-                        pdf.cell(0, 4, caption[:60], 0, 1, 'C')
-                        pdf.ln(5)
-                    except Exception as e:
-                        print(f"Ошибка добавления фото {img_path}: {e}")
-        
+                        pdf.cell(gallery_img_w, 4, caption[:60], 0, 0, 'C')
+                    except Exception:
+                        pass
+                pdf.set_y(y_start + gallery_img_h + 10)
+
+        # ===== PAGE 6: GUARANTEES + UPSELL + URGENCY + NOTES + CONTACTS =====
         pdf.add_page()
         pdf.chapter_title("Гарантии и преимущества:")
         pdf.ln(3)
@@ -1081,73 +894,41 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(0, 7, "Гарантийные обязательства:", 0, 1, "L")
         pdf.set_font('DejaVu', '', 9)
-        warranty_items = [
-            "5 лет гарантии на конструкцию перголы",
-            "2 года гарантии на автоматику и моторы",
-            "Сервисное обслуживание на весь срок эксплуатации",
-        ]
-        for wi in warranty_items:
+        for wi in ["5 лет гарантии на конструкцию перголы", "2 года гарантии на автоматику и моторы", "Сервисное обслуживание на весь срок эксплуатации"]:
             pdf.cell(5, 5, "\u2022", 0, 0, "L")
             pdf.cell(0, 5, wi, 0, 1, "L")
 
-        pdf.ln(5)
+        pdf.ln(4)
         pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(0, 7, "Дополнительные опции:", 0, 1, "L")
         pdf.set_font('DejaVu', '', 9)
-        upsell_items = [
-            "Инфракрасные обогреватели — комфорт в прохладные вечера",
-            "Раздвижное остекление — защита от ветра и осадков",
-            "LED-подсветка (белая / RGB) — атмосферное вечернее освещение",
-            "Встроенная акустическая система с Bluetooth-управлением",
-            "Боковые маркизы и шторы — дополнительная приватность",
-        ]
-        for ui in upsell_items:
+        for ui in ["Инфракрасные обогреватели — комфорт в прохладные вечера", "Раздвижное остекление — защита от ветра", "LED-подсветка (белая / RGB)", "Акустическая система с Bluetooth"]:
             pdf.cell(5, 5, "\u2022", 0, 0, "L")
             pdf.cell(0, 5, ui, 0, 1, "L")
 
-        pdf.ln(5)
+        pdf.ln(4)
         pdf.set_fill_color(255, 243, 224)
         pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(170, 8, "  \u23F0 Цены действительны 14 дней с даты расчёта", 1, 1, "L", fill=True)
         pdf.set_fill_color(255, 255, 255)
 
-        pdf.ln(5)
+        pdf.ln(4)
         pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(0, 7, "О компании «Комфортный дом»:", 0, 1, "L")
         pdf.set_font('DejaVu', '', 9)
-        company_info = [
-            "Более 8 лет на рынке биоклиматических пергол",
-            "Официальный дилер Decolife в России",
-            "Работаем в 12 регионах РФ",
-            "Комплексные решения: проект, поставка, монтаж",
-        ]
-        for ci in company_info:
+        for ci in ["Более 8 лет на рынке биоклиматических пергол", "Официальный дилер Decolife в России", "Работаем в 12 регионах РФ", "Комплексные решения: проект, поставка, монтаж"]:
             pdf.cell(5, 5, "\u2022", 0, 0, "L")
             pdf.cell(0, 5, ci, 0, 1, "L")
 
-        contact_info_height = 80
-        
-        if 297 - pdf.get_y() < contact_info_height:
-            pdf.add_page()
-        else:
-            pdf.ln(10)
-            
+        pdf.ln(6)
         pdf.chapter_title("Примечания:")
-        
-        pdf.set_font('DejaVu', '', 10)
-        notes = [
-            "1. Расчет является предварительным и может быть уточнен при обращении в компанию.",
-            "2. Срок действия предложения: 14 дней с даты расчета.",
-            "3. Срок поставки: 6 недель с момента подтверждения заказа.",
-            "4. Условия оплаты: 80% предоплата, 20% после монтажа.",
-        ]
-        for note in notes:
-            pdf.cell(0, 6, note, 0, 1)
-        
-        pdf.ln(10)
+        pdf.set_font('DejaVu', '', 9)
+        for note in ["1. Расчет предварительный, уточняется при обращении.", "2. Срок действия: 14 дней.", "3. Срок поставки: 6 недель.", "4. Оплата: 80% предоплата, 20% после монтажа."]:
+            pdf.cell(0, 5, note, 0, 1)
+
+        pdf.ln(6)
         pdf.line(20, pdf.get_y(), 190, pdf.get_y())
-        pdf.ln(5)
-        
+        pdf.ln(4)
         pdf.set_font('DejaVu', 'B', 11)
         pdf.cell(0, 6, 'Компания «Комфортный дом»', 0, 1, 'L')
         pdf.set_font('DejaVu', '', 9)

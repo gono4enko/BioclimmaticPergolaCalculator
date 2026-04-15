@@ -52,6 +52,7 @@
     <div class="container">
         <h1 class="display-4 fw-bold">Биоклиматические перголы</h1>
         <p class="lead mb-4">Создайте идеальную атмосферу для вашего отдыха с нашими современными перголами</p>
+        <div class="installation-counter" id="install-counter" style="margin:0 auto 1.5rem;max-width:320px;border-radius:12px;padding:0.8rem;color:#fff;text-align:center;display:none;"></div>
         <a href="{{ url_for('main.calculator') }}" class="btn btn-primary btn-lg px-4 me-2">Рассчитать стоимость</a>
         <a href="{{ url_for('main.catalog') }}" class="btn btn-outline-light btn-lg px-4">Каталог</a>
     </div>
@@ -172,5 +173,26 @@
             observer.observe(el);
         });
     });
+
+    fetch('/api/promotions')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) return;
+            var counterEl = document.getElementById('install-counter');
+            if (counterEl && data.install_count > 0) {
+                var n = data.install_count;
+                var m100 = n % 100;
+                var m10 = n % 10;
+                var word;
+                if (m100 >= 11 && m100 <= 14) word = 'ПЕРГОЛ';
+                else if (m10 === 1) word = 'ПЕРГОЛА';
+                else if (m10 >= 2 && m10 <= 4) word = 'ПЕРГОЛЫ';
+                else word = 'ПЕРГОЛ';
+                counterEl.style.background = 'linear-gradient(135deg, ' + data.counter_color + ', ' + data.counter_color + 'CC)';
+                counterEl.innerHTML = '<div style="font-size:1.5rem;font-weight:700;">' + n + ' ' + word + '</div><div style="font-size:0.85rem;">установлено в ' + data.year + ' году</div>';
+                counterEl.style.display = 'block';
+            }
+        })
+        .catch(function() {});
 </script>
 {% endblock %}

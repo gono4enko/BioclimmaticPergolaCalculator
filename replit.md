@@ -95,11 +95,12 @@ PostgreSQL через DATABASE_URL
 - **Decolife контент**: `flask_app/static/decolife/{b500,b700,b600}/data.json` — описания, особенности, преимущества
 - **API**: `/api/decolife-data/<pergola_type>` — возвращает JSON с маркетинговым контентом
 - **Имя заказчика**: необязательное поле в Step 4, передаётся в PDF и отображается в KP
-- **Маркетинговые блоки**: KP-заголовок, urgency-баннер (14 дней), цена-герой (80/20), о модели, особенности, преимущества, спецификация, стоимость, upsell-карточки, галерея, гарантии, о компании (счётчик), этапы, CTA
-- **Decolife в PDF**: описание модели + особенности из data.json включены в PDF
-- **Decolife fetcher**: `scripts/fetch_decolife.py` — загрузка/обновление контента, fallback на встроенные данные; автобутстрап при старте
+- **Web KP 10 блоков**: 1) Заголовок (номер+дата+14дней), 2) Цена-герой (urgency+80/20), 3) О модели + фото Decolife, 4) Особенности, 5) Преимущества, 6) Спецификация (micro-hints), 7) Стоимость/сравнение, 8) Гарантии+компания (счётчик), 9) Этапы+upsell, 10) Галерея+CTA
+- **PDF 6 страниц**: P1=Hero cover (синий header, фото, цена, KP#), P2=Decolife описание+фото+параметры+спецификация, P3=Стоимость+варианты оплаты+сравнение, P4=Описание перголы (condensed), P5=Галерея, P6=Гарантии+upsell+примечания+контакты
+- **Decolife fetcher**: `scripts/fetch_decolife.py` — загрузка/обновление контента, fallback на встроенные данные; автобутстрап+persist при старте
+- **Счётчик на главной**: `index.html` → `#install-counter` в Hero секции + fetch `/api/promotions`
 - **CSS**: `.kp-section`, `.kp-block`, `.kp-price-hero`, `.kp-urgency-banner`, `.kp-upsell-grid`, `.kp-gallery-grid`, `.kp-payment-terms`
-- **Static cache**: CSS/JS v21
+- **Static cache**: CSS/JS v22
 
 ## Визуальные компоненты
 - Hero-секция с параллакс-эффектом (`hero_pergola.jpg`)

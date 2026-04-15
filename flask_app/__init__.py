@@ -75,9 +75,17 @@ def create_app(test_config=None):
             from scripts.fetch_decolife import ensure_data_files, fetch_and_parse
             ensure_data_files()
             import threading
+            _deco_dir = os.path.join(app.root_path, 'static', 'decolife')
             def _bg_fetch():
                 try:
-                    fetch_and_parse()
+                    results = fetch_and_parse()
+                    if results:
+                        import json as _json
+                        for key, data in results.items():
+                            dp = os.path.join(_deco_dir, key, 'data.json')
+                            os.makedirs(os.path.dirname(dp), exist_ok=True)
+                            with open(dp, 'w', encoding='utf-8') as f:
+                                _json.dump(data, f, ensure_ascii=False, indent=2)
                 except Exception:
                     pass
             threading.Thread(target=_bg_fetch, daemon=True).start()
