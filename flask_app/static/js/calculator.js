@@ -43,12 +43,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var PERGOLA_VIDEOS = {
         'B500NEW': [
-            {id: 'e51c7aaa6b00e9c125bbcdb92866b626', type: 'shorts', title: '\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B500 \u0432 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0438'},
+            {id: '351f7009cda5991ef24138f05f7a8692', type: 'shorts', title: '\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B500 \u0432 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0438'},
             {id: 'df0131deee13f2a2fd945146aacaeed8', type: 'full', title: '\u041E\u0431\u0437\u043E\u0440 \u0431\u0438\u043E\u043A\u043B\u0438\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0439 \u043F\u0435\u0440\u0433\u043E\u043B\u044B'}
         ],
         'B700NEW': [
-            {id: 'f281d74466c7636d0e30186a7db3e70d', type: 'shorts', title: '\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B700 \u2014 \u043F\u043E\u0432\u043E\u0440\u043E\u0442 \u0438 \u0441\u0434\u0432\u0438\u0433'},
-            {id: '351f7009cda5991ef24138f05f7a8692', type: 'full', title: 'B700 \u2014 \u043F\u0440\u0435\u043C\u0438\u0430\u043B\u044C\u043D\u0430\u044F \u043F\u0435\u0440\u0433\u043E\u043B\u0430'}
+            {id: 'e51c7aaa6b00e9c125bbcdb92866b626', type: 'shorts', title: '\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B700 \u2014 \u043F\u043E\u0432\u043E\u0440\u043E\u0442 \u0438 \u0441\u0434\u0432\u0438\u0433'},
+            {id: 'f281d74466c7636d0e30186a7db3e70d', type: 'full', title: 'B700 \u2014 \u043F\u0440\u0435\u043C\u0438\u0430\u043B\u044C\u043D\u0430\u044F \u043F\u0435\u0440\u0433\u043E\u043B\u0430'}
         ],
         'B600': [
             {id: 'b01e73426cb0d008adbb72a544ec6f18', type: 'full', title: '\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B600 \u2014 PIR \u043A\u0440\u044B\u0448\u0430'},
@@ -952,10 +952,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         /* Block 10: Videos + Gallery + CTA */
         var allVids = [
-            {id:'e51c7aaa6b00e9c125bbcdb92866b626', type:'shorts', title:'\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B500', group:'bio'},
+            {id:'351f7009cda5991ef24138f05f7a8692', type:'shorts', title:'\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B500', group:'bio'},
             {id:'df0131deee13f2a2fd945146aacaeed8', type:'full', title:'\u041E\u0431\u0437\u043E\u0440 \u0431\u0438\u043E\u043A\u043B\u0438\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0439 \u043F\u0435\u0440\u0433\u043E\u043B\u044B', group:'bio'},
-            {id:'f281d74466c7636d0e30186a7db3e70d', type:'shorts', title:'\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B700', group:'bio'},
-            {id:'351f7009cda5991ef24138f05f7a8692', type:'full', title:'B700 \u2014 \u043F\u0440\u0435\u043C\u0438\u0430\u043B\u044C\u043D\u0430\u044F \u043F\u0435\u0440\u0433\u043E\u043B\u0430', group:'bio'},
+            {id:'e51c7aaa6b00e9c125bbcdb92866b626', type:'shorts', title:'\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B700', group:'bio'},
+            {id:'f281d74466c7636d0e30186a7db3e70d', type:'full', title:'B700 \u2014 \u043F\u0440\u0435\u043C\u0438\u0430\u043B\u044C\u043D\u0430\u044F \u043F\u0435\u0440\u0433\u043E\u043B\u0430', group:'bio'},
             {id:'b01e73426cb0d008adbb72a544ec6f18', type:'full', title:'\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B600 \u2014 PIR \u043A\u0440\u044B\u0448\u0430', group:'pir'},
             {id:'ca7d582f5793c56641c7c6c3ecef4cfa', type:'full', title:'B600 \u2014 \u0432\u0441\u0435\u0441\u0435\u0437\u043E\u043D\u043D\u0430\u044F \u0442\u0435\u0440\u0440\u0430\u0441\u0430', group:'pir'}
         ];
