@@ -950,25 +950,7 @@ document.addEventListener('DOMContentLoaded', function() {
             '<div class="kp-upsell-card"><div class="kp-upsell-icon">\uD83D\uDCA1</div><div class="kp-upsell-title">LED \u043E\u0441\u0432\u0435\u0449\u0435\u043D\u0438\u0435</div></div>' +
             '</div></div>';
 
-        /* Block 10: Gallery + CTA */
-        var galleryImages = [
-            'IMG_5914.jpg',
-            'pergola_b500_garden_view.jpg',
-            'pergola_b700_poolside.jpg',
-            'pergola_evening_lighting.jpg',
-            'pergola_b500_led_lighting.jpg',
-            'pergola_panoramic_glass_walls.jpg',
-            'IMG_0672_2_882acf32.jpg',
-            'IMG_0748_827e14fe.jpg'
-        ];
-        html += '<div class="kp-block">' +
-            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83D\uDCF7</div><div class="kp-block-title">\u0420\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u043F\u0440\u043E\u0435\u043A\u0442\u044B</div></div>' +
-            '<div class="kp-gallery-grid">';
-        galleryImages.forEach(function(img, idx) {
-            html += '<div class="kp-gallery-item"><img src="/static/images/gallery/' + img + '" alt="\u041F\u0440\u043E\u0435\u043A\u0442 ' + (idx+1) + '" onerror="this.parentElement.style.display=\'none\'"></div>';
-        });
-        html += '</div></div>';
-
+        /* Block 10: Videos + Gallery + CTA */
         var allVids = [
             {id:'e51c7aaa6b00e9c125bbcdb92866b626', type:'shorts', title:'\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B500', group:'bio'},
             {id:'df0131deee13f2a2fd945146aacaeed8', type:'full', title:'\u041E\u0431\u0437\u043E\u0440 \u0431\u0438\u043E\u043A\u043B\u0438\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0439 \u043F\u0435\u0440\u0433\u043E\u043B\u044B', group:'bio'},
@@ -993,6 +975,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<iframe data-src="https://rutube.ru/play/embed/' + v.id + '" frameborder="0" allowfullscreen allow="autoplay" loading="lazy"></iframe>' +
                 '</div>' +
                 '<div class="video-card-title">' + v.title + '</div></div>';
+        });
+        html += '</div></div>';
+
+        var galleryImages = [
+            'IMG_5914.jpg',
+            'pergola_b500_garden_view.jpg',
+            'pergola_b700_poolside.jpg',
+            'pergola_evening_lighting.jpg',
+            'pergola_b500_led_lighting.jpg',
+            'pergola_panoramic_glass_walls.jpg',
+            'IMG_0672_2_882acf32.jpg',
+            'IMG_0748_827e14fe.jpg'
+        ];
+        html += '<div class="kp-block">' +
+            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83D\uDCF7</div><div class="kp-block-title">\u0420\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u043F\u0440\u043E\u0435\u043A\u0442\u044B</div></div>' +
+            '<div class="kp-gallery-grid">';
+        galleryImages.forEach(function(img, idx) {
+            html += '<div class="kp-gallery-item"><img src="/static/images/gallery/' + img + '" alt="\u041F\u0440\u043E\u0435\u043A\u0442 ' + (idx+1) + '" onerror="this.parentElement.style.display=\'none\'"></div>';
         });
         html += '</div></div>';
 
