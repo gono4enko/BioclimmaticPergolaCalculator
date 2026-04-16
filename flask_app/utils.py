@@ -31,6 +31,37 @@ except (ValueError, TypeError):
 HEALTH_CHECK_GRACE_MULTIPLIER = 2
 
 
+def send_telegram_alert(message):
+    """
+    Отправляет уведомление администратору через Telegram-бота.
+
+    Использует переменные окружения TG_BOT_TOKEN и TG_ADMIN_CHAT_ID
+    (с фолбэком на TG_CHAT_ID). Если конфигурация отсутствует или
+    отправка не удалась — пишет в лог и возвращает False.
+    """
+    token = os.environ.get('TG_BOT_TOKEN')
+    chat_id = os.environ.get('TG_ADMIN_CHAT_ID') or os.environ.get('TG_CHAT_ID')
+    if not token or not chat_id:
+        logger.warning(
+            "Telegram alert not sent (TG_BOT_TOKEN/TG_ADMIN_CHAT_ID not configured): %s",
+            message,
+        )
+        return False
+    try:
+        import urllib.request as ur
+        payload = json.dumps({'chat_id': chat_id, 'text': message}).encode()
+        req = ur.Request(
+            f'https://api.telegram.org/bot{token}/sendMessage',
+            data=payload,
+            headers={'Content-Type': 'application/json'},
+        )
+        ur.urlopen(req, timeout=8)
+        return True
+    except Exception as exc:
+        logger.warning("Failed to send Telegram alert: %s | message=%s", exc, message)
+        return False
+
+
 def check_scheduler_health():
     last_dt = cleanup_metrics.get('last_run_dt')
     if last_dt is None:

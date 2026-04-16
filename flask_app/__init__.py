@@ -39,20 +39,53 @@ def _start_cleanup_scheduler(app, cleanup_fn):
 
     try:
         from apscheduler.schedulers.background import BackgroundScheduler
+        import threading as _threading
+        import time as _time
         scheduler = BackgroundScheduler(daemon=True)
+
+        try:
+            alert_cooldown_seconds = max(
+                60, int(os.environ.get('SCHEDULER_ALERT_COOLDOWN_SECONDS', 3600))
+            )
+        except (ValueError, TypeError):
+            alert_cooldown_seconds = 3600
+
+        alert_state = {'last_sent': 0.0, 'last_status': None, 'was_unhealthy': False}
 
         def _run_cleanup():
             with app.app_context():
                 cleanup_fn()
 
         def _watchdog_check():
-            from flask_app.utils import check_scheduler_health
+            from flask_app.utils import check_scheduler_health, send_telegram_alert
             health = check_scheduler_health()
             if not health['healthy']:
                 _logger.warning(
                     "SCHEDULER ALERT: %s (status=%s)",
                     health['message'], health['status']
                 )
+
+                now_ts = _time.time()
+                status_changed = alert_state['last_status'] != health['status']
+                cooldown_elapsed = (
+                    now_ts - alert_state['last_sent']
+                ) >= alert_cooldown_seconds
+                if status_changed or cooldown_elapsed:
+                    alert_text = (
+                        "⚠️ Pergola: cleanup scheduler stalled\n"
+                        f"Status: {health['status']}\n"
+                        f"Details: {health['message']}\n"
+                        f"Last run: {health.get('last_run') or 'never'}"
+                    )
+                    _threading.Thread(
+                        target=send_telegram_alert,
+                        args=(alert_text,),
+                        daemon=True,
+                    ).start()
+                    alert_state['last_sent'] = now_ts
+                    alert_state['last_status'] = health['status']
+                alert_state['was_unhealthy'] = True
+
                 job = scheduler.get_job('cleanup_old_calculations')
                 if job is None or not scheduler.running:
                     _logger.error(
@@ -70,6 +103,20 @@ def _start_cleanup_scheduler(app, cleanup_fn):
                         _logger.info("Scheduler recovery attempted successfully")
                     except Exception as recover_exc:
                         _logger.error("Scheduler recovery failed: %s", recover_exc)
+            else:
+                if alert_state['was_unhealthy']:
+                    recovery_text = (
+                        "✅ Pergola: cleanup scheduler recovered\n"
+                        f"Status: {health['status']}\n"
+                        f"Details: {health['message']}"
+                    )
+                    _threading.Thread(
+                        target=send_telegram_alert,
+                        args=(recovery_text,),
+                        daemon=True,
+                    ).start()
+                alert_state['was_unhealthy'] = False
+                alert_state['last_status'] = health['status']
 
         scheduler.add_job(_run_cleanup, 'interval', hours=hours, id='cleanup_old_calculations')
         scheduler.add_job(
