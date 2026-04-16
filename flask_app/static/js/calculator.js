@@ -784,11 +784,15 @@ document.addEventListener('DOMContentLoaded', function() {
         return found;
     }
 
+    function findMoForResult(r) {
+        var spec = findMatchedSpecForResult(r);
+        return spec && spec.max_overhang ? spec.max_overhang : null;
+    }
+
     function updateSchemeForVariant(r) {
         var block = document.getElementById('kp-scheme-block');
         if (!block) return;
-        var spec = findMatchedSpecForResult(r);
-        var mo = spec && spec.max_overhang ? spec.max_overhang : null;
+        var mo = findMoForResult(r);
         state._maxOverhang = mo;
         var w = block.dataset.w, l = block.dataset.l, m = block.dataset.m;
         var pir = block.dataset.pir === '1';
@@ -973,15 +977,17 @@ document.addEventListener('DOMContentLoaded', function() {
             var isPir = state.pergolaType === 'B600';
             var lamMm = state.lamellaSize === '200' ? 200 : 250;
             var lamCnt = isPir ? '' : Math.floor(schL * 1000 / lamMm);
+            var moLocal = findMoForResult(mainResult);
+            if (moLocal) state._maxOverhang = moLocal;
             var qs = 'w=' + schW + '&l=' + schL + '&m=' + schM +
                 (lamCnt !== '' ? '&lc=' + lamCnt : '') +
-                (state._maxOverhang ? '&mo=' + state._maxOverhang : '') +
+                (moLocal ? '&mo=' + moLocal : '') +
                 (isPir ? '&pir=1' : '');
-            var needsExtra = state._maxOverhang && schL > state._maxOverhang + 0.001;
+            var needsExtra = moLocal && schL > moLocal + 0.001;
             var pergolaH = state._pergolaHeight || 3.0;
             var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM;
-            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (state._maxOverhang ? '&mo=' + state._maxOverhang : '');
-            var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (state._maxOverhang ? '&mo=' + state._maxOverhang : '') + '&v=55';
+            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (moLocal ? '&mo=' + moLocal : '');
+            var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + '&v=56';
             var isoBlock = (!isPir && lamCnt) ? (
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)</div>' +
                 '<img id="kp-iso-img" src="/api/pergola-iso.svg?' + iqs + '" alt="\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F" style="max-width:100%;height:auto;"></div>'
