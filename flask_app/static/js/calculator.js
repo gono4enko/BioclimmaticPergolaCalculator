@@ -585,6 +585,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 state.result = r;
                 var container = document.getElementById('variant-detail-container');
                 container.innerHTML = buildVariantDetail(r);
+                updateSchemeForVariant(r);
                 setTimeout(function() {
                     container.scrollIntoView({behavior: 'smooth', block: 'start'});
                 }, 100);
@@ -758,6 +759,46 @@ document.addEventListener('DOMContentLoaded', function() {
         return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    function findMatchedSpecForResult(r) {
+        if (!r || !r.selected_variant || !state.variantsData) return null;
+        var sv = r.selected_variant;
+        var sls = r.lamella_size || state.lamellaSize || '';
+        var found = null;
+        state.variantsData.forEach(function(v) {
+            if (v.variant === sv && (!sls || v.lamella_size === sls)) found = v;
+        });
+        if (!found) {
+            state.variantsData.forEach(function(v) { if (v.variant === sv) found = v; });
+        }
+        return found;
+    }
+
+    function updateSchemeForVariant(r) {
+        var block = document.getElementById('kp-scheme-block');
+        if (!block) return;
+        var spec = findMatchedSpecForResult(r);
+        var mo = spec && spec.max_overhang ? spec.max_overhang : null;
+        state._maxOverhang = mo;
+        var w = block.dataset.w, l = block.dataset.l, m = block.dataset.m;
+        var pir = block.dataset.pir === '1';
+        var lc = block.dataset.lc;
+        var qs = 'w=' + w + '&l=' + l + '&m=' + m +
+            (lc ? '&lc=' + lc : '') +
+            (mo ? '&mo=' + mo : '') +
+            (pir ? '&pir=1' : '');
+        var img = document.getElementById('kp-scheme-img');
+        if (img) img.src = '/api/pergola-scheme.svg?' + qs;
+        var warn = document.getElementById('kp-scheme-warn');
+        if (warn) {
+            var lf = parseFloat(l);
+            var needs = mo && lf > mo + 0.001;
+            warn.style.display = needs ? 'block' : 'none';
+            if (needs) {
+                warn.innerHTML = '\u26A0\uFE0F \u0412\u044B\u043D\u043E\u0441 ' + lf + ' \u043C \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C \u0431\u0435\u0437 \u0434\u043E\u043F. \u043E\u043F\u043E\u0440 (' + mo + ' \u043C). \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u044B \u043F\u0440\u043E\u043C\u0435\u0436\u0443\u0442\u043E\u0447\u043D\u044B\u0435 \u043A\u043E\u043B\u043E\u043D\u043D\u044B \u043F\u043E \u0446\u0435\u043D\u0442\u0440\u0443.';
+            }
+        }
+    }
+
     function buildMarketingKP(resultOrResults, decoData) {
         var isAll = Array.isArray(resultOrResults);
         var mainResult = isAll ? resultOrResults[0] : resultOrResults;
@@ -909,10 +950,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 (state._maxOverhang ? '&mo=' + state._maxOverhang : '') +
                 (isPir ? '&pir=1' : '');
             var needsExtra = state._maxOverhang && schL > state._maxOverhang + 0.001;
-            html += '<div class="kp-block">' +
+            html += '<div class="kp-block" id="kp-scheme-block" data-w="' + schW + '" data-l="' + schL + '" data-m="' + schM + '" data-pir="' + (isPir ? '1' : '0') + '" data-lc="' + lamCnt + '">' +
                 '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83D\uDCD0</div><div class="kp-block-title">\u0421\u0445\u0435\u043C\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B (\u0432\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443)</div></div>' +
-                '<div style="text-align:center;"><img src="/api/pergola-scheme.svg?' + qs + '" alt="\u0421\u0445\u0435\u043C\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B" style="max-width:100%;height:auto;"></div>' +
-                (needsExtra ? '<div style="margin-top:0.6rem;padding:0.6rem 0.8rem;background:#fff8e1;border-left:3px solid #f59e0b;font-size:0.88rem;color:#5d4a00;">\u26A0\uFE0F \u0412\u044B\u043D\u043E\u0441 ' + schL + ' \u043C \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C \u0431\u0435\u0437 \u0434\u043E\u043F. \u043E\u043F\u043E\u0440 (' + state._maxOverhang + ' \u043C). \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u044B \u043F\u0440\u043E\u043C\u0435\u0436\u0443\u0442\u043E\u0447\u043D\u044B\u0435 \u043A\u043E\u043B\u043E\u043D\u043D\u044B \u043F\u043E \u0446\u0435\u043D\u0442\u0440\u0443.</div>' : '') +
+                '<div style="text-align:center;"><img id="kp-scheme-img" src="/api/pergola-scheme.svg?' + qs + '" alt="\u0421\u0445\u0435\u043C\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B" style="max-width:100%;height:auto;"></div>' +
+                '<div id="kp-scheme-warn" style="display:' + (needsExtra ? 'block' : 'none') + ';margin-top:0.6rem;padding:0.6rem 0.8rem;background:#fff8e1;border-left:3px solid #f59e0b;font-size:0.88rem;color:#5d4a00;">' +
+                (needsExtra ? '\u26A0\uFE0F \u0412\u044B\u043D\u043E\u0441 ' + schL + ' \u043C \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C \u0431\u0435\u0437 \u0434\u043E\u043F. \u043E\u043F\u043E\u0440 (' + state._maxOverhang + ' \u043C). \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u044B \u043F\u0440\u043E\u043C\u0435\u0436\u0443\u0442\u043E\u0447\u043D\u044B\u0435 \u043A\u043E\u043B\u043E\u043D\u043D\u044B \u043F\u043E \u0446\u0435\u043D\u0442\u0440\u0443.' : '') +
+                '</div>' +
                 '</div>';
         }
 
