@@ -150,23 +150,35 @@ def load_calculation(calc_id):
 
 
 def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=None):
-    svg_w = 300
-    svg_h = 220
-    margin = 40
+    svg_w = 320
+    svg_h = 240
+    margin = 44
     rect_w = svg_w - 2 * margin
     rect_h = svg_h - 2 * margin
     area = round(width * length, 1)
 
     arrow_color = '#1a3a6e'
-    rect_color = '#e8eef6'
-    stroke_color = '#1a3a6e'
-    tray_color = '#1a3a6e'
-    tray_fill = '#cfe0f5'
+    inner_fill = '#eef3fa'
+    beam_color = '#1a3a6e'
+    beam_fill = '#9fb8d6'
+    column_fill = '#1a3a6e'
+    lamella_color = '#5d7da8'
     text_color = '#333'
     dim_font = '13px'
     label_font = '10px'
 
-    TRAY_WIDTH_M = 0.28
+    BEAM_WIDTH_M = 0.164
+    CENTER_BEAM_WIDTH_M = 0.28
+    COLUMN_M = 0.164
+
+    px_per_m_x = rect_w / max(width, 0.1) if width else 0
+    px_per_m_y = rect_h / max(length, 0.1) if length else 0
+
+    beam_px_x = max(3.0, BEAM_WIDTH_M * px_per_m_x)
+    beam_px_y = max(3.0, BEAM_WIDTH_M * px_per_m_y)
+    center_beam_px = max(4.0, CENTER_BEAM_WIDTH_M * px_per_m_x)
+    col_px_x = max(4.0, COLUMN_M * px_per_m_x)
+    col_px_y = max(4.0, COLUMN_M * px_per_m_y)
 
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}" width="{svg_w}" height="{svg_h}">'
     svg += '<defs><marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">'
@@ -176,38 +188,77 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
 
     rx = margin
     ry = margin
-    svg += f'<rect x="{rx}" y="{ry}" width="{rect_w}" height="{rect_h}" fill="{rect_color}" stroke="{stroke_color}" stroke-width="2" rx="3"/>'
 
-    px_per_m = rect_w / max(width, 0.1) if width else 0
-    tray_px = max(3.0, TRAY_WIDTH_M * px_per_m) if px_per_m else 0
+    svg += (f'<rect x="{rx}" y="{ry}" width="{rect_w}" height="{rect_h}" '
+            f'fill="{beam_fill}" stroke="{beam_color}" stroke-width="1"/>')
+
+    inner_x = rx + beam_px_x
+    inner_y = ry + beam_px_y
+    inner_w = rect_w - 2 * beam_px_x
+    inner_h = rect_h - 2 * beam_px_y
 
     if is_pir:
         panel_count = max(1, modules)
         for i in range(1, panel_count):
-            px = rx + (rect_w / panel_count) * i
-            svg += f'<line x1="{px}" y1="{ry}" x2="{px}" y2="{ry + rect_h}" stroke="{stroke_color}" stroke-width="1.2"/>'
+            mx = rx + (rect_w / panel_count) * i
+            svg += (f'<rect x="{mx - beam_px_x / 2}" y="{ry}" width="{beam_px_x}" height="{rect_h}" '
+                    f'fill="{beam_fill}" stroke="{beam_color}" stroke-width="0.8"/>')
+
+        seg_w = (inner_w - (panel_count - 1) * beam_px_x) / panel_count
+        for i in range(panel_count):
+            sx = inner_x + i * (seg_w + beam_px_x)
+            svg += (f'<rect x="{sx}" y="{inner_y}" width="{seg_w}" height="{inner_h}" '
+                    f'fill="{inner_fill}" stroke="none"/>')
+
         cx = rx + rect_w / 2
         cy = ry + rect_h / 2
-        svg += f'<text x="{cx}" y="{cy - 8}" text-anchor="middle" font-size="{label_font}" fill="{text_color}">PIR панели</text>'
+        svg += f'<text x="{cx}" y="{cy - 6}" text-anchor="middle" font-size="{label_font}" fill="{text_color}">PIR панели</text>'
         svg += f'<text x="{cx}" y="{cy + 8}" text-anchor="middle" font-size="{label_font}" fill="{text_color}">{panel_count} секц.</text>'
     else:
-        lam_count = lamella_count or max(4, int(rect_h / 8))
-        spacing = rect_h / (lam_count + 1)
-        for i in range(1, lam_count + 1):
-            ly = ry + spacing * i
-            svg += f'<line x1="{rx + 4}" y1="{ly}" x2="{rx + rect_w - 4}" y2="{ly}" stroke="{stroke_color}" stroke-width="0.6" opacity="0.4"/>'
+        mod_count = max(1, modules)
+
+        for i in range(1, mod_count):
+            mx = rx + (rect_w / mod_count) * i
+            svg += (f'<rect x="{mx - center_beam_px / 2}" y="{ry}" width="{center_beam_px}" height="{rect_h}" '
+                    f'fill="{beam_fill}" stroke="{beam_color}" stroke-width="0.8"/>')
+
+        seg_w = (inner_w - (mod_count - 1) * center_beam_px) / mod_count
+        for m in range(mod_count):
+            sx = inner_x + m * (seg_w + center_beam_px)
+            svg += (f'<rect x="{sx}" y="{inner_y}" width="{seg_w}" height="{inner_h}" '
+                    f'fill="{inner_fill}" stroke="none"/>')
+
+            lam_count = lamella_count or max(4, int(inner_h / 7))
+            if mod_count > 1 and lamella_count:
+                lam_count = max(2, int(round(lamella_count / mod_count)))
+            spacing = inner_h / (lam_count + 1)
+            for k in range(1, lam_count + 1):
+                ly = inner_y + spacing * k
+                svg += (f'<line x1="{sx + 1}" y1="{ly}" x2="{sx + seg_w - 1}" y2="{ly}" '
+                        f'stroke="{lamella_color}" stroke-width="0.5" opacity="0.55"/>')
+
         cx = rx + rect_w / 2
         cy = ry + rect_h / 2
-        svg += f'<text x="{cx}" y="{cy}" text-anchor="middle" font-size="{label_font}" fill="{text_color}">{lam_count} ламелей</text>'
+        total_lam = lamella_count or max(4, int(inner_h / 7))
+        svg += f'<text x="{cx}" y="{cy + 4}" text-anchor="middle" font-size="{label_font}" fill="{text_color}">{total_lam} ламелей</text>'
 
-    if modules > 1 and not is_pir:
+    col_count_x = max(2, modules + 1)
+    col_xs = []
+    if col_count_x == 2:
+        col_xs = [rx + col_px_x / 2, rx + rect_w - col_px_x / 2]
+    else:
+        col_xs.append(rx + col_px_x / 2)
         for i in range(1, modules):
-            mx = rx + (rect_w / modules) * i
-            tx = mx - tray_px / 2
-            svg += (f'<rect x="{tx}" y="{ry}" width="{tray_px}" height="{rect_h}" '
-                    f'fill="{tray_fill}" stroke="{tray_color}" stroke-width="1"/>')
-            svg += (f'<line x1="{mx}" y1="{ry}" x2="{mx}" y2="{ry + rect_h}" '
-                    f'stroke="{tray_color}" stroke-width="0.8"/>')
+            col_xs.append(rx + (rect_w / modules) * i)
+        col_xs.append(rx + rect_w - col_px_x / 2)
+
+    col_ys = [ry + col_px_y / 2, ry + rect_h - col_px_y / 2]
+
+    for cxp in col_xs:
+        for cyp in col_ys:
+            svg += (f'<rect x="{cxp - col_px_x / 2}" y="{cyp - col_px_y / 2}" '
+                    f'width="{col_px_x}" height="{col_px_y}" '
+                    f'fill="{column_fill}" stroke="{column_fill}" stroke-width="0.5"/>')
 
     arrow_y = ry + rect_h + 25
     svg += f'<line x1="{rx}" y1="{arrow_y}" x2="{rx + rect_w}" y2="{arrow_y}" stroke="{arrow_color}" stroke-width="1.5" marker-start="url(#aht)" marker-end="url(#ah)"/>'
