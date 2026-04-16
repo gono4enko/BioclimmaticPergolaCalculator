@@ -160,9 +160,13 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
     arrow_color = '#1a3a6e'
     rect_color = '#e8eef6'
     stroke_color = '#1a3a6e'
+    tray_color = '#1a3a6e'
+    tray_fill = '#cfe0f5'
     text_color = '#333'
     dim_font = '13px'
     label_font = '10px'
+
+    TRAY_WIDTH_M = 0.28
 
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}" width="{svg_w}" height="{svg_h}">'
     svg += '<defs><marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">'
@@ -174,11 +178,14 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
     ry = margin
     svg += f'<rect x="{rx}" y="{ry}" width="{rect_w}" height="{rect_h}" fill="{rect_color}" stroke="{stroke_color}" stroke-width="2" rx="3"/>'
 
+    px_per_m = rect_w / max(width, 0.1) if width else 0
+    tray_px = max(3.0, TRAY_WIDTH_M * px_per_m) if px_per_m else 0
+
     if is_pir:
         panel_count = max(1, modules)
         for i in range(1, panel_count):
             px = rx + (rect_w / panel_count) * i
-            svg += f'<line x1="{px}" y1="{ry}" x2="{px}" y2="{ry + rect_h}" stroke="{stroke_color}" stroke-width="0.8" stroke-dasharray="6,3"/>'
+            svg += f'<line x1="{px}" y1="{ry}" x2="{px}" y2="{ry + rect_h}" stroke="{stroke_color}" stroke-width="1.2"/>'
         cx = rx + rect_w / 2
         cy = ry + rect_h / 2
         svg += f'<text x="{cx}" y="{cy - 8}" text-anchor="middle" font-size="{label_font}" fill="{text_color}">PIR панели</text>'
@@ -193,10 +200,14 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
         cy = ry + rect_h / 2
         svg += f'<text x="{cx}" y="{cy}" text-anchor="middle" font-size="{label_font}" fill="{text_color}">{lam_count} ламелей</text>'
 
-    if modules > 1:
+    if modules > 1 and not is_pir:
         for i in range(1, modules):
             mx = rx + (rect_w / modules) * i
-            svg += f'<line x1="{mx}" y1="{ry - 2}" x2="{mx}" y2="{ry + rect_h + 2}" stroke="#c00" stroke-width="1.5" stroke-dasharray="4,2"/>'
+            tx = mx - tray_px / 2
+            svg += (f'<rect x="{tx}" y="{ry}" width="{tray_px}" height="{rect_h}" '
+                    f'fill="{tray_fill}" stroke="{tray_color}" stroke-width="1"/>')
+            svg += (f'<line x1="{mx}" y1="{ry}" x2="{mx}" y2="{ry + rect_h}" '
+                    f'stroke="{tray_color}" stroke-width="0.8"/>')
 
     arrow_y = ry + rect_h + 25
     svg += f'<line x1="{rx}" y1="{arrow_y}" x2="{rx + rect_w}" y2="{arrow_y}" stroke="{arrow_color}" stroke-width="1.5" marker-start="url(#aht)" marker-end="url(#ah)"/>'
