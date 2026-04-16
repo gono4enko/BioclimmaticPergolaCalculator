@@ -388,14 +388,6 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     col_left_x = ox + pad_px
     col_right_x = ox + real_w_px - pad_px - col_w_px
 
-    beam_x = col_left_x
-    beam_w = (col_right_x + col_w_px) - col_left_x
-    svg += (f'<rect x="{beam_x}" y="{pergola_top}" width="{beam_w}" height="{beam_h_px}" '
-            f'fill="{beam_fill}" stroke="{beam_color}" stroke-width="1"/>')
-
-    col_top_y = pergola_top + beam_h_px
-    col_h_px = pergola_bottom - col_top_y
-
     col_xs = [col_left_x, col_right_x]
     inner_span_m = width - COLUMN_W_M
     needs_extra = (max_overhang is not None and inner_span_m > max_overhang + 0.001)
@@ -407,9 +399,17 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     elif needs_extra:
         col_xs.append(ox + real_w_px / 2 - col_w_px / 2)
 
+    col_top_y = pergola_top
+    col_h_px = pergola_bottom - pergola_top
+
     for cxp in col_xs:
         svg += (f'<rect x="{cxp}" y="{col_top_y}" width="{col_w_px}" height="{col_h_px}" '
                 f'fill="{column_fill}" stroke="{column_fill}" stroke-width="0.5"/>')
+
+    beam_x = col_left_x
+    beam_w = (col_right_x + col_w_px) - col_left_x
+    svg += (f'<rect x="{beam_x}" y="{pergola_top}" width="{beam_w}" height="{beam_h_px}" '
+            f'fill="{beam_fill}" stroke="{beam_color}" stroke-width="1"/>')
 
     svg += (f'<rect x="{ox}" y="{slab_top}" width="{real_w_px}" height="{slab_h_px}" '
             f'fill="url(#hatch)" stroke="{slab_stroke}" stroke-width="0.8"/>')
@@ -426,7 +426,7 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     svg += (f'<text x="{col_right_x + col_w_px + 4}" y="{pergola_top + beam_h_px/2 + 3}" '
             f'text-anchor="start" font-size="{small_font}" fill="{DIM_COLOR}">280</text>')
 
-    svg += (f'<text x="{col_left_x - 4}" y="{col_top_y + col_h_px/2}" text-anchor="end" '
+    svg += (f'<text x="{col_left_x - 4}" y="{col_top_y + col_h_px/2 + beam_h_px/2}" text-anchor="end" '
             f'font-size="{small_font}" fill="{DIM_COLOR}">164</text>')
 
     svg += '</svg>'
