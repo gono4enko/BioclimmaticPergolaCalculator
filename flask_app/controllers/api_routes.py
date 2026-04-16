@@ -75,10 +75,12 @@ def pergola_iso_svg():
         lc = request.args.get('lc')
         lc = int(lc) if lc and lc.isdigit() else None
         deg = float(request.args.get('deg', 55))
+        mo_raw = request.args.get('mo')
+        mo = float(mo_raw) if mo_raw else None
         if w <= 0 or l <= 0:
             return Response('', status=400)
         svg = generate_isometric_svg(width=w, length=l, height=h, lamella_count=lc,
-                                     modules=m, lamella_open_deg=deg)
+                                     modules=m, lamella_open_deg=deg, max_overhang=mo)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'public, max-age=3600'})
     except Exception:

@@ -413,7 +413,7 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None):
     return svg
 
 
-def generate_isometric_svg(width, length, height=3.0, lamella_count=None, modules=1, lamella_open_deg=55):
+def generate_isometric_svg(width, length, height=3.0, lamella_count=None, modules=1, lamella_open_deg=55, max_overhang=None):
     """3D isometric view of pergola with tilted/open lamellas.
     Camera looks from front-right-above. X = ширина (вправо-вниз),
     Z = длина (влево-вниз в глубину), Y = высота (вверх).
@@ -497,6 +497,9 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
             col_xs.append(width / mod_count * i)
         col_xs.append(width - COL_W / 2)
     col_zs = [COL_W / 2, length - COL_W / 2]
+    has_mid_z = max_overhang is not None and length > float(max_overhang) + 0.001
+    if has_mid_z:
+        col_zs.insert(1, length / 2)
 
     column_top = height - BEAM_H
 
@@ -509,7 +512,8 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
         out += quad([(x0, y0, z0), (x0, y1, z0), (x1, y1, z0), (x1, y0, z0)], col_light)
         return out
 
-    back_cols = [(cx, col_zs[1]) for cx in col_xs]
+    back_cols = [(cx, col_zs[-1]) for cx in col_xs]
+    mid_cols = [(cx, col_zs[1]) for cx in col_xs] if has_mid_z else []
     front_cols = [(cx, col_zs[0]) for cx in col_xs]
 
     back_cols.sort(key=lambda c: -c[0])
@@ -579,6 +583,11 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     svg += draw_beam(width - COL_W, width, COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
 
     svg += draw_beam(0, width, 0, COL_W, by0, by1, beam_top, beam_front, beam_side)
+
+    if mid_cols:
+        mid_cols.sort(key=lambda c: c[0])
+        for cx, cz in mid_cols:
+            svg += draw_column(cx, cz, 0, column_top)
 
     front_cols.sort(key=lambda c: c[0])
     for cx, cz in front_cols:

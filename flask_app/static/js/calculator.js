@@ -799,7 +799,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var pirAttr = block.dataset.pir === '1';
         var isoimg = document.getElementById('kp-iso-img');
         if (isoimg && !pirAttr && lcAttr) {
-            var iqs = 'w=' + w + '&l=' + l + '&h=' + pergolaH + '&m=' + m + '&lc=' + lcAttr + '&v=54';
+            var iqs = 'w=' + w + '&l=' + l + '&h=' + pergolaH + '&m=' + m + '&lc=' + lcAttr + (mo ? '&mo=' + mo : '') + '&v=55';
             isoimg.src = '/api/pergola-iso.svg?' + iqs;
         }
         var warn = document.getElementById('kp-scheme-warn');
@@ -970,7 +970,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var pergolaH = state._pergolaHeight || 3.0;
             var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM;
             var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (state._maxOverhang ? '&mo=' + state._maxOverhang : '');
-            var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + '&v=54';
+            var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (state._maxOverhang ? '&mo=' + state._maxOverhang : '') + '&v=55';
             var isoBlock = (!isPir && lamCnt) ? (
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)</div>' +
                 '<img id="kp-iso-img" src="/api/pergola-iso.svg?' + iqs + '" alt="\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F" style="max-width:100%;height:auto;"></div>'
