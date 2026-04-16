@@ -36,8 +36,10 @@ def pergola_scheme_svg():
         pir = request.args.get('pir', '0') == '1'
         if w <= 0 or l <= 0:
             return Response('', status=400)
+        ref_raw = request.args.get('ref')
+        ref = float(ref_raw) if ref_raw else None
         svg = generate_top_view_svg(width=w, length=l, modules=m,
-                                    is_pir=pir, lamella_count=lc, max_overhang=mo)
+                                    is_pir=pir, lamella_count=lc, max_overhang=mo, ref=ref)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'public, max-age=3600'})
     except Exception:
@@ -56,7 +58,10 @@ def pergola_front_svg():
         mo = float(mo) if mo else None
         if w <= 0:
             return Response('', status=400)
-        svg = generate_front_view_svg(width=w, height=h, modules=m, max_overhang=mo)
+        ref_raw = request.args.get('ref')
+        ref = float(ref_raw) if ref_raw else None
+        title = request.args.get('title') or 'Вид спереди'
+        svg = generate_front_view_svg(width=w, height=h, modules=m, max_overhang=mo, ref=ref, title=title)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'public, max-age=3600'})
     except Exception:

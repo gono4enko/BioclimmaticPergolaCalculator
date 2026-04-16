@@ -797,24 +797,25 @@ document.addEventListener('DOMContentLoaded', function() {
         var w = block.dataset.w, l = block.dataset.l, m = block.dataset.m;
         var pir = block.dataset.pir === '1';
         var lc = block.dataset.lc;
+        var pergolaH = parseFloat(block.dataset.h) || 3.0;
+        var refDim = Math.max(parseFloat(w), parseFloat(l), pergolaH);
         var qs = 'w=' + w + '&l=' + l + '&m=' + m +
             (lc ? '&lc=' + lc : '') +
             (mo ? '&mo=' + mo : '') +
-            (pir ? '&pir=1' : '');
+            (pir ? '&pir=1' : '') + '&ref=' + refDim;
         var img = document.getElementById('kp-scheme-img');
         if (img) img.src = '/api/pergola-scheme.svg?' + qs;
-        var pergolaH = parseFloat(block.dataset.h) || 3.0;
-        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m;
+        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид спереди');
         var fimg = document.getElementById('kp-front-img');
         if (fimg) fimg.src = '/api/pergola-front.svg?' + fqs;
-        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=1' + (mo ? '&mo=' + mo : '');
+        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=1' + (mo ? '&mo=' + mo : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид сбоку');
         var simg = document.getElementById('kp-side-img');
         if (simg) simg.src = '/api/pergola-front.svg?' + sqs;
         var lcAttr = block.dataset.lc;
         var pirAttr = block.dataset.pir === '1';
         var isoimg = document.getElementById('kp-iso-img');
         if (isoimg && !pirAttr && lcAttr) {
-            var iqs = 'w=' + w + '&l=' + l + '&h=' + pergolaH + '&m=' + m + '&lc=' + lcAttr + (mo ? '&mo=' + mo : '') + '&v=55';
+            var iqs = 'w=' + w + '&l=' + l + '&h=' + pergolaH + '&m=' + m + '&lc=' + lcAttr + (mo ? '&mo=' + mo : '') + '&v=57';
             isoimg.src = '/api/pergola-iso.svg?' + iqs;
         }
         var warn = document.getElementById('kp-scheme-warn');
@@ -979,15 +980,16 @@ document.addEventListener('DOMContentLoaded', function() {
             var lamCnt = isPir ? '' : Math.floor(schL * 1000 / lamMm);
             var moLocal = findMoForResult(mainResult);
             if (moLocal) state._maxOverhang = moLocal;
+            var pergolaH = state._pergolaHeight || 3.0;
+            var refDim = Math.max(schW, schL, pergolaH);
             var qs = 'w=' + schW + '&l=' + schL + '&m=' + schM +
                 (lamCnt !== '' ? '&lc=' + lamCnt : '') +
                 (moLocal ? '&mo=' + moLocal : '') +
-                (isPir ? '&pir=1' : '');
+                (isPir ? '&pir=1' : '') + '&ref=' + refDim;
             var needsExtra = moLocal && schL > moLocal + 0.001;
-            var pergolaH = state._pergolaHeight || 3.0;
-            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM;
-            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (moLocal ? '&mo=' + moLocal : '');
-            var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + '&v=56';
+            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид спереди');
+            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид сбоку');
+            var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + '&v=57';
             var isoBlock = (!isPir && lamCnt) ? (
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)</div>' +
                 '<img id="kp-iso-img" src="/api/pergola-iso.svg?' + iqs + '" alt="\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F" style="max-width:100%;height:auto;"></div>'

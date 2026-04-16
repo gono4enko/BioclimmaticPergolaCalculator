@@ -149,45 +149,100 @@ def load_calculation(calc_id):
         return None
 
 
-def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=None, max_overhang=None):
-    svg_w = 320
-    svg_h = 240
-    margin = 44
-    rect_w = svg_w - 2 * margin
-    rect_h = svg_h - 2 * margin
-    area = round(width * length, 1)
+DIM_COLOR = '#1a3a6e'
+DIM_FONT = '13px'
+DIM_SMALL_FONT = '10px'
+DIM_OFFSET = 26
+DIM_TEXT_GAP = 14
+DIM_EXT_LEN = 6
+DIM_TARGET_PX = 280
+DIM_MARGIN_L = 74
+DIM_MARGIN_R = 64
+DIM_MARGIN_T = 46
+DIM_MARGIN_B = 64
 
-    arrow_color = '#1a3a6e'
+
+def _scale_from_ref(ref):
+    if not ref or ref <= 0:
+        ref = 5.0
+    return DIM_TARGET_PX / float(ref)
+
+
+def _dim_defs(prefix='d'):
+    return (
+        f'<defs><marker id="{prefix}-ah" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">'
+        f'<path d="M0,0 L8,3.5 L0,7" fill="{DIM_COLOR}"/></marker>'
+        f'<marker id="{prefix}-aht" markerWidth="9" markerHeight="7" refX="0" refY="3.5" orient="auto">'
+        f'<path d="M8,0 L0,3.5 L8,7" fill="{DIM_COLOR}"/></marker>'
+        f'<pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+        f'<line x1="0" y1="0" x2="0" y2="6" stroke="#666" stroke-width="0.7"/></pattern></defs>'
+    )
+
+
+def _dim_h(x1, x2, y, label, prefix='d', below=True, font=None):
+    f = font or DIM_FONT
+    ext1_y0 = y - DIM_EXT_LEN if below else y + DIM_EXT_LEN
+    ext1_y1 = y + 2 if below else y - 2
+    text_y = y + DIM_TEXT_GAP if below else y - DIM_TEXT_GAP + 4
+    return (
+        f'<line x1="{x1}" y1="{ext1_y0}" x2="{x1}" y2="{ext1_y1}" stroke="{DIM_COLOR}" stroke-width="0.6"/>'
+        f'<line x1="{x2}" y1="{ext1_y0}" x2="{x2}" y2="{ext1_y1}" stroke="{DIM_COLOR}" stroke-width="0.6"/>'
+        f'<line x1="{x1}" y1="{y}" x2="{x2}" y2="{y}" stroke="{DIM_COLOR}" stroke-width="1.2" '
+        f'marker-start="url(#{prefix}-aht)" marker-end="url(#{prefix}-ah)"/>'
+        f'<text x="{(x1+x2)/2}" y="{text_y}" text-anchor="middle" '
+        f'font-size="{f}" font-weight="bold" fill="{DIM_COLOR}">{label}</text>'
+    )
+
+
+def _dim_v(x, y1, y2, label, prefix='d', side='left', font=None):
+    f = font or DIM_FONT
+    ext_x0 = x + DIM_EXT_LEN if side == 'left' else x - DIM_EXT_LEN
+    ext_x1 = x - 2 if side == 'left' else x + 2
+    text_x = x - DIM_TEXT_GAP if side == 'left' else x + DIM_TEXT_GAP
+    return (
+        f'<line x1="{ext_x0}" y1="{y1}" x2="{ext_x1}" y2="{y1}" stroke="{DIM_COLOR}" stroke-width="0.6"/>'
+        f'<line x1="{ext_x0}" y1="{y2}" x2="{ext_x1}" y2="{y2}" stroke="{DIM_COLOR}" stroke-width="0.6"/>'
+        f'<line x1="{x}" y1="{y1}" x2="{x}" y2="{y2}" stroke="{DIM_COLOR}" stroke-width="1.2" '
+        f'marker-start="url(#{prefix}-aht)" marker-end="url(#{prefix}-ah)"/>'
+        f'<text x="{text_x}" y="{(y1+y2)/2}" text-anchor="middle" '
+        f'font-size="{f}" font-weight="bold" fill="{DIM_COLOR}" '
+        f'transform="rotate(-90,{text_x},{(y1+y2)/2})">{label}</text>'
+    )
+
+
+def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=None, max_overhang=None, ref=None):
     inner_fill = '#eef3fa'
     beam_color = '#1a3a6e'
     beam_fill = '#9fb8d6'
     column_fill = '#1a3a6e'
     lamella_color = '#5d7da8'
     text_color = '#333'
-    dim_font = '13px'
     label_font = '10px'
 
     BEAM_WIDTH_M = 0.164
     CENTER_BEAM_WIDTH_M = 0.28
     COLUMN_M = 0.164
 
-    px_per_m_x = rect_w / max(width, 0.1) if width else 0
-    px_per_m_y = rect_h / max(length, 0.1) if length else 0
+    if not ref:
+        ref = max(width, length, 0.5)
+    scale = _scale_from_ref(ref)
 
-    beam_px_x = max(3.0, BEAM_WIDTH_M * px_per_m_x)
-    beam_px_y = max(3.0, BEAM_WIDTH_M * px_per_m_y)
-    center_beam_px = max(4.0, CENTER_BEAM_WIDTH_M * px_per_m_x)
-    col_px_x = max(4.0, COLUMN_M * px_per_m_x)
-    col_px_y = max(4.0, COLUMN_M * px_per_m_y)
+    rect_w = max(60.0, width * scale)
+    rect_h = max(60.0, length * scale)
+    svg_w = int(DIM_MARGIN_L + rect_w + DIM_MARGIN_R)
+    svg_h = int(DIM_MARGIN_T + rect_h + DIM_MARGIN_B)
+    area = round(width * length, 1)
+
+    beam_px_x = max(2.5, BEAM_WIDTH_M * scale)
+    beam_px_y = max(2.5, BEAM_WIDTH_M * scale)
+    center_beam_px = max(3.5, CENTER_BEAM_WIDTH_M * scale)
+    col_px = max(3.5, COLUMN_M * scale)
 
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}" width="{svg_w}" height="{svg_h}">'
-    svg += '<defs><marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">'
-    svg += f'<path d="M0,0 L8,3 L0,6" fill="{arrow_color}"/></marker>'
-    svg += '<marker id="aht" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">'
-    svg += f'<path d="M8,0 L0,3 L8,6" fill="{arrow_color}"/></marker></defs>'
+    svg += _dim_defs('t')
 
-    rx = margin
-    ry = margin
+    rx = DIM_MARGIN_L
+    ry = DIM_MARGIN_T
 
     svg += (f'<rect x="{rx}" y="{ry}" width="{rect_w}" height="{rect_h}" '
             f'fill="{beam_fill}" stroke="{beam_color}" stroke-width="1"/>')
@@ -243,14 +298,14 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
     col_count_x = max(2, modules + 1)
     col_xs = []
     if col_count_x == 2:
-        col_xs = [rx + col_px_x / 2, rx + rect_w - col_px_x / 2]
+        col_xs = [rx + col_px / 2, rx + rect_w - col_px / 2]
     else:
-        col_xs.append(rx + col_px_x / 2)
+        col_xs.append(rx + col_px / 2)
         for i in range(1, modules):
             col_xs.append(rx + (rect_w / modules) * i)
-        col_xs.append(rx + rect_w - col_px_x / 2)
+        col_xs.append(rx + rect_w - col_px / 2)
 
-    col_ys = [ry + col_px_y / 2, ry + rect_h - col_px_y / 2]
+    col_ys = [ry + col_px / 2, ry + rect_h - col_px / 2]
 
     needs_extra = (max_overhang is not None and length and length > max_overhang + 0.001)
     if needs_extra:
@@ -258,34 +313,31 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
 
     for cxp in col_xs:
         for cyp in col_ys:
-            svg += (f'<rect x="{cxp - col_px_x / 2}" y="{cyp - col_px_y / 2}" '
-                    f'width="{col_px_x}" height="{col_px_y}" '
+            svg += (f'<rect x="{cxp - col_px / 2}" y="{cyp - col_px / 2}" '
+                    f'width="{col_px}" height="{col_px}" '
                     f'fill="{column_fill}" stroke="{column_fill}" stroke-width="0.5"/>')
 
     if needs_extra:
-        note_y = ry + rect_h / 2 - col_px_y - 4
         svg += (f'<text x="{rx + rect_w + 4}" y="{ry + rect_h / 2 + 3}" '
                 f'text-anchor="start" font-size="8px" fill="{beam_color}" '
                 f'font-style="italic">доп. опора</text>')
 
-    arrow_y = ry + rect_h + 25
-    svg += f'<line x1="{rx}" y1="{arrow_y}" x2="{rx + rect_w}" y2="{arrow_y}" stroke="{arrow_color}" stroke-width="1.5" marker-start="url(#aht)" marker-end="url(#ah)"/>'
-    svg += f'<text x="{rx + rect_w / 2}" y="{arrow_y + 15}" text-anchor="middle" font-size="{dim_font}" font-weight="bold" fill="{arrow_color}">{width} м</text>'
+    arrow_y = ry + rect_h + DIM_OFFSET
+    svg += _dim_h(rx, rx + rect_w, arrow_y, f'{width:.2f} м', prefix='t', below=True)
 
-    arrow_x = rx - 20
-    svg += f'<line x1="{arrow_x}" y1="{ry}" x2="{arrow_x}" y2="{ry + rect_h}" stroke="{arrow_color}" stroke-width="1.5" marker-start="url(#aht)" marker-end="url(#ah)"/>'
-    svg += f'<text x="{arrow_x}" y="{ry + rect_h / 2}" text-anchor="middle" font-size="{dim_font}" font-weight="bold" fill="{arrow_color}" transform="rotate(-90,{arrow_x},{ry + rect_h / 2})">{length} м</text>'
+    arrow_x = rx - DIM_OFFSET
+    svg += _dim_v(arrow_x, ry, ry + rect_h, f'{length:.2f} м', prefix='t', side='left')
 
-    svg += f'<text x="{rx + rect_w / 2}" y="{ry - 8}" text-anchor="middle" font-size="12px" font-weight="bold" fill="{text_color}">S = {area} м²</text>'
+    svg += (f'<text x="{rx + rect_w / 2}" y="{ry - 14}" text-anchor="middle" '
+            f'font-size="13px" font-weight="bold" fill="{text_color}">Вид сверху · S = {area} м²</text>')
 
     svg += '</svg>'
     return svg
 
 
-def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None):
-    """Front view of pergola (width direction).
-    width, height in meters. Standard column 164mm, drainage beam 260mm tall,
-    pad overhang 82mm each side, slab thickness ~50mm.
+def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди'):
+    """Front/side elevation. width = horizontal dimension (m), height in m.
+    Uses shared scale (DIM_TARGET_PX/ref) so views align with top view.
     """
     BEAM_H_M = 0.26
     COLUMN_W_M = 0.164
@@ -298,41 +350,32 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None):
         height = BEAM_H_M + 0.5
 
     total_w_m = width + 2 * PAD_OVERHANG_M
+    total_h_m = height + SLAB_H_M
 
-    svg_w = 480
-    svg_h = 320
-    margin_l = 70
-    margin_r = 90
-    margin_t = 50
-    margin_b = 80
+    if not ref:
+        ref = max(width, height, 0.5)
+    scale = _scale_from_ref(ref)
 
-    draw_w = svg_w - margin_l - margin_r
-    draw_h = svg_h - margin_t - margin_b
+    real_w_px = max(60.0, total_w_m * scale)
+    real_h_px = max(60.0, total_h_m * scale)
 
-    px_per_m_x = draw_w / total_w_m
-    px_per_m_y = draw_h / (height + SLAB_H_M)
-    scale = min(px_per_m_x, px_per_m_y)
+    svg_w = int(DIM_MARGIN_L + real_w_px + DIM_MARGIN_R)
+    svg_h = int(DIM_MARGIN_T + real_h_px + DIM_MARGIN_B)
 
-    real_w_px = total_w_m * scale
-    real_h_px = (height + SLAB_H_M) * scale
+    ox = DIM_MARGIN_L
+    oy = DIM_MARGIN_T
 
-    ox = margin_l + (draw_w - real_w_px) / 2
-    oy = margin_t + (draw_h - real_h_px)
-
-    arrow_color = '#1a3a6e'
     beam_color = '#1a3a6e'
     beam_fill = '#9fb8d6'
     column_fill = '#1a3a6e'
-    slab_fill = '#d4d4d4'
     slab_stroke = '#666'
     text_color = '#333'
-    dim_font = '12px'
     small_font = '10px'
 
     pad_px = PAD_OVERHANG_M * scale
-    col_w_px = COLUMN_W_M * scale
-    beam_h_px = BEAM_H_M * scale
-    slab_h_px = SLAB_H_M * scale
+    col_w_px = max(2.5, COLUMN_W_M * scale)
+    beam_h_px = max(3.0, BEAM_H_M * scale)
+    slab_h_px = max(2.5, SLAB_H_M * scale)
 
     pergola_top = oy
     pergola_bottom = oy + height * scale
@@ -340,12 +383,7 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None):
     slab_bottom = slab_top + slab_h_px
 
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}" width="{svg_w}" height="{svg_h}">'
-    svg += '<defs><marker id="fah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">'
-    svg += f'<path d="M0,0 L8,3 L0,6" fill="{arrow_color}"/></marker>'
-    svg += '<marker id="faht" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">'
-    svg += f'<path d="M8,0 L0,3 L8,6" fill="{arrow_color}"/></marker>'
-    svg += '<pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
-    svg += f'<line x1="0" y1="0" x2="0" y2="6" stroke="{slab_stroke}" stroke-width="0.7"/></pattern></defs>'
+    svg += _dim_defs('f')
 
     col_left_x = ox + pad_px
     col_right_x = ox + real_w_px - pad_px - col_w_px
@@ -376,38 +414,20 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None):
     svg += (f'<rect x="{ox}" y="{slab_top}" width="{real_w_px}" height="{slab_h_px}" '
             f'fill="url(#hatch)" stroke="{slab_stroke}" stroke-width="0.8"/>')
 
-    title_y = margin_t - 25
-    svg += (f'<text x="{svg_w/2}" y="{title_y}" text-anchor="middle" '
-            f'font-size="13px" font-style="italic" fill="{text_color}">Вид спереди</text>')
+    svg += (f'<text x="{svg_w/2}" y="{oy - 14}" text-anchor="middle" '
+            f'font-size="13px" font-weight="bold" fill="{text_color}">{title}</text>')
 
-    h_arrow_x = ox + real_w_px + 30
-    svg += (f'<line x1="{h_arrow_x}" y1="{pergola_top}" x2="{h_arrow_x}" y2="{pergola_bottom}" '
-            f'stroke="{arrow_color}" stroke-width="1.2" marker-start="url(#faht)" marker-end="url(#fah)"/>')
-    svg += (f'<text x="{h_arrow_x + 10}" y="{(pergola_top + pergola_bottom)/2}" '
-            f'text-anchor="middle" font-size="{dim_font}" font-weight="bold" fill="{arrow_color}" '
-            f'transform="rotate(-90,{h_arrow_x + 10},{(pergola_top + pergola_bottom)/2})">{height:.2f} м</text>')
+    h_dim_x = ox + real_w_px + DIM_OFFSET
+    svg += _dim_v(h_dim_x, pergola_top, pergola_bottom, f'{height:.2f} м', prefix='f', side='right')
 
-    beam_arrow_x = col_right_x + col_w_px + 8
-    svg += (f'<line x1="{beam_arrow_x}" y1="{pergola_top}" x2="{beam_arrow_x}" y2="{pergola_top + beam_h_px}" '
-            f'stroke="{arrow_color}" stroke-width="1" marker-start="url(#faht)" marker-end="url(#fah)"/>')
-    svg += (f'<text x="{beam_arrow_x + 4}" y="{pergola_top + beam_h_px/2 + 3}" '
-            f'text-anchor="start" font-size="{small_font}" fill="{arrow_color}">260</text>')
+    w_dim_y = slab_bottom + DIM_OFFSET
+    svg += _dim_h(ox, ox + real_w_px, w_dim_y, f'{width:.2f} м (+ 2×82 мм)', prefix='f', below=True)
 
-    w_arrow_y = slab_bottom + 22
-    svg += (f'<line x1="{ox}" y1="{w_arrow_y}" x2="{ox + real_w_px}" y2="{w_arrow_y}" '
-            f'stroke="{arrow_color}" stroke-width="1.2" marker-start="url(#faht)" marker-end="url(#fah)"/>')
-    svg += (f'<text x="{ox + real_w_px/2}" y="{w_arrow_y + 14}" text-anchor="middle" '
-            f'font-size="{dim_font}" font-weight="bold" fill="{arrow_color}">{width:.2f} м (+ 2×82 мм)</text>')
-
-    col_arrow_y = pergola_top - 10
-    svg += (f'<line x1="{col_left_x + col_w_px}" y1="{col_arrow_y}" x2="{col_right_x}" y2="{col_arrow_y}" '
-            f'stroke="{arrow_color}" stroke-width="1" marker-start="url(#faht)" marker-end="url(#fah)"/>')
-    inner_mm = int(round((width - COLUMN_W_M) * 1000))
-    svg += (f'<text x="{(col_left_x + col_w_px + col_right_x)/2}" y="{col_arrow_y - 4}" '
-            f'text-anchor="middle" font-size="{small_font}" fill="{arrow_color}">{inner_mm} мм</text>')
+    svg += (f'<text x="{col_right_x + col_w_px + 4}" y="{pergola_top + beam_h_px/2 + 3}" '
+            f'text-anchor="start" font-size="{small_font}" fill="{DIM_COLOR}">260</text>')
 
     svg += (f'<text x="{col_left_x - 4}" y="{col_top_y + col_h_px/2}" text-anchor="end" '
-            f'font-size="{small_font}" fill="{arrow_color}">164</text>')
+            f'font-size="{small_font}" fill="{DIM_COLOR}">164</text>')
 
     svg += '</svg>'
     return svg
@@ -432,11 +452,11 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     LAM_W = 0.25
     LAM_T = 0.04
 
-    svg_w = 560
-    svg_h = 400
-    pad_x = 40
-    pad_top = 36
-    pad_bot = 50
+    svg_w = 620
+    svg_h = 460
+    pad_x = 80
+    pad_top = 40
+    pad_bot = 80
 
     cos30 = math.cos(math.radians(30))
     sin30 = math.sin(math.radians(30))
@@ -592,6 +612,55 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     front_cols.sort(key=lambda c: c[0])
     for cx, cz in front_cols:
         svg += draw_column(cx, cz, 0, column_top)
+
+    svg += _dim_defs('i')
+
+    def _iso_dim(p1, p2, nx, ny, label, off=28, text_off=14):
+        d1x = p1[0] + nx * off
+        d1y = p1[1] + ny * off
+        d2x = p2[0] + nx * off
+        d2y = p2[1] + ny * off
+        ang = math.degrees(math.atan2(d2y - d1y, d2x - d1x))
+        if ang > 90 or ang < -90:
+            ang -= 180
+            d1x, d2x = d2x, d1x
+            d1y, d2y = d2y, d1y
+        midx = (d1x + d2x) / 2
+        midy = (d1y + d2y) / 2
+        tnx, tny = nx, ny
+        if (tnx * math.cos(math.radians(ang)) + tny * math.sin(math.radians(ang))) > 0:
+            pass
+        tx = midx + nx * text_off
+        ty = midy + ny * text_off
+        return (
+            f'<line x1="{p1[0]:.1f}" y1="{p1[1]:.1f}" x2="{p1[0] + nx*off:.1f}" y2="{p1[1] + ny*off:.1f}" stroke="{DIM_COLOR}" stroke-width="0.5" stroke-dasharray="3,2"/>'
+            f'<line x1="{p2[0]:.1f}" y1="{p2[1]:.1f}" x2="{p2[0] + nx*off:.1f}" y2="{p2[1] + ny*off:.1f}" stroke="{DIM_COLOR}" stroke-width="0.5" stroke-dasharray="3,2"/>'
+            f'<line x1="{d1x:.1f}" y1="{d1y:.1f}" x2="{d2x:.1f}" y2="{d2y:.1f}" stroke="{DIM_COLOR}" stroke-width="1.2" '
+            f'marker-start="url(#i-aht)" marker-end="url(#i-ah)"/>'
+            f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" font-size="12px" font-weight="bold" '
+            f'fill="{DIM_COLOR}" transform="rotate({ang:.1f},{tx:.1f},{ty:.1f})">{label}</text>'
+        )
+
+    p_bl_floor = s((0, 0, length))
+    p_br_floor = s((width, 0, length))
+    nx_w_back = -math.cos(math.radians(30))
+    ny_w_back = math.sin(math.radians(30))
+    svg += _iso_dim(p_bl_floor, p_br_floor, nx_w_back, ny_w_back, f'{width:.2f} м (Ш)')
+
+    p_fr_floor = s((width, 0, 0))
+    nx_l_right = math.cos(math.radians(30))
+    ny_l_right = math.sin(math.radians(30))
+    svg += _iso_dim(p_fr_floor, p_br_floor, nx_l_right, ny_l_right, f'{length:.2f} м (Д)')
+
+    p_btr = s((width, 0, 0))
+    p_ttr = s((width, height, 0))
+    hd_x = max(p_btr[0], p_ttr[0]) + 32
+    svg += (f'<line x1="{p_btr[0]:.1f}" y1="{p_btr[1]:.1f}" x2="{hd_x:.1f}" y2="{p_btr[1]:.1f}" stroke="{DIM_COLOR}" stroke-width="0.5" stroke-dasharray="3,2"/>'
+            f'<line x1="{p_ttr[0]:.1f}" y1="{p_ttr[1]:.1f}" x2="{hd_x:.1f}" y2="{p_ttr[1]:.1f}" stroke="{DIM_COLOR}" stroke-width="0.5" stroke-dasharray="3,2"/>'
+            f'<line x1="{hd_x:.1f}" y1="{p_ttr[1]:.1f}" x2="{hd_x:.1f}" y2="{p_btr[1]:.1f}" stroke="{DIM_COLOR}" stroke-width="1.2" '
+            f'marker-start="url(#i-aht)" marker-end="url(#i-ah)"/>'
+            f'<text x="{hd_x + 14:.1f}" y="{(p_btr[1]+p_ttr[1])/2:.1f}" text-anchor="middle" font-size="12px" font-weight="bold" '
+            f'fill="{DIM_COLOR}" transform="rotate(-90,{hd_x + 14:.1f},{(p_btr[1]+p_ttr[1])/2:.1f})">{height:.2f} м (В)</text>')
 
     label_y_top = 22
     svg += (f'<text x="{svg_w/2}" y="{label_y_top}" text-anchor="middle" '
