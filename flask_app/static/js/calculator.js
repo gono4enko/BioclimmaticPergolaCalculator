@@ -715,6 +715,7 @@ document.addEventListener('DOMContentLoaded', function() {
             '</div>';
 
         state._variantSpecHtml = variantSpecHtml;
+        state._maxOverhang = (matchedSpec && matchedSpec.max_overhang) ? matchedSpec.max_overhang : null;
 
         sec.innerHTML = '<div class="kp-actions-row"><button class="pdf-btn" id="pdf-btn"><i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF</button>' +
             '<button class="share-btn" id="share-btn" title="\u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F"><i class="bi bi-share"></i> \u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F</button></div>' +
@@ -895,6 +896,24 @@ document.addEventListener('DOMContentLoaded', function() {
         /* Block 8: Technical specifications (from variant specs) */
         if (state._variantSpecHtml) {
             html += '<div class="kp-block">' + state._variantSpecHtml + '</div>';
+        }
+
+        /* Block 8b: Top-view scheme */
+        var schW = dims.width, schL = dims.length, schM = dims.modules || 1;
+        if (schW > 0 && schL > 0) {
+            var isPir = state.pergolaType === 'B600';
+            var lamMm = state.lamellaSize === '200' ? 200 : 250;
+            var lamCnt = isPir ? '' : Math.floor(schL * 1000 / lamMm);
+            var qs = 'w=' + schW + '&l=' + schL + '&m=' + schM +
+                (lamCnt !== '' ? '&lc=' + lamCnt : '') +
+                (state._maxOverhang ? '&mo=' + state._maxOverhang : '') +
+                (isPir ? '&pir=1' : '');
+            var needsExtra = state._maxOverhang && schL > state._maxOverhang + 0.001;
+            html += '<div class="kp-block">' +
+                '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83D\uDCD0</div><div class="kp-block-title">\u0421\u0445\u0435\u043C\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B (\u0432\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443)</div></div>' +
+                '<div style="text-align:center;"><img src="/api/pergola-scheme.svg?' + qs + '" alt="\u0421\u0445\u0435\u043C\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B" style="max-width:100%;height:auto;"></div>' +
+                (needsExtra ? '<div style="margin-top:0.6rem;padding:0.6rem 0.8rem;background:#fff8e1;border-left:3px solid #f59e0b;font-size:0.88rem;color:#5d4a00;">\u26A0\uFE0F \u0412\u044B\u043D\u043E\u0441 ' + schL + ' \u043C \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C \u0431\u0435\u0437 \u0434\u043E\u043F. \u043E\u043F\u043E\u0440 (' + state._maxOverhang + ' \u043C). \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u044B \u043F\u0440\u043E\u043C\u0435\u0436\u0443\u0442\u043E\u0447\u043D\u044B\u0435 \u043A\u043E\u043B\u043E\u043D\u043D\u044B \u043F\u043E \u0446\u0435\u043D\u0442\u0440\u0443.</div>' : '') +
+                '</div>';
         }
 
         /* Block 9: Guarantees + Company info with dynamic counter (merged) */

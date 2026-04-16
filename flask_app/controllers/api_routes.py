@@ -21,6 +21,29 @@ from ..services.calculator import (
 bp = Blueprint('api', __name__)
 
 
+@bp.route('/pergola-scheme.svg', methods=['GET'])
+def pergola_scheme_svg():
+    from flask import Response
+    from ..utils import generate_top_view_svg
+    try:
+        w = float(request.args.get('w', 0))
+        l = float(request.args.get('l', 0))
+        m = int(request.args.get('m', 1))
+        lc = request.args.get('lc')
+        lc = int(lc) if lc and lc.isdigit() else None
+        mo = request.args.get('mo')
+        mo = float(mo) if mo else None
+        pir = request.args.get('pir', '0') == '1'
+        if w <= 0 or l <= 0:
+            return Response('', status=400)
+        svg = generate_top_view_svg(width=w, length=l, modules=m,
+                                    is_pir=pir, lamella_count=lc, max_overhang=mo)
+        return Response(svg, mimetype='image/svg+xml',
+                        headers={'Cache-Control': 'public, max-age=3600'})
+    except Exception:
+        return Response('', status=400)
+
+
 @bp.route('/promotions', methods=['GET'])
 def get_promotions():
     try:
