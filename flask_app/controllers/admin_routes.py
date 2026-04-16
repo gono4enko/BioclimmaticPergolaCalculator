@@ -441,6 +441,12 @@ def save_cell():
         return jsonify({'error': 'Ошибка сохранения'}), 500
 
 
+@bp.route('/scheduler')
+@admin_required
+def scheduler_page():
+    return render_template('admin_scheduler.html')
+
+
 @bp.route('/scheduler-status')
 @admin_required
 def scheduler_status():

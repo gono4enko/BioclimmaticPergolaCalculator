@@ -48,8 +48,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <div class="top-bar">
     <h1>Управление ценами</h1>
-    <div>
-        <a href="/" style="margin-right:16px">← Калькулятор</a>
+    <div style="display:flex;gap:16px;align-items:center">
+        <a href="{{ url_for('admin.prices_page') }}" style="color:#fff;font-weight:600">Управление ценами</a>
+        <a href="{{ url_for('admin.scheduler_page') }}">Планировщик</a>
+        <a href="/">← Калькулятор</a>
         <a href="{{ url_for('admin.logout') }}">Выйти</a>
     </div>
 </div>

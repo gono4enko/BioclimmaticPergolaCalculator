@@ -87,8 +87,10 @@ PostgreSQL через DATABASE_URL
 - `/admin/apply-parsed-prices` — сохранение распознанных цен в БД + сброс кэша калькулятора
 - `/admin/save-cell` — сохранение одной ячейки
 - `/admin/get-prices` — получение текущих цен из БД
+- `/admin/scheduler` — визуальная панель статуса планировщика очистки
+- `/admin/scheduler-status` — JSON API статуса планировщика
 - Blueprint: `flask_app/controllers/admin_routes.py`
-- Шаблоны: `admin_login.html`, `admin_prices.html`
+- Шаблоны: `admin_login.html`, `admin_prices.html`, `admin_scheduler.html`
 
 ## Маркетинговое КП
 - **Динамический счётчик**: `flask_app/utils.py` → `get_pergola_count()` = base(10) + weeks_since(2026-01-01)
