@@ -866,6 +866,45 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             pdf.set_fill_color(255, 255, 255)
 
             try:
+                from config.variant_specs import VARIANT_SPECS, VARIANT_DISPLAY_ORDER
+                pt = pergola_data.get('pergola_type', '')
+                type_specs = VARIANT_SPECS.get(pt, {})
+                display_order = VARIANT_DISPLAY_ORDER.get(pt, [])
+                if type_specs:
+                    pdf.ln(3)
+                    pdf.set_font('DejaVu', 'I', 7)
+                    pdf.set_text_color(80, 80, 80)
+                    for idx, v in enumerate(all_variants):
+                        v_label = v.get('variant_label', '') or v.get('selected_variant', '') or f"Вариант {idx+1}"
+                        v_variant = v.get('selected_variant', '')
+                        v_ls = v.get('lamella_size', '')
+                        if not v_ls:
+                            for do in display_order:
+                                if do['variant'] == v_variant and do.get('label', '') == v_label:
+                                    v_ls = do['lamella_size']
+                                    break
+                            if not v_ls:
+                                for do in display_order:
+                                    if do['variant'] == v_variant:
+                                        v_ls = do['lamella_size']
+                                        break
+                        spec = type_specs.get(v_variant, {}).get(v_ls, {})
+                        if spec:
+                            details = []
+                            if spec.get('lamella'):
+                                details.append(f"ламель {spec['lamella']}")
+                            if spec.get('column'):
+                                details.append(f"колонна {spec['column']}")
+                            if spec.get('beam'):
+                                details.append(f"балка {spec['beam']}")
+                            if details:
+                                footnote = f"{v_label}: {', '.join(details)}"
+                                pdf.cell(0, 4, footnote, 0, 1, 'L')
+                    pdf.set_text_color(0, 0, 0)
+            except Exception as e:
+                print(f"[PDF] Ошибка генерации сносок модификаций: {e}")
+
+            try:
                 from config.variant_specs import get_variant_options
                 pt = pergola_data.get('pergola_type', '')
                 specs = get_variant_options(pt)

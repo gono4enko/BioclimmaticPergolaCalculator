@@ -223,6 +223,7 @@ def _build_pergola_data(result):
         'vat_total': totals.get('with_vat', 0),
         'selected_variant': result.get('selected_variant', ''),
         'variant_label': result.get('variant_label', ''),
+        'lamella_size': options.get('lamella_size', ''),
         'description': '',
         'modular_description': get_modular_system_description(),
         'drainage_description': get_drainage_system_description(),
