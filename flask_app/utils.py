@@ -10,7 +10,10 @@ from datetime import datetime, date, timedelta
 
 logger = logging.getLogger(__name__)
 
-CALC_MAX_AGE_DAYS = 30
+try:
+    CALC_MAX_AGE_DAYS = max(1, int(os.environ.get('CALC_RETENTION_DAYS', 30)))
+except (ValueError, TypeError):
+    CALC_MAX_AGE_DAYS = 30
 
 
 def get_pergola_count():
