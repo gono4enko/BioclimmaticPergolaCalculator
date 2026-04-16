@@ -102,7 +102,7 @@ PostgreSQL через DATABASE_URL
 - **Счётчик на главной**: `index.html` → `#install-counter` в Hero секции + fetch `/api/promotions`
 - **CSS**: `.kp-section`, `.kp-block`, `.kp-price-hero`, `.kp-urgency-banner`, `.kp-upsell-grid`, `.kp-gallery-grid`, `.kp-payment-terms`
 - **Постоянная ссылка на КП**: `/kp/<calc_id>` — загружает сохранённый расчёт из `data/calculations/{calc_id}.json`
-- **Очистка расчётов**: `CALC_RETENTION_DAYS` env var (default 30) — срок хранения файлов расчётов перед автоудалением
+- **Очистка расчётов**: `CALC_RETENTION_DAYS` env var (default 30) — срок хранения файлов расчётов перед автоудалением; `CLEANUP_INTERVAL_HOURS` env var (default 24) — интервал автоочистки через APScheduler
 - **Кнопка «Поделиться»**: копирует ссылку `/kp/{id}` в буфер обмена
 - **SVG-схема в PDF**: вид сверху с размерами, ламелями/PIR-панелями, модулями (page 2)
 - **QR-код в PDF**: на последней странице, ссылка на конкретный расчёт `/kp/<calc_id>`

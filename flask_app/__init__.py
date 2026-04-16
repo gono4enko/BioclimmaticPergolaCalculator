@@ -23,6 +23,34 @@ def _stable_dev_key():
         _DEV_KEY_CACHE = hashlib.sha256(seed.encode()).hexdigest()
     return _DEV_KEY_CACHE
 
+def _start_cleanup_scheduler(app, cleanup_fn):
+    import logging
+    _logger = logging.getLogger(__name__)
+
+    if app.config.get('TESTING'):
+        return
+
+    try:
+        hours = max(1, int(os.environ.get('CLEANUP_INTERVAL_HOURS', 24)))
+    except (ValueError, TypeError):
+        hours = 24
+
+    try:
+        from apscheduler.schedulers.background import BackgroundScheduler
+        scheduler = BackgroundScheduler(daemon=True)
+
+        def _run_cleanup():
+            with app.app_context():
+                cleanup_fn()
+
+        scheduler.add_job(_run_cleanup, 'interval', hours=hours, id='cleanup_old_calculations')
+        scheduler.start()
+        app.extensions['cleanup_scheduler'] = scheduler
+        _logger.info("Cleanup scheduler started (every %d hour(s))", hours)
+    except Exception as exc:
+        _logger.warning("Failed to start cleanup scheduler: %s", exc)
+
+
 def create_app(test_config=None):
     """
     Создает и настраивает экземпляр Flask-приложения.
@@ -123,6 +151,8 @@ def create_app(test_config=None):
     
     from .utils import cleanup_old_calculations
     cleanup_old_calculations()
+
+    _start_cleanup_scheduler(app, cleanup_old_calculations)
 
     @app.after_request
     def set_iframe_headers(response):

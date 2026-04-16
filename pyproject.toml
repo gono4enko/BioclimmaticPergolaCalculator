@@ -26,6 +26,7 @@ flask-migrate = "^4.1.0"
 flask-compress = "^1.23"
 anthropic = "^0.94.1"
 qrcode = "^8.2"
+apscheduler = "^3.11.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4.0"
