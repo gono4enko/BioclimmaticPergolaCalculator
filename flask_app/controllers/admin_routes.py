@@ -5,7 +5,7 @@ import re
 import csv
 import threading
 from functools import wraps
-from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template
+from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template, current_app
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -439,3 +439,38 @@ def save_cell():
         return jsonify({'ok': True})
     except Exception:
         return jsonify({'error': 'Ошибка сохранения'}), 500
+
+
+@bp.route('/scheduler-status')
+@admin_required
+def scheduler_status():
+    from ..utils import cleanup_metrics, CALC_MAX_AGE_DAYS
+
+    scheduler = current_app.extensions.get('cleanup_scheduler')
+
+    next_run = None
+    scheduler_running = False
+    interval_hours = None
+
+    if scheduler:
+        scheduler_running = scheduler.running
+        job = scheduler.get_job('cleanup_old_calculations')
+        if job and job.next_run_time:
+            next_run = job.next_run_time.isoformat()
+        if job and job.trigger:
+            try:
+                interval_hours = job.trigger.interval.total_seconds() / 3600
+            except Exception:
+                pass
+
+    return jsonify({
+        'ok': True,
+        'scheduler_running': scheduler_running,
+        'interval_hours': interval_hours,
+        'retention_days': CALC_MAX_AGE_DAYS,
+        'next_run': next_run,
+        'last_run_time': cleanup_metrics['last_run_time'],
+        'last_files_removed': cleanup_metrics['last_files_removed'],
+        'total_runs': cleanup_metrics['total_runs'],
+        'total_files_removed': cleanup_metrics['total_files_removed'],
+    })

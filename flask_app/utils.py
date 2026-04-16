@@ -15,6 +15,13 @@ try:
 except (ValueError, TypeError):
     CALC_MAX_AGE_DAYS = 30
 
+cleanup_metrics = {
+    'last_run_time': None,
+    'last_files_removed': 0,
+    'total_runs': 0,
+    'total_files_removed': 0,
+}
+
 
 def get_pergola_count():
     current_week = datetime.now().isocalendar()[1]
@@ -171,6 +178,10 @@ def cleanup_old_calculations(max_age_days=CALC_MAX_AGE_DAYS):
         pass
     if removed:
         logger.info("Cleaned up %d old calculation(s) from %s", removed, calc_dir)
+    cleanup_metrics['last_run_time'] = datetime.now().isoformat()
+    cleanup_metrics['last_files_removed'] = removed
+    cleanup_metrics['total_runs'] += 1
+    cleanup_metrics['total_files_removed'] += removed
     return removed
 
 
