@@ -339,7 +339,7 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     """Front/side elevation. width = horizontal dimension (m), height in m.
     Uses shared scale (DIM_TARGET_PX/ref) so views align with top view.
     """
-    BEAM_H_M = 0.26
+    BEAM_H_M = 0.28
     COLUMN_W_M = 0.164
     PAD_OVERHANG_M = 0.082
     SLAB_H_M = 0.05
@@ -446,7 +446,7 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     open_deg = min(80, max(0, float(lamella_open_deg)))
     open_rad = math.radians(open_deg)
 
-    BEAM_H = 0.26
+    BEAM_H = 0.28
     COL_W = 0.164
     CENTER_BEAM_W = 0.28
     LAM_W = 0.25
@@ -538,7 +538,7 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
 
     back_cols.sort(key=lambda c: -c[0])
     for cx, cz in back_cols:
-        svg += draw_column(cx, cz, 0, column_top)
+        svg += draw_column(cx, cz, 0, height)
 
     by0 = column_top
     by1 = height
@@ -607,11 +607,11 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     if mid_cols:
         mid_cols.sort(key=lambda c: c[0])
         for cx, cz in mid_cols:
-            svg += draw_column(cx, cz, 0, column_top)
+            svg += draw_column(cx, cz, 0, height)
 
     front_cols.sort(key=lambda c: c[0])
     for cx, cz in front_cols:
-        svg += draw_column(cx, cz, 0, column_top)
+        svg += draw_column(cx, cz, 0, height)
 
     svg += _dim_defs('i')
 
