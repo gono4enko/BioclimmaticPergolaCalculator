@@ -416,72 +416,79 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None):
 
 
 def generate_isometric_svg(width, length, height=3.0, lamella_count=None, modules=1, lamella_open_deg=55):
-    """Isometric view of pergola with tilted/open lamellas.
-    width = ширина (X), length = длина (Z, в глубину), height = высота (Y).
-    Lamellas run параллельно ширине (короткой стороне), вращаются вокруг своей оси.
+    """3D isometric view of pergola with tilted/open lamellas.
+    Camera looks from front-right-above. X = ширина (вправо-вниз),
+    Z = длина (влево-вниз в глубину), Y = высота (вверх).
     """
     import math
 
     width = max(0.5, float(width))
     length = max(0.5, float(length))
     height = max(1.5, float(height))
-    open_rad = math.radians(min(85, max(0, float(lamella_open_deg))))
+    open_deg = min(80, max(0, float(lamella_open_deg)))
+    open_rad = math.radians(open_deg)
 
     BEAM_H = 0.26
     COL_W = 0.164
+    LAM_W = 0.25
+    LAM_T = 0.04
 
-    svg_w = 520
-    svg_h = 360
-    pad = 30
+    svg_w = 560
+    svg_h = 400
+    pad_x = 40
+    pad_top = 36
+    pad_bot = 50
 
     cos30 = math.cos(math.radians(30))
     sin30 = math.sin(math.radians(30))
 
-    def project(x, y, z):
+    def project(p):
+        x, y, z = p
         sx = (x - z) * cos30
         sy = (x + z) * sin30 - y
         return sx, sy
 
-    corners = [
-        project(0, 0, 0), project(width, 0, 0),
-        project(width, 0, length), project(0, 0, length),
-        project(0, height, 0), project(width, height, 0),
-        project(width, height, length), project(0, height, length),
+    test_pts = [
+        (0, 0, 0), (width, 0, 0), (width, 0, length), (0, 0, length),
+        (0, height, 0), (width, height, 0), (width, height, length), (0, height, length),
     ]
-    xs = [c[0] for c in corners]
-    ys = [c[1] for c in corners]
-    min_x, max_x = min(xs), max(xs)
-    min_y, max_y = min(ys), max(ys)
-    span_x = max_x - min_x
-    span_y = max_y - min_y
-    scale = min((svg_w - 2 * pad) / span_x, (svg_h - 2 * pad - 30) / span_y)
-    ox = pad - min_x * scale + (svg_w - 2 * pad - span_x * scale) / 2
-    oy = pad + 20 - min_y * scale
+    proj = [project(p) for p in test_pts]
+    xs = [p[0] for p in proj]; ys = [p[1] for p in proj]
+    span_x = max(xs) - min(xs); span_y = max(ys) - min(ys)
+    scale = min((svg_w - 2 * pad_x) / span_x, (svg_h - pad_top - pad_bot) / span_y)
+    ox = pad_x - min(xs) * scale + ((svg_w - 2 * pad_x) - span_x * scale) / 2
+    oy = pad_top - min(ys) * scale
 
-    def to_svg(p):
-        return ox + p[0] * scale, oy + p[1] * scale
+    def s(p):
+        sx, sy = project(p)
+        return ox + sx * scale, oy + sy * scale
 
-    column_color = '#1a3a6e'
-    beam_color = '#1a3a6e'
-    beam_fill = '#9fb8d6'
-    lam_color = '#5d7da8'
-    lam_fill = '#c9d5e7'
+    def quad(pts, fill, stroke='#1a3a6e', sw=0.8):
+        coords = ' '.join(f'{x:.1f},{y:.1f}' for x, y in (s(p) for p in pts))
+        return f'<polygon points="{coords}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}" stroke-linejoin="round"/>'
+
+    def line(p1, p2, stroke='#1a3a6e', sw=0.6, opacity=1.0):
+        x1, y1 = s(p1); x2, y2 = s(p2)
+        return f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{stroke}" stroke-width="{sw}" opacity="{opacity}"/>'
+
+    col_dark = '#143055'
+    col_med = '#2a4a7e'
+    col_light = '#3d6396'
+    beam_top = '#b8c8df'
+    beam_front = '#7d9bc0'
+    beam_side = '#5d7da8'
+    lam_top = '#d8e2ef'
+    lam_front = '#9fb3cd'
+    lam_edge = '#3d6396'
+    ground = '#eef2f7'
     text_color = '#333'
-    arrow_color = '#1a3a6e'
 
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}" width="{svg_w}" height="{svg_h}">'
-    svg += '<defs><marker id="iah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">'
-    svg += f'<path d="M0,0 L8,3 L0,6" fill="{arrow_color}"/></marker>'
-    svg += '<marker id="iaht" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">'
-    svg += f'<path d="M8,0 L0,3 L8,6" fill="{arrow_color}"/></marker></defs>'
 
-    def draw_quad(p1, p2, p3, p4, fill, stroke, sw=1.0):
-        s1 = to_svg(p1); s2 = to_svg(p2); s3 = to_svg(p3); s4 = to_svg(p4)
-        return (f'<polygon points="{s1[0]:.1f},{s1[1]:.1f} {s2[0]:.1f},{s2[1]:.1f} '
-                f'{s3[0]:.1f},{s3[1]:.1f} {s4[0]:.1f},{s4[1]:.1f}" '
-                f'fill="{fill}" stroke="{stroke}" stroke-width="{sw}" stroke-linejoin="round"/>')
+    g00 = (-0.4, 0, -0.4); g10 = (width + 0.4, 0, -0.4)
+    g11 = (width + 0.4, 0, length + 0.4); g01 = (-0.4, 0, length + 0.4)
+    svg += quad([g00, g10, g11, g01], ground, '#cfd6e0', 0.5)
 
-    col_positions = []
     mod_count = max(1, int(modules))
     if mod_count == 1:
         col_xs = [COL_W / 2, width - COL_W / 2]
@@ -494,72 +501,98 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
 
     column_top = height - BEAM_H
 
-    columns = []
-    for cx in col_xs:
-        for cz in col_zs:
-            columns.append((cx, cz))
+    def draw_column(cx, cz, y0, y1):
+        x0 = cx - COL_W / 2; x1 = cx + COL_W / 2
+        z0 = cz - COL_W / 2; z1 = cz + COL_W / 2
+        out = ''
+        out += quad([(x0, y0, z1), (x0, y1, z1), (x0, y1, z0), (x0, y0, z0)], col_med)
+        out += quad([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], col_dark)
+        out += quad([(x0, y0, z0), (x0, y1, z0), (x1, y1, z0), (x1, y0, z0)], col_light)
+        return out
 
-    columns.sort(key=lambda c: c[0] + c[1])
+    back_cols = [(cx, col_zs[1]) for cx in col_xs]
+    front_cols = [(cx, col_zs[0]) for cx in col_xs]
 
-    for cx, cz in columns:
-        x0 = cx - COL_W / 2
-        x1 = cx + COL_W / 2
-        z0 = cz - COL_W / 2
-        z1 = cz + COL_W / 2
-        p_bot_fl = (x0, 0, z0); p_bot_fr = (x1, 0, z0)
-        p_bot_br = (x1, 0, z1); p_bot_bl = (x0, 0, z1)
-        p_top_fl = (x0, column_top, z0); p_top_fr = (x1, column_top, z0)
-        p_top_br = (x1, column_top, z1); p_top_bl = (x0, column_top, z1)
-        svg += draw_quad(p_bot_fr, p_top_fr, p_top_br, p_bot_br, '#2a4a7e', column_color, 0.6)
-        svg += draw_quad(p_bot_fl, p_top_fl, p_top_fr, p_bot_fr, column_color, column_color, 0.6)
+    back_cols.sort(key=lambda c: -c[0])
+    for cx, cz in back_cols:
+        svg += draw_column(cx, cz, 0, column_top)
 
     by0 = column_top
     by1 = height
-    p_blf = (0, by0, 0); p_brf = (width, by0, 0)
-    p_brb = (width, by0, length); p_blb = (0, by0, length)
-    p_tlf = (0, by1, 0); p_trf = (width, by1, 0)
-    p_trb = (width, by1, length); p_tlb = (0, by1, length)
 
-    svg += draw_quad(p_blb, p_tlb, p_trb, p_brb, '#7d9bc0', beam_color, 0.8)
-    svg += draw_quad(p_brf, p_trf, p_trb, p_brb, '#6a89b0', beam_color, 0.8)
-    svg += draw_quad(p_blf, p_tlf, p_trf, p_brf, beam_fill, beam_color, 0.8)
-    svg += draw_quad(p_blf, p_brf, p_brb, p_blb, beam_fill, beam_color, 0.8)
+    def draw_beam(x0, x1, z0, z1, y0, y1, top_c, front_c, side_c):
+        out = ''
+        out += quad([(x0, y0, z1), (x0, y1, z1), (x1, y1, z1), (x1, y0, z1)], front_c)
+        out += quad([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], side_c)
+        out += quad([(x0, y1, z0), (x0, y1, z1), (x1, y1, z1), (x1, y1, z0)], top_c)
+        return out
+
+    svg += draw_beam(0, width, length - COL_W, length, by0, by1, beam_top, beam_front, beam_side)
+
+    svg += draw_beam(0, COL_W, COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
 
     if lamella_count and lamella_count > 0:
         lam_n = int(lamella_count)
         seg_count = mod_count
         lam_per_seg = max(1, lam_n // seg_count)
-        lam_thickness = 0.05
-        for s in range(seg_count):
-            seg_x0 = (width / seg_count) * s + (COL_W if s == 0 else COL_W / 2)
-            seg_x1 = (width / seg_count) * (s + 1) - (COL_W if s == seg_count - 1 else COL_W / 2)
-            seg_w_real = seg_x1 - seg_x0
-            if seg_w_real <= 0:
+        for s_idx in range(seg_count):
+            x_left = (width / seg_count) * s_idx + (COL_W if s_idx == 0 else COL_W / 2)
+            x_right = (width / seg_count) * (s_idx + 1) - (COL_W if s_idx == seg_count - 1 else COL_W / 2)
+            if x_right - x_left < 0.1:
                 continue
-            seg_z0 = COL_W
-            seg_z1 = length - COL_W
-            seg_z_span = seg_z1 - seg_z0
-            spacing = seg_z_span / (lam_per_seg + 1)
-            lam_y_center = column_top + 0.05
-            for k in range(1, lam_per_seg + 1):
-                cz = seg_z0 + spacing * k
-                half_w = 0.125
-                dy = math.sin(open_rad) * half_w
-                dz = math.cos(open_rad) * half_w
-                p1 = (seg_x0, lam_y_center - dy, cz - dz)
-                p2 = (seg_x1, lam_y_center - dy, cz - dz)
-                p3 = (seg_x1, lam_y_center + dy, cz + dz)
-                p4 = (seg_x0, lam_y_center + dy, cz + dz)
-                svg += draw_quad(p1, p2, p3, p4, lam_fill, lam_color, 0.5)
+            z_first = COL_W + 0.05
+            z_last = length - COL_W - 0.05
+            z_span = z_last - z_first
+            spacing = z_span / max(1, lam_per_seg)
+            y_center = column_top + 0.06
 
-    title_y = 18
-    svg += (f'<text x="{svg_w/2}" y="{title_y}" text-anchor="middle" '
-            f'font-size="13px" font-style="italic" fill="{text_color}">Изометрия (ламели открыты)</text>')
+            half_w = LAM_W / 2
+            half_t = LAM_T / 2
+            dy_w = math.sin(open_rad) * half_w
+            dz_w = math.cos(open_rad) * half_w
+            dy_t = math.cos(open_rad) * half_t
+            dz_t = math.sin(open_rad) * half_t
 
-    bottom_y = svg_h - 8
-    svg += (f'<text x="{svg_w/2}" y="{bottom_y}" text-anchor="middle" '
-            f'font-size="11px" fill="{text_color}">{width:.2f} × {length:.2f} × {height:.2f} м'
-            + (f', {int(lamella_count)} ламелей' if lamella_count else '') + '</text>')
+            lam_list = []
+            for k in range(lam_per_seg):
+                cz = z_first + spacing * (k + 0.5)
+                lam_list.append(cz)
+            for cz in lam_list:
+                A = (x_left,  y_center - dy_w - dy_t, cz - dz_w + dz_t)
+                B = (x_right, y_center - dy_w - dy_t, cz - dz_w + dz_t)
+                C = (x_right, y_center - dy_w + dy_t, cz - dz_w - dz_t)
+                D = (x_left,  y_center - dy_w + dy_t, cz - dz_w - dz_t)
+                E = (x_left,  y_center + dy_w + dy_t, cz + dz_w - dz_t)
+                F = (x_right, y_center + dy_w + dy_t, cz + dz_w - dz_t)
+                G = (x_right, y_center + dy_w - dy_t, cz + dz_w + dz_t)
+                H = (x_left,  y_center + dy_w - dy_t, cz + dz_w + dz_t)
+
+                svg += quad([D, C, F, E], lam_top, lam_edge, 0.4)
+                svg += quad([B, C, F, G], lam_front, lam_edge, 0.4)
+                svg += quad([A, B, G, H], lam_front, lam_edge, 0.4)
+
+    svg += draw_beam(width - COL_W, width, COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
+
+    svg += draw_beam(0, width, 0, COL_W, by0, by1, beam_top, beam_front, beam_side)
+
+    front_cols.sort(key=lambda c: c[0])
+    for cx, cz in front_cols:
+        svg += draw_column(cx, cz, 0, column_top)
+
+    label_y_top = 22
+    svg += (f'<text x="{svg_w/2}" y="{label_y_top}" text-anchor="middle" '
+            f'font-size="14px" font-weight="600" fill="#1a3a6e">Изометрия — ламели открыты {int(open_deg)}°</text>')
+
+    info_y = svg_h - 28
+    info = f'{width:.2f} (Ш) × {length:.2f} (Д) × {height:.2f} (В) м'
+    if lamella_count:
+        info += f', {int(lamella_count)} ламелей по {int(LAM_W*1000)} мм'
+    svg += (f'<text x="{svg_w/2}" y="{info_y}" text-anchor="middle" '
+            f'font-size="11px" fill="{text_color}">{info}</text>')
+
+    svg += (f'<text x="{svg_w/2}" y="{svg_h - 12}" text-anchor="middle" '
+            f'font-size="9px" fill="#888" font-style="italic">'
+            f'Колонна {int(COL_W*1000)}×{int(COL_W*1000)} мм, лоток {int(BEAM_H*1000)} мм</text>')
 
     svg += '</svg>'
     return svg
