@@ -121,6 +121,9 @@ def create_app(test_config=None):
     from .controllers.pdf_controller import register_pdf_blueprints
     register_pdf_blueprints(app)
     
+    from .utils import cleanup_old_calculations
+    cleanup_old_calculations()
+
     @app.after_request
     def set_iframe_headers(response):
         response.headers.pop('X-Frame-Options', None)

@@ -3,8 +3,14 @@ import json
 import uuid
 import random
 import string
+import time
+import logging
 import tempfile
 from datetime import datetime, date, timedelta
+
+logger = logging.getLogger(__name__)
+
+CALC_MAX_AGE_DAYS = 30
 
 
 def get_pergola_count():
@@ -141,6 +147,28 @@ def svg_to_png_path(svg_content):
         return tmp.name
     except Exception:
         return None
+
+
+def cleanup_old_calculations(max_age_days=CALC_MAX_AGE_DAYS):
+    calc_dir = _get_calculations_dir()
+    cutoff = time.time() - max_age_days * 86400
+    removed = 0
+    try:
+        for fname in os.listdir(calc_dir):
+            if not fname.endswith('.json'):
+                continue
+            fpath = os.path.join(calc_dir, fname)
+            try:
+                if os.path.getmtime(fpath) < cutoff:
+                    os.remove(fpath)
+                    removed += 1
+            except OSError:
+                continue
+    except OSError:
+        pass
+    if removed:
+        logger.info("Cleaned up %d old calculation(s) from %s", removed, calc_dir)
+    return removed
 
 
 def generate_qr_image(url, size=150):
