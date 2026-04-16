@@ -502,6 +502,11 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             area = round(p_w * p_l, 1)
             pdf.cell(0, 7, f"Размер: {p_w} × {p_l} м ({area} м²)", 0, 1, "C")
 
+        variant_label = pergola_data.get('variant_label', '') or pergola_data.get('selected_variant', '')
+        if variant_label:
+            pdf.set_font('DejaVu', '', 11)
+            pdf.cell(0, 7, f"Модификация: {variant_label}", 0, 1, "C")
+
         cash_total = pergola_data.get('cash_total', 0) or pergola_data.get('total_cost', 0) or 0
         if cash_total:
             pdf.ln(5)
@@ -611,6 +616,9 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         pdf.cell(0, 7, "Параметры перголы:", 0, 1, "L")
         pdf.set_font('DejaVu', '', 10)
         pdf.cell(50, 6, "Модель:", 0, 0, "L"); pdf.cell(0, 6, pergola_type, 0, 1, "L")
+        variant_label_p2 = pergola_data.get('variant_label', '') or pergola_data.get('selected_variant', '')
+        if variant_label_p2:
+            pdf.cell(50, 6, "Модификация:", 0, 0, "L"); pdf.cell(0, 6, variant_label_p2, 0, 1, "L")
         pdf.cell(50, 6, "Ширина:", 0, 0, "L"); pdf.cell(0, 6, f"{width} м", 0, 1, "L")
         pdf.cell(50, 6, "Вынос (длина):", 0, 0, "L"); pdf.cell(0, 6, f"{length} м", 0, 1, "L")
         pdf.cell(50, 6, "Модулей:", 0, 0, "L"); pdf.cell(0, 6, f"{modules}", 0, 1, "L")
