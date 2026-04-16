@@ -360,6 +360,70 @@
     .installation-counter .counter-number { font-size: 2.2rem; }
 }
 
+.saved-kp-banner {
+    background: linear-gradient(135deg, #f0f6ff 0%, #e5eeff 100%);
+    border: 2px solid #004B9A;
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.8rem;
+    animation: fadeIn 0.4s;
+}
+.saved-kp-banner-title {
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #004B9A;
+    margin-bottom: 0.2rem;
+}
+.saved-kp-banner-params {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.2rem;
+    flex: 1;
+}
+.saved-kp-param {
+    font-size: 0.88rem;
+    color: #333;
+    white-space: nowrap;
+}
+.saved-kp-param strong {
+    color: #004B9A;
+}
+.saved-kp-new-btn {
+    display: inline-block;
+    padding: 0.5rem 1.2rem;
+    background: #004B9A;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+.saved-kp-new-btn:hover {
+    background: #003670;
+    color: #fff;
+}
+@media (max-width: 768px) {
+    .saved-kp-banner {
+        padding: 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .saved-kp-param {
+        white-space: normal;
+    }
+    .saved-kp-new-btn {
+        align-self: stretch;
+        text-align: center;
+    }
+}
+
 /* ===== ФОРМА ЗАЯВКИ ===== */
 .ch-submit {
     width: 100%; padding: 14px;

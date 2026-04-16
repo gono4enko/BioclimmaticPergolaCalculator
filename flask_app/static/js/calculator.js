@@ -977,15 +977,60 @@ document.addEventListener('DOMContentLoaded', function() {
             if (stepsEl.step4) stepsEl.step4.style.display = 'none';
             var req = d.request || {};
             if (req.pergola_type) state.pergolaType = req.pergola_type;
+
+            var typeNames = {'B500NEW': 'В500 — поворотные ламели', 'B700NEW': 'В700 — поворотно-сдвижные', 'B600': 'В600 — PIR панели'};
+            var pergolaTypeName = '';
+            var dimWidth = req.width || 0;
+            var dimLength = req.length || 0;
+            var modLabel = '';
+
             if (d.mode === 'all' && d.results) {
                 if (d.results[0] && d.results[0].options) state.pergolaType = d.results[0].options.pergola_type || state.pergolaType;
+                pergolaTypeName = (d.results[0] && d.results[0].pergola_type_name) || '';
+                if (d.results[0] && d.results[0].dimensions) {
+                    dimWidth = dimWidth || d.results[0].dimensions.width;
+                    dimLength = dimLength || d.results[0].dimensions.length;
+                }
+                modLabel = 'Все модификации';
                 state.allResults = d.results;
                 state.result = d.results[0];
                 renderAllResults(d.results);
             } else if (d.result) {
                 if (d.result.options) state.pergolaType = d.result.options.pergola_type || state.pergolaType;
+                pergolaTypeName = d.result.pergola_type_name || '';
+                if (d.result.dimensions) {
+                    dimWidth = dimWidth || d.result.dimensions.width;
+                    dimLength = dimLength || d.result.dimensions.length;
+                }
+                modLabel = d.result.variant_label || d.result.selected_variant || '';
                 state.result = d.result;
                 renderResults(d.result);
+            }
+
+            pergolaTypeName = pergolaTypeName || typeNames[state.pergolaType] || state.pergolaType;
+
+            var bannerHtml = '<div class="saved-kp-banner">';
+            bannerHtml += '<div class="saved-kp-banner-title">Сохранённое коммерческое предложение</div>';
+            bannerHtml += '<div class="saved-kp-banner-params">';
+            bannerHtml += '<span class="saved-kp-param"><strong>Модель:</strong> ' + escHtml(pergolaTypeName) + '</span>';
+            if (dimWidth && dimLength) {
+                bannerHtml += '<span class="saved-kp-param"><strong>Размеры:</strong> ' + Number(dimWidth).toFixed(2) + ' × ' + Number(dimLength).toFixed(2) + ' м</span>';
+            }
+            if (modLabel) {
+                bannerHtml += '<span class="saved-kp-param"><strong>Модификация:</strong> ' + escHtml(modLabel) + '</span>';
+            }
+            if (state.clientName) {
+                bannerHtml += '<span class="saved-kp-param"><strong>Заказчик:</strong> ' + escHtml(state.clientName) + '</span>';
+            }
+            bannerHtml += '</div>';
+            bannerHtml += '<a href="/calculator" class="saved-kp-new-btn">Новый расчёт</a>';
+            bannerHtml += '</div>';
+
+            var bannerDiv = document.createElement('div');
+            bannerDiv.innerHTML = bannerHtml;
+            var calcContainer = document.querySelector('.calc-container');
+            if (calcContainer) {
+                calcContainer.insertBefore(bannerDiv.firstChild, calcContainer.firstChild);
             }
         })
         .catch(function() {});
