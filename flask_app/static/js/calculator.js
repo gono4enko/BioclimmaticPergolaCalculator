@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ],
         'B700NEW': [
             {id: 'e51c7aaa6b00e9c125bbcdb92866b626', type: 'shorts', title: '\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B700 \u2014 \u043F\u043E\u0432\u043E\u0440\u043E\u0442 \u0438 \u0441\u0434\u0432\u0438\u0433'},
-            {id: 'f281d74466c7636d0e30186a7db3e70d', type: 'full', title: 'B700 \u2014 \u043F\u0440\u0435\u043C\u0438\u0430\u043B\u044C\u043D\u0430\u044F \u043F\u0435\u0440\u0433\u043E\u043B\u0430'}
+            {id: 'f281d74466c7636d0e30186a7db3e70d', type: 'full', title: 'B500 \u2014 \u0431\u0438\u043E\u043A\u043B\u0438\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u043F\u0435\u0440\u0433\u043E\u043B\u0430'}
         ],
         'B600': [
             {id: 'b01e73426cb0d008adbb72a544ec6f18', type: 'full', title: '\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B600 \u2014 PIR \u043A\u0440\u044B\u0448\u0430'},
@@ -950,32 +950,22 @@ document.addEventListener('DOMContentLoaded', function() {
             '</div></div>';
 
         /* Block 10: Videos + Gallery + CTA */
-        var allVids = [
-            {id:'351f7009cda5991ef24138f05f7a8692', type:'shorts', title:'\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B500', group:'bio'},
-            {id:'df0131deee13f2a2fd945146aacaeed8', type:'full', title:'\u041E\u0431\u0437\u043E\u0440 \u0431\u0438\u043E\u043A\u043B\u0438\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0439 \u043F\u0435\u0440\u0433\u043E\u043B\u044B', group:'bio'},
-            {id:'e51c7aaa6b00e9c125bbcdb92866b626', type:'shorts', title:'\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B700', group:'bio'},
-            {id:'f281d74466c7636d0e30186a7db3e70d', type:'full', title:'B700 \u2014 \u043F\u0440\u0435\u043C\u0438\u0430\u043B\u044C\u043D\u0430\u044F \u043F\u0435\u0440\u0433\u043E\u043B\u0430', group:'bio'},
-            {id:'b01e73426cb0d008adbb72a544ec6f18', type:'full', title:'\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B600 \u2014 PIR \u043A\u0440\u044B\u0448\u0430', group:'pir'},
-            {id:'ca7d582f5793c56641c7c6c3ecef4cfa', type:'full', title:'B600 \u2014 \u0432\u0441\u0435\u0441\u0435\u0437\u043E\u043D\u043D\u0430\u044F \u0442\u0435\u0440\u0440\u0430\u0441\u0430', group:'pir'}
-        ];
-        html += '<div class="kp-block">' +
-            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83C\uDFA5</div><div class="kp-block-title">\u0412\u0438\u0434\u0435\u043E \u0441 \u043D\u0430\u0448\u0438\u0445 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043E\u043A</div></div>' +
-            '<div class="kp-video-grid">';
-        var pirStarted = false;
-        allVids.forEach(function(v) {
-            if (v.group === 'pir' && !pirStarted) {
-                pirStarted = true;
-                html += '<div class="kp-video-divider"><span>\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B600 \u2014 \u0441\u0442\u0430\u0446\u0438\u043E\u043D\u0430\u0440\u043D\u0430\u044F \u043A\u0440\u044B\u0448\u0430 (PIR \u043F\u0430\u043D\u0435\u043B\u0438)</span></div>';
-            }
-            var borderColor = v.group === 'bio' ? '#1a3a6e' : '#f59e0b';
-            var isShorts = v.type === 'shorts';
-            html += '<div class="kp-video-card' + (isShorts ? ' kp-video-card-shorts' : '') + '" style="border-top:3px solid ' + borderColor + ';">' +
-                '<div class="video-iframe-wrap' + (isShorts ? ' video-iframe-shorts' : '') + '">' +
-                '<iframe data-src="https://rutube.ru/play/embed/' + v.id + '" frameborder="0" allowfullscreen allow="autoplay" loading="lazy"></iframe>' +
-                '</div>' +
-                '<div class="video-card-title">' + v.title + '</div></div>';
-        });
-        html += '</div></div>';
+        var kpVideos = PERGOLA_VIDEOS[state.pergolaType] || [];
+        if (kpVideos.length) {
+            var kpVideoColor = state.pergolaType === 'B600' ? '#f59e0b' : '#1a3a6e';
+            html += '<div class="kp-block">' +
+                '<div class="kp-block-header"><div class="kp-block-icon" style="background:' + kpVideoColor + ';">\uD83C\uDFA5</div><div class="kp-block-title">\u0412\u0438\u0434\u0435\u043E \u0441 \u043D\u0430\u0448\u0438\u0445 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043E\u043A</div></div>' +
+                '<div class="kp-video-grid">';
+            kpVideos.forEach(function(v) {
+                var isShorts = v.type === 'shorts';
+                html += '<div class="kp-video-card' + (isShorts ? ' kp-video-card-shorts' : '') + '" style="border-top:3px solid ' + kpVideoColor + ';">' +
+                    '<div class="video-iframe-wrap' + (isShorts ? ' video-iframe-shorts' : '') + '">' +
+                    '<iframe data-src="https://rutube.ru/play/embed/' + v.id + '" frameborder="0" allowfullscreen allow="autoplay" loading="lazy"></iframe>' +
+                    '</div>' +
+                    '<div class="video-card-title">' + v.title + '</div></div>';
+            });
+            html += '</div></div>';
+        }
 
         var galleryImages = [
             'IMG_5914.jpg',
