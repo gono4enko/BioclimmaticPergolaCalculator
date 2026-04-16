@@ -568,9 +568,9 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
                 G = (x_right, y_center + dy_w - dy_t, cz + dz_w + dz_t)
                 H = (x_left,  y_center + dy_w - dy_t, cz + dz_w + dz_t)
 
-                svg += quad([D, C, F, E], lam_top, lam_edge, 0.4)
-                svg += quad([B, C, F, G], lam_front, lam_edge, 0.4)
-                svg += quad([A, B, G, H], lam_front, lam_edge, 0.4)
+                svg += quad([D, C, F, E], lam_top, lam_edge, 0.7)
+                svg += quad([B, C, F, G], lam_front, lam_edge, 0.7)
+                svg += quad([A, B, G, H], '#7a96ba', lam_edge, 0.7)
 
     if mod_count >= 2:
         for i in range(1, mod_count):
