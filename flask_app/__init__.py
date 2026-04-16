@@ -157,7 +157,10 @@ def create_app(test_config=None):
     @app.after_request
     def set_iframe_headers(response):
         response.headers.pop('X-Frame-Options', None)
-        response.headers['Content-Security-Policy'] = response.headers.get('Content-Security-Policy', '').replace('frame-ancestors', '') or "frame-ancestors *"
+        csp = response.headers.get('Content-Security-Policy', '').replace('frame-ancestors', '') or "frame-ancestors *"
+        if 'frame-src' not in csp:
+            csp += "; frame-src 'self' https://rutube.ru https://*.rutube.ru"
+        response.headers['Content-Security-Policy'] = csp
         return response
 
     @app.errorhandler(404)

@@ -36,9 +36,72 @@ document.addEventListener('DOMContentLoaded', function() {
             stepsEl.step4.style.display = 'none';
             stepsEl.calcBtn.style.display = 'none';
             stepsEl.resultsSection.style.display = 'none';
+            showVideos(state.pergolaType);
             loadVariantOptions(state.pergolaType);
         });
     });
+
+    var PERGOLA_VIDEOS = {
+        'B500NEW': [
+            {id: 'e51c7aaa6b00e9c125bbcdb92866b626', type: 'shorts', title: '\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B500 \u0432 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0438'},
+            {id: 'df0131deee13f2a2fd945146aacaeed8', type: 'full', title: '\u041E\u0431\u0437\u043E\u0440 \u0431\u0438\u043E\u043A\u043B\u0438\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0439 \u043F\u0435\u0440\u0433\u043E\u043B\u044B'}
+        ],
+        'B700NEW': [
+            {id: 'f281d74466c7636d0e30186a7db3e70d', type: 'shorts', title: '\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B700 \u2014 \u043F\u043E\u0432\u043E\u0440\u043E\u0442 \u0438 \u0441\u0434\u0432\u0438\u0433'},
+            {id: '351f7009cda5991ef24138f05f7a8692', type: 'full', title: 'B700 \u2014 \u043F\u0440\u0435\u043C\u0438\u0430\u043B\u044C\u043D\u0430\u044F \u043F\u0435\u0440\u0433\u043E\u043B\u0430'}
+        ],
+        'B600': [
+            {id: 'b01e73426cb0d008adbb72a544ec6f18', type: 'full', title: '\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B600 \u2014 PIR \u043A\u0440\u044B\u0448\u0430'},
+            {id: 'ca7d582f5793c56641c7c6c3ecef4cfa', type: 'full', title: 'B600 \u2014 \u0432\u0441\u0435\u0441\u0435\u0437\u043E\u043D\u043D\u0430\u044F \u0442\u0435\u0440\u0440\u0430\u0441\u0430'}
+        ]
+    };
+
+    function showVideos(modelType) {
+        var videos = PERGOLA_VIDEOS[modelType] || [];
+        var grid = document.getElementById('video-grid');
+        var block = document.getElementById('pergola-videos');
+        if (!grid || !block) return;
+        grid.innerHTML = '';
+        videos.forEach(function(v) {
+            var isShorts = v.type === 'shorts';
+            var wrapper = document.createElement('div');
+            wrapper.className = 'video-card' + (isShorts ? ' video-card-shorts' : ' video-card-full');
+            wrapper.innerHTML =
+                '<div class="video-iframe-wrap' + (isShorts ? ' video-iframe-shorts' : '') + '">' +
+                '<iframe data-src="https://rutube.ru/play/embed/' + v.id + '" frameborder="0" allowfullscreen allow="autoplay" loading="lazy"></iframe>' +
+                '</div>' +
+                '<div class="video-card-title">' + v.title + '</div>';
+            grid.appendChild(wrapper);
+        });
+        block.style.display = videos.length ? 'block' : 'none';
+        initLazyIframes();
+    }
+
+    var _lazyObserver = null;
+    function initLazyIframes() {
+        if (!('IntersectionObserver' in window)) {
+            document.querySelectorAll('iframe[data-src]').forEach(function(f) {
+                f.src = f.dataset.src;
+                f.removeAttribute('data-src');
+            });
+            return;
+        }
+        if (!_lazyObserver) {
+            _lazyObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        var iframe = entry.target;
+                        iframe.src = iframe.dataset.src;
+                        iframe.removeAttribute('data-src');
+                        _lazyObserver.unobserve(iframe);
+                    }
+                });
+            }, {rootMargin: '200px'});
+        }
+        document.querySelectorAll('iframe[data-src]').forEach(function(f) {
+            _lazyObserver.observe(f);
+        });
+    }
 
     function setDefaultLamellaForType(pergolaType) {
         if (pergolaType === 'B600') {
@@ -904,7 +967,36 @@ document.addEventListener('DOMContentLoaded', function() {
         galleryImages.forEach(function(img, idx) {
             html += '<div class="kp-gallery-item"><img src="/static/images/gallery/' + img + '" alt="\u041F\u0440\u043E\u0435\u043A\u0442 ' + (idx+1) + '" onerror="this.parentElement.style.display=\'none\'"></div>';
         });
-        html += '</div></div>' +
+        html += '</div></div>';
+
+        var allVids = [
+            {id:'e51c7aaa6b00e9c125bbcdb92866b626', type:'shorts', title:'\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B500', group:'bio'},
+            {id:'df0131deee13f2a2fd945146aacaeed8', type:'full', title:'\u041E\u0431\u0437\u043E\u0440 \u0431\u0438\u043E\u043A\u043B\u0438\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0439 \u043F\u0435\u0440\u0433\u043E\u043B\u044B', group:'bio'},
+            {id:'f281d74466c7636d0e30186a7db3e70d', type:'shorts', title:'\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B700', group:'bio'},
+            {id:'351f7009cda5991ef24138f05f7a8692', type:'full', title:'B700 \u2014 \u043F\u0440\u0435\u043C\u0438\u0430\u043B\u044C\u043D\u0430\u044F \u043F\u0435\u0440\u0433\u043E\u043B\u0430', group:'bio'},
+            {id:'b01e73426cb0d008adbb72a544ec6f18', type:'full', title:'\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B600 \u2014 PIR \u043A\u0440\u044B\u0448\u0430', group:'pir'},
+            {id:'ca7d582f5793c56641c7c6c3ecef4cfa', type:'full', title:'B600 \u2014 \u0432\u0441\u0435\u0441\u0435\u0437\u043E\u043D\u043D\u0430\u044F \u0442\u0435\u0440\u0440\u0430\u0441\u0430', group:'pir'}
+        ];
+        html += '<div class="kp-block">' +
+            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83C\uDFA5</div><div class="kp-block-title">\u0412\u0438\u0434\u0435\u043E \u0441 \u043D\u0430\u0448\u0438\u0445 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043E\u043A</div></div>' +
+            '<div class="kp-video-grid">';
+        var pirStarted = false;
+        allVids.forEach(function(v) {
+            if (v.group === 'pir' && !pirStarted) {
+                pirStarted = true;
+                html += '<div class="kp-video-divider"><span>\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B600 \u2014 \u0441\u0442\u0430\u0446\u0438\u043E\u043D\u0430\u0440\u043D\u0430\u044F \u043A\u0440\u044B\u0448\u0430 (PIR \u043F\u0430\u043D\u0435\u043B\u0438)</span></div>';
+            }
+            var borderColor = v.group === 'bio' ? '#1a3a6e' : '#f59e0b';
+            var isShorts = v.type === 'shorts';
+            html += '<div class="kp-video-card' + (isShorts ? ' kp-video-card-shorts' : '') + '" style="border-top:3px solid ' + borderColor + ';">' +
+                '<div class="video-iframe-wrap' + (isShorts ? ' video-iframe-shorts' : '') + '">' +
+                '<iframe data-src="https://rutube.ru/play/embed/' + v.id + '" frameborder="0" allowfullscreen allow="autoplay" loading="lazy"></iframe>' +
+                '</div>' +
+                '<div class="video-card-title">' + v.title + '</div></div>';
+        });
+        html += '</div></div>';
+
+        html +=
             '<div class="kp-cta-block">' +
             '<h4>\u0413\u043E\u0442\u043E\u0432\u044B \u043E\u0431\u0441\u0443\u0434\u0438\u0442\u044C \u043F\u0440\u043E\u0435\u043A\u0442?</h4>' +
             '<p>\u0421\u0432\u044F\u0436\u0438\u0442\u0435\u0441\u044C \u0441 \u043D\u0430\u043C\u0438 \u2014 \u043E\u0442\u0432\u0435\u0442\u0438\u043C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B</p>' +
@@ -922,12 +1014,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 var kpContainer = document.getElementById('marketing-kp-container');
                 if (kpContainer) {
                     kpContainer.innerHTML = buildMarketingKP(resultOrResults, decoData);
+                    initLazyIframes();
                 }
             })
             .catch(function() {
                 var kpContainer = document.getElementById('marketing-kp-container');
                 if (kpContainer) {
                     kpContainer.innerHTML = buildMarketingKP(resultOrResults, {});
+                    initLazyIframes();
                 }
             });
     }
