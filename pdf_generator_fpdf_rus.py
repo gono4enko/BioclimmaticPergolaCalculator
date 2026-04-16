@@ -917,8 +917,21 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                                 details.append(f"колонна {spec['column']}")
                             if spec.get('beam'):
                                 details.append(f"балка {spec['beam']}")
+                            weight_str = spec.get('weight', '')
+                            weight_suffix = ''
+                            if weight_str:
+                                try:
+                                    w_num = float(weight_str.split('кг')[0].strip().replace(',', '.'))
+                                    p_w = float(pergola_data.get('width', 0) or 0)
+                                    p_l = float(pergola_data.get('length', 0) or 0)
+                                    p_area = p_w * p_l
+                                    if p_area > 0:
+                                        total_weight = w_num * p_area
+                                        weight_suffix = f", ~{total_weight:.0f} кг"
+                                except (ValueError, IndexError, TypeError):
+                                    pass
                             if details:
-                                footnote = f"{v_label}: {', '.join(details)}"
+                                footnote = f"{v_label}: {', '.join(details)}{weight_suffix}"
                                 pdf.cell(0, 4, footnote, 0, 1, 'L')
                     pdf.set_text_color(0, 0, 0)
             except Exception as e:
