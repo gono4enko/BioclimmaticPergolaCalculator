@@ -542,22 +542,33 @@ document.addEventListener('DOMContentLoaded', function() {
         tableHtml += '<th>\u0421 \u041D\u0414\u0421 22%</th>';
         tableHtml += '</tr></thead><tbody>';
 
-        var cheapest = results[0].totals.cash;
+        var minCash = Math.min.apply(null, results.map(function(r) { return r.totals.cash; }));
+        var minNonCash = Math.min.apply(null, results.map(function(r) { return r.totals.non_cash; }));
+        var minWithVat = Math.min.apply(null, results.map(function(r) { return r.totals.with_vat; }));
+        var cheapest = minCash;
+
+        function priceCellDiff(val, base) {
+            if (!base || val <= base) return '';
+            var diff = Math.round(val - base);
+            var pct = Math.round((val - base) / base * 100);
+            return '<div class="compare-diff">+' + formatPrice(diff) + ' \u20BD (+' + pct + '%)</div>';
+        }
 
         results.forEach(function(r, idx) {
             var label = r.variant_label || r.selected_variant || ('\u0412\u0430\u0440\u0438\u0430\u043D\u0442 ' + (idx + 1));
             var diffHtml = '';
             if (idx > 0) {
                 var diff = r.totals.cash - cheapest;
-                diffHtml = '<div class="compare-diff">+' + formatPrice(diff) + ' \u20BD</div>';
+                var pct = cheapest ? Math.round((r.totals.cash - cheapest) / cheapest * 100) : 0;
+                diffHtml = '<div class="compare-diff">+' + formatPrice(diff) + ' \u20BD (+' + pct + '%)</div>';
             } else {
                 diffHtml = '<div class="compare-best">\u043B\u0443\u0447\u0448\u0430\u044F \u0446\u0435\u043D\u0430</div>';
             }
             tableHtml += '<tr class="compare-row-clickable' + (idx === 0 ? ' compare-row-best' : '') + '" data-variant-idx="' + idx + '">';
             tableHtml += '<td><strong>' + label + '</strong>' + diffHtml + '</td>';
-            tableHtml += '<td>' + formatPrice(r.totals.cash) + ' \u20BD</td>';
-            tableHtml += '<td>' + formatPrice(r.totals.non_cash) + ' \u20BD</td>';
-            tableHtml += '<td>' + formatPrice(r.totals.with_vat) + ' \u20BD</td>';
+            tableHtml += '<td>' + formatPrice(r.totals.cash) + ' \u20BD' + priceCellDiff(r.totals.cash, minCash) + '</td>';
+            tableHtml += '<td>' + formatPrice(r.totals.non_cash) + ' \u20BD' + priceCellDiff(r.totals.non_cash, minNonCash) + '</td>';
+            tableHtml += '<td>' + formatPrice(r.totals.with_vat) + ' \u20BD' + priceCellDiff(r.totals.with_vat, minWithVat) + '</td>';
             tableHtml += '</tr>';
         });
         tableHtml += '</tbody></table></div>';
