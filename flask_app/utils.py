@@ -424,7 +424,7 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     svg += _dim_h(ox, ox + real_w_px, w_dim_y, f'{width:.2f} м (+ 2×82 мм)', prefix='f', below=True)
 
     svg += (f'<text x="{col_right_x + col_w_px + 4}" y="{pergola_top + beam_h_px/2 + 3}" '
-            f'text-anchor="start" font-size="{small_font}" fill="{DIM_COLOR}">260</text>')
+            f'text-anchor="start" font-size="{small_font}" fill="{DIM_COLOR}">280</text>')
 
     svg += (f'<text x="{col_left_x - 4}" y="{col_top_y + col_h_px/2}" text-anchor="end" '
             f'font-size="{small_font}" fill="{DIM_COLOR}">164</text>')
