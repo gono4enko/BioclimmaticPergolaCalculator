@@ -485,6 +485,19 @@ def scheduler_status():
     })
 
 
+@bp.route('/scheduler-run-now', methods=['POST'])
+@admin_required
+def scheduler_run_now():
+    from ..utils import cleanup_old_calculations
+    import logging
+    try:
+        removed = cleanup_old_calculations()
+        return jsonify({'ok': True, 'files_removed': removed})
+    except Exception:
+        logging.getLogger(__name__).exception('Manual cleanup failed')
+        return jsonify({'ok': False, 'error': 'Ошибка выполнения очистки'}), 500
+
+
 @bp.route('/scheduler-health')
 @admin_required
 def scheduler_health():
