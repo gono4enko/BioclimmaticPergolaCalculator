@@ -916,7 +916,7 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     if is_cheapest and len(all_variants) > 1:
                         pdf.set_font('DejaVu', 'B', 8)
                         label_text = "  " + v_label
-                        badge_text = "  лучшая цена"
+                        badge_text = "  ✓ лучшая цена"
                         label_w = pdf.get_string_width(label_text)
                         pdf.set_font('DejaVu', '', 6)
                         badge_w = pdf.get_string_width(badge_text)
