@@ -842,24 +842,44 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             pdf.cell(col_price, row_h, "Безналичный", 1, 0, 'C', fill=True)
             pdf.cell(col_price, row_h, "С НДС 22%", 1, 1, 'C', fill=True)
 
+            min_cash = min(v.get('cash_total', 0) for v in all_variants)
+            min_noncash = min(v.get('noncash_total', 0) for v in all_variants)
+            min_vat = min(v.get('vat_total', 0) for v in all_variants)
+
+            def _pct_diff(val, base):
+                if not base or val <= base:
+                    return ""
+                pct = (val - base) / base * 100
+                return f" (+{pct:.0f}%)"
+
             for idx, v in enumerate(all_variants):
                 v_cash = v.get('cash_total', 0)
                 v_noncash = v.get('noncash_total', 0)
                 v_vat = v.get('vat_total', 0)
                 v_label = v.get('variant_label', '') or v.get('selected_variant', '') or f"Вариант {idx+1}"
 
-                if idx == 0:
+                is_cheapest = (v_cash == min_cash)
+
+                if is_cheapest:
                     pdf.set_fill_color(240, 248, 232)
                 else:
                     pdf.set_fill_color(240, 244, 255)
 
                 pdf.set_text_color(0, 0, 0)
-                pdf.set_font('DejaVu', 'B' if idx == 0 else '', 8)
+                pdf.set_font('DejaVu', 'B' if is_cheapest else '', 8)
                 pdf.cell(col_label, row_h, "  " + v_label, 1, 0, 'L', fill=True)
-                pdf.set_font('DejaVu', 'B' if idx == 0 else '', 8)
-                pdf.cell(col_price, row_h, _format_total(v_cash), 1, 0, 'C', fill=True)
-                pdf.cell(col_price, row_h, _format_total(v_noncash), 1, 0, 'C', fill=True)
-                pdf.cell(col_price, row_h, _format_total(v_vat), 1, 1, 'C', fill=True)
+
+                cash_pct = _pct_diff(v_cash, min_cash)
+                noncash_pct = _pct_diff(v_noncash, min_noncash)
+                vat_pct = _pct_diff(v_vat, min_vat)
+
+                has_pct = bool(cash_pct or noncash_pct or vat_pct)
+                font_sz = 7 if has_pct else 8
+
+                pdf.set_font('DejaVu', 'B' if is_cheapest else '', font_sz)
+                pdf.cell(col_price, row_h, _format_total(v_cash) + cash_pct, 1, 0, 'C', fill=True)
+                pdf.cell(col_price, row_h, _format_total(v_noncash) + noncash_pct, 1, 0, 'C', fill=True)
+                pdf.cell(col_price, row_h, _format_total(v_vat) + vat_pct, 1, 1, 'C', fill=True)
 
             pdf.set_text_color(0, 0, 0)
             pdf.set_draw_color(0, 0, 0)
