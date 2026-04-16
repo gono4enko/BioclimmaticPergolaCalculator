@@ -962,12 +962,12 @@ document.addEventListener('DOMContentLoaded', function() {
             var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schM + (state._maxOverhang ? '&mo=' + state._maxOverhang : '');
             html += '<div class="kp-block" id="kp-scheme-block" data-w="' + schW + '" data-l="' + schL + '" data-m="' + schM + '" data-pir="' + (isPir ? '1' : '0') + '" data-lc="' + lamCnt + '" data-h="' + pergolaH + '">' +
                 '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83D\uDCD0</div><div class="kp-block-title">\u0421\u0445\u0435\u043C\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B</div></div>' +
-                '<div style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;align-items:flex-start;">' +
-                '<div style="flex:1;min-width:280px;text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443</div>' +
+                '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;align-items:start;">' +
+                '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443</div>' +
                 '<img id="kp-scheme-img" src="/api/pergola-scheme.svg?' + qs + '" alt="\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443" style="max-width:100%;height:auto;"></div>' +
-                '<div style="flex:1;min-width:280px;text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u043F\u0435\u0440\u0435\u0434\u0438</div>' +
+                '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u043F\u0435\u0440\u0435\u0434\u0438</div>' +
                 '<img id="kp-front-img" src="/api/pergola-front.svg?' + fqs + '" alt="\u0412\u0438\u0434 \u0441\u043F\u0435\u0440\u0435\u0434\u0438" style="max-width:100%;height:auto;"></div>' +
-                '<div style="flex:1;min-width:280px;text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u0431\u043E\u043A\u0443</div>' +
+                '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u0431\u043E\u043A\u0443</div>' +
                 '<img id="kp-side-img" src="/api/pergola-front.svg?' + sqs + '" alt="\u0412\u0438\u0434 \u0441\u0431\u043E\u043A\u0443" style="max-width:100%;height:auto;"></div>' +
                 '</div>' +
                 '<div style="margin-top:0.6rem;font-size:0.82rem;color:#666;text-align:center;">\u0412\u044B\u0441\u043E\u0442\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B: ' + pergolaH.toFixed(2) + ' \u043C (\u0441\u0442\u0430\u043D\u0434\u0430\u0440\u0442). \u041A\u043E\u043B\u043E\u043D\u043D\u044B 164\u00D7164 \u043C\u043C, \u0432\u044B\u0441\u043E\u0442\u0430 \u043B\u043E\u0442\u043A\u0430 260 \u043C\u043C, \u0432\u044B\u043B\u0435\u0442 \u043F\u043B\u043E\u0449\u0430\u0434\u043A\u0438 82 \u043C\u043C.</div>' +
