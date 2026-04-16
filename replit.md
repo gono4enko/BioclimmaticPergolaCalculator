@@ -16,7 +16,7 @@
   - `__init__.py` — фабрика приложения `create_app()`
   - `controllers/api_routes.py` — API: `/api/calculate`, `/api/pergola-types`, `/api/lamella-sizes/<type>`, `/api/max-dimensions`, `/api/export-pdf`, `/api/kp/<calc_id>`
   - `controllers/main_routes.py` — HTML-страницы: `/`, `/calculator`, `/kp/<calc_id>`, `/catalog`, `/about`, `/health`
-  - `utils.py` — утилиты: generate_calc_id(), save/load_calculation(), generate_top_view_svg(), svg_to_png_path(), generate_qr_image()
+  - `utils.py` — утилиты: generate_calc_id(), save/load_calculation(), generate_top_view_svg(), svg_to_png_path(), generate_qr_image(), check_scheduler_health()
   - `services/calculator.py` — бизнес-логика расчёта (порт из app.py)
   - `templates/calculator.html` — страница калькулятора (Bootstrap 5)
   - `static/js/calculator.js` — клиентская логика формы

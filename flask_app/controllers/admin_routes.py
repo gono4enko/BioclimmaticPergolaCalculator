@@ -450,7 +450,7 @@ def scheduler_page():
 @bp.route('/scheduler-status')
 @admin_required
 def scheduler_status():
-    from ..utils import cleanup_metrics, CALC_MAX_AGE_DAYS
+    from ..utils import cleanup_metrics, CALC_MAX_AGE_DAYS, check_scheduler_health
 
     scheduler = current_app.extensions.get('cleanup_scheduler')
 
@@ -469,6 +469,8 @@ def scheduler_status():
             except Exception:
                 pass
 
+    health = check_scheduler_health()
+
     return jsonify({
         'ok': True,
         'scheduler_running': scheduler_running,
@@ -479,4 +481,38 @@ def scheduler_status():
         'last_files_removed': cleanup_metrics['last_files_removed'],
         'total_runs': cleanup_metrics['total_runs'],
         'total_files_removed': cleanup_metrics['total_files_removed'],
+        'health': health,
     })
+
+
+@bp.route('/scheduler-health')
+@admin_required
+def scheduler_health():
+    from ..utils import check_scheduler_health
+
+    scheduler = current_app.extensions.get('cleanup_scheduler')
+    health = check_scheduler_health()
+
+    scheduler_running = False
+    cleanup_job_exists = False
+    watchdog_job_exists = False
+    if scheduler:
+        scheduler_running = scheduler.running
+        cleanup_job_exists = scheduler.get_job('cleanup_old_calculations') is not None
+        watchdog_job_exists = scheduler.get_job('cleanup_watchdog') is not None
+
+    health['scheduler_running'] = scheduler_running
+    health['cleanup_job_exists'] = cleanup_job_exists
+    health['watchdog_job_exists'] = watchdog_job_exists
+
+    if not scheduler_running or not cleanup_job_exists:
+        health['healthy'] = False
+        if not scheduler_running:
+            health['status'] = 'scheduler_down'
+            health['message'] = 'Scheduler process is not running'
+        elif not cleanup_job_exists:
+            health['status'] = 'job_missing'
+            health['message'] = 'Cleanup job is missing from scheduler'
+
+    status_code = 200 if health['healthy'] else 503
+    return jsonify(health), status_code

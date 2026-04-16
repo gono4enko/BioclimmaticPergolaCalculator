@@ -35,6 +35,8 @@ def _start_cleanup_scheduler(app, cleanup_fn):
     except (ValueError, TypeError):
         hours = 24
 
+    watchdog_minutes = max(10, (hours * 60) // 4)
+
     try:
         from apscheduler.schedulers.background import BackgroundScheduler
         scheduler = BackgroundScheduler(daemon=True)
@@ -43,10 +45,43 @@ def _start_cleanup_scheduler(app, cleanup_fn):
             with app.app_context():
                 cleanup_fn()
 
+        def _watchdog_check():
+            from flask_app.utils import check_scheduler_health
+            health = check_scheduler_health()
+            if not health['healthy']:
+                _logger.warning(
+                    "SCHEDULER ALERT: %s (status=%s)",
+                    health['message'], health['status']
+                )
+                job = scheduler.get_job('cleanup_old_calculations')
+                if job is None or not scheduler.running:
+                    _logger.error(
+                        "SCHEDULER ALERT: Cleanup job missing or scheduler stopped. "
+                        "Attempting recovery..."
+                    )
+                    try:
+                        if not scheduler.running:
+                            scheduler.start()
+                        if scheduler.get_job('cleanup_old_calculations') is None:
+                            scheduler.add_job(
+                                _run_cleanup, 'interval', hours=hours,
+                                id='cleanup_old_calculations'
+                            )
+                        _logger.info("Scheduler recovery attempted successfully")
+                    except Exception as recover_exc:
+                        _logger.error("Scheduler recovery failed: %s", recover_exc)
+
         scheduler.add_job(_run_cleanup, 'interval', hours=hours, id='cleanup_old_calculations')
+        scheduler.add_job(
+            _watchdog_check, 'interval', minutes=watchdog_minutes,
+            id='cleanup_watchdog'
+        )
         scheduler.start()
         app.extensions['cleanup_scheduler'] = scheduler
-        _logger.info("Cleanup scheduler started (every %d hour(s))", hours)
+        _logger.info(
+            "Cleanup scheduler started (every %d hour(s), watchdog every %d min)",
+            hours, watchdog_minutes
+        )
     except Exception as exc:
         _logger.warning("Failed to start cleanup scheduler: %s", exc)
 

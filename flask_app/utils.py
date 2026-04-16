@@ -17,10 +17,53 @@ except (ValueError, TypeError):
 
 cleanup_metrics = {
     'last_run_time': None,
+    'last_run_dt': None,
     'last_files_removed': 0,
     'total_runs': 0,
     'total_files_removed': 0,
 }
+
+try:
+    CLEANUP_INTERVAL_HOURS = max(1, int(os.environ.get('CLEANUP_INTERVAL_HOURS', 24)))
+except (ValueError, TypeError):
+    CLEANUP_INTERVAL_HOURS = 24
+
+HEALTH_CHECK_GRACE_MULTIPLIER = 2
+
+
+def check_scheduler_health():
+    last_dt = cleanup_metrics.get('last_run_dt')
+    if last_dt is None:
+        return {
+            'healthy': False,
+            'status': 'never_run',
+            'message': 'Cleanup has never run',
+            'last_run': None,
+            'overdue_seconds': None,
+        }
+
+    expected_interval = timedelta(hours=CLEANUP_INTERVAL_HOURS)
+    grace_period = expected_interval * HEALTH_CHECK_GRACE_MULTIPLIER
+    now = datetime.now()
+    elapsed = now - last_dt
+    overdue = elapsed - grace_period
+
+    if overdue.total_seconds() > 0:
+        return {
+            'healthy': False,
+            'status': 'stalled',
+            'message': f'Cleanup overdue by {int(overdue.total_seconds())}s (last ran {int(elapsed.total_seconds())}s ago, expected every {CLEANUP_INTERVAL_HOURS}h)',
+            'last_run': cleanup_metrics['last_run_time'],
+            'overdue_seconds': int(overdue.total_seconds()),
+        }
+
+    return {
+        'healthy': True,
+        'status': 'ok',
+        'message': f'Cleanup running normally (last ran {int(elapsed.total_seconds())}s ago)',
+        'last_run': cleanup_metrics['last_run_time'],
+        'overdue_seconds': 0,
+    }
 
 
 def get_pergola_count():
@@ -178,7 +221,9 @@ def cleanup_old_calculations(max_age_days=CALC_MAX_AGE_DAYS):
         pass
     if removed:
         logger.info("Cleaned up %d old calculation(s) from %s", removed, calc_dir)
-    cleanup_metrics['last_run_time'] = datetime.now().isoformat()
+    now = datetime.now()
+    cleanup_metrics['last_run_time'] = now.isoformat()
+    cleanup_metrics['last_run_dt'] = now
     cleanup_metrics['last_files_removed'] = removed
     cleanup_metrics['total_runs'] += 1
     cleanup_metrics['total_files_removed'] += removed
