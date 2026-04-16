@@ -852,6 +852,12 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                 pct = (val - base) / base * 100
                 return f" (+{pct:.0f}%)"
 
+            def _abs_diff(val, base):
+                if not base or val <= base:
+                    return ""
+                diff = round(val - base)
+                return f"+{diff:,d}".replace(',', ' ') + " ₽"
+
             for idx, v in enumerate(all_variants):
                 v_cash = v.get('cash_total', 0)
                 v_noncash = v.get('noncash_total', 0)
@@ -865,43 +871,66 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                 else:
                     pdf.set_fill_color(240, 244, 255)
 
-                pdf.set_text_color(0, 0, 0)
-                if is_cheapest and len(all_variants) > 1:
-                    pdf.set_font('DejaVu', 'B', 8)
-                    label_text = "  " + v_label
-                    badge_text = "  лучшая цена"
-                    label_w = pdf.get_string_width(label_text)
-                    pdf.set_font('DejaVu', '', 6)
-                    badge_w = pdf.get_string_width(badge_text)
-                    remaining = col_label - label_w - 2
-                    show_badge = remaining >= badge_w
-                    pdf.set_font('DejaVu', 'B', 8)
-                    x_before = pdf.get_x()
-                    y_before = pdf.get_y()
-                    pdf.cell(col_label, row_h, "", 1, 0, 'L', fill=True)
-                    pdf.set_xy(x_before, y_before)
-                    pdf.cell(label_w + 1, row_h, label_text, 0, 0, 'L')
-                    if show_badge:
-                        pdf.set_font('DejaVu', '', 6)
-                        pdf.set_text_color(56, 118, 29)
-                        pdf.cell(remaining, row_h, badge_text, 0, 0, 'L')
-                        pdf.set_text_color(0, 0, 0)
-                    pdf.set_xy(x_before + col_label, y_before)
-                else:
-                    pdf.set_font('DejaVu', 'B' if is_cheapest else '', 8)
-                    pdf.cell(col_label, row_h, "  " + v_label, 1, 0, 'L', fill=True)
-
                 cash_pct = _pct_diff(v_cash, min_cash)
                 noncash_pct = _pct_diff(v_noncash, min_noncash)
                 vat_pct = _pct_diff(v_vat, min_vat)
 
-                has_pct = bool(cash_pct or noncash_pct or vat_pct)
-                font_sz = 7 if has_pct else 8
+                cash_abs = _abs_diff(v_cash, min_cash)
+                noncash_abs = _abs_diff(v_noncash, min_noncash)
+                vat_abs = _abs_diff(v_vat, min_vat)
 
-                pdf.set_font('DejaVu', 'B' if is_cheapest else '', font_sz)
-                pdf.cell(col_price, row_h, _format_total(v_cash) + cash_pct, 1, 0, 'C', fill=True)
-                pdf.cell(col_price, row_h, _format_total(v_noncash) + noncash_pct, 1, 0, 'C', fill=True)
-                pdf.cell(col_price, row_h, _format_total(v_vat) + vat_pct, 1, 1, 'C', fill=True)
+                has_diff = bool(cash_pct or noncash_pct or vat_pct)
+
+                if has_diff:
+                    diff_row_h = 5
+                    main_row_h = row_h - diff_row_h
+                    x_start = pdf.get_x()
+                    y_start = pdf.get_y()
+
+                    pdf.set_text_color(0, 0, 0)
+                    pdf.set_font('DejaVu', '', 8)
+                    pdf.cell(col_label, main_row_h, "  " + v_label, 'LTR', 0, 'L', fill=True)
+                    pdf.set_font('DejaVu', '', 8)
+                    pdf.cell(col_price, main_row_h, _format_total(v_cash) + cash_pct, 'LTR', 0, 'C', fill=True)
+                    pdf.cell(col_price, main_row_h, _format_total(v_noncash) + noncash_pct, 'LTR', 0, 'C', fill=True)
+                    pdf.cell(col_price, main_row_h, _format_total(v_vat) + vat_pct, 'LTR', 1, 'C', fill=True)
+
+                    pdf.set_x(x_start)
+                    pdf.set_font('DejaVu', '', 6)
+                    pdf.set_text_color(130, 130, 130)
+                    pdf.cell(col_label, diff_row_h, "", 'LBR', 0, 'L', fill=True)
+                    pdf.cell(col_price, diff_row_h, cash_abs, 'LBR', 0, 'C', fill=True)
+                    pdf.cell(col_price, diff_row_h, noncash_abs, 'LBR', 0, 'C', fill=True)
+                    pdf.cell(col_price, diff_row_h, vat_abs, 'LBR', 1, 'C', fill=True)
+                else:
+                    pdf.set_text_color(0, 0, 0)
+                    if is_cheapest and len(all_variants) > 1:
+                        pdf.set_font('DejaVu', 'B', 8)
+                        label_text = "  " + v_label
+                        badge_text = "  лучшая цена"
+                        label_w = pdf.get_string_width(label_text)
+                        pdf.set_font('DejaVu', '', 6)
+                        badge_w = pdf.get_string_width(badge_text)
+                        remaining = col_label - label_w - 2
+                        show_badge = remaining >= badge_w
+                        pdf.set_font('DejaVu', 'B', 8)
+                        x_before = pdf.get_x()
+                        y_before = pdf.get_y()
+                        pdf.cell(col_label, row_h, "", 1, 0, 'L', fill=True)
+                        pdf.set_xy(x_before, y_before)
+                        pdf.cell(label_w + 1, row_h, label_text, 0, 0, 'L')
+                        if show_badge:
+                            pdf.set_font('DejaVu', '', 6)
+                            pdf.set_text_color(56, 118, 29)
+                            pdf.cell(remaining, row_h, badge_text, 0, 0, 'L')
+                            pdf.set_text_color(0, 0, 0)
+                        pdf.set_xy(x_before + col_label, y_before)
+                    else:
+                        pdf.set_font('DejaVu', 'B' if is_cheapest else '', 8)
+                        pdf.cell(col_label, row_h, "  " + v_label, 1, 0, 'L', fill=True)
+                    pdf.cell(col_price, row_h, _format_total(v_cash), 1, 0, 'C', fill=True)
+                    pdf.cell(col_price, row_h, _format_total(v_noncash), 1, 0, 'C', fill=True)
+                    pdf.cell(col_price, row_h, _format_total(v_vat), 1, 1, 'C', fill=True)
 
             pdf.set_text_color(0, 0, 0)
             pdf.set_draw_color(0, 0, 0)
