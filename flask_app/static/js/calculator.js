@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', function() {
             stepsEl.step4.style.display = 'none';
             stepsEl.calcBtn.style.display = 'none';
             stepsEl.resultsSection.style.display = 'none';
-            showVideos(state.pergolaType);
             loadVariantOptions(state.pergolaType);
         });
     });
