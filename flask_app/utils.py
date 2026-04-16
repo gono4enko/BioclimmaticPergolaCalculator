@@ -430,6 +430,7 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
 
     BEAM_H = 0.26
     COL_W = 0.164
+    CENTER_BEAM_W = 0.28
     LAM_W = 0.25
     LAM_T = 0.04
 
@@ -570,6 +571,12 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
                 svg += quad([D, C, F, E], lam_top, lam_edge, 0.4)
                 svg += quad([B, C, F, G], lam_front, lam_edge, 0.4)
                 svg += quad([A, B, G, H], lam_front, lam_edge, 0.4)
+
+    if mod_count >= 2:
+        for i in range(1, mod_count):
+            cx_mid = width / mod_count * i
+            svg += draw_beam(cx_mid - CENTER_BEAM_W / 2, cx_mid + CENTER_BEAM_W / 2,
+                             COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
 
     svg += draw_beam(width - COL_W, width, COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
 
