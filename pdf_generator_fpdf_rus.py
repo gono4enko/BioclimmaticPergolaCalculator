@@ -480,8 +480,14 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         if os.path.exists(hero_img_path):
             try:
                 compressed = _compress_image_for_pdf(hero_img_path, max_width=1000, quality=70)
+                with Image.open(compressed) as _img:
+                    orig_w, orig_h = _img.size
                 img_w = 170
-                img_h = 90
+                img_h = img_w * orig_h / orig_w
+                max_h = 110
+                if img_h > max_h:
+                    img_h = max_h
+                    img_w = img_h * orig_w / orig_h
                 x_pos = (210 - img_w) / 2
                 pdf.image(compressed, x=x_pos, y=pdf.get_y(), w=img_w, h=img_h)
                 pdf.set_y(pdf.get_y() + img_h + 5)
@@ -555,7 +561,14 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     deco_img_path = os.path.join(deco_img_dir, deco_imgs[0])
                     try:
                         compressed = _compress_image_for_pdf(deco_img_path, max_width=600, quality=55)
-                        pdf.image(compressed, x=20, y=pdf.get_y(), w=80, h=50)
+                        with Image.open(compressed) as _dimg:
+                            _dw, _dh = _dimg.size
+                        deco_w = 80
+                        deco_h = deco_w * _dh / _dw
+                        if deco_h > 60:
+                            deco_h = 60
+                            deco_w = deco_h * _dw / _dh
+                        pdf.image(compressed, x=20, y=pdf.get_y(), w=deco_w, h=deco_h)
                         pdf.set_xy(105, pdf.get_y())
                         deco_img_placed = True
                     except Exception:
@@ -952,11 +965,13 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     space_left = 260 - pdf.get_y()
                     if space_left > 50:
                         compressed = _compress_image_for_pdf(cover_photo, max_width=1000, quality=70)
+                        with Image.open(compressed) as _cimg:
+                            _cw, _ch = _cimg.size
                         img_w = 150
-                        img_h = 80
+                        img_h = img_w * _ch / _cw
                         if img_h > space_left - 5:
                             img_h = space_left - 5
-                            img_w = img_h * 1.875
+                            img_w = img_h * _cw / _ch
                         pdf.ln(5)
                         pdf.image(compressed, x=(210 - img_w) / 2, y=pdf.get_y(), w=img_w, h=img_h)
                 except Exception:
@@ -1017,11 +1032,13 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     space_left = 260 - pdf.get_y()
                     if space_left > 50:
                         compressed = _compress_image_for_pdf(model_photo, max_width=1000, quality=70)
+                        with Image.open(compressed) as _mimg:
+                            _mw, _mh = _mimg.size
                         img_w = 150
-                        img_h = 80
+                        img_h = img_w * _mh / _mw
                         if img_h > space_left - 5:
                             img_h = space_left - 5
-                            img_w = img_h * 1.875
+                            img_w = img_h * _mw / _mh
                         pdf.ln(5)
                         pdf.image(compressed, x=(210 - img_w) / 2, y=pdf.get_y(), w=img_w, h=img_h)
                 except Exception:
