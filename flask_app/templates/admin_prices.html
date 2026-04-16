@@ -42,6 +42,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .spinner .dot:nth-child(2){animation-delay:.2s}
 .spinner .dot:nth-child(3){animation-delay:.4s}
 @keyframes bounce{to{transform:translateY(-12px);opacity:.3}}
+.health-card{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.health-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700}
+.health-badge.ok{background:#d4edda;color:#155724}
+.health-badge.bad{background:#f8d7da;color:#721c24}
+.health-badge.unknown{background:#e9ecef;color:#666}
+.health-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.health-badge.ok .health-dot{background:#28a745;box-shadow:0 0 0 3px rgba(40,167,69,.18)}
+.health-badge.bad .health-dot{background:#dc3545;box-shadow:0 0 0 3px rgba(220,53,69,.18)}
+.health-badge.unknown .health-dot{background:#888}
+.health-meta{display:flex;gap:22px;flex-wrap:wrap;font-size:13px;color:#444}
+.health-meta .label{color:#888;font-weight:600;margin-right:6px;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+.health-overdue{color:#721c24;font-weight:600}
+.health-link{margin-left:auto;font-size:13px;color:#1a3a6b;text-decoration:none;font-weight:600}
+.health-link:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -57,6 +71,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <div class="main">
+
+<div class="card">
+    <div class="card-header">Состояние планировщика очистки</div>
+    <div class="card-body">
+        <div id="schedHealthCard" class="health-card">
+            <span class="health-badge unknown"><span class="health-dot"></span>Загрузка…</span>
+        </div>
+    </div>
+</div>
 
 <div class="card">
     <div class="card-header">Выбор модели</div>
@@ -397,6 +420,67 @@ function applyParsedPrices() {
         applyStatus.innerHTML = '<div class="status-msg err">' + e.message + '</div>';
     });
 }
+
+function formatSchedDateTime(isoStr) {
+    if (!isoStr) return '—';
+    try {
+        var dt = new Date(isoStr);
+        if (isNaN(dt.getTime())) return isoStr;
+        return dt.toLocaleString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    } catch(e) { return isoStr; }
+}
+
+function formatOverdue(seconds) {
+    if (!seconds || seconds <= 0) return '';
+    var h = Math.floor(seconds / 3600);
+    var m = Math.floor((seconds % 3600) / 60);
+    if (h > 0) return h + ' ч ' + m + ' мин';
+    return m + ' мин';
+}
+
+function loadSchedulerHealth() {
+    var card = document.getElementById('schedHealthCard');
+    fetch('{{ url_for("admin.scheduler_status") }}')
+        .then(function(r) {
+            if (r.redirected || !r.ok) throw new Error('status ' + r.status);
+            return r.json();
+        })
+        .then(function(d) {
+            if (!d.ok) throw new Error('not ok');
+            var health = d.health || {};
+            var running = d.scheduler_running;
+            var healthy = running && health.healthy;
+            var badgeClass, badgeText;
+            if (healthy) {
+                badgeClass = 'ok';
+                badgeText = 'Работает нормально';
+            } else {
+                badgeClass = 'bad';
+                if (!running) badgeText = 'Планировщик остановлен';
+                else if (health.status === 'never_run') badgeText = 'Ни разу не запускался';
+                else if (health.status === 'stalled') badgeText = 'Просрочен';
+                else badgeText = 'Проблема';
+            }
+
+            var html = '<span class="health-badge ' + badgeClass + '"><span class="health-dot"></span>' + badgeText + '</span>';
+            html += '<div class="health-meta">';
+            html += '<div><span class="label">Последний запуск</span>' + formatSchedDateTime(d.last_run_time) + '</div>';
+            html += '<div><span class="label">Следующий запуск</span>' + formatSchedDateTime(d.next_run) + '</div>';
+            if (health.overdue_seconds && health.overdue_seconds > 0) {
+                html += '<div><span class="label">Просрочка</span><span class="health-overdue">' + formatOverdue(health.overdue_seconds) + '</span></div>';
+            }
+            html += '</div>';
+            html += '<a class="health-link" href="{{ url_for("admin.scheduler_page") }}">Подробнее →</a>';
+            card.innerHTML = html;
+        })
+        .catch(function() {
+            card.innerHTML = '<span class="health-badge unknown"><span class="health-dot"></span>Не удалось загрузить статус</span>' +
+                '<a class="health-link" href="{{ url_for("admin.scheduler_page") }}">Открыть планировщик →</a>';
+        });
+}
+
+loadSchedulerHealth();
+setInterval(loadSchedulerHealth, 60000);
 </script>
 </body>
 </html>
