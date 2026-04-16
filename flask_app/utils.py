@@ -284,6 +284,134 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
     return svg
 
 
+def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None):
+    """Front view of pergola (width direction).
+    width, height in meters. Standard column 164mm, drainage beam 260mm tall,
+    pad overhang 82mm each side, slab thickness ~50mm.
+    """
+    BEAM_H_M = 0.26
+    COLUMN_W_M = 0.164
+    PAD_OVERHANG_M = 0.082
+    SLAB_H_M = 0.05
+
+    width = max(0.5, float(width))
+    height = max(1.5, float(height))
+    if height < BEAM_H_M + 0.5:
+        height = BEAM_H_M + 0.5
+
+    total_w_m = width + 2 * PAD_OVERHANG_M
+
+    svg_w = 480
+    svg_h = 320
+    margin_l = 70
+    margin_r = 90
+    margin_t = 50
+    margin_b = 80
+
+    draw_w = svg_w - margin_l - margin_r
+    draw_h = svg_h - margin_t - margin_b
+
+    px_per_m_x = draw_w / total_w_m
+    px_per_m_y = draw_h / (height + SLAB_H_M)
+    scale = min(px_per_m_x, px_per_m_y)
+
+    real_w_px = total_w_m * scale
+    real_h_px = (height + SLAB_H_M) * scale
+
+    ox = margin_l + (draw_w - real_w_px) / 2
+    oy = margin_t + (draw_h - real_h_px)
+
+    arrow_color = '#1a3a6e'
+    beam_color = '#1a3a6e'
+    beam_fill = '#9fb8d6'
+    column_fill = '#1a3a6e'
+    slab_fill = '#d4d4d4'
+    slab_stroke = '#666'
+    text_color = '#333'
+    dim_font = '12px'
+    small_font = '10px'
+
+    pad_px = PAD_OVERHANG_M * scale
+    col_w_px = COLUMN_W_M * scale
+    beam_h_px = BEAM_H_M * scale
+    slab_h_px = SLAB_H_M * scale
+
+    pergola_top = oy
+    pergola_bottom = oy + height * scale
+    slab_top = pergola_bottom
+    slab_bottom = slab_top + slab_h_px
+
+    svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}" width="{svg_w}" height="{svg_h}">'
+    svg += '<defs><marker id="fah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">'
+    svg += f'<path d="M0,0 L8,3 L0,6" fill="{arrow_color}"/></marker>'
+    svg += '<marker id="faht" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">'
+    svg += f'<path d="M8,0 L0,3 L8,6" fill="{arrow_color}"/></marker>'
+    svg += '<pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+    svg += f'<line x1="0" y1="0" x2="0" y2="6" stroke="{slab_stroke}" stroke-width="0.7"/></pattern></defs>'
+
+    svg += (f'<rect x="{ox}" y="{pergola_top}" width="{real_w_px}" height="{beam_h_px}" '
+            f'fill="{beam_fill}" stroke="{beam_color}" stroke-width="1"/>')
+
+    col_left_x = ox + pad_px
+    col_right_x = ox + real_w_px - pad_px - col_w_px
+    col_top_y = pergola_top + beam_h_px
+    col_h_px = pergola_bottom - col_top_y
+
+    col_xs = [col_left_x, col_right_x]
+    inner_span_m = width - COLUMN_W_M
+    needs_extra = (max_overhang is not None and inner_span_m > max_overhang + 0.001)
+    mod_count = max(1, int(modules))
+    if mod_count > 1:
+        for i in range(1, mod_count):
+            cxp = ox + pad_px + (width * scale / mod_count) * i - col_w_px / 2
+            col_xs.append(cxp)
+    elif needs_extra:
+        col_xs.append(ox + real_w_px / 2 - col_w_px / 2)
+
+    for cxp in col_xs:
+        svg += (f'<rect x="{cxp}" y="{col_top_y}" width="{col_w_px}" height="{col_h_px}" '
+                f'fill="{column_fill}" stroke="{column_fill}" stroke-width="0.5"/>')
+
+    svg += (f'<rect x="{ox}" y="{slab_top}" width="{real_w_px}" height="{slab_h_px}" '
+            f'fill="url(#hatch)" stroke="{slab_stroke}" stroke-width="0.8"/>')
+
+    title_y = margin_t - 25
+    svg += (f'<text x="{svg_w/2}" y="{title_y}" text-anchor="middle" '
+            f'font-size="13px" font-style="italic" fill="{text_color}">Вид спереди</text>')
+
+    h_arrow_x = ox + real_w_px + 30
+    svg += (f'<line x1="{h_arrow_x}" y1="{pergola_top}" x2="{h_arrow_x}" y2="{pergola_bottom}" '
+            f'stroke="{arrow_color}" stroke-width="1.2" marker-start="url(#faht)" marker-end="url(#fah)"/>')
+    svg += (f'<text x="{h_arrow_x + 10}" y="{(pergola_top + pergola_bottom)/2}" '
+            f'text-anchor="middle" font-size="{dim_font}" font-weight="bold" fill="{arrow_color}" '
+            f'transform="rotate(-90,{h_arrow_x + 10},{(pergola_top + pergola_bottom)/2})">{height:.2f} м</text>')
+
+    beam_arrow_x = ox + real_w_px + 8
+    svg += (f'<line x1="{beam_arrow_x}" y1="{pergola_top}" x2="{beam_arrow_x}" y2="{pergola_top + beam_h_px}" '
+            f'stroke="{arrow_color}" stroke-width="1" marker-start="url(#faht)" marker-end="url(#fah)"/>')
+    svg += (f'<text x="{beam_arrow_x + 4}" y="{pergola_top + beam_h_px/2 + 3}" '
+            f'text-anchor="start" font-size="{small_font}" fill="{arrow_color}">260</text>')
+
+    w_arrow_y = slab_bottom + 22
+    svg += (f'<line x1="{ox}" y1="{w_arrow_y}" x2="{ox + real_w_px}" y2="{w_arrow_y}" '
+            f'stroke="{arrow_color}" stroke-width="1.2" marker-start="url(#faht)" marker-end="url(#fah)"/>')
+    svg += (f'<text x="{ox + real_w_px/2}" y="{w_arrow_y + 14}" text-anchor="middle" '
+            f'font-size="{dim_font}" font-weight="bold" fill="{arrow_color}">{width:.2f} м (+ 2×82 мм)</text>')
+
+    col_arrow_y = pergola_top - 10
+    svg += (f'<line x1="{col_left_x + col_w_px}" y1="{col_arrow_y}" x2="{col_right_x}" y2="{col_arrow_y}" '
+            f'stroke="{arrow_color}" stroke-width="1" marker-start="url(#faht)" marker-end="url(#fah)"/>')
+    inner_mm = int(round((width - COLUMN_W_M) * 1000))
+    svg += (f'<text x="{(col_left_x + col_w_px + col_right_x)/2}" y="{col_arrow_y - 4}" '
+            f'text-anchor="middle" font-size="{small_font}" fill="{arrow_color}">{inner_mm} мм</text>')
+
+    svg += (f'<text x="{col_left_x - 4}" y="{col_top_y + col_h_px/2}" text-anchor="end" '
+            f'font-size="{small_font}" fill="{arrow_color}">164</text>')
+
+    svg += '</svg>'
+    return svg
+
+
 def svg_to_png_path(svg_content):
     try:
         import cairosvg

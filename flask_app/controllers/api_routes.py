@@ -44,6 +44,25 @@ def pergola_scheme_svg():
         return Response('', status=400)
 
 
+@bp.route('/pergola-front.svg', methods=['GET'])
+def pergola_front_svg():
+    from flask import Response
+    from ..utils import generate_front_view_svg
+    try:
+        w = float(request.args.get('w', 0))
+        h = float(request.args.get('h', 3.0))
+        m = int(request.args.get('m', 1))
+        mo = request.args.get('mo')
+        mo = float(mo) if mo else None
+        if w <= 0:
+            return Response('', status=400)
+        svg = generate_front_view_svg(width=w, height=h, modules=m, max_overhang=mo)
+        return Response(svg, mimetype='image/svg+xml',
+                        headers={'Cache-Control': 'public, max-age=3600'})
+    except Exception:
+        return Response('', status=400)
+
+
 @bp.route('/promotions', methods=['GET'])
 def get_promotions():
     try:
