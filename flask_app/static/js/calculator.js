@@ -55,50 +55,26 @@ document.addEventListener('DOMContentLoaded', function() {
         ]
     };
 
-    function showVideos(modelType) {
-        var videos = PERGOLA_VIDEOS[modelType] || [];
-        var grid = document.getElementById('video-grid');
-        var block = document.getElementById('pergola-videos');
-        if (!grid || !block) return;
-        grid.innerHTML = '';
-        videos.forEach(function(v) {
-            var isShorts = v.type === 'shorts';
-            var wrapper = document.createElement('div');
-            wrapper.className = 'video-card' + (isShorts ? ' video-card-shorts' : ' video-card-full');
-            wrapper.innerHTML =
-                '<div class="video-iframe-wrap' + (isShorts ? ' video-iframe-shorts' : '') + '">' +
-                '<iframe data-src="https://rutube.ru/play/embed/' + v.id + '" frameborder="0" allowfullscreen allow="autoplay" loading="lazy"></iframe>' +
-                '</div>' +
-                '<div class="video-card-title">' + v.title + '</div>';
-            grid.appendChild(wrapper);
-        });
-        block.style.display = videos.length ? 'block' : 'none';
-        initLazyIframes();
+    function videoThumbUrl(videoId) {
+        return 'https://pic.rutube.ru/video/' + videoId + '/';
     }
 
-    var _lazyObserver = null;
-    function initLazyIframes() {
-        if (!('IntersectionObserver' in window)) {
-            document.querySelectorAll('iframe[data-src]').forEach(function(f) {
-                f.src = f.dataset.src;
-                f.removeAttribute('data-src');
+    function videoFacadeHtml(videoId, isShorts) {
+        return '<div class="video-facade" data-video-id="' + videoId + '">' +
+            '<img class="video-thumb" src="' + videoThumbUrl(videoId) + '" alt="" loading="lazy">' +
+            '<div class="video-play-btn"><svg viewBox="0 0 68 48" width="68" height="48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55C3.97 2.33 2.27 4.81 1.48 7.74.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#1a3a6e" opacity=".85"/><path d="M45 24L27 14v20" fill="#fff"/></svg></div>' +
+            '</div>';
+    }
+
+    function activateVideoFacades() {
+        document.querySelectorAll('.video-facade').forEach(function(el) {
+            if (el.dataset.bound) return;
+            el.dataset.bound = '1';
+            el.addEventListener('click', function() {
+                var id = el.dataset.videoId;
+                var wrap = el.parentElement;
+                wrap.innerHTML = '<iframe src="https://rutube.ru/play/embed/' + id + '?autoplay=1" frameborder="0" allowfullscreen allow="autoplay"></iframe>';
             });
-            return;
-        }
-        if (!_lazyObserver) {
-            _lazyObserver = new IntersectionObserver(function(entries) {
-                entries.forEach(function(entry) {
-                    if (entry.isIntersecting) {
-                        var iframe = entry.target;
-                        iframe.src = iframe.dataset.src;
-                        iframe.removeAttribute('data-src');
-                        _lazyObserver.unobserve(iframe);
-                    }
-                });
-            }, {rootMargin: '200px'});
-        }
-        document.querySelectorAll('iframe[data-src]').forEach(function(f) {
-            _lazyObserver.observe(f);
         });
     }
 
@@ -960,7 +936,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var isShorts = v.type === 'shorts';
                 html += '<div class="kp-video-card' + (isShorts ? ' kp-video-card-shorts' : '') + '" style="border-top:3px solid ' + kpVideoColor + ';">' +
                     '<div class="video-iframe-wrap' + (isShorts ? ' video-iframe-shorts' : '') + '">' +
-                    '<iframe data-src="https://rutube.ru/play/embed/' + v.id + '" frameborder="0" allowfullscreen allow="autoplay" loading="lazy"></iframe>' +
+                    videoFacadeHtml(v.id, isShorts) +
                     '</div>' +
                     '<div class="video-card-title">' + v.title + '</div></div>';
             });
@@ -1003,14 +979,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 var kpContainer = document.getElementById('marketing-kp-container');
                 if (kpContainer) {
                     kpContainer.innerHTML = buildMarketingKP(resultOrResults, decoData);
-                    initLazyIframes();
+                    activateVideoFacades();
                 }
             })
             .catch(function() {
                 var kpContainer = document.getElementById('marketing-kp-container');
                 if (kpContainer) {
                     kpContainer.innerHTML = buildMarketingKP(resultOrResults, {});
-                    initLazyIframes();
+                    activateVideoFacades();
                 }
             });
     }
