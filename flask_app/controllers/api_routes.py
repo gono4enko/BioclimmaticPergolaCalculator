@@ -63,6 +63,28 @@ def pergola_front_svg():
         return Response('', status=400)
 
 
+@bp.route('/pergola-iso.svg', methods=['GET'])
+def pergola_iso_svg():
+    from flask import Response
+    from ..utils import generate_isometric_svg
+    try:
+        w = float(request.args.get('w', 0))
+        l = float(request.args.get('l', 0))
+        h = float(request.args.get('h', 3.0))
+        m = int(request.args.get('m', 1))
+        lc = request.args.get('lc')
+        lc = int(lc) if lc and lc.isdigit() else None
+        deg = float(request.args.get('deg', 55))
+        if w <= 0 or l <= 0:
+            return Response('', status=400)
+        svg = generate_isometric_svg(width=w, length=l, height=h, lamella_count=lc,
+                                     modules=m, lamella_open_deg=deg)
+        return Response(svg, mimetype='image/svg+xml',
+                        headers={'Cache-Control': 'public, max-age=3600'})
+    except Exception:
+        return Response('', status=400)
+
+
 @bp.route('/promotions', methods=['GET'])
 def get_promotions():
     try:

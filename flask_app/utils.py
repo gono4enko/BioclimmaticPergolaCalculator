@@ -415,6 +415,156 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None):
     return svg
 
 
+def generate_isometric_svg(width, length, height=3.0, lamella_count=None, modules=1, lamella_open_deg=55):
+    """Isometric view of pergola with tilted/open lamellas.
+    width = ширина (X), length = длина (Z, в глубину), height = высота (Y).
+    Lamellas run параллельно ширине (короткой стороне), вращаются вокруг своей оси.
+    """
+    import math
+
+    width = max(0.5, float(width))
+    length = max(0.5, float(length))
+    height = max(1.5, float(height))
+    open_rad = math.radians(min(85, max(0, float(lamella_open_deg))))
+
+    BEAM_H = 0.26
+    COL_W = 0.164
+
+    svg_w = 520
+    svg_h = 360
+    pad = 30
+
+    cos30 = math.cos(math.radians(30))
+    sin30 = math.sin(math.radians(30))
+
+    def project(x, y, z):
+        sx = (x - z) * cos30
+        sy = (x + z) * sin30 - y
+        return sx, sy
+
+    corners = [
+        project(0, 0, 0), project(width, 0, 0),
+        project(width, 0, length), project(0, 0, length),
+        project(0, height, 0), project(width, height, 0),
+        project(width, height, length), project(0, height, length),
+    ]
+    xs = [c[0] for c in corners]
+    ys = [c[1] for c in corners]
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    span_x = max_x - min_x
+    span_y = max_y - min_y
+    scale = min((svg_w - 2 * pad) / span_x, (svg_h - 2 * pad - 30) / span_y)
+    ox = pad - min_x * scale + (svg_w - 2 * pad - span_x * scale) / 2
+    oy = pad + 20 - min_y * scale
+
+    def to_svg(p):
+        return ox + p[0] * scale, oy + p[1] * scale
+
+    column_color = '#1a3a6e'
+    beam_color = '#1a3a6e'
+    beam_fill = '#9fb8d6'
+    lam_color = '#5d7da8'
+    lam_fill = '#c9d5e7'
+    text_color = '#333'
+    arrow_color = '#1a3a6e'
+
+    svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}" width="{svg_w}" height="{svg_h}">'
+    svg += '<defs><marker id="iah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">'
+    svg += f'<path d="M0,0 L8,3 L0,6" fill="{arrow_color}"/></marker>'
+    svg += '<marker id="iaht" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">'
+    svg += f'<path d="M8,0 L0,3 L8,6" fill="{arrow_color}"/></marker></defs>'
+
+    def draw_quad(p1, p2, p3, p4, fill, stroke, sw=1.0):
+        s1 = to_svg(p1); s2 = to_svg(p2); s3 = to_svg(p3); s4 = to_svg(p4)
+        return (f'<polygon points="{s1[0]:.1f},{s1[1]:.1f} {s2[0]:.1f},{s2[1]:.1f} '
+                f'{s3[0]:.1f},{s3[1]:.1f} {s4[0]:.1f},{s4[1]:.1f}" '
+                f'fill="{fill}" stroke="{stroke}" stroke-width="{sw}" stroke-linejoin="round"/>')
+
+    col_positions = []
+    mod_count = max(1, int(modules))
+    if mod_count == 1:
+        col_xs = [COL_W / 2, width - COL_W / 2]
+    else:
+        col_xs = [COL_W / 2]
+        for i in range(1, mod_count):
+            col_xs.append(width / mod_count * i)
+        col_xs.append(width - COL_W / 2)
+    col_zs = [COL_W / 2, length - COL_W / 2]
+
+    column_top = height - BEAM_H
+
+    columns = []
+    for cx in col_xs:
+        for cz in col_zs:
+            columns.append((cx, cz))
+
+    columns.sort(key=lambda c: c[0] + c[1])
+
+    for cx, cz in columns:
+        x0 = cx - COL_W / 2
+        x1 = cx + COL_W / 2
+        z0 = cz - COL_W / 2
+        z1 = cz + COL_W / 2
+        p_bot_fl = (x0, 0, z0); p_bot_fr = (x1, 0, z0)
+        p_bot_br = (x1, 0, z1); p_bot_bl = (x0, 0, z1)
+        p_top_fl = (x0, column_top, z0); p_top_fr = (x1, column_top, z0)
+        p_top_br = (x1, column_top, z1); p_top_bl = (x0, column_top, z1)
+        svg += draw_quad(p_bot_fr, p_top_fr, p_top_br, p_bot_br, '#2a4a7e', column_color, 0.6)
+        svg += draw_quad(p_bot_fl, p_top_fl, p_top_fr, p_bot_fr, column_color, column_color, 0.6)
+
+    by0 = column_top
+    by1 = height
+    p_blf = (0, by0, 0); p_brf = (width, by0, 0)
+    p_brb = (width, by0, length); p_blb = (0, by0, length)
+    p_tlf = (0, by1, 0); p_trf = (width, by1, 0)
+    p_trb = (width, by1, length); p_tlb = (0, by1, length)
+
+    svg += draw_quad(p_blb, p_tlb, p_trb, p_brb, '#7d9bc0', beam_color, 0.8)
+    svg += draw_quad(p_brf, p_trf, p_trb, p_brb, '#6a89b0', beam_color, 0.8)
+    svg += draw_quad(p_blf, p_tlf, p_trf, p_brf, beam_fill, beam_color, 0.8)
+    svg += draw_quad(p_blf, p_brf, p_brb, p_blb, beam_fill, beam_color, 0.8)
+
+    if lamella_count and lamella_count > 0:
+        lam_n = int(lamella_count)
+        seg_count = mod_count
+        lam_per_seg = max(1, lam_n // seg_count)
+        lam_thickness = 0.05
+        for s in range(seg_count):
+            seg_x0 = (width / seg_count) * s + (COL_W if s == 0 else COL_W / 2)
+            seg_x1 = (width / seg_count) * (s + 1) - (COL_W if s == seg_count - 1 else COL_W / 2)
+            seg_w_real = seg_x1 - seg_x0
+            if seg_w_real <= 0:
+                continue
+            seg_z0 = COL_W
+            seg_z1 = length - COL_W
+            seg_z_span = seg_z1 - seg_z0
+            spacing = seg_z_span / (lam_per_seg + 1)
+            lam_y_center = column_top + 0.05
+            for k in range(1, lam_per_seg + 1):
+                cz = seg_z0 + spacing * k
+                half_w = 0.125
+                dy = math.sin(open_rad) * half_w
+                dz = math.cos(open_rad) * half_w
+                p1 = (seg_x0, lam_y_center - dy, cz - dz)
+                p2 = (seg_x1, lam_y_center - dy, cz - dz)
+                p3 = (seg_x1, lam_y_center + dy, cz + dz)
+                p4 = (seg_x0, lam_y_center + dy, cz + dz)
+                svg += draw_quad(p1, p2, p3, p4, lam_fill, lam_color, 0.5)
+
+    title_y = 18
+    svg += (f'<text x="{svg_w/2}" y="{title_y}" text-anchor="middle" '
+            f'font-size="13px" font-style="italic" fill="{text_color}">Изометрия (ламели открыты)</text>')
+
+    bottom_y = svg_h - 8
+    svg += (f'<text x="{svg_w/2}" y="{bottom_y}" text-anchor="middle" '
+            f'font-size="11px" fill="{text_color}">{width:.2f} × {length:.2f} × {height:.2f} м'
+            + (f', {int(lamella_count)} ламелей' if lamella_count else '') + '</text>')
+
+    svg += '</svg>'
+    return svg
+
+
 def svg_to_png_path(svg_content):
     try:
         import cairosvg

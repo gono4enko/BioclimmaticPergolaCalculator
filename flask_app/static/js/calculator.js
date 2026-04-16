@@ -795,6 +795,13 @@ document.addEventListener('DOMContentLoaded', function() {
         var sqs = 'w=' + l + '&h=' + pergolaH + '&m=1' + (mo ? '&mo=' + mo : '');
         var simg = document.getElementById('kp-side-img');
         if (simg) simg.src = '/api/pergola-front.svg?' + sqs;
+        var lcAttr = block.dataset.lc;
+        var pirAttr = block.dataset.pir === '1';
+        var isoimg = document.getElementById('kp-iso-img');
+        if (isoimg && !pirAttr && lcAttr) {
+            var iqs = 'w=' + w + '&l=' + l + '&h=' + pergolaH + '&m=' + m + '&lc=' + lcAttr;
+            isoimg.src = '/api/pergola-iso.svg?' + iqs;
+        }
         var warn = document.getElementById('kp-scheme-warn');
         if (warn) {
             var lf = parseFloat(l);
@@ -963,6 +970,11 @@ document.addEventListener('DOMContentLoaded', function() {
             var pergolaH = state._pergolaHeight || 3.0;
             var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM;
             var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (state._maxOverhang ? '&mo=' + state._maxOverhang : '');
+            var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '');
+            var isoBlock = (!isPir && lamCnt) ? (
+                '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)</div>' +
+                '<img id="kp-iso-img" src="/api/pergola-iso.svg?' + iqs + '" alt="\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F" style="max-width:100%;height:auto;"></div>'
+            ) : '';
             html += '<div class="kp-block" id="kp-scheme-block" data-w="' + schW + '" data-l="' + schL + '" data-m="' + schM + '" data-pir="' + (isPir ? '1' : '0') + '" data-lc="' + lamCnt + '" data-h="' + pergolaH + '">' +
                 '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83D\uDCD0</div><div class="kp-block-title">\u0421\u0445\u0435\u043C\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B</div></div>' +
                 '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;align-items:start;">' +
@@ -972,6 +984,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<img id="kp-front-img" src="/api/pergola-front.svg?' + fqs + '" alt="\u0412\u0438\u0434 \u0441\u043F\u0435\u0440\u0435\u0434\u0438" style="max-width:100%;height:auto;"></div>' +
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u0431\u043E\u043A\u0443</div>' +
                 '<img id="kp-side-img" src="/api/pergola-front.svg?' + sqs + '" alt="\u0412\u0438\u0434 \u0441\u0431\u043E\u043A\u0443" style="max-width:100%;height:auto;"></div>' +
+                isoBlock +
                 '</div>' +
                 '<div style="margin-top:0.6rem;font-size:0.82rem;color:#666;text-align:center;">\u0412\u044B\u0441\u043E\u0442\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B: ' + pergolaH.toFixed(2) + ' \u043C (\u0441\u0442\u0430\u043D\u0434\u0430\u0440\u0442). \u041A\u043E\u043B\u043E\u043D\u043D\u044B 164\u00D7164 \u043C\u043C, \u0432\u044B\u0441\u043E\u0442\u0430 \u043B\u043E\u0442\u043A\u0430 260 \u043C\u043C, \u0432\u044B\u043B\u0435\u0442 \u043F\u043B\u043E\u0449\u0430\u0434\u043A\u0438 82 \u043C\u043C.</div>' +
                 '<div id="kp-scheme-warn" style="display:' + (needsExtra ? 'block' : 'none') + ';margin-top:0.6rem;padding:0.6rem 0.8rem;background:#fff8e1;border-left:3px solid #f59e0b;font-size:0.88rem;color:#5d4a00;">' +
