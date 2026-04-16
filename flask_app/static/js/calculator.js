@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var diff = r.totals.cash - cheapest;
                 diffHtml = '<div class="compare-diff">+' + formatPrice(diff) + ' \u20BD</div>';
             } else {
-                diffHtml = '<div class="compare-best">\u041C\u0438\u043D\u0438\u043C\u0430\u043B\u044C\u043D\u0430\u044F \u0446\u0435\u043D\u0430</div>';
+                diffHtml = '<div class="compare-best">\u043B\u0443\u0447\u0448\u0430\u044F \u0446\u0435\u043D\u0430</div>';
             }
             tableHtml += '<tr class="compare-row-clickable' + (idx === 0 ? ' compare-row-best' : '') + '" data-variant-idx="' + idx + '">';
             tableHtml += '<td><strong>' + label + '</strong>' + diffHtml + '</td>';
@@ -933,7 +933,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<div class="compare-table-wrap"><table class="compare-table"><thead><tr><th>\u041C\u043E\u0434\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u044F</th><th>\u041D\u0430\u043B\u0438\u0447\u043D\u044B\u0435</th><th>\u0411\u0435\u0437\u043D\u0430\u043B.</th><th>\u0421 \u041D\u0414\u0421</th></tr></thead><tbody>';
             resultOrResults.forEach(function(r, idx) {
                 var label = r.variant_label || r.selected_variant || '';
-                html += '<tr' + (idx === 0 ? ' class="compare-row-best"' : '') + '><td><strong>' + label + '</strong></td>' +
+                var badgeHtml = (idx === 0 && resultOrResults.length > 1)
+                    ? '<div class="compare-best">\u043B\u0443\u0447\u0448\u0430\u044F \u0446\u0435\u043D\u0430</div>'
+                    : '';
+                html += '<tr' + (idx === 0 ? ' class="compare-row-best"' : '') + '><td><strong>' + label + '</strong>' + badgeHtml + '</td>' +
                     '<td>' + formatPrice(r.totals.cash) + ' \u20BD</td>' +
                     '<td>' + formatPrice(r.totals.non_cash) + ' \u20BD</td>' +
                     '<td>' + formatPrice(r.totals.with_vat) + ' \u20BD</td></tr>';
