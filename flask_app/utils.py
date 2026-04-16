@@ -349,11 +349,14 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None):
     svg += '<pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
     svg += f'<line x1="0" y1="0" x2="0" y2="6" stroke="{slab_stroke}" stroke-width="0.7"/></pattern></defs>'
 
-    svg += (f'<rect x="{ox}" y="{pergola_top}" width="{real_w_px}" height="{beam_h_px}" '
-            f'fill="{beam_fill}" stroke="{beam_color}" stroke-width="1"/>')
-
     col_left_x = ox + pad_px
     col_right_x = ox + real_w_px - pad_px - col_w_px
+
+    beam_x = col_left_x
+    beam_w = (col_right_x + col_w_px) - col_left_x
+    svg += (f'<rect x="{beam_x}" y="{pergola_top}" width="{beam_w}" height="{beam_h_px}" '
+            f'fill="{beam_fill}" stroke="{beam_color}" stroke-width="1"/>')
+
     col_top_y = pergola_top + beam_h_px
     col_h_px = pergola_bottom - col_top_y
 
@@ -386,7 +389,7 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None):
             f'text-anchor="middle" font-size="{dim_font}" font-weight="bold" fill="{arrow_color}" '
             f'transform="rotate(-90,{h_arrow_x + 10},{(pergola_top + pergola_bottom)/2})">{height:.2f} м</text>')
 
-    beam_arrow_x = ox + real_w_px + 8
+    beam_arrow_x = col_right_x + col_w_px + 8
     svg += (f'<line x1="{beam_arrow_x}" y1="{pergola_top}" x2="{beam_arrow_x}" y2="{pergola_top + beam_h_px}" '
             f'stroke="{arrow_color}" stroke-width="1" marker-start="url(#faht)" marker-end="url(#fah)"/>')
     svg += (f'<text x="{beam_arrow_x + 4}" y="{pergola_top + beam_h_px/2 + 3}" '
