@@ -789,10 +789,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var img = document.getElementById('kp-scheme-img');
         if (img) img.src = '/api/pergola-scheme.svg?' + qs;
         var pergolaH = parseFloat(block.dataset.h) || 3.0;
-        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=1' + (mo ? '&mo=' + mo : '');
+        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m;
         var fimg = document.getElementById('kp-front-img');
         if (fimg) fimg.src = '/api/pergola-front.svg?' + fqs;
-        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=' + m + (mo ? '&mo=' + mo : '');
+        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=1' + (mo ? '&mo=' + mo : '');
         var simg = document.getElementById('kp-side-img');
         if (simg) simg.src = '/api/pergola-front.svg?' + sqs;
         var warn = document.getElementById('kp-scheme-warn');
@@ -958,8 +958,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 (isPir ? '&pir=1' : '');
             var needsExtra = state._maxOverhang && schL > state._maxOverhang + 0.001;
             var pergolaH = state._pergolaHeight || 3.0;
-            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=1' + (state._maxOverhang ? '&mo=' + state._maxOverhang : '');
-            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schM + (state._maxOverhang ? '&mo=' + state._maxOverhang : '');
+            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM;
+            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (state._maxOverhang ? '&mo=' + state._maxOverhang : '');
             html += '<div class="kp-block" id="kp-scheme-block" data-w="' + schW + '" data-l="' + schL + '" data-m="' + schM + '" data-pir="' + (isPir ? '1' : '0') + '" data-lc="' + lamCnt + '" data-h="' + pergolaH + '">' +
                 '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83D\uDCD0</div><div class="kp-block-title">\u0421\u0445\u0435\u043C\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B</div></div>' +
                 '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;align-items:start;">' +
