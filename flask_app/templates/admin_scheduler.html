@@ -246,6 +246,9 @@ function stopAutoRefresh() {
 }
 
 function runCleanupNow() {
+    if (!confirm('Вы уверены, что хотите запустить очистку прямо сейчас?\n\nСтарые файлы расчётов будут удалены без возможности восстановления.')) {
+        return;
+    }
     var btn = document.getElementById('runNowBtn');
     var icon = document.getElementById('runNowIcon');
     var label = document.getElementById('runNowLabel');
