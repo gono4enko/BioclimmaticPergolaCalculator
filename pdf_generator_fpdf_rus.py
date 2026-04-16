@@ -866,8 +866,30 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     pdf.set_fill_color(240, 244, 255)
 
                 pdf.set_text_color(0, 0, 0)
-                pdf.set_font('DejaVu', 'B' if is_cheapest else '', 8)
-                pdf.cell(col_label, row_h, "  " + v_label, 1, 0, 'L', fill=True)
+                if is_cheapest and len(all_variants) > 1:
+                    pdf.set_font('DejaVu', 'B', 8)
+                    label_text = "  " + v_label
+                    badge_text = "  лучшая цена"
+                    label_w = pdf.get_string_width(label_text)
+                    pdf.set_font('DejaVu', '', 6)
+                    badge_w = pdf.get_string_width(badge_text)
+                    remaining = col_label - label_w - 2
+                    show_badge = remaining >= badge_w
+                    pdf.set_font('DejaVu', 'B', 8)
+                    x_before = pdf.get_x()
+                    y_before = pdf.get_y()
+                    pdf.cell(col_label, row_h, "", 1, 0, 'L', fill=True)
+                    pdf.set_xy(x_before, y_before)
+                    pdf.cell(label_w + 1, row_h, label_text, 0, 0, 'L')
+                    if show_badge:
+                        pdf.set_font('DejaVu', '', 6)
+                        pdf.set_text_color(56, 118, 29)
+                        pdf.cell(remaining, row_h, badge_text, 0, 0, 'L')
+                        pdf.set_text_color(0, 0, 0)
+                    pdf.set_xy(x_before + col_label, y_before)
+                else:
+                    pdf.set_font('DejaVu', 'B' if is_cheapest else '', 8)
+                    pdf.cell(col_label, row_h, "  " + v_label, 1, 0, 'L', fill=True)
 
                 cash_pct = _pct_diff(v_cash, min_cash)
                 noncash_pct = _pct_diff(v_noncash, min_noncash)
