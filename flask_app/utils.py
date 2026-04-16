@@ -149,7 +149,7 @@ def load_calculation(calc_id):
         return None
 
 
-def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=None):
+def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=None, max_overhang=None):
     svg_w = 320
     svg_h = 240
     margin = 44
@@ -254,11 +254,21 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
 
     col_ys = [ry + col_px_y / 2, ry + rect_h - col_px_y / 2]
 
+    needs_extra = (max_overhang is not None and length and length > max_overhang + 0.001)
+    if needs_extra:
+        col_ys.append(ry + rect_h / 2)
+
     for cxp in col_xs:
         for cyp in col_ys:
             svg += (f'<rect x="{cxp - col_px_x / 2}" y="{cyp - col_px_y / 2}" '
                     f'width="{col_px_x}" height="{col_px_y}" '
                     f'fill="{column_fill}" stroke="{column_fill}" stroke-width="0.5"/>')
+
+    if needs_extra:
+        note_y = ry + rect_h / 2 - col_px_y - 4
+        svg += (f'<text x="{rx + rect_w + 4}" y="{ry + rect_h / 2 + 3}" '
+                f'text-anchor="start" font-size="8px" fill="{beam_color}" '
+                f'font-style="italic">доп. опора</text>')
 
     arrow_y = ry + rect_h + 25
     svg += f'<line x1="{rx}" y1="{arrow_y}" x2="{rx + rect_w}" y2="{arrow_y}" stroke="{arrow_color}" stroke-width="1.5" marker-start="url(#aht)" marker-end="url(#ah)"/>'

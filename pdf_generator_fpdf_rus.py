@@ -673,10 +673,19 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
 
         try:
             from flask_app.utils import generate_top_view_svg, svg_to_png_path
+            _mo = pergola_data.get('max_overhang')
+            if _mo is None:
+                try:
+                    from config.variant_specs import get_variant_options as _gvo
+                    _spec = _gvo(pergola_data.get('pergola_type', '')) or {}
+                    _mo = _spec.get('max_overhang')
+                except Exception:
+                    _mo = None
             svg_content = generate_top_view_svg(
                 width=width, length=length, modules=modules,
                 is_pir=(hero_img_key == 'b600'),
-                lamella_count=pergola_data.get('lamellas_count') or pergola_data.get('lamella_count')
+                lamella_count=pergola_data.get('lamellas_count') or pergola_data.get('lamella_count'),
+                max_overhang=_mo
             )
             png_path = svg_to_png_path(svg_content)
             if png_path and os.path.exists(png_path):
