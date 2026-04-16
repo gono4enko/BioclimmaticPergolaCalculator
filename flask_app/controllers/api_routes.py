@@ -41,7 +41,7 @@ def pergola_scheme_svg():
         svg = generate_top_view_svg(width=w, length=l, modules=m,
                                     is_pir=pir, lamella_count=lc, max_overhang=mo, ref=ref)
         return Response(svg, mimetype='image/svg+xml',
-                        headers={'Cache-Control': 'public, max-age=3600'})
+                        headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:
         return Response('', status=400)
 
@@ -63,7 +63,7 @@ def pergola_front_svg():
         title = request.args.get('title') or 'Вид спереди'
         svg = generate_front_view_svg(width=w, height=h, modules=m, max_overhang=mo, ref=ref, title=title)
         return Response(svg, mimetype='image/svg+xml',
-                        headers={'Cache-Control': 'public, max-age=3600'})
+                        headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:
         return Response('', status=400)
 
@@ -87,7 +87,7 @@ def pergola_iso_svg():
         svg = generate_isometric_svg(width=w, length=l, height=h, lamella_count=lc,
                                      modules=m, lamella_open_deg=deg, max_overhang=mo)
         return Response(svg, mimetype='image/svg+xml',
-                        headers={'Cache-Control': 'public, max-age=3600'})
+                        headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:
         return Response('', status=400)
 
