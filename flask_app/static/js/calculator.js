@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     function videoThumbUrl(videoId) {
-        return 'https://pic.rutube.ru/video/' + videoId + '/';
+        return '/api/video-thumb/' + videoId;
     }
 
     function videoFacadeHtml(videoId, isShorts) {
