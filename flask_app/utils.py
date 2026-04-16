@@ -229,8 +229,6 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
                     f'fill="{inner_fill}" stroke="none"/>')
 
             lam_count = lamella_count or max(4, int(inner_h / 7))
-            if mod_count > 1 and lamella_count:
-                lam_count = max(2, int(round(lamella_count / mod_count)))
             spacing = inner_h / (lam_count + 1)
             for k in range(1, lam_count + 1):
                 ly = inner_y + spacing * k
@@ -535,7 +533,7 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     if lamella_count and lamella_count > 0:
         lam_n = int(lamella_count)
         seg_count = mod_count
-        lam_per_seg = max(1, lam_n // seg_count)
+        lam_per_seg = max(1, lam_n)
         for s_idx in range(seg_count):
             x_left = (width / seg_count) * s_idx + (COL_W if s_idx == 0 else COL_W / 2)
             x_right = (width / seg_count) * (s_idx + 1) - (COL_W if s_idx == seg_count - 1 else COL_W / 2)
