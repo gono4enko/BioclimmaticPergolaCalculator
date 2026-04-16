@@ -132,6 +132,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (v.snow_wind_load) {
                         specsHtml += '<div class="spec-row"><span class="spec-icon">\u2744\uFE0F</span> \u0421\u043D\u0435\u0433./\u0432\u0435\u0442\u0440. \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430: <strong>' + v.snow_wind_load + '</strong></div>';
                     }
+                    if (v.heat_protection) {
+                        specsHtml += '<div class="spec-row"><span class="spec-icon">\u2600\uFE0F</span> \u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430: <strong>' + v.heat_protection + '</strong></div>';
+                    }
+                    if (v.rotation_type) {
+                        var rotLabel = v.rotation_type;
+                        if (v.rotation_angle) rotLabel += ' ' + v.rotation_angle;
+                        specsHtml += '<div class="spec-row"><span class="spec-icon">\uD83D\uDD04</span> \u0412\u0440\u0430\u0449\u0435\u043D\u0438\u0435 \u043B\u0430\u043C\u0435\u043B\u0435\u0439: <strong>' + rotLabel + '</strong></div>';
+                    }
+                    if (v.opening_percent && v.opening_percent !== '\u2014') {
+                        specsHtml += '<div class="spec-row"><span class="spec-icon">\u2B1C</span> \u041E\u0442\u043A\u0440\u044B\u0432\u0430\u043D\u0438\u0435 (90\u00B0): <strong>' + v.opening_percent + '</strong></div>';
+                    }
+                    if (v.parking_zone && v.parking_zone !== '\u2014') {
+                        specsHtml += '<div class="spec-row"><span class="spec-icon">\u2B1B</span> \u041F\u0430\u0440\u043A\u043E\u0432\u043E\u0447\u043D\u0430\u044F \u0437\u043E\u043D\u0430: <strong>' + v.parking_zone + '</strong></div>';
+                    }
                     specsHtml += '</div>';
 
                     div.innerHTML = '<span class="check-mark"><svg viewBox="0 0 14 14" fill="none" width="12" height="12"><path d="M2 7.5L5.5 11L12 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
@@ -337,7 +351,12 @@ document.addEventListener('DOMContentLoaded', function() {
             {key: '_total_weight', label: '\u0412\u0435\u0441 \u0440\u0430\u0441\u0441\u0447\u0438\u0442\u0430\u043D\u043D\u043E\u0439 \u043C\u043E\u0434\u0435\u043B\u0438', computed: true},
             {key: 'snow_wind_load', label: '\u0421\u043D\u0435\u0433\u043E\u0432\u0430\u044F \u0438 \u0432\u0435\u0442\u0440\u043E\u0432\u0430\u044F \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430'},
             {key: 'hermiticity', label: '\u0413\u0435\u0440\u043C\u0435\u0442\u0438\u0447\u043D\u043E\u0441\u0442\u044C'},
-            {key: 'heat_protection', label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430'}
+            {key: 'heat_protection', label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430'},
+            {key: '_rotation', label: '\u0412\u0440\u0430\u0449\u0435\u043D\u0438\u0435 \u043B\u0430\u043C\u0435\u043B\u0435\u0439', computed: true},
+            {key: 'opening_percent', label: '\u041E\u0442\u043A\u0440\u044B\u0432\u0430\u043D\u0438\u0435 (90\u00B0)'},
+            {key: 'parking_zone', label: '\u041F\u0430\u0440\u043A\u043E\u0432\u043E\u0447\u043D\u0430\u044F \u0437\u043E\u043D\u0430'},
+            {key: 'max_structure_size', label: '\u041C\u0430\u043A\u0441. \u0440\u0430\u0437\u043C\u0435\u0440 \u043D\u0430 4 \u043E\u043F\u043E\u0440\u0430\u0445', suffix: ' \u043C'},
+            {key: 'frame_rigidity', label: '\u0416\u0451\u0441\u0442\u043A\u043E\u0441\u0442\u044C \u043E\u0431\u0432\u044F\u0437\u043A\u0438'}
         ];
         specRows.forEach(function(sr) {
             specsHtml += '<tr><td><strong>' + sr.label + '</strong></td>';
@@ -345,6 +364,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 var val;
                 if (sr.computed && sr.key === '_total_weight') {
                     val = calcTotalWeight(v.weight, state.width, state.length);
+                } else if (sr.computed && sr.key === '_rotation') {
+                    val = v.rotation_type || '';
+                    if (v.rotation_angle) val += ' ' + v.rotation_angle;
                 } else {
                     val = v[sr.key];
                     if (sr.suffix && val && typeof val === 'number') val = val + sr.suffix;
@@ -405,10 +427,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (result.selected_variant && state.variantsData) {
             var sv = result.selected_variant;
+            var sls = state.lamellaSize || '';
             var matchedSpec = null;
             state.variantsData.forEach(function(v) {
-                if (v.variant === sv) matchedSpec = v;
+                if (v.variant === sv && (!sls || v.lamella_size === sls)) matchedSpec = v;
             });
+            if (!matchedSpec) {
+                state.variantsData.forEach(function(v) {
+                    if (v.variant === sv) matchedSpec = v;
+                });
+            }
             if (matchedSpec) {
                 html += '<div class="variant-tech-block">' +
                     '<div class="variant-tech-title">\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0445\u0430\u0440\u0430\u043A\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043A\u0438 (' + matchedSpec.label + ')</div>';
@@ -432,7 +460,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     {icon: '', label: '\u0412\u0435\u0441 \u043C\u043E\u0434\u0435\u043B\u0438', val: calcTotalWeight(matchedSpec.weight, dims.width, dims.length)},
                     {icon: '', label: '\u0421\u043D\u0435\u0433./\u0432\u0435\u0442\u0440. \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430', val: matchedSpec.snow_wind_load},
                     {icon: '', label: '\u0413\u0435\u0440\u043C\u0435\u0442\u0438\u0447\u043D\u043E\u0441\u0442\u044C', val: matchedSpec.hermiticity},
-                    {icon: '', label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430', val: matchedSpec.heat_protection}
+                    {icon: '', label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430', val: matchedSpec.heat_protection},
+                    {icon: '', label: '\u0412\u0440\u0430\u0449\u0435\u043D\u0438\u0435 \u043B\u0430\u043C\u0435\u043B\u0435\u0439', val: (matchedSpec.rotation_type || '') + (matchedSpec.rotation_angle ? ' ' + matchedSpec.rotation_angle : '')},
+                    {icon: '', label: '\u041E\u0442\u043A\u0440\u044B\u0432\u0430\u043D\u0438\u0435 (90\u00B0)', val: matchedSpec.opening_percent && matchedSpec.opening_percent !== '\u2014' ? matchedSpec.opening_percent : ''},
+                    {icon: '', label: '\u041F\u0430\u0440\u043A\u043E\u0432\u043E\u0447\u043D\u0430\u044F \u0437\u043E\u043D\u0430', val: matchedSpec.parking_zone && matchedSpec.parking_zone !== '\u2014' ? matchedSpec.parking_zone : ''},
+                    {icon: '', label: '\u041C\u0430\u043A\u0441. \u0440\u0430\u0437\u043C\u0435\u0440 \u043D\u0430 4 \u043E\u043F\u043E\u0440\u0430\u0445', val: matchedSpec.max_structure_size ? matchedSpec.max_structure_size + ' \u043C' : ''},
+                    {icon: '', label: '\u0416\u0451\u0441\u0442\u043A\u043E\u0441\u0442\u044C \u043E\u0431\u0432\u044F\u0437\u043A\u0438', val: matchedSpec.frame_rigidity}
                 ];
                 techItems.forEach(function(ti) {
                     if (ti.val) {
@@ -583,10 +616,16 @@ document.addEventListener('DOMContentLoaded', function() {
         var variantSpecHtml = '';
         if (result.selected_variant && state.variantsData) {
             var sv = result.selected_variant;
+            var sls = state.lamellaSize || '';
             var matchedSpec = null;
             state.variantsData.forEach(function(v) {
-                if (v.variant === sv) matchedSpec = v;
+                if (v.variant === sv && (!sls || v.lamella_size === sls)) matchedSpec = v;
             });
+            if (!matchedSpec) {
+                state.variantsData.forEach(function(v) {
+                    if (v.variant === sv) matchedSpec = v;
+                });
+            }
             if (matchedSpec) {
                 variantSpecHtml = '<div class="variant-tech-block">' +
                     '<div class="variant-tech-title">\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0445\u0430\u0440\u0430\u043A\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043A\u0438 (' + matchedSpec.label + ')</div>';
@@ -610,7 +649,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     {icon: '', label: '\u0412\u0435\u0441 \u043C\u043E\u0434\u0435\u043B\u0438', val: calcTotalWeight(matchedSpec.weight, dims.width, dims.length)},
                     {icon: '', label: '\u0421\u043D\u0435\u0433./\u0432\u0435\u0442\u0440. \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430', val: matchedSpec.snow_wind_load},
                     {icon: '', label: '\u0413\u0435\u0440\u043C\u0435\u0442\u0438\u0447\u043D\u043E\u0441\u0442\u044C', val: matchedSpec.hermiticity},
-                    {icon: '', label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430', val: matchedSpec.heat_protection}
+                    {icon: '', label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430', val: matchedSpec.heat_protection},
+                    {icon: '', label: '\u0412\u0440\u0430\u0449\u0435\u043D\u0438\u0435 \u043B\u0430\u043C\u0435\u043B\u0435\u0439', val: (matchedSpec.rotation_type || '') + (matchedSpec.rotation_angle ? ' ' + matchedSpec.rotation_angle : '')},
+                    {icon: '', label: '\u041E\u0442\u043A\u0440\u044B\u0432\u0430\u043D\u0438\u0435 (90\u00B0)', val: matchedSpec.opening_percent && matchedSpec.opening_percent !== '\u2014' ? matchedSpec.opening_percent : ''},
+                    {icon: '', label: '\u041F\u0430\u0440\u043A\u043E\u0432\u043E\u0447\u043D\u0430\u044F \u0437\u043E\u043D\u0430', val: matchedSpec.parking_zone && matchedSpec.parking_zone !== '\u2014' ? matchedSpec.parking_zone : ''},
+                    {icon: '', label: '\u041C\u0430\u043A\u0441. \u0440\u0430\u0437\u043C\u0435\u0440 \u043D\u0430 4 \u043E\u043F\u043E\u0440\u0430\u0445', val: matchedSpec.max_structure_size ? matchedSpec.max_structure_size + ' \u043C' : ''},
+                    {icon: '', label: '\u0416\u0451\u0441\u0442\u043A\u043E\u0441\u0442\u044C \u043E\u0431\u0432\u044F\u0437\u043A\u0438', val: matchedSpec.frame_rigidity}
                 ];
                 techItems.forEach(function(ti) {
                     if (ti.val) {
