@@ -596,7 +596,7 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     svg += _dim_v(h_dim_x, pergola_top, pergola_bottom, f'{height:.2f} м', prefix='f', side='right')
 
     w_dim_y = slab_bottom + DIM_OFFSET
-    svg += _dim_h(ox, ox + real_w_px, w_dim_y, f'{width:.2f} м (+ 2×82 мм)', prefix='f', below=True)
+    svg += _dim_h(ox, ox + real_w_px, w_dim_y, f'{width:.2f} м', prefix='f', below=True)
 
     svg += (f'<text x="{col_right_x + col_w_px + 4}" y="{pergola_top + beam_h_px/2 + 3}" '
             f'text-anchor="start" font-size="{small_font}" fill="{DIM_COLOR}">280</text>')
