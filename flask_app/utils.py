@@ -225,7 +225,7 @@ DIM_OFFSET = 26
 DIM_TEXT_GAP = 14
 DIM_EXT_LEN = 6
 DIM_TARGET_PX = 280
-DIM_MARGIN_L = 74
+DIM_MARGIN_L = 110
 DIM_MARGIN_R = 64
 DIM_MARGIN_T = 46
 DIM_MARGIN_B = 64
@@ -495,8 +495,20 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     svg += (f'<text x="{col_right_x + col_w_px + 4}" y="{pergola_top + beam_h_px/2 + 3}" '
             f'text-anchor="start" font-size="{small_font}" fill="{DIM_COLOR}">280</text>')
 
-    svg += (f'<text x="{col_left_x - 4}" y="{col_top_y + col_h_px/2 + beam_h_px/2}" text-anchor="end" '
-            f'font-size="{small_font}" fill="{DIM_COLOR}">164</text>')
+    _ldr_attach_x = col_left_x
+    _ldr_attach_y = col_top_y + beam_h_px + (col_h_px - beam_h_px) * 0.38
+    _ldr_shelf_y = _ldr_attach_y - 12
+    _ldr_shelf_x = col_left_x - 8
+    _ldr_text_x = _ldr_shelf_x - 3
+    svg += (f'<defs><marker id="f-dot" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5">'
+            f'<circle cx="2.5" cy="2.5" r="2" fill="{DIM_COLOR}"/></marker></defs>')
+    svg += (f'<polyline points="{_ldr_attach_x:.1f},{_ldr_attach_y:.1f} '
+            f'{_ldr_shelf_x:.1f},{_ldr_shelf_y:.1f} '
+            f'{max(4, _ldr_text_x - 56):.1f},{_ldr_shelf_y:.1f}" '
+            f'fill="none" stroke="{DIM_COLOR}" stroke-width="0.8" '
+            f'marker-start="url(#f-dot)"/>')
+    svg += (f'<text x="{_ldr_text_x:.1f}" y="{_ldr_shelf_y + 3:.1f}" '
+            f'text-anchor="end" font-size="{small_font}" fill="{DIM_COLOR}">□ 164×164 мм</text>')
 
     svg += '</svg>'
     return svg
