@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v71';
+    var SVG_V = 'v72';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -174,12 +174,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     specsHtml += '<div class="spec-row"><span class="spec-icon">\u2550</span> \u0411\u0430\u043B\u043A\u0430 \u0434\u0432\u0443\u0445\u0441\u0442.: <strong>' + v.beam_double + '</strong></div>';
                     if (v.max_overhang) {
                         specsHtml += '<div class="spec-row spec-overhang"><span class="spec-icon">\u2194</span> \u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442 \u0431\u0435\u0437 \u0434\u043E\u043F. \u043A\u043E\u043B\u043E\u043D\u043D\u044B: <strong>' + v.max_overhang + ' \u043C</strong></div>';
-                    }
-                    if (v.hermiticity) {
-                        specsHtml += '<div class="spec-row"><span class="spec-icon">\uD83D\uDCA7</span> \u0413\u0435\u0440\u043C\u0435\u0442\u0438\u0447\u043D\u043E\u0441\u0442\u044C: <strong>' + v.hermiticity + '</strong></div>';
-                    }
-                    if (v.snow_wind_load) {
-                        specsHtml += '<div class="spec-row"><span class="spec-icon">\u2744\uFE0F</span> \u0421\u043D\u0435\u0433./\u0432\u0435\u0442\u0440. \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430: <strong>' + v.snow_wind_load + '</strong></div>';
                     }
                     if (v.heat_protection) {
                         specsHtml += '<div class="spec-row"><span class="spec-icon">\u2600\uFE0F</span> \u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430: <strong>' + v.heat_protection + '</strong></div>';
