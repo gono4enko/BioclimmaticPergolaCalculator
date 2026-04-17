@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v70';
+    var SVG_V = 'v71';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
             state.lamellaType = 'B600-PIR';
         } else if (pergolaType === 'B200') {
             state.lamellaSize = '20';
-            state.lamellaType = 'B200-20';
+            state.lamellaType = 'B200-20A';
         } else {
             state.lamellaSize = '250';
             if (pergolaType === 'B500NEW') state.lamellaType = 'B500-25NEW';
@@ -111,7 +111,8 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (pergolaType === 'B700NEW') {
                 state.lamellaType = 'B700-' + (lamellaSize === '200' ? '20' : '25') + 'NEW';
             } else if (pergolaType === 'B200') {
-                state.lamellaType = 'B200-' + lamellaSize;
+                var bSuffix = (variant && variant.indexOf('AERO') === 0) ? 'A' : 'F';
+                state.lamellaType = 'B200-' + lamellaSize + bSuffix;
             } else {
                 state.lamellaType = 'B600-PIR';
             }
@@ -196,7 +197,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     specsHtml += '</div>';
 
+                    var imgHtml = '';
+                    if (v.images && v.images.hero) {
+                        imgHtml = '<div class="variant-thumb" style="text-align:center;margin-bottom:0.5rem;"><img src="' + v.images.hero + '?_v=' + SVG_V + '" alt="' + v.variant + '" style="max-width:100%;max-height:150px;object-fit:contain;border-radius:6px;background:#f5f7fb;"></div>';
+                    }
                     div.innerHTML = '<span class="check-mark"><svg viewBox="0 0 14 14" fill="none" width="12" height="12"><path d="M2 7.5L5.5 11L12 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+                        imgHtml +
                         '<div class="variant-label">' + v.label + '</div>' +
                         specsHtml;
 
@@ -218,6 +224,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (state.selectedVariant === 'auto' || state.selectedVariant === 'all') {
             if (state.pergolaType === 'B600') {
                 ls = 'PIR';
+            } else if (state.pergolaType === 'B200') {
+                ls = '20';
             } else {
                 ls = '250';
             }

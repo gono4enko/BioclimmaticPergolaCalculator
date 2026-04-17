@@ -37,6 +37,10 @@ LAMELLA_TYPES = {
     "B600-PIR": "PIR сэндвич-панель",
     "B200-20": "Стационарные ламели 200×50 мм, шаг 20 см",
     "B200-25": "Стационарные ламели 200×50 мм, шаг 25 см",
+    "B200-20A": "AERO ламели 200×50 мм (аэродинамические, наклонные), шаг 20 см",
+    "B200-25A": "AERO ламели 200×50 мм (аэродинамические, наклонные), шаг 25 см",
+    "B200-20F": "FLAT ламели 200×50 мм (плоские, римский стиль), шаг 20 см",
+    "B200-25F": "FLAT ламели 200×50 мм (плоские, римский стиль), шаг 25 см",
     "lamella-200": "Ламели 200 мм (усиленные)",
     "lamella-250": "Ламели 250 мм (стандарт)"
 }
@@ -859,7 +863,8 @@ def perform_all_variants_calculation(dimensions, options):
         if pergola_type in ["B500NEW", "B700NEW"]:
             lt = f"{pergola_type.replace('NEW','')}-{('20' if ls == '200' else '25')}NEW"
         elif pergola_type == "B200":
-            lt = f"B200-{ls}"
+            suffix = "A" if variant_name.startswith("AERO") else "F"
+            lt = f"B200-{ls}{suffix}"
         else:
             lt = "B600-PIR"
 

@@ -280,9 +280,55 @@ VARIANT_SPECS = {
         }
     },
     "B200": {
+        "AERO-20": {
+            "20": {
+                "lamella": "200 × 50 мм AERO (аэродинамические, наклонные)",
+                "column": "100 × 100 мм",
+                "beam": "200 × 50 мм",
+                "beam_double": "—",
+                "max_overhang": 12.1,
+                "max_module_width": 4.5,
+                "max_structure_size": "4,5 × 12,1",
+                "weight": "18,0 кг/м²",
+                "snow_wind_load": "Средн",
+                "hermiticity": "75%",
+                "heat_protection": "70%",
+                "parking_zone": "—",
+                "rotation_type": "стационарные (под углом)",
+                "rotation_angle": "",
+                "opening_percent": "—",
+                "frame_rigidity": "Высок",
+                "images": {"hero": "/static/images/b200_aero.jpg"},
+                "pros": ["Аэродинамическая форма — лучшая защита от косого дождя", "Максимальное затенение", "Премиальный внешний вид"],
+                "cons": ["Ламели нерегулируемые"]
+            }
+        },
+        "AERO-25": {
+            "25": {
+                "lamella": "200 × 50 мм AERO (аэродинамические, наклонные)",
+                "column": "100 × 100 мм",
+                "beam": "200 × 50 мм",
+                "beam_double": "—",
+                "max_overhang": 12.1,
+                "max_module_width": 4.5,
+                "max_structure_size": "4,5 × 12,1",
+                "weight": "15,0 кг/м²",
+                "snow_wind_load": "Средн",
+                "hermiticity": "65%",
+                "heat_protection": "60%",
+                "parking_zone": "—",
+                "rotation_type": "стационарные (под углом)",
+                "rotation_angle": "",
+                "opening_percent": "—",
+                "frame_rigidity": "Высок",
+                "images": {"hero": "/static/images/b200_aero.jpg"},
+                "pros": ["Аэродинамическая форма AERO", "Лёгкая конструкция", "Больше воздуха и света"],
+                "cons": ["Ламели нерегулируемые", "Меньше тени, чем у шага 20 см"]
+            }
+        },
         "FLAT-20": {
             "20": {
-                "lamella": "200 × 50 мм FLAT (стационарные)",
+                "lamella": "200 × 50 мм FLAT (плоские, вертикальные)",
                 "column": "100 × 100 мм",
                 "beam": "200 × 50 мм",
                 "beam_double": "—",
@@ -294,18 +340,18 @@ VARIANT_SPECS = {
                 "hermiticity": "70%",
                 "heat_protection": "60%",
                 "parking_zone": "—",
-                "rotation_type": "стационарные",
+                "rotation_type": "стационарные (вертикально)",
                 "rotation_angle": "",
                 "opening_percent": "—",
                 "frame_rigidity": "Высок",
-                "images": {},
-                "pros": ["Максимальный вынос до 12,1 м", "Лёгкая конструкция", "Экономичная цена"],
-                "cons": ["Ламели нерегулируемые", "Частичное затенение"]
+                "images": {"hero": "/static/images/b200_flat.jpg"},
+                "pros": ["Классический римский стиль", "Экономичная цена", "Простая, лаконичная геометрия"],
+                "cons": ["Ламели нерегулируемые", "Меньше защита от косого дождя"]
             }
         },
         "FLAT-25": {
             "25": {
-                "lamella": "200 × 50 мм FLAT (стационарные)",
+                "lamella": "200 × 50 мм FLAT (плоские, вертикальные)",
                 "column": "100 × 100 мм",
                 "beam": "200 × 50 мм",
                 "beam_double": "—",
@@ -317,12 +363,12 @@ VARIANT_SPECS = {
                 "hermiticity": "60%",
                 "heat_protection": "50%",
                 "parking_zone": "—",
-                "rotation_type": "стационарные",
+                "rotation_type": "стационарные (вертикально)",
                 "rotation_angle": "",
                 "opening_percent": "—",
                 "frame_rigidity": "Высок",
-                "images": {},
-                "pros": ["Максимальный вынос до 12,1 м", "Наилегчайшая конструкция", "Наименьшая цена"],
+                "images": {"hero": "/static/images/b200_flat.jpg"},
+                "pros": ["Классический римский стиль FLAT", "Больше воздуха и света", "Лёгкая конструкция"],
                 "cons": ["Ламели нерегулируемые", "Более открытое перекрытие"]
             }
         }
@@ -347,8 +393,10 @@ VARIANT_DISPLAY_ORDER = {
         {"variant": "Light", "lamella_size": "PIR", "label": "Light"},
     ],
     "B200": [
-        {"variant": "FLAT-20", "lamella_size": "20", "label": "FLAT-20 (шаг 20 см)"},
-        {"variant": "FLAT-25", "lamella_size": "25", "label": "FLAT-25 (шаг 25 см)"},
+        {"variant": "AERO-20", "lamella_size": "20", "label": "AERO-20 — аэродинамические, шаг 20 см"},
+        {"variant": "AERO-25", "lamella_size": "25", "label": "AERO-25 — аэродинамические, шаг 25 см"},
+        {"variant": "FLAT-20", "lamella_size": "20", "label": "FLAT-20 — плоские (римский стиль), шаг 20 см"},
+        {"variant": "FLAT-25", "lamella_size": "25", "label": "FLAT-25 — плоские (римский стиль), шаг 25 см"},
     ]
 }
 
