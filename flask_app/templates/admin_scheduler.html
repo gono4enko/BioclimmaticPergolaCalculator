@@ -192,6 +192,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <script>
 var autoRefreshTimer = null;
 var allHistoryEntries = [];
+var lastHistoryTotal = 0;
 
 function loadStatus() {
     var btn = document.getElementById('refreshBtn');
@@ -515,7 +516,16 @@ function loadHistory() {
     btn.disabled = true;
     btn.textContent = 'Обновление…';
 
-    fetch('{{ url_for("admin.scheduler_history") }}?limit=200')
+    var trigger = document.getElementById('filterTrigger').value;
+    var dateFrom = document.getElementById('filterDateFrom').value;
+    var dateTo = document.getElementById('filterDateTo').value;
+
+    var url = '{{ url_for("admin.scheduler_history") }}?limit=200';
+    if (trigger) url += '&trigger=' + encodeURIComponent(trigger);
+    if (dateFrom) url += '&date_from=' + encodeURIComponent(dateFrom);
+    if (dateTo) url += '&date_to=' + encodeURIComponent(dateTo);
+
+    fetch(url)
         .then(function(r) {
             if (r.redirected || !r.ok) {
                 throw new Error(r.status === 401 || r.redirected ? 'Сессия истекла. Перезайдите в админ-панель.' : 'Ошибка сервера (' + r.status + ')');
@@ -526,7 +536,14 @@ function loadHistory() {
             btn.disabled = false;
             btn.textContent = 'Обновить';
             allHistoryEntries = (d && d.entries) || [];
-            applyHistoryFilters();
+            var note = document.getElementById('historyCountNote');
+            if (trigger || dateFrom || dateTo) {
+                note.textContent = 'Показано: ' + allHistoryEntries.length + ' (фильтр на сервере)';
+            } else {
+                note.textContent = '';
+            }
+            updateDownloadLinks();
+            renderHistory(allHistoryEntries);
         })
         .catch(function(e) {
             btn.disabled = false;
@@ -567,30 +584,7 @@ function applyHistoryFilters() {
     var dateFrom = document.getElementById('filterDateFrom').value;
     var dateTo = document.getElementById('filterDateTo').value;
     updateUrlFromFilters(trigger, dateFrom, dateTo);
-
-    var filtered = allHistoryEntries.filter(function(e) {
-        if (trigger && (e.trigger || 'scheduled') !== trigger) return false;
-        if (dateFrom || dateTo) {
-            var ts = e.timestamp ? new Date(e.timestamp) : null;
-            if (!ts || isNaN(ts.getTime())) return false;
-            var y = ts.getFullYear();
-            var m = String(ts.getMonth() + 1).padStart(2, '0');
-            var d = String(ts.getDate()).padStart(2, '0');
-            var localDateStr = y + '-' + m + '-' + d;
-            if (dateFrom && localDateStr < dateFrom) return false;
-            if (dateTo && localDateStr > dateTo) return false;
-        }
-        return true;
-    });
-
-    var note = document.getElementById('historyCountNote');
-    if (trigger || dateFrom || dateTo) {
-        note.textContent = 'Показано: ' + filtered.length + ' из ' + allHistoryEntries.length;
-    } else {
-        note.textContent = '';
-    }
-
-    renderHistory(filtered);
+    loadHistory();
 }
 
 function resetHistoryFilters() {
@@ -600,15 +594,18 @@ function resetHistoryFilters() {
     document.getElementById('historyCountNote').textContent = '';
     updateDownloadLinks();
     updateUrlFromFilters('', '', '');
-    renderHistory(allHistoryEntries);
+    loadHistory();
 }
 
 function renderHistory(entries) {
     if (!entries || !entries.length) {
-        var isEmpty = !allHistoryEntries.length;
-        document.getElementById('historyContent').innerHTML = isEmpty
-            ? '<div class="history-empty">История пуста. После первого запуска очистки здесь появятся записи.</div>'
-            : '<div class="history-empty">Нет записей, соответствующих фильтрам.</div>';
+        var trigger = document.getElementById('filterTrigger').value;
+        var dateFrom = document.getElementById('filterDateFrom').value;
+        var dateTo = document.getElementById('filterDateTo').value;
+        var hasFilters = !!(trigger || dateFrom || dateTo);
+        document.getElementById('historyContent').innerHTML = hasFilters
+            ? '<div class="history-empty">Нет записей, соответствующих фильтрам.</div>'
+            : '<div class="history-empty">История пуста. После первого запуска очистки здесь появятся записи.</div>';
         return;
     }
 
