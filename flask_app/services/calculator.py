@@ -18,13 +18,15 @@ def clear_price_cache():
 PERGOLA_TYPES = {
     "B500NEW": "В500 - с поворотными ламелями",
     "B700NEW": "В700 - с поворотно-сдвижными ламелями",
-    "B600": "В600 PIR - со стационарными панелями"
+    "B600": "В600 PIR - со стационарными панелями",
+    "B200": "В200 MAF AERO FLAT - со стационарными ламелями"
 }
 
 PERGOLA_TYPE_DESCRIPTIONS = {
     "B500NEW": "Современная пергола с поворотными алюминиевыми ламелями.",
     "B700NEW": "Премиальная пергола с поворотно-сдвижными ламелями.",
-    "B600": "Пергола со стационарной крышей из PIR сэндвич-панелей."
+    "B600": "Пергола со стационарной крышей из PIR сэндвич-панелей.",
+    "B200": "Пергола со стационарными ламелями AERO/FLAT 200×50 мм. Шаг 20 или 25 см."
 }
 
 LAMELLA_TYPES = {
@@ -33,6 +35,8 @@ LAMELLA_TYPES = {
     "B700-20NEW": "Ламели 200 мм (усиленные)",
     "B700-25NEW": "Ламели 250 мм (стандарт)",
     "B600-PIR": "PIR сэндвич-панель",
+    "B200-20": "Стационарные ламели 200×50 мм, шаг 20 см",
+    "B200-25": "Стационарные ламели 200×50 мм, шаг 25 см",
     "lamella-200": "Ламели 200 мм (усиленные)",
     "lamella-250": "Ламели 250 мм (стандарт)"
 }
@@ -42,13 +46,16 @@ MAX_DIMENSIONS = {
     "B500NEW_200": {"width": 15.0, "length": 8.0},
     "B700NEW_250": {"width": 13.5, "length": 8.0},
     "B700NEW_200": {"width": 15.0, "length": 8.0},
-    "B600": {"width": 15.0, "length": 8.0}
+    "B600": {"width": 15.0, "length": 8.0},
+    "B200_20": {"width": 13.5, "length": 12.1},
+    "B200_25": {"width": 13.5, "length": 12.1}
 }
 
 ADDITIONAL_COLUMNS_RULES = {
     "B500NEW": {"250": 6.5, "200": 6.85},
     "B700NEW": {"250": 6.5, "200": 6.85},
     "B600": {"PIR": 6.5}
+    # B200: дополнительные колонны уже включены в прайс-таблицу
 }
 
 COLUMNS_PRICES = {1: 653, 2: 980, 3: 1306}
@@ -605,10 +612,15 @@ def perform_calculation(dimensions, options):
 
         lamella_size = options.get("lamella_size", "")
         if not lamella_size:
-            lamella_size = "PIR" if "PIR" in lamella_type else ("200" if "20" in lamella_type and "200" not in lamella_type else ("200" if "200" in lamella_type else "250"))
+            if pergola_type == "B200":
+                lamella_size = "20"
+            else:
+                lamella_size = "PIR" if "PIR" in lamella_type else ("200" if "20" in lamella_type and "200" not in lamella_type else ("200" if "200" in lamella_type else "250"))
 
         if pergola_type == "B600":
             dim_key = pergola_type
+        elif pergola_type == "B200":
+            dim_key = f"B200_{lamella_size}"
         else:
             dim_key = f"{pergola_type}_{lamella_size}"
 
@@ -626,6 +638,10 @@ def perform_calculation(dimensions, options):
             lamella_size_mm = 200 if lamella_size == "200" else 250
             length_m = adjust_length_for_lamella_size(length_m, lamella_size)
             lamellas_count = int(length_m * 1000 / lamella_size_mm)
+        elif pergola_type == "B200":
+            # B200: шаг 20 см → питч 400 мм, шаг 25 см → питч 500 мм
+            lamella_pitch_mm = 400 if lamella_size == "20" else 500
+            lamellas_count = int(length_m * 1000 / lamella_pitch_mm)
         else:
             lamellas_count = 0
 
@@ -639,16 +655,26 @@ def perform_calculation(dimensions, options):
             selected_variant = variant_name
             modules = variant_modules
             logger.info(f"{pergola_type} вариант: {variant_name}, модулей: {variant_modules}, цена: {variant_price}€")
+        elif pergola_type == "B200" and requested_variant and requested_variant not in ("auto", "all"):
+            # B200 цены хранятся по lamella_size, не по варианту — запоминаем имя варианта
+            base_price = get_base_price(pergola_type, lamella_size, width_m, length_m)
+            selected_variant = requested_variant
         else:
             base_price = get_base_price(pergola_type, lamella_size, width_m, length_m)
 
-        lamella_display = {"200": "200 мм", "250": "250 мм", "PIR": "PIR"}.get(lamella_size, lamella_size)
+        lamella_display = {"200": "200 мм", "250": "250 мм", "PIR": "PIR",
+                           "20": "шаг 20 см", "25": "шаг 25 см"}.get(lamella_size, lamella_size)
         variant_suffix = f" {selected_variant}" if selected_variant else ""
         variant_lamella = f" ({selected_variant})" if selected_variant else " (стандарт)"
         if pergola_type in ["B500NEW", "B700NEW"]:
             lamella_motion = "поворотно-сдвижными" if pergola_type == "B700NEW" else "поворотными"
             pergola_name = (f"Пергола серии {pergola_type}{variant_suffix} - с {lamella_motion} ламелями "
                            f"{width_m:.2f}×{length_m:.2f} м. Ламели {lamella_display}{variant_lamella}. "
+                           f"Количество ламелей - {lamellas_count} шт. ({modules} {_get_plural_form(modules, 'модуль', 'модуля', 'модулей')})")
+        elif pergola_type == "B200":
+            variant_flat = f" {selected_variant}" if selected_variant else ""
+            pergola_name = (f"Пергола серии B200 MAF AERO FLAT{variant_flat} - стационарные ламели 200×50 мм "
+                           f"{width_m:.2f}×{length_m:.2f} м. {lamella_display.capitalize()}. "
                            f"Количество ламелей - {lamellas_count} шт. ({modules} {_get_plural_form(modules, 'модуль', 'модуля', 'модулей')})")
         else:
             variant_pir = f" {selected_variant}" if selected_variant else ""
@@ -659,7 +685,11 @@ def perform_calculation(dimensions, options):
         total_price = base_price
         specification = []
 
-        if selected_variant:
+        if pergola_type == "B200":
+            lamella_info = f"Стационарные ламели 200×50 мм, {lamella_display}"
+            if selected_variant:
+                lamella_info += f" ({selected_variant})"
+        elif selected_variant:
             lamella_info = f"Ламели {lamella_display} ({selected_variant})"
         else:
             lamella_info = LAMELLA_TYPES.get(lamella_type, lamella_type)
@@ -668,6 +698,7 @@ def perform_calculation(dimensions, options):
             pergola_type_display = pergola_type_display.replace("В500", f"В500 {selected_variant}")
             pergola_type_display = pergola_type_display.replace("В700", f"В700 {selected_variant}")
             pergola_type_display = pergola_type_display.replace("В600 PIR", f"В600 PIR {selected_variant}")
+            pergola_type_display = pergola_type_display.replace("В200 MAF AERO FLAT", f"В200 MAF AERO FLAT {selected_variant}")
         lamellas_text = f", Количество ламелей - {lamellas_count} шт." if lamellas_count > 0 else ""
         specification.append({
             "name": f"Пергола серии {pergola_type_display} {width_m:.2f}×{length_m:.2f} м. {lamella_info}{lamellas_text}",
@@ -682,14 +713,16 @@ def perform_calculation(dimensions, options):
             total_price += columns_price
             specification.append({"name": "Дополнительные колонны", "count": f"{col_count} шт."})
 
-        gutter_needed, gutter_price, gutters_count, total_gutter_length = calculate_gutter_insert_price(length_m, modules)
-        if gutter_needed:
-            items.append({"name": f"Усилитель лотка ({gutters_count} лотка, {total_gutter_length:.2f} м)", "price": gutter_price})
-            total_price += gutter_price
-            specification.append({
-                "name": "Усилитель лотка",
-                "count": f"{total_gutter_length:.2f} м ({gutters_count} {_get_plural_form(gutters_count, 'лоток', 'лотка', 'лотков')})"
-            })
+        # Усилитель лотка — только для B500/B700 (B200 и B600 не используют)
+        if pergola_type in ["B500NEW", "B700NEW"]:
+            gutter_needed, gutter_price, gutters_count, total_gutter_length = calculate_gutter_insert_price(length_m, modules)
+            if gutter_needed:
+                items.append({"name": f"Усилитель лотка ({gutters_count} лотка, {total_gutter_length:.2f} м)", "price": gutter_price})
+                total_price += gutter_price
+                specification.append({
+                    "name": "Усилитель лотка",
+                    "count": f"{total_gutter_length:.2f} м ({gutters_count} {_get_plural_form(gutters_count, 'лоток', 'лотка', 'лотков')})"
+                })
 
         devices_count = 0
         if pergola_type in ["B500NEW", "B700NEW"]:
@@ -745,7 +778,7 @@ def perform_calculation(dimensions, options):
                 total_price += rgb_cost
                 specification.append({"name": "Светодиодная лента RGB", "count": f"{lighting_perimeter:.2f} м"})
 
-            if pergola_type == "B600":
+            if pergola_type in ["B600", "B200"]:
                 lighting_devices = controllers_count
                 remote_name, remote_price = get_remote_control(lighting_devices)
                 items.append({
@@ -825,6 +858,8 @@ def perform_all_variants_calculation(dimensions, options):
 
         if pergola_type in ["B500NEW", "B700NEW"]:
             lt = f"{pergola_type.replace('NEW','')}-{('20' if ls == '200' else '25')}NEW"
+        elif pergola_type == "B200":
+            lt = f"B200-{ls}"
         else:
             lt = "B600-PIR"
 
@@ -846,7 +881,8 @@ def get_pergola_types_list():
     return [
         {"id": "B500NEW", "name": PERGOLA_TYPES["B500NEW"], "description": PERGOLA_TYPE_DESCRIPTIONS["B500NEW"], "image": "b500_rotation.png"},
         {"id": "B700NEW", "name": PERGOLA_TYPES["B700NEW"], "description": PERGOLA_TYPE_DESCRIPTIONS["B700NEW"], "image": "b700_sliding.png"},
-        {"id": "B600", "name": PERGOLA_TYPES["B600"], "description": PERGOLA_TYPE_DESCRIPTIONS["B600"], "image": "b600_sandwich.png"}
+        {"id": "B600", "name": PERGOLA_TYPES["B600"], "description": PERGOLA_TYPE_DESCRIPTIONS["B600"], "image": "b600_sandwich.png"},
+        {"id": "B200", "name": PERGOLA_TYPES["B200"], "description": PERGOLA_TYPE_DESCRIPTIONS["B200"], "image": "b200_aero_flat.jpg"}
     ]
 
 
@@ -860,12 +896,19 @@ def get_lamella_sizes_for_type(pergola_type):
         return [
             {"id": "PIR", "name": "PIR сэндвич-панель", "lamella_type": "B600-PIR"}
         ]
+    elif pergola_type == "B200":
+        return [
+            {"id": "20", "name": "Шаг 20 см (FLAT-20)", "lamella_type": "B200-20"},
+            {"id": "25", "name": "Шаг 25 см (FLAT-25)", "lamella_type": "B200-25"}
+        ]
     return []
 
 
 def get_max_dimensions(pergola_type, lamella_size):
     if pergola_type == "B600":
         key = pergola_type
+    elif pergola_type == "B200":
+        key = f"B200_{lamella_size}"
     else:
         key = f"{pergola_type}_{lamella_size}"
     return MAX_DIMENSIONS.get(key, {"width": 13.5, "length": 8.0})

@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v68';
+    var SVG_V = 'v70';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -53,7 +53,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'B600': [
             {id: 'b01e73426cb0d008adbb72a544ec6f18', type: 'full', title: '\u041F\u0435\u0440\u0433\u043E\u043B\u0430 B600 PIR \u2014 \u0432 \u043A\u0430\u0447\u0435\u0441\u0442\u0432\u0435 \u043F\u0430\u0432\u0438\u043B\u044C\u043E\u043D\u0430 \u0434\u043B\u044F \u0431\u0430\u0441\u0441\u0435\u0439\u043D\u0430'},
             {id: 'ca7d582f5793c56641c7c6c3ecef4cfa', type: 'full', title: 'B600 \u2014 \u0432\u0441\u0435\u0441\u0435\u0437\u043E\u043D\u043D\u0430\u044F \u0442\u0435\u0440\u0440\u0430\u0441\u0430'}
-        ]
+        ],
+        'B200': []
     };
 
     var _lazyObserver = null;
@@ -86,6 +87,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (pergolaType === 'B600') {
             state.lamellaSize = 'PIR';
             state.lamellaType = 'B600-PIR';
+        } else if (pergolaType === 'B200') {
+            state.lamellaSize = '20';
+            state.lamellaType = 'B200-20';
         } else {
             state.lamellaSize = '250';
             if (pergolaType === 'B500NEW') state.lamellaType = 'B500-25NEW';
@@ -106,6 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 state.lamellaType = 'B500-' + (lamellaSize === '200' ? '20' : '25') + 'NEW';
             } else if (pergolaType === 'B700NEW') {
                 state.lamellaType = 'B700-' + (lamellaSize === '200' ? '20' : '25') + 'NEW';
+            } else if (pergolaType === 'B200') {
+                state.lamellaType = 'B200-' + lamellaSize;
             } else {
                 state.lamellaType = 'B600-PIR';
             }
@@ -846,9 +852,9 @@ document.addEventListener('DOMContentLoaded', function() {
         var html = '<div class="kp-section">';
 
         var kpDate = new Date().toLocaleDateString('ru-RU');
-        var decoKeyMap = {'B500NEW': 'b500', 'B700NEW': 'b700', 'B600': 'b600'};
+        var decoKeyMap = {'B500NEW': 'b500', 'B700NEW': 'b700', 'B600': 'b600', 'B200': 'b200'};
         var decoKey = decoKeyMap[state.pergolaType] || '';
-        var modelImgMap = {'B500NEW': 'b500.jpg', 'B700NEW': 'b700.jpg', 'B600': 'b600.jpg'};
+        var modelImgMap = {'B500NEW': 'b500.jpg', 'B700NEW': 'b700.jpg', 'B600': 'b600.jpg', 'B200': 'b200.jpg'};
         var modelImg = modelImgMap[state.pergolaType] || 'hero_pergola.jpg';
 
         /* Block 1: KP header — number, date, greeting */
@@ -977,7 +983,13 @@ document.addEventListener('DOMContentLoaded', function() {
         var schW = dims.width, schL = dims.length, schM = dims.modules || 1;
         if (schW > 0 && schL > 0) {
             var isPir = state.pergolaType === 'B600';
-            var lamMm = state.lamellaSize === '200' ? 200 : 250;
+            var isB200 = state.pergolaType === 'B200';
+            var lamMm;
+            if (state.pergolaType === 'B200') {
+                lamMm = state.lamellaSize === '20' ? 400 : 500;
+            } else {
+                lamMm = state.lamellaSize === '200' ? 200 : 250;
+            }
             var lamCnt = isPir ? '' : Math.floor(schL * 1000 / lamMm);
             var moLocal = findMoForResult(mainResult);
             if (moLocal) state._maxOverhang = moLocal;
@@ -991,7 +1003,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид спереди') + '&_v=' + SVG_V;
             var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид сбоку') + '&_v=' + SVG_V;
             var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + (isPir ? '&pir=1' : '') + '&_v=' + SVG_V;
-            var isoLabel = isPir ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (PIR \u043F\u0430\u043D\u0435\u043B\u0438)' : '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)';
+            var isoLabel = isPir ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (PIR \u043F\u0430\u043D\u0435\u043B\u0438)' : (isB200 ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u0441\u0442\u0430\u0446\u0438\u043E\u043D\u0430\u0440\u043D\u044B\u0435)' : '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)');
             var isoBlock = (isPir || lamCnt) ? (
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">' + isoLabel + '</div>' +
                 '<img id="kp-iso-img" src="/api/pergola-iso.svg?' + iqs + '" alt="\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F" style="max-width:100%;height:auto;"></div>'
@@ -1007,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<img id="kp-side-img" src="/api/pergola-front.svg?' + sqs + '" alt="\u0412\u0438\u0434 \u0441\u0431\u043E\u043A\u0443" style="max-width:100%;height:auto;"></div>' +
                 isoBlock +
                 '</div>' +
-                '<div style="margin-top:0.6rem;font-size:0.82rem;color:#666;text-align:center;">\u0412\u044B\u0441\u043E\u0442\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B: ' + pergolaH.toFixed(2) + ' \u043C (\u0441\u0442\u0430\u043D\u0434\u0430\u0440\u0442). \u041A\u043E\u043B\u043E\u043D\u043D\u044B 164\u00D7164 \u043C\u043C, \u0432\u044B\u0441\u043E\u0442\u0430 \u043B\u043E\u0442\u043A\u0430 280 \u043C\u043C, \u0432\u044B\u043B\u0435\u0442 \u043F\u043B\u043E\u0449\u0430\u0434\u043A\u0438 82 \u043C\u043C.</div>' +
+                '<div style="margin-top:0.6rem;font-size:0.82rem;color:#666;text-align:center;">\u0412\u044B\u0441\u043E\u0442\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B: ' + pergolaH.toFixed(2) + ' \u043C (\u0441\u0442\u0430\u043D\u0434\u0430\u0440\u0442). ' + (state.pergolaType === 'B200' ? '\u041A\u043E\u043B\u043E\u043D\u043D\u044B 100\u00D7100 \u043C\u043C, \u0431\u0430\u043B\u043A\u0430 200\u00D750 \u043C\u043C, \u043B\u0430\u043C\u0435\u043B\u0438 200\u00D750 \u043C\u043C.' : '\u041A\u043E\u043B\u043E\u043D\u043D\u044B 164\u00D7164 \u043C\u043C, \u0432\u044B\u0441\u043E\u0442\u0430 \u043B\u043E\u0442\u043A\u0430 280 \u043C\u043C, \u0432\u044B\u043B\u0435\u0442 \u043F\u043B\u043E\u0449\u0430\u0434\u043A\u0438 82 \u043C\u043C.') + '</div>' +
                 '<div id="kp-scheme-warn" style="display:' + (needsExtra ? 'block' : 'none') + ';margin-top:0.6rem;padding:0.6rem 0.8rem;background:#fff8e1;border-left:3px solid #f59e0b;font-size:0.88rem;color:#5d4a00;">' +
                 (needsExtra ? '\u26A0\uFE0F \u0412\u044B\u043D\u043E\u0441 ' + schL + ' \u043C \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C \u0431\u0435\u0437 \u0434\u043E\u043F. \u043E\u043F\u043E\u0440 (' + state._maxOverhang + ' \u043C). \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u044B \u043F\u0440\u043E\u043C\u0435\u0436\u0443\u0442\u043E\u0447\u043D\u044B\u0435 \u043A\u043E\u043B\u043E\u043D\u043D\u044B \u043F\u043E \u0446\u0435\u043D\u0442\u0440\u0443.' : '') +
                 '</div>' +

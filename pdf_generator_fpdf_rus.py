@@ -468,6 +468,9 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                 os.path.join(base_img_dir, 'b600_sandwich.jpg'),
                 os.path.join(base_img_dir, 'b600.jpg'),
             ],
+            'b200': [
+                os.path.join(base_img_dir, 'b200.jpg'),
+            ],
         }
         hero_img_path = None
         for candidate in COVER_IMAGES.get(hero_img_key, []):
@@ -624,6 +627,8 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         pdf.cell(50, 6, "Модулей:", 0, 0, "L"); pdf.cell(0, 6, f"{modules}", 0, 1, "L")
         if hero_img_key == 'b600':
             pdf.cell(50, 6, "Тип кровли:", 0, 0, "L"); pdf.cell(0, 6, "PIR сэндвич-панели, 100 мм", 0, 1, "L")
+        elif hero_img_key == 'b200':
+            pdf.cell(50, 6, "Тип ламелей:", 0, 0, "L"); pdf.cell(0, 6, "Стационарные, 200×50 мм", 0, 1, "L")
         else:
             pdf.cell(50, 6, "Тип ламелей:", 0, 0, "L"); pdf.cell(0, 6, lamella_type, 0, 1, "L")
 
@@ -707,8 +712,10 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                                                      modules=modules, max_overhang=_mo))
 
             _pngs = [svg_to_png_path(s) for s in _svgs]
-            _labels = ['Вид сверху', 'Вид спереди', 'Вид сбоку',
-                       'Изометрия (PIR панели)' if _is_pir else 'Изометрия (ламели открыты)']
+            _iso_lbl = ('Изометрия (PIR панели)' if _is_pir
+                        else ('Изометрия (стационарные)' if hero_img_key == 'b200'
+                              else 'Изометрия (ламели открыты)'))
+            _labels = ['Вид сверху', 'Вид спереди', 'Вид сбоку', _iso_lbl]
 
             if any(p and os.path.exists(p) for p in _pngs):
                 pdf.add_page()
@@ -1206,6 +1213,7 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             model_photo_map = {
                 'b500': os.path.join(gallery_img_dir, 'pergola_b500_garden_view.jpg'),
                 'b700': os.path.join(gallery_img_dir, 'pergola_b700_poolside.jpg'),
+                'b200': os.path.join(base_img_dir, 'b200.jpg'),
             }
             model_photo = model_photo_map.get(hero_img_key)
             if model_photo and os.path.exists(model_photo):

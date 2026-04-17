@@ -278,6 +278,54 @@ VARIANT_SPECS = {
                 "cons": ["Ширина модуля до 4 м", "3 модуля до 12 м"]
             }
         }
+    },
+    "B200": {
+        "FLAT-20": {
+            "20": {
+                "lamella": "200 × 50 мм FLAT (стационарные)",
+                "column": "100 × 100 мм",
+                "beam": "200 × 50 мм",
+                "beam_double": "—",
+                "max_overhang": 12.1,
+                "max_module_width": 4.5,
+                "max_structure_size": "4,5 × 12,1",
+                "weight": "18,0 кг/м²",
+                "snow_wind_load": "Средн",
+                "hermiticity": "70%",
+                "heat_protection": "60%",
+                "parking_zone": "—",
+                "rotation_type": "стационарные",
+                "rotation_angle": "",
+                "opening_percent": "—",
+                "frame_rigidity": "Высок",
+                "images": {},
+                "pros": ["Максимальный вынос до 12,1 м", "Лёгкая конструкция", "Экономичная цена"],
+                "cons": ["Ламели нерегулируемые", "Частичное затенение"]
+            }
+        },
+        "FLAT-25": {
+            "25": {
+                "lamella": "200 × 50 мм FLAT (стационарные)",
+                "column": "100 × 100 мм",
+                "beam": "200 × 50 мм",
+                "beam_double": "—",
+                "max_overhang": 12.1,
+                "max_module_width": 4.5,
+                "max_structure_size": "4,5 × 12,1",
+                "weight": "15,0 кг/м²",
+                "snow_wind_load": "Средн",
+                "hermiticity": "60%",
+                "heat_protection": "50%",
+                "parking_zone": "—",
+                "rotation_type": "стационарные",
+                "rotation_angle": "",
+                "opening_percent": "—",
+                "frame_rigidity": "Высок",
+                "images": {},
+                "pros": ["Максимальный вынос до 12,1 м", "Наилегчайшая конструкция", "Наименьшая цена"],
+                "cons": ["Ламели нерегулируемые", "Более открытое перекрытие"]
+            }
+        }
     }
 }
 
@@ -297,6 +345,10 @@ VARIANT_DISPLAY_ORDER = {
     "B600": [
         {"variant": "Standard", "lamella_size": "PIR", "label": "Standard"},
         {"variant": "Light", "lamella_size": "PIR", "label": "Light"},
+    ],
+    "B200": [
+        {"variant": "FLAT-20", "lamella_size": "20", "label": "FLAT-20 (шаг 20 см)"},
+        {"variant": "FLAT-25", "lamella_size": "25", "label": "FLAT-25 (шаг 25 см)"},
     ]
 }
 

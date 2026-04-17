@@ -3,9 +3,9 @@
 {% block title %}Калькулятор стоимости перголы{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=68">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=69">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=68" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=69" as="script">
 {% endblock %}
 
 {% block content %}
@@ -23,7 +23,7 @@
     <div class="step-card" id="step-1">
         <h3>1. Выберите тип перголы</h3>
         <div class="row g-3 align-items-stretch">
-            <div class="col-12 col-md-4 d-flex">
+            <div class="col-12 col-md-6 col-lg-3 d-flex">
                 <div class="type-option w-100" data-type="B500NEW">
                     <span class="check-mark"><svg viewBox="0 0 14 14" fill="none" width="14" height="14"><path d="M2 7.5L5.5 11L12 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <img src="{{ url_for('static', filename='images/b500_rotation.jpg') }}?v=3" alt="B500">
@@ -32,7 +32,7 @@
                     <div class="click-hint">Нажмите для выбора</div>
                 </div>
             </div>
-            <div class="col-12 col-md-4 d-flex">
+            <div class="col-12 col-md-6 col-lg-3 d-flex">
                 <div class="type-option w-100" data-type="B700NEW">
                     <span class="check-mark"><svg viewBox="0 0 14 14" fill="none" width="14" height="14"><path d="M2 7.5L5.5 11L12 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <img src="{{ url_for('static', filename='images/b700_sliding.jpg') }}?v=3" alt="B700">
@@ -41,12 +41,21 @@
                     <div class="click-hint">Нажмите для выбора</div>
                 </div>
             </div>
-            <div class="col-12 col-md-4 d-flex">
+            <div class="col-12 col-md-6 col-lg-3 d-flex">
                 <div class="type-option w-100" data-type="B600">
                     <span class="check-mark"><svg viewBox="0 0 14 14" fill="none" width="14" height="14"><path d="M2 7.5L5.5 11L12 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <img src="{{ url_for('static', filename='images/b600_sandwich.jpg') }}?v=3" alt="B600">
                     <div class="type-name">В600 — PIR панели</div>
                     <div class="type-desc">Пергола со стационарной крышей из PIR сэндвич-панелей</div>
+                    <div class="click-hint">Нажмите для выбора</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-3 d-flex">
+                <div class="type-option w-100" data-type="B200">
+                    <span class="check-mark"><svg viewBox="0 0 14 14" fill="none" width="14" height="14"><path d="M2 7.5L5.5 11L12 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <img src="{{ url_for('static', filename='images/b200.jpg') }}?v=1" alt="B200" onerror="this.src='{{ url_for('static', filename='images/hero_pergola.jpg') }}'">
+                    <div class="type-name">В200 MAF AERO FLAT</div>
+                    <div class="type-desc">Пергола со стационарными ламелями 200×50 мм, вынос до 12,1 м</div>
                     <div class="click-hint">Нажмите для выбора</div>
                 </div>
             </div>
@@ -163,7 +172,7 @@
 
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=68"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=69"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');

@@ -237,7 +237,7 @@ def lamella_sizes(pergola_type):
 
 @bp.route('/decolife-data/<pergola_type>', methods=['GET'])
 def decolife_data(pergola_type):
-    type_map = {'B500NEW': 'b500', 'B700NEW': 'b700', 'B600': 'b600'}
+    type_map = {'B500NEW': 'b500', 'B700NEW': 'b700', 'B600': 'b600', 'B200': 'b200'}
     folder = type_map.get(pergola_type, 'b500')
     data_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static', 'decolife', folder, 'data.json')
     try:
@@ -282,8 +282,10 @@ def _build_pergola_data(result):
             'price': round(item['price'] * euro_rate)
         })
 
+    from config.pergola_descriptions import get_pergola_description
+    ptype = options.get('pergola_type', '')
     return {
-        'pergola_type': options.get('pergola_type', ''),
+        'pergola_type': ptype,
         'lamella_type': options.get('lamella_type', ''),
         'width': dimensions.get('width', 0),
         'length': dimensions.get('length', 0),
@@ -302,11 +304,11 @@ def _build_pergola_data(result):
         'selected_variant': result.get('selected_variant', ''),
         'variant_label': result.get('variant_label', ''),
         'lamella_size': options.get('lamella_size', ''),
-        'description': '',
+        'description': get_pergola_description(ptype) or '',
         'modular_description': get_modular_system_description(),
         'drainage_description': get_drainage_system_description(),
-        'image_paths': get_pergola_images(options.get('pergola_type', '')),
-        'image_caption': get_pergola_image_caption(options.get('pergola_type', ''))
+        'image_paths': get_pergola_images(ptype),
+        'image_caption': get_pergola_image_caption(ptype)
     }
 
 
@@ -328,7 +330,7 @@ def export_pdf():
 
         def _load_decolife(ptype):
             key = ptype.replace('NEW', '').lower()
-            deco_map = {'b500': 'b500', 'b700': 'b700', 'b600': 'b600'}
+            deco_map = {'b500': 'b500', 'b700': 'b700', 'b600': 'b600', 'b200': 'b200'}
             folder = deco_map.get(key, key)
             deco_path = os.path.join(current_app.static_folder, 'decolife', folder, 'data.json')
             try:
