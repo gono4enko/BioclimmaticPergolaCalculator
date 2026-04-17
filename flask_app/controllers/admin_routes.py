@@ -3,9 +3,10 @@ import json
 import base64
 import re
 import csv
+import io
 import threading
 from functools import wraps
-from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template, current_app
+from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template, current_app, Response
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -574,6 +575,50 @@ def test_telegram_alert():
         'reason': result.get('reason'),
         'error': result.get('error') or 'Неизвестная ошибка отправки',
     }), 200
+
+
+@bp.route('/scheduler-history-download')
+@admin_required
+def scheduler_history_download():
+    from ..utils import get_cleanup_history
+    fmt = request.args.get('format', 'json').lower()
+    entries = get_cleanup_history(limit=0)
+
+    if fmt == 'csv':
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['timestamp', 'trigger', 'files_removed', 'max_age_days', 'error'])
+        for e in entries:
+            writer.writerow([
+                e.get('timestamp', ''),
+                e.get('trigger', ''),
+                e.get('files_removed', ''),
+                e.get('max_age_days', ''),
+                e.get('error', ''),
+            ])
+        csv_bytes = output.getvalue().encode('utf-8')
+        return Response(
+            csv_bytes,
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename="cleanup_history.csv"'},
+        )
+
+    json_bytes = json.dumps(entries, ensure_ascii=False, indent=2).encode('utf-8')
+    return Response(
+        json_bytes,
+        mimetype='application/json',
+        headers={'Content-Disposition': 'attachment; filename="cleanup_history.json"'},
+    )
+
+
+@bp.route('/scheduler-history-clear', methods=['POST'])
+@admin_required
+def scheduler_history_clear():
+    from ..utils import clear_cleanup_history
+    ok = clear_cleanup_history()
+    if ok:
+        return jsonify({'ok': True})
+    return jsonify({'ok': False, 'error': 'Не удалось очистить историю'}), 500
 
 
 @bp.route('/scheduler-health')

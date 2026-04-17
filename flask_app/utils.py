@@ -97,6 +97,27 @@ def get_cleanup_history(limit=50):
         history = history[-limit:]
     return list(reversed(history))
 
+
+def clear_cleanup_history():
+    """Wipe the entire cleanup history log. Returns True on success, False on error."""
+    path = _get_cleanup_history_path()
+    lock = _get_cleanup_history_lock()
+    with lock:
+        tmp_path = path + '.tmp'
+        try:
+            with open(tmp_path, 'w', encoding='utf-8') as f:
+                json.dump([], f)
+            os.replace(tmp_path, path)
+            return True
+        except OSError as exc:
+            logger.warning("Failed to clear cleanup history: %s", exc)
+            try:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            except OSError:
+                pass
+            return False
+
 HEALTH_CHECK_GRACE_MULTIPLIER = 2
 
 GRACE_MULTIPLIER_MIN = 1.0
