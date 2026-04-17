@@ -486,7 +486,7 @@ def _dim_v(x, y1, y2, label, prefix='d', side='left', font=None):
     )
 
 
-def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=None, max_overhang=None, ref=None):
+def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=None, max_overhang=None, ref=None, extra_columns=0):
     inner_fill = '#eef3fa'
     beam_color = '#1a3a6e'
     beam_fill = '#9fb8d6'
@@ -584,19 +584,25 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
     col_ys = [ry + col_px / 2, ry + rect_h - col_px / 2]
 
     needs_extra = (max_overhang is not None and length and length > max_overhang + 0.001)
-    if needs_extra:
-        col_ys.append(ry + rect_h / 2)
+    extra_rows = max(int(extra_columns or 0), 1 if needs_extra else 0)
+    if extra_rows > 0:
+        for i in range(1, extra_rows + 1):
+            col_ys.append(ry + (rect_h / (extra_rows + 1)) * i)
 
     for cxp in col_xs:
         for cyp in col_ys:
+            is_extra = extra_rows > 0 and abs(cyp - (ry + col_px / 2)) > 0.5 and abs(cyp - (ry + rect_h - col_px / 2)) > 0.5
+            fill_color = '#d97706' if is_extra else column_fill
             svg += (f'<rect x="{cxp - col_px / 2}" y="{cyp - col_px / 2}" '
                     f'width="{col_px}" height="{col_px}" '
-                    f'fill="{column_fill}" stroke="{column_fill}" stroke-width="0.5"/>')
+                    f'fill="{fill_color}" stroke="{fill_color}" stroke-width="0.5"/>')
 
-    if needs_extra:
-        svg += (f'<text x="{rx + rect_w + 4}" y="{ry + rect_h / 2 + 3}" '
-                f'text-anchor="start" font-size="8px" fill="{beam_color}" '
-                f'font-style="italic">доп. опора</text>')
+    if extra_rows > 0:
+        for i in range(1, extra_rows + 1):
+            yy = ry + (rect_h / (extra_rows + 1)) * i
+            svg += (f'<text x="{rx + rect_w + 4}" y="{yy + 3}" '
+                    f'text-anchor="start" font-size="8px" fill="#d97706" '
+                    f'font-style="italic">доп. колонна</text>')
 
     arrow_y = ry + rect_h + DIM_OFFSET
     svg += _dim_h(rx, rx + rect_w, arrow_y, f'{width:.2f} м', prefix='t', below=True)
@@ -611,7 +617,7 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
     return svg
 
 
-def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди'):
+def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди', extra_columns=0):
     """Front/side elevation. width = horizontal dimension (m), height in m.
     Uses shared scale (DIM_TARGET_PX/ref) so views align with top view.
     """
@@ -668,19 +674,30 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     inner_span_m = width - COLUMN_W_M
     needs_extra = (max_overhang is not None and inner_span_m > max_overhang + 0.001)
     mod_count = max(1, int(modules))
+    extra_col_xs = []
     if mod_count > 1:
         for i in range(1, mod_count):
             cxp = ox + pad_px + (width * scale / mod_count) * i - col_w_px / 2
             col_xs.append(cxp)
     elif needs_extra:
-        col_xs.append(ox + real_w_px / 2 - col_w_px / 2)
+        cxp = ox + real_w_px / 2 - col_w_px / 2
+        col_xs.append(cxp)
+        extra_col_xs.append(cxp)
+    extra_n = max(int(extra_columns or 0), 0)
+    if extra_n > 0:
+        for i in range(1, extra_n + 1):
+            cxp = ox + pad_px + (width * scale / (extra_n + 1)) * i - col_w_px / 2
+            col_xs.append(cxp)
+            extra_col_xs.append(cxp)
 
     col_top_y = pergola_top
     col_h_px = pergola_bottom - pergola_top
 
     for cxp in col_xs:
+        is_extra = any(abs(cxp - exc) < 0.5 for exc in extra_col_xs)
+        cfill = '#d97706' if is_extra else column_fill
         svg += (f'<rect x="{cxp}" y="{col_top_y}" width="{col_w_px}" height="{col_h_px}" '
-                f'fill="{column_fill}" stroke="{column_fill}" stroke-width="0.5"/>')
+                f'fill="{cfill}" stroke="{cfill}" stroke-width="0.5"/>')
 
     beam_x = col_left_x
     beam_w = (col_right_x + col_w_px) - col_left_x
@@ -721,7 +738,7 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     return svg
 
 
-def generate_isometric_svg(width, length, height=3.0, lamella_count=None, modules=1, lamella_open_deg=55, max_overhang=None):
+def generate_isometric_svg(width, length, height=3.0, lamella_count=None, modules=1, lamella_open_deg=55, max_overhang=None, extra_columns=0):
     """3D isometric view of pergola with tilted/open lamellas.
     Camera looks from front-right-above. X = ширина (вправо-вниз),
     Z = длина (влево-вниз в глубину), Y = высота (вверх).
@@ -806,8 +823,16 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
         col_xs.append(width - COL_W / 2)
     col_zs = [COL_W / 2, length - COL_W / 2]
     has_mid_z = max_overhang is not None and length > float(max_overhang) + 0.001
-    if has_mid_z:
-        col_zs.insert(1, length / 2)
+    extra_n = max(int(extra_columns or 0), 0)
+    mid_z_positions = []
+    if extra_n > 0:
+        for i in range(1, extra_n + 1):
+            mid_z_positions.append(length / (extra_n + 1) * i)
+    elif has_mid_z:
+        mid_z_positions.append(length / 2)
+    for mz in mid_z_positions:
+        col_zs.insert(-1, mz)
+    has_mid_z = bool(mid_z_positions)
 
     column_top = height - BEAM_H
 
@@ -821,7 +846,10 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
         return out
 
     back_cols = [(cx, col_zs[-1]) for cx in col_xs]
-    mid_cols = [(cx, col_zs[1]) for cx in col_xs] if has_mid_z else []
+    mid_cols = []
+    for mz in mid_z_positions:
+        for cx in col_xs:
+            mid_cols.append((cx, mz))
     front_cols = [(cx, col_zs[0]) for cx in col_xs]
 
     back_cols.sort(key=lambda c: -c[0])
@@ -1038,8 +1066,16 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
     col_xs.append(width - COL_W / 2)
     col_zs = [COL_W / 2, length - COL_W / 2]
     has_mid_z = max_overhang is not None and length > float(max_overhang) + 0.001
-    if has_mid_z:
-        col_zs.insert(1, length / 2)
+    extra_n = max(int(extra_columns or 0), 0)
+    mid_z_positions = []
+    if extra_n > 0:
+        for i in range(1, extra_n + 1):
+            mid_z_positions.append(length / (extra_n + 1) * i)
+    elif has_mid_z:
+        mid_z_positions.append(length / 2)
+    for mz in mid_z_positions:
+        col_zs.insert(-1, mz)
+    has_mid_z = bool(mid_z_positions)
 
     column_top = height - BEAM_H
 

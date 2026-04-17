@@ -38,8 +38,11 @@ def pergola_scheme_svg():
             return Response('', status=400)
         ref_raw = request.args.get('ref')
         ref = float(ref_raw) if ref_raw else None
+        xc_raw = request.args.get('xc')
+        xc = int(xc_raw) if xc_raw and xc_raw.isdigit() else 0
         svg = generate_top_view_svg(width=w, length=l, modules=m,
-                                    is_pir=pir, lamella_count=lc, max_overhang=mo, ref=ref)
+                                    is_pir=pir, lamella_count=lc, max_overhang=mo, ref=ref,
+                                    extra_columns=xc)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:
@@ -61,7 +64,10 @@ def pergola_front_svg():
         ref_raw = request.args.get('ref')
         ref = float(ref_raw) if ref_raw else None
         title = request.args.get('title') or 'Вид спереди'
-        svg = generate_front_view_svg(width=w, height=h, modules=m, max_overhang=mo, ref=ref, title=title)
+        xc_raw = request.args.get('xc')
+        xc = int(xc_raw) if xc_raw and xc_raw.isdigit() else 0
+        svg = generate_front_view_svg(width=w, height=h, modules=m, max_overhang=mo, ref=ref,
+                                      title=title, extra_columns=xc)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:
@@ -85,11 +91,14 @@ def pergola_iso_svg():
         is_pir = request.args.get('pir', '0') == '1'
         if w <= 0 or l <= 0:
             return Response('', status=400)
+        xc_raw = request.args.get('xc')
+        xc = int(xc_raw) if xc_raw and xc_raw.isdigit() else 0
         if is_pir:
             svg = generate_pir_iso_svg(width=w, length=l, height=h, modules=m, max_overhang=mo)
         else:
             svg = generate_isometric_svg(width=w, length=l, height=h, lamella_count=lc,
-                                         modules=m, lamella_open_deg=deg, max_overhang=mo)
+                                         modules=m, lamella_open_deg=deg, max_overhang=mo,
+                                         extra_columns=xc)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:

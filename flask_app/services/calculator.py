@@ -59,8 +59,33 @@ ADDITIONAL_COLUMNS_RULES = {
     "B500NEW": {"250": 6.5, "200": 6.85},
     "B700NEW": {"250": 6.5, "200": 6.85},
     "B600": {"PIR": 6.5}
-    # B200: дополнительные колонны уже включены в прайс-таблицу
+    # B200: стоимость уже включена в прайс — см. B200_REINFORCEMENT_RULES
 }
+
+# B200 — пороги по выносу (length_m), при которых требуется
+# усилитель балки или дополнительная колонна. Стоимость уже учтена
+# в табличной цене (выделена в прайсе цветом), поэтому здесь только
+# флаги для отображения в спецификации и на эскизе.
+B200_REINFORCEMENT_RULES = {
+    "20": {"reinforcer": 6.5, "extra_column": 7.7},
+    "25": {"reinforcer": 6.6, "extra_column": 7.6},
+}
+
+
+def get_b200_reinforcement(width_m, length_m, lamella_size, modules):
+    """Определяет, нужен ли усилитель балки или доп. колонна для B200.
+    Возвращает dict: {kind: 'extra_column'|'reinforcer'|None, extra_columns_count: int}.
+    Стоимость не добавляется — она уже включена в табличную цену прайса.
+    """
+    rules = B200_REINFORCEMENT_RULES.get(str(lamella_size))
+    if not rules:
+        return {"kind": None, "extra_columns_count": 0}
+    overhang = float(length_m or 0)
+    if overhang > rules["extra_column"] + 0.001:
+        return {"kind": "extra_column", "extra_columns_count": 1}
+    if int(modules or 1) >= 2 and overhang > rules["reinforcer"] + 0.001:
+        return {"kind": "reinforcer", "extra_columns_count": 0}
+    return {"kind": None, "extra_columns_count": 0}
 
 COLUMNS_PRICES = {1: 653, 2: 980, 3: 1306}
 
@@ -717,6 +742,22 @@ def perform_calculation(dimensions, options):
             total_price += columns_price
             specification.append({"name": "Дополнительные колонны", "count": f"{col_count} шт."})
 
+        # B200: усилитель балки / доп. колонна (стоимость уже в цене прайса)
+        b200_reinf = {"kind": None, "extra_columns_count": 0}
+        if pergola_type == "B200":
+            b200_reinf = get_b200_reinforcement(width_m, length_m, lamella_size, modules)
+            if b200_reinf["kind"] == "extra_column":
+                col_count = modules + 1
+                specification.append({
+                    "name": "Дополнительная колонна (включена в цену)",
+                    "count": f"{col_count} шт. (промежуточный ряд)"
+                })
+            elif b200_reinf["kind"] == "reinforcer":
+                specification.append({
+                    "name": "Усилитель несущей балки (включён в цену)",
+                    "count": f"{modules} шт."
+                })
+
         # Усилитель лотка — только для B500/B700 (B200 и B600 не используют)
         if pergola_type in ["B500NEW", "B700NEW"]:
             gutter_needed, gutter_price, gutters_count, total_gutter_length = calculate_gutter_insert_price(length_m, modules)
@@ -827,6 +868,7 @@ def perform_calculation(dimensions, options):
             },
             "items": items,
             "specification": specification,
+            "reinforcement": b200_reinf if pergola_type == "B200" else {"kind": None, "extra_columns_count": 0},
             "total_price_eur": total_price,
             "euro_rate": euro_rate,
             "totals": {
