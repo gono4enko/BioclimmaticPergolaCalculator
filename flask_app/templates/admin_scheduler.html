@@ -535,11 +535,38 @@ function loadHistory() {
         });
 }
 
+function getFilterParams() {
+    var params = new URLSearchParams(window.location.search);
+    return {
+        trigger: params.get('trigger') || '',
+        from: params.get('from') || '',
+        to: params.get('to') || ''
+    };
+}
+
+function syncFiltersFromUrl() {
+    var f = getFilterParams();
+    document.getElementById('filterTrigger').value = f.trigger;
+    document.getElementById('filterDateFrom').value = f.from;
+    document.getElementById('filterDateTo').value = f.to;
+}
+
+function updateUrlFromFilters(trigger, dateFrom, dateTo) {
+    var params = new URLSearchParams(window.location.search);
+    if (trigger) { params.set('trigger', trigger); } else { params.delete('trigger'); }
+    if (dateFrom) { params.set('from', dateFrom); } else { params.delete('from'); }
+    if (dateTo) { params.set('to', dateTo); } else { params.delete('to'); }
+    var newSearch = params.toString();
+    var newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
+    window.history.replaceState(null, '', newUrl);
+}
+
 function applyHistoryFilters() {
     updateDownloadLinks();
     var trigger = document.getElementById('filterTrigger').value;
     var dateFrom = document.getElementById('filterDateFrom').value;
     var dateTo = document.getElementById('filterDateTo').value;
+    updateUrlFromFilters(trigger, dateFrom, dateTo);
 
     var filtered = allHistoryEntries.filter(function(e) {
         if (trigger && (e.trigger || 'scheduled') !== trigger) return false;
@@ -572,6 +599,7 @@ function resetHistoryFilters() {
     document.getElementById('filterDateTo').value = '';
     document.getElementById('historyCountNote').textContent = '';
     updateDownloadLinks();
+    updateUrlFromFilters('', '', '');
     renderHistory(allHistoryEntries);
 }
 
@@ -639,6 +667,7 @@ function clearHistory() {
 }
 
 loadStatus();
+syncFiltersFromUrl();
 loadHistory();
 setupAutoRefresh();
 loadAlertSettings();
