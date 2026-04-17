@@ -99,6 +99,111 @@ def get_cleanup_history(limit=50):
 
 HEALTH_CHECK_GRACE_MULTIPLIER = 2
 
+GRACE_MULTIPLIER_MIN = 1.0
+GRACE_MULTIPLIER_MAX = 100.0
+ALERT_COOLDOWN_MIN = 60
+ALERT_COOLDOWN_MAX = 86400
+
+
+def _scheduler_settings_path():
+    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(base, 'data')
+    os.makedirs(data_dir, exist_ok=True)
+    return os.path.join(data_dir, 'scheduler_settings.json')
+
+
+def _env_default_grace_multiplier():
+    try:
+        v = float(os.environ.get('SCHEDULER_GRACE_MULTIPLIER', HEALTH_CHECK_GRACE_MULTIPLIER))
+    except (ValueError, TypeError):
+        v = float(HEALTH_CHECK_GRACE_MULTIPLIER)
+    return max(GRACE_MULTIPLIER_MIN, min(GRACE_MULTIPLIER_MAX, v))
+
+
+def _env_default_alert_cooldown():
+    try:
+        v = int(os.environ.get('SCHEDULER_ALERT_COOLDOWN_SECONDS', 3600))
+    except (ValueError, TypeError):
+        v = 3600
+    return max(ALERT_COOLDOWN_MIN, min(ALERT_COOLDOWN_MAX, v))
+
+
+def get_scheduler_settings():
+    """Returns current scheduler alert settings.
+
+    Reads from data/scheduler_settings.json (if present), otherwise falls back
+    to env defaults. Result is always clamped to valid bounds.
+    """
+    grace = _env_default_grace_multiplier()
+    cooldown = _env_default_alert_cooldown()
+    source = 'env'
+    path = _scheduler_settings_path()
+    if os.path.exists(path):
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                if 'grace_multiplier' in data:
+                    try:
+                        grace = max(GRACE_MULTIPLIER_MIN, min(
+                            GRACE_MULTIPLIER_MAX, float(data['grace_multiplier'])))
+                    except (ValueError, TypeError):
+                        pass
+                if 'alert_cooldown_seconds' in data:
+                    try:
+                        cooldown = max(ALERT_COOLDOWN_MIN, min(
+                            ALERT_COOLDOWN_MAX, int(data['alert_cooldown_seconds'])))
+                    except (ValueError, TypeError):
+                        pass
+                source = 'file'
+        except Exception as exc:
+            logger.warning("Failed to read scheduler settings: %s", exc)
+    return {
+        'grace_multiplier': grace,
+        'alert_cooldown_seconds': cooldown,
+        'source': source,
+    }
+
+
+def save_scheduler_settings(grace_multiplier, alert_cooldown_seconds):
+    """Validates and persists scheduler alert settings.
+
+    Returns (ok, error_message). Raises nothing.
+    """
+    try:
+        gm = float(grace_multiplier)
+    except (ValueError, TypeError):
+        return False, 'Grace multiplier должен быть числом'
+    try:
+        cd = int(alert_cooldown_seconds)
+    except (ValueError, TypeError):
+        return False, 'Alert cooldown должен быть целым числом'
+
+    if not (GRACE_MULTIPLIER_MIN <= gm <= GRACE_MULTIPLIER_MAX):
+        return False, (
+            f'Grace multiplier должен быть в диапазоне '
+            f'{GRACE_MULTIPLIER_MIN}–{GRACE_MULTIPLIER_MAX}'
+        )
+    if not (ALERT_COOLDOWN_MIN <= cd <= ALERT_COOLDOWN_MAX):
+        return False, (
+            f'Alert cooldown должен быть в диапазоне '
+            f'{ALERT_COOLDOWN_MIN}–{ALERT_COOLDOWN_MAX} сек'
+        )
+
+    path = _scheduler_settings_path()
+    try:
+        tmp = path + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump({
+                'grace_multiplier': gm,
+                'alert_cooldown_seconds': cd,
+            }, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, path)
+        return True, None
+    except Exception as exc:
+        logger.warning("Failed to save scheduler settings: %s", exc)
+        return False, 'Не удалось сохранить настройки'
+
 
 def send_telegram_alert(message):
     """
@@ -143,7 +248,8 @@ def check_scheduler_health():
         }
 
     expected_interval = timedelta(hours=CLEANUP_INTERVAL_HOURS)
-    grace_period = expected_interval * HEALTH_CHECK_GRACE_MULTIPLIER
+    grace_multiplier = get_scheduler_settings()['grace_multiplier']
+    grace_period = expected_interval * grace_multiplier
     now = datetime.now()
     elapsed = now - last_dt
     overdue = elapsed - grace_period

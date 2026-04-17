@@ -43,13 +43,6 @@ def _start_cleanup_scheduler(app, cleanup_fn):
         import time as _time
         scheduler = BackgroundScheduler(daemon=True)
 
-        try:
-            alert_cooldown_seconds = max(
-                60, int(os.environ.get('SCHEDULER_ALERT_COOLDOWN_SECONDS', 3600))
-            )
-        except (ValueError, TypeError):
-            alert_cooldown_seconds = 3600
-
         alert_state = {'last_sent': 0.0, 'last_status': None, 'was_unhealthy': False}
 
         def _run_cleanup():
@@ -57,8 +50,11 @@ def _start_cleanup_scheduler(app, cleanup_fn):
                 cleanup_fn(trigger='scheduled')
 
         def _watchdog_check():
-            from flask_app.utils import check_scheduler_health, send_telegram_alert
+            from flask_app.utils import (
+                check_scheduler_health, send_telegram_alert, get_scheduler_settings,
+            )
             health = check_scheduler_health()
+            alert_cooldown_seconds = get_scheduler_settings()['alert_cooldown_seconds']
             if not health['healthy']:
                 _logger.warning(
                     "SCHEDULER ALERT: %s (status=%s)",

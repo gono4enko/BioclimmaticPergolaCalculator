@@ -447,6 +447,46 @@ def scheduler_page():
     return render_template('admin_scheduler.html')
 
 
+@bp.route('/scheduler-settings', methods=['GET'])
+@admin_required
+def scheduler_settings_get():
+    from ..utils import (
+        get_scheduler_settings, GRACE_MULTIPLIER_MIN, GRACE_MULTIPLIER_MAX,
+        ALERT_COOLDOWN_MIN, ALERT_COOLDOWN_MAX,
+    )
+    s = get_scheduler_settings()
+    return jsonify({
+        'ok': True,
+        'grace_multiplier': s['grace_multiplier'],
+        'alert_cooldown_seconds': s['alert_cooldown_seconds'],
+        'source': s['source'],
+        'bounds': {
+            'grace_multiplier': {'min': GRACE_MULTIPLIER_MIN, 'max': GRACE_MULTIPLIER_MAX},
+            'alert_cooldown_seconds': {'min': ALERT_COOLDOWN_MIN, 'max': ALERT_COOLDOWN_MAX},
+        },
+    })
+
+
+@bp.route('/scheduler-settings', methods=['POST'])
+@admin_required
+def scheduler_settings_save():
+    from ..utils import save_scheduler_settings, get_scheduler_settings
+    body = request.get_json(silent=True) or {}
+    ok, err = save_scheduler_settings(
+        body.get('grace_multiplier'),
+        body.get('alert_cooldown_seconds'),
+    )
+    if not ok:
+        return jsonify({'ok': False, 'error': err}), 400
+    s = get_scheduler_settings()
+    return jsonify({
+        'ok': True,
+        'grace_multiplier': s['grace_multiplier'],
+        'alert_cooldown_seconds': s['alert_cooldown_seconds'],
+        'source': s['source'],
+    })
+
+
 @bp.route('/scheduler-status')
 @admin_required
 def scheduler_status():

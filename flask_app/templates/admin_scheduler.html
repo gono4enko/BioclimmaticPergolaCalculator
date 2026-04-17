@@ -130,6 +130,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
 </div>
 
+<div class="card">
+    <div class="card-header">Настройка алертов о сбое планировщика</div>
+    <div class="card-body">
+        <p style="font-size:13px;color:#666;margin:0 0 16px">
+            Настройки определяют, когда планировщик считается «зависшим» и как часто
+            отправлять Telegram-уведомления.
+        </p>
+        <div id="alertSettingsContent">
+            <div class="loading-overlay">Загрузка…</div>
+        </div>
+    </div>
+</div>
+
 </div>
 
 <script>
@@ -171,6 +184,89 @@ function showError(msg) {
     document.getElementById('statusContent').innerHTML = '<div class="error-msg">' + msg + '</div>';
     document.getElementById('metricsContent').innerHTML = '<div class="loading-overlay">—</div>';
     document.getElementById('configContent').innerHTML = '<div class="loading-overlay">—</div>';
+}
+
+function loadAlertSettings() {
+    fetch('{{ url_for("admin.scheduler_settings_get") }}')
+        .then(function(r) {
+            if (r.redirected || !r.ok) throw new Error('Сессия истекла или ошибка сервера');
+            return r.json();
+        })
+        .then(function(d) {
+            if (!d.ok) throw new Error('Ошибка загрузки настроек');
+            renderAlertSettings(d);
+        })
+        .catch(function(e) {
+            document.getElementById('alertSettingsContent').innerHTML =
+                '<div class="error-msg">' + (e.message || 'Ошибка загрузки настроек') + '</div>';
+        });
+}
+
+function renderAlertSettings(d) {
+    var gmB = d.bounds.grace_multiplier;
+    var cdB = d.bounds.alert_cooldown_seconds;
+    var sourceLabel = d.source === 'file' ? 'сохранены в файле' : 'значения по умолчанию (env)';
+    var html = '';
+    html += '<table class="info-table" style="margin-bottom:16px">';
+    html += '<tr><td>Множитель льготного периода</td><td>' +
+        '<input type="number" id="graceInput" step="0.1" min="' + gmB.min + '" max="' + gmB.max +
+        '" value="' + d.grace_multiplier + '" style="width:120px;padding:4px 8px;border:1px solid #ccc;border-radius:4px">' +
+        ' <span style="font-size:12px;color:#888">× интервал очистки (' + gmB.min + '–' + gmB.max + ')</span>' +
+        '</td></tr>';
+    html += '<tr><td>Период тишины алертов, сек</td><td>' +
+        '<input type="number" id="cooldownInput" step="1" min="' + cdB.min + '" max="' + cdB.max +
+        '" value="' + d.alert_cooldown_seconds + '" style="width:120px;padding:4px 8px;border:1px solid #ccc;border-radius:4px">' +
+        ' <span style="font-size:12px;color:#888">(' + cdB.min + '–' + cdB.max + ')</span>' +
+        '</td></tr>';
+    html += '<tr><td>Источник</td><td><span style="font-size:12px;color:#888">' + sourceLabel + '</span></td></tr>';
+    html += '</table>';
+    html += '<button class="run-now-btn" id="saveSettingsBtn" onclick="saveAlertSettings()">Сохранить</button>';
+    html += '<div id="saveSettingsResult" style="display:none;margin-top:12px"></div>';
+    document.getElementById('alertSettingsContent').innerHTML = html;
+}
+
+function saveAlertSettings() {
+    var btn = document.getElementById('saveSettingsBtn');
+    var result = document.getElementById('saveSettingsResult');
+    var gm = document.getElementById('graceInput').value;
+    var cd = document.getElementById('cooldownInput').value;
+
+    btn.disabled = true;
+    btn.textContent = 'Сохранение…';
+    result.style.display = 'none';
+
+    fetch('{{ url_for("admin.scheduler_settings_save") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            grace_multiplier: parseFloat(gm),
+            alert_cooldown_seconds: parseInt(cd, 10)
+        })
+    })
+        .then(function(r) {
+            if (r.redirected || r.status === 401) throw new Error('Сессия истекла. Перезайдите.');
+            return r.json().then(function(j){ return {status: r.status, json: j}; });
+        })
+        .then(function(res) {
+            btn.disabled = false;
+            btn.textContent = 'Сохранить';
+            if (res.status === 200 && res.json.ok) {
+                result.className = 'run-now-result success';
+                result.textContent = 'Настройки сохранены.';
+                loadAlertSettings();
+            } else {
+                result.className = 'run-now-result error';
+                result.textContent = 'Ошибка: ' + (res.json.error || 'Неизвестная ошибка');
+            }
+            result.style.display = 'block';
+        })
+        .catch(function(e) {
+            btn.disabled = false;
+            btn.textContent = 'Сохранить';
+            result.className = 'run-now-result error';
+            result.textContent = e.message || 'Ошибка соединения';
+            result.style.display = 'block';
+        });
 }
 
 function renderStatus(d) {
@@ -373,6 +469,7 @@ function renderHistory(d) {
 loadStatus();
 loadHistory();
 setupAutoRefresh();
+loadAlertSettings();
 </script>
 </body>
 </html>
