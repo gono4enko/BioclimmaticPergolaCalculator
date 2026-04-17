@@ -28,6 +28,75 @@ try:
 except (ValueError, TypeError):
     CLEANUP_INTERVAL_HOURS = 24
 
+try:
+    CLEANUP_HISTORY_MAX_ENTRIES = max(10, int(os.environ.get('CLEANUP_HISTORY_MAX_ENTRIES', 200)))
+except (ValueError, TypeError):
+    CLEANUP_HISTORY_MAX_ENTRIES = 200
+
+_cleanup_history_lock = None
+
+
+def _get_cleanup_history_lock():
+    global _cleanup_history_lock
+    if _cleanup_history_lock is None:
+        import threading
+        _cleanup_history_lock = threading.Lock()
+    return _cleanup_history_lock
+
+
+def _get_cleanup_history_path():
+    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(base, 'data')
+    os.makedirs(data_dir, exist_ok=True)
+    return os.path.join(data_dir, 'cleanup_history.json')
+
+
+def _load_cleanup_history_raw():
+    path = _get_cleanup_history_path()
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        if isinstance(data, list):
+            return data
+    except Exception:
+        logger.warning("Cleanup history file is corrupted; starting fresh")
+    return []
+
+
+def append_cleanup_history(entry, max_entries=None):
+    """Append a cleanup run entry to the persistent history log (JSON file)."""
+    if max_entries is None:
+        max_entries = CLEANUP_HISTORY_MAX_ENTRIES
+    path = _get_cleanup_history_path()
+    lock = _get_cleanup_history_lock()
+    with lock:
+        history = _load_cleanup_history_raw()
+        history.append(entry)
+        if len(history) > max_entries:
+            history = history[-max_entries:]
+        tmp_path = path + '.tmp'
+        try:
+            with open(tmp_path, 'w', encoding='utf-8') as f:
+                json.dump(history, f, ensure_ascii=False, indent=2)
+            os.replace(tmp_path, path)
+        except OSError as exc:
+            logger.warning("Failed to write cleanup history: %s", exc)
+            try:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            except OSError:
+                pass
+
+
+def get_cleanup_history(limit=50):
+    """Return up to `limit` most recent cleanup history entries, newest first."""
+    history = _load_cleanup_history_raw()
+    if limit and limit > 0:
+        history = history[-limit:]
+    return list(reversed(history))
+
 HEALTH_CHECK_GRACE_MULTIPLIER = 2
 
 
@@ -702,10 +771,11 @@ def svg_to_png_path(svg_content):
         return None
 
 
-def cleanup_old_calculations(max_age_days=CALC_MAX_AGE_DAYS):
+def cleanup_old_calculations(max_age_days=CALC_MAX_AGE_DAYS, trigger='scheduled'):
     calc_dir = _get_calculations_dir()
     cutoff = time.time() - max_age_days * 86400
     removed = 0
+    error_msg = None
     try:
         for fname in os.listdir(calc_dir):
             if not fname.endswith('.json'):
@@ -715,10 +785,11 @@ def cleanup_old_calculations(max_age_days=CALC_MAX_AGE_DAYS):
                 if os.path.getmtime(fpath) < cutoff:
                     os.remove(fpath)
                     removed += 1
-            except OSError:
+            except OSError as exc:
+                error_msg = str(exc)
                 continue
-    except OSError:
-        pass
+    except OSError as exc:
+        error_msg = str(exc)
     if removed:
         logger.info("Cleaned up %d old calculation(s) from %s", removed, calc_dir)
     now = datetime.now()
@@ -727,6 +798,19 @@ def cleanup_old_calculations(max_age_days=CALC_MAX_AGE_DAYS):
     cleanup_metrics['last_files_removed'] = removed
     cleanup_metrics['total_runs'] += 1
     cleanup_metrics['total_files_removed'] += removed
+
+    entry = {
+        'timestamp': now.isoformat(),
+        'files_removed': removed,
+        'trigger': trigger if trigger in ('manual', 'scheduled', 'startup') else 'scheduled',
+        'max_age_days': max_age_days,
+    }
+    if error_msg:
+        entry['error'] = error_msg
+    try:
+        append_cleanup_history(entry)
+    except Exception as exc:
+        logger.warning("Failed to append cleanup history entry: %s", exc)
     return removed
 
 

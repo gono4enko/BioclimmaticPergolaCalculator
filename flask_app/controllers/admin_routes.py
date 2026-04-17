@@ -491,11 +491,24 @@ def scheduler_run_now():
     from ..utils import cleanup_old_calculations
     import logging
     try:
-        removed = cleanup_old_calculations()
+        removed = cleanup_old_calculations(trigger='manual')
         return jsonify({'ok': True, 'files_removed': removed})
     except Exception:
         logging.getLogger(__name__).exception('Manual cleanup failed')
         return jsonify({'ok': False, 'error': 'Ошибка выполнения очистки'}), 500
+
+
+@bp.route('/scheduler-history')
+@admin_required
+def scheduler_history():
+    from ..utils import get_cleanup_history
+    try:
+        limit = int(request.args.get('limit', 50))
+    except (ValueError, TypeError):
+        limit = 50
+    limit = max(1, min(limit, 500))
+    entries = get_cleanup_history(limit=limit)
+    return jsonify({'ok': True, 'entries': entries, 'count': len(entries)})
 
 
 @bp.route('/scheduler-health')

@@ -54,7 +54,7 @@ def _start_cleanup_scheduler(app, cleanup_fn):
 
         def _run_cleanup():
             with app.app_context():
-                cleanup_fn()
+                cleanup_fn(trigger='scheduled')
 
         def _watchdog_check():
             from flask_app.utils import check_scheduler_health, send_telegram_alert
@@ -232,7 +232,7 @@ def create_app(test_config=None):
     register_pdf_blueprints(app)
     
     from .utils import cleanup_old_calculations
-    cleanup_old_calculations()
+    cleanup_old_calculations(trigger='startup')
 
     _start_cleanup_scheduler(app, cleanup_old_calculations)
 

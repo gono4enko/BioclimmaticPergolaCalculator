@@ -46,6 +46,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .run-now-result{margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:500}
 .run-now-result.success{background:#d4edda;color:#155724}
 .run-now-result.error{background:#f8d7da;color:#721c24}
+.history-table{width:100%;border-collapse:collapse;font-size:13px}
+.history-table th{text-align:left;padding:8px 10px;background:#f8f9fc;color:#666;font-weight:600;border-bottom:1px solid #e5e7eb;font-size:12px;text-transform:uppercase}
+.history-table td{padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#333}
+.history-table tr:last-child td{border-bottom:none}
+.trigger-badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.3px}
+.trigger-badge.manual{background:#fff3cd;color:#856404}
+.trigger-badge.scheduled{background:#d1e7fd;color:#0a4275}
+.trigger-badge.startup{background:#e2e3e5;color:#41464b}
+.history-empty{text-align:center;color:#888;padding:20px;font-size:13px}
+.history-error-cell{color:#721c24;font-size:12px}
 </style>
 </head>
 <body>
@@ -96,6 +106,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <span id="runNowIcon">&#9654;</span> <span id="runNowLabel">Запустить очистку</span>
         </button>
         <div id="runNowResult" style="display:none"></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span>История запусков</span>
+        <button class="refresh-btn" id="historyRefreshBtn" onclick="loadHistory()">Обновить</button>
+    </div>
+    <div class="card-body">
+        <div id="historyContent">
+            <div class="loading-overlay">Загрузка…</div>
+        </div>
     </div>
 </div>
 
@@ -235,7 +257,7 @@ function setupAutoRefresh() {
 
 function startAutoRefresh() {
     stopAutoRefresh();
-    autoRefreshTimer = setInterval(loadStatus, 30000);
+    autoRefreshTimer = setInterval(function() { loadStatus(); loadHistory(); }, 30000);
 }
 
 function stopAutoRefresh() {
@@ -280,6 +302,7 @@ function runCleanupNow() {
             }
             result.style.display = 'block';
             loadStatus();
+            loadHistory();
         })
         .catch(function(e) {
             btn.disabled = false;
@@ -291,7 +314,64 @@ function runCleanupNow() {
         });
 }
 
+function loadHistory() {
+    var btn = document.getElementById('historyRefreshBtn');
+    btn.disabled = true;
+    btn.textContent = 'Обновление…';
+
+    fetch('{{ url_for("admin.scheduler_history") }}?limit=50')
+        .then(function(r) {
+            if (r.redirected || !r.ok) {
+                throw new Error(r.status === 401 || r.redirected ? 'Сессия истекла. Перезайдите в админ-панель.' : 'Ошибка сервера (' + r.status + ')');
+            }
+            return r.json();
+        })
+        .then(function(d) {
+            btn.disabled = false;
+            btn.textContent = 'Обновить';
+            renderHistory(d);
+        })
+        .catch(function(e) {
+            btn.disabled = false;
+            btn.textContent = 'Обновить';
+            document.getElementById('historyContent').innerHTML = '<div class="error-msg">' + (e.message || 'Ошибка соединения') + '</div>';
+        });
+}
+
+function renderHistory(d) {
+    var entries = (d && d.entries) || [];
+    if (!entries.length) {
+        document.getElementById('historyContent').innerHTML = '<div class="history-empty">История пуста. После первого запуска очистки здесь появятся записи.</div>';
+        return;
+    }
+
+    var triggerLabels = { manual: 'Вручную', scheduled: 'По расписанию', startup: 'При запуске' };
+
+    var html = '<table class="history-table">';
+    html += '<thead><tr><th>Время</th><th>Тип</th><th>Файлов удалено</th><th>Примечание</th></tr></thead><tbody>';
+
+    for (var i = 0; i < entries.length; i++) {
+        var e = entries[i];
+        var trigger = e.trigger || 'scheduled';
+        var label = triggerLabels[trigger] || trigger;
+        var ts = e.timestamp ? formatDateTime(e.timestamp) : '—';
+        var removed = (typeof e.files_removed === 'number') ? e.files_removed : '—';
+        var note = '';
+        if (e.error) {
+            note = '<span class="history-error-cell">Ошибка: ' + String(e.error).replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span>';
+        } else if (typeof e.max_age_days !== 'undefined') {
+            note = '<span style="color:#888;font-size:12px">срок ' + e.max_age_days + ' дн</span>';
+        }
+        html += '<tr><td>' + ts + '</td><td><span class="trigger-badge ' + trigger + '">' + label + '</span></td><td>' + removed + '</td><td>' + note + '</td></tr>';
+    }
+    html += '</tbody></table>';
+    html += '<div class="last-updated">Всего записей: ' + entries.length + '</div>';
+
+    document.getElementById('historyContent').innerHTML = html;
+}
+
 loadStatus();
+loadHistory();
 setupAutoRefresh();
 </script>
 </body>
