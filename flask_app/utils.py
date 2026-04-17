@@ -976,6 +976,10 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
     z_near = COL_W
     z_far = length - COL_W
 
+    RIB_PITCH = 0.075
+    pir_shadow = '#7a94b2'
+    pir_highlight = '#ddeef8'
+
     for i in range(n_panels):
         px0 = inner_x0 + i * panel_w
         px1 = inner_x0 + (i + 1) * panel_w
@@ -983,11 +987,23 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
                      (px1, height, z_far), (px1, height, z_near)], pir_top, pir_joint, 0.4)
         svg += quad([(px0, column_top, z_near), (px0, height, z_near),
                      (px1, height, z_near), (px1, column_top, z_near)], pir_front, pir_joint, 0.4)
+        n_ribs = max(1, int((px1 - px0) / RIB_PITCH))
+        actual_pitch = (px1 - px0) / n_ribs
+        for k in range(n_ribs + 1):
+            rx = px0 + k * actual_pitch
+            if rx > px1 + 1e-6:
+                break
+            rx = min(rx, px1)
+            svg += seg((rx, height, z_near), (rx, height, z_far), pir_shadow, 0.55)
+            svg += seg((rx, column_top, z_near), (rx, height, z_near), pir_shadow, 0.55)
+            hlx = rx + actual_pitch * 0.35
+            if hlx < px1 - 1e-6:
+                svg += seg((hlx, height, z_near), (hlx, height, z_far), pir_highlight, 0.5)
 
     for i in range(1, n_panels):
         jx = inner_x0 + i * panel_w
-        svg += seg((jx, height, z_near), (jx, height, z_far), pir_joint, 0.9)
-        svg += seg((jx, column_top, z_near), (jx, height, z_near), pir_joint, 0.9)
+        svg += seg((jx, height, z_near), (jx, height, z_far), pir_joint, 1.2)
+        svg += seg((jx, column_top, z_near), (jx, height, z_near), pir_joint, 1.2)
 
     if mod_count >= 2:
         for i in range(1, mod_count):
