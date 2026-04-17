@@ -548,7 +548,10 @@ def scheduler_history():
     except (ValueError, TypeError):
         limit = 50
     limit = max(1, min(limit, 500))
-    entries = get_cleanup_history(limit=limit)
+    trigger = request.args.get('trigger', '').strip() or None
+    date_from = request.args.get('date_from', '').strip() or None
+    date_to = request.args.get('date_to', '').strip() or None
+    entries = get_cleanup_history(limit=limit, trigger=trigger, date_from=date_from, date_to=date_to)
     return jsonify({'ok': True, 'entries': entries, 'count': len(entries)})
 
 
@@ -582,7 +585,10 @@ def test_telegram_alert():
 def scheduler_history_download():
     from ..utils import get_cleanup_history
     fmt = request.args.get('format', 'json').lower()
-    entries = get_cleanup_history(limit=0)
+    trigger = request.args.get('trigger', '').strip() or None
+    date_from = request.args.get('date_from', '').strip() or None
+    date_to = request.args.get('date_to', '').strip() or None
+    entries = get_cleanup_history(limit=0, trigger=trigger, date_from=date_from, date_to=date_to)
 
     if fmt == 'csv':
         output = io.StringIO()

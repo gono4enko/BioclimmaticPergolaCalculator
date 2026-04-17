@@ -90,9 +90,50 @@ def append_cleanup_history(entry, max_entries=None):
                 pass
 
 
-def get_cleanup_history(limit=50):
-    """Return up to `limit` most recent cleanup history entries, newest first."""
+def get_cleanup_history(limit=50, trigger=None, date_from=None, date_to=None):
+    """Return up to `limit` most recent cleanup history entries, newest first.
+
+    Optional filters:
+      trigger   – exact match on entry['trigger'] (e.g. 'manual', 'scheduled', 'startup')
+      date_from – inclusive lower bound, 'YYYY-MM-DD' string or datetime.date / datetime.datetime
+      date_to   – inclusive upper bound, same format
+    """
     history = _load_cleanup_history_raw()
+
+    if trigger:
+        history = [e for e in history if e.get('trigger') == trigger]
+
+    if date_from or date_to:
+        from datetime import datetime as _dt, date as _date
+
+        def _parse_bound(val):
+            if isinstance(val, _dt):
+                return val.date()
+            if isinstance(val, _date):
+                return val
+            try:
+                return _dt.strptime(str(val)[:10], '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                return None
+
+        df = _parse_bound(date_from)
+        dt = _parse_bound(date_to)
+
+        filtered = []
+        for e in history:
+            ts_raw = e.get('timestamp', '')
+            try:
+                entry_date = _dt.fromisoformat(str(ts_raw)[:19]).date()
+            except (ValueError, TypeError):
+                filtered.append(e)
+                continue
+            if df and entry_date < df:
+                continue
+            if dt and entry_date > dt:
+                continue
+            filtered.append(e)
+        history = filtered
+
     if limit and limit > 0:
         history = history[-limit:]
     return list(reversed(history))
