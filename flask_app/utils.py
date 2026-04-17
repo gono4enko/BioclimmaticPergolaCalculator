@@ -970,40 +970,40 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
 
     inner_x0 = COL_W
     inner_x1 = width - COL_W
-    inner_span = inner_x1 - inner_x0
-    n_panels = max(1, round(inner_span / PANEL_W_NOM))
-    panel_w = inner_span / n_panels
     z_near = COL_W
     z_far = length - COL_W
+    z_span = z_far - z_near
+
+    n_panels = max(1, round(z_span / PANEL_W_NOM))
+    panel_depth = z_span / n_panels
 
     RIB_PITCH = 0.075
     pir_shadow = '#7a94b2'
     pir_highlight = '#ddeef8'
 
     for i in range(n_panels):
-        px0 = inner_x0 + i * panel_w
-        px1 = inner_x0 + (i + 1) * panel_w
-        svg += quad([(px0, height, z_near), (px0, height, z_far),
-                     (px1, height, z_far), (px1, height, z_near)], pir_top, pir_joint, 0.4)
-        svg += quad([(px0, column_top, z_near), (px0, height, z_near),
-                     (px1, height, z_near), (px1, column_top, z_near)], pir_front, pir_joint, 0.4)
-        n_ribs = max(1, int((px1 - px0) / RIB_PITCH))
-        actual_pitch = (px1 - px0) / n_ribs
+        pz0 = z_near + i * panel_depth
+        pz1 = z_near + (i + 1) * panel_depth
+        svg += quad([(inner_x0, height, pz0), (inner_x0, height, pz1),
+                     (inner_x1, height, pz1), (inner_x1, height, pz0)], pir_top, pir_joint, 0.4)
+        if i == 0:
+            svg += quad([(inner_x0, column_top, pz0), (inner_x0, height, pz0),
+                         (inner_x1, height, pz0), (inner_x1, column_top, pz0)], pir_front, pir_joint, 0.4)
+        n_ribs = max(1, int(panel_depth / RIB_PITCH))
+        actual_pitch = panel_depth / n_ribs
         for k in range(n_ribs + 1):
-            rx = px0 + k * actual_pitch
-            if rx > px1 + 1e-6:
+            rz = pz0 + k * actual_pitch
+            if rz > pz1 + 1e-6:
                 break
-            rx = min(rx, px1)
-            svg += seg((rx, height, z_near), (rx, height, z_far), pir_shadow, 0.55)
-            svg += seg((rx, column_top, z_near), (rx, height, z_near), pir_shadow, 0.55)
-            hlx = rx + actual_pitch * 0.35
-            if hlx < px1 - 1e-6:
-                svg += seg((hlx, height, z_near), (hlx, height, z_far), pir_highlight, 0.5)
+            rz = min(rz, pz1)
+            svg += seg((inner_x0, height, rz), (inner_x1, height, rz), pir_shadow, 0.55)
+            hlz = rz + actual_pitch * 0.35
+            if hlz < pz1 - 1e-6:
+                svg += seg((inner_x0, height, hlz), (inner_x1, height, hlz), pir_highlight, 0.5)
 
     for i in range(1, n_panels):
-        jx = inner_x0 + i * panel_w
-        svg += seg((jx, height, z_near), (jx, height, z_far), pir_joint, 1.2)
-        svg += seg((jx, column_top, z_near), (jx, height, z_near), pir_joint, 1.2)
+        jz = z_near + i * panel_depth
+        svg += seg((inner_x0, height, jz), (inner_x1, height, jz), pir_joint, 1.2)
 
     if mod_count >= 2:
         for i in range(1, mod_count):
@@ -1063,7 +1063,7 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
 
     svg += (f'<text x="{svg_w/2}" y="22" text-anchor="middle" '
             f'font-size="14px" font-weight="600" fill="#1a3a6e">Изометрия — PIR панели</text>')
-    panel_mm = int(round(panel_w * 1000))
+    panel_mm = int(round(panel_depth * 1000))
     _psuffix = 'и' if 2 <= n_panels <= 4 else ('ей' if n_panels >= 5 else 'ь')
     svg += (f'<text x="{svg_w/2}" y="{svg_h - 28}" text-anchor="middle" '
             f'font-size="11px" fill="#333">{width:.2f} (Ш) × {length:.2f} (Д) × {height:.2f} (В) м, '
