@@ -56,6 +56,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .trigger-badge.startup{background:#e2e3e5;color:#41464b}
 .history-empty{text-align:center;color:#888;padding:20px;font-size:13px}
 .history-error-cell{color:#721c24;font-size:12px}
+.history-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #f0f0f0}
+.history-filters label{font-size:12px;color:#666;font-weight:600;margin-right:4px}
+.history-filters select,.history-filters input[type=date]{font-size:13px;padding:4px 8px;border:1px solid #ddd;border-radius:5px;background:#fff;color:#333}
+.history-filters .filter-group{display:flex;align-items:center;gap:6px}
+.filter-reset-btn{font-size:12px;padding:4px 10px;border:1px solid #ddd;border-radius:5px;background:#fff;color:#666;cursor:pointer;transition:.2s}
+.filter-reset-btn:hover{background:#f5f5f5;border-color:#aaa}
+.history-count-note{font-size:12px;color:#888;margin-left:auto}
 </style>
 </head>
 <body>
@@ -131,6 +138,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
     </div>
     <div class="card-body">
+        <div class="history-filters">
+            <div class="filter-group">
+                <label for="filterTrigger">Тип:</label>
+                <select id="filterTrigger" onchange="applyHistoryFilters()">
+                    <option value="">Все</option>
+                    <option value="manual">Вручную</option>
+                    <option value="scheduled">По расписанию</option>
+                    <option value="startup">При запуске</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterDateFrom">С:</label>
+                <input type="date" id="filterDateFrom" onchange="applyHistoryFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterDateTo">По:</label>
+                <input type="date" id="filterDateTo" onchange="applyHistoryFilters()">
+            </div>
+            <button class="filter-reset-btn" onclick="resetHistoryFilters()">Сбросить</button>
+            <span class="history-count-note" id="historyCountNote"></span>
+        </div>
         <div id="historyContent">
             <div class="loading-overlay">Загрузка…</div>
         </div>
@@ -163,6 +191,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <script>
 var autoRefreshTimer = null;
+var allHistoryEntries = [];
 
 function loadStatus() {
     var btn = document.getElementById('refreshBtn');
@@ -473,7 +502,7 @@ function loadHistory() {
     btn.disabled = true;
     btn.textContent = 'Обновление…';
 
-    fetch('{{ url_for("admin.scheduler_history") }}?limit=50')
+    fetch('{{ url_for("admin.scheduler_history") }}?limit=200')
         .then(function(r) {
             if (r.redirected || !r.ok) {
                 throw new Error(r.status === 401 || r.redirected ? 'Сессия истекла. Перезайдите в админ-панель.' : 'Ошибка сервера (' + r.status + ')');
@@ -483,7 +512,8 @@ function loadHistory() {
         .then(function(d) {
             btn.disabled = false;
             btn.textContent = 'Обновить';
-            renderHistory(d);
+            allHistoryEntries = (d && d.entries) || [];
+            applyHistoryFilters();
         })
         .catch(function(e) {
             btn.disabled = false;
@@ -492,10 +522,50 @@ function loadHistory() {
         });
 }
 
-function renderHistory(d) {
-    var entries = (d && d.entries) || [];
-    if (!entries.length) {
-        document.getElementById('historyContent').innerHTML = '<div class="history-empty">История пуста. После первого запуска очистки здесь появятся записи.</div>';
+function applyHistoryFilters() {
+    var trigger = document.getElementById('filterTrigger').value;
+    var dateFrom = document.getElementById('filterDateFrom').value;
+    var dateTo = document.getElementById('filterDateTo').value;
+
+    var filtered = allHistoryEntries.filter(function(e) {
+        if (trigger && (e.trigger || 'scheduled') !== trigger) return false;
+        if (dateFrom || dateTo) {
+            var ts = e.timestamp ? new Date(e.timestamp) : null;
+            if (!ts || isNaN(ts.getTime())) return false;
+            var y = ts.getFullYear();
+            var m = String(ts.getMonth() + 1).padStart(2, '0');
+            var d = String(ts.getDate()).padStart(2, '0');
+            var localDateStr = y + '-' + m + '-' + d;
+            if (dateFrom && localDateStr < dateFrom) return false;
+            if (dateTo && localDateStr > dateTo) return false;
+        }
+        return true;
+    });
+
+    var note = document.getElementById('historyCountNote');
+    if (trigger || dateFrom || dateTo) {
+        note.textContent = 'Показано: ' + filtered.length + ' из ' + allHistoryEntries.length;
+    } else {
+        note.textContent = '';
+    }
+
+    renderHistory(filtered);
+}
+
+function resetHistoryFilters() {
+    document.getElementById('filterTrigger').value = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    document.getElementById('historyCountNote').textContent = '';
+    renderHistory(allHistoryEntries);
+}
+
+function renderHistory(entries) {
+    if (!entries || !entries.length) {
+        var isEmpty = !allHistoryEntries.length;
+        document.getElementById('historyContent').innerHTML = isEmpty
+            ? '<div class="history-empty">История пуста. После первого запуска очистки здесь появятся записи.</div>'
+            : '<div class="history-empty">Нет записей, соответствующих фильтрам.</div>';
         return;
     }
 
@@ -519,7 +589,7 @@ function renderHistory(d) {
         html += '<tr><td>' + ts + '</td><td><span class="trigger-badge ' + trigger + '">' + label + '</span></td><td>' + removed + '</td><td>' + note + '</td></tr>';
     }
     html += '</tbody></table>';
-    html += '<div class="last-updated">Всего записей: ' + entries.length + '</div>';
+    html += '<div class="last-updated">Записей: ' + entries.length + '</div>';
 
     document.getElementById('historyContent').innerHTML = html;
 }
