@@ -868,6 +868,198 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     return svg
 
 
+def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None):
+    """Isometric view for B600 pergola with PIR sandwich-panel roof.
+    Panel joints spaced proportionally to actual panel width (~0.9 m).
+    """
+    import math
+
+    width = max(0.5, float(width))
+    length = max(0.5, float(length))
+    height = max(1.5, float(height))
+
+    BEAM_H = 0.28
+    COL_W = 0.164
+    CENTER_BEAM_W = 0.28
+    PANEL_W_NOM = 0.9
+
+    svg_w = 620
+    svg_h = 460
+    pad_x = 80
+    pad_top = 40
+    pad_bot = 80
+
+    cos30 = math.cos(math.radians(30))
+    sin30 = math.sin(math.radians(30))
+
+    def project(p):
+        x, y, z = p
+        return (x - z) * cos30, (x + z) * sin30 - y
+
+    test_pts = [
+        (0, 0, 0), (width, 0, 0), (width, 0, length), (0, 0, length),
+        (0, height, 0), (width, height, 0), (width, height, length), (0, height, length),
+    ]
+    proj = [project(p) for p in test_pts]
+    xs = [p[0] for p in proj]; ys = [p[1] for p in proj]
+    span_x = max(xs) - min(xs); span_y = max(ys) - min(ys)
+    scale = min((svg_w - 2 * pad_x) / span_x, (svg_h - pad_top - pad_bot) / span_y)
+    ox = pad_x - min(xs) * scale + ((svg_w - 2 * pad_x) - span_x * scale) / 2
+    oy = pad_top - min(ys) * scale
+
+    def s(p):
+        sx, sy = project(p)
+        return ox + sx * scale, oy + sy * scale
+
+    def quad(pts, fill, stroke='#1a3a6e', sw=0.8):
+        coords = ' '.join(f'{x:.1f},{y:.1f}' for x, y in (s(p) for p in pts))
+        return f'<polygon points="{coords}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}" stroke-linejoin="round"/>'
+
+    def seg(p1, p2, stroke='#1a3a6e', sw=0.7):
+        x1, y1 = s(p1); x2, y2 = s(p2)
+        return f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{stroke}" stroke-width="{sw}"/>'
+
+    col_dark = '#143055'; col_med = '#2a4a7e'; col_light = '#3d6396'
+    beam_top = '#b8c8df'; beam_front = '#7d9bc0'; beam_side = '#5d7da8'
+    pir_top = '#c8d8eb'; pir_front = '#8fafc8'; pir_joint = '#6a87a8'
+    ground = '#eef2f7'
+
+    svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}" width="{svg_w}" height="{svg_h}">'
+
+    g00 = (-0.4, 0, -0.4); g10 = (width + 0.4, 0, -0.4)
+    g11 = (width + 0.4, 0, length + 0.4); g01 = (-0.4, 0, length + 0.4)
+    svg += quad([g00, g10, g11, g01], ground, '#cfd6e0', 0.5)
+
+    mod_count = max(1, int(modules))
+    col_xs = [COL_W / 2]
+    for i in range(1, mod_count):
+        col_xs.append(width / mod_count * i)
+    col_xs.append(width - COL_W / 2)
+    col_zs = [COL_W / 2, length - COL_W / 2]
+    has_mid_z = max_overhang is not None and length > float(max_overhang) + 0.001
+    if has_mid_z:
+        col_zs.insert(1, length / 2)
+
+    column_top = height - BEAM_H
+
+    def draw_column(cx, cz, y0, y1):
+        x0 = cx - COL_W / 2; x1 = cx + COL_W / 2
+        z0 = cz - COL_W / 2; z1 = cz + COL_W / 2
+        out = ''
+        out += quad([(x0, y0, z1), (x0, y1, z1), (x0, y1, z0), (x0, y0, z0)], col_med)
+        out += quad([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], col_dark)
+        out += quad([(x0, y0, z0), (x0, y1, z0), (x1, y1, z0), (x1, y0, z0)], col_light)
+        return out
+
+    def draw_beam(x0, x1, z0, z1, y0, y1, tc, fc, sc):
+        out = ''
+        out += quad([(x0, y0, z1), (x0, y1, z1), (x1, y1, z1), (x1, y0, z1)], fc)
+        out += quad([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], sc)
+        out += quad([(x0, y1, z0), (x0, y1, z1), (x1, y1, z1), (x1, y1, z0)], tc)
+        return out
+
+    by0 = column_top; by1 = height
+
+    back_cols = [(cx, col_zs[-1]) for cx in col_xs]
+    back_cols.sort(key=lambda c: -c[0])
+    for cx, cz in back_cols:
+        svg += draw_column(cx, cz, 0, height)
+
+    svg += draw_beam(0, width, length - COL_W, length, by0, by1, beam_top, beam_front, beam_side)
+    svg += draw_beam(0, COL_W, COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
+
+    inner_x0 = COL_W
+    inner_x1 = width - COL_W
+    inner_span = inner_x1 - inner_x0
+    n_panels = max(1, round(inner_span / PANEL_W_NOM))
+    panel_w = inner_span / n_panels
+    z_near = COL_W
+    z_far = length - COL_W
+
+    for i in range(n_panels):
+        px0 = inner_x0 + i * panel_w
+        px1 = inner_x0 + (i + 1) * panel_w
+        svg += quad([(px0, height, z_near), (px0, height, z_far),
+                     (px1, height, z_far), (px1, height, z_near)], pir_top, pir_joint, 0.4)
+        svg += quad([(px0, column_top, z_near), (px0, height, z_near),
+                     (px1, height, z_near), (px1, column_top, z_near)], pir_front, pir_joint, 0.4)
+
+    for i in range(1, n_panels):
+        jx = inner_x0 + i * panel_w
+        svg += seg((jx, height, z_near), (jx, height, z_far), pir_joint, 0.9)
+        svg += seg((jx, column_top, z_near), (jx, height, z_near), pir_joint, 0.9)
+
+    if mod_count >= 2:
+        for i in range(1, mod_count):
+            cx_mid = width / mod_count * i
+            svg += draw_beam(cx_mid - CENTER_BEAM_W / 2, cx_mid + CENTER_BEAM_W / 2,
+                             COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
+
+    svg += draw_beam(width - COL_W, width, COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
+    svg += draw_beam(0, width, 0, COL_W, by0, by1, beam_top, beam_front, beam_side)
+
+    if has_mid_z:
+        mid_cols = [(cx, col_zs[1]) for cx in col_xs]
+        mid_cols.sort(key=lambda c: c[0])
+        for cx, cz in mid_cols:
+            svg += draw_column(cx, cz, 0, height)
+
+    front_cols = [(cx, col_zs[0]) for cx in col_xs]
+    front_cols.sort(key=lambda c: c[0])
+    for cx, cz in front_cols:
+        svg += draw_column(cx, cz, 0, height)
+
+    svg += _dim_defs('i')
+
+    def _iso_dim(p1, p2, nx, ny, label, off=28, text_off=14):
+        d1x = p1[0] + nx * off; d1y = p1[1] + ny * off
+        d2x = p2[0] + nx * off; d2y = p2[1] + ny * off
+        ang = math.degrees(math.atan2(d2y - d1y, d2x - d1x))
+        if ang > 90 or ang < -90:
+            ang -= 180
+            d1x, d2x = d2x, d1x
+            d1y, d2y = d2y, d1y
+        midx = (d1x + d2x) / 2; midy = (d1y + d2y) / 2
+        tx = midx + nx * text_off; ty = midy + ny * text_off
+        return (
+            f'<line x1="{p1[0]:.1f}" y1="{p1[1]:.1f}" x2="{p1[0]+nx*off:.1f}" y2="{p1[1]+ny*off:.1f}" stroke="{DIM_COLOR}" stroke-width="0.5" stroke-dasharray="3,2"/>'
+            f'<line x1="{p2[0]:.1f}" y1="{p2[1]:.1f}" x2="{p2[0]+nx*off:.1f}" y2="{p2[1]+ny*off:.1f}" stroke="{DIM_COLOR}" stroke-width="0.5" stroke-dasharray="3,2"/>'
+            f'<line x1="{d1x:.1f}" y1="{d1y:.1f}" x2="{d2x:.1f}" y2="{d2y:.1f}" stroke="{DIM_COLOR}" stroke-width="1.2" marker-start="url(#i-aht)" marker-end="url(#i-ah)"/>'
+            f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" font-size="12px" font-weight="bold" fill="{DIM_COLOR}" transform="rotate({ang:.1f},{tx:.1f},{ty:.1f})">{label}</text>'
+        )
+
+    p_bl = s((0, 0, length)); p_br = s((width, 0, length))
+    nx_w = -cos30; ny_w = sin30
+    svg += _iso_dim(p_bl, p_br, nx_w, ny_w, f'{width:.2f} м (Ш)')
+
+    p_fr = s((width, 0, 0))
+    nx_l = cos30; ny_l = sin30
+    svg += _iso_dim(p_fr, p_br, nx_l, ny_l, f'{length:.2f} м (Д)')
+
+    p_btr = s((width, 0, 0)); p_ttr = s((width, height, 0))
+    hd_x = max(p_btr[0], p_ttr[0]) + 32
+    svg += (
+        f'<line x1="{p_btr[0]:.1f}" y1="{p_btr[1]:.1f}" x2="{hd_x:.1f}" y2="{p_btr[1]:.1f}" stroke="{DIM_COLOR}" stroke-width="0.5" stroke-dasharray="3,2"/>'
+        f'<line x1="{p_ttr[0]:.1f}" y1="{p_ttr[1]:.1f}" x2="{hd_x:.1f}" y2="{p_ttr[1]:.1f}" stroke="{DIM_COLOR}" stroke-width="0.5" stroke-dasharray="3,2"/>'
+        f'<line x1="{hd_x:.1f}" y1="{p_ttr[1]:.1f}" x2="{hd_x:.1f}" y2="{p_btr[1]:.1f}" stroke="{DIM_COLOR}" stroke-width="1.2" marker-start="url(#i-aht)" marker-end="url(#i-ah)"/>'
+        f'<text x="{hd_x+14:.1f}" y="{(p_btr[1]+p_ttr[1])/2:.1f}" text-anchor="middle" font-size="12px" font-weight="bold" fill="{DIM_COLOR}" transform="rotate(-90,{hd_x+14:.1f},{(p_btr[1]+p_ttr[1])/2:.1f})">{height:.2f} м (В)</text>'
+    )
+
+    svg += (f'<text x="{svg_w/2}" y="22" text-anchor="middle" '
+            f'font-size="14px" font-weight="600" fill="#1a3a6e">Изометрия — PIR панели</text>')
+    panel_mm = int(round(panel_w * 1000))
+    _psuffix = 'и' if 2 <= n_panels <= 4 else ('ей' if n_panels >= 5 else 'ь')
+    svg += (f'<text x="{svg_w/2}" y="{svg_h - 28}" text-anchor="middle" '
+            f'font-size="11px" fill="#333">{width:.2f} (Ш) × {length:.2f} (Д) × {height:.2f} (В) м, '
+            f'{n_panels} панел{_psuffix} ~{panel_mm} мм</text>')
+    svg += (f'<text x="{svg_w/2}" y="{svg_h - 12}" text-anchor="middle" '
+            f'font-size="9px" fill="#888" font-style="italic">'
+            f'Колонна {int(COL_W*1000)}×{int(COL_W*1000)} мм, лоток {int(BEAM_H*1000)} мм</text>')
+
+    svg += '</svg>'
+    return svg
+
+
 def svg_to_png_path(svg_content):
     try:
         import cairosvg

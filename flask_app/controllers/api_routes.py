@@ -71,7 +71,7 @@ def pergola_front_svg():
 @bp.route('/pergola-iso.svg', methods=['GET'])
 def pergola_iso_svg():
     from flask import Response
-    from ..utils import generate_isometric_svg
+    from ..utils import generate_isometric_svg, generate_pir_iso_svg
     try:
         w = float(request.args.get('w', 0))
         l = float(request.args.get('l', 0))
@@ -82,10 +82,14 @@ def pergola_iso_svg():
         deg = float(request.args.get('deg', 55))
         mo_raw = request.args.get('mo')
         mo = float(mo_raw) if mo_raw else None
+        is_pir = request.args.get('pir', '0') == '1'
         if w <= 0 or l <= 0:
             return Response('', status=400)
-        svg = generate_isometric_svg(width=w, length=l, height=h, lamella_count=lc,
-                                     modules=m, lamella_open_deg=deg, max_overhang=mo)
+        if is_pir:
+            svg = generate_pir_iso_svg(width=w, length=l, height=h, modules=m, max_overhang=mo)
+        else:
+            svg = generate_isometric_svg(width=w, length=l, height=h, lamella_count=lc,
+                                         modules=m, lamella_open_deg=deg, max_overhang=mo)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:
