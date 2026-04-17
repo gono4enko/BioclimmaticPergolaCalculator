@@ -672,7 +672,12 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     pdf.table_row([str(i), name, str(count)], widths, aligns=["C", "L", "C"])
 
         try:
-            from flask_app.utils import generate_top_view_svg, svg_to_png_path
+            from flask_app.utils import (generate_top_view_svg, generate_front_view_svg,
+                                          generate_isometric_svg, generate_pir_iso_svg,
+                                          svg_to_png_path)
+            _is_pir = (hero_img_key == 'b600')
+            _lc = pergola_data.get('lamellas_count') or pergola_data.get('lamella_count')
+            _h = float(pergola_data.get('height', 3.0) or 3.0)
             _mo = pergola_data.get('max_overhang')
             if _mo is None:
                 try:
@@ -681,27 +686,63 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     _mo = _spec.get('max_overhang')
                 except Exception:
                     _mo = None
-            svg_content = generate_top_view_svg(
-                width=width, length=length, modules=modules,
-                is_pir=(hero_img_key == 'b600'),
-                lamella_count=pergola_data.get('lamellas_count') or pergola_data.get('lamella_count'),
-                max_overhang=_mo
-            )
-            png_path = svg_to_png_path(svg_content)
-            if png_path and os.path.exists(png_path):
-                if pdf.get_y() > 200:
-                    pdf.add_page()
-                pdf.ln(6)
-                pdf.set_font('DejaVu', 'B', 11)
-                pdf.cell(0, 7, "Схема перголы (вид сверху):", 0, 1, "L")
-                img_w = 100
-                img_x = (210 - img_w) / 2
-                pdf.image(png_path, x=img_x, y=pdf.get_y(), w=img_w)
-                pdf.ln(img_w * 0.73 + 4)
-                try:
-                    os.unlink(png_path)
-                except Exception:
-                    pass
+
+            _ref = max(width, length, _h)
+            _svgs = [
+                generate_top_view_svg(width=width, length=length, modules=modules,
+                                      is_pir=_is_pir, lamella_count=_lc,
+                                      max_overhang=_mo, ref=_ref),
+                generate_front_view_svg(width=width, height=_h, modules=modules,
+                                        max_overhang=_mo, ref=_ref, title='Вид спереди'),
+                generate_front_view_svg(width=length, height=_h, modules=1,
+                                        max_overhang=_mo, ref=_ref, title='Вид сбоку'),
+            ]
+            if _is_pir:
+                _svgs.append(generate_pir_iso_svg(width=width, length=length,
+                                                   height=_h, modules=modules,
+                                                   max_overhang=_mo))
+            else:
+                _svgs.append(generate_isometric_svg(width=width, length=length,
+                                                     height=_h, lamella_count=_lc,
+                                                     modules=modules, max_overhang=_mo))
+
+            _pngs = [svg_to_png_path(s) for s in _svgs]
+            _labels = ['Вид сверху', 'Вид спереди', 'Вид сбоку',
+                       'Изометрия (PIR панели)' if _is_pir else 'Изометрия (ламели открыты)']
+
+            if any(p and os.path.exists(p) for p in _pngs):
+                pdf.add_page()
+                pdf.set_font('DejaVu', 'B', 12)
+                pdf.cell(0, 8, "Схема перголы:", 0, 1, "L")
+                pdf.ln(2)
+
+                _iw = 88
+                _gap = 5
+                _x_left = 12
+                _x_right = _x_left + _iw + _gap
+                _row_h = 75
+                _y_rows = [pdf.get_y(), pdf.get_y() + _row_h + 8]
+
+                for idx in range(4):
+                    p = _pngs[idx] if idx < len(_pngs) else None
+                    lbl = _labels[idx] if idx < len(_labels) else ''
+                    if not p or not os.path.exists(p):
+                        continue
+                    _col = idx % 2
+                    _row = idx // 2
+                    _x = _x_left if _col == 0 else _x_right
+                    _y = _y_rows[_row]
+                    pdf.set_font('DejaVu', 'B', 8)
+                    pdf.set_xy(_x, _y)
+                    pdf.cell(_iw, 5, lbl, 0, 0, 'C')
+                    pdf.image(p, x=_x, y=_y + 5, w=_iw)
+
+                for p in _pngs:
+                    try:
+                        if p:
+                            os.unlink(p)
+                    except Exception:
+                        pass
         except Exception:
             pass
 
