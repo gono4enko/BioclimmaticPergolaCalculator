@@ -551,6 +551,31 @@ def scheduler_history():
     return jsonify({'ok': True, 'entries': entries, 'count': len(entries)})
 
 
+@bp.route('/test-telegram-alert', methods=['POST'])
+@admin_required
+def test_telegram_alert():
+    from ..utils import send_telegram_alert_detailed
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    message = f'[ТЕСТ] Проверка Telegram-уведомлений из админ-панели. {timestamp}'
+
+    result = send_telegram_alert_detailed(message)
+
+    if result.get('ok'):
+        return jsonify({
+            'ok': True,
+            'sent': True,
+            'message': 'Тестовое сообщение отправлено. Проверьте Telegram.',
+        })
+    return jsonify({
+        'ok': False,
+        'sent': False,
+        'reason': result.get('reason'),
+        'error': result.get('error') or 'Неизвестная ошибка отправки',
+    }), 200
+
+
 @bp.route('/scheduler-health')
 @admin_required
 def scheduler_health():

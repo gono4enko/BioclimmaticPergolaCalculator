@@ -205,35 +205,74 @@ def save_scheduler_settings(grace_multiplier, alert_cooldown_seconds):
         return False, 'Не удалось сохранить настройки'
 
 
-def send_telegram_alert(message):
+def send_telegram_alert_detailed(message):
     """
-    Отправляет уведомление администратору через Telegram-бота.
+    Отправляет уведомление через Telegram-бота и возвращает подробный результат.
 
-    Использует переменные окружения TG_BOT_TOKEN и TG_ADMIN_CHAT_ID
-    (с фолбэком на TG_CHAT_ID). Если конфигурация отсутствует или
-    отправка не удалась — пишет в лог и возвращает False.
+    Возвращает dict: {'ok': bool, 'error': str|None, 'reason': str|None},
+    где `reason` — машиночитаемый код ('missing_config', 'http_error',
+    'network_error', 'unexpected_error'), а `error` — человекочитаемое
+    описание (включая HTTP-код и тело ответа Telegram при наличии).
     """
     token = os.environ.get('TG_BOT_TOKEN')
     chat_id = os.environ.get('TG_ADMIN_CHAT_ID') or os.environ.get('TG_CHAT_ID')
     if not token or not chat_id:
-        logger.warning(
-            "Telegram alert not sent (TG_BOT_TOKEN/TG_ADMIN_CHAT_ID not configured): %s",
-            message,
-        )
-        return False
+        missing = []
+        if not token:
+            missing.append('TG_BOT_TOKEN')
+        if not chat_id:
+            missing.append('TG_ADMIN_CHAT_ID/TG_CHAT_ID')
+        err = 'Не настроены переменные окружения: ' + ', '.join(missing)
+        logger.warning("Telegram alert not sent (%s): %s", err, message)
+        return {'ok': False, 'error': err, 'reason': 'missing_config'}
+
+    import urllib.request as ur
+    import urllib.error as ue
+    payload = json.dumps({'chat_id': chat_id, 'text': message}).encode()
+    req = ur.Request(
+        f'https://api.telegram.org/bot{token}/sendMessage',
+        data=payload,
+        headers={'Content-Type': 'application/json'},
+    )
     try:
-        import urllib.request as ur
-        payload = json.dumps({'chat_id': chat_id, 'text': message}).encode()
-        req = ur.Request(
-            f'https://api.telegram.org/bot{token}/sendMessage',
-            data=payload,
-            headers={'Content-Type': 'application/json'},
-        )
         ur.urlopen(req, timeout=8)
-        return True
+        return {'ok': True, 'error': None, 'reason': None}
+    except ue.HTTPError as exc:
+        body = ''
+        try:
+            raw = exc.read()
+            if raw:
+                body = raw.decode('utf-8', errors='replace')[:300]
+        except Exception:
+            pass
+        try:
+            body_json = json.loads(body) if body else {}
+            description = body_json.get('description') if isinstance(body_json, dict) else None
+        except Exception:
+            description = None
+        err = f'Telegram API HTTP {exc.code}'
+        if description:
+            err += f': {description}'
+        elif body:
+            err += f': {body}'
+        logger.warning("Failed to send Telegram alert: %s | message=%s", err, message)
+        return {'ok': False, 'error': err, 'reason': 'http_error'}
+    except ue.URLError as exc:
+        err = f'Сетевая ошибка: {exc.reason}'
+        logger.warning("Failed to send Telegram alert: %s | message=%s", err, message)
+        return {'ok': False, 'error': err, 'reason': 'network_error'}
     except Exception as exc:
-        logger.warning("Failed to send Telegram alert: %s | message=%s", exc, message)
-        return False
+        err = f'{type(exc).__name__}: {exc}'
+        logger.warning("Failed to send Telegram alert: %s | message=%s", err, message)
+        return {'ok': False, 'error': err, 'reason': 'unexpected_error'}
+
+
+def send_telegram_alert(message):
+    """
+    Backwards-compatible wrapper around send_telegram_alert_detailed.
+    Returns True on success, False otherwise.
+    """
+    return bool(send_telegram_alert_detailed(message).get('ok'))
 
 
 def check_scheduler_health():

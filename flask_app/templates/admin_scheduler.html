@@ -110,6 +110,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <div class="card">
+    <div class="card-header">Telegram-уведомления</div>
+    <div class="card-body">
+        <p style="font-size:13px;color:#666;margin:0 0 12px">Отправить тестовое сообщение в Telegram, чтобы проверить настройку бота (TG_BOT_TOKEN и TG_ADMIN_CHAT_ID).</p>
+        <button class="run-now-btn" id="testTgBtn" onclick="sendTestTelegram()">
+            <span id="testTgIcon">&#9993;</span> <span id="testTgLabel">Отправить тестовое сообщение</span>
+        </button>
+        <div id="testTgResult" style="display:none"></div>
+    </div>
+</div>
+
+<div class="card">
     <div class="card-header">
         <span>История запусков</span>
         <button class="refresh-btn" id="historyRefreshBtn" onclick="loadHistory()">Обновить</button>
@@ -404,6 +415,48 @@ function runCleanupNow() {
             btn.disabled = false;
             icon.innerHTML = '&#9654;';
             label.textContent = 'Запустить очистку';
+            result.className = 'run-now-result error';
+            result.textContent = e.message || 'Ошибка соединения';
+            result.style.display = 'block';
+        });
+}
+
+function sendTestTelegram() {
+    var btn = document.getElementById('testTgBtn');
+    var icon = document.getElementById('testTgIcon');
+    var label = document.getElementById('testTgLabel');
+    var result = document.getElementById('testTgResult');
+
+    btn.disabled = true;
+    icon.innerHTML = '&#8987;';
+    label.textContent = 'Отправка…';
+    result.style.display = 'none';
+
+    fetch('{{ url_for("admin.test_telegram_alert") }}', { method: 'POST' })
+        .then(function(r) {
+            if (r.redirected || r.status === 401) {
+                throw new Error('Сессия истекла. Перезайдите в админ-панель.');
+            }
+            return r.json();
+        })
+        .then(function(d) {
+            btn.disabled = false;
+            icon.innerHTML = '&#9993;';
+            label.textContent = 'Отправить тестовое сообщение';
+
+            if (d.ok && d.sent) {
+                result.className = 'run-now-result success';
+                result.textContent = d.message || 'Сообщение отправлено.';
+            } else {
+                result.className = 'run-now-result error';
+                result.textContent = 'Не отправлено: ' + (d.error || 'неизвестная ошибка');
+            }
+            result.style.display = 'block';
+        })
+        .catch(function(e) {
+            btn.disabled = false;
+            icon.innerHTML = '&#9993;';
+            label.textContent = 'Отправить тестовое сообщение';
             result.className = 'run-now-result error';
             result.textContent = e.message || 'Ошибка соединения';
             result.style.display = 'block';
