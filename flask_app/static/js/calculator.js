@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v91';
+    var SVG_V = 'v92';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -457,6 +457,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 buildFacadeTopView();
                 updateFacadeAreaInfo();
+                if (state._lastMainResult) updateSchemeForVariant(state.result || state._lastMainResult);
             });
         });
     }
@@ -1197,6 +1198,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function buildMarketingKP(resultOrResults, decoData) {
         var isAll = Array.isArray(resultOrResults);
         var mainResult = isAll ? resultOrResults[0] : resultOrResults;
+        state._lastMainResult = mainResult;
         var dims = mainResult.dimensions;
         var totals = mainResult.totals;
         var pType = mainResult.pergola_type_name || state.pergolaType;
