@@ -608,12 +608,12 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
     return svg
 
 
-def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди', extra_columns=0, col_mm=164):
+def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди', extra_columns=0, col_mm=164, beam_h_mm=280):
     """Front/side elevation. width = horizontal dimension (m), height in m.
     Uses shared scale (DIM_TARGET_PX/ref) so views align with top view.
     """
-    BEAM_H_M = 0.28
-    COLUMN_W_M = 0.164
+    COLUMN_W_M = max(0.05, float(col_mm or 164) / 1000)
+    BEAM_H_M = max(0.10, float(beam_h_mm or 280) / 1000)
     PAD_OVERHANG_M = 0.082
     SLAB_H_M = 0.05
 
@@ -705,8 +705,9 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     w_dim_y = slab_bottom + DIM_OFFSET
     svg += _dim_h(ox, ox + real_w_px, w_dim_y, f'{width:.2f} м', prefix='f', below=True)
 
+    beam_h_label = int(round(float(beam_h_mm or 280)))
     svg += (f'<text x="{col_right_x + col_w_px + 4}" y="{pergola_top + beam_h_px/2 + 3}" '
-            f'text-anchor="start" font-size="{small_font}" fill="{DIM_COLOR}">280</text>')
+            f'text-anchor="start" font-size="{small_font}" fill="{DIM_COLOR}">{beam_h_label}</text>')
 
     _ldr_attach_x = col_left_x
     _ldr_attach_y = col_top_y + beam_h_px + (col_h_px - beam_h_px) * 0.38
