@@ -111,7 +111,7 @@ def pergola_iso_svg():
         fill_left = request.args.get('fill_left', '').strip() or None
         fill_back = request.args.get('fill_back', '').strip() or None
         if is_pir:
-            svg = generate_pir_iso_svg(width=w, length=l, height=h, modules=m, max_overhang=mo)
+            svg = generate_pir_iso_svg(width=w, length=l, height=h, modules=m, max_overhang=mo, extra_columns=xc)
         else:
             svg = generate_isometric_svg(width=w, length=l, height=h, lamella_count=lc,
                                          modules=m, lamella_open_deg=deg, max_overhang=mo,

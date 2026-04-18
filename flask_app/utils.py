@@ -1095,7 +1095,7 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     return svg
 
 
-def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None):
+def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None, extra_columns=0):
     """Isometric view for B600 pergola with PIR sandwich-panel roof.
     Panel joints spaced proportionally to actual panel width (~0.9 m).
     """
