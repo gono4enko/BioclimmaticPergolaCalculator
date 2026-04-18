@@ -591,18 +591,9 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
 
     for cxp in col_xs:
         for cyp in col_ys:
-            is_extra = extra_rows > 0 and abs(cyp - (ry + col_px / 2)) > 0.5 and abs(cyp - (ry + rect_h - col_px / 2)) > 0.5
-            fill_color = '#d97706' if is_extra else column_fill
             svg += (f'<rect x="{cxp - col_px / 2}" y="{cyp - col_px / 2}" '
                     f'width="{col_px}" height="{col_px}" '
-                    f'fill="{fill_color}" stroke="{fill_color}" stroke-width="0.5"/>')
-
-    if extra_rows > 0:
-        for i in range(1, extra_rows + 1):
-            yy = ry + (rect_h / (extra_rows + 1)) * i
-            svg += (f'<text x="{rx + rect_w + 4}" y="{yy + 3}" '
-                    f'text-anchor="start" font-size="8px" fill="#d97706" '
-                    f'font-style="italic">доп. колонна</text>')
+                    f'fill="{column_fill}" stroke="{column_fill}" stroke-width="0.5"/>')
 
     arrow_y = ry + rect_h + DIM_OFFSET
     svg += _dim_h(rx, rx + rect_w, arrow_y, f'{width:.2f} м', prefix='t', below=True)
@@ -694,10 +685,8 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     col_h_px = pergola_bottom - pergola_top
 
     for cxp in col_xs:
-        is_extra = any(abs(cxp - exc) < 0.5 for exc in extra_col_xs)
-        cfill = '#d97706' if is_extra else column_fill
         svg += (f'<rect x="{cxp}" y="{col_top_y}" width="{col_w_px}" height="{col_h_px}" '
-                f'fill="{cfill}" stroke="{cfill}" stroke-width="0.5"/>')
+                f'fill="{column_fill}" stroke="{column_fill}" stroke-width="0.5"/>')
 
     beam_x = col_left_x
     beam_w = (col_right_x + col_w_px) - col_left_x
