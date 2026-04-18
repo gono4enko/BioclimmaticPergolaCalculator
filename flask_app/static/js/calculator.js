@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v82';
+    var SVG_V = 'v83';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
         installation: true,
         facadeType: '',
         facadeOpenings: [],
+        facadePerOpening: {},
         maxWidth: 13.5,
         maxLength: 8.0,
         result: null,
@@ -125,6 +126,7 @@ document.addEventListener('DOMContentLoaded', function() {
         stepsEl.step4.style.display = 'block';
         stepsEl.calcBtn.style.display = 'block';
         buildFacadeTopView();
+        buildFacadeTable();
         setTimeout(function() {
             stepsEl.step3.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 80);
@@ -252,10 +254,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('input-width').addEventListener('input', function() {
         state.width = parseFloat(this.value) || 0;
         buildFacadeTopView();
+        buildFacadeTable();
     });
     document.getElementById('input-length').addEventListener('input', function() {
         state.length = parseFloat(this.value) || 0;
         buildFacadeTopView();
+        buildFacadeTable();
     });
 
     var whiteLedEl = document.getElementById('opt-white-led');
@@ -275,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     updateLightingPreviews();
 
-    var facadeTypeEl = document.getElementById('opt-facade-type');
+    var facadeTypeEl = null;
     var facadeAreaInfo = document.getElementById('facade-area-info');
 
     function facadeModules(width) {
@@ -301,21 +305,104 @@ document.addEventListener('DOMContentLoaded', function() {
         return total > 1 ? letter + (bay + 1) : letter;
     }
 
+    function computeFacadeOpenings() {
+        return Object.keys(state.facadePerOpening)
+            .filter(function(k) { return state.facadePerOpening[k]; })
+            .map(function(k) {
+                var parts = k.split('_');
+                var bay = parseInt(parts.pop());
+                var side = parts.join('_');
+                return {side: side, bay: bay, type: state.facadePerOpening[k]};
+            });
+    }
+
     function updateFacadeAreaInfo() {
         if (!facadeAreaInfo) return;
-        if (!state.facadeType || state.facadeOpenings.length === 0) {
+        var actives = computeFacadeOpenings();
+        if (actives.length === 0) {
             facadeAreaInfo.style.display = 'none'; facadeAreaInfo.textContent = ''; return;
         }
         var mods = facadeModules(state.width);
         var total = 0;
         var labels = [];
-        state.facadeOpenings.forEach(function(o) {
+        actives.forEach(function(o) {
             total += facadeOpeningArea(o, mods);
             labels.push(openingLabel(o.side, o.bay));
         });
         facadeAreaInfo.style.display = 'block';
-        facadeAreaInfo.textContent = '\u041f\u0440\u043e\u0451\u043c\u044b: ' + labels.join(', ')
+        facadeAreaInfo.textContent = '\u0418\u0442\u043e\u0433\u043e \u043f\u0440\u043e\u0451\u043c\u043e\u0432: ' + labels.join(', ')
             + ' \u2014 \u043f\u043b\u043e\u0449\u0430\u0434\u044c \u2248 ' + total.toFixed(2) + ' \u043c\u00b2';
+    }
+
+    function buildFacadeTable() {
+        var tableEl = document.getElementById('facade-opening-table');
+        if (!tableEl) return;
+        var W = state.width; var L = state.length;
+        if (W <= 0 || L <= 0) { tableEl.innerHTML = ''; return; }
+        var mods = facadeModules(W);
+        var TYPES = [
+            {v: 'FP-20',    n: 'FP-20 \u2014 \u0444\u0430\u0441\u0430\u0434\u043d\u044b\u0435 \u043f\u0430\u043d\u0435\u043b\u0438 (199 \u20ac/\u043c\u00b2)'},
+            {v: 'FP-PIR',   n: 'FP-PIR \u2014 PIR-\u0441\u044d\u043d\u0434\u0432\u0438\u0447 (150 \u20ac/\u043c\u00b2)'},
+            {v: 'FZ-44-50', n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 50% (99 \u20ac/\u043c\u00b2)'},
+            {v: 'FZ-44-70', n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 70% (124 \u20ac/\u043c\u00b2)'},
+            {v: 'FZ-44-100',n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 100% (170 \u20ac/\u043c\u00b2)'}
+        ];
+        var openings = [];
+        openings.push({side: 'left',  bay: 0, label: 'A',
+            desc: '\u0421\u043b\u0435\u0432\u0430'});
+        for (var bi = 0; bi < mods; bi++) {
+            openings.push({side: 'back', bay: bi,
+                label: mods > 1 ? 'B' + (bi+1) : 'B',
+                desc: mods > 1 ? '\u0421\u0437\u0430\u0434\u0438 \u00b7 \u041f\u0440\u043e\u043b\u00b8\u0442 ' + (bi+1) : '\u0421\u0437\u0430\u0434\u0438'});
+        }
+        openings.push({side: 'right', bay: 0, label: 'C',
+            desc: '\u0421\u043f\u0440\u0430\u0432\u0430'});
+        for (var fi = 0; fi < mods; fi++) {
+            openings.push({side: 'front', bay: fi,
+                label: mods > 1 ? 'F' + (fi+1) : 'F',
+                desc: mods > 1 ? '\u0424\u0430\u0441\u0430\u0434 \u00b7 \u041f\u0440\u043e\u043b\u00b8\u0442 ' + (fi+1) : '\u0424\u0430\u0441\u0430\u0434'});
+        }
+        var html = '<table class="facade-table"><thead><tr>'
+            + '<th>\u041f\u0440\u043e\u0451\u043c</th>'
+            + '<th>\u0420\u0430\u0441\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435</th>'
+            + '<th>\u0422\u0438\u043f \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f</th>'
+            + '<th>\u041f\u043b\u043e\u0449\u0430\u0434\u044c</th>'
+            + '</tr></thead><tbody>';
+        openings.forEach(function(o) {
+            var key = o.side + '_' + o.bay;
+            var selType = state.facadePerOpening[key] || '';
+            var area = selType ? facadeOpeningArea(o, facadeModules(W)).toFixed(2) + ' \u043c\u00b2' : '\u2014';
+            html += '<tr data-key="' + key + '"><td><span class="facade-lbl">' + o.label + '</span></td>'
+                + '<td>' + o.desc + '</td>'
+                + '<td><select class="form-select form-select-sm facade-type-sel" data-side="' + o.side + '" data-bay="' + o.bay + '">'
+                + '<option value="">\u2014 \u0431\u0435\u0437 \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f \u2014</option>';
+            TYPES.forEach(function(t) {
+                html += '<option value="' + t.v + '"' + (selType === t.v ? ' selected' : '') + '>' + t.n + '</option>';
+            });
+            html += '</select></td><td class="facade-area">' + area + '</td></tr>';
+        });
+        html += '</tbody></table>';
+        tableEl.innerHTML = html;
+        tableEl.querySelectorAll('.facade-type-sel').forEach(function(sel) {
+            sel.addEventListener('change', function() {
+                var key2 = this.dataset.side + '_' + this.dataset.bay;
+                state.facadePerOpening[key2] = this.value;
+                state.facadeOpenings = computeFacadeOpenings();
+                state.facadeType = this.value;
+                var tr = this.closest('tr');
+                if (tr) {
+                    var areaTd = tr.querySelector('.facade-area');
+                    if (areaTd) {
+                        if (this.value) {
+                            var o2 = {side: this.dataset.side, bay: parseInt(this.dataset.bay)};
+                            areaTd.textContent = facadeOpeningArea(o2, facadeModules(W)).toFixed(2) + ' \u043c\u00b2';
+                        } else { areaTd.textContent = '\u2014'; }
+                    }
+                }
+                buildFacadeTopView();
+                updateFacadeAreaInfo();
+            });
+        });
     }
 
     function buildFacadeTopView() {
@@ -344,14 +431,14 @@ document.addEventListener('DOMContentLoaded', function() {
         var svgH = drawH + MT + MB;
         var ox = ML; var oy = MT;
         var innerBayW = (drawW - 2 * COL) / mods;
-        var canClick = !!state.facadeType;
+        var canClick = true;
         var selFill = '#1a3a6e'; var selStroke = '#0d2550';
-        var unFill = canClick ? '#cde0f5' : '#c4d4e8';
-        var unStroke = canClick ? '#7aA0c8' : '#96b0c8';
-        var cur = canClick ? 'pointer' : 'default';
+        var unFill = '#cde0f5';
+        var unStroke = '#7aA0c8';
+        var cur = 'pointer';
         var p = [];
 
-        function isSel(s, b) { return state.facadeOpenings.some(function(o){return o.side===s&&o.bay===b;}); }
+        function isSel(s, b) { return !!(state.facadePerOpening[s+'_'+b]); }
 
         p.push('<rect x="'+ox+'" y="'+oy+'" width="'+drawW+'" height="'+drawH+'" fill="#b8cadf" rx="2"/>');
         var ix=ox+STRIP; var iy=oy+STRIP; var iw=drawW-2*STRIP; var ih=drawH-2*STRIP;
@@ -427,39 +514,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             rect.addEventListener('click',function(){
-                if(!state.facadeType){
-                    if(hint){hint.textContent='\u2190 \u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0438\u043f \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f';hint.style.color='#c44';}
-                    return;
-                }
                 var s3=this.dataset.side; var b3=parseInt(this.dataset.bay);
-                var idx=state.facadeOpenings.findIndex(function(o){return o.side===s3&&o.bay===b3;});
-                if(idx>=0) state.facadeOpenings.splice(idx,1);
-                else state.facadeOpenings.push({side:s3,bay:b3});
-                buildFacadeTopView(); updateFacadeAreaInfo();
+                var sel=document.querySelector('.facade-type-sel[data-side="'+s3+'"][data-bay="'+b3+'"]');
+                if(sel){
+                    sel.scrollIntoView({behavior:'smooth',block:'nearest'});
+                    sel.focus();
+                    var tr=sel.closest('tr');
+                    if(tr){
+                        tr.classList.add('facade-row-flash');
+                        setTimeout(function(){tr.classList.remove('facade-row-flash');},800);
+                    }
+                }
             });
         });
 
         if(hint){
-            if(!state.facadeType){
-                hint.textContent='\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0438\u043f \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f \u043d\u0438\u0436\u0435, \u0437\u0430\u0442\u0435\u043c \u043a\u043b\u0438\u043a\u043d\u0438\u0442\u0435 \u043d\u0430 \u043f\u0440\u043e\u0451\u043c\u044b';
+            var cnt=computeFacadeOpenings().length;
+            if(cnt===0){
+                hint.textContent='\u041a\u043b\u0438\u043a\u043d\u0438\u0442\u0435 \u043d\u0430 \u043f\u0440\u043e\u0451\u043c \u0434\u043b\u044f \u0431\u044b\u0441\u0442\u0440\u043e\u0433\u043e \u0434\u043e\u0441\u0442\u0443\u043f\u0430, \u043b\u0438\u0431\u043e \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0438\u043f \u0432 \u0442\u0430\u0431\u043b\u0438\u0446\u0435 \u043d\u0438\u0436\u0435';
                 hint.style.color='#888';
-            } else if(state.facadeOpenings.length===0){
-                hint.textContent='\u041a\u043b\u0438\u043a\u043d\u0438\u0442\u0435 \u043d\u0430 \u043f\u0440\u043e\u0451\u043c\u044b \u0434\u043b\u044f \u0432\u044b\u0431\u043e\u0440\u0430 (\u0441\u0438\u043d\u0438\u0439 = \u0432\u044b\u0431\u0440\u0430\u043d)';
-                hint.style.color='#1a3a6e';
             } else {
-                hint.textContent='\u0412\u044b\u0431\u0440\u0430\u043d\u043e: '+state.facadeOpenings.length+' \u043f\u0440\u043e\u0451\u043c\u0430';
+                hint.textContent='\u0412\u044b\u0431\u0440\u0430\u043d\u043e \u043f\u0440\u043e\u0451\u043c\u043e\u0432: '+cnt;
                 hint.style.color='#1a3a6e';
             }
         }
-    }
-
-    if (facadeTypeEl) {
-        facadeTypeEl.addEventListener('change', function() {
-            state.facadeType = this.value;
-            state.facadeOpenings = [];
-            buildFacadeTopView();
-            updateFacadeAreaInfo();
-        });
     }
 
     document.getElementById('calc-btn').addEventListener('click', function() {
@@ -486,8 +564,7 @@ document.addEventListener('DOMContentLoaded', function() {
             installation: state.installation,
             selected_variant: state.selectedVariant,
             client_name: state.clientName,
-            facade_type: state.facadeType,
-            facade_openings: state.facadeOpenings
+            facade_openings: computeFacadeOpenings()
         };
 
         stepsEl.spinner.style.display = 'flex';

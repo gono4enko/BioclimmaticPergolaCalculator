@@ -867,7 +867,7 @@ def perform_calculation(dimensions, options):
         facade_area = 0.0
         facade_price_eur = 0.0
 
-        if facade_type and facade_openings and facade_type in FACADE_PRICES:
+        if facade_openings:
             sv = selected_variant or ""
             if "Light" in sv:
                 col_w = FACADE_COL_WIDTHS["Light"]
@@ -879,40 +879,54 @@ def perform_calculation(dimensions, options):
                 col_w = 0.164
                 beam_h = 0.280
             open_h = max(0.1, FACADE_PERGOLA_HEIGHT - beam_h)
-            side_count = {}
-            for opening in facade_openings:
-                if not isinstance(opening, dict):
-                    continue
-                side = opening.get("side", "")
-                if side in ("front", "back"):
-                    bay_w = max(0.01, (width_m / max(1, modules)) - col_w)
-                    facade_area += bay_w * open_h
-                    side_count[side] = side_count.get(side, 0) + 1
-                elif side in ("left", "right"):
-                    side_w = max(0.01, length_m - col_w)
-                    facade_area += side_w * open_h
-                    side_count[side] = side_count.get(side, 0) + 1
-            facade_area = round(facade_area, 2)
-            facade_price_eur = round(facade_area * FACADE_PRICES[facade_type], 2)
             side_labels = {"front": "\u0441\u043f\u0435\u0440\u0435\u0434\u0438",
                            "back": "\u0441\u0437\u0430\u0434\u0438",
                            "left": "\u0441\u043b\u0435\u0432\u0430",
                            "right": "\u0441\u043f\u0440\u0430\u0432\u0430"}
-            parts = []
-            for s in ("front", "back", "left", "right"):
-                if s in side_count:
-                    parts.append(f"{side_labels[s]} \u00d7{side_count[s]}" if side_count[s] > 1 else side_labels[s])
-            sides_str = ", ".join(parts)
-            facade_name = FACADE_NAMES[facade_type]
-            items.append({
-                "name": f"{facade_name} ({sides_str}, {len(facade_openings)} \u043f\u0440\u043e\u0451\u043c\u0430, {facade_area:.2f} \u043c\u00b2)",
-                "price": facade_price_eur
-            })
-            total_price += facade_price_eur
-            specification.append({
-                "name": facade_name,
-                "count": f"{len(facade_openings)} \u043f\u0440\u043e\u0451\u043c\u0430, {facade_area:.2f} \u043c\u00b2"
-            })
+            type_groups = {}
+            for opening in facade_openings:
+                if not isinstance(opening, dict):
+                    continue
+                o_type = opening.get("type") or facade_type
+                if not o_type or o_type not in FACADE_PRICES:
+                    continue
+                side = opening.get("side", "")
+                if side not in ("front", "back", "left", "right"):
+                    continue
+                if o_type not in type_groups:
+                    type_groups[o_type] = {"area": 0.0, "sides": {}}
+                if side in ("front", "back"):
+                    bay_w = max(0.01, (width_m / max(1, modules)) - col_w)
+                    type_groups[o_type]["area"] += bay_w * open_h
+                else:
+                    side_w = max(0.01, length_m - col_w)
+                    type_groups[o_type]["area"] += side_w * open_h
+                type_groups[o_type]["sides"][side] = type_groups[o_type]["sides"].get(side, 0) + 1
+
+            for o_type, grp in type_groups.items():
+                g_area = round(grp["area"], 2)
+                g_price = round(g_area * FACADE_PRICES[o_type], 2)
+                facade_area += g_area
+                facade_price_eur += g_price
+                total_price += g_price
+                parts = []
+                for s in ("front", "back", "left", "right"):
+                    if s in grp["sides"]:
+                        cnt = grp["sides"][s]
+                        parts.append(f"{side_labels[s]} \u00d7{cnt}" if cnt > 1 else side_labels[s])
+                sides_str = ", ".join(parts)
+                n_open = sum(grp["sides"].values())
+                facade_name = FACADE_NAMES[o_type]
+                items.append({
+                    "name": f"{facade_name} ({sides_str}, {n_open} \u043f\u0440\u043e\u0451\u043c\u0430, {g_area:.2f} \u043c\u00b2)",
+                    "price": g_price
+                })
+                specification.append({
+                    "name": facade_name,
+                    "count": f"{n_open} \u043f\u0440\u043e\u0451\u043c\u0430, {g_area:.2f} \u043c\u00b2"
+                })
+            facade_area = round(facade_area, 2)
+            facade_price_eur = round(facade_price_eur, 2)
 
         base_total = total_price
 

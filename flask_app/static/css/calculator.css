@@ -310,6 +310,28 @@
     min-height: 18px;
 }
 
+/* ─── Facade opening table ─── */
+.facade-table {
+    width: 100%; border-collapse: collapse; font-size: 0.84rem;
+    border: 1px solid #d8e2f0; border-radius: 7px; overflow: hidden;
+}
+.facade-table thead th {
+    background: #e8eef8; color: #334; font-weight: 600; font-size: 0.78rem;
+    padding: 6px 10px; text-align: left; border-bottom: 1px solid #c8d4ea;
+}
+.facade-table tbody tr { border-bottom: 1px solid #e4ecf5; }
+.facade-table tbody tr:last-child { border-bottom: none; }
+.facade-table tbody tr:hover { background: #f5f8fd; }
+.facade-table tbody tr.facade-row-flash { background: #d8edff; transition: background 0.4s; }
+.facade-table td { padding: 6px 10px; vertical-align: middle; }
+.facade-table td:last-child { color: #556; font-size: 0.78rem; white-space: nowrap; }
+.facade-lbl {
+    display: inline-block; min-width: 28px; padding: 2px 6px;
+    background: #1a3a6e; color: #fff; border-radius: 4px;
+    font-size: 0.75rem; font-weight: 700; text-align: center; letter-spacing: 0.5px;
+}
+.facade-table .form-select-sm { font-size: 0.82rem; padding: 3px 6px; height: auto; }
+
 /* ─── Legacy facade grid (kept for any fallback) ─── */
 .facade-grid { display: grid; gap: 0.45rem; margin-bottom: 0.6rem; }
 .facade-row { display: flex; align-items: center; gap: 0.4rem; }
