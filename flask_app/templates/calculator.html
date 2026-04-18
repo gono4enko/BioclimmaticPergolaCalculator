@@ -5,7 +5,7 @@
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=69">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=76" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=77" as="script">
 {% endblock %}
 
 {% block content %}
@@ -111,6 +111,29 @@
             <input type="checkbox" id="opt-installation" class="form-check-input" checked>
             <label for="opt-installation">Установка (монтаж)</label>
         </div>
+
+        <!-- Фасадное заполнение -->
+        <div class="mt-4">
+            <label class="form-label" style="font-weight:600;font-size:0.95rem;">Фасадное заполнение проёма</label>
+            <select id="opt-facade-type" class="form-select mb-3" style="font-size:0.9rem;">
+                <option value="">— Без фасадного заполнения —</option>
+                <option value="FP-20">FP-20 — фасадные панели (199 €/м²)</option>
+                <option value="FP-PIR">FP-PIR — панели PIR сэндвич (150 €/м²)</option>
+                <option value="FZ-44-50">FZ-44 — жалюзи, заполнение 50% (99 €/м²)</option>
+                <option value="FZ-44-70">FZ-44 — жалюзи, заполнение 70% (124 €/м²)</option>
+                <option value="FZ-44-100">FZ-44 — жалюзи, заполнение 100% (170 €/м²)</option>
+            </select>
+            <div id="facade-sides-block" style="display:none;">
+                <label class="form-label" style="font-size:0.88rem;color:#555;margin-bottom:0.4rem;">Выберите стороны заполнения:</label>
+                <div style="display:flex;flex-wrap:wrap;gap:0.6rem 1.2rem;margin-bottom:0.5rem;">
+                    <div class="option-check"><input type="checkbox" id="facade-front" class="form-check-input"><label for="facade-front">Спереди</label></div>
+                    <div class="option-check"><input type="checkbox" id="facade-back" class="form-check-input"><label for="facade-back">Сзади</label></div>
+                    <div class="option-check"><input type="checkbox" id="facade-left" class="form-check-input"><label for="facade-left">Слева</label></div>
+                    <div class="option-check"><input type="checkbox" id="facade-right" class="form-check-input"><label for="facade-right">Справа</label></div>
+                </div>
+                <div id="facade-area-info" style="font-size:0.82rem;color:#1a3a6e;background:#f0f4fa;border-radius:6px;padding:0.4rem 0.7rem;display:none;"></div>
+            </div>
+        </div>
     </div>
 
     <button class="calc-btn" id="calc-btn" style="display:none;">
@@ -172,7 +195,7 @@
 
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=76"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=77"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');

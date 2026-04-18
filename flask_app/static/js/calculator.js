@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v76';
+    var SVG_V = 'v77';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
         whiteLed: true,
         rgbLed: false,
         installation: true,
+        facadeType: '',
+        facadeSides: [],
         maxWidth: 13.5,
         maxLength: 8.0,
         result: null,
@@ -270,6 +272,60 @@ document.addEventListener('DOMContentLoaded', function() {
 
     updateLightingPreviews();
 
+    var facadeTypeEl = document.getElementById('opt-facade-type');
+    var facadeSidesBlock = document.getElementById('facade-sides-block');
+    var facadeAreaInfo = document.getElementById('facade-area-info');
+    var facadeSideIds = ['facade-front', 'facade-back', 'facade-left', 'facade-right'];
+    var facadeSideKeys = ['front', 'back', 'left', 'right'];
+    var facadeSideLabels = {front: '\u0421\u043f\u0435\u0440\u0435\u0434\u0438', back: '\u0421\u0437\u0430\u0434\u0438', left: '\u0421\u043b\u0435\u0432\u0430', right: '\u0421\u043f\u0440\u0430\u0432\u0430'};
+
+    function updateFacadeInfo() {
+        var sides = state.facadeSides;
+        if (!state.facadeType || sides.length === 0) {
+            if (facadeAreaInfo) { facadeAreaInfo.style.display = 'none'; facadeAreaInfo.textContent = ''; }
+            return;
+        }
+        var colW = (state.selectedVariant === 'Light') ? 0.150 : (state.pergolaType === 'B200' ? 0.100 : 0.164);
+        var beamH = (state.selectedVariant === 'Light') ? 0.250 : (state.pergolaType === 'B200' ? 0.200 : 0.280);
+        var pergH = 3.0;
+        var openH = Math.max(0.1, pergH - beamH);
+        var mods = 1;
+        if (state.result && state.result.modules) mods = state.result.modules;
+        else if (state.allResults && state.allResults.length > 0 && state.allResults[0].modules) mods = state.allResults[0].modules;
+        var totalArea = 0;
+        sides.forEach(function(s) {
+            if (s === 'front' || s === 'back') {
+                var bayW = Math.max(0.1, (state.width / Math.max(1, mods)) - colW);
+                totalArea += mods * bayW * openH;
+            } else {
+                var sideW = Math.max(0.1, state.length - colW);
+                totalArea += sideW * openH;
+            }
+        });
+        if (facadeAreaInfo) {
+            facadeAreaInfo.style.display = 'block';
+            facadeAreaInfo.textContent = '\u041f\u0440\u043e\u0451\u043c: \u0448\u0438\u0440\u0438\u043d\u0430 \u00d7 \u0432\u044b\u0441\u043e\u0442\u0430 = \u2248 ' + totalArea.toFixed(2) + ' \u043c\u00b2';
+        }
+    }
+
+    if (facadeTypeEl) {
+        facadeTypeEl.addEventListener('change', function() {
+            state.facadeType = this.value;
+            if (facadeSidesBlock) facadeSidesBlock.style.display = this.value ? 'block' : 'none';
+            updateFacadeInfo();
+        });
+    }
+    facadeSideIds.forEach(function(id, i) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('change', function() {
+            state.facadeSides = facadeSideKeys.filter(function(k, j) {
+                var cb = document.getElementById(facadeSideIds[j]);
+                return cb && cb.checked;
+            });
+            updateFacadeInfo();
+        });
+    });
+
     document.getElementById('calc-btn').addEventListener('click', function() {
         if (!state.pergolaType) { alert('\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0438\u043F \u043F\u0435\u0440\u0433\u043E\u043B\u044B'); return; }
         if (!state.selectedVariant) { alert('\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043C\u043E\u0434\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u044E'); return; }
@@ -293,7 +349,9 @@ document.addEventListener('DOMContentLoaded', function() {
             lighting: lighting,
             installation: state.installation,
             selected_variant: state.selectedVariant,
-            client_name: state.clientName
+            client_name: state.clientName,
+            facade_type: state.facadeType,
+            facade_sides: state.facadeSides
         };
 
         stepsEl.spinner.style.display = 'flex';

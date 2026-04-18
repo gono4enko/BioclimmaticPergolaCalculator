@@ -151,6 +151,32 @@ LIGHTING_PRICES = {
     "rgb_led": 20
 }
 
+FACADE_PRICES = {
+    "FP-20":     199,
+    "FP-PIR":    150,
+    "FZ-44-50":   99,
+    "FZ-44-70":  124,
+    "FZ-44-100": 170,
+}
+
+FACADE_NAMES = {
+    "FP-20":     "\u0424\u0430\u0441\u0430\u0434\u043d\u044b\u0435 \u043f\u0430\u043d\u0435\u043b\u0438 FP-20",
+    "FP-PIR":    "\u0424\u0430\u0441\u0430\u0434\u043d\u044b\u0435 \u043f\u0430\u043d\u0435\u043b\u0438 FP-PIR",
+    "FZ-44-50":  "\u0424\u0430\u0441\u0430\u0434\u043d\u044b\u0435 \u0436\u0430\u043b\u044e\u0437\u0438 FZ-44 (\u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u0435 50%)",
+    "FZ-44-70":  "\u0424\u0430\u0441\u0430\u0434\u043d\u044b\u0435 \u0436\u0430\u043b\u044e\u0437\u0438 FZ-44 (\u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u0435 70%)",
+    "FZ-44-100": "\u0424\u0430\u0441\u0430\u0434\u043d\u044b\u0435 \u0436\u0430\u043b\u044e\u0437\u0438 FZ-44 (\u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u0435 100%)",
+}
+
+FACADE_COL_WIDTHS = {
+    "Light": 0.150,
+    "B200":  0.100,
+}
+FACADE_BEAM_HEIGHTS = {
+    "Light": 0.250,
+    "B200":  0.200,
+}
+FACADE_PERGOLA_HEIGHT = 3.0
+
 _price_cache = {}
 _variant_price_cache = {}
 
@@ -836,6 +862,48 @@ def perform_calculation(dimensions, options):
                     "count": f"1 шт. ({lighting_devices} {_get_plural_form(lighting_devices, 'канал', 'канала', 'каналов')})"
                 })
 
+        facade_type = options.get("facade_type", "")
+        facade_sides = options.get("facade_sides", [])
+        facade_area = 0.0
+        facade_price_eur = 0.0
+
+        if facade_type and facade_sides and facade_type in FACADE_PRICES:
+            sv = selected_variant or ""
+            if "Light" in sv:
+                col_w = FACADE_COL_WIDTHS["Light"]
+                beam_h = FACADE_BEAM_HEIGHTS["Light"]
+            elif pergola_type == "B200":
+                col_w = FACADE_COL_WIDTHS["B200"]
+                beam_h = FACADE_BEAM_HEIGHTS["B200"]
+            else:
+                col_w = 0.164
+                beam_h = 0.280
+            open_h = max(0.1, FACADE_PERGOLA_HEIGHT - beam_h)
+            for side in facade_sides:
+                if side in ("front", "back"):
+                    bay_w = max(0.1, (width_m / max(1, modules)) - col_w)
+                    facade_area += modules * bay_w * open_h
+                elif side in ("left", "right"):
+                    side_w = max(0.1, length_m - col_w)
+                    facade_area += side_w * open_h
+            facade_area = round(facade_area, 2)
+            facade_price_eur = round(facade_area * FACADE_PRICES[facade_type], 2)
+            side_labels = {"front": "\u0441\u043f\u0435\u0440\u0435\u0434\u0438",
+                           "back": "\u0441\u0437\u0430\u0434\u0438",
+                           "left": "\u0441\u043b\u0435\u0432\u0430",
+                           "right": "\u0441\u043f\u0440\u0430\u0432\u0430"}
+            sides_str = ", ".join(side_labels.get(s, s) for s in facade_sides)
+            facade_name = FACADE_NAMES[facade_type]
+            items.append({
+                "name": f"{facade_name} ({sides_str}, {facade_area:.2f} \u043c\u00b2)",
+                "price": facade_price_eur
+            })
+            total_price += facade_price_eur
+            specification.append({
+                "name": facade_name,
+                "count": f"{facade_area:.2f} \u043c\u00b2"
+            })
+
         base_total = total_price
 
         delivery_pct = pricing_settings.get_delivery_markup_percent()
@@ -878,6 +946,7 @@ def perform_calculation(dimensions, options):
             },
             "delivery": {"percentage": delivery_pct, "price": delivery_price},
             "installation": {"selected": installation, "price": installation_price},
+            "facade": {"type": facade_type, "sides": facade_sides, "area": facade_area, "price": facade_price_eur},
             "lamellas_count": lamellas_count,
             "pergola_type_name": PERGOLA_TYPES.get(pergola_type, pergola_type),
             "lamella_type_name": LAMELLA_TYPES.get(lamella_type, lamella_type),

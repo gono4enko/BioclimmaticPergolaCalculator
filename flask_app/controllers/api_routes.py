@@ -163,6 +163,9 @@ def calculate():
         if not pergola_type or width <= 0 or length <= 0:
             return jsonify({'success': False, 'error': 'Некорректные параметры'}), 400
 
+        facade_type = data.get('facade_type', '')
+        facade_sides = data.get('facade_sides', [])
+
         dimensions = {"width": width, "length": length}
         options = {
             "pergola_type": pergola_type,
@@ -170,7 +173,9 @@ def calculate():
             "lamella_size": lamella_size,
             "lighting": lighting,
             "installation": installation,
-            "selected_variant": selected_variant
+            "selected_variant": selected_variant,
+            "facade_type": facade_type,
+            "facade_sides": facade_sides
         }
 
         from ..utils import generate_kp_number, get_pergola_count, get_deadline_str, generate_calc_id, save_calculation
