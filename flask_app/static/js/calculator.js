@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v84';
+    var SVG_V = 'v85';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -462,17 +462,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return total > 1 ? letter + (bay + 1) : letter;
         }
 
-        for(var bf=0;bf<mods;bf++){
-            var s=isSel('front',bf);
-            var bx=ox+COL+bf*innerBayW; var bw=innerBayW;
-            p.push('<rect x="'+bx+'" y="'+oy+'" width="'+bw+'" height="'+STRIP+'" fill="'+(s?selFill:unFill)+'" stroke="'+(s?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="front" data-bay="'+bf+'"/>');
-            p.push('<text x="'+(bx+bw/2)+'" y="'+(oy+STRIP/2+3.5)+'" text-anchor="middle" fill="'+(s?'#fff':'#1e3d70')+'" font-size="8" font-weight="bold" font-family="Arial,sans-serif" pointer-events="none">'+bayLbl('front',bf)+'</text>');
-        }
         for(var bb=0;bb<mods;bb++){
             var sb=isSel('back',bb);
             var bbx=ox+COL+bb*innerBayW; var bbw=innerBayW;
-            p.push('<rect x="'+bbx+'" y="'+(oy+drawH-STRIP)+'" width="'+bbw+'" height="'+STRIP+'" fill="'+(sb?selFill:unFill)+'" stroke="'+(sb?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="back" data-bay="'+bb+'"/>');
-            p.push('<text x="'+(bbx+bbw/2)+'" y="'+(oy+drawH-STRIP/2+3.5)+'" text-anchor="middle" fill="'+(sb?'#fff':'#1e3d70')+'" font-size="8" font-weight="bold" font-family="Arial,sans-serif" pointer-events="none">'+bayLbl('back',bb)+'</text>');
+            p.push('<rect x="'+bbx+'" y="'+oy+'" width="'+bbw+'" height="'+STRIP+'" fill="'+(sb?selFill:unFill)+'" stroke="'+(sb?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="back" data-bay="'+bb+'"/>');
+            p.push('<text x="'+(bbx+bbw/2)+'" y="'+(oy+STRIP/2+3.5)+'" text-anchor="middle" fill="'+(sb?'#fff':'#1e3d70')+'" font-size="8" font-weight="bold" font-family="Arial,sans-serif" pointer-events="none">'+bayLbl('back',bb)+'</text>');
+        }
+        for(var bf=0;bf<mods;bf++){
+            var s=isSel('front',bf);
+            var bx=ox+COL+bf*innerBayW; var bw=innerBayW;
+            p.push('<rect x="'+bx+'" y="'+(oy+drawH-STRIP)+'" width="'+bw+'" height="'+STRIP+'" fill="'+(s?selFill:unFill)+'" stroke="'+(s?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="front" data-bay="'+bf+'"/>');
+            p.push('<text x="'+(bx+bw/2)+'" y="'+(oy+drawH-STRIP/2+3.5)+'" text-anchor="middle" fill="'+(s?'#fff':'#1e3d70')+'" font-size="8" font-weight="bold" font-family="Arial,sans-serif" pointer-events="none">'+bayLbl('front',bf)+'</text>');
         }
         var sL=isSel('left',0);
         var leftMidY=oy+COL+(drawH-2*COL)/2;
