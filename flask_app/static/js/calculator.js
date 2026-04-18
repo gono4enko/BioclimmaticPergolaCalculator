@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v83';
+    var SVG_V = 'v84';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -487,9 +487,9 @@ document.addEventListener('DOMContentLoaded', function() {
             p.push('<rect x="'+c[0]+'" y="'+c[1]+'" width="'+COL+'" height="'+COL+'" fill="'+cf+'" rx="2" pointer-events="none"/>');
         });
         for(var mc2=1;mc2<mods;mc2++){
-            var mcx=Math.round(ox+mc2*drawW/mods-COL/2);
-            p.push('<rect x="'+mcx+'" y="'+oy+'" width="'+COL+'" height="'+STRIP+'" fill="'+cf+'" rx="1" pointer-events="none"/>');
-            p.push('<rect x="'+mcx+'" y="'+(oy+drawH-STRIP)+'" width="'+COL+'" height="'+STRIP+'" fill="'+cf+'" rx="1" pointer-events="none"/>');
+            var mcx2=Math.round(ox+mc2*drawW/mods-COL/2);
+            p.push('<rect x="'+mcx2+'" y="'+oy+'" width="'+COL+'" height="'+COL+'" fill="'+cf+'" rx="2" pointer-events="none"/>');
+            p.push('<rect x="'+mcx2+'" y="'+(oy+drawH-COL)+'" width="'+COL+'" height="'+COL+'" fill="'+cf+'" rx="2" pointer-events="none"/>');
         }
         p.push('<text x="'+(ox+drawW/2)+'" y="'+(oy-8)+'" text-anchor="middle" fill="#667" font-size="8" font-style="italic" font-family="Arial,sans-serif">\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443 \u00b7 S = '+(W*L).toFixed(1)+' \u043c\u00b2</text>');
         p.push('<text x="'+(ox+drawW/2)+'" y="'+(oy+drawH+14)+'" text-anchor="middle" fill="#334" font-size="10" font-weight="bold" font-family="Arial,sans-serif">'+W.toFixed(2)+' \u043c</text>');
