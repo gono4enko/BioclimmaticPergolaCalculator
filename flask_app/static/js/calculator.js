@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v87';
+    var SVG_V = 'v88';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -369,11 +369,11 @@ document.addEventListener('DOMContentLoaded', function() {
         var mods = facadeModules(W);
         var lMods = facadeLengthModules(L);
         var TYPES = [
-            {v: 'FP-20',    n: 'FP-20 \u2014 \u0444\u0430\u0441\u0430\u0434\u043d\u044b\u0435 \u043f\u0430\u043d\u0435\u043b\u0438 (199 \u20ac/\u043c\u00b2)'},
-            {v: 'FP-PIR',   n: 'FP-PIR \u2014 PIR-\u0441\u044d\u043d\u0434\u0432\u0438\u0447 (150 \u20ac/\u043c\u00b2)'},
-            {v: 'FZ-44-50', n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 50% (99 \u20ac/\u043c\u00b2)'},
-            {v: 'FZ-44-70', n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 70% (124 \u20ac/\u043c\u00b2)'},
-            {v: 'FZ-44-100',n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 100% (170 \u20ac/\u043c\u00b2)'}
+            {v: 'FP-20',    n: 'FP-20 \u2014 \u0444\u0430\u0441\u0430\u0434\u043d\u044b\u0435 \u043f\u0430\u043d\u0435\u043b\u0438'},
+            {v: 'FP-PIR',   n: 'FP-PIR \u2014 PIR-\u0441\u044d\u043d\u0434\u0432\u0438\u0447'},
+            {v: 'FZ-44-50', n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 50%'},
+            {v: 'FZ-44-70', n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 70%'},
+            {v: 'FZ-44-100',n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 100%'}
         ];
         var openings = [];
         for (var ai = 0; ai < lMods; ai++) {
