@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v92';
+    var SVG_V = 'v93';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -1171,6 +1171,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var _fillF = getFillForSide('front');
         var _fillA = getFillForSide('left');
         var _fillC = getFillForSide('right');
+        var _fillB = getFillForSide('back');
         var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + (_fillF ? '&fill=' + encodeURIComponent(_fillF) : '');
         var fimg = document.getElementById('kp-front-img');
         if (fimg) fimg.src = '/api/pergola-front.svg?' + fqs + '&_v=' + SVG_V;
@@ -1181,7 +1182,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var pirAttr = block.dataset.pir === '1';
         var isoimg = document.getElementById('kp-iso-img');
         if (isoimg && (pirAttr || lcAttr)) {
-            var iqs = 'w=' + w + '&l=' + l + '&h=' + pergolaH + '&m=' + m + (lcAttr ? '&lc=' + lcAttr : '') + (mo ? '&mo=' + mo : '') + (pirAttr ? '&pir=1' : '') + (_fillF ? '&fill_front=' + encodeURIComponent(_fillF) : '') + (_fillC ? '&fill_right=' + encodeURIComponent(_fillC) : '') + '&_v=' + SVG_V;
+            var iqs = 'w=' + w + '&l=' + l + '&h=' + pergolaH + '&m=' + m + (lcAttr ? '&lc=' + lcAttr : '') + (mo ? '&mo=' + mo : '') + (pirAttr ? '&pir=1' : '') + (_fillF ? '&fill_front=' + encodeURIComponent(_fillF) : '') + (_fillC ? '&fill_right=' + encodeURIComponent(_fillC) : '') + (_fillA ? '&fill_left=' + encodeURIComponent(_fillA) : '') + (_fillB ? '&fill_back=' + encodeURIComponent(_fillB) : '') + '&_v=' + SVG_V;
             isoimg.src = '/api/pergola-iso.svg?' + iqs;
         }
         var warn = document.getElementById('kp-scheme-warn');
@@ -1368,9 +1369,10 @@ document.addEventListener('DOMContentLoaded', function() {
             var _kpFillF = getFillForSide('front');
             var _kpFillA = getFillForSide('left');
             var _kpFillC = getFillForSide('right');
+            var _kpFillB = getFillForSide('back');
             var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + colMmQs + (_kpFillF ? '&fill=' + encodeURIComponent(_kpFillF) : '') + '&_v=' + SVG_V;
             var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0431\u043e\u043a\u0443') + xcQs + colMmQs + (_kpFillA ? '&fill=' + encodeURIComponent(_kpFillA) : '') + '&_v=' + SVG_V;
-            var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + (isPir ? '&pir=1' : '') + xcQs + (_kpFillF ? '&fill_front=' + encodeURIComponent(_kpFillF) : '') + (_kpFillC ? '&fill_right=' + encodeURIComponent(_kpFillC) : '') + '&_v=' + SVG_V;
+            var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + (isPir ? '&pir=1' : '') + xcQs + (_kpFillF ? '&fill_front=' + encodeURIComponent(_kpFillF) : '') + (_kpFillC ? '&fill_right=' + encodeURIComponent(_kpFillC) : '') + (_kpFillA ? '&fill_left=' + encodeURIComponent(_kpFillA) : '') + (_kpFillB ? '&fill_back=' + encodeURIComponent(_kpFillB) : '') + '&_v=' + SVG_V;
             var isoLabel = isPir ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (PIR \u043F\u0430\u043D\u0435\u043B\u0438)' : (isB200 ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u0441\u0442\u0430\u0446\u0438\u043E\u043D\u0430\u0440\u043D\u044B\u0435)' : '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)');
             var isoBlock = (isPir || lamCnt) ? (
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">' + isoLabel + '</div>' +

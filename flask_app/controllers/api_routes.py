@@ -101,12 +101,15 @@ def pergola_iso_svg():
         xc = int(xc_raw) if xc_raw and xc_raw.isdigit() else 0
         fill_front = request.args.get('fill_front', '').strip() or None
         fill_right = request.args.get('fill_right', '').strip() or None
+        fill_left = request.args.get('fill_left', '').strip() or None
+        fill_back = request.args.get('fill_back', '').strip() or None
         if is_pir:
             svg = generate_pir_iso_svg(width=w, length=l, height=h, modules=m, max_overhang=mo)
         else:
             svg = generate_isometric_svg(width=w, length=l, height=h, lamella_count=lc,
                                          modules=m, lamella_open_deg=deg, max_overhang=mo,
-                                         extra_columns=xc, fill_front=fill_front, fill_right=fill_right)
+                                         extra_columns=xc, fill_front=fill_front, fill_right=fill_right,
+                                         fill_left=fill_left, fill_back=fill_back)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:
