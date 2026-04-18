@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v90';
+    var SVG_V = 'v91';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -397,22 +397,22 @@ document.addEventListener('DOMContentLoaded', function() {
         for (var ai = 0; ai < lMods; ai++) {
             openings.push({side: 'left', bay: ai,
                 label: lMods > 1 ? 'A' + (ai+1) : 'A',
-                desc: lMods > 1 ? '\u0421\u043b\u0435\u0432\u0430 \u00b7 \u0421\u0435\u043a\u0446\u0438\u044f ' + (ai+1) : '\u0421\u043b\u0435\u0432\u0430'});
+                desc: lMods > 1 ? '\u0421\u043b\u0435\u0432\u0430 \u00b7 \u041f\u0440\u043e\u0451\u043c ' + (ai+1) : '\u0421\u043b\u0435\u0432\u0430'});
         }
         for (var bi = 0; bi < mods; bi++) {
             openings.push({side: 'back', bay: bi,
                 label: mods > 1 ? 'B' + (bi+1) : 'B',
-                desc: mods > 1 ? '\u0421\u0437\u0430\u0434\u0438 \u00b7 \u041f\u0440\u043e\u043b\u00b8\u0442 ' + (bi+1) : '\u0421\u0437\u0430\u0434\u0438'});
+                desc: mods > 1 ? '\u0421\u0437\u0430\u0434\u0438 \u00b7 \u041f\u0440\u043e\u0451\u043c ' + (bi+1) : '\u0421\u0437\u0430\u0434\u0438'});
         }
         for (var ci = 0; ci < lMods; ci++) {
             openings.push({side: 'right', bay: ci,
                 label: lMods > 1 ? 'C' + (ci+1) : 'C',
-                desc: lMods > 1 ? '\u0421\u043f\u0440\u0430\u0432\u0430 \u00b7 \u0421\u0435\u043a\u0446\u0438\u044f ' + (ci+1) : '\u0421\u043f\u0440\u0430\u0432\u0430'});
+                desc: lMods > 1 ? '\u0421\u043f\u0440\u0430\u0432\u0430 \u00b7 \u041f\u0440\u043e\u0451\u043c ' + (ci+1) : '\u0421\u043f\u0440\u0430\u0432\u0430'});
         }
         for (var fi = 0; fi < mods; fi++) {
             openings.push({side: 'front', bay: fi,
                 label: mods > 1 ? 'F' + (fi+1) : 'F',
-                desc: mods > 1 ? '\u0424\u0430\u0441\u0430\u0434 \u00b7 \u041f\u0440\u043e\u043b\u00b8\u0442 ' + (fi+1) : '\u0424\u0430\u0441\u0430\u0434'});
+                desc: mods > 1 ? '\u0424\u0430\u0441\u0430\u0434 \u00b7 \u041f\u0440\u043e\u0451\u043c ' + (fi+1) : '\u0424\u0430\u0441\u0430\u0434'});
         }
         var html = '<table class="facade-table"><thead><tr>'
             + '<th>\u041f\u0440\u043e\u0451\u043c</th>'
