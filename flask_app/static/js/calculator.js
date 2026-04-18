@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v73';
+    var SVG_V = 'v74';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -885,7 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
         /* Block 3: Model info with product photo from Decolife */
         html += '<div class="kp-block">' +
             '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\u2139</div><div class="kp-block-title">\u041E \u043C\u043E\u0434\u0435\u043B\u0438 ' + escHtml(dd.model || pType) + '</div></div>' +
-            '<div class="kp-model-photo"><img src="' + (decoKey ? '/static/decolife/' + decoKey + '/images/product.jpg' : '/static/images/' + modelImg) + '" alt="' + escHtml(dd.model || pType) + '" onerror="this.src=\'/static/images/' + modelImg + '\';this.onerror=function(){this.parentElement.style.display=\'none\';}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:0.8rem;"></div>';
+            '<div class="kp-model-photo"><img src="' + (decoKey ? '/static/decolife/' + decoKey + '/images/product.jpg' : '/static/images/' + modelImg) + '" alt="' + escHtml(dd.model || pType) + '" onerror="this.src=\'/static/images/' + modelImg + '\';this.onerror=function(){this.parentElement.style.display=\'none\';}" style="width:100%;max-height:400px;object-fit:contain;border-radius:8px;margin-bottom:0.8rem;background:#f5f7fb;"></div>';
         if (dd.description) {
             html += '<p>' + escHtml(dd.description) + '</p>';
         }
@@ -1005,8 +1005,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 (moLocal ? '&mo=' + moLocal : '') +
                 (isPir ? '&pir=1' : '') + '&ref=' + refDim + xcQs;
             var needsExtra = (moLocal && schL > moLocal + 0.001) || xc > 0;
-            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид спереди') + '&_v=' + SVG_V;
-            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид сбоку') + xcQs + '&_v=' + SVG_V;
+            var colMmQs = isB200 ? '&col_mm=100' : '';
+            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид спереди') + colMmQs + '&_v=' + SVG_V;
+            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид сбоку') + xcQs + colMmQs + '&_v=' + SVG_V;
             var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + (isPir ? '&pir=1' : '') + xcQs + '&_v=' + SVG_V;
             var isoLabel = isPir ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (PIR \u043F\u0430\u043D\u0435\u043B\u0438)' : (isB200 ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u0441\u0442\u0430\u0446\u0438\u043E\u043D\u0430\u0440\u043D\u044B\u0435)' : '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)');
             var isoBlock = (isPir || lamCnt) ? (

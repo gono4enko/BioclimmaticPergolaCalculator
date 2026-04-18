@@ -617,7 +617,7 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
     return svg
 
 
-def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди', extra_columns=0):
+def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди', extra_columns=0, col_mm=164):
     """Front/side elevation. width = horizontal dimension (m), height in m.
     Uses shared scale (DIM_TARGET_PX/ref) so views align with top view.
     """
@@ -731,8 +731,9 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
             f'{_ldr_shelf_end_x:.1f},{_ldr_elbow_y:.1f}" '
             f'fill="none" stroke="{DIM_COLOR}" stroke-width="0.8" '
             f'marker-start="url(#f-dot)"/>')
+    col_mm_label = int(col_mm) if col_mm else 164
     svg += (f'<text x="{_ldr_elbow_x:.1f}" y="{_ldr_elbow_y - 3:.1f}" '
-            f'text-anchor="end" font-size="{small_font}" fill="{DIM_COLOR}">□ 164×164 мм</text>')
+            f'text-anchor="end" font-size="{small_font}" fill="{DIM_COLOR}">□ {col_mm_label}×{col_mm_label} мм</text>')
 
     svg += '</svg>'
     return svg
