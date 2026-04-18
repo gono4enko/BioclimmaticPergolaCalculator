@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v88';
+    var SVG_V = 'v89';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -319,9 +319,27 @@ document.addEventListener('DOMContentLoaded', function() {
         var openH = Math.max(0.1, 3.0 - beamH);
         var lMods = facadeLengthModules(state.length);
         if (opening.side === 'front' || opening.side === 'back') {
-            return Math.max(0.01, (state.width / Math.max(1, mods)) - colW) * openH;
+            var n = Math.max(1, mods);
+            return Math.max(0.01, (state.width - (n + 1) * colW) / n) * openH;
         }
-        return Math.max(0.01, (state.length / Math.max(1, lMods)) - colW) * openH;
+        var nL = Math.max(1, lMods);
+        return Math.max(0.01, (state.length - (nL + 1) * colW) / nL) * openH;
+    }
+
+    function facadeOpeningDims(opening) {
+        var colW = (state.selectedVariant === 'Light') ? 0.150 : (state.pergolaType === 'B200' ? 0.100 : 0.164);
+        var beamH = (state.selectedVariant === 'Light') ? 0.250 : (state.pergolaType === 'B200' ? 0.200 : 0.280);
+        var hMm = Math.round((3.0 - beamH) * 1000);
+        var n, totalDim;
+        if (opening.side === 'front' || opening.side === 'back') {
+            n = Math.max(1, facadeModules(state.width));
+            totalDim = state.width;
+        } else {
+            n = Math.max(1, facadeLengthModules(state.length));
+            totalDim = state.length;
+        }
+        var wMm = Math.round(Math.max(100, (totalDim - (n + 1) * colW) / n * 1000));
+        return {wMm: wMm, hMm: hMm};
     }
 
     function openingLabel(side, bay) {
@@ -400,12 +418,14 @@ document.addEventListener('DOMContentLoaded', function() {
             + '<th>\u041f\u0440\u043e\u0451\u043c</th>'
             + '<th>\u0420\u0430\u0441\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435</th>'
             + '<th>\u0422\u0438\u043f \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f</th>'
-            + '<th>\u041f\u043b\u043e\u0449\u0430\u0434\u044c</th>'
+            + '<th>\u0420\u0430\u0437\u043c\u0435\u0440 / \u041f\u043b\u043e\u0449\u0430\u0434\u044c</th>'
             + '</tr></thead><tbody>';
         openings.forEach(function(o) {
             var key = o.side + '_' + o.bay;
             var selType = state.facadePerOpening[key] || '';
-            var area = selType ? facadeOpeningArea(o, facadeModules(W)).toFixed(2) + ' \u043c\u00b2' : '\u2014';
+            var dims = facadeOpeningDims(o);
+            var dimsHtml = '<span style="font-size:0.82em;color:#555;white-space:nowrap;">' + dims.wMm + '\u00d7' + dims.hMm + ' \u043c\u043c</span>';
+            var areaHtml = selType ? '<br><span style="font-size:0.9em;">' + facadeOpeningArea(o, facadeModules(W)).toFixed(2) + ' \u043c\u00b2</span>' : '';
             html += '<tr data-key="' + key + '"><td><span class="facade-lbl">' + o.label + '</span></td>'
                 + '<td>' + o.desc + '</td>'
                 + '<td><select class="form-select form-select-sm facade-type-sel" data-side="' + o.side + '" data-bay="' + o.bay + '">'
@@ -413,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
             TYPES.forEach(function(t) {
                 html += '<option value="' + t.v + '"' + (selType === t.v ? ' selected' : '') + '>' + t.n + '</option>';
             });
-            html += '</select></td><td class="facade-area">' + area + '</td></tr>';
+            html += '</select></td><td class="facade-area">' + dimsHtml + areaHtml + '</td></tr>';
         });
         html += '</tbody></table>';
         tableEl.innerHTML = html;
@@ -427,10 +447,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (tr) {
                     var areaTd = tr.querySelector('.facade-area');
                     if (areaTd) {
+                        var o2 = {side: this.dataset.side, bay: parseInt(this.dataset.bay)};
+                        var dims2 = facadeOpeningDims(o2);
+                        var dHtml = '<span style="font-size:0.82em;color:#555;white-space:nowrap;">' + dims2.wMm + '\u00d7' + dims2.hMm + ' \u043c\u043c</span>';
                         if (this.value) {
-                            var o2 = {side: this.dataset.side, bay: parseInt(this.dataset.bay)};
-                            areaTd.textContent = facadeOpeningArea(o2, facadeModules(W)).toFixed(2) + ' \u043c\u00b2';
-                        } else { areaTd.textContent = '\u2014'; }
+                            areaTd.innerHTML = dHtml + '<br><span style="font-size:0.9em;">' + facadeOpeningArea(o2, facadeModules(W)).toFixed(2) + ' \u043c\u00b2</span>';
+                        } else {
+                            areaTd.innerHTML = dHtml;
+                        }
                     }
                 }
                 buildFacadeTopView();
