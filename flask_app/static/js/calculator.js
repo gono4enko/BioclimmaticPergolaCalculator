@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v78';
+    var SVG_V = 'v79';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -124,6 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
         stepsEl.step3.style.display = 'block';
         stepsEl.step4.style.display = 'block';
         stepsEl.calcBtn.style.display = 'block';
+        buildFacadeTopView();
         setTimeout(function() {
             stepsEl.step3.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 80);
@@ -250,9 +251,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('input-width').addEventListener('input', function() {
         state.width = parseFloat(this.value) || 0;
+        buildFacadeTopView();
     });
     document.getElementById('input-length').addEventListener('input', function() {
         state.length = parseFloat(this.value) || 0;
+        buildFacadeTopView();
     });
 
     var whiteLedEl = document.getElementById('opt-white-led');
@@ -273,16 +276,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateLightingPreviews();
 
     var facadeTypeEl = document.getElementById('opt-facade-type');
-    var facadeSidesBlock = document.getElementById('facade-sides-block');
     var facadeAreaInfo = document.getElementById('facade-area-info');
-    var facadeSchematic = document.getElementById('facade-schematic');
-
-    var FACADE_SIDE_LABELS = {
-        front: '\u0421\u043f\u0435\u0440\u0435\u0434\u0438',
-        back:  '\u0421\u0437\u0430\u0434\u0438',
-        left:  '\u0421\u043b\u0435\u0432\u0430',
-        right: '\u0421\u043f\u0440\u0430\u0432\u0430'
-    };
 
     function facadeModules(width) {
         if (width <= 4.5) return 1;
@@ -313,87 +307,130 @@ document.addEventListener('DOMContentLoaded', function() {
             + ' \u043f\u0440\u043e\u0451\u043c\u0430, \u043f\u043b\u043e\u0449\u0430\u0434\u044c \u2248 ' + total.toFixed(2) + ' \u043c\u00b2';
     }
 
-    function buildFacadeSchematic() {
-        if (!facadeSchematic) return;
-        facadeSchematic.innerHTML = '';
-        if (!state.facadeType) return;
-        var mods = facadeModules(state.width);
-        var sides = ['front', 'back', 'left', 'right'];
-        sides.forEach(function(side) {
-            var bayCount = (side === 'front' || side === 'back') ? mods : 1;
-            var row = document.createElement('div');
-            row.className = 'facade-row';
-            var lbl = document.createElement('span');
-            lbl.className = 'facade-row-label';
-            lbl.textContent = FACADE_SIDE_LABELS[side] + ':';
-            row.appendChild(lbl);
-            var baysDiv = document.createElement('div');
-            baysDiv.className = 'facade-bays';
-            for (var b = 0; b < bayCount; b++) {
-                (function(side2, bay) {
-                    var btn = document.createElement('div');
-                    btn.className = 'facade-bay';
-                    btn.dataset.side = side2;
-                    btn.dataset.bay = bay;
-                    btn.textContent = (bayCount > 1)
-                        ? ('\u041f\u0440\u043e\u0451\u043c ' + (bay + 1))
-                        : '\u041f\u0440\u043e\u0451\u043c';
-                    var isActive = state.facadeOpenings.some(function(o) { return o.side === side2 && o.bay === bay; });
-                    if (isActive) btn.classList.add('active');
-                    btn.addEventListener('click', function() {
-                        var idx = state.facadeOpenings.findIndex(function(o) { return o.side === side2 && o.bay === bay; });
-                        if (idx >= 0) {
-                            state.facadeOpenings.splice(idx, 1);
-                            btn.classList.remove('active');
-                        } else {
-                            state.facadeOpenings.push({side: side2, bay: bay});
-                            btn.classList.add('active');
-                        }
-                        updateFacadeAreaInfo();
-                    });
-                    baysDiv.appendChild(btn);
-                })(side, b);
-            }
-            var allBtn = document.createElement('span');
-            allBtn.className = 'facade-select-all';
-            var allActive = (function() {
-                for (var b2 = 0; b2 < bayCount; b2++) {
-                    if (!state.facadeOpenings.some(function(o) { return o.side === side && o.bay === b2; })) return false;
-                }
-                return true;
-            })();
-            allBtn.textContent = allActive ? '\u0421\u043d\u044f\u0442\u044c \u0432\u0441\u0435' : '\u0412\u0441\u0435';
-            (function(side3, count) {
-                allBtn.addEventListener('click', function() {
-                    var allSel = true;
-                    for (var b3 = 0; b3 < count; b3++) {
-                        if (!state.facadeOpenings.some(function(o) { return o.side === side3 && o.bay === b3; })) { allSel = false; break; }
-                    }
-                    if (allSel) {
-                        state.facadeOpenings = state.facadeOpenings.filter(function(o) { return o.side !== side3; });
-                    } else {
-                        for (var b4 = 0; b4 < count; b4++) {
-                            if (!state.facadeOpenings.some(function(o) { return o.side === side3 && o.bay === b4; })) {
-                                state.facadeOpenings.push({side: side3, bay: b4});
-                            }
-                        }
-                    }
-                    buildFacadeSchematic();
-                    updateFacadeAreaInfo();
-                });
-            })(side, bayCount);
-            baysDiv.appendChild(allBtn);
-            row.appendChild(baysDiv);
-            facadeSchematic.appendChild(row);
+    function buildFacadeTopView() {
+        var svg = document.getElementById('facade-topview-svg');
+        var hint = document.getElementById('facade-topview-hint');
+        if (!svg) return;
+        var W = state.width;
+        var L = state.length;
+        if (W <= 0 || L <= 0) {
+            svg.setAttribute('viewBox', '0 0 300 60');
+            svg.setAttribute('width', '300'); svg.setAttribute('height', '60');
+            svg.innerHTML = '<rect width="300" height="60" fill="none"/>' +
+                '<text x="150" y="34" text-anchor="middle" fill="#aab" font-size="12" font-family="Arial,sans-serif">' +
+                '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0440\u0430\u0437\u043c\u0435\u0440\u044b \u043d\u0430 \u0448\u0430\u0433\u0435 3</text>';
+            if (hint) { hint.textContent = ''; }
+            return;
+        }
+        var mods = facadeModules(W);
+        var ML = 30; var MR = 16; var MT = 22; var MB = 24;
+        var STRIP = 16; var COL = 14;
+        var MAX_W = 270; var MAX_H = 240;
+        var scale = Math.min(MAX_W / W, MAX_H / L);
+        var drawW = Math.max(110, Math.round(W * scale));
+        var drawH = Math.max(75, Math.round(L * scale));
+        var svgW = drawW + ML + MR;
+        var svgH = drawH + MT + MB;
+        var ox = ML; var oy = MT;
+        var innerBayW = (drawW - 2 * COL) / mods;
+        var canClick = !!state.facadeType;
+        var selFill = '#1a3a6e'; var selStroke = '#0d2550';
+        var unFill = canClick ? '#cde0f5' : '#c4d4e8';
+        var unStroke = canClick ? '#7aA0c8' : '#96b0c8';
+        var cur = canClick ? 'pointer' : 'default';
+        var p = [];
+
+        function isSel(s, b) { return state.facadeOpenings.some(function(o){return o.side===s&&o.bay===b;}); }
+
+        p.push('<rect x="'+ox+'" y="'+oy+'" width="'+drawW+'" height="'+drawH+'" fill="#b8cadf" rx="2"/>');
+        var ix=ox+STRIP; var iy=oy+STRIP; var iw=drawW-2*STRIP; var ih=drawH-2*STRIP;
+        p.push('<rect x="'+ix+'" y="'+iy+'" width="'+iw+'" height="'+ih+'" fill="#eef6ff" rx="1"/>');
+        var nLam=Math.max(3,Math.min(Math.round(L/0.25),22));
+        for(var li=0;li<nLam;li++){
+            var ly=iy+(li+0.5)*ih/nLam;
+            p.push('<line x1="'+ix+'" y1="'+ly+'" x2="'+(ix+iw)+'" y2="'+ly+'" stroke="#b0c8e0" stroke-width="0.7"/>');
+        }
+        for(var mc=1;mc<mods;mc++){
+            var mdx=ox+mc*drawW/mods;
+            p.push('<line x1="'+mdx+'" y1="'+(oy+STRIP)+'" x2="'+mdx+'" y2="'+(oy+drawH-STRIP)+'" stroke="#8099b8" stroke-width="1" stroke-dasharray="3,2"/>');
+        }
+        for(var bf=0;bf<mods;bf++){
+            var s=isSel('front',bf);
+            var bx=ox+COL+bf*innerBayW; var bw=innerBayW;
+            p.push('<rect x="'+bx+'" y="'+oy+'" width="'+bw+'" height="'+STRIP+'" fill="'+(s?selFill:unFill)+'" stroke="'+(s?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="front" data-bay="'+bf+'"/>');
+            if(s&&mods>1) p.push('<text x="'+(bx+bw/2)+'" y="'+(oy+STRIP/2+3)+'" text-anchor="middle" fill="#fff" font-size="7" font-family="Arial,sans-serif" pointer-events="none">\u041f'+(bf+1)+'</text>');
+        }
+        for(var bb=0;bb<mods;bb++){
+            var sb=isSel('back',bb);
+            var bbx=ox+COL+bb*innerBayW; var bbw=innerBayW;
+            p.push('<rect x="'+bbx+'" y="'+(oy+drawH-STRIP)+'" width="'+bbw+'" height="'+STRIP+'" fill="'+(sb?selFill:unFill)+'" stroke="'+(sb?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="back" data-bay="'+bb+'"/>');
+            if(sb&&mods>1) p.push('<text x="'+(bbx+bbw/2)+'" y="'+(oy+drawH-STRIP/2+3)+'" text-anchor="middle" fill="#fff" font-size="7" font-family="Arial,sans-serif" pointer-events="none">\u041f'+(bb+1)+'</text>');
+        }
+        var sL=isSel('left',0);
+        p.push('<rect x="'+ox+'" y="'+(oy+COL)+'" width="'+STRIP+'" height="'+(drawH-2*COL)+'" fill="'+(sL?selFill:unFill)+'" stroke="'+(sL?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="left" data-bay="0"/>');
+        var sR=isSel('right',0);
+        p.push('<rect x="'+(ox+drawW-STRIP)+'" y="'+(oy+COL)+'" width="'+STRIP+'" height="'+(drawH-2*COL)+'" fill="'+(sR?selFill:unFill)+'" stroke="'+(sR?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="right" data-bay="0"/>');
+        var cf='#1a3a6e';
+        [[ox,oy],[ox+drawW-COL,oy],[ox,oy+drawH-COL],[ox+drawW-COL,oy+drawH-COL]].forEach(function(c){
+            p.push('<rect x="'+c[0]+'" y="'+c[1]+'" width="'+COL+'" height="'+COL+'" fill="'+cf+'" rx="2" pointer-events="none"/>');
         });
+        for(var mc2=1;mc2<mods;mc2++){
+            var mcx=Math.round(ox+mc2*drawW/mods-COL/2);
+            p.push('<rect x="'+mcx+'" y="'+oy+'" width="'+COL+'" height="'+STRIP+'" fill="'+cf+'" rx="1" pointer-events="none"/>');
+            p.push('<rect x="'+mcx+'" y="'+(oy+drawH-STRIP)+'" width="'+COL+'" height="'+STRIP+'" fill="'+cf+'" rx="1" pointer-events="none"/>');
+        }
+        p.push('<text x="'+(ox+drawW/2)+'" y="'+(oy-8)+'" text-anchor="middle" fill="#667" font-size="8" font-style="italic" font-family="Arial,sans-serif">\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443 \u00b7 S = '+(W*L).toFixed(1)+' \u043c\u00b2</text>');
+        p.push('<text x="'+(ox+drawW/2)+'" y="'+(oy+drawH+14)+'" text-anchor="middle" fill="#334" font-size="10" font-weight="bold" font-family="Arial,sans-serif">'+W.toFixed(2)+' \u043c</text>');
+        p.push('<text transform="translate('+(ox-18)+','+(oy+drawH/2)+') rotate(-90)" text-anchor="middle" fill="#334" font-size="10" font-weight="bold" font-family="Arial,sans-serif">'+L.toFixed(2)+' \u043c</text>');
+        p.push('<text x="'+(ox+drawW/2)+'" y="'+(oy+drawH/2+4)+'" text-anchor="middle" fill="#99bbcc" font-size="9" font-family="Arial,sans-serif" pointer-events="none">'+mods+' '+(mods===1?'\u043c\u043e\u0434\u0443\u043b\u044c':mods<5?'\u043c\u043e\u0434\u0443\u043b\u044f':'\u043c\u043e\u0434\u0443\u043b\u0435\u0439')+'</text>');
+
+        svg.setAttribute('viewBox','0 0 '+svgW+' '+svgH);
+        svg.setAttribute('width',svgW); svg.setAttribute('height',svgH);
+        svg.innerHTML = p.join('');
+
+        svg.querySelectorAll('rect[data-side]').forEach(function(rect){
+            if(canClick){
+                rect.addEventListener('mouseenter',function(){
+                    var s2=this.dataset.side; var b2=parseInt(this.dataset.bay);
+                    if(!isSel(s2,b2)) this.setAttribute('fill','#8ab8dc');
+                });
+                rect.addEventListener('mouseleave',function(){
+                    var s2=this.dataset.side; var b2=parseInt(this.dataset.bay);
+                    if(!isSel(s2,b2)) this.setAttribute('fill',unFill);
+                });
+            }
+            rect.addEventListener('click',function(){
+                if(!state.facadeType){
+                    if(hint){hint.textContent='\u2190 \u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0438\u043f \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f';hint.style.color='#c44';}
+                    return;
+                }
+                var s3=this.dataset.side; var b3=parseInt(this.dataset.bay);
+                var idx=state.facadeOpenings.findIndex(function(o){return o.side===s3&&o.bay===b3;});
+                if(idx>=0) state.facadeOpenings.splice(idx,1);
+                else state.facadeOpenings.push({side:s3,bay:b3});
+                buildFacadeTopView(); updateFacadeAreaInfo();
+            });
+        });
+
+        if(hint){
+            if(!state.facadeType){
+                hint.textContent='\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0438\u043f \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f \u043d\u0438\u0436\u0435, \u0437\u0430\u0442\u0435\u043c \u043a\u043b\u0438\u043a\u043d\u0438\u0442\u0435 \u043d\u0430 \u043f\u0440\u043e\u0451\u043c\u044b';
+                hint.style.color='#888';
+            } else if(state.facadeOpenings.length===0){
+                hint.textContent='\u041a\u043b\u0438\u043a\u043d\u0438\u0442\u0435 \u043d\u0430 \u043f\u0440\u043e\u0451\u043c\u044b \u0434\u043b\u044f \u0432\u044b\u0431\u043e\u0440\u0430 (\u0441\u0438\u043d\u0438\u0439 = \u0432\u044b\u0431\u0440\u0430\u043d)';
+                hint.style.color='#1a3a6e';
+            } else {
+                hint.textContent='\u0412\u044b\u0431\u0440\u0430\u043d\u043e: '+state.facadeOpenings.length+' \u043f\u0440\u043e\u0451\u043c\u0430';
+                hint.style.color='#1a3a6e';
+            }
+        }
     }
 
     if (facadeTypeEl) {
         facadeTypeEl.addEventListener('change', function() {
             state.facadeType = this.value;
             state.facadeOpenings = [];
-            if (facadeSidesBlock) facadeSidesBlock.style.display = this.value ? 'block' : 'none';
-            buildFacadeSchematic();
+            buildFacadeTopView();
             updateFacadeAreaInfo();
         });
     }

@@ -3,9 +3,9 @@
 {% block title %}Калькулятор стоимости перголы{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=69">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=70">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=78" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=79" as="script">
 {% endblock %}
 
 {% block content %}
@@ -115,7 +115,11 @@
         <!-- Фасадное заполнение -->
         <div class="mt-4">
             <label class="form-label" style="font-weight:600;font-size:0.95rem;">Фасадное заполнение проёма</label>
-            <select id="opt-facade-type" class="form-select mb-3" style="font-size:0.9rem;">
+            <div class="facade-topview-wrap">
+                <svg id="facade-topview-svg" style="max-width:100%;display:block;margin:auto;"></svg>
+                <div id="facade-topview-hint"></div>
+            </div>
+            <select id="opt-facade-type" class="form-select mb-2" style="font-size:0.9rem;margin-top:0.6rem;">
                 <option value="">— Без фасадного заполнения —</option>
                 <option value="FP-20">FP-20 — фасадные панели (199 €/м²)</option>
                 <option value="FP-PIR">FP-PIR — панели PIR сэндвич (150 €/м²)</option>
@@ -123,11 +127,7 @@
                 <option value="FZ-44-70">FZ-44 — жалюзи, заполнение 70% (124 €/м²)</option>
                 <option value="FZ-44-100">FZ-44 — жалюзи, заполнение 100% (170 €/м²)</option>
             </select>
-            <div id="facade-sides-block" style="display:none;">
-                <label class="form-label" style="font-size:0.88rem;color:#555;margin-bottom:0.5rem;">Выберите проёмы для заполнения:</label>
-                <div id="facade-schematic" class="facade-grid"></div>
-                <div id="facade-area-info" style="font-size:0.82rem;color:#1a3a6e;background:#f0f4fa;border-radius:6px;padding:0.4rem 0.7rem;display:none;"></div>
-            </div>
+            <div id="facade-area-info" style="font-size:0.82rem;color:#1a3a6e;background:#f0f4fa;border-radius:6px;padding:0.4rem 0.7rem;display:none;margin-top:0.3rem;"></div>
         </div>
     </div>
 
@@ -190,7 +190,7 @@
 
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=78"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=79"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');

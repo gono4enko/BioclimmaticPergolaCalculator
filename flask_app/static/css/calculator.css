@@ -294,13 +294,26 @@
 }
 .option-check label { font-size: 0.95rem; cursor: pointer; margin: 0; }
 
-/* ─── Facade opening selector ─── */
+/* ─── Facade top-view SVG wrapper ─── */
+.facade-topview-wrap {
+    background: #f4f7fb;
+    border: 1px solid #d8e2f0;
+    border-radius: 8px;
+    padding: 0.6rem 0.4rem 0.3rem;
+    margin-bottom: 0.3rem;
+    text-align: center;
+}
+#facade-topview-hint {
+    font-size: 0.78rem;
+    color: #888;
+    margin-top: 4px;
+    min-height: 18px;
+}
+
+/* ─── Legacy facade grid (kept for any fallback) ─── */
 .facade-grid { display: grid; gap: 0.45rem; margin-bottom: 0.6rem; }
 .facade-row { display: flex; align-items: center; gap: 0.4rem; }
-.facade-row-label {
-    width: 68px; flex-shrink: 0;
-    font-size: 0.78rem; font-weight: 600; color: #555; text-align: right;
-}
+.facade-row-label { width: 68px; flex-shrink: 0; font-size: 0.78rem; font-weight: 600; color: #555; text-align: right; }
 .facade-bays { display: flex; gap: 0.3rem; flex-wrap: wrap; }
 .facade-bay {
     min-width: 58px; padding: 6px 10px;
@@ -312,10 +325,7 @@
 .facade-bay:hover  { border-color: #5a82c0; background: #eaf0fb; color: #1a3a6e; }
 .facade-bay.active { border-color: #1a3a6e; background: #1a3a6e; color: #fff; }
 .facade-bay.active:hover { background: #2a4a8e; border-color: #2a4a8e; }
-.facade-select-all {
-    font-size: 0.78rem; color: #1a3a6e; cursor: pointer;
-    text-decoration: underline; margin-left: 4px; white-space: nowrap;
-}
+.facade-select-all { font-size: 0.78rem; color: #1a3a6e; cursor: pointer; text-decoration: underline; margin-left: 4px; white-space: nowrap; }
 
 .installation-counter {
     background: linear-gradient(135deg, #004B9A, #0066CC);
