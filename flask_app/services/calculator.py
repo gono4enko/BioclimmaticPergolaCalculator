@@ -863,11 +863,11 @@ def perform_calculation(dimensions, options):
                 })
 
         facade_type = options.get("facade_type", "")
-        facade_sides = options.get("facade_sides", [])
+        facade_openings = options.get("facade_openings", [])
         facade_area = 0.0
         facade_price_eur = 0.0
 
-        if facade_type and facade_sides and facade_type in FACADE_PRICES:
+        if facade_type and facade_openings and facade_type in FACADE_PRICES:
             sv = selected_variant or ""
             if "Light" in sv:
                 col_w = FACADE_COL_WIDTHS["Light"]
@@ -879,29 +879,39 @@ def perform_calculation(dimensions, options):
                 col_w = 0.164
                 beam_h = 0.280
             open_h = max(0.1, FACADE_PERGOLA_HEIGHT - beam_h)
-            for side in facade_sides:
+            side_count = {}
+            for opening in facade_openings:
+                if not isinstance(opening, dict):
+                    continue
+                side = opening.get("side", "")
                 if side in ("front", "back"):
-                    bay_w = max(0.1, (width_m / max(1, modules)) - col_w)
-                    facade_area += modules * bay_w * open_h
+                    bay_w = max(0.01, (width_m / max(1, modules)) - col_w)
+                    facade_area += bay_w * open_h
+                    side_count[side] = side_count.get(side, 0) + 1
                 elif side in ("left", "right"):
-                    side_w = max(0.1, length_m - col_w)
+                    side_w = max(0.01, length_m - col_w)
                     facade_area += side_w * open_h
+                    side_count[side] = side_count.get(side, 0) + 1
             facade_area = round(facade_area, 2)
             facade_price_eur = round(facade_area * FACADE_PRICES[facade_type], 2)
             side_labels = {"front": "\u0441\u043f\u0435\u0440\u0435\u0434\u0438",
                            "back": "\u0441\u0437\u0430\u0434\u0438",
                            "left": "\u0441\u043b\u0435\u0432\u0430",
                            "right": "\u0441\u043f\u0440\u0430\u0432\u0430"}
-            sides_str = ", ".join(side_labels.get(s, s) for s in facade_sides)
+            parts = []
+            for s in ("front", "back", "left", "right"):
+                if s in side_count:
+                    parts.append(f"{side_labels[s]} \u00d7{side_count[s]}" if side_count[s] > 1 else side_labels[s])
+            sides_str = ", ".join(parts)
             facade_name = FACADE_NAMES[facade_type]
             items.append({
-                "name": f"{facade_name} ({sides_str}, {facade_area:.2f} \u043c\u00b2)",
+                "name": f"{facade_name} ({sides_str}, {len(facade_openings)} \u043f\u0440\u043e\u0451\u043c\u0430, {facade_area:.2f} \u043c\u00b2)",
                 "price": facade_price_eur
             })
             total_price += facade_price_eur
             specification.append({
                 "name": facade_name,
-                "count": f"{facade_area:.2f} \u043c\u00b2"
+                "count": f"{len(facade_openings)} \u043f\u0440\u043e\u0451\u043c\u0430, {facade_area:.2f} \u043c\u00b2"
             })
 
         base_total = total_price
@@ -946,7 +956,7 @@ def perform_calculation(dimensions, options):
             },
             "delivery": {"percentage": delivery_pct, "price": delivery_price},
             "installation": {"selected": installation, "price": installation_price},
-            "facade": {"type": facade_type, "sides": facade_sides, "area": facade_area, "price": facade_price_eur},
+            "facade": {"type": facade_type, "openings": facade_openings, "area": facade_area, "price": facade_price_eur},
             "lamellas_count": lamellas_count,
             "pergola_type_name": PERGOLA_TYPES.get(pergola_type, pergola_type),
             "lamella_type_name": LAMELLA_TYPES.get(lamella_type, lamella_type),

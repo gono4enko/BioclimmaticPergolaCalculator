@@ -294,6 +294,29 @@
 }
 .option-check label { font-size: 0.95rem; cursor: pointer; margin: 0; }
 
+/* ─── Facade opening selector ─── */
+.facade-grid { display: grid; gap: 0.45rem; margin-bottom: 0.6rem; }
+.facade-row { display: flex; align-items: center; gap: 0.4rem; }
+.facade-row-label {
+    width: 68px; flex-shrink: 0;
+    font-size: 0.78rem; font-weight: 600; color: #555; text-align: right;
+}
+.facade-bays { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.facade-bay {
+    min-width: 58px; padding: 6px 10px;
+    border: 2px solid #d0d8e8; border-radius: 5px;
+    background: #f8f9fb; color: #555;
+    font-size: 0.78rem; text-align: center; cursor: pointer;
+    user-select: none; transition: border-color .15s, background .15s, color .15s;
+}
+.facade-bay:hover  { border-color: #5a82c0; background: #eaf0fb; color: #1a3a6e; }
+.facade-bay.active { border-color: #1a3a6e; background: #1a3a6e; color: #fff; }
+.facade-bay.active:hover { background: #2a4a8e; border-color: #2a4a8e; }
+.facade-select-all {
+    font-size: 0.78rem; color: #1a3a6e; cursor: pointer;
+    text-decoration: underline; margin-left: 4px; white-space: nowrap;
+}
+
 .installation-counter {
     background: linear-gradient(135deg, #004B9A, #0066CC);
     color: #fff;

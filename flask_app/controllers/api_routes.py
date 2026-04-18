@@ -164,7 +164,7 @@ def calculate():
             return jsonify({'success': False, 'error': 'Некорректные параметры'}), 400
 
         facade_type = data.get('facade_type', '')
-        facade_sides = data.get('facade_sides', [])
+        facade_openings = data.get('facade_openings', [])
 
         dimensions = {"width": width, "length": length}
         options = {
@@ -175,7 +175,7 @@ def calculate():
             "installation": installation,
             "selected_variant": selected_variant,
             "facade_type": facade_type,
-            "facade_sides": facade_sides
+            "facade_openings": facade_openings
         }
 
         from ..utils import generate_kp_number, get_pergola_count, get_deadline_str, generate_calc_id, save_calculation

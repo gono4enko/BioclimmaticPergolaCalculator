@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v77';
+    var SVG_V = 'v78';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
         rgbLed: false,
         installation: true,
         facadeType: '',
-        facadeSides: [],
+        facadeOpenings: [],
         maxWidth: 13.5,
         maxLength: 8.0,
         result: null,
@@ -275,56 +275,128 @@ document.addEventListener('DOMContentLoaded', function() {
     var facadeTypeEl = document.getElementById('opt-facade-type');
     var facadeSidesBlock = document.getElementById('facade-sides-block');
     var facadeAreaInfo = document.getElementById('facade-area-info');
-    var facadeSideIds = ['facade-front', 'facade-back', 'facade-left', 'facade-right'];
-    var facadeSideKeys = ['front', 'back', 'left', 'right'];
-    var facadeSideLabels = {front: '\u0421\u043f\u0435\u0440\u0435\u0434\u0438', back: '\u0421\u0437\u0430\u0434\u0438', left: '\u0421\u043b\u0435\u0432\u0430', right: '\u0421\u043f\u0440\u0430\u0432\u0430'};
+    var facadeSchematic = document.getElementById('facade-schematic');
 
-    function updateFacadeInfo() {
-        var sides = state.facadeSides;
-        if (!state.facadeType || sides.length === 0) {
-            if (facadeAreaInfo) { facadeAreaInfo.style.display = 'none'; facadeAreaInfo.textContent = ''; }
-            return;
-        }
+    var FACADE_SIDE_LABELS = {
+        front: '\u0421\u043f\u0435\u0440\u0435\u0434\u0438',
+        back:  '\u0421\u0437\u0430\u0434\u0438',
+        left:  '\u0421\u043b\u0435\u0432\u0430',
+        right: '\u0421\u043f\u0440\u0430\u0432\u0430'
+    };
+
+    function facadeModules(width) {
+        if (width <= 4.5) return 1;
+        if (width <= 9.0) return 2;
+        return 3;
+    }
+
+    function facadeOpeningArea(opening, mods) {
         var colW = (state.selectedVariant === 'Light') ? 0.150 : (state.pergolaType === 'B200' ? 0.100 : 0.164);
         var beamH = (state.selectedVariant === 'Light') ? 0.250 : (state.pergolaType === 'B200' ? 0.200 : 0.280);
-        var pergH = 3.0;
-        var openH = Math.max(0.1, pergH - beamH);
-        var mods = 1;
-        if (state.result && state.result.modules) mods = state.result.modules;
-        else if (state.allResults && state.allResults.length > 0 && state.allResults[0].modules) mods = state.allResults[0].modules;
-        var totalArea = 0;
-        sides.forEach(function(s) {
-            if (s === 'front' || s === 'back') {
-                var bayW = Math.max(0.1, (state.width / Math.max(1, mods)) - colW);
-                totalArea += mods * bayW * openH;
-            } else {
-                var sideW = Math.max(0.1, state.length - colW);
-                totalArea += sideW * openH;
-            }
-        });
-        if (facadeAreaInfo) {
-            facadeAreaInfo.style.display = 'block';
-            facadeAreaInfo.textContent = '\u041f\u0440\u043e\u0451\u043c: \u0448\u0438\u0440\u0438\u043d\u0430 \u00d7 \u0432\u044b\u0441\u043e\u0442\u0430 = \u2248 ' + totalArea.toFixed(2) + ' \u043c\u00b2';
+        var openH = Math.max(0.1, 3.0 - beamH);
+        if (opening.side === 'front' || opening.side === 'back') {
+            return Math.max(0.01, (state.width / Math.max(1, mods)) - colW) * openH;
         }
+        return Math.max(0.01, state.length - colW) * openH;
+    }
+
+    function updateFacadeAreaInfo() {
+        if (!facadeAreaInfo) return;
+        if (!state.facadeType || state.facadeOpenings.length === 0) {
+            facadeAreaInfo.style.display = 'none'; facadeAreaInfo.textContent = ''; return;
+        }
+        var mods = facadeModules(state.width);
+        var total = 0;
+        state.facadeOpenings.forEach(function(o) { total += facadeOpeningArea(o, mods); });
+        facadeAreaInfo.style.display = 'block';
+        facadeAreaInfo.textContent = '\u0412\u044b\u0431\u0440\u0430\u043d\u043e ' + state.facadeOpenings.length
+            + ' \u043f\u0440\u043e\u0451\u043c\u0430, \u043f\u043b\u043e\u0449\u0430\u0434\u044c \u2248 ' + total.toFixed(2) + ' \u043c\u00b2';
+    }
+
+    function buildFacadeSchematic() {
+        if (!facadeSchematic) return;
+        facadeSchematic.innerHTML = '';
+        if (!state.facadeType) return;
+        var mods = facadeModules(state.width);
+        var sides = ['front', 'back', 'left', 'right'];
+        sides.forEach(function(side) {
+            var bayCount = (side === 'front' || side === 'back') ? mods : 1;
+            var row = document.createElement('div');
+            row.className = 'facade-row';
+            var lbl = document.createElement('span');
+            lbl.className = 'facade-row-label';
+            lbl.textContent = FACADE_SIDE_LABELS[side] + ':';
+            row.appendChild(lbl);
+            var baysDiv = document.createElement('div');
+            baysDiv.className = 'facade-bays';
+            for (var b = 0; b < bayCount; b++) {
+                (function(side2, bay) {
+                    var btn = document.createElement('div');
+                    btn.className = 'facade-bay';
+                    btn.dataset.side = side2;
+                    btn.dataset.bay = bay;
+                    btn.textContent = (bayCount > 1)
+                        ? ('\u041f\u0440\u043e\u0451\u043c ' + (bay + 1))
+                        : '\u041f\u0440\u043e\u0451\u043c';
+                    var isActive = state.facadeOpenings.some(function(o) { return o.side === side2 && o.bay === bay; });
+                    if (isActive) btn.classList.add('active');
+                    btn.addEventListener('click', function() {
+                        var idx = state.facadeOpenings.findIndex(function(o) { return o.side === side2 && o.bay === bay; });
+                        if (idx >= 0) {
+                            state.facadeOpenings.splice(idx, 1);
+                            btn.classList.remove('active');
+                        } else {
+                            state.facadeOpenings.push({side: side2, bay: bay});
+                            btn.classList.add('active');
+                        }
+                        updateFacadeAreaInfo();
+                    });
+                    baysDiv.appendChild(btn);
+                })(side, b);
+            }
+            var allBtn = document.createElement('span');
+            allBtn.className = 'facade-select-all';
+            var allActive = (function() {
+                for (var b2 = 0; b2 < bayCount; b2++) {
+                    if (!state.facadeOpenings.some(function(o) { return o.side === side && o.bay === b2; })) return false;
+                }
+                return true;
+            })();
+            allBtn.textContent = allActive ? '\u0421\u043d\u044f\u0442\u044c \u0432\u0441\u0435' : '\u0412\u0441\u0435';
+            (function(side3, count) {
+                allBtn.addEventListener('click', function() {
+                    var allSel = true;
+                    for (var b3 = 0; b3 < count; b3++) {
+                        if (!state.facadeOpenings.some(function(o) { return o.side === side3 && o.bay === b3; })) { allSel = false; break; }
+                    }
+                    if (allSel) {
+                        state.facadeOpenings = state.facadeOpenings.filter(function(o) { return o.side !== side3; });
+                    } else {
+                        for (var b4 = 0; b4 < count; b4++) {
+                            if (!state.facadeOpenings.some(function(o) { return o.side === side3 && o.bay === b4; })) {
+                                state.facadeOpenings.push({side: side3, bay: b4});
+                            }
+                        }
+                    }
+                    buildFacadeSchematic();
+                    updateFacadeAreaInfo();
+                });
+            })(side, bayCount);
+            baysDiv.appendChild(allBtn);
+            row.appendChild(baysDiv);
+            facadeSchematic.appendChild(row);
+        });
     }
 
     if (facadeTypeEl) {
         facadeTypeEl.addEventListener('change', function() {
             state.facadeType = this.value;
+            state.facadeOpenings = [];
             if (facadeSidesBlock) facadeSidesBlock.style.display = this.value ? 'block' : 'none';
-            updateFacadeInfo();
+            buildFacadeSchematic();
+            updateFacadeAreaInfo();
         });
     }
-    facadeSideIds.forEach(function(id, i) {
-        var el = document.getElementById(id);
-        if (el) el.addEventListener('change', function() {
-            state.facadeSides = facadeSideKeys.filter(function(k, j) {
-                var cb = document.getElementById(facadeSideIds[j]);
-                return cb && cb.checked;
-            });
-            updateFacadeInfo();
-        });
-    });
 
     document.getElementById('calc-btn').addEventListener('click', function() {
         if (!state.pergolaType) { alert('\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0438\u043F \u043F\u0435\u0440\u0433\u043E\u043B\u044B'); return; }
@@ -351,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
             selected_variant: state.selectedVariant,
             client_name: state.clientName,
             facade_type: state.facadeType,
-            facade_sides: state.facadeSides
+            facade_openings: state.facadeOpenings
         };
 
         stepsEl.spinner.style.display = 'flex';
