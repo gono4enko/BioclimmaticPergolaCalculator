@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v93';
+    var SVG_V = 'v94';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -1168,6 +1168,8 @@ document.addEventListener('DOMContentLoaded', function() {
             (pir ? '&pir=1' : '') + '&ref=' + refDim;
         var img = document.getElementById('kp-scheme-img');
         if (img) img.src = '/api/pergola-scheme.svg?' + qs + '&_v=' + SVG_V;
+        var lm = parseInt(block.dataset.lm) || 1;
+        var moAttr = block.dataset.mo || '';
         var _fillF = getFillForSide('front');
         var _fillA = getFillForSide('left');
         var _fillC = getFillForSide('right');
@@ -1175,9 +1177,15 @@ document.addEventListener('DOMContentLoaded', function() {
         var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + (_fillF ? '&fill=' + encodeURIComponent(_fillF) : '');
         var fimg = document.getElementById('kp-front-img');
         if (fimg) fimg.src = '/api/pergola-front.svg?' + fqs + '&_v=' + SVG_V;
-        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=1' + (mo ? '&mo=' + mo : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0431\u043e\u043a\u0443') + (_fillA ? '&fill=' + encodeURIComponent(_fillA) : '');
+        var bqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + (_fillB ? '&fill=' + encodeURIComponent(_fillB) : '');
+        var bimg = document.getElementById('kp-back-img');
+        if (bimg) bimg.src = '/api/pergola-front.svg?' + bqs + '&_v=' + SVG_V;
+        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + (_fillA ? '&fill=' + encodeURIComponent(_fillA) : '');
         var simg = document.getElementById('kp-side-img');
         if (simg) simg.src = '/api/pergola-front.svg?' + sqs + '&_v=' + SVG_V;
+        var rqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + (_fillC ? '&fill=' + encodeURIComponent(_fillC) : '');
+        var rimg = document.getElementById('kp-right-img');
+        if (rimg) rimg.src = '/api/pergola-front.svg?' + rqs + '&_v=' + SVG_V;
         var lcAttr = block.dataset.lc;
         var pirAttr = block.dataset.pir === '1';
         var isoimg = document.getElementById('kp-iso-img');
@@ -1366,27 +1374,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 (isPir ? '&pir=1' : '') + '&ref=' + refDim + xcQs;
             var needsExtra = (moLocal && schL > moLocal + 0.001) || xc > 0;
             var colMmQs = isB200 ? '&col_mm=100' : (isLight ? '&col_mm=150&beam_h_mm=250' : '');
+            var schLMods = facadeLengthModules(schL);
             var _kpFillF = getFillForSide('front');
             var _kpFillA = getFillForSide('left');
             var _kpFillC = getFillForSide('right');
             var _kpFillB = getFillForSide('back');
             var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + colMmQs + (_kpFillF ? '&fill=' + encodeURIComponent(_kpFillF) : '') + '&_v=' + SVG_V;
-            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0431\u043e\u043a\u0443') + xcQs + colMmQs + (_kpFillA ? '&fill=' + encodeURIComponent(_kpFillA) : '') + '&_v=' + SVG_V;
+            var bqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + colMmQs + (_kpFillB ? '&fill=' + encodeURIComponent(_kpFillB) : '') + '&_v=' + SVG_V;
+            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + xcQs + colMmQs + (_kpFillA ? '&fill=' + encodeURIComponent(_kpFillA) : '') + '&_v=' + SVG_V;
+            var rqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + xcQs + colMmQs + (_kpFillC ? '&fill=' + encodeURIComponent(_kpFillC) : '') + '&_v=' + SVG_V;
             var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + (isPir ? '&pir=1' : '') + xcQs + (_kpFillF ? '&fill_front=' + encodeURIComponent(_kpFillF) : '') + (_kpFillC ? '&fill_right=' + encodeURIComponent(_kpFillC) : '') + (_kpFillA ? '&fill_left=' + encodeURIComponent(_kpFillA) : '') + (_kpFillB ? '&fill_back=' + encodeURIComponent(_kpFillB) : '') + '&_v=' + SVG_V;
             var isoLabel = isPir ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (PIR \u043F\u0430\u043D\u0435\u043B\u0438)' : (isB200 ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u0441\u0442\u0430\u0446\u0438\u043E\u043D\u0430\u0440\u043D\u044B\u0435)' : '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)');
             var isoBlock = (isPir || lamCnt) ? (
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">' + isoLabel + '</div>' +
                 '<img id="kp-iso-img" src="/api/pergola-iso.svg?' + iqs + '" alt="\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F" style="max-width:100%;height:auto;"></div>'
             ) : '';
-            html += '<div class="kp-block" id="kp-scheme-block" data-w="' + schW + '" data-l="' + schL + '" data-m="' + schM + '" data-pir="' + (isPir ? '1' : '0') + '" data-lc="' + lamCnt + '" data-h="' + pergolaH + '">' +
+            html += '<div class="kp-block" id="kp-scheme-block" data-w="' + schW + '" data-l="' + schL + '" data-m="' + schM + '" data-lm="' + schLMods + '" data-pir="' + (isPir ? '1' : '0') + '" data-lc="' + lamCnt + '" data-h="' + pergolaH + '" data-mo="' + (moLocal || '') + '">' +
                 '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83D\uDCD0</div><div class="kp-block-title">\u0421\u0445\u0435\u043C\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B</div></div>' +
-                '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;align-items:start;">' +
+                '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;align-items:start;">' +
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443</div>' +
                 '<img id="kp-scheme-img" src="/api/pergola-scheme.svg?' + qs + '&_v=' + SVG_V + '" alt="\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443" style="max-width:100%;height:auto;"></div>' +
-                '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u043F\u0435\u0440\u0435\u0434\u0438</div>' +
-                '<img id="kp-front-img" src="/api/pergola-front.svg?' + fqs + '" alt="\u0412\u0438\u0434 \u0441\u043F\u0435\u0440\u0435\u0434\u0438" style="max-width:100%;height:auto;"></div>' +
-                '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u0431\u043E\u043A\u0443</div>' +
-                '<img id="kp-side-img" src="/api/pergola-front.svg?' + sqs + '" alt="\u0412\u0438\u0434 \u0441\u0431\u043E\u043A\u0443" style="max-width:100%;height:auto;"></div>' +
+                '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438 (F)</div>' +
+                '<img id="kp-front-img" src="/api/pergola-front.svg?' + fqs + '" alt="\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438" style="max-width:100%;height:auto;"></div>' +
+                '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438 (B)</div>' +
+                '<img id="kp-back-img" src="/api/pergola-front.svg?' + bqs + '" alt="\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438" style="max-width:100%;height:auto;"></div>' +
+                '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430 (A)</div>' +
+                '<img id="kp-side-img" src="/api/pergola-front.svg?' + sqs + '" alt="\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430" style="max-width:100%;height:auto;"></div>' +
+                '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430 (C)</div>' +
+                '<img id="kp-right-img" src="/api/pergola-front.svg?' + rqs + '" alt="\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430" style="max-width:100%;height:auto;"></div>' +
                 isoBlock +
                 '</div>' +
                 '<div style="margin-top:0.6rem;font-size:0.82rem;color:#666;text-align:center;">\u0412\u044B\u0441\u043E\u0442\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B: ' + pergolaH.toFixed(2) + ' \u043C (\u0441\u0442\u0430\u043D\u0434\u0430\u0440\u0442). ' + (isB200 ? '\u041A\u043E\u043B\u043E\u043D\u043D\u044B 100\u00D7100 \u043C\u043C, \u0431\u0430\u043B\u043A\u0430 200\u00D750 \u043C\u043C, \u043B\u0430\u043C\u0435\u043B\u0438 200\u00D750 \u043C\u043C.' : (isLight ? '\u041A\u043E\u043B\u043E\u043D\u043D\u044B 150\u00D7150 \u043C\u043C, \u0431\u0430\u043B\u043A\u0430 150\u00D7250 \u043C\u043C.' : '\u041A\u043E\u043B\u043E\u043D\u043D\u044B 164\u00D7164 \u043C\u043C, \u0432\u044B\u0441\u043E\u0442\u0430 \u043B\u043E\u0442\u043A\u0430 280 \u043C\u043C, \u0432\u044B\u043B\u0435\u0442 \u043F\u043B\u043E\u0449\u0430\u0434\u043A\u0438 82 \u043C\u043C.')) + '</div>' +
