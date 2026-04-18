@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v79';
+    var SVG_V = 'v80';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -294,6 +294,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return Math.max(0.01, state.length - colW) * openH;
     }
 
+    function openingLabel(side, bay) {
+        var letter = side === 'front' ? 'F' : side === 'back' ? 'B' : side === 'left' ? 'A' : 'C';
+        var mods = facadeModules(state.width);
+        var total = (side === 'front' || side === 'back') ? mods : 1;
+        return total > 1 ? letter + (bay + 1) : letter;
+    }
+
     function updateFacadeAreaInfo() {
         if (!facadeAreaInfo) return;
         if (!state.facadeType || state.facadeOpenings.length === 0) {
@@ -301,10 +308,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         var mods = facadeModules(state.width);
         var total = 0;
-        state.facadeOpenings.forEach(function(o) { total += facadeOpeningArea(o, mods); });
+        var labels = [];
+        state.facadeOpenings.forEach(function(o) {
+            total += facadeOpeningArea(o, mods);
+            labels.push(openingLabel(o.side, o.bay));
+        });
         facadeAreaInfo.style.display = 'block';
-        facadeAreaInfo.textContent = '\u0412\u044b\u0431\u0440\u0430\u043d\u043e ' + state.facadeOpenings.length
-            + ' \u043f\u0440\u043e\u0451\u043c\u0430, \u043f\u043b\u043e\u0449\u0430\u0434\u044c \u2248 ' + total.toFixed(2) + ' \u043c\u00b2';
+        facadeAreaInfo.textContent = '\u041f\u0440\u043e\u0451\u043c\u044b: ' + labels.join(', ')
+            + ' \u2014 \u043f\u043b\u043e\u0449\u0430\u0434\u044c \u2248 ' + total.toFixed(2) + ' \u043c\u00b2';
     }
 
     function buildFacadeTopView() {
@@ -354,22 +365,32 @@ document.addEventListener('DOMContentLoaded', function() {
             var mdx=ox+mc*drawW/mods;
             p.push('<line x1="'+mdx+'" y1="'+(oy+STRIP)+'" x2="'+mdx+'" y2="'+(oy+drawH-STRIP)+'" stroke="#8099b8" stroke-width="1" stroke-dasharray="3,2"/>');
         }
+        function bayLbl(side, bay) {
+            var letter = side === 'front' ? 'F' : side === 'back' ? 'B' : side === 'left' ? 'A' : 'C';
+            var total = (side === 'front' || side === 'back') ? mods : 1;
+            return total > 1 ? letter + (bay + 1) : letter;
+        }
+
         for(var bf=0;bf<mods;bf++){
             var s=isSel('front',bf);
             var bx=ox+COL+bf*innerBayW; var bw=innerBayW;
             p.push('<rect x="'+bx+'" y="'+oy+'" width="'+bw+'" height="'+STRIP+'" fill="'+(s?selFill:unFill)+'" stroke="'+(s?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="front" data-bay="'+bf+'"/>');
-            if(s&&mods>1) p.push('<text x="'+(bx+bw/2)+'" y="'+(oy+STRIP/2+3)+'" text-anchor="middle" fill="#fff" font-size="7" font-family="Arial,sans-serif" pointer-events="none">\u041f'+(bf+1)+'</text>');
+            p.push('<text x="'+(bx+bw/2)+'" y="'+(oy+STRIP/2+3.5)+'" text-anchor="middle" fill="'+(s?'#fff':'#1e3d70')+'" font-size="8" font-weight="bold" font-family="Arial,sans-serif" pointer-events="none">'+bayLbl('front',bf)+'</text>');
         }
         for(var bb=0;bb<mods;bb++){
             var sb=isSel('back',bb);
             var bbx=ox+COL+bb*innerBayW; var bbw=innerBayW;
             p.push('<rect x="'+bbx+'" y="'+(oy+drawH-STRIP)+'" width="'+bbw+'" height="'+STRIP+'" fill="'+(sb?selFill:unFill)+'" stroke="'+(sb?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="back" data-bay="'+bb+'"/>');
-            if(sb&&mods>1) p.push('<text x="'+(bbx+bbw/2)+'" y="'+(oy+drawH-STRIP/2+3)+'" text-anchor="middle" fill="#fff" font-size="7" font-family="Arial,sans-serif" pointer-events="none">\u041f'+(bb+1)+'</text>');
+            p.push('<text x="'+(bbx+bbw/2)+'" y="'+(oy+drawH-STRIP/2+3.5)+'" text-anchor="middle" fill="'+(sb?'#fff':'#1e3d70')+'" font-size="8" font-weight="bold" font-family="Arial,sans-serif" pointer-events="none">'+bayLbl('back',bb)+'</text>');
         }
         var sL=isSel('left',0);
+        var leftMidY=oy+COL+(drawH-2*COL)/2;
         p.push('<rect x="'+ox+'" y="'+(oy+COL)+'" width="'+STRIP+'" height="'+(drawH-2*COL)+'" fill="'+(sL?selFill:unFill)+'" stroke="'+(sL?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="left" data-bay="0"/>');
+        p.push('<text transform="translate('+(ox+STRIP/2)+','+leftMidY+') rotate(-90)" text-anchor="middle" fill="'+(sL?'#fff':'#1e3d70')+'" font-size="8" font-weight="bold" font-family="Arial,sans-serif" pointer-events="none">A</text>');
         var sR=isSel('right',0);
+        var rightMidY=oy+COL+(drawH-2*COL)/2;
         p.push('<rect x="'+(ox+drawW-STRIP)+'" y="'+(oy+COL)+'" width="'+STRIP+'" height="'+(drawH-2*COL)+'" fill="'+(sR?selFill:unFill)+'" stroke="'+(sR?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="right" data-bay="0"/>');
+        p.push('<text transform="translate('+(ox+drawW-STRIP/2)+','+rightMidY+') rotate(-90)" text-anchor="middle" fill="'+(sR?'#fff':'#1e3d70')+'" font-size="8" font-weight="bold" font-family="Arial,sans-serif" pointer-events="none">C</text>');
         var cf='#1a3a6e';
         [[ox,oy],[ox+drawW-COL,oy],[ox,oy+drawH-COL],[ox+drawW-COL,oy+drawH-COL]].forEach(function(c){
             p.push('<rect x="'+c[0]+'" y="'+c[1]+'" width="'+COL+'" height="'+COL+'" fill="'+cf+'" rx="2" pointer-events="none"/>');
