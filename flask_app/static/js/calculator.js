@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v86';
+    var SVG_V = 'v87';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -301,6 +301,16 @@ document.addEventListener('DOMContentLoaded', function() {
         var mo = state._maxOverhang || null;
         if (!mo || length <= mo + 0.001) return 1;
         return Math.max(2, Math.ceil(length / mo));
+    }
+
+    function getFillForSide(side) {
+        if (!state.facadePerOpening) return '';
+        var bays = (side === 'front' || side === 'back') ? facadeModules(state.width) : facadeLengthModules(state.length);
+        for (var i = 0; i < bays; i++) {
+            var t = state.facadePerOpening[side + '_' + i];
+            if (t) return t;
+        }
+        return '';
     }
 
     function facadeOpeningArea(opening, mods) {
@@ -1135,17 +1145,20 @@ document.addEventListener('DOMContentLoaded', function() {
             (pir ? '&pir=1' : '') + '&ref=' + refDim;
         var img = document.getElementById('kp-scheme-img');
         if (img) img.src = '/api/pergola-scheme.svg?' + qs + '&_v=' + SVG_V;
-        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид спереди');
+        var _fillF = getFillForSide('front');
+        var _fillA = getFillForSide('left');
+        var _fillC = getFillForSide('right');
+        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + (_fillF ? '&fill=' + encodeURIComponent(_fillF) : '');
         var fimg = document.getElementById('kp-front-img');
         if (fimg) fimg.src = '/api/pergola-front.svg?' + fqs + '&_v=' + SVG_V;
-        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=1' + (mo ? '&mo=' + mo : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид сбоку');
+        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=1' + (mo ? '&mo=' + mo : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0431\u043e\u043a\u0443') + (_fillA ? '&fill=' + encodeURIComponent(_fillA) : '');
         var simg = document.getElementById('kp-side-img');
         if (simg) simg.src = '/api/pergola-front.svg?' + sqs + '&_v=' + SVG_V;
         var lcAttr = block.dataset.lc;
         var pirAttr = block.dataset.pir === '1';
         var isoimg = document.getElementById('kp-iso-img');
         if (isoimg && (pirAttr || lcAttr)) {
-            var iqs = 'w=' + w + '&l=' + l + '&h=' + pergolaH + '&m=' + m + (lcAttr ? '&lc=' + lcAttr : '') + (mo ? '&mo=' + mo : '') + (pirAttr ? '&pir=1' : '') + '&_v=' + SVG_V;
+            var iqs = 'w=' + w + '&l=' + l + '&h=' + pergolaH + '&m=' + m + (lcAttr ? '&lc=' + lcAttr : '') + (mo ? '&mo=' + mo : '') + (pirAttr ? '&pir=1' : '') + (_fillF ? '&fill_front=' + encodeURIComponent(_fillF) : '') + (_fillC ? '&fill_right=' + encodeURIComponent(_fillC) : '') + '&_v=' + SVG_V;
             isoimg.src = '/api/pergola-iso.svg?' + iqs;
         }
         var warn = document.getElementById('kp-scheme-warn');
@@ -1328,9 +1341,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 (isPir ? '&pir=1' : '') + '&ref=' + refDim + xcQs;
             var needsExtra = (moLocal && schL > moLocal + 0.001) || xc > 0;
             var colMmQs = isB200 ? '&col_mm=100' : (isLight ? '&col_mm=150&beam_h_mm=250' : '');
-            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид спереди') + colMmQs + '&_v=' + SVG_V;
-            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('Вид сбоку') + xcQs + colMmQs + '&_v=' + SVG_V;
-            var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + (isPir ? '&pir=1' : '') + xcQs + '&_v=' + SVG_V;
+            var _kpFillF = getFillForSide('front');
+            var _kpFillA = getFillForSide('left');
+            var _kpFillC = getFillForSide('right');
+            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + colMmQs + (_kpFillF ? '&fill=' + encodeURIComponent(_kpFillF) : '') + '&_v=' + SVG_V;
+            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=1' + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0431\u043e\u043a\u0443') + xcQs + colMmQs + (_kpFillA ? '&fill=' + encodeURIComponent(_kpFillA) : '') + '&_v=' + SVG_V;
+            var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + (isPir ? '&pir=1' : '') + xcQs + (_kpFillF ? '&fill_front=' + encodeURIComponent(_kpFillF) : '') + (_kpFillC ? '&fill_right=' + encodeURIComponent(_kpFillC) : '') + '&_v=' + SVG_V;
             var isoLabel = isPir ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (PIR \u043F\u0430\u043D\u0435\u043B\u0438)' : (isB200 ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u0441\u0442\u0430\u0446\u0438\u043E\u043D\u0430\u0440\u043D\u044B\u0435)' : '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)');
             var isoBlock = (isPir || lamCnt) ? (
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">' + isoLabel + '</div>' +

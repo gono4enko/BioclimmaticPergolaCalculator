@@ -70,8 +70,10 @@ def pergola_front_svg():
         col_mm = int(cm_raw) if cm_raw and cm_raw.isdigit() else 164
         bh_raw = request.args.get('beam_h_mm')
         beam_h_mm = int(bh_raw) if bh_raw and bh_raw.isdigit() else 280
+        fill_type = request.args.get('fill', '').strip() or None
         svg = generate_front_view_svg(width=w, height=h, modules=m, max_overhang=mo, ref=ref,
-                                      title=title, extra_columns=xc, col_mm=col_mm, beam_h_mm=beam_h_mm)
+                                      title=title, extra_columns=xc, col_mm=col_mm, beam_h_mm=beam_h_mm,
+                                      fill_type=fill_type)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:
@@ -97,12 +99,14 @@ def pergola_iso_svg():
             return Response('', status=400)
         xc_raw = request.args.get('xc')
         xc = int(xc_raw) if xc_raw and xc_raw.isdigit() else 0
+        fill_front = request.args.get('fill_front', '').strip() or None
+        fill_right = request.args.get('fill_right', '').strip() or None
         if is_pir:
             svg = generate_pir_iso_svg(width=w, length=l, height=h, modules=m, max_overhang=mo)
         else:
             svg = generate_isometric_svg(width=w, length=l, height=h, lamella_count=lc,
                                          modules=m, lamella_open_deg=deg, max_overhang=mo,
-                                         extra_columns=xc)
+                                         extra_columns=xc, fill_front=fill_front, fill_right=fill_right)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:

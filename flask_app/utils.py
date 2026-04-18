@@ -608,7 +608,34 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
     return svg
 
 
-def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди', extra_columns=0, col_mm=164, beam_h_mm=280):
+def _draw_facade_fill(fill_type, x, y, w, h):
+    """Return SVG string for facade opening fill in flat elevation views."""
+    out = ''
+    ft = (fill_type or '').strip()
+    if not ft or w < 2 or h < 2:
+        return out
+    if ft in ('FP-20', 'FP-PIR'):
+        bg = '#4e6070' if ft == 'FP-PIR' else '#5d7080'
+        line_c = '#3b4e5e' if ft == 'FP-PIR' else '#4a5e6e'
+        out += f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" fill="{bg}" opacity="0.80"/>'
+        n = max(3, int(h / 18))
+        for i in range(1, n + 1):
+            ly = y + i * h / (n + 1)
+            out += (f'<line x1="{x:.1f}" y1="{ly:.1f}" x2="{x + w:.1f}" y2="{ly:.1f}" '
+                    f'stroke="{line_c}" stroke-width="0.9" opacity="0.55"/>')
+    elif ft.startswith('FZ-44'):
+        slat_c = '#4d6578'
+        gap_r = 0.08 if '-100' in ft else (0.30 if '-70' in ft else 0.52)
+        n_slats = max(4, int(h / 13))
+        sh = h / n_slats
+        sfh = max(1.0, sh * (1.0 - gap_r))
+        for i in range(n_slats):
+            sy = y + i * sh
+            out += f'<rect x="{x:.1f}" y="{sy:.1f}" width="{w:.1f}" height="{sfh:.1f}" fill="{slat_c}" opacity="0.80"/>'
+    return out
+
+
+def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди', extra_columns=0, col_mm=164, beam_h_mm=280, fill_type=None):
     """Front/side elevation. width = horizontal dimension (m), height in m.
     Uses shared scale (DIM_TARGET_PX/ref) so views align with top view.
     """
@@ -725,11 +752,21 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     svg += (f'<text x="{_ldr_elbow_x:.1f}" y="{_ldr_elbow_y - 3:.1f}" '
             f'text-anchor="end" font-size="{small_font}" fill="{DIM_COLOR}">□ {col_mm_label}×{col_mm_label} мм</text>')
 
+    if fill_type and fill_type.strip():
+        fill_y0 = pergola_top + beam_h_px
+        fill_h_px = pergola_bottom - fill_y0
+        sorted_xs = sorted(col_xs)
+        for _bi in range(len(sorted_xs) - 1):
+            _fx0 = sorted_xs[_bi] + col_w_px
+            _fx1 = sorted_xs[_bi + 1]
+            if _fx1 - _fx0 > 2:
+                svg += _draw_facade_fill(fill_type, _fx0, fill_y0, _fx1 - _fx0, fill_h_px)
+
     svg += '</svg>'
     return svg
 
 
-def generate_isometric_svg(width, length, height=3.0, lamella_count=None, modules=1, lamella_open_deg=55, max_overhang=None, extra_columns=0):
+def generate_isometric_svg(width, length, height=3.0, lamella_count=None, modules=1, lamella_open_deg=55, max_overhang=None, extra_columns=0, fill_front=None, fill_right=None):
     """3D isometric view of pergola with tilted/open lamellas.
     Camera looks from front-right-above. X = ширина (вправо-вниз),
     Z = длина (влево-вниз в глубину), Y = высота (вверх).
@@ -910,6 +947,55 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     svg += draw_beam(width - COL_W, width, COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
 
     svg += draw_beam(0, width, 0, COL_W, by0, by1, beam_top, beam_front, beam_side)
+
+    def _iso_fill_face(ft, pts_bot_left, pts_bot_right, pts_top_left, pts_top_right, n_h_lines=8):
+        _out = ''
+        if not ft or not ft.strip():
+            return _out
+        ft = ft.strip()
+        if ft in ('FP-20', 'FP-PIR'):
+            bg = '#455a6a' if ft == 'FP-PIR' else '#527080'
+            line_c = '#334455'
+            _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left], bg, bg, 0.0)
+            for _li in range(1, n_h_lines + 1):
+                t = _li / (n_h_lines + 1)
+                def _lerp(a, b, t):
+                    return (a[0]+t*(b[0]-a[0]), a[1]+t*(b[1]-a[1]), a[2]+t*(b[2]-a[2]))
+                p1 = _lerp(pts_bot_left, pts_top_left, t)
+                p2 = _lerp(pts_bot_right, pts_top_right, t)
+                _out += line(p1, p2, line_c, 0.7)
+        elif ft.startswith('FZ-44'):
+            slat_c = '#415568'
+            gap_r = 0.08 if '-100' in ft else (0.30 if '-70' in ft else 0.52)
+            n_slats = 8
+            for _si in range(n_slats):
+                t0 = _si / n_slats
+                t1 = t0 + (1.0 - gap_r) / n_slats
+                def _lerp(a, b, t):
+                    return (a[0]+t*(b[0]-a[0]), a[1]+t*(b[1]-a[1]), a[2]+t*(b[2]-a[2]))
+                p0l = _lerp(pts_bot_left, pts_top_left, t0)
+                p0r = _lerp(pts_bot_right, pts_top_right, t0)
+                p1l = _lerp(pts_bot_left, pts_top_left, t1)
+                p1r = _lerp(pts_bot_right, pts_top_right, t1)
+                _out += quad([p0l, p0r, p1r, p1l], slat_c, slat_c, 0.3)
+        return _out
+
+    if fill_front and fill_front.strip():
+        for _mi in range(mod_count):
+            _fx0 = col_xs[0] if _mi == 0 else width / mod_count * _mi + COL_W / 2
+            _fx1 = col_xs[-1] if _mi == mod_count - 1 else width / mod_count * (_mi + 1) - COL_W / 2
+            _pbl = (_fx0, 0, 0)
+            _pbr = (_fx1, 0, 0)
+            _ptl = (_fx0, column_top, 0)
+            _ptr = (_fx1, column_top, 0)
+            svg += _iso_fill_face(fill_front, _pbl, _pbr, _ptl, _ptr)
+
+    if fill_right and fill_right.strip():
+        _pbl = (width, 0, COL_W)
+        _pbr = (width, 0, length - COL_W)
+        _ptl = (width, column_top, COL_W)
+        _ptr = (width, column_top, length - COL_W)
+        svg += _iso_fill_face(fill_right, _pbl, _pbr, _ptl, _ptr)
 
     if mid_cols:
         mid_cols.sort(key=lambda c: c[0])
