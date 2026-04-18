@@ -997,22 +997,26 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
 
     svg += draw_beam(0, width, 0, COL_W, by0, by1, beam_top, beam_front, beam_side)
 
-    if fill_front and fill_front.strip():
-        for _mi in range(mod_count):
-            _fx0 = col_xs[0] if _mi == 0 else width / mod_count * _mi + COL_W / 2
-            _fx1 = col_xs[-1] if _mi == mod_count - 1 else width / mod_count * (_mi + 1) - COL_W / 2
-            _pbl = (_fx0, 0, 0)
-            _pbr = (_fx1, 0, 0)
-            _ptl = (_fx0, column_top, 0)
-            _ptr = (_fx1, column_top, 0)
-            svg += _iso_fill_face(fill_front, _pbl, _pbr, _ptl, _ptr)
-
     if fill_right and fill_right.strip():
         _pbl = (width, 0, COL_W)
         _pbr = (width, 0, length - COL_W)
         _ptl = (width, column_top, COL_W)
         _ptr = (width, column_top, length - COL_W)
         svg += _iso_fill_face(fill_right, _pbl, _pbr, _ptl, _ptr)
+
+    any_other_fill = any([fill_right, fill_left, fill_back])
+    for _mi in range(mod_count):
+        _fx0 = col_xs[0] if _mi == 0 else width / mod_count * _mi + COL_W / 2
+        _fx1 = col_xs[-1] if _mi == mod_count - 1 else width / mod_count * (_mi + 1) - COL_W / 2
+        _pbl = (_fx0, 0, 0)
+        _pbr = (_fx1, 0, 0)
+        _ptl = (_fx0, column_top, 0)
+        _ptr = (_fx1, column_top, 0)
+        if fill_front and fill_front.strip():
+            svg += _iso_fill_face(fill_front, _pbl, _pbr, _ptl, _ptr)
+        elif any_other_fill:
+            coords = ' '.join(f'{x:.1f},{y:.1f}' for x, y in (s(p) for p in [_pbl, _pbr, _ptr, _ptl]))
+            svg += f'<polygon points="{coords}" fill="#eef2f7" fill-opacity="0.78" stroke="#2a4a7e" stroke-width="1.0" stroke-dasharray="6,3" stroke-linejoin="round"/>'
 
     if mid_cols:
         mid_cols.sort(key=lambda c: c[0])
