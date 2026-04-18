@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v81';
+    var SVG_V = 'v82';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -364,10 +364,10 @@ document.addEventListener('DOMContentLoaded', function() {
         for(var mc=1;mc<mods;mc++){
             var mbx=Math.round(ox+mc*drawW/mods-COL/2);
             var mby=oy+STRIP; var mbh=drawH-2*STRIP;
-            p.push('<rect x="'+mbx+'" y="'+mby+'" width="'+COL+'" height="'+mbh+'" fill="#243d5c" pointer-events="none"><title>\u0411\u0430\u043b\u043a\u0430 298\xd7280 \u2014 \u0434\u0432\u043e\u0439\u043d\u043e\u0439 \u0441\u043b\u0438\u0432\u043d\u043e\u0439 \u043b\u043e\u0442\u043e\u043a</title></rect>');
+            p.push('<rect x="'+mbx+'" y="'+mby+'" width="'+COL+'" height="'+mbh+'" fill="#b8cadf" pointer-events="none"><title>\u0411\u0430\u043b\u043a\u0430 298\xd7280 \u2014 \u0434\u0432\u043e\u0439\u043d\u043e\u0439 \u0441\u043b\u0438\u0432\u043d\u043e\u0439 \u043b\u043e\u0442\u043e\u043a</title></rect>');
             var dcx=mbx+COL/2;
-            p.push('<line x1="'+(dcx-2)+'" y1="'+(mby+5)+'" x2="'+(dcx-2)+'" y2="'+(mby+mbh-5)+'" stroke="#5a88bb" stroke-width="1.2" stroke-linecap="round" pointer-events="none"/>');
-            p.push('<line x1="'+(dcx+1.5)+'" y1="'+(mby+5)+'" x2="'+(dcx+1.5)+'" y2="'+(mby+mbh-5)+'" stroke="#5a88bb" stroke-width="1.2" stroke-linecap="round" pointer-events="none"/>');
+            p.push('<line x1="'+(dcx-2)+'" y1="'+(mby+5)+'" x2="'+(dcx-2)+'" y2="'+(mby+mbh-5)+'" stroke="#7a8fab" stroke-width="1.2" stroke-linecap="round" pointer-events="none"/>');
+            p.push('<line x1="'+(dcx+1.5)+'" y1="'+(mby+5)+'" x2="'+(dcx+1.5)+'" y2="'+(mby+mbh-5)+'" stroke="#7a8fab" stroke-width="1.2" stroke-linecap="round" pointer-events="none"/>');
         }
         function bayLbl(side, bay) {
             var letter = side === 'front' ? 'F' : side === 'back' ? 'B' : side === 'left' ? 'A' : 'C';
