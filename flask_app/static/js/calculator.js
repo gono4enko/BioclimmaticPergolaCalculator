@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v75';
+    var SVG_V = 'v76';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -986,7 +986,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (schW > 0 && schL > 0) {
             var isPir = state.pergolaType === 'B600';
             var isB200 = state.pergolaType === 'B200';
-            var isLight = isPir && state.selectedVariant === 'Light';
+            var isLight = state.selectedVariant === 'Light';
             var lamMm;
             if (state.pergolaType === 'B200') {
                 lamMm = state.lamellaSize === '20' ? 400 : 500;
