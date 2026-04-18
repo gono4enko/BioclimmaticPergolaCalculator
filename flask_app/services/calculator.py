@@ -541,13 +541,15 @@ def adjust_length_for_lamella_size(length_m, lamella_size):
     return round(num_lamellas * lamella_size_m, 2)
 
 
-def get_modules_by_dimensions(width, length, pergola_type=None):
-    if width <= 4.5:
+def get_modules_by_dimensions(width, length, pergola_type=None, max_module_width=None):
+    mw = max_module_width if max_module_width else 4.5
+    return max(1, math.ceil(width / mw))
+
+
+def get_length_modules(length, max_overhang=None):
+    if not max_overhang or length <= max_overhang + 0.001:
         return 1
-    elif width <= 9.0:
-        return 2
-    else:
-        return 3
+    return max(2, math.ceil(length / max_overhang))
 
 
 def get_base_price(pergola_type, lamella_size, width_m, length_m):
@@ -883,6 +885,14 @@ def perform_calculation(dimensions, options):
                            "back": "\u0441\u0437\u0430\u0434\u0438",
                            "left": "\u0441\u043b\u0435\u0432\u0430",
                            "right": "\u0441\u043f\u0440\u0430\u0432\u0430"}
+            side_max_bay = {"left": 0, "right": 0}
+            for _op in facade_openings:
+                if not isinstance(_op, dict):
+                    continue
+                _s = _op.get("side", "")
+                if _s in side_max_bay:
+                    side_max_bay[_s] = max(side_max_bay[_s], int(_op.get("bay", 0)))
+            length_modules = max(side_max_bay["left"], side_max_bay["right"]) + 1
             type_groups = {}
             for opening in facade_openings:
                 if not isinstance(opening, dict):
@@ -899,7 +909,7 @@ def perform_calculation(dimensions, options):
                     bay_w = max(0.01, (width_m / max(1, modules)) - col_w)
                     type_groups[o_type]["area"] += bay_w * open_h
                 else:
-                    side_w = max(0.01, length_m - col_w)
+                    side_w = max(0.01, (length_m / max(1, length_modules)) - col_w)
                     type_groups[o_type]["area"] += side_w * open_h
                 type_groups[o_type]["sides"][side] = type_groups[o_type]["sides"].get(side, 0) + 1
 

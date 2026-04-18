@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v85';
+    var SVG_V = 'v86';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -120,6 +120,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 state.lamellaType = 'B600-PIR';
             }
         }
+
+        var _spec2 = null;
+        if (state.variantsData) {
+            state.variantsData.forEach(function(sv2) {
+                if (sv2.variant === variant && (!lamellaSize || sv2.lamella_size === lamellaSize)) _spec2 = sv2;
+            });
+            if (!_spec2) state.variantsData.forEach(function(sv2) { if (sv2.variant === variant) _spec2 = sv2; });
+        }
+        state._maxModuleWidth = _spec2 ? (_spec2.max_module_width || null) : null;
+        state._maxOverhang = _spec2 ? (_spec2.max_overhang || null) : null;
 
         updateMaxDimensions();
         stepsEl.step3.style.display = 'block';
@@ -283,25 +293,32 @@ document.addEventListener('DOMContentLoaded', function() {
     var facadeAreaInfo = document.getElementById('facade-area-info');
 
     function facadeModules(width) {
-        if (width <= 4.5) return 1;
-        if (width <= 9.0) return 2;
-        return 3;
+        var mw = state._maxModuleWidth || 4.5;
+        return Math.max(1, Math.ceil(width / mw));
+    }
+
+    function facadeLengthModules(length) {
+        var mo = state._maxOverhang || null;
+        if (!mo || length <= mo + 0.001) return 1;
+        return Math.max(2, Math.ceil(length / mo));
     }
 
     function facadeOpeningArea(opening, mods) {
         var colW = (state.selectedVariant === 'Light') ? 0.150 : (state.pergolaType === 'B200' ? 0.100 : 0.164);
         var beamH = (state.selectedVariant === 'Light') ? 0.250 : (state.pergolaType === 'B200' ? 0.200 : 0.280);
         var openH = Math.max(0.1, 3.0 - beamH);
+        var lMods = facadeLengthModules(state.length);
         if (opening.side === 'front' || opening.side === 'back') {
             return Math.max(0.01, (state.width / Math.max(1, mods)) - colW) * openH;
         }
-        return Math.max(0.01, state.length - colW) * openH;
+        return Math.max(0.01, (state.length / Math.max(1, lMods)) - colW) * openH;
     }
 
     function openingLabel(side, bay) {
         var letter = side === 'front' ? 'F' : side === 'back' ? 'B' : side === 'left' ? 'A' : 'C';
         var mods = facadeModules(state.width);
-        var total = (side === 'front' || side === 'back') ? mods : 1;
+        var lMods = facadeLengthModules(state.length);
+        var total = (side === 'front' || side === 'back') ? mods : lMods;
         return total > 1 ? letter + (bay + 1) : letter;
     }
 
@@ -340,6 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var W = state.width; var L = state.length;
         if (W <= 0 || L <= 0) { tableEl.innerHTML = ''; return; }
         var mods = facadeModules(W);
+        var lMods = facadeLengthModules(L);
         var TYPES = [
             {v: 'FP-20',    n: 'FP-20 \u2014 \u0444\u0430\u0441\u0430\u0434\u043d\u044b\u0435 \u043f\u0430\u043d\u0435\u043b\u0438 (199 \u20ac/\u043c\u00b2)'},
             {v: 'FP-PIR',   n: 'FP-PIR \u2014 PIR-\u0441\u044d\u043d\u0434\u0432\u0438\u0447 (150 \u20ac/\u043c\u00b2)'},
@@ -348,15 +366,21 @@ document.addEventListener('DOMContentLoaded', function() {
             {v: 'FZ-44-100',n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 100% (170 \u20ac/\u043c\u00b2)'}
         ];
         var openings = [];
-        openings.push({side: 'left',  bay: 0, label: 'A',
-            desc: '\u0421\u043b\u0435\u0432\u0430'});
+        for (var ai = 0; ai < lMods; ai++) {
+            openings.push({side: 'left', bay: ai,
+                label: lMods > 1 ? 'A' + (ai+1) : 'A',
+                desc: lMods > 1 ? '\u0421\u043b\u0435\u0432\u0430 \u00b7 \u0421\u0435\u043a\u0446\u0438\u044f ' + (ai+1) : '\u0421\u043b\u0435\u0432\u0430'});
+        }
         for (var bi = 0; bi < mods; bi++) {
             openings.push({side: 'back', bay: bi,
                 label: mods > 1 ? 'B' + (bi+1) : 'B',
                 desc: mods > 1 ? '\u0421\u0437\u0430\u0434\u0438 \u00b7 \u041f\u0440\u043e\u043b\u00b8\u0442 ' + (bi+1) : '\u0421\u0437\u0430\u0434\u0438'});
         }
-        openings.push({side: 'right', bay: 0, label: 'C',
-            desc: '\u0421\u043f\u0440\u0430\u0432\u0430'});
+        for (var ci = 0; ci < lMods; ci++) {
+            openings.push({side: 'right', bay: ci,
+                label: lMods > 1 ? 'C' + (ci+1) : 'C',
+                desc: lMods > 1 ? '\u0421\u043f\u0440\u0430\u0432\u0430 \u00b7 \u0421\u0435\u043a\u0446\u0438\u044f ' + (ci+1) : '\u0421\u043f\u0440\u0430\u0432\u0430'});
+        }
         for (var fi = 0; fi < mods; fi++) {
             openings.push({side: 'front', bay: fi,
                 label: mods > 1 ? 'F' + (fi+1) : 'F',
@@ -421,6 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         var mods = facadeModules(W);
+        var lMods = facadeLengthModules(L);
         var ML = 30; var MR = 16; var MT = 22; var MB = 24;
         var STRIP = 16; var COL = 14;
         var MAX_W = 270; var MAX_H = 240;
@@ -431,6 +456,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var svgH = drawH + MT + MB;
         var ox = ML; var oy = MT;
         var innerBayW = (drawW - 2 * COL) / mods;
+        var innerBayH = (drawH - 2 * COL) / lMods;
         var canClick = true;
         var selFill = '#1a3a6e'; var selStroke = '#0d2550';
         var unFill = '#cde0f5';
@@ -458,8 +484,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         function bayLbl(side, bay) {
             var letter = side === 'front' ? 'F' : side === 'back' ? 'B' : side === 'left' ? 'A' : 'C';
-            var total = (side === 'front' || side === 'back') ? mods : 1;
+            var total = (side === 'front' || side === 'back') ? mods : lMods;
             return total > 1 ? letter + (bay + 1) : letter;
+        }
+
+        for(var lm=1;lm<lMods;lm++){
+            var lbY=Math.round(oy+COL+lm*innerBayH-COL/2);
+            var lbX=ox+STRIP; var lbW=drawW-2*STRIP;
+            p.push('<rect x="'+lbX+'" y="'+lbY+'" width="'+lbW+'" height="'+COL+'" fill="#b8cadf" pointer-events="none"><title>\u0411\u0430\u043b\u043a\u0430 298\xd7280 \u2014 \u0434\u0432\u043e\u0439\u043d\u043e\u0439 \u0441\u043b\u0438\u0432\u043d\u043e\u0439 \u043b\u043e\u0442\u043e\u043a</title></rect>');
+            var dcY=lbY+COL/2;
+            p.push('<line x1="'+(lbX+5)+'" y1="'+(dcY-2)+'" x2="'+(lbX+lbW-5)+'" y2="'+(dcY-2)+'" stroke="#7a8fab" stroke-width="1.2" stroke-linecap="round" pointer-events="none"/>');
+            p.push('<line x1="'+(lbX+5)+'" y1="'+(dcY+1.5)+'" x2="'+(lbX+lbW-5)+'" y2="'+(dcY+1.5)+'" stroke="#7a8fab" stroke-width="1.2" stroke-linecap="round" pointer-events="none"/>');
         }
 
         for(var bb=0;bb<mods;bb++){
@@ -474,14 +509,20 @@ document.addEventListener('DOMContentLoaded', function() {
             p.push('<rect x="'+bx+'" y="'+(oy+drawH-STRIP)+'" width="'+bw+'" height="'+STRIP+'" fill="'+(s?selFill:unFill)+'" stroke="'+(s?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="front" data-bay="'+bf+'"/>');
             p.push('<text x="'+(bx+bw/2)+'" y="'+(oy+drawH-STRIP/2+3.5)+'" text-anchor="middle" fill="'+(s?'#fff':'#1e3d70')+'" font-size="8" font-weight="bold" font-family="Arial,sans-serif" pointer-events="none">'+bayLbl('front',bf)+'</text>');
         }
-        var sL=isSel('left',0);
-        var leftMidY=oy+COL+(drawH-2*COL)/2;
-        p.push('<rect x="'+ox+'" y="'+(oy+COL)+'" width="'+STRIP+'" height="'+(drawH-2*COL)+'" fill="'+(sL?selFill:unFill)+'" stroke="'+(sL?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="left" data-bay="0"/>');
-        p.push('<text transform="translate('+(ox+STRIP/2)+','+leftMidY+') rotate(-90)" text-anchor="middle" fill="'+(sL?'#fff':'#1e3d70')+'" font-size="8" font-weight="bold" font-family="Arial,sans-serif" pointer-events="none">A</text>');
-        var sR=isSel('right',0);
-        var rightMidY=oy+COL+(drawH-2*COL)/2;
-        p.push('<rect x="'+(ox+drawW-STRIP)+'" y="'+(oy+COL)+'" width="'+STRIP+'" height="'+(drawH-2*COL)+'" fill="'+(sR?selFill:unFill)+'" stroke="'+(sR?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="right" data-bay="0"/>');
-        p.push('<text transform="translate('+(ox+drawW-STRIP/2)+','+rightMidY+') rotate(-90)" text-anchor="middle" fill="'+(sR?'#fff':'#1e3d70')+'" font-size="8" font-weight="bold" font-family="Arial,sans-serif" pointer-events="none">C</text>');
+        for(var la=0;la<lMods;la++){
+            var sLA=isSel('left',la);
+            var laY=oy+COL+la*innerBayH; var laH=innerBayH;
+            var laMidY=laY+laH/2;
+            p.push('<rect x="'+ox+'" y="'+laY+'" width="'+STRIP+'" height="'+laH+'" fill="'+(sLA?selFill:unFill)+'" stroke="'+(sLA?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="left" data-bay="'+la+'"/>');
+            p.push('<text transform="translate('+(ox+STRIP/2)+','+laMidY+') rotate(-90)" text-anchor="middle" fill="'+(sLA?'#fff':'#1e3d70')+'" font-size="8" font-weight="bold" font-family="Arial,sans-serif" pointer-events="none">'+bayLbl('left',la)+'</text>');
+        }
+        for(var lc=0;lc<lMods;lc++){
+            var sRC=isSel('right',lc);
+            var lcY=oy+COL+lc*innerBayH; var lcH=innerBayH;
+            var lcMidY=lcY+lcH/2;
+            p.push('<rect x="'+(ox+drawW-STRIP)+'" y="'+lcY+'" width="'+STRIP+'" height="'+lcH+'" fill="'+(sRC?selFill:unFill)+'" stroke="'+(sRC?selStroke:unStroke)+'" stroke-width="1" rx="1" cursor="'+cur+'" data-side="right" data-bay="'+lc+'"/>');
+            p.push('<text transform="translate('+(ox+drawW-STRIP/2)+','+lcMidY+') rotate(-90)" text-anchor="middle" fill="'+(sRC?'#fff':'#1e3d70')+'" font-size="8" font-weight="bold" font-family="Arial,sans-serif" pointer-events="none">'+bayLbl('right',lc)+'</text>');
+        }
         var cf='#1a3a6e';
         [[ox,oy],[ox+drawW-COL,oy],[ox,oy+drawH-COL],[ox+drawW-COL,oy+drawH-COL]].forEach(function(c){
             p.push('<rect x="'+c[0]+'" y="'+c[1]+'" width="'+COL+'" height="'+COL+'" fill="'+cf+'" rx="2" pointer-events="none"/>');
@@ -491,10 +532,19 @@ document.addEventListener('DOMContentLoaded', function() {
             p.push('<rect x="'+mcx2+'" y="'+oy+'" width="'+COL+'" height="'+COL+'" fill="'+cf+'" rx="2" pointer-events="none"/>');
             p.push('<rect x="'+mcx2+'" y="'+(oy+drawH-COL)+'" width="'+COL+'" height="'+COL+'" fill="'+cf+'" rx="2" pointer-events="none"/>');
         }
+        for(var lm2=1;lm2<lMods;lm2++){
+            var lbY2=Math.round(oy+COL+lm2*innerBayH-COL/2);
+            p.push('<rect x="'+ox+'" y="'+lbY2+'" width="'+COL+'" height="'+COL+'" fill="'+cf+'" rx="2" pointer-events="none"/>');
+            p.push('<rect x="'+(ox+drawW-COL)+'" y="'+lbY2+'" width="'+COL+'" height="'+COL+'" fill="'+cf+'" rx="2" pointer-events="none"/>');
+            for(var mc3=1;mc3<mods;mc3++){
+                var mcx3=Math.round(ox+mc3*drawW/mods-COL/2);
+                p.push('<rect x="'+mcx3+'" y="'+lbY2+'" width="'+COL+'" height="'+COL+'" fill="'+cf+'" rx="2" pointer-events="none"/>');
+            }
+        }
         p.push('<text x="'+(ox+drawW/2)+'" y="'+(oy-8)+'" text-anchor="middle" fill="#667" font-size="8" font-style="italic" font-family="Arial,sans-serif">\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443 \u00b7 S = '+(W*L).toFixed(1)+' \u043c\u00b2</text>');
         p.push('<text x="'+(ox+drawW/2)+'" y="'+(oy+drawH+14)+'" text-anchor="middle" fill="#334" font-size="10" font-weight="bold" font-family="Arial,sans-serif">'+W.toFixed(2)+' \u043c</text>');
         p.push('<text transform="translate('+(ox-18)+','+(oy+drawH/2)+') rotate(-90)" text-anchor="middle" fill="#334" font-size="10" font-weight="bold" font-family="Arial,sans-serif">'+L.toFixed(2)+' \u043c</text>');
-        if(mods===1){
+        if(mods===1 && lMods===1){
             p.push('<text x="'+(ox+drawW/2)+'" y="'+(oy+drawH/2+4)+'" text-anchor="middle" fill="#99bbcc" font-size="9" font-family="Arial,sans-serif" pointer-events="none">1 \u043c\u043e\u0434\u0443\u043b\u044c</text>');
         }
 
