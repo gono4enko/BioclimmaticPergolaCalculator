@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v89';
+    var SVG_V = 'v90';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -425,7 +425,8 @@ document.addEventListener('DOMContentLoaded', function() {
             var selType = state.facadePerOpening[key] || '';
             var dims = facadeOpeningDims(o);
             var dimsHtml = '<span style="font-size:0.82em;color:#555;white-space:nowrap;">' + dims.wMm + '\u00d7' + dims.hMm + ' \u043c\u043c</span>';
-            var areaHtml = selType ? '<br><span style="font-size:0.9em;">' + facadeOpeningArea(o, facadeModules(W)).toFixed(2) + ' \u043c\u00b2</span>' : '';
+            var areaVal = (dims.wMm * dims.hMm / 1e6).toFixed(2);
+            var areaHtml = '<br><span style="font-size:0.9em;">' + areaVal + ' \u043c\u00b2</span>';
             html += '<tr data-key="' + key + '"><td><span class="facade-lbl">' + o.label + '</span></td>'
                 + '<td>' + o.desc + '</td>'
                 + '<td><select class="form-select form-select-sm facade-type-sel" data-side="' + o.side + '" data-bay="' + o.bay + '">'
@@ -450,11 +451,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         var o2 = {side: this.dataset.side, bay: parseInt(this.dataset.bay)};
                         var dims2 = facadeOpeningDims(o2);
                         var dHtml = '<span style="font-size:0.82em;color:#555;white-space:nowrap;">' + dims2.wMm + '\u00d7' + dims2.hMm + ' \u043c\u043c</span>';
-                        if (this.value) {
-                            areaTd.innerHTML = dHtml + '<br><span style="font-size:0.9em;">' + facadeOpeningArea(o2, facadeModules(W)).toFixed(2) + ' \u043c\u00b2</span>';
-                        } else {
-                            areaTd.innerHTML = dHtml;
-                        }
+                        var areaVal2 = (dims2.wMm * dims2.hMm / 1e6).toFixed(2);
+                        areaTd.innerHTML = dHtml + '<br><span style="font-size:0.9em;">' + areaVal2 + ' \u043c\u00b2</span>';
                     }
                 }
                 buildFacadeTopView();
