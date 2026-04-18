@@ -635,7 +635,7 @@ def _draw_facade_fill(fill_type, x, y, w, h):
     return out
 
 
-def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди', extra_columns=0, col_mm=164, beam_h_mm=280, fill_type=None):
+def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди', extra_columns=0, col_mm=164, beam_h_mm=280, fill_type=None, fills_per_bay=None):
     """Front/side elevation. width = horizontal dimension (m), height in m.
     Uses shared scale (DIM_TARGET_PX/ref) so views align with top view.
     """
@@ -752,7 +752,7 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     svg += (f'<text x="{_ldr_elbow_x:.1f}" y="{_ldr_elbow_y - 3:.1f}" '
             f'text-anchor="end" font-size="{small_font}" fill="{DIM_COLOR}">□ {col_mm_label}×{col_mm_label} мм</text>')
 
-    if fill_type and fill_type.strip():
+    if fills_per_bay or (fill_type and fill_type.strip()):
         fill_y0 = pergola_top + beam_h_px
         fill_h_px = pergola_bottom - fill_y0
         sorted_xs = sorted(col_xs)
@@ -760,7 +760,11 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
             _fx0 = sorted_xs[_bi] + col_w_px
             _fx1 = sorted_xs[_bi + 1]
             if _fx1 - _fx0 > 2:
-                svg += _draw_facade_fill(fill_type, _fx0, fill_y0, _fx1 - _fx0, fill_h_px)
+                if fills_per_bay and _bi < len(fills_per_bay) and fills_per_bay[_bi]:
+                    bay_fill = fills_per_bay[_bi]
+                else:
+                    bay_fill = fill_type
+                svg += _draw_facade_fill(bay_fill, _fx0, fill_y0, _fx1 - _fx0, fill_h_px)
 
     svg += '</svg>'
     return svg

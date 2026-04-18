@@ -71,9 +71,16 @@ def pergola_front_svg():
         bh_raw = request.args.get('beam_h_mm')
         beam_h_mm = int(bh_raw) if bh_raw and bh_raw.isdigit() else 280
         fill_type = request.args.get('fill', '').strip() or None
+        fills_per_bay = []
+        for _bi in range(1, 20):
+            _f = request.args.get(f'fill_{_bi}', '').strip()
+            if not _f:
+                break
+            fills_per_bay.append(_f)
+        fills_per_bay = fills_per_bay if fills_per_bay else None
         svg = generate_front_view_svg(width=w, height=h, modules=m, max_overhang=mo, ref=ref,
                                       title=title, extra_columns=xc, col_mm=col_mm, beam_h_mm=beam_h_mm,
-                                      fill_type=fill_type)
+                                      fill_type=fill_type, fills_per_bay=fills_per_bay)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:
