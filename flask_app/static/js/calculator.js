@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v80';
+    var SVG_V = 'v81';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -362,8 +362,12 @@ document.addEventListener('DOMContentLoaded', function() {
             p.push('<line x1="'+ix+'" y1="'+ly+'" x2="'+(ix+iw)+'" y2="'+ly+'" stroke="#b0c8e0" stroke-width="0.7"/>');
         }
         for(var mc=1;mc<mods;mc++){
-            var mdx=ox+mc*drawW/mods;
-            p.push('<line x1="'+mdx+'" y1="'+(oy+STRIP)+'" x2="'+mdx+'" y2="'+(oy+drawH-STRIP)+'" stroke="#8099b8" stroke-width="1" stroke-dasharray="3,2"/>');
+            var mbx=Math.round(ox+mc*drawW/mods-COL/2);
+            var mby=oy+STRIP; var mbh=drawH-2*STRIP;
+            p.push('<rect x="'+mbx+'" y="'+mby+'" width="'+COL+'" height="'+mbh+'" fill="#243d5c" pointer-events="none"><title>\u0411\u0430\u043b\u043a\u0430 298\xd7280 \u2014 \u0434\u0432\u043e\u0439\u043d\u043e\u0439 \u0441\u043b\u0438\u0432\u043d\u043e\u0439 \u043b\u043e\u0442\u043e\u043a</title></rect>');
+            var dcx=mbx+COL/2;
+            p.push('<line x1="'+(dcx-2)+'" y1="'+(mby+5)+'" x2="'+(dcx-2)+'" y2="'+(mby+mbh-5)+'" stroke="#5a88bb" stroke-width="1.2" stroke-linecap="round" pointer-events="none"/>');
+            p.push('<line x1="'+(dcx+1.5)+'" y1="'+(mby+5)+'" x2="'+(dcx+1.5)+'" y2="'+(mby+mbh-5)+'" stroke="#5a88bb" stroke-width="1.2" stroke-linecap="round" pointer-events="none"/>');
         }
         function bayLbl(side, bay) {
             var letter = side === 'front' ? 'F' : side === 'back' ? 'B' : side === 'left' ? 'A' : 'C';
@@ -403,7 +407,9 @@ document.addEventListener('DOMContentLoaded', function() {
         p.push('<text x="'+(ox+drawW/2)+'" y="'+(oy-8)+'" text-anchor="middle" fill="#667" font-size="8" font-style="italic" font-family="Arial,sans-serif">\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443 \u00b7 S = '+(W*L).toFixed(1)+' \u043c\u00b2</text>');
         p.push('<text x="'+(ox+drawW/2)+'" y="'+(oy+drawH+14)+'" text-anchor="middle" fill="#334" font-size="10" font-weight="bold" font-family="Arial,sans-serif">'+W.toFixed(2)+' \u043c</text>');
         p.push('<text transform="translate('+(ox-18)+','+(oy+drawH/2)+') rotate(-90)" text-anchor="middle" fill="#334" font-size="10" font-weight="bold" font-family="Arial,sans-serif">'+L.toFixed(2)+' \u043c</text>');
-        p.push('<text x="'+(ox+drawW/2)+'" y="'+(oy+drawH/2+4)+'" text-anchor="middle" fill="#99bbcc" font-size="9" font-family="Arial,sans-serif" pointer-events="none">'+mods+' '+(mods===1?'\u043c\u043e\u0434\u0443\u043b\u044c':mods<5?'\u043c\u043e\u0434\u0443\u043b\u044f':'\u043c\u043e\u0434\u0443\u043b\u0435\u0439')+'</text>');
+        if(mods===1){
+            p.push('<text x="'+(ox+drawW/2)+'" y="'+(oy+drawH/2+4)+'" text-anchor="middle" fill="#99bbcc" font-size="9" font-family="Arial,sans-serif" pointer-events="none">1 \u043c\u043e\u0434\u0443\u043b\u044c</text>');
+        }
 
         svg.setAttribute('viewBox','0 0 '+svgW+' '+svgH);
         svg.setAttribute('width',svgW); svg.setAttribute('height',svgH);
