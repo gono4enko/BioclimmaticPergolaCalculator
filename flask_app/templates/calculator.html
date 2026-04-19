@@ -117,11 +117,11 @@
             <label for="opt-installation">Установка (монтаж)</label>
         </div>
 
-        <!-- Фасадное заполнение -->
+        <!-- Заполнение проёмов: фасадные панели + остекление S500 -->
         <details class="facade-spoiler mt-4">
             <summary class="facade-spoiler-summary">
                 <i class="bi bi-layout-sidebar-inset facade-spoiler-icon"></i>
-                <span class="facade-spoiler-title">Фасадное заполнение проёма</span>
+                <span class="facade-spoiler-title">Заполнение проёмов</span>
                 <span class="facade-spoiler-badge">Опция</span>
                 <span class="facade-spoiler-hint">развернуть&nbsp;↓</span>
                 <i class="bi bi-chevron-down facade-spoiler-chevron"></i>
@@ -149,13 +149,19 @@
                             <p>Глухая панель с PIR-утеплителем (60 мм). Даёт теплоизоляцию и применяется в утеплённых перголах серии B600. Отлично подходит для круглогодичной эксплуатации.</p>
                         </div>
                     </div>
+                    <div class="facade-info-card">
+                        <div class="facade-info-text" style="padding:8px 10px;">
+                            <div class="facade-info-name">S500 — панорамное остекление</div>
+                            <p>Раздвижные безрамные створки от 2 до 10 панелей в проёме. Стекло прозрачное или тонированное, профиль в любой RAL. Превращает перголу в тёплую веранду.</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="facade-how-to">
-                    <div class="facade-how-to-title"><i class="bi bi-info-circle-fill"></i> Как выбрать заполнение</div>
+                    <div class="facade-how-to-title"><i class="bi bi-info-circle-fill"></i> Как заполнить проём</div>
                     <ol class="facade-how-to-steps">
-                        <li>На схеме ниже нажмите на нужную <strong>сторону перголы</strong> (A, B, C или F)</li>
-                        <li>В появившемся меню выберите <strong>тип заполнения</strong>: жалюзи, глухая панель или сэндвич</li>
-                        <li>Повторите для каждой стороны, которую хотите заполнить</li>
+                        <li>На схеме ниже нажмите на нужную <strong>сторону перголы</strong> (A, B, C или F) и выберите <strong>тип фасадной панели</strong> (FZ-44, FP-20 или FP-PIR)</li>
+                        <li>Для <strong>остекления S500</strong> включите нужные проёмы в таблице ниже и задайте число створок, направление, цвет профиля и тип стекла</li>
+                        <li>Один проём не может одновременно содержать фасадное заполнение и остекление</li>
                     </ol>
                 </div>
                 <div class="facade-topview-wrap">
@@ -164,36 +170,10 @@
                 </div>
                 <div id="facade-opening-table" style="margin-top:0.6rem;"></div>
                 <div id="facade-area-info" style="font-size:0.82rem;color:#1a3a6e;background:#f0f4fa;border-radius:6px;padding:0.4rem 0.7rem;display:none;margin-top:0.4rem;"></div>
-            </div>
-        </details>
-
-        <!-- Панорамное остекление S500 -->
-        <details class="facade-spoiler glazing-spoiler mt-3">
-            <summary class="facade-spoiler-summary">
-                <i class="bi bi-border-outer facade-spoiler-icon"></i>
-                <span class="facade-spoiler-title">Панорамное остекление S500</span>
-                <span class="facade-spoiler-badge">Опция</span>
-                <span class="facade-spoiler-hint">развернуть&nbsp;↓</span>
-                <i class="bi bi-chevron-down facade-spoiler-chevron"></i>
-            </summary>
-            <div class="facade-spoiler-body">
-                <div class="facade-info">
-                    <div class="facade-info-card">
-                        <div class="facade-info-text" style="padding:8px 4px;">
-                            <div class="facade-info-name">S500 — раздвижное безрамное остекление</div>
-                            <p>Лёгкие сдвижные створки от 2 до 10 панелей в проёме. Стекло прозрачное или тонированное, профиль в любой RAL. Идеально подходит для перголы как зимняя версия — превращает навес в тёплую веранду.</p>
-                        </div>
-                    </div>
+                <div class="glazing-subhead" style="margin-top:1.1rem;font-weight:600;color:#1a3a6e;font-size:0.92rem;display:flex;align-items:center;gap:6px;">
+                    <i class="bi bi-border-outer"></i> Панорамное остекление S500 по проёмам
                 </div>
-                <div class="facade-how-to">
-                    <div class="facade-how-to-title"><i class="bi bi-info-circle-fill"></i> Как настроить остекление</div>
-                    <ol class="facade-how-to-steps">
-                        <li>Включите проёмы для остекления и задайте число створок, направление, цвет профиля и тип стекла</li>
-                        <li>Минимальное число створок рассчитывается автоматически по весу и ширине проёма</li>
-                        <li>Один проём не может одновременно содержать фасадное заполнение и остекление</li>
-                    </ol>
-                </div>
-                <div id="glazing-opening-table" style="margin-top:0.6rem;"></div>
+                <div id="glazing-opening-table" style="margin-top:0.4rem;"></div>
                 <div id="glazing-area-info" style="font-size:0.82rem;color:#1a3a6e;background:#f0f4fa;border-radius:6px;padding:0.4rem 0.7rem;display:none;margin-top:0.4rem;"></div>
             </div>
         </details>
