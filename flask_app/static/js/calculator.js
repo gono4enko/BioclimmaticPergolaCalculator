@@ -417,7 +417,8 @@ document.addEventListener('DOMContentLoaded', function() {
             {v: 'FP-PIR',   n: 'FP-PIR \u2014 PIR-\u0441\u044d\u043d\u0434\u0432\u0438\u0447'},
             {v: 'FZ-44-50', n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 50%'},
             {v: 'FZ-44-70', n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 70%'},
-            {v: 'FZ-44-100',n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 100%'}
+            {v: 'FZ-44-100',n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 100%'},
+            {v: 'S500',     n: 'S500 \u2014 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'}
         ];
         var openings = [];
         for (var ai = 0; ai < lMods; ai++) {
@@ -448,18 +449,15 @@ document.addEventListener('DOMContentLoaded', function() {
             + '</tr></thead><tbody>';
         openings.forEach(function(o) {
             var key = o.side + '_' + o.bay;
-            var selType = state.facadePerOpening[key] || '';
+            var hasGlz = !!(state.glazingPerOpening && state.glazingPerOpening[key] && state.glazingPerOpening[key].enabled);
+            var selType = state.facadePerOpening[key] || (hasGlz ? 'S500' : '');
             var dims = facadeOpeningDims(o);
             var dimsHtml = '<span style="font-size:0.82em;color:#555;white-space:nowrap;">' + dims.wMm + '\u00d7' + dims.hMm + ' \u043c\u043c</span>';
             var areaVal = (dims.wMm * dims.hMm / 1e6).toFixed(2);
             var areaHtml = '<br><span style="font-size:0.9em;">' + areaVal + ' \u043c\u00b2</span>';
-            var hasGlz = !!(state.glazingPerOpening && state.glazingPerOpening[key] && state.glazingPerOpening[key].enabled);
-            var rowStyle = hasGlz ? ' style="opacity:0.5;"' : '';
-            var noteGlz = hasGlz ? ' <span style="color:#c0392b;font-size:0.78em;">\u0432 \u044d\u0442\u043e\u043c \u043f\u0440\u043e\u0451\u043c\u0435 \u0443\u0436\u0435 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435</span>' : '';
-            var disAttr = hasGlz ? ' disabled' : '';
-            html += '<tr data-key="' + key + '"' + rowStyle + '><td><span class="facade-lbl">' + o.label + '</span></td>'
-                + '<td>' + o.desc + noteGlz + '</td>'
-                + '<td><select class="form-select form-select-sm facade-type-sel" data-side="' + o.side + '" data-bay="' + o.bay + '"' + disAttr + '>'
+            html += '<tr data-key="' + key + '"><td><span class="facade-lbl">' + o.label + '</span></td>'
+                + '<td>' + o.desc + '</td>'
+                + '<td><select class="form-select form-select-sm facade-type-sel" data-side="' + o.side + '" data-bay="' + o.bay + '">'
                 + '<option value="">\u2014 \u0431\u0435\u0437 \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f \u2014</option>';
             TYPES.forEach(function(t) {
                 html += '<option value="' + t.v + '"' + (selType === t.v ? ' selected' : '') + '>' + t.n + '</option>';
@@ -471,9 +469,19 @@ document.addEventListener('DOMContentLoaded', function() {
         tableEl.querySelectorAll('.facade-type-sel').forEach(function(sel) {
             sel.addEventListener('change', function() {
                 var key2 = this.dataset.side + '_' + this.dataset.bay;
-                state.facadePerOpening[key2] = this.value;
+                var val = this.value;
+                if (val === 'S500') {
+                    // Enable glazing for this opening, clear facade
+                    state.facadePerOpening[key2] = '';
+                    state.glazingPerOpening[key2] = state.glazingPerOpening[key2] || {pc:0, direction:'right', color:'ral7016', glass:'transparent', count:1};
+                    state.glazingPerOpening[key2].enabled = true;
+                } else {
+                    // Regular facade or none — disable glazing for this opening
+                    state.facadePerOpening[key2] = val;
+                    if (state.glazingPerOpening[key2]) state.glazingPerOpening[key2].enabled = false;
+                }
                 state.facadeOpenings = computeFacadeOpenings();
-                state.facadeType = this.value;
+                state.facadeType = (val === 'S500') ? '' : val;
                 var tr = this.closest('tr');
                 if (tr) {
                     var areaTd = tr.querySelector('.facade-area');
@@ -692,40 +700,51 @@ document.addEventListener('DOMContentLoaded', function() {
         for (var ci = 0; ci < lMods; ci++) openings.push({side:'right', bay:ci, label:lMods>1?'C'+(ci+1):'C', desc:lMods>1?'\u0421\u043f\u0440\u0430\u0432\u0430 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(ci+1):'\u0421\u043f\u0440\u0430\u0432\u0430'});
         for (var fi = 0; fi < mods; fi++)  openings.push({side:'front', bay:fi, label:mods>1?'F'+(fi+1):'F', desc:mods>1?'\u0424\u0430\u0441\u0430\u0434 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(fi+1):'\u0424\u0430\u0441\u0430\u0434'});
 
+        // Build only config rows for openings where glazing is enabled (toggled via the facade dropdown above)
+        var enabledOpenings = openings.filter(function(o) {
+            var key = o.side + '_' + o.bay;
+            var g = state.glazingPerOpening[key];
+            return g && g.enabled;
+        });
+        if (enabledOpenings.length === 0) {
+            tableEl.innerHTML = '<div style="color:#7a8aa8;font-size:0.85rem;padding:10px 4px;font-style:italic;">'
+                + '\u0427\u0442\u043e\u0431\u044b \u0434\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 \u0432 \u043f\u0440\u043e\u0451\u043c \u2014 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 <strong>S500</strong> \u0432 \u0442\u0430\u0431\u043b\u0438\u0446\u0435 \u00ab\u0422\u0438\u043f \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f\u00bb \u0432\u044b\u0448\u0435.'
+                + '</div>';
+            updateGlazingAreaInfo();
+            return;
+        }
         var html = '<table class="facade-table"><thead><tr>'
             + '<th>\u041f\u0440\u043e\u0451\u043c</th>'
             + '<th>\u0420\u0430\u0441\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435</th>'
-            + '<th>\u0422\u0438\u043f \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f</th>'
+            + '<th>\u041a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044f S500</th>'
             + '<th>\u0420\u0430\u0437\u043c\u0435\u0440 / \u041f\u043b\u043e\u0449\u0430\u0434\u044c</th>'
             + '</tr></thead><tbody>';
-        openings.forEach(function(o) {
+        enabledOpenings.forEach(function(o) {
             var key = o.side + '_' + o.bay;
             var dims = _glazingDimsForKey(o.side);
-            var hasFacade = !!(state.facadePerOpening && state.facadePerOpening[key]);
             var outOfRange = (dims.wM < 1.8 || dims.hM < 1.7 || dims.wM > 12.0 || dims.hM > 3.25);
-            var g = state.glazingPerOpening[key] || {enabled:false, pc:0, direction:'right', color:'ral7016', glass:'transparent', count:1};
-            if (outOfRange) g.enabled = false;
-            if (g.enabled) g = _normalizeGlzCfg(g, dims.wM, dims.hM);
+            var g = state.glazingPerOpening[key];
+            if (outOfRange) {
+                g.enabled = false;
+                state.glazingPerOpening[key] = g;
+                return;
+            }
+            g = _normalizeGlzCfg(g, dims.wM, dims.hM);
             state.glazingPerOpening[key] = g;
             var minP = glazingMinPanels(dims.wM, dims.hM);
             var dimsHtml = '<span style="font-size:0.82em;color:#555;white-space:nowrap;">' + Math.round(dims.wM*1000) + '\u00d7' + Math.round(dims.hM*1000) + ' \u043c\u043c</span>';
             var areaVal = (dims.wM * dims.hM).toFixed(2);
             var areaHtml = '<br><span style="font-size:0.9em;">' + areaVal + ' \u043c\u00b2</span>';
-            var disabled = hasFacade || outOfRange;
-            var noteHtml = '';
-            if (hasFacade) noteHtml = ' <span style="color:#c0392b;font-size:0.78em;">\u0432 \u044d\u0442\u043e\u043c \u043f\u0440\u043e\u0451\u043c\u0435 \u0443\u0436\u0435 \u0444\u0430\u0441\u0430\u0434</span>';
-            else if (outOfRange) noteHtml = ' <span style="color:#c0392b;font-size:0.78em;">\u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e (\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u043e 1.8\u201312 \u043c \u00d7 1.7\u20133.25 \u043c)</span>';
-            var rowStyle = disabled ? ' style="opacity:0.55;"' : '';
-            var disAttr = disabled ? ' disabled' : '';
-            html += '<tr data-key="' + key + '"' + rowStyle + '>';
+            var summary = (g.pc || minP) + ' \u0441\u0442\u0432. \u00b7 '
+                + (GLAZING_DIRS_JS.find(function(d){return d.v===g.direction;})||{n:''}).n + ' \u00b7 '
+                + (GLAZING_COLORS_JS.find(function(c){return c.v===g.color;})||{n:''}).n + ' \u00b7 '
+                + (GLAZING_GLASS_JS.find(function(c){return c.v===g.glass;})||{n:''}).n;
+            html += '<tr data-key="' + key + '">';
             html += '<td><span class="facade-lbl">' + o.label + '</span></td>';
-            html += '<td>' + o.desc + noteHtml + '</td>';
-            html += '<td><select class="form-select form-select-sm glz-en" data-key="' + key + '"' + disAttr + '>'
-                + '<option value="0">\u2014 \u0431\u0435\u0437 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u044f \u2014</option>'
-                + '<option value="1"' + (g.enabled ? ' selected' : '') + '>S500 \u2014 \u0440\u0430\u0437\u0434\u0432\u0438\u0436\u043d\u043e\u0435 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435</option>'
-                + '</select></td>';
+            html += '<td>' + o.desc + '</td>';
+            html += '<td><span style="font-size:0.85em;color:#1a3a6e;">' + summary + '</span></td>';
             html += '<td class="facade-area">' + dimsHtml + areaHtml + '</td></tr>';
-            if (g.enabled && !disabled) {
+            {
                 var pcOpts = '';
                 GLAZING_PCS_JS.forEach(function(p) {
                     var disP = p < minP ? ' disabled' : '';
