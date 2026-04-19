@@ -3,7 +3,7 @@
 {% block title %}Калькулятор стоимости перголы{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=71">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=72">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
 <link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=101" as="script">
 {% endblock %}
@@ -113,15 +113,48 @@
         </div>
 
         <!-- Фасадное заполнение -->
-        <div class="mt-4">
-            <label class="form-label" style="font-weight:600;font-size:0.95rem;">Фасадное заполнение проёма</label>
-            <div class="facade-topview-wrap">
-                <svg id="facade-topview-svg" style="max-width:100%;display:block;margin:auto;"></svg>
-                <div id="facade-topview-hint"></div>
+        <details class="facade-spoiler mt-4">
+            <summary class="facade-spoiler-summary">
+                <span class="facade-spoiler-title">Фасадное заполнение проёма</span>
+                <span class="facade-spoiler-hint">нажмите, чтобы развернуть</span>
+                <i class="bi bi-chevron-down facade-spoiler-chevron"></i>
+            </summary>
+            <div class="facade-spoiler-body">
+                <div class="facade-info">
+                    <div class="facade-info-card">
+                        <img src="{{ url_for('static', filename='images/facade/fz44.webp') }}?v=1" alt="Фасадные жалюзи FZ-44" class="facade-info-img">
+                        <div class="facade-info-text">
+                            <div class="facade-info-name">FZ-44 — фасадные жалюзи</div>
+                            <p>Регулируемые алюминиевые ламели. Рассеивают боковые лучи солнца, снижают температуру под навесом, стильно зонируют пространство. Высокая жёсткость и простота сборки.</p>
+                        </div>
+                    </div>
+                    <div class="facade-info-card">
+                        <img src="{{ url_for('static', filename='images/facade/fp20.webp') }}?v=1" alt="Глухая фасадная панель FP-20" class="facade-info-img">
+                        <div class="facade-info-text">
+                            <div class="facade-info-name">FP-20 — глухая алюминиевая панель</div>
+                            <p>Заполняет проём «наглухо». Жёсткая и устойчивая конструкция, система пазов даёт хорошую шумоизоляцию и ветрозащиту. Легкосборная, совместима со всей линейкой пергол.</p>
+                        </div>
+                    </div>
+                    <div class="facade-info-card">
+                        <img src="{{ url_for('static', filename='images/facade/fp20_scheme.webp') }}?v=1" alt="Сэндвич-панель FP-PIR" class="facade-info-img">
+                        <div class="facade-info-text">
+                            <div class="facade-info-name">FP-PIR — утеплённая сэндвич-панель</div>
+                            <p>Глухая панель с PIR-утеплителем (40 мм). Даёт теплоизоляцию и применяется в утеплённых перголах серии B600. Отлично подходит для круглогодичной эксплуатации.</p>
+                        </div>
+                    </div>
+                    <div class="facade-info-source">
+                        Описания и фото&nbsp;—
+                        <a href="https://decolife.pro/products/optional/facade-blinds/" target="_blank" rel="noopener">decolife.pro</a>
+                    </div>
+                </div>
+                <div class="facade-topview-wrap">
+                    <svg id="facade-topview-svg" style="max-width:100%;display:block;margin:auto;"></svg>
+                    <div id="facade-topview-hint"></div>
+                </div>
+                <div id="facade-opening-table" style="margin-top:0.6rem;"></div>
+                <div id="facade-area-info" style="font-size:0.82rem;color:#1a3a6e;background:#f0f4fa;border-radius:6px;padding:0.4rem 0.7rem;display:none;margin-top:0.4rem;"></div>
             </div>
-            <div id="facade-opening-table" style="margin-top:0.6rem;"></div>
-            <div id="facade-area-info" style="font-size:0.82rem;color:#1a3a6e;background:#f0f4fa;border-radius:6px;padding:0.4rem 0.7rem;display:none;margin-top:0.4rem;"></div>
-        </div>
+        </details>
     </div>
 
     <button class="calc-btn" id="calc-btn" style="display:none;">
