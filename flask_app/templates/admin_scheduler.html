@@ -164,6 +164,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                 <label for="filterDateTo">По:</label>
                 <input type="date" id="filterDateTo" onchange="applyHistoryFilters()">
             </div>
+            <div class="filter-group">
+                <label for="historyPageSizeSelect">На странице:</label>
+                <select id="historyPageSizeSelect" onchange="changeHistoryPageSize(this.value)">
+                    <option value="25">25</option>
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                </select>
+            </div>
             <button class="filter-reset-btn" onclick="resetHistoryFilters()">Сбросить</button>
             <span class="history-count-note" id="historyCountNote"></span>
         </div>
@@ -202,6 +211,8 @@ var autoRefreshTimer = null;
 var allHistoryEntries = [];
 var lastHistoryTotal = 0;
 var historyPageSize = 50;
+var HISTORY_PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
+var HISTORY_PAGE_SIZE_STORAGE_KEY = 'admin_scheduler_history_page_size';
 var historyPage = 1;
 var historyTotalPages = 1;
 var historyFilteredCount = 0;
@@ -616,6 +627,52 @@ function syncFiltersFromUrl() {
     document.getElementById('filterDateTo').value = f.to;
 }
 
+function normalizeHistoryPageSize(v) {
+    var n = parseInt(v, 10);
+    if (!n || HISTORY_PAGE_SIZE_OPTIONS.indexOf(n) === -1) return 50;
+    return n;
+}
+
+function loadHistoryPageSizePreference() {
+    var params = new URLSearchParams(window.location.search);
+    var fromUrl = params.get('page_size');
+    if (fromUrl) {
+        return normalizeHistoryPageSize(fromUrl);
+    }
+    try {
+        var stored = window.localStorage.getItem(HISTORY_PAGE_SIZE_STORAGE_KEY);
+        if (stored) return normalizeHistoryPageSize(stored);
+    } catch (e) {}
+    return 50;
+}
+
+function persistHistoryPageSize(size) {
+    try { window.localStorage.setItem(HISTORY_PAGE_SIZE_STORAGE_KEY, String(size)); } catch (e) {}
+    var params = new URLSearchParams(window.location.search);
+    if (size === 50) {
+        params.delete('page_size');
+    } else {
+        params.set('page_size', String(size));
+    }
+    var newSearch = params.toString();
+    var newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
+    window.history.replaceState(null, '', newUrl);
+}
+
+function syncHistoryPageSizeSelect() {
+    var sel = document.getElementById('historyPageSizeSelect');
+    if (sel) sel.value = String(historyPageSize);
+}
+
+function changeHistoryPageSize(value) {
+    var size = normalizeHistoryPageSize(value);
+    if (size === historyPageSize) return;
+    historyPageSize = size;
+    persistHistoryPageSize(size);
+    syncHistoryPageSizeSelect();
+    loadHistory(1);
+}
+
 function updateUrlFromFilters(trigger, dateFrom, dateTo) {
     var params = new URLSearchParams(window.location.search);
     if (trigger) { params.set('trigger', trigger); } else { params.delete('trigger'); }
@@ -756,6 +813,8 @@ function clearHistory() {
 
 loadStatus();
 syncFiltersFromUrl();
+historyPageSize = loadHistoryPageSizePreference();
+syncHistoryPageSizeSelect();
 loadHistory();
 setupAutoRefresh();
 loadAlertSettings();
