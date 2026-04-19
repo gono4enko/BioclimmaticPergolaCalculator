@@ -687,6 +687,22 @@ document.addEventListener('DOMContentLoaded', function() {
         return [g.pc || 4, g.direction || 'right', g.color || 'ral7016', g.glass || 'transparent'].join(':');
     }
 
+    function getIsoBayQs(side, count) {
+        var parts = [];
+        for (var i = 0; i < count; i++) {
+            var key = side + '_' + i;
+            var f = (state.facadePerOpening || {})[key] || '';
+            var g = (state.glazingPerOpening || {})[key];
+            if (f) {
+                parts.push('fill_' + side + '_' + (i + 1) + '=' + encodeURIComponent(f));
+            } else if (g && g.enabled) {
+                var spec = glazingSpec(g);
+                if (spec) parts.push('glz_' + side + '_' + (i + 1) + '=' + encodeURIComponent(spec));
+            }
+        }
+        return parts.length ? ('&' + parts.join('&')) : '';
+    }
+
     function getBayGlzQs(side, count, xPerBay) {
         if (!state.glazingPerOpening) return '';
         var parts = [];
@@ -2162,7 +2178,12 @@ document.addEventListener('DOMContentLoaded', function() {
             var _isoA = _fillA || getGlzForSide('left');
             var _isoC = _fillC || getGlzForSide('right');
             var _isoB = _fillB || getGlzForSide('back');
-            var iqs = 'w=' + w + '&l=' + l + '&h=' + pergolaH + '&m=' + m + (lcAttr ? '&lc=' + lcAttr : '') + (mo ? '&mo=' + mo : '') + (pirAttr ? '&pir=1' : '') + (_isoF ? '&fill_front=' + encodeURIComponent(_isoF) : '') + (_isoC ? '&fill_right=' + encodeURIComponent(_isoC) : '') + (_isoA ? '&fill_left=' + encodeURIComponent(_isoA) : '') + (_isoB ? '&fill_back=' + encodeURIComponent(_isoB) : '') + '&_v=' + SVG_V;
+            var _isoBayF = getIsoBayQs('front', parseInt(m) || 1);
+            var _isoBayB = getIsoBayQs('back',  parseInt(m) || 1);
+            var _isoBayA = getIsoBayQs('left',  lm);
+            var _isoBayC = getIsoBayQs('right', lm);
+            var _isoXc = Math.max(0, lm - 1);
+            var iqs = 'w=' + w + '&l=' + l + '&h=' + pergolaH + '&m=' + m + (lcAttr ? '&lc=' + lcAttr : '') + (mo ? '&mo=' + mo : '') + (pirAttr ? '&pir=1' : '') + (_isoXc > 0 ? '&xc=' + _isoXc : '') + (_isoF ? '&fill_front=' + encodeURIComponent(_isoF) : '') + (_isoC ? '&fill_right=' + encodeURIComponent(_isoC) : '') + (_isoA ? '&fill_left=' + encodeURIComponent(_isoA) : '') + (_isoB ? '&fill_back=' + encodeURIComponent(_isoB) : '') + _isoBayF + _isoBayB + _isoBayA + _isoBayC + '&_v=' + SVG_V;
             isoimg.src = '/api/pergola-iso.svg?' + iqs;
         }
         var warn = document.getElementById('kp-scheme-warn');
@@ -2415,7 +2436,12 @@ document.addEventListener('DOMContentLoaded', function() {
             var _kpIsoA = _kpFillA || getGlzForSide('left');
             var _kpIsoC = _kpFillC || getGlzForSide('right');
             var _kpIsoB = _kpFillB || getGlzForSide('back');
-            var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + (isPir ? '&pir=1' : '') + xcQs + (_kpIsoF ? '&fill_front=' + encodeURIComponent(_kpIsoF) : '') + (_kpIsoC ? '&fill_right=' + encodeURIComponent(_kpIsoC) : '') + (_kpIsoA ? '&fill_left=' + encodeURIComponent(_kpIsoA) : '') + (_kpIsoB ? '&fill_back=' + encodeURIComponent(_kpIsoB) : '') + '&_v=' + SVG_V;
+            var _kpIsoBayF = getIsoBayQs('front', schM);
+            var _kpIsoBayB = getIsoBayQs('back',  schM);
+            var _kpIsoBayA = getIsoBayQs('left',  schLMods);
+            var _kpIsoBayC = getIsoBayQs('right', schLMods);
+            var _kpIsoXc = Math.max(parseInt(xcQs ? xcQs.split('=')[1] : '0', 10) || 0, schLMods - 1);
+            var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + (isPir ? '&pir=1' : '') + (_kpIsoXc > 0 ? '&xc=' + _kpIsoXc : '') + (_kpIsoF ? '&fill_front=' + encodeURIComponent(_kpIsoF) : '') + (_kpIsoC ? '&fill_right=' + encodeURIComponent(_kpIsoC) : '') + (_kpIsoA ? '&fill_left=' + encodeURIComponent(_kpIsoA) : '') + (_kpIsoB ? '&fill_back=' + encodeURIComponent(_kpIsoB) : '') + _kpIsoBayF + _kpIsoBayB + _kpIsoBayA + _kpIsoBayC + '&_v=' + SVG_V;
             var isoLabel = isPir ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (PIR \u043F\u0430\u043D\u0435\u043B\u0438)' : (isB200 ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u0441\u0442\u0430\u0446\u0438\u043E\u043D\u0430\u0440\u043D\u044B\u0435)' : '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)');
             var isoBlock = (isPir || lamCnt) ? (
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">' + isoLabel + '</div>' +

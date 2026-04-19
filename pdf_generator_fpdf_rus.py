@@ -783,28 +783,33 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             _left_glz = _glz_for('left')
             _right_glz = _glz_for('right')
 
-            # iso fills: prefer facade type, else "S500"/"S100" marker
-            def _iso_fill(side, fills, glazings):
-                if fills:
-                    for f in fills:
-                        if f:
-                            return f
-                if glazings:
-                    for g in glazings:
-                        if not g:
-                            continue
+            # iso fills per bay: prefer facade type, else "S500"/"S100" marker (W-series keeps full spec)
+            def _iso_bay_specs(fills, glazings, bays):
+                arr = [None] * bays
+                for i in range(bays):
+                    f = fills[i] if (fills and i < len(fills)) else None
+                    g = glazings[i] if (glazings and i < len(glazings)) else None
+                    spec = None
+                    if f:
+                        spec = f
+                    elif g:
                         gu = g.upper()
-                        if gu.startswith('W500'): return g  # preserve full spec (W500:sashes:color:glass)
-                        if gu.startswith('W600'): return g
-                        if gu.startswith('W700'): return g
-                        if gu.startswith('ZIP100') or gu.startswith('ZIP130'): return None  # ZIP awning: no SVG fill
-                        return 'S100' if gu.startswith('S100') else 'S500'
-                return None
+                        if gu.startswith(('W500', 'W600', 'W700')):
+                            spec = g
+                        elif gu.startswith(('ZIP100', 'ZIP130')):
+                            spec = None
+                        elif gu.startswith('S100'):
+                            spec = 'S100'
+                        else:
+                            spec = 'S500'
+                    arr[i] = spec
+                return arr if any(arr) else None
 
-            _iso_front = _iso_fill('front', _front_fills, _front_glz)
-            _iso_back = _iso_fill('back', _back_fills, _back_glz)
-            _iso_left = _iso_fill('left', _left_fills, _left_glz)
-            _iso_right = _iso_fill('right', _right_fills, _right_glz)
+            _iso_front_per_bay = _iso_bay_specs(_front_fills, _front_glz, _bays_for('front'))
+            _iso_back_per_bay  = _iso_bay_specs(_back_fills,  _back_glz,  _bays_for('back'))
+            _iso_left_per_bay  = _iso_bay_specs(_left_fills,  _left_glz,  _bays_for('left'))
+            _iso_right_per_bay = _iso_bay_specs(_right_fills, _right_glz, _bays_for('right'))
+            _iso_xc_lr = max(0, _bays_for('left') - 1, _bays_for('right') - 1)
 
             _svgs = [
                 generate_top_view_svg(width=width, length=length, modules=modules,
@@ -836,15 +841,20 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             if _is_pir:
                 _svgs.append(generate_pir_iso_svg(width=width, length=length,
                                                    height=_h, modules=modules,
-                                                   max_overhang=_mo,
-                                                   fill_front=_iso_front, fill_back=_iso_back,
-                                                   fill_left=_iso_left, fill_right=_iso_right))
+                                                   max_overhang=_mo, extra_columns=_iso_xc_lr,
+                                                   fills_front_per_bay=_iso_front_per_bay,
+                                                   fills_back_per_bay=_iso_back_per_bay,
+                                                   fills_left_per_bay=_iso_left_per_bay,
+                                                   fills_right_per_bay=_iso_right_per_bay))
             else:
                 _svgs.append(generate_isometric_svg(width=width, length=length,
                                                      height=_h, lamella_count=_lc,
                                                      modules=modules, max_overhang=_mo,
-                                                     fill_front=_iso_front, fill_back=_iso_back,
-                                                     fill_left=_iso_left, fill_right=_iso_right))
+                                                     extra_columns=_iso_xc_lr,
+                                                     fills_front_per_bay=_iso_front_per_bay,
+                                                     fills_back_per_bay=_iso_back_per_bay,
+                                                     fills_left_per_bay=_iso_left_per_bay,
+                                                     fills_right_per_bay=_iso_right_per_bay))
 
             _pngs = [svg_to_png_path(s) for s in _svgs]
             _iso_lbl = ('Изометрия (PIR панели)' if _is_pir

@@ -1068,7 +1068,7 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     return svg
 
 
-def generate_isometric_svg(width, length, height=3.0, lamella_count=None, modules=1, lamella_open_deg=55, max_overhang=None, extra_columns=0, fill_front=None, fill_right=None, fill_left=None, fill_back=None):
+def generate_isometric_svg(width, length, height=3.0, lamella_count=None, modules=1, lamella_open_deg=55, max_overhang=None, extra_columns=0, fill_front=None, fill_right=None, fill_left=None, fill_back=None, fills_front_per_bay=None, fills_back_per_bay=None, fills_left_per_bay=None, fills_right_per_bay=None):
     """3D isometric view of pergola with tilted/open lamellas.
     Camera looks from front-right-above. X = ширина (вправо-вниз),
     Z = длина (влево-вниз в глубину), Y = высота (вверх).
@@ -1254,34 +1254,68 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
 
     column_top = height - BEAM_H
 
+    def _front_bay_bounds(_mi):
+        _bx0 = col_xs[0] if _mi == 0 else width / mod_count * _mi + COL_W / 2
+        _bx1 = col_xs[-1] if _mi == mod_count - 1 else width / mod_count * (_mi + 1) - COL_W / 2
+        return _bx0, _bx1
+
+    _sorted_zs = sorted(col_zs)
+    _n_lr_bays = max(1, len(_sorted_zs) - 1)
+
+    def _side_bay_bounds(_bi):
+        z0 = _sorted_zs[_bi] + COL_W / 2
+        z1 = _sorted_zs[_bi + 1] - COL_W / 2
+        return z0, z1
+
+    def _bay_specs(side, single, per_bay, n_bays):
+        out = []
+        for _bi in range(n_bays):
+            v = None
+            if per_bay is not None and _bi < len(per_bay):
+                v = per_bay[_bi]
+            elif single and str(single).strip():
+                v = single
+            out.append(v if (v and str(v).strip()) else None)
+        return out
+
+    _front_specs = _bay_specs('front', fill_front, fills_front_per_bay, mod_count)
+    _back_specs  = _bay_specs('back',  fill_back,  fills_back_per_bay,  mod_count)
+    _left_specs  = _bay_specs('left',  fill_left,  fills_left_per_bay,  _n_lr_bays)
+    _right_specs = _bay_specs('right', fill_right, fills_right_per_bay, _n_lr_bays)
+
     fill_back_svg = ''
-    if fill_back and fill_back.strip():
-        for _mi in range(mod_count):
-            _bx0 = col_xs[0] if _mi == 0 else width / mod_count * _mi + COL_W / 2
-            _bx1 = col_xs[-1] if _mi == mod_count - 1 else width / mod_count * (_mi + 1) - COL_W / 2
-            fill_back_svg += _iso_fill_face(fill_back, (_bx0, 0, length), (_bx1, 0, length),
-                                            (_bx0, column_top, length), (_bx1, column_top, length))
+    for _mi in range(mod_count):
+        _spec = _back_specs[_mi]
+        if not _spec: continue
+        _bx0, _bx1 = _front_bay_bounds(_mi)
+        fill_back_svg += _iso_fill_face(_spec, (_bx0, 0, length), (_bx1, 0, length),
+                                        (_bx0, column_top, length), (_bx1, column_top, length))
+
     fill_left_svg = ''
-    if fill_left and fill_left.strip():
-        fill_left_svg = _iso_fill_face(fill_left, (0, 0, COL_W), (0, 0, length - COL_W),
-                                       (0, column_top, COL_W), (0, column_top, length - COL_W))
+    for _bi in range(_n_lr_bays):
+        _spec = _left_specs[_bi]
+        if not _spec: continue
+        _z0, _z1 = _side_bay_bounds(_bi)
+        fill_left_svg += _iso_fill_face(_spec, (0, 0, _z0), (0, 0, _z1),
+                                        (0, column_top, _z0), (0, column_top, _z1))
 
     fill_right_svg = ''
-    if fill_right and fill_right.strip():
-        fill_right_svg = _iso_fill_face(fill_right, (width, 0, COL_W), (width, 0, length - COL_W),
-                                        (width, column_top, COL_W), (width, column_top, length - COL_W))
+    for _bi in range(_n_lr_bays):
+        _spec = _right_specs[_bi]
+        if not _spec: continue
+        _z0, _z1 = _side_bay_bounds(_bi)
+        fill_right_svg += _iso_fill_face(_spec, (width, 0, _z0), (width, 0, _z1),
+                                         (width, column_top, _z0), (width, column_top, _z1))
 
     fill_front_svg = ''
-    any_other_fill = any([fill_right, fill_left, fill_back])
+    any_other_fill = any(_back_specs) or any(_left_specs) or any(_right_specs)
     for _mi in range(mod_count):
-        _fx0 = col_xs[0] if _mi == 0 else width / mod_count * _mi + COL_W / 2
-        _fx1 = col_xs[-1] if _mi == mod_count - 1 else width / mod_count * (_mi + 1) - COL_W / 2
-        _pbl = (_fx0, 0, 0)
-        _pbr = (_fx1, 0, 0)
-        _ptl = (_fx0, column_top, 0)
-        _ptr = (_fx1, column_top, 0)
-        if fill_front and fill_front.strip():
-            fill_front_svg += _iso_fill_face(fill_front, _pbl, _pbr, _ptl, _ptr)
+        _fx0, _fx1 = _front_bay_bounds(_mi)
+        _pbl = (_fx0, 0, 0); _pbr = (_fx1, 0, 0)
+        _ptl = (_fx0, column_top, 0); _ptr = (_fx1, column_top, 0)
+        _spec = _front_specs[_mi]
+        if _spec:
+            fill_front_svg += _iso_fill_face(_spec, _pbl, _pbr, _ptl, _ptr)
         elif any_other_fill:
             coords = ' '.join(f'{x:.1f},{y:.1f}' for x, y in (s(p) for p in [_pbl, _pbr, _ptr, _ptl]))
             fill_front_svg += f'<polygon points="{coords}" fill="#eef2f7" fill-opacity="0.78" stroke="#2a4a7e" stroke-width="1.0" stroke-dasharray="6,3" stroke-linejoin="round"/>'
@@ -1453,7 +1487,7 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     return svg
 
 
-def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None, extra_columns=0, fill_front=None, fill_right=None, fill_left=None, fill_back=None):
+def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None, extra_columns=0, fill_front=None, fill_right=None, fill_left=None, fill_back=None, fills_front_per_bay=None, fills_back_per_bay=None, fills_left_per_bay=None, fills_right_per_bay=None):
     """Isometric view for B600 pergola with PIR sandwich-panel roof.
     Panel joints spaced proportionally to actual panel width (~0.9 m).
     """
@@ -1635,30 +1669,65 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
 
     by0 = column_top; by1 = height
 
+    def _front_bay_bounds(_mi):
+        _bx0 = col_xs[0] if _mi == 0 else width / mod_count * _mi + COL_W / 2
+        _bx1 = col_xs[-1] if _mi == mod_count - 1 else width / mod_count * (_mi + 1) - COL_W / 2
+        return _bx0, _bx1
+
+    _sorted_zs = sorted(col_zs)
+    _n_lr_bays = max(1, len(_sorted_zs) - 1)
+
+    def _side_bay_bounds(_bi):
+        z0 = _sorted_zs[_bi] + COL_W / 2
+        z1 = _sorted_zs[_bi + 1] - COL_W / 2
+        return z0, z1
+
+    def _bay_specs(single, per_bay, n_bays):
+        out = []
+        for _bi in range(n_bays):
+            v = None
+            if per_bay is not None and _bi < len(per_bay):
+                v = per_bay[_bi]
+            elif single and str(single).strip():
+                v = single
+            out.append(v if (v and str(v).strip()) else None)
+        return out
+
+    _front_specs = _bay_specs(fill_front, fills_front_per_bay, mod_count)
+    _back_specs  = _bay_specs(fill_back,  fills_back_per_bay,  mod_count)
+    _left_specs  = _bay_specs(fill_left,  fills_left_per_bay,  _n_lr_bays)
+    _right_specs = _bay_specs(fill_right, fills_right_per_bay, _n_lr_bays)
+
     fill_back_svg = ''
-    if fill_back and fill_back.strip():
-        for _mi in range(mod_count):
-            _bx0 = col_xs[0] if _mi == 0 else width / mod_count * _mi + COL_W / 2
-            _bx1 = col_xs[-1] if _mi == mod_count - 1 else width / mod_count * (_mi + 1) - COL_W / 2
-            fill_back_svg += _iso_fill_face(fill_back, (_bx0, 0, length), (_bx1, 0, length),
-                                            (_bx0, column_top, length), (_bx1, column_top, length))
-    fill_left_svg = ''
-    if fill_left and fill_left.strip():
-        fill_left_svg = _iso_fill_face(fill_left, (0, 0, COL_W), (0, 0, length - COL_W),
-                                       (0, column_top, COL_W), (0, column_top, length - COL_W))
-    fill_right_svg = ''
-    if fill_right and fill_right.strip():
-        fill_right_svg = _iso_fill_face(fill_right, (width, 0, COL_W), (width, 0, length - COL_W),
-                                        (width, column_top, COL_W), (width, column_top, length - COL_W))
-    fill_front_svg = ''
-    any_other_fill = any([fill_right, fill_left, fill_back])
     for _mi in range(mod_count):
-        _fx0 = col_xs[0] if _mi == 0 else width / mod_count * _mi + COL_W / 2
-        _fx1 = col_xs[-1] if _mi == mod_count - 1 else width / mod_count * (_mi + 1) - COL_W / 2
+        _spec = _back_specs[_mi]
+        if not _spec: continue
+        _bx0, _bx1 = _front_bay_bounds(_mi)
+        fill_back_svg += _iso_fill_face(_spec, (_bx0, 0, length), (_bx1, 0, length),
+                                        (_bx0, column_top, length), (_bx1, column_top, length))
+    fill_left_svg = ''
+    for _bi in range(_n_lr_bays):
+        _spec = _left_specs[_bi]
+        if not _spec: continue
+        _z0, _z1 = _side_bay_bounds(_bi)
+        fill_left_svg += _iso_fill_face(_spec, (0, 0, _z0), (0, 0, _z1),
+                                        (0, column_top, _z0), (0, column_top, _z1))
+    fill_right_svg = ''
+    for _bi in range(_n_lr_bays):
+        _spec = _right_specs[_bi]
+        if not _spec: continue
+        _z0, _z1 = _side_bay_bounds(_bi)
+        fill_right_svg += _iso_fill_face(_spec, (width, 0, _z0), (width, 0, _z1),
+                                         (width, column_top, _z0), (width, column_top, _z1))
+    fill_front_svg = ''
+    any_other_fill = any(_back_specs) or any(_left_specs) or any(_right_specs)
+    for _mi in range(mod_count):
+        _fx0, _fx1 = _front_bay_bounds(_mi)
         _pbl = (_fx0, 0, 0); _pbr = (_fx1, 0, 0)
         _ptl = (_fx0, column_top, 0); _ptr = (_fx1, column_top, 0)
-        if fill_front and fill_front.strip():
-            fill_front_svg += _iso_fill_face(fill_front, _pbl, _pbr, _ptl, _ptr)
+        _spec = _front_specs[_mi]
+        if _spec:
+            fill_front_svg += _iso_fill_face(_spec, _pbl, _pbr, _ptl, _ptr)
         elif any_other_fill:
             coords = ' '.join(f'{x:.1f},{y:.1f}' for x, y in (s(p) for p in [_pbl, _pbr, _ptr, _ptl]))
             fill_front_svg += f'<polygon points="{coords}" fill="#eef2f7" fill-opacity="0.78" stroke="#2a4a7e" stroke-width="1.0" stroke-dasharray="6,3" stroke-linejoin="round"/>'

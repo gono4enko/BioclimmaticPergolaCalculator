@@ -131,15 +131,52 @@ def pergola_iso_svg():
         fill_right = request.args.get('fill_right', '').strip() or None
         fill_left = request.args.get('fill_left', '').strip() or None
         fill_back = request.args.get('fill_back', '').strip() or None
+
+        def _per_bay(side):
+            arr = []
+            for _bi in range(1, 20):
+                _f = request.args.get(f'fill_{side}_{_bi}', '').strip()
+                _g = request.args.get(f'glz_{side}_{_bi}', '').strip()
+                spec = None
+                if _f:
+                    spec = _f
+                elif _g:
+                    gu = _g.upper()
+                    if gu.startswith(('W500', 'W600', 'W700')):
+                        spec = _g
+                    elif gu.startswith(('ZIP100', 'ZIP130')):
+                        spec = None
+                    elif gu.startswith('S100'):
+                        spec = 'S100'
+                    else:
+                        spec = 'S500'
+                arr.append(spec)
+            while arr and arr[-1] is None:
+                arr.pop()
+            return arr if arr else None
+
+        fills_front_per_bay = _per_bay('front')
+        fills_back_per_bay  = _per_bay('back')
+        fills_left_per_bay  = _per_bay('left')
+        fills_right_per_bay = _per_bay('right')
+
         if is_pir:
             svg = generate_pir_iso_svg(width=w, length=l, height=h, modules=m, max_overhang=mo, extra_columns=xc,
                                        fill_front=fill_front, fill_right=fill_right,
-                                       fill_left=fill_left, fill_back=fill_back)
+                                       fill_left=fill_left, fill_back=fill_back,
+                                       fills_front_per_bay=fills_front_per_bay,
+                                       fills_back_per_bay=fills_back_per_bay,
+                                       fills_left_per_bay=fills_left_per_bay,
+                                       fills_right_per_bay=fills_right_per_bay)
         else:
             svg = generate_isometric_svg(width=w, length=l, height=h, lamella_count=lc,
                                          modules=m, lamella_open_deg=deg, max_overhang=mo,
                                          extra_columns=xc, fill_front=fill_front, fill_right=fill_right,
-                                         fill_left=fill_left, fill_back=fill_back)
+                                         fill_left=fill_left, fill_back=fill_back,
+                                         fills_front_per_bay=fills_front_per_bay,
+                                         fills_back_per_bay=fills_back_per_bay,
+                                         fills_left_per_bay=fills_left_per_bay,
+                                         fills_right_per_bay=fills_right_per_bay)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:
