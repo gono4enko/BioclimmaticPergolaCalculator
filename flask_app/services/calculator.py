@@ -1578,9 +1578,16 @@ def perform_calculation(dimensions, options):
                 # Backend mutual exclusion: facade wins
                 if (side, bay_g) in _facade_keys:
                     continue
-                series_g = (op.get("series") or 'S500').upper()
+                raw_series = op.get("series")
+                if raw_series is None or str(raw_series).strip() == '':
+                    raise ValueError(
+                        f"Glazing opening (side={side}, bay={bay_g}): missing 'series'. "
+                        f"Expected one of S500, S100, W500, W600, W700.")
+                series_g = str(raw_series).upper()
                 if series_g not in ('S500', 'S100', 'W500', 'W600', 'W700'):
-                    series_g = 'S500'
+                    raise ValueError(
+                        f"Glazing opening (side={side}, bay={bay_g}): unknown series '{raw_series}'. "
+                        f"Expected one of S500, S100, W500, W600, W700.")
                 count_g = max(1, int(op.get("count", 1) or 1))
 
                 full_bay_w = full_fb_bay_w if side in ("front", "back") else full_lr_bay_w
@@ -1594,10 +1601,16 @@ def perform_calculation(dimensions, options):
                         continue
                     color_g = op.get("color") or 'ral9t08'
                     if color_g not in W_COLOR_NAMES:
-                        color_g = 'ral9t08'
+                        raise ValueError(
+                            f"Glazing opening (side={side}, bay={bay_g}, series={series_g}): "
+                            f"color '{color_g}' is not valid for {series_g}. "
+                            f"Allowed: {sorted(W_COLOR_NAMES.keys())}.")
                     glass_g = op.get("glass") or 'transparent'
                     if glass_g not in W_GLASS_NAMES:
-                        glass_g = 'transparent'
+                        raise ValueError(
+                            f"Glazing opening (side={side}, bay={bay_g}, series={series_g}): "
+                            f"glass '{glass_g}' is not valid for {series_g}. "
+                            f"Allowed: {sorted(W_GLASS_NAMES.keys())}.")
                     sashes_g = int(op.get("sashes") or 0)
                     if sashes_g not in (2, 3):
                         sashes_g = w_min_sashes(op_w)
@@ -1678,11 +1691,17 @@ def perform_calculation(dimensions, options):
                     color_g = op.get("color") or 'ral9t08'
                     glass_g = op.get("glass") or 'transparent'
 
+                    if pc_g not in _allowed_pcs_s100:
+                        raise ValueError(
+                            f"Glazing opening (side={side}, bay={bay_g}, series=S100): "
+                            f"panel count {pc_g} is not allowed. "
+                            f"Allowed values: {list(_allowed_pcs_s100)}.")
                     _min_pc = s100_min_panels(op_w, op_h)
                     if pc_g < _min_pc:
-                        pc_g = _min_pc
-                    if pc_g not in _allowed_pcs_s100:
-                        pc_g = next((p for p in _allowed_pcs_s100 if p >= pc_g), _allowed_pcs_s100[-1])
+                        raise ValueError(
+                            f"Glazing opening (side={side}, bay={bay_g}, series=S100): "
+                            f"panel count {pc_g} is below the minimum {_min_pc} required "
+                            f"for opening {op_w:.2f}x{op_h:.2f} m.")
                     if pc_g in (8, 12):
                         direction_g = 'center'
                     if pc_g == 6 and direction_g == 'center':
@@ -1690,9 +1709,15 @@ def perform_calculation(dimensions, options):
                     if op_w < S100_MIN_W or op_h < S100_MIN_H or op_w > S100_MAX_W or op_h > S100_MAX_H:
                         continue
                     if color_g not in S100_COLOR_NAMES:
-                        color_g = 'ral9t08'
+                        raise ValueError(
+                            f"Glazing opening (side={side}, bay={bay_g}, series=S100): "
+                            f"color '{color_g}' is not valid for S100. "
+                            f"Allowed: {sorted(S100_COLOR_NAMES.keys())}.")
                     if glass_g not in S100_GLASS_NAMES:
-                        glass_g = 'transparent'
+                        raise ValueError(
+                            f"Glazing opening (side={side}, bay={bay_g}, series=S100): "
+                            f"glass '{glass_g}' is not valid for S100. "
+                            f"Allowed: {sorted(S100_GLASS_NAMES.keys())}.")
 
                     _glz_rate = pricing_settings.get_euro_rate() or 100.0
                     price_eur = s100_calc_price(op_w, op_h, pc_g, direction_g, color_g, glass_g, euro_rate=_glz_rate)
@@ -1736,11 +1761,28 @@ def perform_calculation(dimensions, options):
                 color_g = op.get("color") or 'ral7016'
                 glass_g = op.get("glass") or 'transparent'
 
+                if color_g not in GLAZING_COLOR_NAMES:
+                    raise ValueError(
+                        f"Glazing opening (side={side}, bay={bay_g}, series=S500): "
+                        f"color '{color_g}' is not valid for S500. "
+                        f"Allowed: {sorted(GLAZING_COLOR_NAMES.keys())}.")
+                if glass_g not in GLAZING_GLASS_NAMES:
+                    raise ValueError(
+                        f"Glazing opening (side={side}, bay={bay_g}, series=S500): "
+                        f"glass '{glass_g}' is not valid for S500. "
+                        f"Allowed: {sorted(GLAZING_GLASS_NAMES.keys())}.")
+
+                if pc_g not in _allowed_pcs_s500:
+                    raise ValueError(
+                        f"Glazing opening (side={side}, bay={bay_g}, series=S500): "
+                        f"panel count {pc_g} is not allowed. "
+                        f"Allowed values: {list(_allowed_pcs_s500)}.")
                 _min_pc = glazing_min_panels(op_w, op_h)
                 if pc_g < _min_pc:
-                    pc_g = _min_pc
-                if pc_g not in _allowed_pcs_s500:
-                    pc_g = next((p for p in _allowed_pcs_s500 if p >= pc_g), _allowed_pcs_s500[-1])
+                    raise ValueError(
+                        f"Glazing opening (side={side}, bay={bay_g}, series=S500): "
+                        f"panel count {pc_g} is below the minimum {_min_pc} required "
+                        f"for opening {op_w:.2f}x{op_h:.2f} m.")
                 if (op_w >= 6 and pc_g >= 6) or pc_g >= 8:
                     direction_g = 'center'
                 if pc_g % 2 != 0 and direction_g == 'center':
