@@ -325,16 +325,18 @@ document.addEventListener('DOMContentLoaded', function() {
     function getGlzForSide(side) {
         if (!state.glazingPerOpening) return '';
         var bays = (side === 'front' || side === 'back') ? facadeModules(state.width) : facadeLengthModules(state.length);
-        // Prefer S100 if present (any opening), else S500
-        var has500 = '';
+        // Priority: W-series (returns its specific code) > S100 > S500
+        var hasS100 = false, hasS500 = false;
         for (var i = 0; i < bays; i++) {
             var g = state.glazingPerOpening[side + '_' + i];
-            if (g && g.enabled) {
-                if ((g.series || 'S500') === 'S100') return 'S100';
-                has500 = 'S500';
-            }
+            if (!g || !g.enabled) continue;
+            var sU = (g.series || 'S500').toUpperCase();
+            if (sU === 'W500' || sU === 'W600' || sU === 'W700') return sU;
+            if (sU === 'S100') hasS100 = true;
+            else hasS500 = true;
         }
-        return has500;
+        if (hasS100) return 'S100';
+        return hasS500 ? 'S500' : '';
     }
 
     function getBayFillQs(side, count, xPerBay) {
@@ -434,7 +436,10 @@ document.addEventListener('DOMContentLoaded', function() {
             {v: 'FZ-44-70', n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 70%'},
             {v: 'FZ-44-100',n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 100%'},
             {v: 'S500',     n: 'S500 \u2014 \u043f\u0430\u043d\u043e\u0440\u0430\u043c\u043d\u043e\u0435 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'},
-            {v: 'S100',     n: 'S100 \u2014 \u0431\u0435\u0437\u0440\u0430\u043c\u043d\u043e\u0435 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 10\u00a0\u043c\u043c (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'}
+            {v: 'S100',     n: 'S100 \u2014 \u0431\u0435\u0437\u0440\u0430\u043c\u043d\u043e\u0435 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 10\u00a0\u043c\u043c (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'},
+            {v: 'W500',     n: 'W500 \u2014 \u0433\u0438\u043b\u044c\u043e\u0442\u0438\u043d\u043d\u043e\u0435, \u0441\u0442\u0435\u043a\u043b\u043e\u043f\u0430\u043a\u0435\u0442 20\u00a0\u043c\u043c (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'},
+            {v: 'W600',     n: 'W600 \u2014 \u0433\u0438\u043b\u044c\u043e\u0442\u0438\u043d\u043d\u043e\u0435, \u0441\u0442\u0435\u043a\u043b\u043e\u043f\u0430\u043a\u0435\u0442 28\u00a0\u043c\u043c (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'},
+            {v: 'W700',     n: 'W700 \u2014 \u0433\u0438\u043b\u044c\u043e\u0442\u0438\u043d\u043d\u043e\u0435 \u0441 \u0442\u0435\u0440\u043c\u043e\u0440\u0430\u0437\u0440\u044b\u0432\u043e\u043c, 28\u00a0\u043c\u043c (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'}
         ];
         var openings = [];
         for (var ai = 0; ai < lMods; ai++) {
@@ -488,14 +493,15 @@ document.addEventListener('DOMContentLoaded', function() {
             sel.addEventListener('change', function() {
                 var key2 = this.dataset.side + '_' + this.dataset.bay;
                 var val = this.value;
-                if (val === 'S500' || val === 'S100') {
+                var isGlzVal = (val === 'S500' || val === 'S100' || val === 'W500' || val === 'W600' || val === 'W700');
+                if (isGlzVal) {
                     // Enable glazing for this opening, clear facade
                     state.facadePerOpening[key2] = '';
-                    var defColor = (val === 'S100') ? 'ral9t08' : 'ral7016';
+                    var defColor = (val === 'S500') ? 'ral7016' : 'ral9t08';
                     var existing = state.glazingPerOpening[key2];
                     if (!existing || (existing.series || 'S500') !== val) {
                         // Reset to series defaults when switching/initializing
-                        state.glazingPerOpening[key2] = {series: val, pc: 0, direction: 'right', color: defColor, glass: 'transparent', count: 1, enabled: true};
+                        state.glazingPerOpening[key2] = {series: val, pc: 0, direction: 'right', color: defColor, glass: 'transparent', sashes: 0, plavnik: null, count: 1, enabled: true};
                     } else {
                         existing.series = val;
                         existing.enabled = true;
@@ -507,7 +513,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (state.glazingPerOpening[key2]) state.glazingPerOpening[key2].enabled = false;
                 }
                 state.facadeOpenings = computeFacadeOpenings();
-                state.facadeType = (val === 'S500' || val === 'S100') ? '' : val;
+                state.facadeType = isGlzVal ? '' : val;
                 var tr = this.closest('tr');
                 if (tr) {
                     var areaTd = tr.querySelector('.facade-area');
@@ -558,6 +564,27 @@ document.addEventListener('DOMContentLoaded', function() {
         {v:'tinted_mass', n:'\u0422\u043e\u043d\u0438\u0440. \u0432 \u043c\u0430\u0441\u0441\u0435'}
     ];
     var S100_PCS_JS = [3, 4, 6, 8, 12];
+
+    // W-series guillotine option lists (W500/W600/W700)
+    var W_COLORS_JS = [
+        {v:'ral9t08',     n:'\u0413\u0440\u0430\u0444\u0438\u0442 \u0442\u0435\u043a\u0441\u0442. RAL 9T08'},
+        {v:'ral7024',     n:'\u0413\u0440\u0430\u0444\u0438\u0442 \u043c\u0430\u0442\u043e\u0432\u044b\u0439 RAL 7024'},
+        {v:'ral8028',     n:'\u041a\u043e\u0440\u0438\u0447\u043d\u0435\u0432\u044b\u0439 RAL 8028'},
+        {v:'ral9016',     n:'\u0411\u0435\u043b\u044b\u0439 \u043c\u0430\u0442. RAL 9016'},
+        {v:'ral_special', n:'RAL special (+10%)'}
+    ];
+    var W_GLASS_JS = [
+        {v:'transparent',     n:'\u041f\u0440\u043e\u0437\u0440\u0430\u0447\u043d\u043e\u0435'},
+        {v:'multifunctional', n:'\u041c\u0443\u043b\u044c\u0442\u0438\u0444\u0443\u043d\u043a\u0446. (+10%)'}
+    ];
+    var W_SASHES_JS = [2, 3];
+    var W_BOUNDS_JS = {
+        W500: {wMin:1.0, wMax:5.0, hMin:1.5, hMax:3.5},
+        W600: {wMin:2.0, wMax:5.0, hMin:2.0, hMax:4.0},
+        W700: {wMin:2.0, wMax:5.0, hMin:2.0, hMax:4.0}
+    };
+    function wMinSashes(w) { return (w > 3.6) ? 3 : 2; }
+    function isWSeries(s) { s = (s || '').toUpperCase(); return s === 'W500' || s === 'W600' || s === 'W700'; }
     // Explicit S100 configurations as the supplier exposes them.
     // Each entry: cfg-key (v), total panels (pc), direction lock (dir),
     // and human label (n). dir=null means user can pick left/right.
@@ -612,6 +639,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function glazingSpec(g) {
         if (!g || !g.enabled) return '';
         var series = (g.series || 'S500').toUpperCase();
+        if (isWSeries(series)) {
+            var sashes = parseInt(g.sashes) || 0;
+            if (sashes !== 2 && sashes !== 3) sashes = 2;
+            return [series, sashes, g.color || 'ral9t08', g.glass || 'transparent'].join(':');
+        }
         if (series === 'S100') {
             return ['S100', g.pc || 3, g.direction || 'right', g.color || 'ral9t08', g.glass || 'transparent'].join(':');
         }
@@ -646,15 +678,24 @@ document.addEventListener('DOMContentLoaded', function() {
             var side = parts.join('_');
             var seriesU = (g.series || 'S500').toUpperCase();
             var defColor = (seriesU === 'S100') ? 'ral9t08' : 'ral7016';
-            out.push({
+            var entry = {
                 series: seriesU,
                 side: side, bay: bay,
-                pc: parseInt(g.pc) || (seriesU === 'S100' ? 3 : 4),
-                direction: g.direction || 'right',
                 color: g.color || defColor,
                 glass: g.glass || 'transparent',
                 count: parseInt(g.count) || 1
-            });
+            };
+            if (isWSeries(seriesU)) {
+                var sashes = parseInt(g.sashes) || 0;
+                if (sashes !== 2 && sashes !== 3) sashes = 2;
+                entry.sashes = sashes;
+                entry.plavnik = (g.plavnik === true);
+                entry.brand = g.brand || 'simu';
+            } else {
+                entry.pc = parseInt(g.pc) || (seriesU === 'S100' ? 3 : 4);
+                entry.direction = g.direction || 'right';
+            }
+            out.push(entry);
         });
         return out;
     }
@@ -694,9 +735,50 @@ document.addEventListener('DOMContentLoaded', function() {
             + ' \u2014 \u043f\u043b\u043e\u0449\u0430\u0434\u044c \u2248 ' + totalArea.toFixed(2) + ' \u043c\u00b2';
     }
 
-    function _drawGlazingMiniSvg(svgEl, w, h, pc, direction, color, glass, series) {
+    function _drawGlazingMiniSvg(svgEl, w, h, pc, direction, color, glass, series, sashes) {
         if (!svgEl || !w || !h) { if (svgEl) svgEl.innerHTML = ''; return; }
         series = (series || 'S500').toUpperCase();
+        if (isWSeries(series)) {
+            var sN = parseInt(sashes) || 2;
+            if (sN !== 2 && sN !== 3) sN = 2;
+            var pCw;
+            if (color === 'ral9016') pCw = '#d8d8d8';
+            else if (color === 'ral8028') pCw = '#5c3d1e';
+            else if (color === 'ral7024') pCw = '#3a4148';
+            else if (color === 'ral_special') pCw = '#7a7a7a';
+            else pCw = '#2e3338';
+            var isMulti = (glass === 'multifunctional');
+            var cG1w = isMulti ? '#a8c0d0' : '#cce0f0';
+            var cG2w = isMulti ? '#7d97a8' : '#a8c8e0';
+            var fW = 200, asp = h / w;
+            var fH = Math.max(60, Math.min(190, Math.round(fW * asp)));
+            var fxw = 8, fyw = 8, VWw = fW + 16, VHw = fH + 22;
+            svgEl.setAttribute('viewBox', '0 0 ' + VWw + ' ' + VHw);
+            svgEl.setAttribute('width', VWw); svgEl.setAttribute('height', VHw);
+            var topPxw = 9, botPxw = 5, sidePxw = 4, midPxw = 3;
+            var iXw = fxw + sidePxw, iYw = fyw + topPxw;
+            var iWw = fW - 2 * sidePxw, iHw = fH - topPxw - botPxw;
+            var sashHpx = (iHw - (sN - 1) * midPxw) / sN;
+            var sw = '';
+            for (var iw = 0; iw < sN; iw++) {
+                var syw = iYw + iw * (sashHpx + midPxw);
+                sw += '<rect x="' + iXw + '" y="' + syw + '" width="' + iWw + '" height="' + sashHpx + '" fill="' + cG1w + '"/>';
+                sw += '<rect x="' + (iXw + iWw * 0.55) + '" y="' + syw + '" width="' + (iWw * 0.4) + '" height="' + sashHpx + '" fill="' + cG2w + '" opacity="0.35"/>';
+                if (iw < sN - 1) sw += '<rect x="' + iXw + '" y="' + (syw + sashHpx) + '" width="' + iWw + '" height="' + midPxw + '" fill="' + pCw + '"/>';
+            }
+            sw += '<rect x="' + fxw + '" y="' + fyw + '" width="' + sidePxw + '" height="' + fH + '" fill="' + pCw + '"/>';
+            sw += '<rect x="' + (fxw + fW - sidePxw) + '" y="' + fyw + '" width="' + sidePxw + '" height="' + fH + '" fill="' + pCw + '"/>';
+            sw += '<rect x="' + fxw + '" y="' + fyw + '" width="' + fW + '" height="' + topPxw + '" fill="' + pCw + '"/>';
+            sw += '<rect x="' + fxw + '" y="' + (fyw + fH - botPxw) + '" width="' + fW + '" height="' + botPxw + '" fill="' + pCw + '"/>';
+            // Chain marker on top rail
+            sw += '<circle cx="' + (fxw + fW * 0.5) + '" cy="' + (fyw + topPxw * 0.5) + '" r="2.5" fill="#dfe7ef" stroke="#1a3a6e" stroke-width="0.6"/>';
+            sw += '<text x="' + (fxw + fW * 0.5) + '" y="' + (fyw + fH - botPxw * 0.25) + '" text-anchor="middle" font-size="6" fill="#dfe7ef" font-family="Arial,sans-serif">' + series + '</text>';
+            var dimYw = fyw + fH + 8;
+            sw += '<line x1="' + fxw + '" y1="' + dimYw + '" x2="' + (fxw + fW) + '" y2="' + dimYw + '" stroke="#8a9bbf" stroke-width="0.6"/>';
+            sw += '<text x="' + (fxw + fW / 2) + '" y="' + (dimYw + 8) + '" text-anchor="middle" font-size="8" fill="#8a9bbf" font-family="Arial,sans-serif">' + Math.round(w * 1000) + '\u00d7' + Math.round(h * 1000) + ' \u043c\u043c</text>';
+            svgEl.innerHTML = sw;
+            return;
+        }
         var n = parseInt(pc) || 3;
         var isS100 = (series === 'S100');
         var isCenter;
@@ -781,6 +863,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function _normalizeGlzCfg(g, w, h) {
         var series = (g.series || 'S500').toUpperCase();
+        if (isWSeries(series)) {
+            var minSash = wMinSashes(w);
+            if (g.sashes !== 2 && g.sashes !== 3) g.sashes = minSash;
+            if (g.sashes < minSash) g.sashes = minSash;
+            if (['ral9t08','ral7024','ral8028','ral9016','ral_special'].indexOf(g.color) === -1) g.color = 'ral9t08';
+            if (g.glass !== 'transparent' && g.glass !== 'multifunctional') g.glass = 'transparent';
+            if (typeof g.plavnik !== 'boolean') g.plavnik = (w > 3.0);
+            if (w > 3.0) g.plavnik = true; // forced auto when wider than 3m
+            if (g.brand !== 'simu' && g.brand !== 'somfy') g.brand = 'simu';
+            return g;
+        }
         if (series === 'S100') {
             var minS = s100MinPanels(w, h);
             if (!g.pc || g.pc < minS) g.pc = minS;
@@ -844,7 +937,10 @@ document.addEventListener('DOMContentLoaded', function() {
             var g = state.glazingPerOpening[key];
             var seriesU = (g.series || 'S500').toUpperCase();
             var outOfRange;
-            if (seriesU === 'S100') {
+            if (isWSeries(seriesU)) {
+                var wb = W_BOUNDS_JS[seriesU];
+                outOfRange = (dims.wM < wb.wMin || dims.hM < wb.hMin || dims.wM > wb.wMax || dims.hM > wb.hMax);
+            } else if (seriesU === 'S100') {
                 outOfRange = (dims.wM < 1.8 || dims.hM < 1.5 || dims.wM > 12.0 || dims.hM > 3.0);
             } else {
                 outOfRange = (dims.wM < 1.8 || dims.hM < 1.7 || dims.wM > 12.0 || dims.hM > 3.25);
@@ -859,20 +955,60 @@ document.addEventListener('DOMContentLoaded', function() {
             var dimsHtml = '<span style="font-size:0.82em;color:#555;white-space:nowrap;">' + Math.round(dims.wM*1000) + '\u00d7' + Math.round(dims.hM*1000) + ' \u043c\u043c</span>';
             var areaVal = (dims.wM * dims.hM).toFixed(2);
             var areaHtml = '<br><span style="font-size:0.9em;">' + areaVal + ' \u043c\u00b2</span>';
-            var COLORS = (seriesU === 'S100') ? S100_COLORS_JS : GLAZING_COLORS_JS;
-            var GLASS  = (seriesU === 'S100') ? S100_GLASS_JS  : GLAZING_GLASS_JS;
-            var PCS    = (seriesU === 'S100') ? S100_PCS_JS    : GLAZING_PCS_JS;
-            var minP   = (seriesU === 'S100') ? s100MinPanels(dims.wM, dims.hM) : glazingMinPanels(dims.wM, dims.hM);
-            var unitWord = (seriesU === 'S100') ? '\u043f\u0430\u043d.' : '\u0441\u0442\u0432.';
-            var summary = seriesU + ' \u00b7 ' + (g.pc || minP) + ' ' + unitWord + ' \u00b7 '
-                + (GLAZING_DIRS_JS.find(function(d){return d.v===g.direction;})||{n:g.direction}).n + ' \u00b7 '
-                + (COLORS.find(function(c){return c.v===g.color;})||{n:g.color}).n + ' \u00b7 '
-                + (GLASS.find(function(c){return c.v===g.glass;})||{n:g.glass}).n;
+            var COLORS, GLASS, PCS, minP, unitWord, summary;
+            if (isWSeries(seriesU)) {
+                COLORS = W_COLORS_JS; GLASS = W_GLASS_JS;
+                summary = seriesU + ' \u00b7 ' + (g.sashes || 2) + ' \u0441\u0442\u0432\u043e\u0440\u043e\u043a \u00b7 '
+                    + (COLORS.find(function(c){return c.v===g.color;})||{n:g.color}).n + ' \u00b7 '
+                    + (GLASS.find(function(c){return c.v===g.glass;})||{n:g.glass}).n
+                    + (g.plavnik ? ' \u00b7 +\u043f\u043b\u0430\u0432\u043d\u0438\u043a' : '');
+            } else {
+                COLORS = (seriesU === 'S100') ? S100_COLORS_JS : GLAZING_COLORS_JS;
+                GLASS  = (seriesU === 'S100') ? S100_GLASS_JS  : GLAZING_GLASS_JS;
+                PCS    = (seriesU === 'S100') ? S100_PCS_JS    : GLAZING_PCS_JS;
+                minP   = (seriesU === 'S100') ? s100MinPanels(dims.wM, dims.hM) : glazingMinPanels(dims.wM, dims.hM);
+                unitWord = (seriesU === 'S100') ? '\u043f\u0430\u043d.' : '\u0441\u0442\u0432.';
+                summary = seriesU + ' \u00b7 ' + (g.pc || minP) + ' ' + unitWord + ' \u00b7 '
+                    + (GLAZING_DIRS_JS.find(function(d){return d.v===g.direction;})||{n:g.direction}).n + ' \u00b7 '
+                    + (COLORS.find(function(c){return c.v===g.color;})||{n:g.color}).n + ' \u00b7 '
+                    + (GLASS.find(function(c){return c.v===g.glass;})||{n:g.glass}).n;
+            }
             html += '<tr data-key="' + key + '">';
             html += '<td><span class="facade-lbl">' + o.label + '</span></td>';
             html += '<td>' + o.desc + '</td>';
             html += '<td><span style="font-size:0.85em;color:#1a3a6e;font-weight:600;">' + summary + '</span></td>';
             html += '<td class="facade-area">' + dimsHtml + areaHtml + '</td></tr>';
+            if (isWSeries(seriesU)) {
+                var minSash = wMinSashes(dims.wM);
+                var sashOpts = '';
+                W_SASHES_JS.forEach(function(s) {
+                    var dis = (s < minSash) ? ' disabled' : '';
+                    var auto = (s === minSash) ? ' (\u0430\u0432\u0442\u043e)' : '';
+                    sashOpts += '<option value="' + s + '"' + dis + (g.sashes === s ? ' selected' : '') + '>' + s + ' \u0441\u0442\u0432\u043e\u0440\u043e\u043a' + auto + '</option>';
+                });
+                var wColOpts = '';
+                COLORS.forEach(function(c) { wColOpts += '<option value="' + c.v + '"' + (g.color===c.v?' selected':'') + '>' + c.n + '</option>'; });
+                var wGlOpts = '';
+                GLASS.forEach(function(c) { wGlOpts += '<option value="' + c.v + '"' + (g.glass===c.v?' selected':'') + '>' + c.n + '</option>'; });
+                var brOpts = '<option value="simu"' + (g.brand==='simu'?' selected':'') + '>SIMU</option>'
+                           + '<option value="somfy"' + (g.brand==='somfy'?' selected':'') + '>SOMFY</option>';
+                var plavForced = (dims.wM > 3.0);
+                var plavChecked = g.plavnik ? ' checked' : '';
+                var plavDis = plavForced ? ' disabled' : '';
+                html += '<tr class="glz-cfg-row" data-key="' + key + '"><td colspan="4" style="background:#f6f9fc;padding:0.6rem 0.9rem;">';
+                html += '<div class="glz-grid">';
+                html += '<div><label>\u0421\u0442\u0432\u043e\u0440\u043a\u0438 (\u0430\u0432\u0442\u043e\u043f\u043e\u0434\u0431\u043e\u0440)</label><select class="form-select form-select-sm glz-fld" data-fld="sashes" data-key="' + key + '">' + sashOpts + '</select></div>';
+                html += '<div><label>\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f</label><select class="form-select form-select-sm glz-fld" data-fld="color" data-key="' + key + '">' + wColOpts + '</select></div>';
+                html += '<div><label>\u0421\u0442\u0435\u043a\u043b\u043e\u043f\u0430\u043a\u0435\u0442</label><select class="form-select form-select-sm glz-fld" data-fld="glass" data-key="' + key + '">' + wGlOpts + '</select></div>';
+                html += '<div><label>\u041c\u0430\u0440\u043a\u0430 \u043f\u0440\u0438\u0432\u043e\u0434\u0430</label><select class="form-select form-select-sm glz-fld" data-fld="brand" data-key="' + key + '">' + brOpts + '</select></div>';
+                html += '<div style="display:flex;align-items:end;"><label style="font-size:0.85em;cursor:' + (plavForced ? 'not-allowed' : 'pointer') + ';"><input type="checkbox" class="glz-fld" data-fld="plavnik" data-key="' + key + '"' + plavChecked + plavDis + '> \u041f\u043b\u0430\u0432\u043d\u0438\u043a' + (plavForced ? ' (\u043e\u0431\u044f\u0437.)' : '') + '</label></div>';
+                html += '</div>';
+                html += '<div style="margin-top:0.4rem;font-size:0.8em;color:#5a6a85;">' + 
+                    '\u0413\u0438\u043b\u044c\u043e\u0442\u0438\u043d\u043d\u043e\u0435 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435: \u0441\u0442\u0432\u043e\u0440\u043a\u0438 \u043f\u043e\u0434\u043d\u0438\u043c\u0430\u044e\u0442\u0441\u044f \u0432\u0432\u0435\u0440\u0445 \u044d\u043b\u0435\u043a\u0442\u0440\u043e\u043f\u0440\u0438\u0432\u043e\u0434\u043e\u043c. \u041f\u0440\u0438\u0432\u043e\u0434 \u0438 \u043f\u0443\u043b\u044c\u0442 \u0432\u044b\u0431\u0438\u0440\u0430\u044e\u0442\u0441\u044f \u0430\u0432\u0442\u043e\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0438.</div>';
+                html += '<div class="glz-preview" style="margin-top:0.5rem;"><svg class="glz-mini-svg" data-key="' + key + '" xmlns="http://www.w3.org/2000/svg"></svg></div>';
+                html += '</td></tr>';
+                return;
+            }
             {
                 var pcOpts = '';
                 if (seriesU === 'S100') {
@@ -946,7 +1082,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 state.glazingPerOpening[k] = state.glazingPerOpening[k] || {enabled:true};
                 var entry = state.glazingPerOpening[k];
                 var seriesL = (entry.series || 'S500').toUpperCase();
-                if (fld === 'pc' && seriesL === 'S100') {
+                if (fld === 'plavnik') {
+                    entry.plavnik = !!this.checked;
+                } else if (fld === 'sashes') {
+                    entry.sashes = parseInt(val) || 2;
+                } else if (fld === 'pc' && seriesL === 'S100') {
                     var opt = this.options[this.selectedIndex];
                     var pcN = parseInt(opt.dataset.pc) || parseInt(val) || 3;
                     var dirLock = opt.dataset.dir || '';
@@ -969,7 +1109,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!g || !g.enabled) return;
             var sideLocal = k.split('_').slice(0, -1).join('_');
             var d = _glazingDimsForKey(sideLocal);
-            _drawGlazingMiniSvg(svg, d.wM, d.hM, g.pc, g.direction, g.color, g.glass, g.series);
+            _drawGlazingMiniSvg(svg, d.wM, d.hM, g.pc, g.direction, g.color, g.glass, g.series, g.sashes);
         });
         updateGlazingAreaInfo();
     }
@@ -2182,15 +2322,25 @@ document.addEventListener('DOMContentLoaded', function() {
             (req.glazing_openings || []).forEach(function(g) {
                 if (!g || g.side == null || g.bay == null) return;
                 var seriesU = (g.series || 'S500').toUpperCase();
-                state.glazingPerOpening[g.side + '_' + g.bay] = {
+                var defC = (seriesU === 'S500') ? 'ral7016' : 'ral9t08';
+                var entry = {
                     enabled: true,
                     series: seriesU,
-                    pc: parseInt(g.pc) || (seriesU === 'S100' ? 3 : 4),
-                    direction: g.direction || 'right',
-                    color: g.color || (seriesU === 'S100' ? 'ral9t08' : 'ral7016'),
+                    color: g.color || defC,
                     glass: g.glass || 'transparent',
                     count: parseInt(g.count) || 1
                 };
+                if (isWSeries(seriesU)) {
+                    var s = parseInt(g.sashes) || 0;
+                    if (s !== 2 && s !== 3) s = 2;
+                    entry.sashes = s;
+                    entry.plavnik = (g.plavnik === true);
+                    entry.brand = g.brand || 'simu';
+                } else {
+                    entry.pc = parseInt(g.pc) || (seriesU === 'S100' ? 3 : 4);
+                    entry.direction = g.direction || 'right';
+                }
+                state.glazingPerOpening[g.side + '_' + g.bay] = entry;
             });
 
             var typeNames = {'B500NEW': 'В500 — поворотные ламели', 'B700NEW': 'В700 — поворотно-сдвижные', 'B600': 'В600 — PIR панели'};

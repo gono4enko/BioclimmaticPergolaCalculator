@@ -747,14 +747,22 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     if not (0 <= bay < bays):
                         continue
                     series = (op.get('series') or 'S500').upper()
-                    pc = int(op.get('pc') or (3 if series == 'S100' else 4))
-                    direction = op.get('direction') or 'right'
-                    color = op.get('color') or ('ral9t08' if series == 'S100' else 'ral7016')
-                    glass = op.get('glass') or 'transparent'
-                    if series == 'S100':
-                        spec = f'S100:{pc}:{direction}:{color}:{glass}'
+                    if series in ('W500', 'W600', 'W700'):
+                        sashes = int(op.get('sashes') or 2)
+                        if sashes not in (2, 3):
+                            sashes = 2
+                        color = op.get('color') or 'ral9t08'
+                        glass = op.get('glass') or 'transparent'
+                        spec = f'{series}:{sashes}:{color}:{glass}'
                     else:
-                        spec = f'{pc}:{direction}:{color}:{glass}'
+                        pc = int(op.get('pc') or (3 if series == 'S100' else 4))
+                        direction = op.get('direction') or 'right'
+                        color = op.get('color') or ('ral9t08' if series == 'S100' else 'ral7016')
+                        glass = op.get('glass') or 'transparent'
+                        if series == 'S100':
+                            spec = f'S100:{pc}:{direction}:{color}:{glass}'
+                        else:
+                            spec = f'{pc}:{direction}:{color}:{glass}'
                     arr[bay] = spec
                 return arr if any(arr) else None
 
@@ -775,8 +783,13 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                             return f
                 if glazings:
                     for g in glazings:
-                        if g:
-                            return 'S100' if g.upper().startswith('S100') else 'S500'
+                        if not g:
+                            continue
+                        gu = g.upper()
+                        if gu.startswith('W500'): return 'W500'
+                        if gu.startswith('W600'): return 'W600'
+                        if gu.startswith('W700'): return 'W700'
+                        return 'S100' if gu.startswith('S100') else 'S500'
                 return None
 
             _iso_front = _iso_fill('front', _front_fills, _front_glz)

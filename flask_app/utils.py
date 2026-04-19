@@ -742,15 +742,81 @@ def _draw_s100_glazing_fill(pc, direction, color, glass, x, y, w, h):
     return ''.join(out)
 
 
+def _w_color_hex(color):
+    if color == 'ral9016':     return '#d8d8d8'
+    if color == 'ral8028':     return '#5c3d1e'
+    if color == 'ral7024':     return '#3a4148'
+    if color == 'ral_special': return '#7a7a7a'
+    return '#2e3338'  # ral9t08 default
+
+
+def _draw_w_glazing_fill(series, sashes, color, glass, x, y, w, h):
+    """W500/W600/W700 guillotine: top/middle/bottom horizontal rails,
+    no vertical mullions, chain marker on top rail. 2 or 3 sashes."""
+    if w < 4 or h < 4:
+        return ''
+    try:
+        sashes = max(2, min(3, int(sashes)))
+    except Exception:
+        sashes = 2
+    pC = _w_color_hex(color)
+    is_multi = (glass == 'multifunctional')
+    cG1 = '#a8c0d0' if is_multi else '#cce0f0'
+    cG2 = '#7d97a8' if is_multi else '#a8c8e0'
+    top_px = max(4, min(11, h * 0.06))
+    bot_px = max(3, min(7, h * 0.035))
+    mid_px = max(2, min(5, h * 0.022))
+    side_px = max(2, min(7, w * 0.018))
+    out = []
+    # Glass background panels (split into N horizontal sashes)
+    inner_x = x + side_px
+    inner_y = y + top_px
+    inner_w = w - 2 * side_px
+    inner_h = h - top_px - bot_px
+    if inner_w < 4 or inner_h < 4:
+        return ''
+    sash_h = (inner_h - (sashes - 1) * mid_px) / sashes
+    for i in range(sashes):
+        sy = inner_y + i * (sash_h + mid_px)
+        out.append(f'<rect x="{inner_x:.1f}" y="{sy:.1f}" width="{inner_w:.1f}" height="{sash_h:.1f}" fill="{cG1}"/>')
+        out.append(f'<rect x="{inner_x + inner_w * 0.55:.1f}" y="{sy:.1f}" width="{inner_w * 0.4:.1f}" height="{sash_h:.1f}" fill="{cG2}" opacity="0.35"/>')
+        if i < sashes - 1:
+            out.append(f'<rect x="{inner_x:.1f}" y="{sy + sash_h:.1f}" width="{inner_w:.1f}" height="{mid_px:.1f}" fill="{pC}"/>')
+    # Side jambs
+    out.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{side_px:.1f}" height="{h:.1f}" fill="{pC}"/>')
+    out.append(f'<rect x="{x + w - side_px:.1f}" y="{y:.1f}" width="{side_px:.1f}" height="{h:.1f}" fill="{pC}"/>')
+    # Top rail with chain marker
+    out.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{top_px:.1f}" fill="{pC}"/>')
+    out.append(f'<rect x="{x:.1f}" y="{y + h - bot_px:.1f}" width="{w:.1f}" height="{bot_px:.1f}" fill="{pC}"/>')
+    # Chain marker (small lift indicator) on top rail
+    cmx = x + w * 0.5
+    cmy = y + top_px * 0.5
+    out.append(f'<circle cx="{cmx:.1f}" cy="{cmy:.1f}" r="{min(3, top_px*0.35):.1f}" fill="#dfe7ef" stroke="#1a3a6e" stroke-width="0.6"/>')
+    # Series label on bottom rail
+    label_y = y + h - bot_px * 0.25
+    out.append(f'<text x="{x + w*0.5:.1f}" y="{label_y:.1f}" text-anchor="middle" font-size="6" fill="#dfe7ef" font-family="Arial,sans-serif">{series}</text>')
+    return ''.join(out)
+
+
 def _draw_glazing_fill(spec, x, y, w, h):
-    """Render a sliding-sash schematic into the elevation opening.
-    spec: 'pc:direction:color:glass' (S500, default) or 'S100:pc:direction:color:glass'."""
+    """Render a sliding/guillotine schematic into the elevation opening.
+    spec formats:
+      S500: 'pc:direction:color:glass'
+      S100: 'S100:pc:direction:color:glass'
+      W:    'W500|W600|W700:sashes:color:glass'
+    """
     if not spec or w < 4 or h < 4:
         return ''
     try:
         parts = (spec or '').split(':')
+        head = parts[0].upper() if parts else ''
+        if head in ('W500', 'W600', 'W700'):
+            sashes = int(parts[1]) if len(parts) >= 2 else 2
+            color = parts[2] if len(parts) >= 3 else 'ral9t08'
+            glass = parts[3] if len(parts) >= 4 else 'transparent'
+            return _draw_w_glazing_fill(head, sashes, color, glass, x, y, w, h)
         series = 'S500'
-        if parts and parts[0].upper() == 'S100':
+        if head == 'S100':
             series = 'S100'
             parts = parts[1:]
         if parts and parts[0].upper() == 'S500':
@@ -1087,6 +1153,20 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
             # Heavier top + bottom rails (frameless = no side frame)
             _out += line(pts_top_left, pts_top_right, frame_c, 1.6, 1.0)
             _out += line(pts_bot_left, pts_bot_right, frame_c, 1.2, 1.0)
+        elif ft in ('W500', 'W600', 'W700'):
+            # Guillotine: glass panel + thick top/bottom rails + 1 horizontal rail (default 2 sashes)
+            frame_c = '#1f2a35'
+            glass_c = '#bcd4e0' if ft == 'W500' else ('#aac7d8' if ft == 'W600' else '#9bbacd')
+            _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left], glass_c, frame_c, 1.0)
+            def _lerpW(a, b, _t):
+                return (a[0]+_t*(b[0]-a[0]), a[1]+_t*(b[1]-a[1]), a[2]+_t*(b[2]-a[2]))
+            # Mid horizontal rail
+            mid_l = _lerpW(pts_bot_left, pts_top_left, 0.5)
+            mid_r = _lerpW(pts_bot_right, pts_top_right, 0.5)
+            _out += line(mid_l, mid_r, frame_c, 1.4, 1.0)
+            # Heavy top + bottom rails
+            _out += line(pts_top_left, pts_top_right, frame_c, 1.8, 1.0)
+            _out += line(pts_bot_left, pts_bot_right, frame_c, 1.6, 1.0)
         elif ft.startswith('FZ-44'):
             slat_c = '#415568'
             gap_r = 0.08 if '-100' in ft else (0.30 if '-70' in ft else 0.52)
@@ -1430,8 +1510,19 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
             for _li in range(1, n_panels):
                 _t = _li / n_panels
                 _out += line(_lerpS(pts_bot_left, pts_bot_right, _t), _lerpS(pts_top_left, pts_top_right, _t), frame_c, 0.5, 0.7)
-            _out += line(pts_top_left, pts_top_right, frame_c, 1.6, 1.0)
-            _out += line(pts_bot_left, pts_bot_right, frame_c, 1.2, 1.0)
+            _out += seg(pts_top_left, pts_top_right, frame_c, 1.6)
+            _out += seg(pts_bot_left, pts_bot_right, frame_c, 1.2)
+        elif ft in ('W500', 'W600', 'W700'):
+            frame_c = '#1f2a35'
+            glass_c = '#bcd4e0' if ft == 'W500' else ('#aac7d8' if ft == 'W600' else '#9bbacd')
+            _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left], glass_c, frame_c, 1.0)
+            def _lerpW(a, b, _t):
+                return (a[0]+_t*(b[0]-a[0]), a[1]+_t*(b[1]-a[1]), a[2]+_t*(b[2]-a[2]))
+            mid_l = _lerpW(pts_bot_left, pts_top_left, 0.5)
+            mid_r = _lerpW(pts_bot_right, pts_top_right, 0.5)
+            _out += seg(mid_l, mid_r, frame_c, 1.4)
+            _out += seg(pts_top_left, pts_top_right, frame_c, 1.8)
+            _out += seg(pts_bot_left, pts_bot_right, frame_c, 1.6)
         elif ft.startswith('FZ-44'):
             slat_c = '#415568'
             gap_r = 0.08 if '-100' in ft else (0.30 if '-70' in ft else 0.52)

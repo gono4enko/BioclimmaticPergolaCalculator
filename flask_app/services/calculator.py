@@ -464,6 +464,157 @@ def s100_calc_price(w, h, pc, direction='right', color='ral9t08', glass='transpa
     return comp
 
 
+# ---------- W500 / W600 / W700 lifting (guillotine) glazing ----------
+# Price matrices: rows = heights (m), cols = widths (m), values = EUR per window.
+# Approximate baseline pricing derived from the manufacturer spec sheets;
+# admin can adjust later via Task #64.
+
+def _w_grid(w_axis, h_axis, base_per_m2, frame_per_m):
+    """Build a price grid where price = base_per_m2*w*h + frame_per_m*(w+h)*2."""
+    grid = []
+    for h in h_axis:
+        row = []
+        for w in w_axis:
+            p = round(base_per_m2 * w * h + frame_per_m * (w + h) * 2.0)
+            row.append(p)
+        grid.append(row)
+    return grid
+
+
+W500_PD = {
+    'w': [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0],
+    'h': [1.5, 2.0, 2.5, 3.0, 3.5],
+    'p': _w_grid([1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0],
+                 [1.5, 2.0, 2.5, 3.0, 3.5], 480, 55),
+}
+W600_PD = {
+    'w': [2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0],
+    'h': [2.0, 2.5, 3.0, 3.5, 4.0],
+    'p': _w_grid([2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0],
+                 [2.0, 2.5, 3.0, 3.5, 4.0], 620, 70),
+}
+W700_PD = {
+    'w': [2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0],
+    'h': [2.0, 2.5, 3.0, 3.5, 4.0],
+    'p': _w_grid([2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0],
+                 [2.0, 2.5, 3.0, 3.5, 4.0], 760, 80),
+}
+
+W_SERIES_NAMES = {
+    'W500': 'W500 — гильотинное остекление (стеклопакет 20 мм / стекло 10 мм)',
+    'W600': 'W600 — гильотинное остекление (стеклопакет 28 мм)',
+    'W700': 'W700 — гильотинное остекление с терморазрывом (стеклопакет 28 мм)',
+}
+W_BOUNDS = {
+    'W500': {'w_min': 1.0, 'w_max': 5.0, 'h_min': 1.5, 'h_max': 3.5},
+    'W600': {'w_min': 2.0, 'w_max': 5.0, 'h_min': 2.0, 'h_max': 4.0},
+    'W700': {'w_min': 2.0, 'w_max': 5.0, 'h_min': 2.0, 'h_max': 4.0},
+}
+W_COLOR_NAMES = {
+    'ral9t08':     'Графит текстурный RAL 9T08',
+    'ral7024':     'Графит матовый RAL 7024',
+    'ral8028':     'Коричневый Муар RAL 8028',
+    'ral9016':     'Белый матовый RAL 9016',
+    'ral_special': 'RAL special (+10%)',
+}
+W_GLASS_NAMES = {
+    'transparent':     'Прозрачное',
+    'multifunctional': 'Мультифункциональное (+10%)',
+}
+W_RAL_SPECIAL_PCT = 10
+W_MULTIFUNCTIONAL_PCT = 10
+W_PLAVNIK_RATE = {  # €/пог.м (пара плавников)
+    'W500': 80,
+    'W600': 100,
+    'W700': 100,
+}
+W_PLAVNIK_TRIGGER_W = 3.0
+
+
+def _w_pd(series):
+    s = (series or '').upper()
+    if s == 'W500': return W500_PD
+    if s == 'W600': return W600_PD
+    if s == 'W700': return W700_PD
+    return None
+
+
+def w_min_sashes(width_m):
+    """Guillotine windows: 2 sashes by default, 3 when wider than 3.6m."""
+    try:
+        w = float(width_m)
+    except Exception:
+        return 2
+    return 3 if w > 3.6 else 2
+
+
+def w_calc_price(series, w, h, color='ral9t08', glass='transparent',
+                 plavnik=None, euro_rate=100.0):
+    """Per-window price in EUR for W500/W600/W700 guillotine glazing."""
+    try:
+        w = float(w); h = float(h)
+    except Exception:
+        return 0.0
+    if w <= 0 or h <= 0:
+        return 0.0
+    pd = _w_pd(series)
+    if not pd:
+        return 0.0
+    s = series.upper()
+    b = W_BOUNDS[s]
+    w_c = max(b['w_min'], min(b['w_max'], w))
+    h_c = max(b['h_min'], min(b['h_max'], h))
+    comp = pd['p'][_glaze_ci(pd['h'], h_c)][_glaze_ci(pd['w'], w_c)]
+    if color == 'ral_special':
+        comp *= (1 + W_RAL_SPECIAL_PCT / 100.0)
+    if glass == 'multifunctional':
+        comp *= (1 + W_MULTIFUNCTIONAL_PCT / 100.0)
+    # Auto-on плавник when wider than trigger
+    if plavnik is None:
+        plavnik = (w > W_PLAVNIK_TRIGGER_W)
+    if plavnik:
+        comp += W_PLAVNIK_RATE.get(s, 0) * w
+    return round(comp, 2)
+
+
+# ---- Guillotine drive selection ----
+# Approximate required torque (Нм) ≈ weight × drum radius. Conservatively
+# we use weight ≈ w*h*30 kg (double-glaze sash) × 0.03 m drum + safety margin.
+
+def _w_required_torque(w, h):
+    try:
+        w = float(w); h = float(h)
+    except Exception:
+        return 0.0
+    return round(w * h * 7.5 + 4.0, 1)
+
+
+W_DRIVES_SIMU = [
+    {'name': 'Simu RTS T6 80/12', 'torque': 80, 'price': 280, 'tandem': False},
+    {'name': 'Simu RTS T6 120/12', 'torque': 120, 'price': 380, 'tandem': False},
+    {'name': 'Simu RTS T6 TANDEM', 'torque': 240, 'price': 760, 'tandem': True},
+]
+W_DRIVES_SOMFY = [
+    {'name': 'Somfy Altus 60 RTS 85/17', 'torque': 85, 'price': 310, 'tandem': False},
+    {'name': 'Somfy Altus 60 RTS 120/12', 'torque': 120, 'price': 410, 'tandem': False},
+    {'name': 'Somfy Altus 60 RTS TANDEM', 'torque': 240, 'price': 820, 'tandem': True},
+]
+
+
+def pick_guillotine_drive(w, h, brand='simu', force_tandem=False):
+    """Return (drive_name, price_eur, is_tandem, required_torque_nm)."""
+    req = _w_required_torque(w, h)
+    catalog = W_DRIVES_SOMFY if (brand or 'simu').lower() == 'somfy' else W_DRIVES_SIMU
+    if force_tandem:
+        d = catalog[-1]
+        return d['name'], d['price'], True, req
+    for d in catalog:
+        if d['torque'] >= req:
+            return d['name'], d['price'], d['tandem'], req
+    d = catalog[-1]
+    return d['name'], d['price'], True, req
+
+
 def _facade_extra_cols(full_bay_w, col_w, max_panel_w):
     """Compute number of extra support columns and resulting section width.
     Returns (n_extra, section_width_m).
@@ -1106,6 +1257,58 @@ def perform_calculation(dimensions, options):
                     "count": f"{total_gutter_length:.2f} м ({gutters_count} {_get_plural_form(gutters_count, 'лоток', 'лотка', 'лотков')})"
                 })
 
+        # Pre-count W-series guillotine windows (each adds +1 channel to the remote).
+        # Mirror the validation that perform_calculation runs later: drop entries that
+        # are out-of-bounds, on a side already taken by a facade panel, or that name
+        # an unknown side. This keeps the remote pult sized to what is actually billed.
+        _glz_ops_pre = options.get("glazing_openings", []) or []
+        _facade_openings_pre = options.get("facade_openings", []) or []
+        _facade_keys_pre = set()
+        for _fop in _facade_openings_pre:
+            if isinstance(_fop, dict) and _fop.get("side") and _fop.get("type"):
+                _facade_keys_pre.add((_fop.get("side"), int(_fop.get("bay", 0))))
+        try:
+            _col_w_pre = (0.150 if selected_variant == "Light"
+                          else (0.100 if pergola_type == "B200" else 0.164))
+            _beam_h_pre = (0.250 if selected_variant == "Light"
+                           else (0.200 if pergola_type == "B200" else 0.280))
+            _open_h_pre = max(0.1, height_m - _beam_h_pre)
+            _side_max_bay_pre = {"front": 0, "back": 0, "left": 0, "right": 0}
+            for _op in (_glz_ops_pre + (facade_openings or [])):
+                if not isinstance(_op, dict):
+                    continue
+                _s = _op.get("side", "")
+                if _s in _side_max_bay_pre:
+                    _side_max_bay_pre[_s] = max(_side_max_bay_pre[_s], int(_op.get("bay", 0)))
+            _length_modules_pre = max(_side_max_bay_pre["left"], _side_max_bay_pre["right"]) + 1
+            _full_fb_bay_w_pre = width_m / max(1, modules)
+            _full_lr_bay_w_pre = length_m / max(1, _length_modules_pre)
+        except Exception:
+            _col_w_pre, _open_h_pre = 0.164, max(0.1, height_m - 0.28)
+            _full_fb_bay_w_pre = width_m / max(1, modules)
+            _full_lr_bay_w_pre = length_m
+        w_window_count = 0
+        for _gop in _glz_ops_pre:
+            if not isinstance(_gop, dict):
+                continue
+            _ser = (_gop.get("series") or "").upper()
+            if _ser not in ("W500", "W600", "W700"):
+                continue
+            _side = _gop.get("side", "")
+            if _side not in ("front", "back", "left", "right"):
+                continue
+            _bay = int(_gop.get("bay", 0) or 0)
+            if (_side, _bay) in _facade_keys_pre:
+                continue
+            _full_bay = _full_fb_bay_w_pre if _side in ("front", "back") else _full_lr_bay_w_pre
+            _op_w = max(0.1, _full_bay - 2 * _col_w_pre)
+            _op_h = _open_h_pre
+            _bnd = W_BOUNDS.get(_ser)
+            if not _bnd or _op_w < _bnd['w_min'] or _op_h < _bnd['h_min'] \
+                    or _op_w > _bnd['w_max'] or _op_h > _bnd['h_max']:
+                continue
+            w_window_count += max(1, int(_gop.get("count", 1) or 1))
+
         devices_count = 0
         if pergola_type in ["B500NEW", "B700NEW"]:
             drive_name, drive_price, is_tandem = get_drive_price(pergola_type, width_m, length_m, modules)
@@ -1125,6 +1328,7 @@ def perform_calculation(dimensions, options):
             if "rgb_led" in lighting_options:
                 led_controllers += 1
             devices_count += led_controllers
+            devices_count += w_window_count
 
             remote_name, remote_price = get_remote_control(devices_count)
             items.append({
@@ -1161,7 +1365,7 @@ def perform_calculation(dimensions, options):
                 specification.append({"name": "Светодиодная лента RGB", "count": f"{lighting_perimeter:.2f} м"})
 
             if pergola_type in ["B600", "B200"]:
-                lighting_devices = controllers_count
+                lighting_devices = controllers_count + w_window_count
                 remote_name, remote_price = get_remote_control(lighting_devices)
                 items.append({
                     "name": f"Пульт ДУ {remote_name} для освещения ({lighting_devices} {_get_plural_form(lighting_devices, 'канал', 'канала', 'каналов')})",
@@ -1360,13 +1564,92 @@ def perform_calculation(dimensions, options):
                 if (side, bay_g) in _facade_keys:
                     continue
                 series_g = (op.get("series") or 'S500').upper()
-                if series_g not in ('S500', 'S100'):
+                if series_g not in ('S500', 'S100', 'W500', 'W600', 'W700'):
                     series_g = 'S500'
                 count_g = max(1, int(op.get("count", 1) or 1))
 
                 full_bay_w = full_fb_bay_w if side in ("front", "back") else full_lr_bay_w
                 op_w = max(0.1, full_bay_w - 2 * col_w_g)
                 op_h = open_h_g
+
+                # ---- W-series guillotine branch ----
+                if series_g in ('W500', 'W600', 'W700'):
+                    bnd = W_BOUNDS[series_g]
+                    if op_w < bnd['w_min'] or op_h < bnd['h_min'] or op_w > bnd['w_max'] or op_h > bnd['h_max']:
+                        continue
+                    color_g = op.get("color") or 'ral9t08'
+                    if color_g not in W_COLOR_NAMES:
+                        color_g = 'ral9t08'
+                    glass_g = op.get("glass") or 'transparent'
+                    if glass_g not in W_GLASS_NAMES:
+                        glass_g = 'transparent'
+                    sashes_g = int(op.get("sashes") or 0)
+                    if sashes_g not in (2, 3):
+                        sashes_g = w_min_sashes(op_w)
+                    plavnik_g = op.get("plavnik")
+                    if plavnik_g is None:
+                        plavnik_g = (op_w > W_PLAVNIK_TRIGGER_W)
+                    plavnik_g = bool(plavnik_g)
+                    _glz_rate = pricing_settings.get_euro_rate() or 100.0
+                    price_one = w_calc_price(series_g, op_w, op_h, color_g, glass_g,
+                                             plavnik=plavnik_g, euro_rate=_glz_rate)
+                    price_eur = round(price_one * count_g, 2)
+                    area_one = round(op_w * op_h, 2)
+
+                    # Drive selection per window (force tandem when wider than 3m)
+                    brand_g = (op.get("brand") or 'simu').lower()
+                    if brand_g not in ('simu', 'somfy'):
+                        brand_g = 'simu'
+                    force_tandem = (op_w > 3.0)
+                    drive_name, drive_price, is_tandem, req_torque = pick_guillotine_drive(
+                        op_w, op_h, brand=brand_g, force_tandem=force_tandem)
+                    drive_total = round(drive_price * count_g, 2)
+
+                    bay_label = f"\u043f\u0440\u043e\u0451\u043c {bay_g + 1}" if (
+                        (side in ('front', 'back') and modules > 1) or
+                        (side in ('left', 'right') and length_modules_g > 1)
+                    ) else "\u043f\u0440\u043e\u0451\u043c"
+                    plav_label = ", плавник" if plavnik_g else ""
+                    gloss = (f"Гильотинное остекление {series_g} "
+                             f"({GLAZING_SIDE_NAMES[side]}, {bay_label}, "
+                             f"{sashes_g} створки, "
+                             f"{W_GLASS_NAMES.get(glass_g, glass_g)}, "
+                             f"{W_COLOR_NAMES.get(color_g, color_g)}{plav_label}, "
+                             f"{op_w:.2f}\u00d7{op_h:.2f} \u043c"
+                             f"{(', ' + str(count_g) + ' шт.') if count_g > 1 else ''})")
+                    items.append({"name": gloss, "price": price_eur})
+                    specification.append({
+                        "name": f"Гильотинное остекление {series_g}",
+                        "count": (f"{count_g} шт. \u00b7 {sashes_g} створки"
+                                  f" \u00b7 {area_one * count_g:.2f} \u043c\u00b2")
+                    })
+                    items.append({
+                        "name": f"Привод {drive_name} ({req_torque:.1f} Нм, {GLAZING_SIDE_NAMES[side]} · {bay_label})",
+                        "price": drive_total
+                    })
+                    specification.append({
+                        "name": f"Привод {drive_name}",
+                        "count": f"{count_g} шт."
+                    })
+                    total_price += price_eur + drive_total
+                    glazing_total_eur += price_eur
+                    glazing_total_area += area_one * count_g
+                    glazing_normalized.append({
+                        "series": series_g,
+                        "side": side, "bay": bay_g,
+                        "sashes": sashes_g,
+                        "color": color_g, "glass": glass_g,
+                        "plavnik": plavnik_g,
+                        "brand": brand_g,
+                        "drive": drive_name,
+                        "drive_torque": req_torque,
+                        "drive_price_eur": drive_total,
+                        "count": count_g,
+                        "w": round(op_w, 3), "h": round(op_h, 3),
+                        "area": round(area_one * count_g, 2),
+                        "price_eur": price_eur,
+                    })
+                    continue
 
                 if series_g == 'S100':
                     pc_g = int(op.get("pc", 3) or 3)
@@ -1481,6 +1764,21 @@ def perform_calculation(dimensions, options):
 
         glazing_total_eur = round(glazing_total_eur, 2)
         glazing_total_area = round(glazing_total_area, 2)
+
+        # B600/B200 with W-windows but no lighting → still need a remote
+        if (pergola_type in ["B600", "B200"]
+                and not has_lighting
+                and w_window_count > 0):
+            _w_remote_name, _w_remote_price = get_remote_control(w_window_count)
+            items.append({
+                "name": f"Пульт ДУ {_w_remote_name} ({w_window_count} {_get_plural_form(w_window_count, 'канал', 'канала', 'каналов')})",
+                "price": _w_remote_price
+            })
+            total_price += _w_remote_price
+            specification.append({
+                "name": f"Пульт ДУ {_w_remote_name}",
+                "count": f"1 шт. ({w_window_count} {_get_plural_form(w_window_count, 'канал', 'канала', 'каналов')})"
+            })
 
         # Push delivery + installation rows AFTER glazing so they appear last in spec/items
         items.append({"name": "Доставка", "price": delivery_price})
