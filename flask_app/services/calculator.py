@@ -2251,6 +2251,16 @@ def perform_calculation(dimensions, options):
             for _go in glazing_normalized:
                 _glaze_keys.add((_go['side'], _go['bay']))
 
+            # Build facade-fill exclusion set (ZIP not allowed over facade fills)
+            _facade_keys_z = set()
+            for _fop in (facade_openings or []):
+                if isinstance(_fop, dict) and _fop.get("side") and _fop.get("type"):
+                    _facade_keys_z.add((_fop.get("side"), int(_fop.get("bay", 0) or 0)))
+
+            # ZIP130 hard product limits (adjusted dims)
+            _ZIP130_MAX_W = 5.0  # metres
+            _ZIP130_MAX_H = 5.0  # metres
+
             # First pass: determine type for each opening (for global ZIP130 upgrade)
             _zip_types_first = []
             _zip_bay_w = {}
@@ -2261,6 +2271,9 @@ def perform_calculation(dimensions, options):
                 if _zside not in ('front', 'back', 'left', 'right'):
                     continue
                 _zbay = int(_zop.get('bay', 0) or 0)
+                # Skip openings occupied by facade fills
+                if (_zside, _zbay) in _facade_keys_z:
+                    continue
                 if _zside in ('front', 'back'):
                     _zop_w = max(0.1, full_fb_bay_w - 2 * col_w_g)
                 else:
@@ -2274,7 +2287,9 @@ def perform_calculation(dimensions, options):
                                      fabric=_zfab, color=_zcol, drive=_zdrive,
                                      euro_rate=pricing_settings.get_euro_rate() or 100.0)
                 if 'error' not in _zr:
-                    _zip_types_first.append(_zr['zip_type'])
+                    # Only count openings within ZIP130 size limits
+                    if _zr['adj_w'] <= _ZIP130_MAX_W and _zr['adj_h'] <= _ZIP130_MAX_H:
+                        _zip_types_first.append(_zr['zip_type'])
 
             _global_type = 'ZIP130' if 'ZIP130' in _zip_types_first else 'ZIP100'
 
@@ -2286,7 +2301,10 @@ def perform_calculation(dimensions, options):
                 if side_z not in ('front', 'back', 'left', 'right'):
                     continue
                 bay_z = int(_zop.get('bay', 0) or 0)
-                op_w_z = _zip_bay_w.get((side_z, bay_z), 1.0)
+                # Skip if excluded by facade fill or invalid in first pass
+                if (side_z, bay_z) not in _zip_bay_w:
+                    continue
+                op_w_z = _zip_bay_w[(side_z, bay_z)]
                 has_glz_z = (side_z, bay_z) in _glaze_keys
                 fabric_z = _zop.get('fabric', 'veozip')
                 if fabric_z not in ZIP_FABRIC_NAMES:
@@ -2305,6 +2323,9 @@ def perform_calculation(dimensions, options):
                                     euro_rate=_glz_rate_z)
                 if 'error' in zr:
                     continue
+                # Hard product-limit validation: ZIP130 max 5×5 m (adjusted dims)
+                if zr['adj_w'] > _ZIP130_MAX_W or zr['adj_h'] > _ZIP130_MAX_H:
+                    continue  # opening exceeds maximum manufacturable size — skip
 
                 price_z = round(zr['total_eur'] * count_z, 2)
                 install_z = 0.0
@@ -2334,6 +2355,7 @@ def perform_calculation(dimensions, options):
                 zip_total_eur += price_z
                 zip_normalized.append({
                     'zip_type': zr['zip_type'],
+                    'spec': f"{zr['zip_type']}:{fabric_z}:{color_z}:{drive_z}",
                     'side': side_z, 'bay': bay_z,
                     'fabric': fabric_z, 'color': color_z, 'drive': drive_z,
                     'has_glazing': has_glz_z,
