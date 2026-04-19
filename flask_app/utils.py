@@ -706,11 +706,12 @@ def _draw_s100_glazing_fill(pc, direction, color, glass, x, y, w, h):
     bot_px = max(1.8, min(5, h * (bot_mm / 3000.0) * 1.6 + 1.5))
     mid_px = max(0.6, min(1.6, w * 0.0035))
     center_px = max(1.2, min(3, w * 0.006))
+    # Thin vertical side jambs (frameless still has L/R end profiles per spec photos)
+    side_px = max(1.2, min(3.5, w * 0.005))
     out = []
-    # NO side frames — frameless. Just glass + thin mullions + top/bot rails.
-    inner_x = x
+    inner_x = x + side_px
     inner_y = y + top_px
-    inner_w = w
+    inner_w = w - 2 * side_px
     inner_h = h - top_px - bot_px
     if inner_w < 4 or inner_h < 4:
         return ''

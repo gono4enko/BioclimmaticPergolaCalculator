@@ -734,7 +734,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isS100) {
             topPx = (n === 3) ? 5 : 4.5;
             botPx = 2.5;
-            sidePx = 0;  // frameless
+            sidePx = 2;  // frameless between panels, but L/R end profiles per spec
             midPx = 1.2;
             centerPx = 2.5;
         } else {
