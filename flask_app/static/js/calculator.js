@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v99';
+    var SVG_V = 'v100';
     var state = {
         pergolaType: '',
         lamellaSize: '',

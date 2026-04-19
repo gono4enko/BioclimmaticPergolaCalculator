@@ -909,6 +909,26 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
         fill_left_svg = _iso_fill_face(fill_left, (0, 0, COL_W), (0, 0, length - COL_W),
                                        (0, column_top, COL_W), (0, column_top, length - COL_W))
 
+    fill_right_svg = ''
+    if fill_right and fill_right.strip():
+        fill_right_svg = _iso_fill_face(fill_right, (width, 0, COL_W), (width, 0, length - COL_W),
+                                        (width, column_top, COL_W), (width, column_top, length - COL_W))
+
+    fill_front_svg = ''
+    any_other_fill = any([fill_right, fill_left, fill_back])
+    for _mi in range(mod_count):
+        _fx0 = col_xs[0] if _mi == 0 else width / mod_count * _mi + COL_W / 2
+        _fx1 = col_xs[-1] if _mi == mod_count - 1 else width / mod_count * (_mi + 1) - COL_W / 2
+        _pbl = (_fx0, 0, 0)
+        _pbr = (_fx1, 0, 0)
+        _ptl = (_fx0, column_top, 0)
+        _ptr = (_fx1, column_top, 0)
+        if fill_front and fill_front.strip():
+            fill_front_svg += _iso_fill_face(fill_front, _pbl, _pbr, _ptl, _ptr)
+        elif any_other_fill:
+            coords = ' '.join(f'{x:.1f},{y:.1f}' for x, y in (s(p) for p in [_pbl, _pbr, _ptr, _ptl]))
+            fill_front_svg += f'<polygon points="{coords}" fill="#eef2f7" fill-opacity="0.78" stroke="#2a4a7e" stroke-width="1.0" stroke-dasharray="6,3" stroke-linejoin="round"/>'
+
     def draw_column(cx, cz, y0, y1):
         x0 = cx - COL_W / 2; x1 = cx + COL_W / 2
         z0 = cz - COL_W / 2; z1 = cz + COL_W / 2
@@ -941,11 +961,14 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
         out += quad([(x0, y1, z0), (x0, y1, z1), (x1, y1, z1), (x1, y1, z0)], top_c)
         return out
 
-    svg += draw_beam(0, width, length - COL_W, length, by0, by1, beam_top, beam_front, beam_side)
-
-    svg += draw_beam(0, COL_W, COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
-
     svg += fill_left_svg
+    svg += fill_right_svg
+    svg += fill_front_svg
+
+    svg += draw_beam(0, width, length - COL_W, length, by0, by1, beam_top, beam_front, beam_side)
+    svg += draw_beam(0, COL_W, COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
+    svg += draw_beam(width - COL_W, width, COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
+    svg += draw_beam(0, width, 0, COL_W, by0, by1, beam_top, beam_front, beam_side)
 
     if lamella_count and lamella_count > 0:
         lam_n = int(lamella_count)
@@ -992,31 +1015,6 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
             cx_mid = width / mod_count * i
             svg += draw_beam(cx_mid - CENTER_BEAM_W / 2, cx_mid + CENTER_BEAM_W / 2,
                              COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
-
-    svg += draw_beam(width - COL_W, width, COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
-
-    svg += draw_beam(0, width, 0, COL_W, by0, by1, beam_top, beam_front, beam_side)
-
-    if fill_right and fill_right.strip():
-        _pbl = (width, 0, COL_W)
-        _pbr = (width, 0, length - COL_W)
-        _ptl = (width, column_top, COL_W)
-        _ptr = (width, column_top, length - COL_W)
-        svg += _iso_fill_face(fill_right, _pbl, _pbr, _ptl, _ptr)
-
-    any_other_fill = any([fill_right, fill_left, fill_back])
-    for _mi in range(mod_count):
-        _fx0 = col_xs[0] if _mi == 0 else width / mod_count * _mi + COL_W / 2
-        _fx1 = col_xs[-1] if _mi == mod_count - 1 else width / mod_count * (_mi + 1) - COL_W / 2
-        _pbl = (_fx0, 0, 0)
-        _pbr = (_fx1, 0, 0)
-        _ptl = (_fx0, column_top, 0)
-        _ptr = (_fx1, column_top, 0)
-        if fill_front and fill_front.strip():
-            svg += _iso_fill_face(fill_front, _pbl, _pbr, _ptl, _ptr)
-        elif any_other_fill:
-            coords = ' '.join(f'{x:.1f},{y:.1f}' for x, y in (s(p) for p in [_pbl, _pbr, _ptr, _ptl]))
-            svg += f'<polygon points="{coords}" fill="#eef2f7" fill-opacity="0.78" stroke="#2a4a7e" stroke-width="1.0" stroke-dasharray="6,3" stroke-linejoin="round"/>'
 
     if mid_cols:
         mid_cols.sort(key=lambda c: c[0])
@@ -1095,7 +1093,7 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     return svg
 
 
-def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None, extra_columns=0):
+def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None, extra_columns=0, fill_front=None, fill_right=None, fill_left=None, fill_back=None):
     """Isometric view for B600 pergola with PIR sandwich-panel roof.
     Panel joints spaced proportionally to actual panel width (~0.9 m).
     """
@@ -1151,6 +1149,35 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
     pir_top = '#c8d8eb'; pir_front = '#8fafc8'; pir_joint = '#6a87a8'
     ground = '#eef2f7'
 
+    def _iso_fill_face(ft, pts_bot_left, pts_bot_right, pts_top_left, pts_top_right, n_h_lines=8):
+        _out = ''
+        if not ft or not ft.strip():
+            return _out
+        ft = ft.strip()
+        if ft in ('FP-20', 'FP-PIR'):
+            bg = '#455a6a' if ft == 'FP-PIR' else '#527080'
+            line_c = '#334455'
+            _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left], bg, bg, 0.0)
+            for _li in range(1, n_h_lines + 1):
+                _t = _li / (n_h_lines + 1)
+                def _lerp(a, b, __t=_t):
+                    return (a[0]+__t*(b[0]-a[0]), a[1]+__t*(b[1]-a[1]), a[2]+__t*(b[2]-a[2]))
+                _out += seg(_lerp(pts_bot_left, pts_top_left), _lerp(pts_bot_right, pts_top_right), line_c, 0.7)
+        elif ft.startswith('FZ-44'):
+            slat_c = '#415568'
+            gap_r = 0.08 if '-100' in ft else (0.30 if '-70' in ft else 0.52)
+            n_slats = 8
+            for _si in range(n_slats):
+                t0 = _si / n_slats
+                t1 = t0 + (1.0 - gap_r) / n_slats
+                def _lp(a, b, _t):
+                    return (a[0]+_t*(b[0]-a[0]), a[1]+_t*(b[1]-a[1]), a[2]+_t*(b[2]-a[2]))
+                _out += quad([_lp(pts_bot_left, pts_top_left, t0),
+                              _lp(pts_bot_right, pts_top_right, t0),
+                              _lp(pts_bot_right, pts_top_right, t1),
+                              _lp(pts_bot_left, pts_top_left, t1)], slat_c, slat_c, 0.3)
+        return _out
+
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}" width="{svg_w}" height="{svg_h}">'
 
     g00 = (-0.4, 0, -0.4); g10 = (width + 0.4, 0, -0.4)
@@ -1195,10 +1222,44 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
 
     by0 = column_top; by1 = height
 
+    fill_back_svg = ''
+    if fill_back and fill_back.strip():
+        for _mi in range(mod_count):
+            _bx0 = col_xs[0] if _mi == 0 else width / mod_count * _mi + COL_W / 2
+            _bx1 = col_xs[-1] if _mi == mod_count - 1 else width / mod_count * (_mi + 1) - COL_W / 2
+            fill_back_svg += _iso_fill_face(fill_back, (_bx0, 0, length), (_bx1, 0, length),
+                                            (_bx0, column_top, length), (_bx1, column_top, length))
+    fill_left_svg = ''
+    if fill_left and fill_left.strip():
+        fill_left_svg = _iso_fill_face(fill_left, (0, 0, COL_W), (0, 0, length - COL_W),
+                                       (0, column_top, COL_W), (0, column_top, length - COL_W))
+    fill_right_svg = ''
+    if fill_right and fill_right.strip():
+        fill_right_svg = _iso_fill_face(fill_right, (width, 0, COL_W), (width, 0, length - COL_W),
+                                        (width, column_top, COL_W), (width, column_top, length - COL_W))
+    fill_front_svg = ''
+    any_other_fill = any([fill_right, fill_left, fill_back])
+    for _mi in range(mod_count):
+        _fx0 = col_xs[0] if _mi == 0 else width / mod_count * _mi + COL_W / 2
+        _fx1 = col_xs[-1] if _mi == mod_count - 1 else width / mod_count * (_mi + 1) - COL_W / 2
+        _pbl = (_fx0, 0, 0); _pbr = (_fx1, 0, 0)
+        _ptl = (_fx0, column_top, 0); _ptr = (_fx1, column_top, 0)
+        if fill_front and fill_front.strip():
+            fill_front_svg += _iso_fill_face(fill_front, _pbl, _pbr, _ptl, _ptr)
+        elif any_other_fill:
+            coords = ' '.join(f'{x:.1f},{y:.1f}' for x, y in (s(p) for p in [_pbl, _pbr, _ptr, _ptl]))
+            fill_front_svg += f'<polygon points="{coords}" fill="#eef2f7" fill-opacity="0.78" stroke="#2a4a7e" stroke-width="1.0" stroke-dasharray="6,3" stroke-linejoin="round"/>'
+
+    svg += fill_back_svg
+
     back_cols = [(cx, col_zs[-1]) for cx in col_xs]
     back_cols.sort(key=lambda c: -c[0])
     for cx, cz in back_cols:
         svg += draw_column(cx, cz, 0, height)
+
+    svg += fill_left_svg
+    svg += fill_right_svg
+    svg += fill_front_svg
 
     svg += draw_beam(0, width, length - COL_W, length, by0, by1, beam_top, beam_front, beam_side)
     svg += draw_beam(0, COL_W, COL_W, length - COL_W, by0, by1, beam_top, beam_front, beam_side)
