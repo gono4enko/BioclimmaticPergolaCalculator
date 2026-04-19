@@ -833,9 +833,9 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     beam_top = '#b8c8df'
     beam_front = '#7d9bc0'
     beam_side = '#5d7da8'
-    lam_top = '#d8e2ef'
-    lam_front = '#9fb3cd'
-    lam_edge = '#3d6396'
+    lam_top = '#f0f7ff'
+    lam_front = '#c8dff2'
+    lam_edge = '#1a3a6e'
     ground = '#eef2f7'
     text_color = '#333'
 
@@ -983,9 +983,9 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
                 G = (x_right, y_center + dy_w - dy_t, cz + dz_w + dz_t)
                 H = (x_left,  y_center + dy_w - dy_t, cz + dz_w + dz_t)
 
-                svg += quad([D, C, F, E], lam_top, lam_edge, 0.7)
-                svg += quad([B, C, F, G], lam_front, lam_edge, 0.7)
-                svg += quad([A, B, G, H], '#7a96ba', lam_edge, 0.7)
+                svg += quad([D, C, F, E], lam_top, lam_edge, 1.0)
+                svg += quad([B, C, F, G], lam_front, lam_edge, 1.0)
+                svg += quad([A, B, G, H], '#a8c8e0', lam_edge, 1.0)
 
     if mod_count >= 2:
         for i in range(1, mod_count):
