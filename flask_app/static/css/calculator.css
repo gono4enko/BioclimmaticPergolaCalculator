@@ -33,16 +33,35 @@
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    padding: 1.5rem 1.8rem;
+    padding: 0 1.5rem 1.5rem;
     margin-bottom: 1.2rem;
+    overflow: hidden;
+    border-top: 4px solid #1a3a6e;
 }
 .step-card h3 {
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: #004B9A;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #e5eeff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 -1.5rem 1.2rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #1a3a6e 0%, #2a5298 100%);
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    letter-spacing: 0.01em;
+}
+.step-card h3 .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.22);
+    font-size: 0.88rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-right: 0.15rem;
 }
 
 .type-option {
@@ -410,7 +429,8 @@
     .hero-section { height: 200px; background-attachment: scroll; }
     .hero-content h1 { font-size: 1.5rem; }
     .calc-container { margin: -20px 0.5rem 0; }
-    .step-card { padding: 1rem; }
+    .step-card { padding: 0 1rem 1rem; }
+    .step-card h3 { margin: 0 -1rem 1rem; }
     .type-option img { height: 100px; }
     .installation-counter .counter-number { font-size: 2.2rem; }
 }

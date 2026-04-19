@@ -3,7 +3,7 @@
 {% block title %}Калькулятор стоимости перголы{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=73">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=74">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
 <link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=101" as="script">
 {% endblock %}
@@ -21,7 +21,7 @@
 <div class="container calc-container pb-5">
     <div id="promo-badges-container" class="promo-badges mb-3" style="display:none;"></div>
     <div class="step-card" id="step-1">
-        <h3>1. Выберите тип перголы</h3>
+        <h3><span class="step-num">1</span>Выберите тип перголы</h3>
         <div class="row g-3 align-items-stretch">
             <div class="col-12 col-md-6 col-lg-3 d-flex">
                 <div class="type-option w-100" data-type="B500NEW">
@@ -63,12 +63,12 @@
     </div>
 
     <div class="step-card" id="step-2" style="display:none;">
-        <h3>2. Модификация</h3>
+        <h3><span class="step-num">2</span>Модификация</h3>
         <div class="row g-2" id="variant-options"></div>
     </div>
 
     <div class="step-card" id="step-3" style="display:none;">
-        <h3>3. Размеры</h3>
+        <h3><span class="step-num">3</span>Размеры</h3>
         <div class="row g-3">
             <div class="col-6 dim-input">
                 <label for="input-width">Ширина (м)</label>
