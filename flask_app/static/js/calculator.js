@@ -770,7 +770,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<div><label>\u041d\u0430\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435</label><select class="form-select form-select-sm glz-fld" data-fld="direction" data-key="' + key + '">' + dirOpts + '</select></div>';
                 html += '<div><label>\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f</label><select class="form-select form-select-sm glz-fld" data-fld="color" data-key="' + key + '">' + colOpts + '</select></div>';
                 html += '<div><label>\u0422\u0438\u043f \u0441\u0442\u0435\u043a\u043b\u043e\u043f\u0430\u043a\u0435\u0442\u0430</label><select class="form-select form-select-sm glz-fld" data-fld="glass" data-key="' + key + '">' + glOpts + '</select></div>';
-                html += '<div><label>\u041a\u043e\u043b-\u0432\u043e</label><input type="number" min="1" max="20" value="' + (g.count||1) + '" class="form-control form-control-sm glz-fld" data-fld="count" data-key="' + key + '"></div>';
                 html += '</div>';
                 html += '<div class="glz-preview" style="margin-top:0.5rem;"><svg class="glz-mini-svg" data-key="' + key + '" xmlns="http://www.w3.org/2000/svg"></svg></div>';
                 html += '</td></tr>';
