@@ -848,13 +848,15 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
         ft = ft.strip()
         if ft in ('FP-20', 'FP-PIR'):
             bg = '#455a6a' if ft == 'FP-PIR' else '#527080'
-            line_c = '#334455'
-            _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left], bg, bg, 0.0)
-            for _li in range(1, n_h_lines + 1):
-                _t = _li / (n_h_lines + 1)
+            line_c = '#1f2a35'
+            edge_c = '#26323f'
+            _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left], bg, edge_c, 1.2)
+            n_v_lines = 10
+            for _li in range(1, n_v_lines):
+                _t = _li / n_v_lines
                 def _lerp(a, b, __t=_t):
                     return (a[0]+__t*(b[0]-a[0]), a[1]+__t*(b[1]-a[1]), a[2]+__t*(b[2]-a[2]))
-                _out += line(_lerp(pts_bot_left, pts_top_left), _lerp(pts_bot_right, pts_top_right), line_c, 0.7)
+                _out += line(_lerp(pts_bot_left, pts_bot_right), _lerp(pts_top_left, pts_top_right), line_c, 0.6, 0.85)
         elif ft.startswith('FZ-44'):
             slat_c = '#415568'
             gap_r = 0.08 if '-100' in ft else (0.30 if '-70' in ft else 0.52)
