@@ -1400,6 +1400,38 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
                 def _lerp(a, b, __t=_t):
                     return (a[0]+__t*(b[0]-a[0]), a[1]+__t*(b[1]-a[1]), a[2]+__t*(b[2]-a[2]))
                 _out += seg(_lerp(pts_bot_left, pts_top_left), _lerp(pts_bot_right, pts_top_right), line_c, 0.7)
+        elif ft == 'S500':
+            frame_c = '#1f2a35'
+            glass_c = '#bcd4e0'
+            _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left], glass_c, frame_c, 1.2)
+            def _lerpS(a, b, _t):
+                return (a[0]+_t*(b[0]-a[0]), a[1]+_t*(b[1]-a[1]), a[2]+_t*(b[2]-a[2]))
+            _out += quad([_lerpS(pts_bot_left, pts_bot_right, 0.0),
+                          _lerpS(pts_bot_left, pts_bot_right, 0.45),
+                          _lerpS(pts_top_left, pts_top_right, 0.45),
+                          _lerpS(pts_top_left, pts_top_right, 0.0)], '#dde8ee', frame_c, 0.4)
+            n_panels = 4
+            for _li in range(1, n_panels):
+                _t = _li / n_panels
+                _out += line(_lerpS(pts_bot_left, pts_bot_right, _t), _lerpS(pts_top_left, pts_top_right, _t), frame_c, 0.9, 0.95)
+            _out += line(pts_top_left, pts_top_right, frame_c, 1.4, 1.0)
+            _out += line(pts_bot_left, pts_bot_right, frame_c, 1.4, 1.0)
+        elif ft == 'S100':
+            frame_c = '#2e3338'
+            glass_c = '#cfe0ea'
+            _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left], glass_c, frame_c, 0.5)
+            def _lerpS(a, b, _t):
+                return (a[0]+_t*(b[0]-a[0]), a[1]+_t*(b[1]-a[1]), a[2]+_t*(b[2]-a[2]))
+            _out += quad([_lerpS(pts_bot_left, pts_bot_right, 0.55),
+                          _lerpS(pts_bot_left, pts_bot_right, 1.0),
+                          _lerpS(pts_top_left, pts_top_right, 1.0),
+                          _lerpS(pts_top_left, pts_top_right, 0.55)], '#e6f0f6', frame_c, 0.3)
+            n_panels = 6
+            for _li in range(1, n_panels):
+                _t = _li / n_panels
+                _out += line(_lerpS(pts_bot_left, pts_bot_right, _t), _lerpS(pts_top_left, pts_top_right, _t), frame_c, 0.5, 0.7)
+            _out += line(pts_top_left, pts_top_right, frame_c, 1.6, 1.0)
+            _out += line(pts_bot_left, pts_bot_right, frame_c, 1.2, 1.0)
         elif ft.startswith('FZ-44'):
             slat_c = '#415568'
             gap_r = 0.08 if '-100' in ft else (0.30 if '-70' in ft else 0.52)
