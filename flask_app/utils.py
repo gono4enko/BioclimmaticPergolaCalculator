@@ -736,22 +736,6 @@ def _draw_glazing_fill(spec, x, y, w, h):
         out.append(f'<rect x="{px + panel_w * 0.5:.1f}" y="{inner_y:.1f}" width="{panel_w * 0.5:.1f}" height="{inner_h:.1f}" fill="{cG2}" opacity="0.3"/>')
     rail_y = y + h - bot_px
     out.append(f'<rect x="{x:.1f}" y="{rail_y - 1:.1f}" width="{w:.1f}" height="2" fill="#b8c4cc"/>')
-    # Sash handles: small vertical bar on each panel near opening edge.
-    handle_w = max(1.2, min(3.5, panel_w * 0.05))
-    handle_h = max(8, min(28, inner_h * 0.16))
-    handle_y = inner_y + inner_h * 0.45
-    for i in range(pc):
-        if is_center:
-            section_idx = i % (pc // 2)
-            section_off = (inner_w - center_px) / 2 + center_px if i >= pc // 2 else 0
-            opens_right = (i >= pc // 2)
-        else:
-            section_idx = i
-            section_off = 0
-            opens_right = (direction == 'right')
-        px = inner_x + section_off + section_idx * (panel_w + mid_px)
-        hx = (px + panel_w - handle_w - 2) if opens_right else (px + 2)
-        out.append(f'<rect x="{hx:.1f}" y="{handle_y:.1f}" width="{handle_w:.1f}" height="{handle_h:.1f}" fill="{pD}" rx="0.6"/>')
     return ''.join(out)
 
 
@@ -982,6 +966,22 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
                 def _lerp(a, b, __t=_t):
                     return (a[0]+__t*(b[0]-a[0]), a[1]+__t*(b[1]-a[1]), a[2]+__t*(b[2]-a[2]))
                 _out += line(_lerp(pts_bot_left, pts_bot_right), _lerp(pts_top_left, pts_top_right), line_c, 0.6, 0.85)
+        elif ft == 'S500':
+            frame_c = '#1f2a35'
+            glass_c = '#bcd4e0'
+            _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left], glass_c, frame_c, 1.2)
+            def _lerpS(a, b, _t):
+                return (a[0]+_t*(b[0]-a[0]), a[1]+_t*(b[1]-a[1]), a[2]+_t*(b[2]-a[2]))
+            _out += quad([_lerpS(pts_bot_left, pts_bot_right, 0.0),
+                          _lerpS(pts_bot_left, pts_bot_right, 0.45),
+                          _lerpS(pts_top_left, pts_top_right, 0.45),
+                          _lerpS(pts_top_left, pts_top_right, 0.0)], '#dde8ee', frame_c, 0.4)
+            n_panels = 4
+            for _li in range(1, n_panels):
+                _t = _li / n_panels
+                _out += line(_lerpS(pts_bot_left, pts_bot_right, _t), _lerpS(pts_top_left, pts_top_right, _t), frame_c, 0.9, 0.95)
+            _out += line(pts_top_left, pts_top_right, frame_c, 1.4, 1.0)
+            _out += line(pts_bot_left, pts_bot_right, frame_c, 1.4, 1.0)
         elif ft.startswith('FZ-44'):
             slat_c = '#415568'
             gap_r = 0.08 if '-100' in ft else (0.30 if '-70' in ft else 0.52)

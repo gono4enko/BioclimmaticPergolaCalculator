@@ -1185,17 +1185,14 @@ def perform_calculation(dimensions, options):
 
         delivery_pct = pricing_settings.get_delivery_markup_percent()
         delivery_price = round(base_total * delivery_pct / 100, 2)
-        items.append({"name": "Доставка", "price": delivery_price})
         total_price += delivery_price
-        specification.append({"name": "Доставка", "count": "1"})
 
         installation_price = 0
+        install_pct = 0
         if installation:
             install_pct = pricing_settings.get_installation_markup_percent()
             installation_price = round(base_total * install_pct / 100, 2)
-            items.append({"name": "Установка", "price": installation_price})
             total_price += installation_price
-            specification.append({"name": "Установка", "count": "1"})
 
         glazing_openings = options.get("glazing_openings", []) or []
         glazing_total_eur = 0.0
@@ -1303,6 +1300,13 @@ def perform_calculation(dimensions, options):
 
         glazing_total_eur = round(glazing_total_eur, 2)
         glazing_total_area = round(glazing_total_area, 2)
+
+        # Push delivery + installation rows AFTER glazing so they appear last in spec/items
+        items.append({"name": "Доставка", "price": delivery_price})
+        specification.append({"name": "Доставка", "count": "1"})
+        if installation:
+            items.append({"name": "Установка", "price": installation_price})
+            specification.append({"name": "Установка", "count": "1"})
 
         total_price = round(total_price, 2)
 
