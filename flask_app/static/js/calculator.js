@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
         facadeOpenings: [],
         facadePerOpening: {},
         glazingPerOpening: {},
+        zipPerOpening: {},
         maxWidth: 13.5,
         maxLength: 8.0,
         result: null,
@@ -140,6 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
         buildFacadeTopView();
         buildFacadeTable();
         buildGlazingTable();
+        buildZipTable();
         setTimeout(function() {
             stepsEl.step3.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 80);
@@ -275,6 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
         buildFacadeTopView();
         buildFacadeTable();
         buildGlazingTable();
+        buildZipTable();
     });
     document.getElementById('input-length').addEventListener('input', function() {
         state.length = parseFloat(this.value) || 0;
@@ -282,6 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
         buildFacadeTopView();
         buildFacadeTable();
         buildGlazingTable();
+        buildZipTable();
     });
     document.getElementById('input-height').addEventListener('input', function() {
         var raw = parseFloat(this.value);
@@ -542,6 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 buildFacadeTopView();
                 updateFacadeAreaInfo();
                 buildGlazingTable();
+                buildZipTable();
                 if (state._lastMainResult) updateSchemeForVariant(state.result || state._lastMainResult);
             });
         });
@@ -1084,6 +1089,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 state.glazingPerOpening[k] = state.glazingPerOpening[k] || {pc:0, direction:'right', color:'ral7016', glass:'transparent', count:1};
                 state.glazingPerOpening[k].enabled = (this.value === '1');
                 buildGlazingTable();
+                buildZipTable();
                 buildFacadeTable();
                 updateGlazingAreaInfo();
                 if (state._lastMainResult) updateSchemeForVariant(state.result || state._lastMainResult);
@@ -1113,6 +1119,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     entry[fld] = val;
                 }
                 buildGlazingTable();
+                buildZipTable();
                 updateGlazingAreaInfo();
                 if (state._lastMainResult) updateSchemeForVariant(state.result || state._lastMainResult);
             });
@@ -1213,6 +1220,128 @@ document.addEventListener('DOMContentLoaded', function() {
             sec.appendChild(node);
         }
         renderGlazingPreviewSvgs(node);
+    }
+
+    // ===================== ZIP awning per-opening editor =====================
+    var ZIP_FABRICS_JS = [
+        {v:'veozip', n:'Veozip (Screen Veosol)'},
+        {v:'soltis', n:'Soltis W96/W88 (+15 \u20ac/\u043c\u00b2)'},
+        {v:'copaco',  n:'Copaco Lunar Blackout (+15 \u20ac/\u043c\u00b2)'}
+    ];
+    var ZIP_COLORS_JS = [
+        {v:'ral9016',    n:'\u0411\u0435\u043b\u044b\u0439 RAL 9016'},
+        {v:'ral7024',    n:'\u0413\u0440\u0430\u0444\u0438\u0442 RAL 7024'},
+        {v:'ral9t08',    n:'\u0413\u0440\u0430\u0444\u0438\u0442 \u0442\u0435\u043a\u0441\u0442. RAL 9T08'},
+        {v:'ral8028',    n:'\u041a\u043e\u0440\u0438\u0447\u043d\u0435\u0432\u044b\u0439 RAL 8028'},
+        {v:'ral_special',n:'RAL special (+10%)'}
+    ];
+    var ZIP_DRIVES_JS = [
+        {v:'manual',   n:'\u0420\u0443\u0447\u043d\u043e\u0435 (50 \u20ac)'},
+        {v:'simu',     n:'\u042d\u043b\u0435\u043a\u0442\u0440\u043e SIMU'},
+        {v:'somfy',    n:'\u042d\u043b\u0435\u043a\u0442\u0440\u043e Somfy'},
+        {v:'decolife', n:'\u042d\u043b\u0435\u043a\u0442\u0440\u043e Decolife'}
+    ];
+
+    function computeZipOpenings() {
+        var out = [];
+        Object.keys(state.zipPerOpening || {}).forEach(function(k) {
+            var z = state.zipPerOpening[k];
+            if (!z || !z.enabled) return;
+            var parts = k.split('_');
+            var bay = parseInt(parts.pop());
+            var side = parts.join('_');
+            out.push({
+                side: side, bay: bay,
+                fabric: z.fabric || 'veozip',
+                color: z.color || 'ral9016',
+                drive: z.drive || 'manual',
+                count: parseInt(z.count) || 1
+            });
+        });
+        return out;
+    }
+
+    function updateZipAreaInfo() {
+        var infoEl = document.getElementById('zip-area-info');
+        if (!infoEl) return;
+        var actives = computeZipOpenings();
+        if (actives.length === 0) { infoEl.style.display = 'none'; infoEl.textContent = ''; return; }
+        infoEl.style.display = 'block';
+        infoEl.textContent = 'ZIP-\u043c\u0430\u0440\u043a\u0438\u0437: ' + actives.length + ' \u043f\u0440\u043e\u0451\u043c\u0430';
+    }
+
+    function buildZipTable() {
+        var tableEl = document.getElementById('zip-opening-table');
+        if (!tableEl) return;
+        var W = state.width, L = state.length;
+        if (W <= 0 || L <= 0) { tableEl.innerHTML = '<div style="color:#999;font-size:0.85rem;padding:8px 4px;">\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0440\u0430\u0437\u043c\u0435\u0440\u044b \u043d\u0430 \u0448\u0430\u0433\u0435 3</div>'; return; }
+        var mods = facadeModules(W);
+        var lMods = facadeLengthModules(L);
+        var openings = [];
+        for (var ai = 0; ai < lMods; ai++) openings.push({side:'left', bay:ai, label:lMods>1?'A'+(ai+1):'A', desc:lMods>1?'\u0421\u043b\u0435\u0432\u0430 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(ai+1):'\u0421\u043b\u0435\u0432\u0430'});
+        for (var bi = 0; bi < mods; bi++)  openings.push({side:'back', bay:bi, label:mods>1?'B'+(bi+1):'B', desc:mods>1?'\u0421\u0437\u0430\u0434\u0438 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(bi+1):'\u0421\u0437\u0430\u0434\u0438'});
+        for (var ci = 0; ci < lMods; ci++) openings.push({side:'right', bay:ci, label:lMods>1?'C'+(ci+1):'C', desc:lMods>1?'\u0421\u043f\u0440\u0430\u0432\u0430 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(ci+1):'\u0421\u043f\u0440\u0430\u0432\u0430'});
+        for (var fi = 0; fi < mods; fi++)  openings.push({side:'front', bay:fi, label:mods>1?'F'+(fi+1):'F', desc:mods>1?'\u0424\u0430\u0441\u0430\u0434 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(fi+1):'\u0424\u0430\u0441\u0430\u0434'});
+
+        var html = '<table class="facade-table"><thead><tr>'
+            + '<th>\u041f\u0440\u043e\u0451\u043c</th>'
+            + '<th>\u0420\u0430\u0441\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435</th>'
+            + '<th>ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u0430</th>'
+            + '<th>\u041f\u0430\u0440\u0430\u043c\u0435\u0442\u0440\u044b</th>'
+            + '</tr></thead><tbody>';
+
+        openings.forEach(function(o) {
+            var key = o.side + '_' + o.bay;
+            var z = state.zipPerOpening[key] || {};
+            var enabled = !!z.enabled;
+            var hasGlz = !!(state.glazingPerOpening[key] && state.glazingPerOpening[key].enabled);
+            var overlayTag = (enabled && hasGlz) ? '<span style="background:#f59e0b;color:#fff;border-radius:3px;padding:1px 5px;font-size:0.72em;margin-left:4px;">\u041d\u0430\u043a\u043b\u0430\u0434\u043d\u043e\u0439</span>' : '';
+            var toggleBtnStyle = enabled ? 'background:#1a3a6e;color:#fff' : 'background:#e5e9f0;color:#555';
+            var toggleBtnText = enabled ? 'ZIP \u2713' : '+ ZIP';
+            html += '<tr data-key="' + key + '">';
+            html += '<td><span class="facade-lbl">' + o.label + '</span></td>';
+            html += '<td>' + o.desc + overlayTag + '</td>';
+            html += '<td><button class="zip-toggle-btn" data-key="' + key + '" style="' + toggleBtnStyle + ';border:none;border-radius:5px;padding:3px 10px;font-size:0.83em;cursor:pointer;">' + toggleBtnText + '</button></td>';
+            if (enabled) {
+                var fabOpts = '';
+                ZIP_FABRICS_JS.forEach(function(f) { fabOpts += '<option value="' + f.v + '"' + ((z.fabric||'veozip')===f.v?' selected':'') + '>' + f.n + '</option>'; });
+                var colOpts = '';
+                ZIP_COLORS_JS.forEach(function(c) { colOpts += '<option value="' + c.v + '"' + ((z.color||'ral9016')===c.v?' selected':'') + '>' + c.n + '</option>'; });
+                var drvOpts = '';
+                ZIP_DRIVES_JS.forEach(function(d) { drvOpts += '<option value="' + d.v + '"' + ((z.drive||'manual')===d.v?' selected':'') + '>' + d.n + '</option>'; });
+                html += '<td><div class="glz-grid">'
+                    + '<div><label>\u0422\u043a\u0430\u043d\u044c</label><select class="form-select form-select-sm zip-fld" data-fld="fabric" data-key="' + key + '">' + fabOpts + '</select></div>'
+                    + '<div><label>\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f</label><select class="form-select form-select-sm zip-fld" data-fld="color" data-key="' + key + '">' + colOpts + '</select></div>'
+                    + '<div><label>\u041f\u0440\u0438\u0432\u043e\u0434</label><select class="form-select form-select-sm zip-fld" data-fld="drive" data-key="' + key + '">' + drvOpts + '</select></div>'
+                    + '</div></td>';
+            } else {
+                html += '<td style="color:#aaa;font-size:0.82em;">\u2014</td>';
+            }
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        tableEl.innerHTML = html;
+
+        tableEl.querySelectorAll('.zip-toggle-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var k = this.dataset.key;
+                var z = state.zipPerOpening[k] || {fabric:'veozip', color:'ral9016', drive:'manual', count:1};
+                z.enabled = !z.enabled;
+                state.zipPerOpening[k] = z;
+                buildZipTable();
+                updateZipAreaInfo();
+            });
+        });
+        tableEl.querySelectorAll('.zip-fld').forEach(function(sel) {
+            sel.addEventListener('change', function() {
+                var k = this.dataset.key;
+                var fld = this.dataset.fld;
+                if (!state.zipPerOpening[k]) state.zipPerOpening[k] = {fabric:'veozip', color:'ral9016', drive:'manual', count:1, enabled:true};
+                state.zipPerOpening[k][fld] = this.value;
+                updateZipAreaInfo();
+            });
+        });
+        updateZipAreaInfo();
     }
 
     function buildFacadeTopView() {
@@ -1402,7 +1531,8 @@ document.addEventListener('DOMContentLoaded', function() {
             selected_variant: state.selectedVariant,
             client_name: state.clientName,
             facade_openings: computeFacadeOpenings(),
-            glazing_openings: computeGlazingOpenings()
+            glazing_openings: computeGlazingOpenings(),
+            zip_openings: computeZipOpenings()
         };
 
         state._pergolaHeight = state.height || 3.0;
@@ -2102,6 +2232,32 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</tbody></table></div>';
         }
 
+        /* Block 8a: ZIP awning results */
+        var zipRes = mainResult && mainResult.zip;
+        if (!isAll && zipRes && zipRes.count > 0) {
+            html += '<div class="kp-block">';
+            html += '<div class="kp-block-header"><div class="kp-block-icon" style="background:#0ea5e9;">\uD83C\uDF00</div><div class="kp-block-title">ZIP-\u043C\u0430\u0440\u043A\u0438\u0437\u044B (' + zipRes.count + ' \u0448\u0442.)</div></div>';
+            html += '<table class="cost-table"><tbody>';
+            (zipRes.openings || []).forEach(function(zo) {
+                var sideMap = {front:'\u0424\u0430\u0441\u0430\u0434', back:'\u0421\u0437\u0430\u0434\u0438', left:'\u0421\u043B\u0435\u0432\u0430', right:'\u0421\u043F\u0440\u0430\u0432\u0430'};
+                var sideLabel = sideMap[zo.side] || zo.side;
+                var typeLabel = zo.zip_type || 'ZIP100';
+                var dimLabel = zo.width_mm && zo.height_mm ? (zo.width_mm + '\u00d7' + zo.height_mm + ' \u043c\u043c') : '';
+                var fabricMap = {veozip:'Veozip', soltis:'Soltis W96', copaco:'Copaco Blackout'};
+                var fabricLabel = fabricMap[zo.fabric] || zo.fabric;
+                var driveMap = {manual:'\u0420\u0443\u0447\u043d\u043e\u0435', simu:'SIMU', somfy:'Somfy', decolife:'Decolife'};
+                var driveLabel = driveMap[zo.drive] || zo.drive;
+                var priceRub = Math.round((zo.price_eur || 0) * mainResult.euro_rate);
+                html += '<tr><td>' + sideLabel + ' \u00b7 \u041f\u0440\u043e\u0451\u043c ' + (zo.bay + 1) + ' \u00b7 ' + typeLabel + ' \u00b7 ' + dimLabel + '<br><span style="font-size:0.8em;color:#555;">' + fabricLabel + ' \u00b7 ' + driveLabel + '</span></td>' +
+                        '<td style="white-space:nowrap;">' + formatPrice(priceRub) + ' \u20BD</td></tr>';
+            });
+            var zipTotalRub = Math.round((zipRes.price || 0) * mainResult.euro_rate);
+            html += '<tr style="font-weight:700;border-top:2px solid #e5e9f0;">' +
+                    '<td>ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u044b: \u0438\u0442\u043e\u0433\u043e</td>' +
+                    '<td style="white-space:nowrap;">' + formatPrice(zipTotalRub) + ' \u20BD</td></tr>';
+            html += '</tbody></table></div>';
+        }
+
         /* Variant comparison (for "all" mode) */
         if (isAll) {
             html += '<div class="kp-block">' +
@@ -2442,6 +2598,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     entry.direction = g.direction || 'right';
                 }
                 state.glazingPerOpening[g.side + '_' + g.bay] = entry;
+            });
+            state.zipPerOpening = state.zipPerOpening || {};
+            (req.zip_openings || []).forEach(function(z) {
+                if (!z || z.side == null || z.bay == null) return;
+                state.zipPerOpening[z.side + '_' + z.bay] = {
+                    enabled: true,
+                    fabric: z.fabric || 'veozip',
+                    color: z.color || 'ral9016',
+                    drive: z.drive || 'manual',
+                    count: parseInt(z.count) || 1
+                };
             });
 
             var typeNames = {'B500NEW': 'В500 — поворотные ламели', 'B700NEW': 'В700 — поворотно-сдвижные', 'B600': 'В600 — PIR панели'};

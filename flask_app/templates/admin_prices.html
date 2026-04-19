@@ -156,6 +156,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <div class="card">
+    <div class="card-header">ZIP-маркизы — цены и наценки</div>
+    <div class="card-body">
+        <div class="sel-row">
+            <div class="form-group">
+                <label>Тип</label>
+                <select id="zipType">
+                    <option value="ZIP100">ZIP100 (до 4×3.5 м)</option>
+                    <option value="ZIP130">ZIP130 (до 5×5 м)</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="loadZipMatrix()">Показать матрицу</button>
+            <button class="btn btn-outline-danger" onclick="resetZipMatrix()" title="Сбросить к заводским ценам">Сбросить к заводским</button>
+        </div>
+        <div id="zipWrap" style="margin-top:14px"><p style="color:#888;font-size:13px">Выберите тип и нажмите «Показать матрицу»</p></div>
+        <div id="zipControls" style="display:none;margin-top:12px;gap:10px">
+            <button class="btn btn-outline-primary btn-sm" id="zipEditBtn" onclick="toggleZipEdit()">Редактировать</button>
+            <button class="btn btn-success btn-sm" id="zipSaveBtn" style="display:none" onclick="saveZipEdits()">Сохранить изменения</button>
+            <span id="zipStatus" style="font-size:12px;line-height:32px;color:#888"></span>
+        </div>
+
+        <hr style="margin:24px 0">
+        <h6 style="font-weight:700;margin-bottom:12px">Наценки и стоимости ZIP</h6>
+        <div id="zipSettingsWrap" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px"></div>
+        <div style="margin-top:12px">
+            <button class="btn btn-success btn-sm" onclick="saveZipSettings()">Сохранить наценки ZIP</button>
+            <span id="zipSettingsStatus" style="font-size:12px;line-height:32px;color:#888;margin-left:10px"></span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
     <div class="card-header">Загрузка нового прайс-листа (изображение)</div>
     <div class="card-body">
         <div class="upload-area" id="uploadArea">
@@ -695,6 +726,135 @@ function saveGlazingSettings() {
 }
 
 loadGlazingSettings();
+
+// ===== ZIP admin =====
+var _zipData = null;
+var _zipEditMode = false;
+var _zipPendingEdits = {};
+
+var ZIP_SETTING_LABELS = {
+    'ZIP_ASSEMBLY_PCT': 'Сборка/монтаж, % от стоимости',
+    'ZIP_INSTALL_EUR_M2': 'Установка, €/м² (при заказе с монтажом)',
+    'ZIP_COLOR_SPECIAL_PCT': 'Надбавка RAL special, %',
+    'ZIP_FABRIC_SOLTIS_EUR_M2': 'Soltis W96/W88, €/м² надбавка',
+    'ZIP_FABRIC_COPACO_EUR_M2': 'Copaco Blackout, €/м² надбавка',
+};
+
+function loadZipMatrix() {
+    var zt = document.getElementById('zipType').value;
+    document.getElementById('zipWrap').innerHTML = '<p style="color:#888">Загрузка...</p>';
+    document.getElementById('zipControls').style.display = 'none';
+    _zipData = null; _zipEditMode = false; _zipPendingEdits = {};
+    fetch('/admin/zip-prices?zip_type=' + encodeURIComponent(zt))
+        .then(function(r){return r.json();})
+        .then(function(d){
+            if (!d.ok) { document.getElementById('zipWrap').innerHTML = '<p style="color:red">' + (d.error||'Ошибка') + '</p>'; return; }
+            _zipData = d.data;
+            renderZipMatrix(false);
+            document.getElementById('zipControls').style.display = 'flex';
+        })
+        .catch(function(e){ document.getElementById('zipWrap').innerHTML = '<p style="color:red">'+e.message+'</p>'; });
+}
+
+function renderZipMatrix(editable) {
+    if (!_zipData) return;
+    var d = _zipData;
+    var zt = document.getElementById('zipType').value;
+    var html = '<div class="price-table-wrap"><table class="price-table"><thead><tr><th class="depth-header">H\\W (м)</th>';
+    d.w.forEach(function(w){ html += '<th>' + w.toFixed(2) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    d.h.forEach(function(h, hi) {
+        html += '<tr><td class="depth-cell">' + h.toFixed(2) + ' м</td>';
+        d.w.forEach(function(w, wi) {
+            var price = d.p[hi][wi];
+            var key = zt + '_' + w + '_' + h;
+            if (editable) {
+                html += '<td><input type="number" min="0" step="1" value="' + Math.round(price) + '" data-zt="' + zt + '" data-w="' + w + '" data-h="' + h + '" class="zip-cell-input" onchange="markZipEdit(this)"></td>';
+            } else {
+                html += '<td>' + Math.round(price) + '</td>';
+            }
+        });
+        html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('zipWrap').innerHTML = html;
+}
+
+function toggleZipEdit() {
+    _zipEditMode = !_zipEditMode;
+    _zipPendingEdits = {};
+    renderZipMatrix(_zipEditMode);
+    document.getElementById('zipEditBtn').textContent = _zipEditMode ? 'Отмена' : 'Редактировать';
+    document.getElementById('zipSaveBtn').style.display = _zipEditMode ? 'inline-block' : 'none';
+    document.getElementById('zipStatus').textContent = '';
+}
+
+function markZipEdit(inp) {
+    var key = inp.dataset.zt + '_' + inp.dataset.w + '_' + inp.dataset.h;
+    _zipPendingEdits[key] = {zip_type: inp.dataset.zt, w: parseFloat(inp.dataset.w), h: parseFloat(inp.dataset.h), price: parseFloat(inp.value)};
+    inp.style.background = '#fff9c4';
+}
+
+function saveZipEdits() {
+    var keys = Object.keys(_zipPendingEdits);
+    if (!keys.length) { document.getElementById('zipStatus').textContent = 'Нет изменений'; return; }
+    document.getElementById('zipStatus').textContent = 'Сохранение...';
+    var queue = keys.map(function(k){ return _zipPendingEdits[k]; });
+    var idx = 0;
+    function next() {
+        if (idx >= queue.length) { document.getElementById('zipStatus').textContent = 'Сохранено ' + queue.length + ' ячеек'; _zipPendingEdits = {}; toggleZipEdit(); loadZipMatrix(); return; }
+        var item = queue[idx++];
+        fetch('/admin/zip-save-cell', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(item)})
+            .then(function(r){return r.json();})
+            .then(function(d){ if (!d.ok) { document.getElementById('zipStatus').textContent = 'Ошибка: '+(d.error||'?'); } else { next(); } })
+            .catch(function(e){ document.getElementById('zipStatus').textContent = e.message; });
+    }
+    next();
+}
+
+function resetZipMatrix() {
+    var zt = document.getElementById('zipType').value;
+    if (!confirm('Сбросить к заводским ценам для ' + zt + '?')) return;
+    fetch('/admin/zip-reset', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({zip_type:zt})})
+        .then(function(r){return r.json();})
+        .then(function(d){
+            if (d.ok) { document.getElementById('zipStatus').textContent = 'Сброшено: ' + d.deleted + ' правок'; loadZipMatrix(); }
+            else { document.getElementById('zipStatus').textContent = d.error || 'Ошибка'; }
+        });
+}
+
+function loadZipSettings() {
+    fetch('/admin/zip-settings').then(function(r){return r.json();}).then(function(d){
+        if (!d.ok) return;
+        var wrap = document.getElementById('zipSettingsWrap');
+        var html = '';
+        Object.keys(d.values).forEach(function(k){
+            var label = ZIP_SETTING_LABELS[k] || k;
+            html += '<div style="background:#f5f7fa;border-radius:8px;padding:10px 14px">' +
+                '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">' + label + '</label>' +
+                '<input type="number" step="0.01" id="zs_' + k + '" value="' + d.values[k].toFixed(2) + '" ' +
+                'style="width:120px;border:1.5px solid #ddd;border-radius:6px;padding:5px 8px;font-size:13px">' +
+                '<span style="font-size:11px;color:#aaa;margin-left:6px">по умолчанию: ' + (d.defaults[k]||0).toFixed(2) + '</span>' +
+                '</div>';
+        });
+        wrap.innerHTML = html;
+    });
+}
+
+function saveZipSettings() {
+    var keys = ['ZIP_ASSEMBLY_PCT','ZIP_INSTALL_EUR_M2','ZIP_COLOR_SPECIAL_PCT','ZIP_FABRIC_SOLTIS_EUR_M2','ZIP_FABRIC_COPACO_EUR_M2'];
+    var values = {};
+    keys.forEach(function(k){ var el = document.getElementById('zs_'+k); if (el) values[k] = parseFloat(el.value); });
+    fetch('/admin/zip-settings', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({values:values})})
+    .then(function(r){return r.json();})
+    .then(function(d){
+        if (d.ok) document.getElementById('zipSettingsStatus').textContent = 'Сохранено: ' + d.saved + ' значений';
+        else document.getElementById('zipSettingsStatus').textContent = d.error || 'Ошибка';
+    })
+    .catch(function(e){ document.getElementById('zipSettingsStatus').textContent = e.message; });
+}
+
+loadZipSettings();
 
 loadSchedulerHealth();
 setInterval(loadSchedulerHealth, 60000);

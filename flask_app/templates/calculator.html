@@ -5,7 +5,7 @@
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=80">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=122" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=123" as="script">
 {% endblock %}
 
 {% block content %}
@@ -185,6 +185,13 @@
                             <p>Премиум-серия гильотинного остекления для проёмов 2.0–5.0&nbsp;м × 2.0–4.0&nbsp;м с улучшенным стеклопакетом и фурнитурой. Электропривод подбирается по моменту автоматически (по умолчанию — той же марки, что и автоматика перголы), пульт расширяется на каждый дополнительный канал.</p>
                         </div>
                     </div>
+                    <div class="facade-info-card">
+                        <img src="{{ url_for('static', filename='images/facade/zip100.png') }}?v=1" alt="ZIP100 — вертикальная ZIP-маркиза" class="facade-info-img contain">
+                        <div class="facade-info-text">
+                            <div class="facade-info-name">ZIP100 / ZIP130 — вертикальные ZIP-маркизы</div>
+                            <p>Рулонные маркизы с боковыми направляющими (zip-система) — устанавливаются в любой проём или поверх уже выбранного остекления (накладной монтаж, +100&nbsp;мм ширина, +100/130&nbsp;мм высота). ZIP100 до 4.0×3.5&nbsp;м, ZIP130 до 5.0×5.0&nbsp;м; при любом проёме ZIP130 — все маркизы единого типа. Ткань: Veozip, Soltis (+15&nbsp;€/м²) или Copaco Lunar Blackout (+15&nbsp;€/м²). Привод: ручное или электропривод SIMU/Somfy/Decolife.</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="facade-how-to">
                     <div class="facade-how-to-title"><i class="bi bi-info-circle-fill"></i> Как заполнить проём</div>
@@ -206,6 +213,11 @@
                 </div>
                 <div id="glazing-opening-table" style="margin-top:0.4rem;"></div>
                 <div id="glazing-area-info" style="font-size:0.82rem;color:#1a3a6e;background:#f0f4fa;border-radius:6px;padding:0.4rem 0.7rem;display:none;margin-top:0.4rem;"></div>
+                <div class="glazing-subhead" style="margin-top:1.1rem;font-weight:600;color:#1a3a6e;font-size:0.92rem;display:flex;align-items:center;gap:6px;">
+                    <i class="bi bi-wind"></i> ZIP-маркизы (вертикальные)
+                </div>
+                <div id="zip-opening-table" style="margin-top:0.4rem;"></div>
+                <div id="zip-area-info" style="font-size:0.82rem;color:#1a3a6e;background:#f0f4fa;border-radius:6px;padding:0.4rem 0.7rem;display:none;margin-top:0.4rem;"></div>
             </div>
         </details>
     </div>
@@ -269,7 +281,7 @@
 
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=122"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=123"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');

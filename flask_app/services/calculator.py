@@ -17,7 +17,10 @@ def clear_price_cache():
     try:
         clear_glazing_cache()
     except NameError:
-        # During module import clear_glazing_cache may not yet be defined.
+        pass
+    try:
+        clear_zip_cache()
+    except NameError:
         pass
 
 PERGOLA_TYPES = {
@@ -754,6 +757,273 @@ def pick_guillotine_drive(w, h, brand='simu', force_tandem=False):
             return d['name'], d['price'], d['tandem'], req
     d = catalog[-1]
     return d['name'], d['price'], True, req
+
+
+# ============================================================
+# ZIP100 / ZIP130 vertical roller awnings (Decolife / Gaviota)
+# ============================================================
+
+ZIP100_W = [1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75, 3.00, 3.25, 3.50, 3.75, 4.00]
+ZIP100_H = [1.5, 2.5, 3.0, 3.5]
+ZIP100_P = [
+    [319,349,379,409,439,469,499,529,558,588,618,648,678],
+    [408,447,485,523,562,600,639,675,716,754,792,831,869],
+    [451,493,536,578,620,662,705,747,789,832,874,916,959],
+    [577,626,675,724,773,822,871,919,968,1017,1066,1115,1164],
+]
+
+ZIP130_W = [1.00,1.25,1.50,1.75,2.00,2.25,2.50,2.75,3.00,3.25,3.50,3.75,4.00,4.25,4.50,4.75,5.00]
+ZIP130_H = [1.5, 2.5, 3.0, 4.0, 5.0]
+ZIP130_P = [
+    [356,390,425,460,494,529,564,599,633,668,703,737,772,807,842,876,911],
+    [445,488,531,574,618,661,704,747,791,834,887,920,964,1007,1050,1093,1137],
+    [488,535,582,629,676,723,770,818,865,912,959,1006,1053,1100,1148,1195,1242],
+    [617,671,725,779,832,886,940,994,1047,1101,1155,1208,1262,1316,1370,1423,1477],
+    [665,730,794,858,922,987,1051,1115,1179,1244,1308,1372,1436,1500,1565,1629,1693],
+]
+
+ZIP_FABRIC_SURCHARGE = {
+    'veozip': 0.0,
+    'soltis': 15.0,
+    'copaco': 15.0,
+}
+ZIP_FABRIC_NAMES = {
+    'veozip': 'Veozip (Screen Veosol)',
+    'soltis': 'Soltis W96/W88',
+    'copaco': 'Copaco Lunar Blackout',
+}
+ZIP_COLOR_NAMES = {
+    'ral9016':    'Белый матовый RAL 9016',
+    'ral7024':    'Графит матовый RAL 7024',
+    'ral9t08':    'Графит текстурный RAL 9T08',
+    'ral8028':    'Коричневый Муар RAL 8028',
+    'ral_special':'RAL special (+10%)',
+}
+ZIP_DRIVE_NAMES = {
+    'manual':  'Ручное управление',
+    'simu':    'Электропривод SIMU',
+    'somfy':   'Электропривод Somfy',
+    'decolife':'Электропривод Decolife',
+}
+ZIP_ASSEMBLY_PCT = 8.0
+ZIP_INSTALL_EUR_M2 = 20.0
+ZIP_COLOR_SPECIAL_PCT = 10.0
+ZIP_OVERLAY_ADD_W = 0.100
+ZIP100_OVERLAY_ADD_H = 0.100
+ZIP130_OVERLAY_ADD_H = 0.130
+
+# ---- DB-backed ZIP settings ----
+import copy as _zip_copy
+
+ZIP_SETTINGS = {
+    'ZIP_ASSEMBLY_PCT': ZIP_ASSEMBLY_PCT,
+    'ZIP_INSTALL_EUR_M2': ZIP_INSTALL_EUR_M2,
+    'ZIP_COLOR_SPECIAL_PCT': ZIP_COLOR_SPECIAL_PCT,
+    'ZIP_FABRIC_SOLTIS_EUR_M2': 15.0,
+    'ZIP_FABRIC_COPACO_EUR_M2': 15.0,
+}
+_ZIP_SETTINGS_DEFAULTS = dict(ZIP_SETTINGS)
+
+# In-memory overrides for ZIP price cells: {(zip_type, w_dec, h_dec): price}
+_ZIP_PRICE_OVERRIDES = {}
+
+_ZIP_LOADED = False
+
+
+def _ensure_zip_tables(cur):
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS zip_price_overrides (
+            zip_type VARCHAR(8) NOT NULL,
+            w_dec    DOUBLE PRECISION NOT NULL,
+            h_dec    DOUBLE PRECISION NOT NULL,
+            price    DOUBLE PRECISION NOT NULL,
+            updated_at TIMESTAMP DEFAULT NOW(),
+            PRIMARY KEY (zip_type, w_dec, h_dec)
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS zip_settings (
+            key VARCHAR(64) PRIMARY KEY,
+            value DOUBLE PRECISION NOT NULL,
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
+
+
+def clear_zip_cache():
+    global _ZIP_LOADED
+    _ZIP_LOADED = False
+
+
+def _ensure_zip_loaded():
+    global _ZIP_LOADED, ZIP_ASSEMBLY_PCT, ZIP_INSTALL_EUR_M2, ZIP_COLOR_SPECIAL_PCT
+    if _ZIP_LOADED:
+        return
+    ZIP_SETTINGS.clear()
+    ZIP_SETTINGS.update(_ZIP_SETTINGS_DEFAULTS)
+    _ZIP_PRICE_OVERRIDES.clear()
+
+    db_url = os.environ.get('DATABASE_URL', '')
+    if not db_url:
+        _ZIP_LOADED = True
+        return
+    try:
+        import psycopg2
+        with psycopg2.connect(db_url) as conn:
+            with conn.cursor() as cur:
+                _ensure_zip_tables(cur)
+                conn.commit()
+                cur.execute("SELECT zip_type, w_dec, h_dec, price FROM zip_price_overrides")
+                for zt, w, h, price in cur.fetchall():
+                    _ZIP_PRICE_OVERRIDES[(zt, float(w), float(h))] = float(price)
+                cur.execute("SELECT key, value FROM zip_settings")
+                for k, v in cur.fetchall():
+                    if k in ZIP_SETTINGS:
+                        ZIP_SETTINGS[k] = float(v)
+    except Exception as exc:
+        logger.warning('ZIP DB load error: %s', exc)
+    _ZIP_LOADED = True
+
+
+def _zip_setting(key):
+    _ensure_zip_loaded()
+    return ZIP_SETTINGS.get(key, _ZIP_SETTINGS_DEFAULTS.get(key, 0.0))
+
+
+def _zip_cell_price(zip_type, w_axis, h_axis, w_dec, h_dec, base_price):
+    """Return override price if available, else base_price."""
+    _ensure_zip_loaded()
+    key = (zip_type, float(w_dec), float(h_dec))
+    return _ZIP_PRICE_OVERRIDES.get(key, base_price)
+
+
+def _zip_snapshot(zip_type):
+    """Return JSON-friendly view of one ZIP matrix (with DB overrides applied)."""
+    _ensure_zip_loaded()
+    if zip_type == 'ZIP100':
+        w_axis, h_axis, p_grid = ZIP100_W, ZIP100_H, ZIP100_P
+    elif zip_type == 'ZIP130':
+        w_axis, h_axis, p_grid = ZIP130_W, ZIP130_H, ZIP130_P
+    else:
+        return None
+    p_out = []
+    for hi, row in enumerate(p_grid):
+        new_row = []
+        for wi, base in enumerate(row):
+            new_row.append(_zip_cell_price(zip_type, w_axis, h_axis, w_axis[wi], h_axis[hi], base))
+        p_out.append(new_row)
+    return {'w': list(w_axis), 'h': list(h_axis), 'p': p_out}
+
+
+def _zip_ceil(axis, v):
+    """Ceiling-snap v to nearest axis step."""
+    for x in axis:
+        if v <= x + 1e-6:
+            return axis.index(x)
+    return len(axis) - 1
+
+
+def _zip_motor_eur(brand, w, h):
+    """Motor cost in EUR. Small: w<=3.5 AND h<=4.0; large otherwise."""
+    small = (w <= 3.5 and h <= 4.0)
+    if brand == 'simu':
+        return 175.0
+    if brand == 'somfy':
+        return 180.0 if small else 230.0
+    if brand == 'decolife':
+        return 130.0
+    return 50.0  # manual
+
+
+def zip_auto_type(adj_w, adj_h):
+    """Auto-select ZIP type from adjusted dimensions."""
+    if adj_w <= 4.0 + 1e-6 and adj_h <= 3.5 + 1e-6:
+        return 'ZIP100'
+    return 'ZIP130'
+
+
+def zip_calc_price(op_w, op_h, has_glazing=False, fabric='veozip', color='ral9016',
+                   drive='manual', zip_type_override=None, euro_rate=100.0):
+    """Compute ZIP awning cost for one opening. Returns dict with itemised costs (EUR).
+    zip_type_override forces ZIP100 or ZIP130 regardless of auto-selection.
+    """
+    try:
+        op_w = float(op_w); op_h = float(op_h)
+    except Exception:
+        return {'error': 'invalid dims', 'total_eur': 0.0}
+    if op_w <= 0 or op_h <= 0:
+        return {'error': 'invalid dims', 'total_eur': 0.0}
+
+    if fabric not in ZIP_FABRIC_SURCHARGE:
+        fabric = 'veozip'
+    if color not in ZIP_COLOR_NAMES:
+        color = 'ral9016'
+    if drive not in ('manual', 'simu', 'somfy', 'decolife'):
+        drive = 'manual'
+
+    # Overlay adds guide rails + cassette to dimensions
+    if has_glazing:
+        # We don't know the final type yet for overlay height, so use conservative ZIP130 height
+        overlay_h_add = ZIP130_OVERLAY_ADD_H if zip_type_override == 'ZIP130' else ZIP100_OVERLAY_ADD_H
+        adj_w = op_w + ZIP_OVERLAY_ADD_W
+        adj_h = op_h + overlay_h_add
+    else:
+        adj_w = op_w
+        adj_h = op_h
+
+    zip_type = zip_type_override if zip_type_override in ('ZIP100', 'ZIP130') else zip_auto_type(adj_w, adj_h)
+
+    if zip_type == 'ZIP100':
+        w_axis, h_axis, p_grid = ZIP100_W, ZIP100_H, ZIP100_P
+        if has_glazing:
+            adj_h = op_h + ZIP100_OVERLAY_ADD_H
+    else:
+        w_axis, h_axis, p_grid = ZIP130_W, ZIP130_H, ZIP130_P
+        if has_glazing:
+            adj_h = op_h + ZIP130_OVERLAY_ADD_H
+
+    wi = _zip_ceil(w_axis, adj_w)
+    hi = _zip_ceil(h_axis, adj_h)
+    base_eur = _zip_cell_price(zip_type, w_axis, h_axis, w_axis[wi], h_axis[hi], float(p_grid[hi][wi]))
+
+    area = adj_w * adj_h
+    fab_surcharge = {
+        'veozip': 0.0,
+        'soltis': _zip_setting('ZIP_FABRIC_SOLTIS_EUR_M2'),
+        'copaco': _zip_setting('ZIP_FABRIC_COPACO_EUR_M2'),
+    }
+    fabric_eur = area * fab_surcharge.get(fabric, 0.0)
+
+    color_add = 0.0
+    if color == 'ral_special':
+        color_add = base_eur * _zip_setting('ZIP_COLOR_SPECIAL_PCT') / 100.0
+
+    drive_eur = 0.0
+    if drive == 'manual':
+        drive_eur = 50.0
+    else:
+        drive_eur = _zip_motor_eur(drive, adj_w, adj_h)
+
+    subtotal = base_eur + fabric_eur + color_add + drive_eur
+    assembly_eur = round(subtotal * _zip_setting('ZIP_ASSEMBLY_PCT') / 100.0, 2)
+    total_eur = round(subtotal + assembly_eur, 2)
+
+    return {
+        'zip_type': zip_type,
+        'adj_w': round(adj_w, 3),
+        'adj_h': round(adj_h, 3),
+        'area': round(area, 3),
+        'base_eur': round(base_eur, 2),
+        'fabric_eur': round(fabric_eur, 2),
+        'color_add': round(color_add, 2),
+        'drive_eur': round(drive_eur, 2),
+        'assembly_eur': assembly_eur,
+        'total_eur': total_eur,
+        'fabric': fabric,
+        'color': color,
+        'drive': drive,
+        'has_glazing': has_glazing,
+    }
 
 
 def _facade_extra_cols(full_bay_w, col_w, max_panel_w):
@@ -1661,30 +1931,32 @@ def perform_calculation(dimensions, options):
         glazing_total_area = 0.0
         glazing_normalized = []
 
+        # Compute column/beam geometry used by both glazing and ZIP loops
+        sv_g = selected_variant or ""
+        if "Light" in sv_g:
+            col_w_g = FACADE_COL_WIDTHS["Light"]
+            beam_h_g = FACADE_BEAM_HEIGHTS["Light"]
+        elif pergola_type == "B200":
+            col_w_g = FACADE_COL_WIDTHS["B200"]
+            beam_h_g = FACADE_BEAM_HEIGHTS["B200"]
+        else:
+            col_w_g = 0.164
+            beam_h_g = 0.280
+        open_h_g = max(0.1, height_m - beam_h_g)
+
+        _side_max_bay_glz_zip = {"left": 0, "right": 0}
+        for _op in (glazing_openings + (options.get("zip_openings") or [])):
+            if not isinstance(_op, dict):
+                continue
+            _s = _op.get("side", "")
+            if _s in _side_max_bay_glz_zip:
+                _side_max_bay_glz_zip[_s] = max(_side_max_bay_glz_zip[_s], int(_op.get("bay", 0)))
+        length_modules_g = max(_side_max_bay_glz_zip["left"], _side_max_bay_glz_zip["right"]) + 1
+
+        full_fb_bay_w = width_m / max(1, modules)
+        full_lr_bay_w = length_m / max(1, length_modules_g)
+
         if glazing_openings:
-            sv_g = selected_variant or ""
-            if "Light" in sv_g:
-                col_w_g = FACADE_COL_WIDTHS["Light"]
-                beam_h_g = FACADE_BEAM_HEIGHTS["Light"]
-            elif pergola_type == "B200":
-                col_w_g = FACADE_COL_WIDTHS["B200"]
-                beam_h_g = FACADE_BEAM_HEIGHTS["B200"]
-            else:
-                col_w_g = 0.164
-                beam_h_g = 0.280
-            open_h_g = max(0.1, height_m - beam_h_g)
-
-            side_max_bay_g = {"left": 0, "right": 0}
-            for _op in glazing_openings:
-                if not isinstance(_op, dict):
-                    continue
-                _s = _op.get("side", "")
-                if _s in side_max_bay_g:
-                    side_max_bay_g[_s] = max(side_max_bay_g[_s], int(_op.get("bay", 0)))
-            length_modules_g = max(side_max_bay_g["left"], side_max_bay_g["right"]) + 1
-
-            full_fb_bay_w = width_m / max(1, modules)
-            full_lr_bay_w = length_m / max(1, length_modules_g)
 
             # Build set of (side,bay) keys already taken by facade openings
             _facade_keys = set()
@@ -1969,6 +2241,114 @@ def perform_calculation(dimensions, options):
                 "count": f"1 шт. ({w_window_count} {_get_plural_form(w_window_count, 'канал', 'канала', 'каналов')})"
             })
 
+        # ---- ZIP awning loop ----
+        zip_openings_raw = options.get("zip_openings", []) or []
+        zip_normalized = []
+        zip_total_eur = 0.0
+
+        if zip_openings_raw:
+            _glaze_keys = set()
+            for _go in glazing_normalized:
+                _glaze_keys.add((_go['side'], _go['bay']))
+
+            # First pass: determine type for each opening (for global ZIP130 upgrade)
+            _zip_types_first = []
+            _zip_bay_w = {}
+            for _zop in zip_openings_raw:
+                if not isinstance(_zop, dict):
+                    continue
+                _zside = _zop.get('side', '')
+                if _zside not in ('front', 'back', 'left', 'right'):
+                    continue
+                _zbay = int(_zop.get('bay', 0) or 0)
+                if _zside in ('front', 'back'):
+                    _zop_w = max(0.1, full_fb_bay_w - 2 * col_w_g)
+                else:
+                    _zop_w = max(0.1, full_lr_bay_w - 2 * col_w_g)
+                _zip_bay_w[(_zside, _zbay)] = _zop_w
+                _has_glz = (_zside, _zbay) in _glaze_keys
+                _zfab = _zop.get('fabric', 'veozip')
+                _zcol = _zop.get('color', 'ral9016')
+                _zdrive = _zop.get('drive', 'manual')
+                _zr = zip_calc_price(_zop_w, open_h_g, has_glazing=_has_glz,
+                                     fabric=_zfab, color=_zcol, drive=_zdrive,
+                                     euro_rate=pricing_settings.get_euro_rate() or 100.0)
+                if 'error' not in _zr:
+                    _zip_types_first.append(_zr['zip_type'])
+
+            _global_type = 'ZIP130' if 'ZIP130' in _zip_types_first else 'ZIP100'
+
+            # Second pass: compute final prices with global type override
+            for _zop in zip_openings_raw:
+                if not isinstance(_zop, dict):
+                    continue
+                side_z = _zop.get('side', '')
+                if side_z not in ('front', 'back', 'left', 'right'):
+                    continue
+                bay_z = int(_zop.get('bay', 0) or 0)
+                op_w_z = _zip_bay_w.get((side_z, bay_z), 1.0)
+                has_glz_z = (side_z, bay_z) in _glaze_keys
+                fabric_z = _zop.get('fabric', 'veozip')
+                if fabric_z not in ZIP_FABRIC_NAMES:
+                    fabric_z = 'veozip'
+                color_z = _zop.get('color', 'ral9016')
+                if color_z not in ZIP_COLOR_NAMES:
+                    color_z = 'ral9016'
+                drive_z = _zop.get('drive', 'manual')
+                if drive_z not in ('manual', 'simu', 'somfy', 'decolife'):
+                    drive_z = 'manual'
+                count_z = max(1, int(_zop.get('count', 1) or 1))
+                _glz_rate_z = pricing_settings.get_euro_rate() or 100.0
+                zr = zip_calc_price(op_w_z, open_h_g, has_glazing=has_glz_z,
+                                    fabric=fabric_z, color=color_z, drive=drive_z,
+                                    zip_type_override=_global_type,
+                                    euro_rate=_glz_rate_z)
+                if 'error' in zr:
+                    continue
+
+                price_z = round(zr['total_eur'] * count_z, 2)
+                install_z = 0.0
+                if installation:
+                    install_z = round(zr['area'] * _zip_setting('ZIP_INSTALL_EUR_M2') * count_z, 2)
+                    price_z += install_z
+
+                bay_label_z = (f"проём {bay_z + 1}" if (
+                    (side_z in ('front', 'back') and modules > 1) or
+                    (side_z in ('left', 'right') and length_modules_g > 1)
+                ) else "проём")
+                overlay_tag = ' (накл.)' if has_glz_z else ''
+                gloss_z = (f"ZIP-маркиза {zr['zip_type']} "
+                           f"({GLAZING_SIDE_NAMES[side_z]}, {bay_label_z}{overlay_tag}, "
+                           f"{ZIP_FABRIC_NAMES.get(fabric_z, fabric_z)}, "
+                           f"{ZIP_COLOR_NAMES.get(color_z, color_z)}, "
+                           f"{ZIP_DRIVE_NAMES.get(drive_z, drive_z)}, "
+                           f"{zr['adj_w']:.2f}\u00d7{zr['adj_h']:.2f} м"
+                           f"{(', ' + str(count_z) + ' шт.') if count_z > 1 else ''})")
+                items.append({"name": gloss_z, "price": price_z})
+                specification.append({
+                    "name": f"ZIP-маркиза {zr['zip_type']}",
+                    "count": (f"{count_z} шт. · {ZIP_FABRIC_NAMES.get(fabric_z, fabric_z)}"
+                              f" · {zr['adj_w']:.2f}\u00d7{zr['adj_h']:.2f} м")
+                })
+                total_price += price_z
+                zip_total_eur += price_z
+                zip_normalized.append({
+                    'zip_type': zr['zip_type'],
+                    'side': side_z, 'bay': bay_z,
+                    'fabric': fabric_z, 'color': color_z, 'drive': drive_z,
+                    'has_glazing': has_glz_z,
+                    'adj_w': zr['adj_w'], 'adj_h': zr['adj_h'],
+                    'area': zr['area'],
+                    'count': count_z,
+                    'base_eur': zr['base_eur'],
+                    'fabric_eur': zr['fabric_eur'],
+                    'assembly_eur': zr['assembly_eur'],
+                    'install_eur': install_z,
+                    'total_eur': price_z,
+                })
+
+        zip_total_eur = round(zip_total_eur, 2)
+
         # Push delivery + installation rows AFTER glazing so they appear last in spec/items
         items.append({"name": "Доставка", "price": delivery_price})
         specification.append({"name": "Доставка", "count": "1"})
@@ -2019,6 +2399,11 @@ def perform_calculation(dimensions, options):
                 "price": glazing_total_eur,
                 "count": sum(int(o.get("count", 1) or 1) for o in glazing_normalized),
             },
+            "zip": {
+                "openings": zip_normalized,
+                "price": zip_total_eur,
+                "count": sum(int(o.get("count", 1) or 1) for o in zip_normalized),
+            },
             "lamellas_count": lamellas_count,
             "pergola_type_name": PERGOLA_TYPES.get(pergola_type, pergola_type),
             "lamella_type_name": LAMELLA_TYPES.get(lamella_type, lamella_type),
@@ -2028,7 +2413,8 @@ def perform_calculation(dimensions, options):
         return results
 
     except Exception as e:
-        logger.error(f"Ошибка при расчете: {e}")
+        import traceback as _tb
+        logger.error(f"Ошибка при расчете: {e}\n{_tb.format_exc()}")
         return {"error": str(e)}
 
 

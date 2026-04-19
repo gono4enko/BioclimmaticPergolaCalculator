@@ -845,3 +845,149 @@ def glazing_settings_save():
         return jsonify({'ok': True, 'saved': len(parsed)})
     except Exception as exc:
         return jsonify({'error': f'Ошибка сохранения: {exc}'}), 500
+
+
+# ============================================================
+# ZIP awning admin endpoints
+# ============================================================
+
+_ZIP_TYPES = ('ZIP100', 'ZIP130')
+
+_ZIP_SETTING_KEYS = (
+    'ZIP_ASSEMBLY_PCT',
+    'ZIP_INSTALL_EUR_M2',
+    'ZIP_COLOR_SPECIAL_PCT',
+    'ZIP_FABRIC_SOLTIS_EUR_M2',
+    'ZIP_FABRIC_COPACO_EUR_M2',
+)
+
+
+@bp.route('/zip-prices', methods=['GET'])
+@admin_required
+def zip_prices_get():
+    zip_type = (request.args.get('zip_type') or '').upper()
+    if zip_type not in _ZIP_TYPES:
+        return jsonify({'error': 'Неизвестный тип ZIP'}), 400
+    from ..services import calculator as _calc
+    _calc._ensure_zip_loaded()
+    data = _calc._zip_snapshot(zip_type)
+    if data is None:
+        return jsonify({'error': 'Матрица не найдена'}), 404
+    return jsonify({'ok': True, 'zip_type': zip_type, 'data': data})
+
+
+@bp.route('/zip-save-cell', methods=['POST'])
+@admin_required
+def zip_save_cell():
+    body = request.get_json(silent=True) or {}
+    zip_type = (body.get('zip_type') or '').upper()
+    try:
+        w = float(body.get('w'))
+        h = float(body.get('h'))
+        price = float(body.get('price'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Некорректные числовые поля'}), 400
+    if zip_type not in _ZIP_TYPES:
+        return jsonify({'error': 'Неизвестный тип ZIP'}), 400
+    from ..services import calculator as _calc
+    _calc._ensure_zip_loaded()
+    snap = _calc._zip_snapshot(zip_type)
+    if snap is None:
+        return jsonify({'error': 'Матрица не найдена'}), 404
+    def _snap(axis, v):
+        best = axis[0]
+        for x in axis:
+            if abs(x - v) < abs(best - v):
+                best = x
+        return float(best)
+    w_snap = _snap(snap['w'], w)
+    h_snap = _snap(snap['h'], h)
+    try:
+        import psycopg2
+        with psycopg2.connect(os.environ.get('DATABASE_URL', '')) as conn:
+            with conn.cursor() as cur:
+                _calc._ensure_zip_tables(cur)
+                cur.execute("""
+                    INSERT INTO zip_price_overrides (zip_type, w_dec, h_dec, price, updated_at)
+                    VALUES (%s, %s, %s, %s, NOW())
+                    ON CONFLICT (zip_type, w_dec, h_dec)
+                    DO UPDATE SET price = EXCLUDED.price, updated_at = NOW()
+                """, (zip_type, w_snap, h_snap, price))
+            conn.commit()
+        _calc.clear_zip_cache()
+        return jsonify({'ok': True, 'zip_type': zip_type, 'w': w_snap, 'h': h_snap, 'price': price})
+    except Exception as exc:
+        return jsonify({'error': f'Ошибка сохранения: {exc}'}), 500
+
+
+@bp.route('/zip-reset', methods=['POST'])
+@admin_required
+def zip_reset():
+    body = request.get_json(silent=True) or {}
+    zip_type = (body.get('zip_type') or '').upper()
+    if zip_type not in _ZIP_TYPES:
+        return jsonify({'error': 'Неизвестный тип ZIP'}), 400
+    try:
+        import psycopg2
+        with psycopg2.connect(os.environ.get('DATABASE_URL', '')) as conn:
+            with conn.cursor() as cur:
+                from ..services import calculator as _calc
+                _calc._ensure_zip_tables(cur)
+                cur.execute("DELETE FROM zip_price_overrides WHERE zip_type=%s", (zip_type,))
+                deleted = cur.rowcount
+            conn.commit()
+        from ..services import calculator as _calc
+        _calc.clear_zip_cache()
+        return jsonify({'ok': True, 'deleted': deleted})
+    except Exception as exc:
+        return jsonify({'error': f'Ошибка сброса: {exc}'}), 500
+
+
+@bp.route('/zip-settings', methods=['GET'])
+@admin_required
+def zip_settings_get():
+    from ..services import calculator as _calc
+    _calc._ensure_zip_loaded()
+    return jsonify({
+        'ok': True,
+        'values': {k: float(_calc.ZIP_SETTINGS.get(k, 0)) for k in _ZIP_SETTING_KEYS},
+        'defaults': {k: float(_calc._ZIP_SETTINGS_DEFAULTS.get(k, 0)) for k in _ZIP_SETTING_KEYS},
+    })
+
+
+@bp.route('/zip-settings', methods=['POST'])
+@admin_required
+def zip_settings_save():
+    body = request.get_json(silent=True) or {}
+    values = body.get('values') or {}
+    if not isinstance(values, dict):
+        return jsonify({'error': 'Некорректный формат'}), 400
+    parsed = []
+    for k, v in values.items():
+        if k not in _ZIP_SETTING_KEYS:
+            continue
+        try:
+            parsed.append((k, float(v)))
+        except (TypeError, ValueError):
+            return jsonify({'error': f'Некорректное значение для {k}'}), 400
+    if not parsed:
+        return jsonify({'error': 'Нет корректных значений'}), 400
+    try:
+        import psycopg2
+        with psycopg2.connect(os.environ.get('DATABASE_URL', '')) as conn:
+            with conn.cursor() as cur:
+                from ..services import calculator as _calc
+                _calc._ensure_zip_tables(cur)
+                for k, v in parsed:
+                    cur.execute("""
+                        INSERT INTO zip_settings (key, value, updated_at)
+                        VALUES (%s, %s, NOW())
+                        ON CONFLICT (key) DO UPDATE
+                        SET value = EXCLUDED.value, updated_at = NOW()
+                    """, (k, v))
+            conn.commit()
+        from ..services import calculator as _calc
+        _calc.clear_zip_cache()
+        return jsonify({'ok': True, 'saved': len(parsed)})
+    except Exception as exc:
+        return jsonify({'error': f'Ошибка сохранения ZIP: {exc}'}), 500

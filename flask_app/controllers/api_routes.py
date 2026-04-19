@@ -198,6 +198,7 @@ def calculate():
         facade_type = data.get('facade_type', '')
         facade_openings = data.get('facade_openings', [])
         glazing_openings = data.get('glazing_openings', [])
+        zip_openings = data.get('zip_openings', [])
 
         dimensions = {"width": width, "length": length, "height": height}
         options = {
@@ -209,7 +210,8 @@ def calculate():
             "selected_variant": selected_variant,
             "facade_type": facade_type,
             "facade_openings": facade_openings,
-            "glazing_openings": glazing_openings
+            "glazing_openings": glazing_openings,
+            "zip_openings": zip_openings
         }
 
         from ..utils import generate_kp_number, get_pergola_count, get_deadline_str, generate_calc_id, save_calculation
@@ -230,7 +232,7 @@ def calculate():
                     'kp_number': kp_number, 'deadline': deadline,
                     'client_name': data.get('client_name', ''),
                     'created_at': datetime.datetime.now().isoformat(),
-                    'request': {'pergola_type': pergola_type, 'width': width, 'length': length, 'height': height, 'lamella_type': lamella_type, 'lighting': lighting, 'installation': installation, 'facade_type': facade_type, 'facade_openings': facade_openings, 'glazing_openings': glazing_openings,
+                    'request': {'pergola_type': pergola_type, 'width': width, 'length': length, 'height': height, 'lamella_type': lamella_type, 'lighting': lighting, 'installation': installation, 'facade_type': facade_type, 'facade_openings': facade_openings, 'glazing_openings': glazing_openings, 'zip_openings': zip_openings,
                                 'lamella_size': lamella_size, 'selected_variant': selected_variant}
                 })
             except Exception as save_err:
@@ -253,7 +255,7 @@ def calculate():
                 'kp_number': kp_number, 'deadline': deadline,
                 'client_name': data.get('client_name', ''),
                 'created_at': datetime.datetime.now().isoformat(),
-                'request': {'pergola_type': pergola_type, 'width': width, 'length': length, 'height': height, 'lamella_type': lamella_type, 'lighting': lighting, 'installation': installation, 'facade_type': facade_type, 'facade_openings': facade_openings, 'glazing_openings': glazing_openings,
+                'request': {'pergola_type': pergola_type, 'width': width, 'length': length, 'height': height, 'lamella_type': lamella_type, 'lighting': lighting, 'installation': installation, 'facade_type': facade_type, 'facade_openings': facade_openings, 'glazing_openings': glazing_openings, 'zip_openings': zip_openings,
                             'lamella_size': lamella_size, 'selected_variant': selected_variant}
             })
         except Exception as save_err:
