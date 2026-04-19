@@ -92,10 +92,16 @@ def pergola_front_svg():
             glazings_per_bay.append(_g if _g else None)
         if not any(glazings_per_bay):
             glazings_per_bay = None
+        zips_per_bay = []
+        for _bi in range(1, 20):
+            _z = request.args.get(f'zip_{_bi}', '').strip()
+            zips_per_bay.append(bool(_z and _z != '0'))
+        if not any(zips_per_bay):
+            zips_per_bay = None
         svg = generate_front_view_svg(width=w, height=h, modules=m, max_overhang=mo, ref=ref,
                                       title=title, extra_columns=xc, col_mm=col_mm, beam_h_mm=beam_h_mm,
                                       fill_type=fill_type, fills_per_bay=fills_per_bay,
-                                      glazings_per_bay=glazings_per_bay)
+                                      glazings_per_bay=glazings_per_bay, zips_per_bay=zips_per_bay)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:

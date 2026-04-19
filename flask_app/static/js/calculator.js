@@ -703,6 +703,22 @@ document.addEventListener('DOMContentLoaded', function() {
         return parts.length ? ('&' + parts.join('&')) : '';
     }
 
+    function getBayZipQs(side, count, xPerBay) {
+        if (!state.zipPerOpening) return '';
+        var parts = [];
+        var idx = 1;
+        var sections = (xPerBay > 0) ? (xPerBay + 1) : 1;
+        for (var i = 0; i < count; i++) {
+            var z = state.zipPerOpening[side + '_' + i];
+            var enabled = !!(z && z.enabled);
+            for (var j = 0; j < sections; j++) {
+                if (enabled) parts.push('zip_' + idx + '=1');
+                idx++;
+            }
+        }
+        return parts.length ? ('&' + parts.join('&')) : '';
+    }
+
     function computeGlazingOpenings() {
         var out = [];
         Object.keys(state.glazingPerOpening || {}).forEach(function(k) {
@@ -2122,16 +2138,20 @@ document.addEventListener('DOMContentLoaded', function() {
         var _glzB = getBayGlzQs('back', parseInt(m) || 1, _xcB);
         var _glzA = getBayGlzQs('left', lm, _xcA);
         var _glzC = getBayGlzQs('right', lm, _xcC);
-        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcFront + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + _bayF + _glzF;
+        var _zipF = getBayZipQs('front', parseInt(m) || 1, _xcF);
+        var _zipB = getBayZipQs('back', parseInt(m) || 1, _xcB);
+        var _zipA = getBayZipQs('left', lm, _xcA);
+        var _zipC = getBayZipQs('right', lm, _xcC);
+        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcFront + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + _bayF + _glzF + _zipF;
         var fimg = document.getElementById('kp-front-img');
         if (fimg) fimg.src = '/api/pergola-front.svg?' + fqs + '&_v=' + SVG_V;
-        var bqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcBack + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + _bayB + _glzB;
+        var bqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcBack + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + _bayB + _glzB + _zipB;
         var bimg = document.getElementById('kp-back-img');
         if (bimg) bimg.src = '/api/pergola-front.svg?' + bqs + '&_v=' + SVG_V;
-        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcLeft + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _bayA + _glzA;
+        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcLeft + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _bayA + _glzA + _zipA;
         var simg = document.getElementById('kp-side-img');
         if (simg) simg.src = '/api/pergola-front.svg?' + sqs + '&_v=' + SVG_V;
-        var rqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcRight + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _bayC + _glzC;
+        var rqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcRight + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _bayC + _glzC + _zipC;
         var rimg = document.getElementById('kp-right-img');
         if (rimg) rimg.src = '/api/pergola-front.svg?' + rqs + '&_v=' + SVG_V;
         var lcAttr = block.dataset.lc;

@@ -650,6 +650,38 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
     return svg
 
 
+def _draw_zip_fill(x, y, w, h):
+    """Draw a vertical ZIP roller awning in elevation view."""
+    if w < 2 or h < 2:
+        return ''
+    rail_c = '#1a2530'
+    fabric_c = '#2a3a46'
+    rail_w = max(1.5, w * 0.028)
+    out = ''
+    # Fabric background
+    inner_x = x + rail_w
+    inner_w = max(1.0, w - 2 * rail_w)
+    out += (f'<rect x="{inner_x:.1f}" y="{y:.1f}" width="{inner_w:.1f}" height="{h:.1f}" '
+            f'fill="{fabric_c}" opacity="0.52"/>')
+    # Horizontal texture lines
+    n_lines = max(5, int(h / 9))
+    for i in range(1, n_lines + 1):
+        ly = y + i * h / (n_lines + 1)
+        out += (f'<line x1="{inner_x:.1f}" y1="{ly:.1f}" x2="{inner_x + inner_w:.1f}" y2="{ly:.1f}" '
+                f'stroke="{rail_c}" stroke-width="0.5" opacity="0.28"/>')
+    # Guide rails (left and right)
+    out += (f'<rect x="{x:.1f}" y="{y:.1f}" width="{rail_w:.1f}" height="{h:.1f}" '
+            f'fill="{rail_c}" opacity="0.80"/>')
+    out += (f'<rect x="{x + w - rail_w:.1f}" y="{y:.1f}" width="{rail_w:.1f}" height="{h:.1f}" '
+            f'fill="{rail_c}" opacity="0.80"/>')
+    # Label
+    cx = x + w / 2
+    cy = y + h / 2
+    out += (f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" dominant-baseline="middle" '
+            f'font-size="9px" font-weight="bold" fill="white" opacity="0.55">ZIP</text>')
+    return out
+
+
 def _draw_facade_fill(fill_type, x, y, w, h):
     """Return SVG string for facade opening fill in flat elevation views."""
     out = ''
@@ -891,7 +923,7 @@ def _draw_glazing_fill(spec, x, y, w, h):
     return ''.join(out)
 
 
-def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди', extra_columns=0, col_mm=164, beam_h_mm=280, fill_type=None, fills_per_bay=None, glazings_per_bay=None):
+def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди', extra_columns=0, col_mm=164, beam_h_mm=280, fill_type=None, fills_per_bay=None, glazings_per_bay=None, zips_per_bay=None):
     """Front/side elevation. width = horizontal dimension (m), height in m.
     Uses shared scale (DIM_TARGET_PX/ref) so views align with top view.
     """
@@ -1008,7 +1040,7 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     svg += (f'<text x="{_ldr_elbow_x:.1f}" y="{_ldr_elbow_y - 3:.1f}" '
             f'text-anchor="end" font-size="{small_font}" fill="{DIM_COLOR}">□ {col_mm_label}×{col_mm_label} мм</text>')
 
-    if fills_per_bay or (fill_type and fill_type.strip()) or glazings_per_bay:
+    if fills_per_bay or (fill_type and fill_type.strip()) or glazings_per_bay or zips_per_bay:
         fill_y0 = pergola_top + beam_h_px
         fill_h_px = pergola_bottom - fill_y0
         sorted_xs = sorted(col_xs)
@@ -1016,17 +1048,20 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
             _fx0 = sorted_xs[_bi] + col_w_px
             _fx1 = sorted_xs[_bi + 1]
             if _fx1 - _fx0 > 2:
+                has_zip = bool(zips_per_bay and _bi < len(zips_per_bay) and zips_per_bay[_bi])
                 glz_spec = None
                 if glazings_per_bay and _bi < len(glazings_per_bay):
                     glz_spec = glazings_per_bay[_bi]
                 if glz_spec:
                     svg += _draw_glazing_fill(glz_spec, _fx0, fill_y0, _fx1 - _fx0, fill_h_px)
-                    continue
-                if fills_per_bay and _bi < len(fills_per_bay) and fills_per_bay[_bi]:
-                    bay_fill = fills_per_bay[_bi]
                 else:
-                    bay_fill = fill_type
-                svg += _draw_facade_fill(bay_fill, _fx0, fill_y0, _fx1 - _fx0, fill_h_px)
+                    if fills_per_bay and _bi < len(fills_per_bay) and fills_per_bay[_bi]:
+                        bay_fill = fills_per_bay[_bi]
+                    else:
+                        bay_fill = fill_type
+                    svg += _draw_facade_fill(bay_fill, _fx0, fill_y0, _fx1 - _fx0, fill_h_px)
+                if has_zip:
+                    svg += _draw_zip_fill(_fx0, fill_y0, _fx1 - _fx0, fill_h_px)
 
     svg += f'<rect x="0.5" y="0.5" width="{svg_w-1}" height="{svg_h-1}" fill="none" stroke="#bcc4d0" stroke-width="0.8"/>'
     svg += '</svg>'
