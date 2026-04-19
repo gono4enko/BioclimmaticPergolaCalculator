@@ -3,7 +3,7 @@
 {% block title %}Калькулятор стоимости перголы{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=74">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=75">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
 <link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=101" as="script">
 {% endblock %}
@@ -144,6 +144,14 @@
                             <p>Глухая панель с PIR-утеплителем (60 мм). Даёт теплоизоляцию и применяется в утеплённых перголах серии B600. Отлично подходит для круглогодичной эксплуатации.</p>
                         </div>
                     </div>
+                </div>
+                <div class="facade-how-to">
+                    <div class="facade-how-to-title"><i class="bi bi-info-circle-fill"></i> Как выбрать заполнение</div>
+                    <ol class="facade-how-to-steps">
+                        <li>На схеме ниже нажмите на нужную <strong>сторону перголы</strong> (A, B, C или F)</li>
+                        <li>В появившемся меню выберите <strong>тип заполнения</strong>: жалюзи, глухая панель или сэндвич</li>
+                        <li>Повторите для каждой стороны, которую хотите заполнить</li>
+                    </ol>
                 </div>
                 <div class="facade-topview-wrap">
                     <svg id="facade-topview-svg" style="max-width:100%;display:block;margin:auto;"></svg>

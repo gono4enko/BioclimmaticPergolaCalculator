@@ -1035,3 +1035,32 @@
     font-size: 1.15rem;
     flex-shrink: 0;
 }
+
+/* === Facade how-to instruction === */
+.facade-how-to {
+    background: #f0f5ff;
+    border: 1px solid #c8d8f5;
+    border-left: 4px solid #2a5298;
+    border-radius: 8px;
+    padding: 0.6rem 0.9rem 0.65rem;
+    margin: 0.75rem 0 0.65rem;
+}
+.facade-how-to-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1a3a6e;
+    margin-bottom: 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.facade-how-to-title i { font-size: 0.85rem; }
+.facade-how-to-steps {
+    margin: 0;
+    padding-left: 1.3rem;
+    font-size: 0.8rem;
+    color: #374151;
+    line-height: 1.55;
+}
+.facade-how-to-steps li { margin-bottom: 0.1rem; }
+.facade-how-to-steps li:last-child { margin-bottom: 0; }
