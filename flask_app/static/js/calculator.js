@@ -692,7 +692,12 @@ document.addEventListener('DOMContentLoaded', function() {
         for (var ci = 0; ci < lMods; ci++) openings.push({side:'right', bay:ci, label:lMods>1?'C'+(ci+1):'C', desc:lMods>1?'\u0421\u043f\u0440\u0430\u0432\u0430 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(ci+1):'\u0421\u043f\u0440\u0430\u0432\u0430'});
         for (var fi = 0; fi < mods; fi++)  openings.push({side:'front', bay:fi, label:mods>1?'F'+(fi+1):'F', desc:mods>1?'\u0424\u0430\u0441\u0430\u0434 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(fi+1):'\u0424\u0430\u0441\u0430\u0434'});
 
-        var html = '<div class="glazing-rows">';
+        var html = '<table class="facade-table"><thead><tr>'
+            + '<th>\u041f\u0440\u043e\u0451\u043c</th>'
+            + '<th>\u0420\u0430\u0441\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435</th>'
+            + '<th>\u0422\u0438\u043f \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f</th>'
+            + '<th>\u0420\u0430\u0437\u043c\u0435\u0440 / \u041f\u043b\u043e\u0449\u0430\u0434\u044c</th>'
+            + '</tr></thead><tbody>';
         openings.forEach(function(o) {
             var key = o.side + '_' + o.bay;
             var dims = _glazingDimsForKey(o.side);
@@ -703,20 +708,30 @@ document.addEventListener('DOMContentLoaded', function() {
             if (g.enabled) g = _normalizeGlzCfg(g, dims.wM, dims.hM);
             state.glazingPerOpening[key] = g;
             var minP = glazingMinPanels(dims.wM, dims.hM);
-            var disabledNote = hasFacade ? ' <span style="color:#c0392b;font-size:0.78em;">\u0432 \u044d\u0442\u043e\u043c \u043f\u0440\u043e\u0451\u043c\u0435 \u0443\u0436\u0435 \u0444\u0430\u0441\u0430\u0434</span>' : '';
-            var rangeNote = outOfRange ? ' <span style="color:#c0392b;font-size:0.78em;">\u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e \u0434\u043b\u044f \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u044f (\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u043e 1.8\u201312 \u043c \u00d7 1.7\u20133.25 \u043c)</span>' : '';
+            var dimsHtml = '<span style="font-size:0.82em;color:#555;white-space:nowrap;">' + Math.round(dims.wM*1000) + '\u00d7' + Math.round(dims.hM*1000) + ' \u043c\u043c</span>';
+            var areaVal = (dims.wM * dims.hM).toFixed(2);
+            var areaHtml = '<br><span style="font-size:0.9em;">' + areaVal + ' \u043c\u00b2</span>';
             var disabled = hasFacade || outOfRange;
-            html += '<div class="glazing-row" data-key="' + key + '"' + (disabled ? ' style="opacity:0.5;pointer-events:none;"' : '') + '>';
-            html += '<div class="glazing-row-head">';
-            html += '<label class="glazing-toggle"><input type="checkbox" class="glz-en" data-key="' + key + '"' + (g.enabled?' checked':'') + (disabled?' disabled':'') + '> <span class="facade-lbl">' + o.label + '</span> <span class="glz-desc">' + o.desc + '</span>' + disabledNote + rangeNote + '</label>';
-            html += '<div class="glz-dims">' + Math.round(dims.wM*1000) + '\u00d7' + Math.round(dims.hM*1000) + ' \u043c\u043c</div>';
-            html += '</div>';
+            var noteHtml = '';
+            if (hasFacade) noteHtml = ' <span style="color:#c0392b;font-size:0.78em;">\u0432 \u044d\u0442\u043e\u043c \u043f\u0440\u043e\u0451\u043c\u0435 \u0443\u0436\u0435 \u0444\u0430\u0441\u0430\u0434</span>';
+            else if (outOfRange) noteHtml = ' <span style="color:#c0392b;font-size:0.78em;">\u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e (\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u043e 1.8\u201312 \u043c \u00d7 1.7\u20133.25 \u043c)</span>';
+            var rowStyle = disabled ? ' style="opacity:0.55;"' : '';
+            var disAttr = disabled ? ' disabled' : '';
+            html += '<tr data-key="' + key + '"' + rowStyle + '>';
+            html += '<td><span class="facade-lbl">' + o.label + '</span></td>';
+            html += '<td>' + o.desc + noteHtml + '</td>';
+            html += '<td><select class="form-select form-select-sm glz-en" data-key="' + key + '"' + disAttr + '>'
+                + '<option value="0">\u2014 \u0431\u0435\u0437 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u044f \u2014</option>'
+                + '<option value="1"' + (g.enabled ? ' selected' : '') + '>S500 \u2014 \u0440\u0430\u0437\u0434\u0432\u0438\u0436\u043d\u043e\u0435 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435</option>'
+                + '</select></td>';
+            html += '<td class="facade-area">' + dimsHtml + areaHtml + '</td></tr>';
             if (g.enabled && !disabled) {
                 var pcOpts = '';
                 GLAZING_PCS_JS.forEach(function(p) {
-                    var disabled = p < minP ? ' disabled' : '';
+                    var disP = p < minP ? ' disabled' : '';
+                    var autoTag = (p === minP) ? ' (\u0430\u0432\u0442\u043e)' : '';
                     var lbl = (p===6?'6 (3+3)':p===8?'8 (4+4)':p===10?'10 (5+5)':p+(p===2||p===3||p===4?' \u043f\u0430\u043d\u0435\u043b\u0438':' \u043f\u0430\u043d\u0435\u043b\u0435\u0439'));
-                    pcOpts += '<option value="' + p + '"' + disabled + (g.pc===p?' selected':'') + '>' + lbl + '</option>';
+                    pcOpts += '<option value="' + p + '"' + disP + (g.pc===p?' selected':'') + '>' + lbl + autoTag + '</option>';
                 });
                 var dirOpts = '';
                 var allowCenter = (g.pc % 2 === 0 && g.pc >= 4) || g.pc >= 6;
@@ -730,28 +745,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 GLAZING_COLORS_JS.forEach(function(c) { colOpts += '<option value="' + c.v + '"' + (g.color===c.v?' selected':'') + '>' + c.n + '</option>'; });
                 var glOpts = '';
                 GLAZING_GLASS_JS.forEach(function(c) { glOpts += '<option value="' + c.v + '"' + (g.glass===c.v?' selected':'') + '>' + c.n + '</option>'; });
-                html += '<div class="glazing-row-body">';
+                html += '<tr class="glz-cfg-row" data-key="' + key + '"><td colspan="4" style="background:#f6f9fc;padding:0.6rem 0.9rem;">';
                 html += '<div class="glz-grid">';
-                html += '<div><label>\u0421\u0442\u0432\u043e\u0440\u043e\u043a</label><select class="form-select form-select-sm glz-fld" data-fld="pc" data-key="' + key + '">' + pcOpts + '</select></div>';
+                html += '<div><label>\u0421\u0442\u0432\u043e\u0440\u043e\u043a (\u0430\u0432\u0442\u043e\u043f\u043e\u0434\u0431\u043e\u0440)</label><select class="form-select form-select-sm glz-fld" data-fld="pc" data-key="' + key + '">' + pcOpts + '</select></div>';
                 html += '<div><label>\u041d\u0430\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435</label><select class="form-select form-select-sm glz-fld" data-fld="direction" data-key="' + key + '">' + dirOpts + '</select></div>';
-                html += '<div><label>\u0426\u0432\u0435\u0442</label><select class="form-select form-select-sm glz-fld" data-fld="color" data-key="' + key + '">' + colOpts + '</select></div>';
-                html += '<div><label>\u0421\u0442\u0435\u043a\u043b\u043e</label><select class="form-select form-select-sm glz-fld" data-fld="glass" data-key="' + key + '">' + glOpts + '</select></div>';
+                html += '<div><label>\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f</label><select class="form-select form-select-sm glz-fld" data-fld="color" data-key="' + key + '">' + colOpts + '</select></div>';
+                html += '<div><label>\u0422\u0438\u043f \u0441\u0442\u0435\u043a\u043b\u043e\u043f\u0430\u043a\u0435\u0442\u0430</label><select class="form-select form-select-sm glz-fld" data-fld="glass" data-key="' + key + '">' + glOpts + '</select></div>';
                 html += '<div><label>\u041a\u043e\u043b-\u0432\u043e</label><input type="number" min="1" max="20" value="' + (g.count||1) + '" class="form-control form-control-sm glz-fld" data-fld="count" data-key="' + key + '"></div>';
                 html += '</div>';
-                html += '<div class="glz-preview"><svg class="glz-mini-svg" data-key="' + key + '" xmlns="http://www.w3.org/2000/svg"></svg></div>';
-                html += '</div>';
+                html += '<div class="glz-preview" style="margin-top:0.5rem;"><svg class="glz-mini-svg" data-key="' + key + '" xmlns="http://www.w3.org/2000/svg"></svg></div>';
+                html += '</td></tr>';
             }
-            html += '</div>';
         });
-        html += '</div>';
+        html += '</tbody></table>';
         tableEl.innerHTML = html;
 
-        // Wire up
-        tableEl.querySelectorAll('.glz-en').forEach(function(cb) {
-            cb.addEventListener('change', function() {
+        // Wire up — dropdown enable/disable
+        tableEl.querySelectorAll('.glz-en').forEach(function(sel) {
+            sel.addEventListener('change', function() {
                 var k = this.dataset.key;
-                state.glazingPerOpening[k] = state.glazingPerOpening[k] || {};
-                state.glazingPerOpening[k].enabled = this.checked;
+                state.glazingPerOpening[k] = state.glazingPerOpening[k] || {pc:0, direction:'right', color:'ral7016', glass:'transparent', count:1};
+                state.glazingPerOpening[k].enabled = (this.value === '1');
                 buildGlazingTable();
                 buildFacadeTable();
                 updateGlazingAreaInfo();
