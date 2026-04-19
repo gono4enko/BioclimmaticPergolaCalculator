@@ -729,8 +729,11 @@ document.addEventListener('DOMContentLoaded', function() {
             var key = side + '_' + i;
             var f = (state.facadePerOpening || {})[key] || '';
             var g = (state.glazingPerOpening || {})[key];
+            var z = (state.zipPerOpening || {})[key];
             if (f) {
                 parts.push('fill_' + side + '_' + (i + 1) + '=' + encodeURIComponent(f));
+            } else if (z && z.enabled) {
+                parts.push('fill_' + side + '_' + (i + 1) + '=ZIP');
             } else if (g && g.enabled) {
                 var spec = glazingSpec(g);
                 if (spec) parts.push('glz_' + side + '_' + (i + 1) + '=' + encodeURIComponent(spec));
