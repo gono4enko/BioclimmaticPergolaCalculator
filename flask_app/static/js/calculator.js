@@ -1129,6 +1129,92 @@ document.addEventListener('DOMContentLoaded', function() {
         updateGlazingAreaInfo();
     }
 
+    function buildGlazingPreviewBlock() {
+        var W = state.width, L = state.length;
+        if (!W || !L || W <= 0 || L <= 0) return '';
+        var mods = facadeModules(W);
+        var lMods = facadeLengthModules(L);
+        var openings = [];
+        for (var ai = 0; ai < lMods; ai++) openings.push({side:'left',  bay:ai, label:lMods>1?'A'+(ai+1):'A', desc:lMods>1?'\u0421\u043b\u0435\u0432\u0430 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(ai+1):'\u0421\u043b\u0435\u0432\u0430'});
+        for (var bi = 0; bi < mods;  bi++) openings.push({side:'back',  bay:bi, label:mods>1?'B'+(bi+1):'B',  desc:mods>1?'\u0421\u0437\u0430\u0434\u0438 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(bi+1):'\u0421\u0437\u0430\u0434\u0438'});
+        for (var ci = 0; ci < lMods; ci++) openings.push({side:'right', bay:ci, label:lMods>1?'C'+(ci+1):'C', desc:lMods>1?'\u0421\u043f\u0440\u0430\u0432\u0430 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(ci+1):'\u0421\u043f\u0440\u0430\u0432\u0430'});
+        for (var fi = 0; fi < mods;  fi++) openings.push({side:'front', bay:fi, label:mods>1?'F'+(fi+1):'F',  desc:mods>1?'\u0424\u0430\u0441\u0430\u0434 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(fi+1):'\u0424\u0430\u0441\u0430\u0434'});
+
+        var enabled = openings.filter(function(o) {
+            var g = state.glazingPerOpening[o.side + '_' + o.bay];
+            return g && g.enabled;
+        });
+        if (enabled.length === 0) return '';
+
+        var html = '<div class="kp-block" id="kp-glazing-preview-block">' +
+            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83E\uDE9F</div><div class="kp-block-title">\u041e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 \u043f\u043e \u043f\u0440\u043e\u0451\u043c\u0430\u043c</div></div>' +
+            '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.8rem;">';
+        enabled.forEach(function(o) {
+            var key = o.side + '_' + o.bay;
+            var g = state.glazingPerOpening[key];
+            var dims = _glazingDimsForKey(o.side);
+            var seriesU = (g.series || 'S500').toUpperCase();
+            var summary;
+            if (isWSeries(seriesU)) {
+                var Cw = W_COLORS_JS, Gw = W_GLASS_JS;
+                summary = seriesU + ' \u00b7 ' + (g.sashes || 2) + ' \u0441\u0442\u0432\u043e\u0440\u043e\u043a \u00b7 ' +
+                    ((Cw.find(function(c){return c.v===g.color;}) || {n:g.color}).n) + ' \u00b7 ' +
+                    ((Gw.find(function(c){return c.v===g.glass;}) || {n:g.glass}).n) +
+                    (g.plavnik ? ' \u00b7 +\u043f\u043b\u0430\u0432\u043d\u0438\u043a' : '');
+            } else {
+                var Cs = (seriesU === 'S100') ? S100_COLORS_JS : GLAZING_COLORS_JS;
+                var Gs = (seriesU === 'S100') ? S100_GLASS_JS  : GLAZING_GLASS_JS;
+                var unitWord = (seriesU === 'S100') ? '\u043f\u0430\u043d.' : '\u0441\u0442\u0432.';
+                summary = seriesU + ' \u00b7 ' + (g.pc || '') + ' ' + unitWord + ' \u00b7 ' +
+                    ((GLAZING_DIRS_JS.find(function(d){return d.v===g.direction;}) || {n:g.direction}).n) + ' \u00b7 ' +
+                    ((Cs.find(function(c){return c.v===g.color;}) || {n:g.color}).n) + ' \u00b7 ' +
+                    ((Gs.find(function(c){return c.v===g.glass;}) || {n:g.glass}).n);
+            }
+            html += '<div style="border:1px solid #e5e9f0;border-radius:8px;padding:0.6rem;background:#fbfcfe;">' +
+                '<div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.4rem;">' +
+                    '<span style="background:#1a3a6e;color:#fff;border-radius:4px;padding:1px 7px;font-weight:700;font-size:0.85em;">' + o.label + '</span>' +
+                    '<span style="font-size:0.85em;color:#1a3a6e;font-weight:600;">' + escHtml(o.desc) + '</span>' +
+                '</div>' +
+                '<div style="text-align:center;"><svg class="glz-preview-mini-svg" data-key="' + key + '" xmlns="http://www.w3.org/2000/svg"></svg></div>' +
+                '<div style="margin-top:0.3rem;font-size:0.78em;color:#1a3a6e;font-weight:600;text-align:center;">' + summary + '</div>' +
+                '<div style="margin-top:0.15rem;font-size:0.75em;color:#666;text-align:center;">' + Math.round(dims.wM * 1000) + '\u00d7' + Math.round(dims.hM * 1000) + ' \u043c\u043c \u00b7 ' + (dims.wM * dims.hM).toFixed(2) + ' \u043c\u00b2</div>' +
+            '</div>';
+        });
+        html += '</div></div>';
+        return html;
+    }
+
+    function renderGlazingPreviewSvgs(rootEl) {
+        if (!rootEl) return;
+        rootEl.querySelectorAll('.glz-preview-mini-svg').forEach(function(svg) {
+            var k = svg.dataset.key;
+            var g = state.glazingPerOpening[k];
+            if (!g || !g.enabled) return;
+            var sideLocal = k.split('_').slice(0, -1).join('_');
+            var d = _glazingDimsForKey(sideLocal);
+            _drawGlazingMiniSvg(svg, d.wM, d.hM, g.pc, g.direction, g.color, g.glass, g.series, g.sashes);
+        });
+    }
+
+    function injectGlazingPreviewIntoSavedKp() {
+        var sec = stepsEl.resultsSection;
+        if (!sec) return;
+        var existing = document.getElementById('kp-glazing-preview-block');
+        if (existing) existing.parentNode.removeChild(existing);
+        var html = buildGlazingPreviewBlock();
+        if (!html) return;
+        var holder = document.createElement('div');
+        holder.innerHTML = html;
+        var node = holder.firstChild;
+        var anchor = document.getElementById('marketing-kp-container');
+        if (anchor && anchor.parentNode) {
+            anchor.parentNode.insertBefore(node, anchor);
+        } else {
+            sec.appendChild(node);
+        }
+        renderGlazingPreviewSvgs(node);
+    }
+
     function buildFacadeTopView() {
         var svg = document.getElementById('facade-topview-svg');
         var hint = document.getElementById('facade-topview-hint');
@@ -2386,6 +2472,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 state.result = d.result;
                 renderResults(d.result);
             }
+
+            injectGlazingPreviewIntoSavedKp();
 
             pergolaTypeName = pergolaTypeName || typeNames[state.pergolaType] || state.pergolaType;
 
