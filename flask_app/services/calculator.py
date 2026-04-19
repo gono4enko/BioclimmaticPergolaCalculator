@@ -97,7 +97,7 @@ def get_b200_reinforcement(width_m, length_m, lamella_size, modules):
 
 COLUMNS_PRICES = {1: 653, 2: 980, 3: 1306}
 
-GUTTER_INSERT_THRESHOLD = 6.5
+GUTTER_INSERT_THRESHOLD = 4.5
 GUTTER_INSERT_PRICE_PER_METER = 80
 
 BANSBACH_DRIVE_RULES = {
