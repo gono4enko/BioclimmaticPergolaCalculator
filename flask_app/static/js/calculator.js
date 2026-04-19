@@ -2242,15 +2242,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 var sideMap = {front:'\u0424\u0430\u0441\u0430\u0434', back:'\u0421\u0437\u0430\u0434\u0438', left:'\u0421\u043B\u0435\u0432\u0430', right:'\u0421\u043F\u0440\u0430\u0432\u0430'};
                 var sideLabel = sideMap[zo.side] || zo.side;
                 var typeLabel = zo.zip_type || 'ZIP100';
-                var dimLabel = zo.width_mm && zo.height_mm ? (zo.width_mm + '\u00d7' + zo.height_mm + ' \u043c\u043c') : '';
+                var adjWmm = zo.adj_w ? Math.round(zo.adj_w * 1000) : 0;
+                var adjHmm = zo.adj_h ? Math.round(zo.adj_h * 1000) : 0;
+                var dimLabel = (adjWmm && adjHmm) ? (adjWmm + '\u00d7' + adjHmm + ' \u043c\u043c') : '';
                 var fabricMap = {veozip:'Veozip', soltis:'Soltis W96', copaco:'Copaco Blackout'};
                 var fabricLabel = fabricMap[zo.fabric] || zo.fabric;
                 var driveMap = {manual:'\u0420\u0443\u0447\u043d\u043e\u0435', simu:'SIMU', somfy:'Somfy', decolife:'Decolife'};
                 var driveLabel = driveMap[zo.drive] || zo.drive;
-                var priceRub = Math.round((zo.price_eur || 0) * mainResult.euro_rate);
+                var priceRub = Math.round((zo.total_eur || 0) * mainResult.euro_rate);
                 html += '<tr><td>' + sideLabel + ' \u00b7 \u041f\u0440\u043e\u0451\u043c ' + (zo.bay + 1) + ' \u00b7 ' + typeLabel + ' \u00b7 ' + dimLabel + '<br><span style="font-size:0.8em;color:#555;">' + fabricLabel + ' \u00b7 ' + driveLabel + '</span></td>' +
                         '<td style="white-space:nowrap;">' + formatPrice(priceRub) + ' \u20BD</td></tr>';
             });
+            if (zipRes.pult_name) {
+                var pultRub = Math.round((zipRes.pult_eur || 0) * mainResult.euro_rate);
+                html += '<tr><td>\u041f\u0443\u043b\u044c\u0442 \u0414\u0423 ' + zipRes.pult_name + ' (ZIP)</td>' +
+                        '<td style="white-space:nowrap;">' + formatPrice(pultRub) + ' \u20BD</td></tr>';
+            }
             var zipTotalRub = Math.round((zipRes.price || 0) * mainResult.euro_rate);
             html += '<tr style="font-weight:700;border-top:2px solid #e5e9f0;">' +
                     '<td>ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u044b: \u0438\u0442\u043e\u0433\u043e</td>' +

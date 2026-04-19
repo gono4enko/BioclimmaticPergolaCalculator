@@ -789,6 +789,7 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                         if gu.startswith('W500'): return g  # preserve full spec (W500:sashes:color:glass)
                         if gu.startswith('W600'): return g
                         if gu.startswith('W700'): return g
+                        if gu.startswith('ZIP100') or gu.startswith('ZIP130'): return None  # ZIP awning: no SVG fill
                         return 'S100' if gu.startswith('S100') else 'S500'
                 return None
 

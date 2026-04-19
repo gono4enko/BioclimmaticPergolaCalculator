@@ -2347,6 +2347,29 @@ def perform_calculation(dimensions, options):
                     'total_eur': price_z,
                 })
 
+        # Add remote control pult for electric ZIP openings
+        _zip_electric_count = sum(
+            zn['count'] for zn in zip_normalized if zn['drive'] != 'manual'
+        )
+        _zip_pult_name = None
+        _zip_pult_eur = 0.0
+        if _zip_electric_count > 0:
+            _zip_pult_name, _zip_pult_eur = get_remote_control(_zip_electric_count)
+            _pult_channels_label = _get_plural_form(
+                _zip_electric_count, 'канал', 'канала', 'каналов'
+            )
+            items.append({
+                "name": (f"Пульт ДУ {_zip_pult_name} для ZIP-маркиз "
+                         f"({_zip_electric_count} {_pult_channels_label})"),
+                "price": _zip_pult_eur
+            })
+            specification.append({
+                "name": f"Пульт ДУ {_zip_pult_name} (ZIP)",
+                "count": "1 шт."
+            })
+            total_price += _zip_pult_eur
+            zip_total_eur += _zip_pult_eur
+
         zip_total_eur = round(zip_total_eur, 2)
 
         # Push delivery + installation rows AFTER glazing so they appear last in spec/items
@@ -2403,6 +2426,8 @@ def perform_calculation(dimensions, options):
                 "openings": zip_normalized,
                 "price": zip_total_eur,
                 "count": sum(int(o.get("count", 1) or 1) for o in zip_normalized),
+                "pult_name": _zip_pult_name if _zip_electric_count > 0 else None,
+                "pult_eur": _zip_pult_eur if _zip_electric_count > 0 else 0,
             },
             "lamellas_count": lamellas_count,
             "pergola_type_name": PERGOLA_TYPES.get(pergola_type, pergola_type),
