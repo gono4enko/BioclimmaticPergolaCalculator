@@ -336,6 +336,8 @@ def _build_pergola_data(result):
 
     from config.pergola_descriptions import get_pergola_description
     ptype = options.get('pergola_type', '')
+    facade_block = result.get('facade', {}) or {}
+    glazing_block = result.get('glazing', {}) or {}
     return {
         'pergola_type': ptype,
         'lamella_type': options.get('lamella_type', ''),
@@ -344,6 +346,12 @@ def _build_pergola_data(result):
         'height': dimensions.get('height', 3.0),
         'modules': dimensions.get('modules', 1),
         'max_overhang': result.get('max_overhang'),
+        'facade_openings': facade_block.get('openings') or [],
+        'glazing_openings': glazing_block.get('openings') or [],
+        'extra_cols_f': facade_block.get('extra_cols_f', 0) or 0,
+        'extra_cols_b': facade_block.get('extra_cols_b', 0) or 0,
+        'extra_cols_a': facade_block.get('extra_cols_a', 0) or 0,
+        'extra_cols_c': facade_block.get('extra_cols_c', 0) or 0,
         'lamellas_count': result.get('lamellas_count') or result.get('lamella_count'),
         'euro_rate': 1,
         'items': rub_items,

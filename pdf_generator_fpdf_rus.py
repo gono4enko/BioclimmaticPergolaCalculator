@@ -687,35 +687,149 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             if _mo is None:
                 try:
                     from config.variant_specs import get_variant_options as _gvo
-                    _spec = _gvo(pergola_data.get('pergola_type', '')) or {}
-                    _mo = _spec.get('max_overhang')
+                    _opts = _gvo(pergola_data.get('pergola_type', '')) or []
+                    _sel_var = (pergola_data.get('selected_variant') or pergola_data.get('variant') or '').strip().lower()
+                    _sel_lam = str(pergola_data.get('lamella_size') or '').strip()
+                    _spec = None
+                    for _o in (_opts if isinstance(_opts, list) else []):
+                        if not isinstance(_o, dict):
+                            continue
+                        if _sel_var and str(_o.get('variant', '')).lower() != _sel_var:
+                            continue
+                        if _sel_lam and str(_o.get('lamella_size', '')) != _sel_lam:
+                            continue
+                        _spec = _o
+                        break
+                    if _spec is None and isinstance(_opts, list) and _opts:
+                        _spec = _opts[0] if isinstance(_opts[0], dict) else None
+                    if _spec is None and isinstance(_opts, dict):
+                        _spec = _opts
+                    _mo = (_spec or {}).get('max_overhang')
                 except Exception:
                     _mo = None
 
             _ref = max(width, length, _h)
+
+            _facade_ops = pergola_data.get('facade_openings') or []
+            _glz_ops = pergola_data.get('glazing_openings') or []
+            _xc_f = int(pergola_data.get('extra_cols_f', 0) or 0)
+            _xc_b = int(pergola_data.get('extra_cols_b', 0) or 0)
+            _xc_a = int(pergola_data.get('extra_cols_a', 0) or 0)
+            _xc_c = int(pergola_data.get('extra_cols_c', 0) or 0)
+
+            def _bays_for(side):
+                if side in ('front', 'back'):
+                    return max(1, int(modules))
+                # left / right side bays follow max_overhang rule used by JS
+                if not _mo or float(length) <= float(_mo) + 0.001:
+                    return 1
+                import math as _m
+                return max(2, _m.ceil(float(length) / float(_mo)))
+
+            def _fills_for(side):
+                bays = _bays_for(side)
+                arr = [None] * bays
+                for op in _facade_ops:
+                    if op.get('side') != side:
+                        continue
+                    bay = int(op.get('bay', 0) or 0)
+                    if 0 <= bay < bays:
+                        arr[bay] = op.get('type') or None
+                return arr if any(arr) else None
+
+            def _glz_for(side):
+                bays = _bays_for(side)
+                arr = [None] * bays
+                for op in _glz_ops:
+                    if op.get('side') != side:
+                        continue
+                    bay = int(op.get('bay', 0) or 0)
+                    if not (0 <= bay < bays):
+                        continue
+                    series = (op.get('series') or 'S500').upper()
+                    pc = int(op.get('pc') or (3 if series == 'S100' else 4))
+                    direction = op.get('direction') or 'right'
+                    color = op.get('color') or ('ral9t08' if series == 'S100' else 'ral7016')
+                    glass = op.get('glass') or 'transparent'
+                    if series == 'S100':
+                        spec = f'S100:{pc}:{direction}:{color}:{glass}'
+                    else:
+                        spec = f'{pc}:{direction}:{color}:{glass}'
+                    arr[bay] = spec
+                return arr if any(arr) else None
+
+            _front_fills = _fills_for('front')
+            _back_fills = _fills_for('back')
+            _left_fills = _fills_for('left')
+            _right_fills = _fills_for('right')
+            _front_glz = _glz_for('front')
+            _back_glz = _glz_for('back')
+            _left_glz = _glz_for('left')
+            _right_glz = _glz_for('right')
+
+            # iso fills: prefer facade type, else "S500"/"S100" marker
+            def _iso_fill(side, fills, glazings):
+                if fills:
+                    for f in fills:
+                        if f:
+                            return f
+                if glazings:
+                    for g in glazings:
+                        if g:
+                            return 'S100' if g.upper().startswith('S100') else 'S500'
+                return None
+
+            _iso_front = _iso_fill('front', _front_fills, _front_glz)
+            _iso_back = _iso_fill('back', _back_fills, _back_glz)
+            _iso_left = _iso_fill('left', _left_fills, _left_glz)
+            _iso_right = _iso_fill('right', _right_fills, _right_glz)
+
             _svgs = [
                 generate_top_view_svg(width=width, length=length, modules=modules,
                                       is_pir=_is_pir, lamella_count=_lc,
-                                      max_overhang=_mo, ref=_ref),
+                                      max_overhang=_mo, ref=_ref,
+                                      xc_left=_xc_a, xc_right=_xc_c,
+                                      xc_front=_xc_f, xc_back=_xc_b),
                 generate_front_view_svg(width=width, height=_h, modules=modules,
-                                        max_overhang=_mo, ref=_ref, title='Вид спереди'),
+                                        max_overhang=_mo, ref=_ref, title='Вид спереди',
+                                        extra_columns=_xc_f,
+                                        fills_per_bay=_front_fills,
+                                        glazings_per_bay=_front_glz),
+                generate_front_view_svg(width=width, height=_h, modules=modules,
+                                        max_overhang=_mo, ref=_ref, title='Вид сзади',
+                                        extra_columns=_xc_b,
+                                        fills_per_bay=_back_fills,
+                                        glazings_per_bay=_back_glz),
                 generate_front_view_svg(width=length, height=_h, modules=1,
-                                        max_overhang=_mo, ref=_ref, title='Вид сбоку'),
+                                        max_overhang=_mo, ref=_ref, title='Вид слева',
+                                        extra_columns=max(_bays_for('left') - 1, 0) + _xc_a,
+                                        fills_per_bay=_left_fills,
+                                        glazings_per_bay=_left_glz),
+                generate_front_view_svg(width=length, height=_h, modules=1,
+                                        max_overhang=_mo, ref=_ref, title='Вид справа',
+                                        extra_columns=max(_bays_for('right') - 1, 0) + _xc_c,
+                                        fills_per_bay=_right_fills,
+                                        glazings_per_bay=_right_glz),
             ]
             if _is_pir:
                 _svgs.append(generate_pir_iso_svg(width=width, length=length,
                                                    height=_h, modules=modules,
-                                                   max_overhang=_mo))
+                                                   max_overhang=_mo,
+                                                   fill_front=_iso_front, fill_back=_iso_back,
+                                                   fill_left=_iso_left, fill_right=_iso_right))
             else:
                 _svgs.append(generate_isometric_svg(width=width, length=length,
                                                      height=_h, lamella_count=_lc,
-                                                     modules=modules, max_overhang=_mo))
+                                                     modules=modules, max_overhang=_mo,
+                                                     fill_front=_iso_front, fill_back=_iso_back,
+                                                     fill_left=_iso_left, fill_right=_iso_right))
 
             _pngs = [svg_to_png_path(s) for s in _svgs]
             _iso_lbl = ('Изометрия (PIR панели)' if _is_pir
                         else ('Изометрия (стационарные)' if hero_img_key == 'b200'
                               else 'Изометрия (ламели открыты)'))
-            _labels = ['Вид сверху', 'Вид спереди', 'Вид сбоку', _iso_lbl]
+            _labels = ['Вид сверху', 'Вид спереди', 'Вид сзади',
+                       'Вид слева', 'Вид справа', _iso_lbl]
 
             if any(p and os.path.exists(p) for p in _pngs):
                 pdf.add_page()
@@ -727,16 +841,25 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                 _gap = 5
                 _x_left = 12
                 _x_right = _x_left + _iw + _gap
-                _row_h = 75
-                _y_rows = [pdf.get_y(), pdf.get_y() + _row_h + 8]
+                _row_h = 60
+                _start_y = pdf.get_y()
+                _y_rows = [_start_y, _start_y + _row_h + 6,
+                           _start_y + 2 * (_row_h + 6)]
 
-                for idx in range(4):
+                # Layout: row 0 = top + iso, row 1 = front + back, row 2 = left + right
+                _layout = [
+                    (0, 0, 0),  # top  (idx, row, col)
+                    (5, 0, 1),  # iso
+                    (1, 1, 0),  # front
+                    (2, 1, 1),  # back
+                    (3, 2, 0),  # left
+                    (4, 2, 1),  # right
+                ]
+                for (idx, _row, _col) in _layout:
                     p = _pngs[idx] if idx < len(_pngs) else None
                     lbl = _labels[idx] if idx < len(_labels) else ''
                     if not p or not os.path.exists(p):
                         continue
-                    _col = idx % 2
-                    _row = idx // 2
                     _x = _x_left if _col == 0 else _x_right
                     _y = _y_rows[_row]
                     pdf.set_font('DejaVu', 'B', 8)
@@ -750,8 +873,12 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                             os.unlink(p)
                     except Exception:
                         pass
-        except Exception:
-            pass
+        except Exception as _e:
+            try:
+                import logging as _lg
+                _lg.getLogger(__name__).warning("Schema page render failed: %s", _e)
+            except Exception:
+                pass
 
         # ===== PAGE 3: PRICING + PAYMENT VARIANTS =====
         items = pergola_data.get('items', [])
