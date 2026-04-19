@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v102';
+    var SVG_V = 'v103';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -273,7 +273,8 @@ document.addEventListener('DOMContentLoaded', function() {
         buildFacadeTable();
     });
     document.getElementById('input-height').addEventListener('input', function() {
-        state.height = parseFloat(this.value) || 3.0;
+        var h = parseFloat(this.value) || 3.0;
+        state.height = Math.min(3.0, Math.max(2.0, h));
     });
 
     var whiteLedEl = document.getElementById('opt-white-led');
