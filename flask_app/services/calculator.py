@@ -1274,7 +1274,7 @@ def perform_calculation(dimensions, options):
                            else (0.200 if pergola_type == "B200" else 0.280))
             _open_h_pre = max(0.1, height_m - _beam_h_pre)
             _side_max_bay_pre = {"front": 0, "back": 0, "left": 0, "right": 0}
-            for _op in (_glz_ops_pre + (facade_openings or [])):
+            for _op in (_glz_ops_pre + _facade_openings_pre):
                 if not isinstance(_op, dict):
                     continue
                 _s = _op.get("side", "")
@@ -1596,10 +1596,13 @@ def perform_calculation(dimensions, options):
                     price_eur = round(price_one * count_g, 2)
                     area_one = round(op_w * op_h, 2)
 
-                    # Drive selection per window (force tandem when wider than 3m)
-                    brand_g = (op.get("brand") or 'simu').lower()
+                    # Drive selection per window (force tandem when wider than 3m).
+                    # Brand binds to the pergola's automation family (B700NEW → Somfy,
+                    # everything else → Simu) unless the opening explicitly overrides it.
+                    _pergola_default_brand = 'somfy' if pergola_type == 'B700NEW' else 'simu'
+                    brand_g = (op.get("brand") or _pergola_default_brand).lower()
                     if brand_g not in ('simu', 'somfy'):
-                        brand_g = 'simu'
+                        brand_g = _pergola_default_brand
                     force_tandem = (op_w > 3.0)
                     drive_name, drive_price, is_tandem, req_torque = pick_guillotine_drive(
                         op_w, op_h, brand=brand_g, force_tandem=force_tandem)
@@ -1619,7 +1622,10 @@ def perform_calculation(dimensions, options):
                              f"{(', ' + str(count_g) + ' шт.') if count_g > 1 else ''})")
                     items.append({"name": gloss, "price": price_eur})
                     specification.append({
-                        "name": f"Гильотинное остекление {series_g}",
+                        "name": (f"Гильотинное остекление {series_g} · "
+                                 f"{W_GLASS_NAMES.get(glass_g, glass_g)} · "
+                                 f"{W_COLOR_NAMES.get(color_g, color_g)}"
+                                 f"{plav_label} · {op_w:.2f}\u00d7{op_h:.2f} \u043c"),
                         "count": (f"{count_g} шт. \u00b7 {sashes_g} створки"
                                   f" \u00b7 {area_one * count_g:.2f} \u043c\u00b2")
                     })
