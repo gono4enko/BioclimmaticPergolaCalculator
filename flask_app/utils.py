@@ -1153,17 +1153,25 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
             # Heavier top + bottom rails (frameless = no side frame)
             _out += line(pts_top_left, pts_top_right, frame_c, 1.6, 1.0)
             _out += line(pts_bot_left, pts_bot_right, frame_c, 1.2, 1.0)
-        elif ft in ('W500', 'W600', 'W700'):
-            # Guillotine: glass panel + thick top/bottom rails + 1 horizontal rail (default 2 sashes)
+        elif ft.split(':')[0] in ('W500', 'W600', 'W700'):
+            # Guillotine: glass panel + thick top/bottom rails + (sashes-1) horizontal mid-rails.
+            _wparts = ft.split(':')
+            _wseries = _wparts[0]
+            try:
+                _wsashes = max(2, min(3, int(_wparts[1])))
+            except Exception:
+                _wsashes = 2
             frame_c = '#1f2a35'
-            glass_c = '#bcd4e0' if ft == 'W500' else ('#aac7d8' if ft == 'W600' else '#9bbacd')
+            glass_c = '#bcd4e0' if _wseries == 'W500' else ('#aac7d8' if _wseries == 'W600' else '#9bbacd')
             _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left], glass_c, frame_c, 1.0)
             def _lerpW(a, b, _t):
                 return (a[0]+_t*(b[0]-a[0]), a[1]+_t*(b[1]-a[1]), a[2]+_t*(b[2]-a[2]))
-            # Mid horizontal rail
-            mid_l = _lerpW(pts_bot_left, pts_top_left, 0.5)
-            mid_r = _lerpW(pts_bot_right, pts_top_right, 0.5)
-            _out += line(mid_l, mid_r, frame_c, 1.4, 1.0)
+            # Draw (sashes-1) horizontal mid-rails evenly spaced between top and bottom
+            for _ri in range(1, _wsashes):
+                _t = _ri / _wsashes
+                _ml = _lerpW(pts_bot_left,  pts_top_left,  _t)
+                _mr = _lerpW(pts_bot_right, pts_top_right, _t)
+                _out += line(_ml, _mr, frame_c, 1.4, 1.0)
             # Heavy top + bottom rails
             _out += line(pts_top_left, pts_top_right, frame_c, 1.8, 1.0)
             _out += line(pts_bot_left, pts_bot_right, frame_c, 1.6, 1.0)
@@ -1512,15 +1520,23 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
                 _out += line(_lerpS(pts_bot_left, pts_bot_right, _t), _lerpS(pts_top_left, pts_top_right, _t), frame_c, 0.5, 0.7)
             _out += seg(pts_top_left, pts_top_right, frame_c, 1.6)
             _out += seg(pts_bot_left, pts_bot_right, frame_c, 1.2)
-        elif ft in ('W500', 'W600', 'W700'):
+        elif ft.split(':')[0] in ('W500', 'W600', 'W700'):
+            _wparts = ft.split(':')
+            _wseries = _wparts[0]
+            try:
+                _wsashes = max(2, min(3, int(_wparts[1])))
+            except Exception:
+                _wsashes = 2
             frame_c = '#1f2a35'
-            glass_c = '#bcd4e0' if ft == 'W500' else ('#aac7d8' if ft == 'W600' else '#9bbacd')
+            glass_c = '#bcd4e0' if _wseries == 'W500' else ('#aac7d8' if _wseries == 'W600' else '#9bbacd')
             _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left], glass_c, frame_c, 1.0)
             def _lerpW(a, b, _t):
                 return (a[0]+_t*(b[0]-a[0]), a[1]+_t*(b[1]-a[1]), a[2]+_t*(b[2]-a[2]))
-            mid_l = _lerpW(pts_bot_left, pts_top_left, 0.5)
-            mid_r = _lerpW(pts_bot_right, pts_top_right, 0.5)
-            _out += seg(mid_l, mid_r, frame_c, 1.4)
+            for _ri in range(1, _wsashes):
+                _t = _ri / _wsashes
+                _ml = _lerpW(pts_bot_left,  pts_top_left,  _t)
+                _mr = _lerpW(pts_bot_right, pts_top_right, _t)
+                _out += seg(_ml, _mr, frame_c, 1.4)
             _out += seg(pts_top_left, pts_top_right, frame_c, 1.8)
             _out += seg(pts_bot_left, pts_bot_right, frame_c, 1.6)
         elif ft.startswith('FZ-44'):

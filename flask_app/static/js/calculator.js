@@ -340,7 +340,12 @@ document.addEventListener('DOMContentLoaded', function() {
             var g = state.glazingPerOpening[side + '_' + i];
             if (!g || !g.enabled) continue;
             var sU = (g.series || 'S500').toUpperCase();
-            if (sU === 'W500' || sU === 'W600' || sU === 'W700') return sU;
+            if (sU === 'W500' || sU === 'W600' || sU === 'W700') {
+                var wSashes = g.sashes || 2;
+                var wColor  = g.color  || 'ral9t08';
+                var wGlass  = g.glass  || 'transparent';
+                return sU + ':' + wSashes + ':' + wColor + ':' + wGlass;
+            }
             if (sU === 'S100') hasS100 = true;
             else hasS500 = true;
         }

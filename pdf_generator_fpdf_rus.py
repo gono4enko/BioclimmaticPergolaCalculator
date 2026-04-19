@@ -786,9 +786,9 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                         if not g:
                             continue
                         gu = g.upper()
-                        if gu.startswith('W500'): return 'W500'
-                        if gu.startswith('W600'): return 'W600'
-                        if gu.startswith('W700'): return 'W700'
+                        if gu.startswith('W500'): return g  # preserve full spec (W500:sashes:color:glass)
+                        if gu.startswith('W600'): return g
+                        if gu.startswith('W700'): return g
                         return 'S100' if gu.startswith('S100') else 'S500'
                 return None
 
