@@ -2245,6 +2245,11 @@ def perform_calculation(dimensions, options):
         zip_openings_raw = options.get("zip_openings", []) or []
         zip_normalized = []
         zip_total_eur = 0.0
+        extra_cols_z_f = 0
+        extra_cols_z_b = 0
+        extra_cols_z_a = 0
+        extra_cols_z_c = 0
+        total_extra_cols_z = 0
 
         if zip_openings_raw:
             _glaze_keys = set()
@@ -2292,13 +2297,6 @@ def perform_calculation(dimensions, options):
                         _zip_types_first.append(_zr['zip_type'])
 
             _global_type = 'ZIP130' if 'ZIP130' in _zip_types_first else 'ZIP100'
-
-            # Track extra columns needed for ZIP openings
-            extra_cols_z_f = 0
-            extra_cols_z_b = 0
-            extra_cols_z_a = 0
-            extra_cols_z_c = 0
-            total_extra_cols_z = 0
 
             # Second pass: compute final prices with global type override
             for _zop in zip_openings_raw:
