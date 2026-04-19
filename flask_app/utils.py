@@ -651,34 +651,62 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
 
 
 def _draw_zip_fill(x, y, w, h):
-    """Draw a vertical ZIP roller awning in elevation view."""
+    """Draw a vertical ZIP roller awning in elevation view.
+    Structure: cassette box (top) → side guide rails → fabric panel → bottom bar.
+    Matches the appearance of Decolife/SIMU ZIP100/ZIP130 technical drawings.
+    """
     if w < 2 or h < 2:
         return ''
-    rail_c = '#1a2530'
-    fabric_c = '#2a3a46'
-    rail_w = max(1.5, w * 0.028)
+    cassette_c = '#1e2d3a'   # dark aluminium cassette / rails
+    rail_c     = '#253545'
+    fabric_c   = '#c8d8e8'   # light grey-blue, typical solar-screen tone
+    stripe_c   = '#8aa0b2'   # horizontal weft lines
+    bottom_c   = '#1e2d3a'   # weighted hem bar
+
+    cassette_h = max(3.5, min(h * 0.07, 11))
+    rail_w     = max(2.0, w * 0.04)
+    bottom_h   = max(2.0, h * 0.04)
+
+    fy = y + cassette_h                     # fabric top edge
+    fh = max(1.0, h - cassette_h - bottom_h)  # fabric height
+    fx = x + rail_w                         # fabric left edge
+    fw = max(1.0, w - 2 * rail_w)           # fabric width
+
     out = ''
-    # Fabric background
-    inner_x = x + rail_w
-    inner_w = max(1.0, w - 2 * rail_w)
-    out += (f'<rect x="{inner_x:.1f}" y="{y:.1f}" width="{inner_w:.1f}" height="{h:.1f}" '
-            f'fill="{fabric_c}" opacity="0.52"/>')
-    # Horizontal texture lines
-    n_lines = max(5, int(h / 9))
+    # 1. Top cassette housing (where the roller and fabric reel live)
+    out += (f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{cassette_h:.1f}" '
+            f'fill="{cassette_c}" rx="1" opacity="0.92"/>')
+    # Small drum-circle hint inside the cassette
+    dr = max(1.0, cassette_h * 0.30)
+    dcx, dcy = x + w / 2, y + cassette_h / 2
+    out += (f'<circle cx="{dcx:.1f}" cy="{dcy:.1f}" r="{dr:.1f}" '
+            f'fill="none" stroke="#7090a8" stroke-width="0.7" opacity="0.55"/>')
+
+    # 2. Left guide rail
+    out += (f'<rect x="{x:.1f}" y="{fy:.1f}" width="{rail_w:.1f}" '
+            f'height="{fh + bottom_h:.1f}" fill="{rail_c}" opacity="0.88"/>')
+    # 3. Right guide rail
+    out += (f'<rect x="{x + w - rail_w:.1f}" y="{fy:.1f}" width="{rail_w:.1f}" '
+            f'height="{fh + bottom_h:.1f}" fill="{rail_c}" opacity="0.88"/>')
+
+    # 4. Fabric panel (solar screen)
+    out += (f'<rect x="{fx:.1f}" y="{fy:.1f}" width="{fw:.1f}" height="{fh:.1f}" '
+            f'fill="{fabric_c}" opacity="0.72"/>')
+    # 5. Horizontal weft lines (woven screen texture)
+    n_lines = max(4, int(fh / 7))
     for i in range(1, n_lines + 1):
-        ly = y + i * h / (n_lines + 1)
-        out += (f'<line x1="{inner_x:.1f}" y1="{ly:.1f}" x2="{inner_x + inner_w:.1f}" y2="{ly:.1f}" '
-                f'stroke="{rail_c}" stroke-width="0.5" opacity="0.28"/>')
-    # Guide rails (left and right)
-    out += (f'<rect x="{x:.1f}" y="{y:.1f}" width="{rail_w:.1f}" height="{h:.1f}" '
-            f'fill="{rail_c}" opacity="0.80"/>')
-    out += (f'<rect x="{x + w - rail_w:.1f}" y="{y:.1f}" width="{rail_w:.1f}" height="{h:.1f}" '
-            f'fill="{rail_c}" opacity="0.80"/>')
-    # Label
-    cx = x + w / 2
-    cy = y + h / 2
-    out += (f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" dominant-baseline="middle" '
-            f'font-size="9px" font-weight="bold" fill="white" opacity="0.55">ZIP</text>')
+        ly = fy + i * fh / (n_lines + 1)
+        out += (f'<line x1="{fx:.1f}" y1="{ly:.1f}" x2="{fx + fw:.1f}" y2="{ly:.1f}" '
+                f'stroke="{stripe_c}" stroke-width="0.55" opacity="0.55"/>')
+
+    # 6. Bottom weighted bar
+    out += (f'<rect x="{fx:.1f}" y="{fy + fh:.1f}" width="{fw:.1f}" height="{bottom_h:.1f}" '
+            f'fill="{bottom_c}" opacity="0.88"/>')
+
+    # 7. "ZIP" label centred on fabric
+    out += (f'<text x="{x + w / 2:.1f}" y="{fy + fh / 2:.1f}" text-anchor="middle" '
+            f'dominant-baseline="middle" font-size="9px" font-weight="bold" '
+            f'fill="#1e2d3a" opacity="0.65">ZIP</text>')
     return out
 
 

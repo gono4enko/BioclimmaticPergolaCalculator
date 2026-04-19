@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v108';
+    var SVG_V = 'v109';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -2337,7 +2337,9 @@ document.addEventListener('DOMContentLoaded', function() {
             '\u0414\u0438\u043C\u043C\u0435\u0440': '\u0420\u0435\u0433\u0443\u043B\u0438\u0440\u043E\u0432\u043A\u0430 \u044F\u0440\u043A\u043E\u0441\u0442\u0438 LED-\u043F\u043E\u0434\u0441\u0432\u0435\u0442\u043A\u0438 \u043F\u0443\u043B\u044C\u0442\u043E\u043C',
             '\u043B\u0435\u043D\u0442\u0430': 'LED-\u043B\u0435\u043D\u0442\u0430 IP65 \u0441 \u0437\u0430\u0449\u0438\u0442\u043E\u0439 \u043E\u0442 \u0432\u043B\u0430\u0433\u0438',
             '\u0414\u043E\u0441\u0442\u0430\u0432\u043A\u0430': '\u0414\u043E\u0441\u0442\u0430\u0432\u043A\u0430 \u0434\u043E \u043E\u0431\u044A\u0435\u043A\u0442\u0430 \u0432 \u043F\u0440\u0435\u0434\u0435\u043B\u0430\u0445 \u0420\u0424',
-            '\u041C\u043E\u043D\u0442\u0430\u0436': '\u041F\u0440\u043E\u0444\u0435\u0441\u0441\u0438\u043E\u043D\u0430\u043B\u044C\u043D\u0430\u044F \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430 \u0431\u0440\u0438\u0433\u0430\u0434\u043E\u0439 Decolife'
+            '\u041C\u043E\u043D\u0442\u0430\u0436': '\u041F\u0440\u043E\u0444\u0435\u0441\u0441\u0438\u043E\u043D\u0430\u043B\u044C\u043D\u0430\u044F \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430 \u0431\u0440\u0438\u0433\u0430\u0434\u043E\u0439 Decolife',
+            'ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u0430': '\u0420\u0443\u043b\u043e\u043d\u043d\u0430\u044f \u043c\u0430\u0440\u043a\u0438\u0437\u0430 \u0441 \u0431\u043e\u043a\u043e\u0432\u044b\u043c\u0438 \u043d\u0430\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0449\u0438\u043c\u0438 (zip-\u0441\u0438\u0441\u0442\u0435\u043c\u0430) \u2014 \u0437\u0430\u0449\u0438\u0442\u0430 \u043e\u0442 \u0441\u043e\u043b\u043d\u0446\u0430, \u0432\u0435\u0442\u0440\u0430 \u0438 \u043e\u0441\u0430\u0434\u043a\u043e\u0432',
+            '\u0414\u043e\u043f. \u043a\u043e\u043b\u043e\u043d\u043d\u0430 (ZIP)': '\u0414\u043e\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c\u043d\u0430\u044f \u0432\u0435\u0440\u0442\u0438\u043a\u0430\u043b\u044c\u043d\u0430\u044f \u043e\u043f\u043e\u0440\u0430 \u0434\u043b\u044f ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u044b \u0448\u0438\u0440\u043e\u043a\u043e\u0433\u043e \u043f\u0440\u043e\u043b\u0451\u0442\u0430'
         };
         if (!isAll && mainResult.specification) {
             html += '<div class="kp-block">' +
@@ -2599,6 +2601,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return html;
     }
 
+    function _applySchemeAfterKp(resultOrResults) {
+        var _mr = Array.isArray(resultOrResults) ? resultOrResults[0] : resultOrResults;
+        if (_mr) setTimeout(function() { updateSchemeForVariant(_mr); }, 50);
+    }
+
     function loadDecoDataAndRender(resultOrResults) {
         fetch('/api/decolife-data/' + state.pergolaType)
             .then(function(r) { return r.json(); })
@@ -2608,6 +2615,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (kpContainer) {
                     kpContainer.innerHTML = buildMarketingKP(resultOrResults, decoData);
                     initLazyIframes();
+                    _applySchemeAfterKp(resultOrResults);
                 }
             })
             .catch(function() {
@@ -2615,6 +2623,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (kpContainer) {
                     kpContainer.innerHTML = buildMarketingKP(resultOrResults, {});
                     initLazyIframes();
+                    _applySchemeAfterKp(resultOrResults);
                 }
             });
     }
