@@ -2358,6 +2358,11 @@ def perform_calculation(dimensions, options):
             _pult_channels_label = _get_plural_form(
                 _zip_electric_count, 'канал', 'канала', 'каналов'
             )
+            # Apply assembly surcharge to pult (spec: 8% on base+fabric+color+drive+pult)
+            _zip_assembly_pct = _zip_setting('ZIP_ASSEMBLY_PCT') / 100.0
+            _zip_pult_assembly = round(_zip_pult_eur * _zip_assembly_pct, 2)
+            _zip_pult_total = round(_zip_pult_eur + _zip_pult_assembly, 2)
+            _zip_pult_eur = _zip_pult_total  # expose assembled total
             items.append({
                 "name": (f"Пульт ДУ {_zip_pult_name} для ZIP-маркиз "
                          f"({_zip_electric_count} {_pult_channels_label})"),

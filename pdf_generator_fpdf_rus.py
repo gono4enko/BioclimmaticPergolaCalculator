@@ -213,6 +213,14 @@ def format_pergola_data_for_pdf(results, options, dimensions, pergola_descriptio
     # Добавляем позиции для таблицы стоимости
     if "items" in results:
         pergola_data["items"] = results["items"]
+
+    # Добавляем данные ZIP-маркиз для отдельной секции PDF
+    if "zip" in results and results["zip"].get("openings"):
+        pergola_data["zip_openings"] = results["zip"]["openings"]
+        pergola_data["zip_pult_name"] = results["zip"].get("pult_name")
+        pergola_data["zip_pult_eur"] = results["zip"].get("pult_eur", 0)
+        pergola_data["zip_price_eur"] = results["zip"].get("price", 0)
+        pergola_data["zip_count"] = results["zip"].get("count", 0)
     
     # Добавляем текстовые описания
     pergola_data["description"] = pergola_description
@@ -893,6 +901,49 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                 _lg.getLogger(__name__).warning("Schema page render failed: %s", _e)
             except Exception:
                 pass
+
+        # ===== ZIP AWNING SECTION (before pricing) =====
+        _zip_ops_pdf = pergola_data.get('zip_openings', [])
+        if _zip_ops_pdf:
+            pdf.add_page()
+            pdf.set_font('DejaVu', 'B', 14)
+            pdf.cell(0, 8, "ZIP-маркизы:", 0, 1, "L")
+            _zip_side_names = {'front': 'Фасад', 'back': 'Сзади', 'left': 'Слева', 'right': 'Справа'}
+            _zip_fab_names = {'veozip': 'Veozip', 'soltis': 'Soltis W96', 'copaco': 'Copaco Blackout'}
+            _zip_drv_names = {'manual': 'Ручное', 'simu': 'SIMU', 'somfy': 'Somfy', 'decolife': 'Decolife'}
+            _zip_hdrs = ["\u2116", "Расположение", "Тип", "Размер (мм)", "Ткань", "Привод", "Стоимость"]
+            _zip_ws = [8, 35, 15, 28, 35, 20, 29]
+            _euro_r_z = pergola_data.get('euro_rate', 110)
+            pdf.table_header(_zip_hdrs, _zip_ws)
+            for _zi, _zo in enumerate(_zip_ops_pdf, 1):
+                _side_lbl = _zip_side_names.get(_zo.get('side', ''), _zo.get('side', ''))
+                _bay_n = int(_zo.get('bay', 0) or 0) + 1
+                _loc = _side_lbl + ((' · П' + str(_bay_n)) if _bay_n > 1 else '')
+                _typ = _zo.get('zip_type', 'ZIP100')
+                _wm = round((_zo.get('adj_w') or 0) * 1000)
+                _hm = round((_zo.get('adj_h') or 0) * 1000)
+                _dims = f"{_wm}\u00d7{_hm}"
+                _fab = _zip_fab_names.get(_zo.get('fabric', ''), _zo.get('fabric', ''))
+                _drv = _zip_drv_names.get(_zo.get('drive', ''), _zo.get('drive', ''))
+                _cnt = int(_zo.get('count', 1) or 1)
+                _tot_rub = round((_zo.get('total_eur', 0) or 0) * _euro_r_z * _cnt)
+                _price_s = f"{_tot_rub:,d}".replace(',', ' ') + " ₽"
+                _overlay_note = ' (накл.)' if _zo.get('has_glazing') else ''
+                pdf.table_row([str(_zi), _loc + _overlay_note, _typ, _dims, _fab,
+                               _drv + (f' ×{_cnt}' if _cnt > 1 else ''), _price_s],
+                              _zip_ws, aligns=["C", "L", "C", "C", "L", "L", "L"], row_height=6)
+            _zip_pult_nm = pergola_data.get('zip_pult_name')
+            if _zip_pult_nm:
+                _pult_rub = round((pergola_data.get('zip_pult_eur', 0) or 0) * _euro_r_z)
+                _pult_str = f"{_pult_rub:,d}".replace(',', ' ') + " ₽"
+                pdf.table_row(['', f'Пульт ДУ {_zip_pult_nm} (Электро)', '', '', '', '', _pult_str],
+                              _zip_ws, aligns=["C", "L", "C", "C", "L", "L", "L"], row_height=6)
+            _zip_tot_rub = round((pergola_data.get('zip_price_eur', 0) or 0) * _euro_r_z)
+            pdf.set_font('DejaVu', 'B', 9)
+            pdf.cell(sum(_zip_ws[:6]), 6, "ИТОГО ZIP-маркизы:", 1, 0, "L")
+            pdf.cell(_zip_ws[6], 6, f"{_zip_tot_rub:,d}".replace(',', ' ') + " ₽", 1, 1, "L")
+            pdf.set_font('DejaVu', '', 9)
+            pdf.ln(3)
 
         # ===== PAGE 3: PRICING + PAYMENT VARIANTS =====
         items = pergola_data.get('items', [])

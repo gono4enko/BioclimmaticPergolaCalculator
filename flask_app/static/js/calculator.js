@@ -1295,24 +1295,39 @@ document.addEventListener('DOMContentLoaded', function() {
             var z = state.zipPerOpening[key] || {};
             var enabled = !!z.enabled;
             var hasGlz = !!(state.glazingPerOpening[key] && state.glazingPerOpening[key].enabled);
-            var overlayTag = (enabled && hasGlz) ? '<span style="background:#f59e0b;color:#fff;border-radius:3px;padding:1px 5px;font-size:0.72em;margin-left:4px;">\u041d\u0430\u043a\u043b\u0430\u0434\u043d\u043e\u0439</span>' : '';
+            var overlayNotice = '';
+            if (hasGlz) {
+                overlayNotice = '<br><span style="font-size:0.75em;color:#b45309;">\u041d\u0430\u043a\u043b\u0430\u0434\u043d\u043e\u0439 \u043c\u043e\u043d\u0442\u0430\u0436: +100 \u043c\u043c \u0448\u0438\u0440\u0438\u043d\u0430, +100/130 \u043c\u043c \u0432\u044b\u0441\u043e\u0442\u0430</span>';
+            }
             var toggleBtnStyle = enabled ? 'background:#1a3a6e;color:#fff' : 'background:#e5e9f0;color:#555';
             var toggleBtnText = enabled ? 'ZIP \u2713' : '+ ZIP';
             html += '<tr data-key="' + key + '">';
             html += '<td><span class="facade-lbl">' + o.label + '</span></td>';
-            html += '<td>' + o.desc + overlayTag + '</td>';
+            html += '<td>' + o.desc + overlayNotice + '</td>';
             html += '<td><button class="zip-toggle-btn" data-key="' + key + '" style="' + toggleBtnStyle + ';border:none;border-radius:5px;padding:3px 10px;font-size:0.83em;cursor:pointer;">' + toggleBtnText + '</button></td>';
             if (enabled) {
                 var fabOpts = '';
                 ZIP_FABRICS_JS.forEach(function(f) { fabOpts += '<option value="' + f.v + '"' + ((z.fabric||'veozip')===f.v?' selected':'') + '>' + f.n + '</option>'; });
                 var colOpts = '';
                 ZIP_COLORS_JS.forEach(function(c) { colOpts += '<option value="' + c.v + '"' + ((z.color||'ral9016')===c.v?' selected':'') + '>' + c.n + '</option>'; });
-                var drvOpts = '';
-                ZIP_DRIVES_JS.forEach(function(d) { drvOpts += '<option value="' + d.v + '"' + ((z.drive||'manual')===d.v?' selected':'') + '>' + d.n + '</option>'; });
+                var driveType = (z.drive && z.drive !== 'manual') ? 'electric' : 'manual';
+                var drvTypeSel = '<select class="form-select form-select-sm zip-fld" data-fld="drive_type" data-key="' + key + '">'
+                    + '<option value="manual"' + (driveType==='manual'?' selected':'') + '>\u0420\u0443\u0447\u043d\u043e\u0435 (50 \u20ac)</option>'
+                    + '<option value="electric"' + (driveType==='electric'?' selected':'') + '>\u042d\u043b\u0435\u043a\u0442\u0440\u043e</option>'
+                    + '</select>';
+                var brandSel = '';
+                if (driveType === 'electric') {
+                    var ZIP_BRANDS = [{v:'simu',n:'SIMU'},{v:'somfy',n:'Somfy'},{v:'decolife',n:'Decolife'}];
+                    var brOpts = '';
+                    var curBrand = (z.drive && z.drive !== 'manual') ? z.drive : 'simu';
+                    ZIP_BRANDS.forEach(function(b) { brOpts += '<option value="' + b.v + '"' + (curBrand===b.v?' selected':'') + '>' + b.n + '</option>'; });
+                    brandSel = '<div><label>\u0411\u0440\u0435\u043d\u0434</label><select class="form-select form-select-sm zip-fld" data-fld="drive" data-key="' + key + '">' + brOpts + '</select></div>';
+                }
                 html += '<td><div class="glz-grid">'
                     + '<div><label>\u0422\u043a\u0430\u043d\u044c</label><select class="form-select form-select-sm zip-fld" data-fld="fabric" data-key="' + key + '">' + fabOpts + '</select></div>'
                     + '<div><label>\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f</label><select class="form-select form-select-sm zip-fld" data-fld="color" data-key="' + key + '">' + colOpts + '</select></div>'
-                    + '<div><label>\u041f\u0440\u0438\u0432\u043e\u0434</label><select class="form-select form-select-sm zip-fld" data-fld="drive" data-key="' + key + '">' + drvOpts + '</select></div>'
+                    + '<div><label>\u041f\u0440\u0438\u0432\u043e\u0434</label>' + drvTypeSel + '</div>'
+                    + brandSel
                     + '</div></td>';
             } else {
                 html += '<td style="color:#aaa;font-size:0.82em;">\u2014</td>';
@@ -1337,8 +1352,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 var k = this.dataset.key;
                 var fld = this.dataset.fld;
                 if (!state.zipPerOpening[k]) state.zipPerOpening[k] = {fabric:'veozip', color:'ral9016', drive:'manual', count:1, enabled:true};
-                state.zipPerOpening[k][fld] = this.value;
-                updateZipAreaInfo();
+                if (fld === 'drive_type') {
+                    if (this.value === 'manual') {
+                        state.zipPerOpening[k].drive = 'manual';
+                    } else {
+                        if (state.zipPerOpening[k].drive === 'manual') {
+                            state.zipPerOpening[k].drive = 'simu';
+                        }
+                    }
+                    buildZipTable();
+                } else {
+                    state.zipPerOpening[k][fld] = this.value;
+                    updateZipAreaInfo();
+                }
             });
         });
         updateZipAreaInfo();
