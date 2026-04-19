@@ -289,6 +289,19 @@ def _glaze_ci(arr, v):
     return best
 
 
+def _glaze_ceil(arr, v):
+    """Return index of the smallest value in arr that is >= v.
+    Used for pricing where the customer should always be billed for the
+    next available size up. Falls back to the last index when v exceeds
+    the table's maximum (matrix bound is enforced upstream)."""
+    if not arr:
+        return 0
+    for i, a in enumerate(arr):
+        if a + 1e-9 >= v:
+            return i
+    return len(arr) - 1
+
+
 def glazing_min_panels(w, h):
     """Min panel count for a sash given opening size."""
     try:
@@ -564,7 +577,9 @@ def w_calc_price(series, w, h, color='ral9t08', glass='transparent',
     b = W_BOUNDS[s]
     w_c = max(b['w_min'], min(b['w_max'], w))
     h_c = max(b['h_min'], min(b['h_max'], h))
-    comp = pd['p'][_glaze_ci(pd['h'], h_c)][_glaze_ci(pd['w'], w_c)]
+    # W series uses ceiling lookup so non-grid sizes round up to the next
+    # available billable bin (customer is never undercharged).
+    comp = pd['p'][_glaze_ceil(pd['h'], h_c)][_glaze_ceil(pd['w'], w_c)]
     if color == 'ral_special':
         comp *= (1 + W_RAL_SPECIAL_PCT / 100.0)
     if glass == 'multifunctional':

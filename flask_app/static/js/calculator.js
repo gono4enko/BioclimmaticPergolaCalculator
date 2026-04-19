@@ -690,7 +690,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (sashes !== 2 && sashes !== 3) sashes = 2;
                 entry.sashes = sashes;
                 entry.plavnik = (g.plavnik === true);
-                entry.brand = g.brand || 'simu';
+                if (g.brand === 'simu' || g.brand === 'somfy') entry.brand = g.brand;
             } else {
                 entry.pc = parseInt(g.pc) || (seriesU === 'S100' ? 3 : 4);
                 entry.direction = g.direction || 'right';
@@ -871,7 +871,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (g.glass !== 'transparent' && g.glass !== 'multifunctional') g.glass = 'transparent';
             if (typeof g.plavnik !== 'boolean') g.plavnik = (w > 3.0);
             if (w > 3.0) g.plavnik = true; // forced auto when wider than 3m
-            if (g.brand !== 'simu' && g.brand !== 'somfy') g.brand = 'simu';
+            if (g.brand !== 'simu' && g.brand !== 'somfy') g.brand = '';
             return g;
         }
         if (series === 'S100') {
@@ -990,7 +990,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 COLORS.forEach(function(c) { wColOpts += '<option value="' + c.v + '"' + (g.color===c.v?' selected':'') + '>' + c.n + '</option>'; });
                 var wGlOpts = '';
                 GLASS.forEach(function(c) { wGlOpts += '<option value="' + c.v + '"' + (g.glass===c.v?' selected':'') + '>' + c.n + '</option>'; });
-                var brOpts = '<option value="simu"' + (g.brand==='simu'?' selected':'') + '>SIMU</option>'
+                var brOpts = '<option value=""' + (!g.brand?' selected':'') + '>\u0410\u0432\u0442\u043e (\u043f\u043e \u043f\u0435\u0440\u0433\u043e\u043b\u0435)</option>'
+                           + '<option value="simu"' + (g.brand==='simu'?' selected':'') + '>SIMU</option>'
                            + '<option value="somfy"' + (g.brand==='somfy'?' selected':'') + '>SOMFY</option>';
                 var plavForced = (dims.wM > 3.0);
                 var plavChecked = g.plavnik ? ' checked' : '';
@@ -2335,7 +2336,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (s !== 2 && s !== 3) s = 2;
                     entry.sashes = s;
                     entry.plavnik = (g.plavnik === true);
-                    entry.brand = g.brand || 'simu';
+                    entry.brand = (g.brand === 'simu' || g.brand === 'somfy') ? g.brand : '';
                 } else {
                     entry.pc = parseInt(g.pc) || (seriesU === 'S100' ? 3 : 4);
                     entry.direction = g.direction || 'right';
