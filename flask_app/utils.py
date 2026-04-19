@@ -932,7 +932,6 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
             fill_front_svg += f'<polygon points="{coords}" fill="#eef2f7" fill-opacity="0.78" stroke="#2a4a7e" stroke-width="1.0" stroke-dasharray="6,3" stroke-linejoin="round"/>'
 
     SW_SIL = 1.2
-    SW_INT = 0.6
 
     def draw_column(cx, cz, y0, y1, sw=SW_SIL):
         x0 = cx - COL_W / 2; x1 = cx + COL_W / 2
