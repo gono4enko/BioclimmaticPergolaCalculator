@@ -536,9 +536,10 @@ function loadHistory() {
             btn.disabled = false;
             btn.textContent = 'Обновить';
             allHistoryEntries = (d && d.entries) || [];
+            var totalCount = (d && typeof d.total_count === 'number') ? d.total_count : allHistoryEntries.length;
             var note = document.getElementById('historyCountNote');
             if (trigger || dateFrom || dateTo) {
-                note.textContent = 'Показано: ' + allHistoryEntries.length + ' (фильтр на сервере)';
+                note.textContent = 'Показано: ' + allHistoryEntries.length + ' из ' + totalCount;
             } else {
                 note.textContent = '';
             }

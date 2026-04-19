@@ -551,8 +551,15 @@ def scheduler_history():
     trigger = request.args.get('trigger', '').strip() or None
     date_from = request.args.get('date_from', '').strip() or None
     date_to = request.args.get('date_to', '').strip() or None
-    entries = get_cleanup_history(limit=limit, trigger=trigger, date_from=date_from, date_to=date_to)
-    return jsonify({'ok': True, 'entries': entries, 'count': len(entries)})
+    entries, total_count = get_cleanup_history(
+        limit=limit, trigger=trigger, date_from=date_from, date_to=date_to, include_total=True
+    )
+    return jsonify({
+        'ok': True,
+        'entries': entries,
+        'count': len(entries),
+        'total_count': total_count,
+    })
 
 
 @bp.route('/test-telegram-alert', methods=['POST'])

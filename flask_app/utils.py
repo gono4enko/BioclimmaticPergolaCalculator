@@ -90,15 +90,19 @@ def append_cleanup_history(entry, max_entries=None):
                 pass
 
 
-def get_cleanup_history(limit=50, trigger=None, date_from=None, date_to=None):
+def get_cleanup_history(limit=50, trigger=None, date_from=None, date_to=None, include_total=False):
     """Return up to `limit` most recent cleanup history entries, newest first.
 
     Optional filters:
       trigger   – exact match on entry['trigger'] (e.g. 'manual', 'scheduled', 'startup')
       date_from – inclusive lower bound, 'YYYY-MM-DD' string or datetime.date / datetime.datetime
       date_to   – inclusive upper bound, same format
+
+    If `include_total` is True, returns a tuple `(entries, total_count)` where
+    `total_count` is the number of entries in storage before any filtering.
     """
     history = _load_cleanup_history_raw()
+    total_count = len(history)
 
     if trigger:
         history = [e for e in history if e.get('trigger') == trigger]
@@ -136,7 +140,10 @@ def get_cleanup_history(limit=50, trigger=None, date_from=None, date_to=None):
 
     if limit and limit > 0:
         history = history[-limit:]
-    return list(reversed(history))
+    result = list(reversed(history))
+    if include_total:
+        return result, total_count
+    return result
 
 
 def clear_cleanup_history():
