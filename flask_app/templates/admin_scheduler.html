@@ -547,6 +547,7 @@ function loadHistory(page) {
     if (typeof page === 'number' && page > 0) {
         historyPage = page;
     }
+    updateUrlFromPage(historyPage);
     var offset = (historyPage - 1) * historyPageSize;
 
     var url = '{{ url_for("admin.scheduler_history") }}?limit=' + historyPageSize + '&offset=' + offset;
@@ -683,6 +684,27 @@ function updateUrlFromFilters(trigger, dateFrom, dateTo) {
     window.history.replaceState(null, '', newUrl);
 }
 
+function updateUrlFromPage(page) {
+    var params = new URLSearchParams(window.location.search);
+    if (page && page > 1) {
+        params.set('page', String(page));
+    } else {
+        params.delete('page');
+    }
+    var newSearch = params.toString();
+    var newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
+    window.history.replaceState(null, '', newUrl);
+}
+
+function loadHistoryPageFromUrl() {
+    var params = new URLSearchParams(window.location.search);
+    var raw = params.get('page');
+    if (!raw) return 1;
+    var n = parseInt(raw, 10);
+    if (!n || n < 1) return 1;
+    return n;
+}
+
 function applyHistoryFilters() {
     updateDownloadLinks();
     var trigger = document.getElementById('filterTrigger').value;
@@ -815,7 +837,7 @@ loadStatus();
 syncFiltersFromUrl();
 historyPageSize = loadHistoryPageSizePreference();
 syncHistoryPageSizeSelect();
-loadHistory();
+loadHistory(loadHistoryPageFromUrl());
 setupAutoRefresh();
 loadAlertSettings();
 </script>
