@@ -14,6 +14,11 @@ logger = logging.getLogger(__name__)
 def clear_price_cache():
     _price_cache.clear()
     _variant_price_cache.clear()
+    try:
+        clear_glazing_cache()
+    except NameError:
+        # During module import clear_glazing_cache may not yet be defined.
+        pass
 
 PERGOLA_TYPES = {
     "B500NEW": "В500 - с поворотными ламелями",
@@ -243,14 +248,29 @@ GLAZING_PD = {
                 [2772, 2924, 3075, 3227, 3378, 3681]]},
 }
 
-GLAZING_TRANSPARENT_EUR_M2 = 4800
-GLAZING_TINTED_EUR_M2 = 5800
-GLAZING_INSTALL_EUR_M2 = 3500
-GLAZING_MARKUP_PCT = 25
-GLAZING_DELIVERY_PCT = 10
-GLAZING_PAINT_PCT = 10
 GLAZING_PANEL_KG = 30
 GLAZING_MAX_KG = 88
+
+# Surcharge / pricing knobs for S500 (panoramic) and S100 (frameless) glazing.
+# Editable via the admin panel — backed by `glazing_settings` table.
+# Defaults are snapshotted into _GLAZING_SETTINGS_DEFAULTS so that
+# clear_glazing_cache() can reset them before applying DB overrides.
+GLAZING_SETTINGS = {
+    'S500_TRANSPARENT_EUR_M2': 4800.0,
+    'S500_TINTED_EUR_M2':      5800.0,
+    'S500_INSTALL_EUR_M2':     3500.0,
+    'S500_MARKUP_PCT':           25.0,
+    'S500_DELIVERY_PCT':         10.0,
+    'S500_PAINT_PCT':            10.0,
+    'S100_RAL_SPECIAL_PCT':      10.0,
+    # S100 tinted-glass surcharge defaults to (S500 tinted - S500 transparent).
+    'S100_TINTED_SURCHARGE_EUR_M2': 1000.0,
+}
+
+def _gs(key):
+    """Read a glazing setting (with defaults applied)."""
+    _ensure_glazing_loaded()
+    return GLAZING_SETTINGS.get(key, _GLAZING_SETTINGS_DEFAULTS.get(key, 0.0))
 
 GLAZING_COLOR_NAMES = {
     'ral7016': '\u0410\u043d\u0442\u0440\u0430\u0446\u0438\u0442 RAL 7016',
@@ -329,6 +349,8 @@ def glazing_calc_price(w, h, pc, direction='right', color='ral7016', glass='tran
         return 0.0
     if w <= 0 or h <= 0 or pc <= 0:
         return 0.0
+    # Apply admin overrides on the matrix and surcharges before any lookup.
+    _ensure_glazing_loaded()
     conf = str(pc); dir_ = direction or 'right'
     if pc == 2:
         conf = '3'
@@ -348,13 +370,14 @@ def glazing_calc_price(w, h, pc, direction='right', color='ral7016', glass='tran
         return 0.0
     comp = cd['p'][_glaze_ci(cd['h'], h)][_glaze_ci(cd['w'], w)]
     if color == 'custom':
-        comp *= (1 + GLAZING_PAINT_PCT / 100.0)
+        comp *= (1 + _gs('S500_PAINT_PCT') / 100.0)
     area = w * h
-    glass_eur = GLAZING_TINTED_EUR_M2 if glass == 'tinted' else GLAZING_TRANSPARENT_EUR_M2
+    glass_eur = _gs('S500_TINTED_EUR_M2') if glass == 'tinted' else _gs('S500_TRANSPARENT_EUR_M2')
     rate = euro_rate if euro_rate and euro_rate > 0 else 100.0
-    glass_part = area * glass_eur * (1 + GLAZING_MARKUP_PCT / 100.0) / rate  # ₽ → €
-    install_part = area * GLAZING_INSTALL_EUR_M2 * (1 + GLAZING_MARKUP_PCT / 100.0) / rate
-    deliv_part = comp * (GLAZING_DELIVERY_PCT / 100.0) * (1 + GLAZING_MARKUP_PCT / 100.0)
+    markup = _gs('S500_MARKUP_PCT')
+    glass_part = area * glass_eur * (1 + markup / 100.0) / rate  # ₽ → €
+    install_part = area * _gs('S500_INSTALL_EUR_M2') * (1 + markup / 100.0) / rate
+    deliv_part = comp * (_gs('S500_DELIVERY_PCT') / 100.0) * (1 + markup / 100.0)
     # ₽-priced components (glass, install) are converted to € using current pricing_settings rate.
     # Comp price is already in EUR (taken straight from PD table).
     return comp + glass_part + deliv_part + install_part
@@ -400,13 +423,114 @@ S100_PD = {
                 [3686, 4014, 4342, 4669, 5325]]},
 }
 
-S100_RAL_SPECIAL_PCT = 10
-S100_TINTED_SURCHARGE_EUR_M2 = (GLAZING_TINTED_EUR_M2 - GLAZING_TRANSPARENT_EUR_M2)  # 1000 ₽/м²
 S100_PC_ALLOWED = (3, 4, 6, 8, 12)
 S100_MIN_W = 1.8
 S100_MAX_W = 12.0
 S100_MIN_H = 1.5
 S100_MAX_H = 3.0
+
+# ---- Editable glazing matrices: defaults + DB-backed overrides ----
+# Snapshot defaults right after S500/S100 matrices are defined so that
+# clear_glazing_cache() can reset GLAZING_PD/S100_PD to factory state
+# before re-applying admin overrides from the `glazing_price_overrides` table.
+import copy as _copy
+_GLAZING_PD_DEFAULTS = {
+    'S500': _copy.deepcopy(GLAZING_PD),
+    'S100': _copy.deepcopy(S100_PD),
+}
+_GLAZING_SETTINGS_DEFAULTS = dict(GLAZING_SETTINGS)
+_GLAZING_LOADED = False
+
+# Backwards-compat shims: external code may still reference the old constants
+# by name. They mirror the live values in GLAZING_SETTINGS but are NOT
+# auto-refreshed — internal calc functions go through _gs() instead.
+GLAZING_TRANSPARENT_EUR_M2 = GLAZING_SETTINGS['S500_TRANSPARENT_EUR_M2']
+GLAZING_TINTED_EUR_M2      = GLAZING_SETTINGS['S500_TINTED_EUR_M2']
+GLAZING_INSTALL_EUR_M2     = GLAZING_SETTINGS['S500_INSTALL_EUR_M2']
+GLAZING_MARKUP_PCT         = GLAZING_SETTINGS['S500_MARKUP_PCT']
+GLAZING_DELIVERY_PCT       = GLAZING_SETTINGS['S500_DELIVERY_PCT']
+GLAZING_PAINT_PCT          = GLAZING_SETTINGS['S500_PAINT_PCT']
+S100_RAL_SPECIAL_PCT       = GLAZING_SETTINGS['S100_RAL_SPECIAL_PCT']
+S100_TINTED_SURCHARGE_EUR_M2 = GLAZING_SETTINGS['S100_TINTED_SURCHARGE_EUR_M2']
+
+
+def _glazing_pd_for(system):
+    return GLAZING_PD if system == 'S500' else S100_PD if system == 'S100' else None
+
+
+def _ensure_glazing_tables(cur):
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS glazing_price_overrides (
+            system VARCHAR(8) NOT NULL,
+            config VARCHAR(8) NOT NULL,
+            w_dec  DOUBLE PRECISION NOT NULL,
+            h_dec  DOUBLE PRECISION NOT NULL,
+            price  DOUBLE PRECISION NOT NULL,
+            updated_at TIMESTAMP DEFAULT NOW(),
+            PRIMARY KEY (system, config, w_dec, h_dec)
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS glazing_settings (
+            key VARCHAR(64) PRIMARY KEY,
+            value DOUBLE PRECISION NOT NULL,
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
+
+
+def clear_glazing_cache():
+    """Force the next call to glazing_calc_price/s100_calc_price to reload
+    matrices and surcharges from the database."""
+    global _GLAZING_LOADED
+    _GLAZING_LOADED = False
+
+
+def _ensure_glazing_loaded():
+    global _GLAZING_LOADED
+    if _GLAZING_LOADED:
+        return
+    # Reset to factory defaults first
+    for sys_key, src in _GLAZING_PD_DEFAULTS.items():
+        target = _glazing_pd_for(sys_key)
+        if target is None:
+            continue
+        target.clear()
+        target.update(_copy.deepcopy(src))
+    GLAZING_SETTINGS.clear()
+    GLAZING_SETTINGS.update(_GLAZING_SETTINGS_DEFAULTS)
+
+    db_url = os.environ.get('DATABASE_URL', '')
+    if not db_url:
+        _GLAZING_LOADED = True
+        return
+    try:
+        import psycopg2
+        with psycopg2.connect(db_url) as conn:
+            with conn.cursor() as cur:
+                _ensure_glazing_tables(cur)
+                conn.commit()
+                cur.execute("SELECT system, config, w_dec, h_dec, price FROM glazing_price_overrides")
+                for system, conf, w, h, price in cur.fetchall():
+                    target = _glazing_pd_for(system)
+                    if target is None:
+                        continue
+                    cd = target.get(conf)
+                    if not cd:
+                        continue
+                    try:
+                        wi = _glaze_ci(cd['w'], float(w))
+                        hi = _glaze_ci(cd['h'], float(h))
+                        cd['p'][hi][wi] = float(price)
+                    except Exception:
+                        pass
+                cur.execute("SELECT key, value FROM glazing_settings")
+                for key, val in cur.fetchall():
+                    if key in _GLAZING_SETTINGS_DEFAULTS:
+                        GLAZING_SETTINGS[key] = float(val)
+    except Exception as exc:
+        logger.warning(f"Не удалось загрузить настройки остекления из БД: {exc}")
+    _GLAZING_LOADED = True
 
 S100_COLOR_NAMES = {
     'ral9t08':     'Графит текстурный RAL 9T08',
@@ -463,17 +587,19 @@ def s100_calc_price(w, h, pc, direction='right', color='ral9t08', glass='transpa
         return 0.0
     if w <= 0 or h <= 0 or pc <= 0:
         return 0.0
+    # Apply admin overrides on the matrix and surcharges before any lookup.
+    _ensure_glazing_loaded()
     conf, _dir = _s100_conf(pc, direction, w)
     cd = S100_PD.get(conf)
     if not cd:
         return 0.0
     comp = cd['p'][_glaze_ci(cd['h'], h)][_glaze_ci(cd['w'], w)]
     if color == 'ral_special':
-        comp *= (1 + S100_RAL_SPECIAL_PCT / 100.0)
+        comp *= (1 + _gs('S100_RAL_SPECIAL_PCT') / 100.0)
     if glass == 'tinted_mass':
         rate = euro_rate if euro_rate and euro_rate > 0 else 100.0
         area = w * h
-        comp += area * S100_TINTED_SURCHARGE_EUR_M2 * (1 + GLAZING_MARKUP_PCT / 100.0) / rate
+        comp += area * _gs('S100_TINTED_SURCHARGE_EUR_M2') * (1 + _gs('S500_MARKUP_PCT') / 100.0) / rate
     return comp
 
 

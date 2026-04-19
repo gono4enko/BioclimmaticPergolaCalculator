@@ -93,6 +93,10 @@ PostgreSQL через DATABASE_URL
 - `/admin/apply-parsed-prices` — сохранение распознанных цен в БД + сброс кэша калькулятора
 - `/admin/save-cell` — сохранение одной ячейки
 - `/admin/get-prices` — получение текущих цен из БД
+- `/admin/glazing-prices?system=S500|S100` — матрица цен остекления (с применёнными правками)
+- `/admin/glazing-save-cell` — правка одной ячейки матрицы остекления (`glazing_price_overrides`)
+- `/admin/glazing-reset` — сброс правок остекления для системы (или конкретной конфигурации)
+- `/admin/glazing-settings` — GET/POST наценок и стоимостей (`glazing_settings`)
 - `/admin/scheduler` — визуальная панель статуса планировщика очистки
 - `/admin/scheduler-status` — JSON API статуса планировщика
 - Blueprint: `flask_app/controllers/admin_routes.py`

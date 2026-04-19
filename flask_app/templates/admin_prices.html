@@ -121,6 +121,41 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <div class="card">
+    <div class="card-header">Цены остекления (S500 и S100)</div>
+    <div class="card-body">
+        <div class="sel-row">
+            <div class="form-group">
+                <label>Система</label>
+                <select id="glazSystem">
+                    <option value="S500">S500 — раздвижное панорамное</option>
+                    <option value="S100">S100 — безрамное сдвижное</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Конфигурация (створки)</label>
+                <select id="glazConfig"></select>
+            </div>
+            <button class="btn btn-primary" onclick="loadGlazingMatrix()">Показать матрицу</button>
+            <button class="btn btn-outline-danger" onclick="resetGlazingMatrix()" title="Удалить все правки админа для выбранной системы">Сбросить к заводским</button>
+        </div>
+        <div id="glazWrap" style="margin-top:14px"><p style="color:#888;font-size:13px">Выберите систему и нажмите «Показать матрицу»</p></div>
+        <div id="glazControls" style="display:none;margin-top:12px;gap:10px">
+            <button class="btn btn-outline-primary btn-sm" id="glazEditBtn" onclick="toggleGlazEdit()">Редактировать</button>
+            <button class="btn btn-success btn-sm" id="glazSaveBtn" style="display:none" onclick="saveGlazEdits()">Сохранить изменения</button>
+            <span id="glazStatus" style="font-size:12px;line-height:32px;color:#888"></span>
+        </div>
+
+        <hr style="margin:24px 0">
+        <h6 style="font-weight:700;margin-bottom:12px">Наценки и стоимости (общие)</h6>
+        <div id="glazSettingsWrap" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px"></div>
+        <div style="margin-top:12px">
+            <button class="btn btn-success btn-sm" onclick="saveGlazingSettings()">Сохранить наценки</button>
+            <span id="glazSettingsStatus" style="font-size:12px;line-height:32px;color:#888;margin-left:10px"></span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
     <div class="card-header">Загрузка нового прайс-листа (изображение)</div>
     <div class="card-body">
         <div class="upload-area" id="uploadArea">
@@ -478,6 +513,188 @@ function loadSchedulerHealth() {
                 '<a class="health-link" href="{{ url_for("admin.scheduler_page") }}">Открыть планировщик →</a>';
         });
 }
+
+// ---------- Glazing (S500/S100) admin ----------
+var glazSysSel = document.getElementById('glazSystem');
+var glazConfSel = document.getElementById('glazConfig');
+var glazData = null;       // {configs:{...}}
+var glazCurrentConf = null;
+var glazEditMode = false;
+
+var GLAZ_SETTING_LABELS = {
+    'S500_TRANSPARENT_EUR_M2': 'S500: прозрачное стекло, ₽/м²',
+    'S500_TINTED_EUR_M2':      'S500: тонированное стекло, ₽/м²',
+    'S500_INSTALL_EUR_M2':     'S500: монтаж, ₽/м²',
+    'S500_MARKUP_PCT':         'S500: общая наценка, %',
+    'S500_DELIVERY_PCT':       'S500: доставка от комплекта, %',
+    'S500_PAINT_PCT':          'S500: окраска RAL, %',
+    'S100_RAL_SPECIAL_PCT':    'S100: RAL special, %',
+    'S100_TINTED_SURCHARGE_EUR_M2': 'S100: доплата за тонировку, ₽/м²',
+};
+
+function loadGlazingMatrix() {
+    var sys = glazSysSel.value;
+    var wrap = document.getElementById('glazWrap');
+    wrap.innerHTML = '<p style="color:#888">Загрузка…</p>';
+    glazEditMode = false;
+    document.getElementById('glazEditBtn').textContent = 'Редактировать';
+    document.getElementById('glazSaveBtn').style.display = 'none';
+    document.getElementById('glazStatus').textContent = '';
+    fetch('/admin/glazing-prices?system=' + encodeURIComponent(sys))
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if (!d.ok) { wrap.innerHTML = '<div class="status-msg err">' + (d.error || 'Ошибка') + '</div>'; return; }
+            glazData = d;
+            var configs = Object.keys(d.configs);
+            glazConfSel.innerHTML = '';
+            configs.forEach(function(c){
+                var o = document.createElement('option'); o.value = c; o.textContent = c + ' створ.';
+                glazConfSel.appendChild(o);
+            });
+            if (!glazCurrentConf || !d.configs[glazCurrentConf]) glazCurrentConf = configs[0];
+            glazConfSel.value = glazCurrentConf;
+            renderGlazMatrix();
+            document.getElementById('glazControls').style.display = 'flex';
+        })
+        .catch(function(e){ wrap.innerHTML = '<div class="status-msg err">' + e.message + '</div>'; });
+}
+
+glazSysSel.addEventListener('change', function(){ glazCurrentConf = null; loadGlazingMatrix(); });
+document.addEventListener('DOMContentLoaded', function(){
+    glazConfSel.addEventListener('change', function(){
+        glazCurrentConf = this.value;
+        renderGlazMatrix();
+    });
+});
+
+function renderGlazMatrix() {
+    var wrap = document.getElementById('glazWrap');
+    if (!glazData) { wrap.innerHTML = ''; return; }
+    var conf = glazConfSel.value || glazCurrentConf;
+    glazCurrentConf = conf;
+    var cd = glazData.configs[conf];
+    if (!cd) { wrap.innerHTML = '<p style="color:#888">Нет данных</p>'; return; }
+    var html = '<div class="price-table-wrap"><table class="price-table">';
+    html += '<tr><th class="depth-header">H ↓ \\ W →</th>';
+    cd.w.forEach(function(w){ html += '<th>' + w.toFixed(2) + ' м</th>'; });
+    html += '</tr>';
+    cd.h.forEach(function(h, hi){
+        html += '<tr><td class="depth-cell">' + h.toFixed(2) + ' м</td>';
+        cd.w.forEach(function(w, wi){
+            var v = cd.p[hi][wi];
+            if (glazEditMode) {
+                html += '<td><input type="number" step="1" data-w="' + w + '" data-h="' + h + '" data-orig="' + v + '" value="' + v + '"></td>';
+            } else {
+                html += '<td>' + formatNum(v) + '</td>';
+            }
+        });
+        html += '</tr>';
+    });
+    html += '</table></div>';
+    html += '<p style="font-size:12px;color:#888;margin-top:8px">Цена за створку в евро. Любое значение между точками сетки округляется к ближайшей ячейке.</p>';
+    wrap.innerHTML = html;
+}
+
+function toggleGlazEdit() {
+    if (!glazData) return;
+    glazEditMode = !glazEditMode;
+    renderGlazMatrix();
+    document.getElementById('glazEditBtn').textContent = glazEditMode ? 'Отмена' : 'Редактировать';
+    document.getElementById('glazSaveBtn').style.display = glazEditMode ? 'inline-block' : 'none';
+    document.getElementById('glazStatus').textContent = '';
+}
+
+function saveGlazEdits() {
+    if (!glazData) return;
+    var sys = glazSysSel.value;
+    var conf = glazConfSel.value;
+    var inputs = document.querySelectorAll('#glazWrap input[type="number"]');
+    var changes = [];
+    inputs.forEach(function(inp){
+        var v = inp.value.trim();
+        if (v && v !== inp.dataset.orig && !isNaN(parseFloat(v))) {
+            changes.push({w: parseFloat(inp.dataset.w), h: parseFloat(inp.dataset.h), price: parseFloat(v)});
+        }
+    });
+    if (!changes.length) {
+        document.getElementById('glazStatus').textContent = 'Нет изменений';
+        return;
+    }
+    document.getElementById('glazStatus').textContent = 'Сохранение ' + changes.length + ' ячеек…';
+    var done = 0, errors = 0;
+    changes.forEach(function(c){
+        fetch('/admin/glazing-save-cell', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({system: sys, config: conf, w: c.w, h: c.h, price: c.price})
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ if (!d.ok) errors++; })
+        .catch(function(){ errors++; })
+        .finally(function(){
+            done++;
+            if (done === changes.length) {
+                if (errors) document.getElementById('glazStatus').textContent = 'Ошибка для ' + errors + ' ячеек';
+                else { document.getElementById('glazStatus').textContent = 'Сохранено ' + changes.length + ' ячеек'; loadGlazingMatrix(); }
+            }
+        });
+    });
+}
+
+function resetGlazingMatrix() {
+    if (!confirm('Удалить все правки админа для системы ' + glazSysSel.value + '? Цены вернутся к заводским.')) return;
+    fetch('/admin/glazing-reset', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({system: glazSysSel.value})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.ok) { document.getElementById('glazStatus').textContent = 'Удалено правок: ' + d.deleted; loadGlazingMatrix(); }
+        else document.getElementById('glazStatus').textContent = d.error || 'Ошибка';
+    });
+}
+
+function loadGlazingSettings() {
+    fetch('/admin/glazing-settings').then(function(r){return r.json();}).then(function(d){
+        if (!d.ok) return;
+        var wrap = document.getElementById('glazSettingsWrap');
+        wrap.innerHTML = '';
+        Object.keys(GLAZ_SETTING_LABELS).forEach(function(k){
+            var v = d.values[k];
+            var def = d.defaults[k];
+            var box = document.createElement('div');
+            box.style.cssText = 'display:flex;flex-direction:column;gap:3px';
+            box.innerHTML = '<label style="font-size:12px;color:#555;font-weight:600">' + GLAZ_SETTING_LABELS[k] + '</label>' +
+                '<input type="number" step="any" data-key="' + k + '" value="' + v + '" style="padding:6px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:14px">' +
+                '<span style="font-size:11px;color:#999">по умолчанию: ' + def + '</span>';
+            wrap.appendChild(box);
+        });
+    });
+}
+
+function saveGlazingSettings() {
+    var inputs = document.querySelectorAll('#glazSettingsWrap input[type="number"]');
+    var values = {};
+    inputs.forEach(function(inp){
+        var v = inp.value.trim();
+        if (v !== '' && !isNaN(parseFloat(v))) values[inp.dataset.key] = parseFloat(v);
+    });
+    document.getElementById('glazSettingsStatus').textContent = 'Сохранение…';
+    fetch('/admin/glazing-settings', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({values: values})
+    })
+    .then(function(r){return r.json();})
+    .then(function(d){
+        if (d.ok) document.getElementById('glazSettingsStatus').textContent = 'Сохранено: ' + d.saved + ' значений';
+        else document.getElementById('glazSettingsStatus').textContent = d.error || 'Ошибка';
+    })
+    .catch(function(e){ document.getElementById('glazSettingsStatus').textContent = e.message; });
+}
+
+loadGlazingSettings();
 
 loadSchedulerHealth();
 setInterval(loadSchedulerHealth, 60000);

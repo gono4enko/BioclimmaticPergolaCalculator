@@ -675,3 +675,173 @@ def scheduler_health():
 
     status_code = 200 if health['healthy'] else 503
     return jsonify(health), status_code
+
+
+# ---------- Glazing (S500 / S100) price matrix admin ----------
+
+_GLAZING_SYSTEMS = ('S500', 'S100')
+
+
+def _glazing_pd_snapshot(system):
+    """Return a JSON-friendly view of the live glazing matrix for `system`."""
+    from ..services import calculator as _calc
+    _calc._ensure_glazing_loaded()
+    pd = _calc._glazing_pd_for(system)
+    if pd is None:
+        return None
+    out = {}
+    for conf, cd in pd.items():
+        out[conf] = {
+            'w': [float(x) for x in cd['w']],
+            'h': [float(x) for x in cd['h']],
+            'p': [[float(v) for v in row] for row in cd['p']],
+        }
+    return out
+
+
+@bp.route('/glazing-prices', methods=['GET'])
+@admin_required
+def glazing_prices_get():
+    system = (request.args.get('system') or '').upper()
+    if system not in _GLAZING_SYSTEMS:
+        return jsonify({'error': 'Неизвестная система остекления'}), 400
+    data = _glazing_pd_snapshot(system)
+    if data is None:
+        return jsonify({'error': 'Матрица не найдена'}), 404
+    return jsonify({'ok': True, 'system': system, 'configs': data})
+
+
+@bp.route('/glazing-save-cell', methods=['POST'])
+@admin_required
+def glazing_save_cell():
+    body = request.get_json(silent=True) or {}
+    system = (body.get('system') or '').upper()
+    config = (body.get('config') or '').strip()
+    try:
+        w = float(body.get('w'))
+        h = float(body.get('h'))
+        price = float(body.get('price'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Некорректные числовые поля'}), 400
+    if system not in _GLAZING_SYSTEMS or not config:
+        return jsonify({'error': 'Недостаточно данных'}), 400
+
+    from ..services import calculator as _calc
+    _calc._ensure_glazing_loaded()
+    pd = _calc._glazing_pd_for(system)
+    cd = pd.get(config) if pd else None
+    if not cd:
+        return jsonify({'error': 'Конфигурация не найдена'}), 404
+    # Snap (w, h) to the nearest grid cell so admin edits never insert
+    # a shadow cell that the lookup function will never hit.
+    w_snap = float(cd['w'][_calc._glaze_ci(cd['w'], w)])
+    h_snap = float(cd['h'][_calc._glaze_ci(cd['h'], h)])
+
+    try:
+        import psycopg2
+        with psycopg2.connect(os.environ.get('DATABASE_URL', '')) as conn:
+            with conn.cursor() as cur:
+                _calc._ensure_glazing_tables(cur)
+                cur.execute("""
+                    INSERT INTO glazing_price_overrides (system, config, w_dec, h_dec, price, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, NOW())
+                    ON CONFLICT (system, config, w_dec, h_dec)
+                    DO UPDATE SET price = EXCLUDED.price, updated_at = NOW()
+                """, (system, config, w_snap, h_snap, price))
+            conn.commit()
+        _calc.clear_glazing_cache()
+        return jsonify({'ok': True, 'w': w_snap, 'h': h_snap, 'price': price})
+    except Exception as exc:
+        return jsonify({'error': f'Ошибка сохранения: {exc}'}), 500
+
+
+@bp.route('/glazing-reset', methods=['POST'])
+@admin_required
+def glazing_reset():
+    body = request.get_json(silent=True) or {}
+    system = (body.get('system') or '').upper()
+    config = (body.get('config') or '').strip() or None
+    if system not in _GLAZING_SYSTEMS:
+        return jsonify({'error': 'Неизвестная система остекления'}), 400
+    try:
+        import psycopg2
+        with psycopg2.connect(os.environ.get('DATABASE_URL', '')) as conn:
+            with conn.cursor() as cur:
+                from ..services import calculator as _calc
+                _calc._ensure_glazing_tables(cur)
+                if config:
+                    cur.execute(
+                        "DELETE FROM glazing_price_overrides WHERE system=%s AND config=%s",
+                        (system, config))
+                else:
+                    cur.execute(
+                        "DELETE FROM glazing_price_overrides WHERE system=%s", (system,))
+                deleted = cur.rowcount
+            conn.commit()
+        from ..services import calculator as _calc
+        _calc.clear_glazing_cache()
+        return jsonify({'ok': True, 'deleted': deleted})
+    except Exception as exc:
+        return jsonify({'error': f'Ошибка сброса: {exc}'}), 500
+
+
+_GLAZING_SETTING_KEYS = (
+    'S500_TRANSPARENT_EUR_M2',
+    'S500_TINTED_EUR_M2',
+    'S500_INSTALL_EUR_M2',
+    'S500_MARKUP_PCT',
+    'S500_DELIVERY_PCT',
+    'S500_PAINT_PCT',
+    'S100_RAL_SPECIAL_PCT',
+    'S100_TINTED_SURCHARGE_EUR_M2',
+)
+
+
+@bp.route('/glazing-settings', methods=['GET'])
+@admin_required
+def glazing_settings_get():
+    from ..services import calculator as _calc
+    _calc._ensure_glazing_loaded()
+    return jsonify({
+        'ok': True,
+        'values': {k: float(_calc.GLAZING_SETTINGS.get(k, 0)) for k in _GLAZING_SETTING_KEYS},
+        'defaults': {k: float(_calc._GLAZING_SETTINGS_DEFAULTS.get(k, 0)) for k in _GLAZING_SETTING_KEYS},
+    })
+
+
+@bp.route('/glazing-settings', methods=['POST'])
+@admin_required
+def glazing_settings_save():
+    body = request.get_json(silent=True) or {}
+    values = body.get('values') or {}
+    if not isinstance(values, dict):
+        return jsonify({'error': 'Некорректный формат'}), 400
+    parsed = []
+    for k, v in values.items():
+        if k not in _GLAZING_SETTING_KEYS:
+            continue
+        try:
+            parsed.append((k, float(v)))
+        except (TypeError, ValueError):
+            return jsonify({'error': f'Некорректное значение для {k}'}), 400
+    if not parsed:
+        return jsonify({'error': 'Нет корректных значений'}), 400
+    try:
+        import psycopg2
+        with psycopg2.connect(os.environ.get('DATABASE_URL', '')) as conn:
+            with conn.cursor() as cur:
+                from ..services import calculator as _calc
+                _calc._ensure_glazing_tables(cur)
+                for k, v in parsed:
+                    cur.execute("""
+                        INSERT INTO glazing_settings (key, value, updated_at)
+                        VALUES (%s, %s, NOW())
+                        ON CONFLICT (key) DO UPDATE
+                        SET value = EXCLUDED.value, updated_at = NOW()
+                    """, (k, v))
+            conn.commit()
+        from ..services import calculator as _calc
+        _calc.clear_glazing_cache()
+        return jsonify({'ok': True, 'saved': len(parsed)})
+    except Exception as exc:
+        return jsonify({'error': f'Ошибка сохранения: {exc}'}), 500
