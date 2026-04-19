@@ -5,7 +5,7 @@
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=80">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=120" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=121" as="script">
 {% endblock %}
 
 {% block content %}
@@ -158,28 +158,28 @@
                         </div>
                     </div>
                     <div class="facade-info-card">
-                        <img src="{{ url_for('static', filename='images/facade/s500.jpg') }}?v=1" alt="Безрамное остекление S100" class="facade-info-img">
+                        <img src="{{ url_for('static', filename='images/facade/s100.png') }}?v=1" alt="Безрамное остекление S100" class="facade-info-img contain">
                         <div class="facade-info-text">
                             <div class="facade-info-name">S100 — безрамное остекление</div>
                             <p>Раздвижные панели из закалённого стекла 10&nbsp;мм без вертикальных рам — от 3 до 12 панелей (3, 4, 6, 3+3, 4+4, 6+6) в проёме. Стекло прозрачное или тонированное в массе, направляющие в RAL 9T08, 7024, 8028, 9016 или special. Максимально лёгкий и прозрачный вид.</p>
                         </div>
                     </div>
                     <div class="facade-info-card">
-                        <img src="{{ url_for('static', filename='images/facade/s500.jpg') }}?v=1" alt="Гильотинное остекление W500" class="facade-info-img">
+                        <img src="{{ url_for('static', filename='images/facade/w_guillotine.png') }}?v=1" alt="Гильотинное остекление W500" class="facade-info-img contain">
                         <div class="facade-info-text">
                             <div class="facade-info-name">W500 — гильотинное остекление</div>
                             <p>Подъёмные («гильотинные») створки со стеклопакетом — открываются вертикально вверх и полностью убираются в верхнюю балку. Размер проёма 1.0–5.0&nbsp;м по ширине и 1.5–3.5&nbsp;м по высоте, 2 или 3 створки. Электропривод SIMU/SOMFY с автоматическим подбором момента, при ширине более 3&nbsp;м — TANDEM и плавник.</p>
                         </div>
                     </div>
                     <div class="facade-info-card">
-                        <img src="{{ url_for('static', filename='images/facade/s500.jpg') }}?v=1" alt="Гильотинное остекление W600" class="facade-info-img">
+                        <img src="{{ url_for('static', filename='images/facade/w_guillotine.png') }}?v=1" alt="Гильотинное остекление W600" class="facade-info-img contain">
                         <div class="facade-info-text">
                             <div class="facade-info-name">W600 — гильотинное с усиленным профилем</div>
                             <p>Усиленная версия гильотины для больших проёмов — 2.0–5.0&nbsp;м по ширине и 2.0–4.0&nbsp;м по высоте. Тот же принцип подъёма, более жёсткий профиль и удвоенная стоимость плавника (100&nbsp;€/м). Подходит для утеплённых пергол B600 и панорамных веранд с большой высотой.</p>
                         </div>
                     </div>
                     <div class="facade-info-card">
-                        <img src="{{ url_for('static', filename='images/facade/s500.jpg') }}?v=1" alt="Гильотинное остекление W700" class="facade-info-img">
+                        <img src="{{ url_for('static', filename='images/facade/w_guillotine.png') }}?v=1" alt="Гильотинное остекление W700" class="facade-info-img contain">
                         <div class="facade-info-text">
                             <div class="facade-info-name">W700 — гильотинное премиум-класса</div>
                             <p>Премиум-серия гильотинного остекления для проёмов 2.0–5.0&nbsp;м × 2.0–4.0&nbsp;м с улучшенным стеклопакетом и фурнитурой. Электропривод подбирается по моменту автоматически (по умолчанию — той же марки, что и автоматика перголы), пульт расширяется на каждый дополнительный канал.</p>
@@ -269,7 +269,7 @@
 
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=120"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=121"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');
