@@ -2506,29 +2506,6 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</tbody></table></div>';
         }
 
-        /* Block 8b-gutter: Gutter insert info (B500NEW / B700NEW only) */
-        var _isB5B7 = (state.pergolaType === 'B500NEW' || state.pergolaType === 'B700NEW');
-        if (!isAll && _isB5B7) {
-            var _gutterItem = (mainResult.items || []).find(function(it) {
-                return it.name && it.name.indexOf('\u0423\u0441\u0438\u043b\u0438\u0442\u0435\u043b\u044c \u043b\u043e\u0442\u043a\u0430') === 0;
-            });
-            html += '<div class="kp-block" style="border-left:4px solid #1a3a6e;">' +
-                '<div class="kp-block-header"><div class="kp-block-icon" style="background:#4d7fa8;">&#x1F527;</div>' +
-                '<div class="kp-block-title">\u0423\u0441\u0438\u043b\u0438\u0442\u0435\u043b\u044c \u043b\u043e\u0442\u043a\u0430</div></div>';
-            if (_gutterItem) {
-                var _gutterRub = Math.round(_gutterItem.price * (mainResult.euro_rate || 100));
-                html += '<div style="background:#e8f4fd;border-radius:8px;padding:0.7rem 1rem;margin-bottom:0.6rem;font-size:0.9rem;">' +
-                    '<span style="color:#1a5276;font-weight:600;">\u2714 \u0412\u043a\u043b\u044e\u0447\u0435\u043d\u043e \u0432 \u0440\u0430\u0441\u0447\u0451\u0442:</span> ' +
-                    escHtml(_gutterItem.name) + ' \u2014 ' + formatPrice(_gutterRub) + ' \u20BD</div>';
-            }
-            html += '<div style="font-size:0.85rem;color:#555;line-height:1.7;">' +
-                '<strong>\u0420\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u0435\u0442\u0441\u044f</strong> \u043f\u0440\u0438 \u0432\u044b\u043d\u043e\u0441\u0435 \u0431\u043e\u043b\u0435\u0435 6.5 \u043c \u0438 \u043f\u043e\u0432\u044b\u0448\u0435\u043d\u043d\u044b\u0445 \u0441\u043d\u0435\u0433\u043e\u0432\u044b\u0445 \u043d\u0430\u0433\u0440\u0443\u0437\u043a\u0430\u0445. ' +
-                '\u0410\u043b\u044e\u043c\u0438\u043d\u0438\u0435\u0432\u0430\u044f \u043f\u043b\u0430\u0441\u0442\u0438\u043d\u0430 100 \u043c\u043c. ' +
-                '\u041a\u043e\u043b-\u0432\u043e \u0440\u0430\u0441\u0441\u0447\u0438\u0442\u044b\u0432\u0430\u0435\u0442\u0441\u044f \u0438\u043d\u0434\u0438\u0432\u0438\u0434\u0443\u0430\u043b\u044c\u043d\u043e. ' +
-                '<strong>80 \u20AC / \u043f\u043e\u0433. \u043c</strong>.' +
-                '</div></div>';
-        }
-
         /* Block 8a: ZIP awning results */
         var zipRes = mainResult && mainResult.zip;
         if (!isAll && zipRes && zipRes.count > 0) {
