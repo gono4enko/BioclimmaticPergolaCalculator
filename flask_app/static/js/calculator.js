@@ -2273,10 +2273,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 var dimLabel = (adjWmm && adjHmm) ? (adjWmm + '\u00d7' + adjHmm + ' \u043c\u043c') : '';
                 var fabricMap = {veozip:'Veozip', soltis:'Soltis W96', copaco:'Copaco Blackout'};
                 var fabricLabel = fabricMap[zo.fabric] || zo.fabric;
+                var colorMap = {ral9016:'\u0411\u0435\u043b\u044b\u0439 RAL 9016', ral7024:'\u0413\u0440\u0430\u0444\u0438\u0442 RAL 7024', ral9t08:'\u0413\u0440\u0430\u0444\u0438\u0442 RAL 9T08', ral8028:'\u041a\u043e\u0440\u0438\u0447\u043d. RAL 8028', ral_special:'RAL special'};
+                var colorLabel = colorMap[zo.color] || zo.color;
                 var driveMap = {manual:'\u0420\u0443\u0447\u043d\u043e\u0435', simu:'SIMU', somfy:'Somfy', decolife:'Decolife'};
                 var driveLabel = driveMap[zo.drive] || zo.drive;
                 var priceRub = Math.round((zo.total_eur || 0) * mainResult.euro_rate);
-                html += '<tr><td>' + sideLabel + ' \u00b7 \u041f\u0440\u043e\u0451\u043c ' + (zo.bay + 1) + ' \u00b7 ' + typeLabel + ' \u00b7 ' + dimLabel + '<br><span style="font-size:0.8em;color:#555;">' + fabricLabel + ' \u00b7 ' + driveLabel + '</span></td>' +
+                html += '<tr><td>' + sideLabel + ' \u00b7 \u041f\u0440\u043e\u0451\u043c ' + (zo.bay + 1) + ' \u00b7 ' + typeLabel + ' \u00b7 ' + dimLabel + '<br><span style="font-size:0.8em;color:#555;">' + fabricLabel + ' \u00b7 ' + colorLabel + ' \u00b7 ' + driveLabel + '</span></td>' +
                         '<td style="white-space:nowrap;">' + formatPrice(priceRub) + ' \u20BD</td></tr>';
             });
             if (zipRes.pult_name) {
