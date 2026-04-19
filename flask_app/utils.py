@@ -1251,6 +1251,23 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
                               _lp(pts_bot_right, pts_top_right, t0),
                               _lp(pts_bot_right, pts_top_right, t1),
                               _lp(pts_bot_left, pts_top_left, t1)], slat_c, slat_c, 0.3)
+        elif ft == 'ZIP':
+            def _lz(a, b, _t):
+                return (a[0]+_t*(b[0]-a[0]), a[1]+_t*(b[1]-a[1]), a[2]+_t*(b[2]-a[2]))
+            cas_t = 0.07
+            bot_t = 0.04
+            _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left],
+                         '#c8d8e8', '#1a3a6e', 0.6)
+            _cas_bl = _lz(pts_top_left,  pts_bot_left,  cas_t)
+            _cas_br = _lz(pts_top_right, pts_bot_right, cas_t)
+            _out += quad([_cas_bl, _cas_br, pts_top_right, pts_top_left], '#1e2d3a', '#1e2d3a', 0.3)
+            _bot_tl = _lz(pts_bot_left,  pts_top_left,  bot_t)
+            _bot_tr = _lz(pts_bot_right, pts_top_right, bot_t)
+            _out += quad([pts_bot_left, pts_bot_right, _bot_tr, _bot_tl], '#1e2d3a', '#1e2d3a', 0.3)
+            for _li in range(1, 10):
+                _t = cas_t + _li * (1.0 - cas_t - bot_t) / 10
+                _out += line(_lz(pts_top_left, pts_bot_left, _t), _lz(pts_top_right, pts_bot_right, _t),
+                             '#8aa0b2', 0.7, 0.65)
         return _out
 
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}" width="{svg_w}" height="{svg_h}">'
@@ -1649,6 +1666,23 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
                               _lp(pts_bot_right, pts_top_right, t0),
                               _lp(pts_bot_right, pts_top_right, t1),
                               _lp(pts_bot_left, pts_top_left, t1)], slat_c, slat_c, 0.3)
+        elif ft == 'ZIP':
+            def _lz(a, b, _t):
+                return (a[0]+_t*(b[0]-a[0]), a[1]+_t*(b[1]-a[1]), a[2]+_t*(b[2]-a[2]))
+            cas_t = 0.07
+            bot_t = 0.04
+            _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left],
+                         '#c8d8e8', '#1a3a6e', 0.6)
+            _cas_bl = _lz(pts_top_left,  pts_bot_left,  cas_t)
+            _cas_br = _lz(pts_top_right, pts_bot_right, cas_t)
+            _out += quad([_cas_bl, _cas_br, pts_top_right, pts_top_left], '#1e2d3a', '#1e2d3a', 0.3)
+            _bot_tl = _lz(pts_bot_left,  pts_top_left,  bot_t)
+            _bot_tr = _lz(pts_bot_right, pts_top_right, bot_t)
+            _out += quad([pts_bot_left, pts_bot_right, _bot_tr, _bot_tl], '#1e2d3a', '#1e2d3a', 0.3)
+            for _li in range(1, 10):
+                _t = cas_t + _li * (1.0 - cas_t - bot_t) / 10
+                _out += seg(_lz(pts_top_left, pts_bot_left, _t), _lz(pts_top_right, pts_bot_right, _t),
+                            '#8aa0b2', 0.7)
         return _out
 
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}" width="{svg_w}" height="{svg_h}">'
@@ -1986,9 +2020,11 @@ def generate_zip_detail_svg(zip_type='ZIP100', w_m=2.0, h_m=2.7, fabric='Veozip 
     drw_w   = drw_x1 - drw_x0
     drw_h   = drw_y1 - drw_y0
 
-    cas_h   = max(20, drw_h * 0.09)
-    rail_w  = max(10, drw_w * 0.05)
-    bot_h   = max(10, drw_h * 0.055)
+    h_mm    = h_m * 1000
+    w_mm    = w_m * 1000
+    cas_h   = max(8, min(22, cassette_mm / h_mm * drw_h))
+    rail_w  = max(4, min(14, 50 / w_mm * drw_w))
+    bot_h   = max(4, min(14, 40 / h_mm * drw_h))
 
     fy      = drw_y0 + cas_h
     fh      = max(10, drw_h - cas_h - bot_h)
@@ -2019,11 +2055,11 @@ def generate_zip_detail_svg(zip_type='ZIP100', w_m=2.0, h_m=2.7, fabric='Veozip 
 
     svg += (f'<rect x="{fx:.1f}" y="{fy:.1f}" width="{fw:.1f}" height="{fh:.1f}" '
             f'fill="{fab_c}" opacity="0.75"/>')
-    n_lines = max(6, int(fh / 13))
+    n_lines = max(12, int(fh / 8))
     for i in range(1, n_lines + 1):
         ly = fy + i * fh / (n_lines + 1)
         svg += (f'<line x1="{fx:.1f}" y1="{ly:.1f}" x2="{fx + fw:.1f}" y2="{ly:.1f}" '
-                f'stroke="{str_c}" stroke-width="0.7" opacity="0.55"/>')
+                f'stroke="{str_c}" stroke-width="0.8" opacity="0.65"/>')
 
     svg += (f'<rect x="{fx:.1f}" y="{fy + fh:.1f}" width="{fw:.1f}" height="{bot_h:.1f}" '
             f'fill="{dark}" opacity="0.90"/>')

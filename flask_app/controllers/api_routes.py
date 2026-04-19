@@ -145,7 +145,7 @@ def pergola_iso_svg():
                     if gu.startswith(('W500', 'W600', 'W700')):
                         spec = _g
                     elif gu.startswith(('ZIP100', 'ZIP130')):
-                        spec = None
+                        spec = 'ZIP'
                     elif gu.startswith('S100'):
                         spec = 'S100'
                     else:
