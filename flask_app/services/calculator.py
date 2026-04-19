@@ -1000,7 +1000,7 @@ def perform_calculation(dimensions, options):
                 items.append({
                     "name": (f"\u0414\u043e\u043f. \u043a\u043e\u043b\u043e\u043d\u043d\u0430 \u0434\u043b\u044f "
                              f"\u0444\u0430\u0441\u0430\u0434\u043d\u044b\u0445 \u043f\u0430\u043d\u0435\u043b\u0435\u0439 "
-                             f"({total_extra_cols} \u0448\u0442., {height_m:.1f}\u00d7200 \u20ac/\u043c)"),
+                             f"({total_extra_cols} \u0448\u0442.)"),
                     "price": extra_col_total_price
                 })
                 specification.append({

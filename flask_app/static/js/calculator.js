@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v104';
+    var SVG_V = 'v105';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -318,12 +318,18 @@ document.addEventListener('DOMContentLoaded', function() {
         return '';
     }
 
-    function getBayFillQs(side, count) {
+    function getBayFillQs(side, count, xPerBay) {
         if (!state.facadePerOpening) return '';
         var parts = [];
+        var fillIdx = 1;
+        var sections = (xPerBay > 0) ? (xPerBay + 1) : 1;
         for (var i = 0; i < count; i++) {
             var f = state.facadePerOpening[side + '_' + i] || '';
-            parts.push(f ? ('fill_' + (i + 1) + '=' + encodeURIComponent(f)) : '');
+            for (var j = 0; j < sections; j++) {
+                if (f) parts.push('fill_' + fillIdx + '=' + encodeURIComponent(f));
+                fillIdx++;
+            }
+            if (!f) break;
         }
         var qs = parts.filter(Boolean).join('&');
         return qs ? ('&' + qs) : '';
@@ -1192,12 +1198,14 @@ document.addEventListener('DOMContentLoaded', function() {
         var _fillA = getFillForSide('left');
         var _fillC = getFillForSide('right');
         var _fillB = getFillForSide('back');
-        var _bayF = getBayFillQs('front', parseInt(m) || 1);
-        var _bayB = getBayFillQs('back', parseInt(m) || 1);
-        var _bayA = getBayFillQs('left', lm);
-        var _bayC = getBayFillQs('right', lm);
-        var xcFB = (r && r.facade && r.facade.extra_cols_front) ? ('&xc=' + r.facade.extra_cols_front) : '';
-        var xcS = (r && r.facade && r.facade.extra_cols_side) ? ('&xc=' + r.facade.extra_cols_side) : '';
+        var _xcFBval = (r && r.facade && r.facade.extra_cols_front) ? parseInt(r.facade.extra_cols_front, 10) : 0;
+        var _xcSval = (r && r.facade && r.facade.extra_cols_side) ? parseInt(r.facade.extra_cols_side, 10) : 0;
+        var xcFB = _xcFBval > 0 ? ('&xc=' + _xcFBval) : '';
+        var xcS = _xcSval > 0 ? ('&xc=' + _xcSval) : '';
+        var _bayF = getBayFillQs('front', parseInt(m) || 1, _xcFBval);
+        var _bayB = getBayFillQs('back', parseInt(m) || 1, _xcFBval);
+        var _bayA = getBayFillQs('left', lm, _xcSval);
+        var _bayC = getBayFillQs('right', lm, _xcSval);
         var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcFB + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + _bayF;
         var fimg = document.getElementById('kp-front-img');
         if (fimg) fimg.src = '/api/pergola-front.svg?' + fqs + '&_v=' + SVG_V;
@@ -1408,10 +1416,10 @@ document.addEventListener('DOMContentLoaded', function() {
             var _kpFillA = getFillForSide('left');
             var _kpFillC = getFillForSide('right');
             var _kpFillB = getFillForSide('back');
-            var _kpBayF = getBayFillQs('front', schM);
-            var _kpBayB = getBayFillQs('back', schM);
-            var _kpBayA = getBayFillQs('left', schLMods);
-            var _kpBayC = getBayFillQs('right', schLMods);
+            var _kpBayF = getBayFillQs('front', schM, xcFacadeFB);
+            var _kpBayB = getBayFillQs('back', schM, xcFacadeFB);
+            var _kpBayA = getBayFillQs('left', schLMods, xcFacadeS);
+            var _kpBayC = getBayFillQs('right', schLMods, xcFacadeS);
             var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + xcFBqs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + colMmQs + _kpBayF + '&_v=' + SVG_V;
             var bqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + xcFBqs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + colMmQs + _kpBayB + '&_v=' + SVG_V;
             var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + xcSideQs + colMmQs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _kpBayA + '&_v=' + SVG_V;
