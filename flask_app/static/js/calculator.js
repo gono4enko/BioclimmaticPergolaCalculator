@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v105';
+    var SVG_V = 'v106';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -1198,24 +1198,29 @@ document.addEventListener('DOMContentLoaded', function() {
         var _fillA = getFillForSide('left');
         var _fillC = getFillForSide('right');
         var _fillB = getFillForSide('back');
-        var _xcFBval = (r && r.facade && r.facade.extra_cols_front) ? parseInt(r.facade.extra_cols_front, 10) : 0;
-        var _xcSval = (r && r.facade && r.facade.extra_cols_side) ? parseInt(r.facade.extra_cols_side, 10) : 0;
-        var xcFB = _xcFBval > 0 ? ('&xc=' + _xcFBval) : '';
-        var xcS = _xcSval > 0 ? ('&xc=' + _xcSval) : '';
-        var _bayF = getBayFillQs('front', parseInt(m) || 1, _xcFBval);
-        var _bayB = getBayFillQs('back', parseInt(m) || 1, _xcFBval);
-        var _bayA = getBayFillQs('left', lm, _xcSval);
-        var _bayC = getBayFillQs('right', lm, _xcSval);
-        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcFB + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + _bayF;
+        var _fRes = (r && r.facade) || {};
+        var _xcF = parseInt(_fRes.extra_cols_f || 0, 10) || 0;
+        var _xcB = parseInt(_fRes.extra_cols_b || 0, 10) || 0;
+        var _xcA = parseInt(_fRes.extra_cols_a || 0, 10) || 0;
+        var _xcC = parseInt(_fRes.extra_cols_c || 0, 10) || 0;
+        var xcFront = _xcF > 0 ? ('&xc=' + _xcF) : '';
+        var xcBack  = _xcB > 0 ? ('&xc=' + _xcB) : '';
+        var xcLeft  = _xcA > 0 ? ('&xc=' + _xcA) : '';
+        var xcRight = _xcC > 0 ? ('&xc=' + _xcC) : '';
+        var _bayF = getBayFillQs('front', parseInt(m) || 1, _xcF);
+        var _bayB = getBayFillQs('back', parseInt(m) || 1, _xcB);
+        var _bayA = getBayFillQs('left', lm, _xcA);
+        var _bayC = getBayFillQs('right', lm, _xcC);
+        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcFront + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + _bayF;
         var fimg = document.getElementById('kp-front-img');
         if (fimg) fimg.src = '/api/pergola-front.svg?' + fqs + '&_v=' + SVG_V;
-        var bqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcFB + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + _bayB;
+        var bqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcBack + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + _bayB;
         var bimg = document.getElementById('kp-back-img');
         if (bimg) bimg.src = '/api/pergola-front.svg?' + bqs + '&_v=' + SVG_V;
-        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcS + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _bayA;
+        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcLeft + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _bayA;
         var simg = document.getElementById('kp-side-img');
         if (simg) simg.src = '/api/pergola-front.svg?' + sqs + '&_v=' + SVG_V;
-        var rqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcS + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _bayC;
+        var rqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcRight + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _bayC;
         var rimg = document.getElementById('kp-right-img');
         if (rimg) rimg.src = '/api/pergola-front.svg?' + rqs + '&_v=' + SVG_V;
         var lcAttr = block.dataset.lc;
@@ -1401,14 +1406,22 @@ document.addEventListener('DOMContentLoaded', function() {
             var xc = parseInt(reinf.extra_columns_count || 0, 10) || 0;
             var xcQs = xc > 0 ? '&xc=' + xc : '';
             var facadeRes = (mainResult && mainResult.facade) || {};
-            var xcFacadeFB = parseInt(facadeRes.extra_cols_front || 0, 10) || 0;
-            var xcFacadeS = parseInt(facadeRes.extra_cols_side || 0, 10) || 0;
-            var xcFBqs = xcFacadeFB > 0 ? ('&xc=' + xcFacadeFB) : '';
-            var xcSideQs = Math.max(xc, xcFacadeS) > 0 ? ('&xc=' + Math.max(xc, xcFacadeS)) : '';
+            var xcF = parseInt(facadeRes.extra_cols_f || 0, 10) || 0;
+            var xcB = parseInt(facadeRes.extra_cols_b || 0, 10) || 0;
+            var xcA = parseInt(facadeRes.extra_cols_a || 0, 10) || 0;
+            var xcC = parseInt(facadeRes.extra_cols_c || 0, 10) || 0;
+            var xcFqs = xcF > 0 ? ('&xc=' + xcF) : '';
+            var xcBqs = xcB > 0 ? ('&xc=' + xcB) : '';
+            var xcAqs = Math.max(xc, xcA) > 0 ? ('&xc=' + Math.max(xc, xcA)) : '';
+            var xcCqs = Math.max(xc, xcC) > 0 ? ('&xc=' + Math.max(xc, xcC)) : '';
+            var facadeSchemeQs = (xcA > 0 ? '&xc_a=' + xcA : '') +
+                                  (xcC > 0 ? '&xc_c=' + xcC : '') +
+                                  (xcF > 0 ? '&xc_f=' + xcF : '') +
+                                  (xcB > 0 ? '&xc_b=' + xcB : '');
             var qs = 'w=' + schW + '&l=' + schL + '&m=' + schM +
                 (lamCnt !== '' ? '&lc=' + lamCnt : '') +
                 (moLocal ? '&mo=' + moLocal : '') +
-                (isPir ? '&pir=1' : '') + '&ref=' + refDim + xcQs;
+                (isPir ? '&pir=1' : '') + '&ref=' + refDim + xcQs + facadeSchemeQs;
             var needsExtra = (moLocal && schL > moLocal + 0.001) || xc > 0;
             var colMmQs = isB200 ? '&col_mm=100' : (isLight ? '&col_mm=150&beam_h_mm=250' : '');
             var schLMods = facadeLengthModules(schL);
@@ -1416,14 +1429,14 @@ document.addEventListener('DOMContentLoaded', function() {
             var _kpFillA = getFillForSide('left');
             var _kpFillC = getFillForSide('right');
             var _kpFillB = getFillForSide('back');
-            var _kpBayF = getBayFillQs('front', schM, xcFacadeFB);
-            var _kpBayB = getBayFillQs('back', schM, xcFacadeFB);
-            var _kpBayA = getBayFillQs('left', schLMods, xcFacadeS);
-            var _kpBayC = getBayFillQs('right', schLMods, xcFacadeS);
-            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + xcFBqs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + colMmQs + _kpBayF + '&_v=' + SVG_V;
-            var bqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + xcFBqs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + colMmQs + _kpBayB + '&_v=' + SVG_V;
-            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + xcSideQs + colMmQs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _kpBayA + '&_v=' + SVG_V;
-            var rqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + xcSideQs + colMmQs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _kpBayC + '&_v=' + SVG_V;
+            var _kpBayF = getBayFillQs('front', schM, xcF);
+            var _kpBayB = getBayFillQs('back', schM, xcB);
+            var _kpBayA = getBayFillQs('left', schLMods, xcA);
+            var _kpBayC = getBayFillQs('right', schLMods, xcC);
+            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + xcFqs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + colMmQs + _kpBayF + '&_v=' + SVG_V;
+            var bqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + xcBqs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + colMmQs + _kpBayB + '&_v=' + SVG_V;
+            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + xcAqs + colMmQs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _kpBayA + '&_v=' + SVG_V;
+            var rqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + xcCqs + colMmQs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _kpBayC + '&_v=' + SVG_V;
             var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + (isPir ? '&pir=1' : '') + xcQs + (_kpFillF ? '&fill_front=' + encodeURIComponent(_kpFillF) : '') + (_kpFillC ? '&fill_right=' + encodeURIComponent(_kpFillC) : '') + (_kpFillA ? '&fill_left=' + encodeURIComponent(_kpFillA) : '') + (_kpFillB ? '&fill_back=' + encodeURIComponent(_kpFillB) : '') + '&_v=' + SVG_V;
             var isoLabel = isPir ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (PIR \u043F\u0430\u043D\u0435\u043B\u0438)' : (isB200 ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u0441\u0442\u0430\u0446\u0438\u043E\u043D\u0430\u0440\u043D\u044B\u0435)' : '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)');
             var isoBlock = (isPir || lamCnt) ? (

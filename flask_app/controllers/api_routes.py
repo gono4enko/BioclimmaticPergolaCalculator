@@ -40,9 +40,17 @@ def pergola_scheme_svg():
         ref = float(ref_raw) if ref_raw else None
         xc_raw = request.args.get('xc')
         xc = int(xc_raw) if xc_raw and xc_raw.isdigit() else 0
+        def _int_arg(name):
+            v = request.args.get(name)
+            return int(v) if v and v.isdigit() else 0
+        xc_left = _int_arg('xc_a')
+        xc_right = _int_arg('xc_c')
+        xc_front = _int_arg('xc_f')
+        xc_back = _int_arg('xc_b')
         svg = generate_top_view_svg(width=w, length=l, modules=m,
                                     is_pir=pir, lamella_count=lc, max_overhang=mo, ref=ref,
-                                    extra_columns=xc)
+                                    extra_columns=xc, xc_left=xc_left, xc_right=xc_right,
+                                    xc_front=xc_front, xc_back=xc_back)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:

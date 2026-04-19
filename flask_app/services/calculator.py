@@ -898,8 +898,10 @@ def perform_calculation(dimensions, options):
         facade_openings = options.get("facade_openings", [])
         facade_area = 0.0
         facade_price_eur = 0.0
-        max_extra_front_back = 0
-        max_extra_sides = 0
+        extra_cols_f = 0
+        extra_cols_b = 0
+        extra_cols_a = 0
+        extra_cols_c = 0
         total_extra_cols = 0
 
         if facade_openings:
@@ -964,10 +966,14 @@ def perform_calculation(dimensions, options):
                 type_groups[o_type]["sides"][side] = type_groups[o_type]["sides"].get(side, 0) + 1
 
             for (side, _bay), n_extra in extra_cols_by_key.items():
-                if side in ("front", "back"):
-                    max_extra_front_back = max(max_extra_front_back, n_extra)
-                else:
-                    max_extra_sides = max(max_extra_sides, n_extra)
+                if side == "front":
+                    extra_cols_f = max(extra_cols_f, n_extra)
+                elif side == "back":
+                    extra_cols_b = max(extra_cols_b, n_extra)
+                elif side == "left":
+                    extra_cols_a = max(extra_cols_a, n_extra)
+                elif side == "right":
+                    extra_cols_c = max(extra_cols_c, n_extra)
                 total_extra_cols += n_extra
 
             for o_type, grp in type_groups.items():
@@ -1060,8 +1066,10 @@ def perform_calculation(dimensions, options):
                 "openings": facade_openings,
                 "area": facade_area,
                 "price": facade_price_eur,
-                "extra_cols_front": max_extra_front_back,
-                "extra_cols_side": max_extra_sides,
+                "extra_cols_f": extra_cols_f,
+                "extra_cols_b": extra_cols_b,
+                "extra_cols_a": extra_cols_a,
+                "extra_cols_c": extra_cols_c,
                 "extra_cols_count": total_extra_cols,
             },
             "lamellas_count": lamellas_count,

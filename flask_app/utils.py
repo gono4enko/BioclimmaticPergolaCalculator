@@ -486,7 +486,7 @@ def _dim_v(x, y1, y2, label, prefix='d', side='left', font=None):
     )
 
 
-def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=None, max_overhang=None, ref=None, extra_columns=0):
+def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=None, max_overhang=None, ref=None, extra_columns=0, xc_left=0, xc_right=0, xc_front=0, xc_back=0):
     inner_fill = '#eef3fa'
     beam_color = '#1a3a6e'
     beam_fill = '#9fb8d6'
@@ -581,19 +581,43 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
             col_xs.append(rx + (rect_w / modules) * i)
         col_xs.append(rx + rect_w - col_px / 2)
 
-    col_ys = [ry + col_px / 2, ry + rect_h - col_px / 2]
+    col_ys_base = [ry + col_px / 2, ry + rect_h - col_px / 2]
 
     needs_extra = (max_overhang is not None and length and length > max_overhang + 0.001)
-    extra_rows = max(int(extra_columns or 0), 1 if needs_extra else 0)
-    if extra_rows > 0:
-        for i in range(1, extra_rows + 1):
-            col_ys.append(ry + (rect_h / (extra_rows + 1)) * i)
+    reinf_rows = max(int(extra_columns or 0), 1 if needs_extra else 0)
+
+    xc_l = max(int(xc_left or 0), 0)
+    xc_r = max(int(xc_right or 0), 0)
+    xc_f = max(int(xc_front or 0), 0)
+    xc_bk = max(int(xc_back or 0), 0)
+
+    left_x = col_xs[0]
+    right_x = col_xs[-1]
+
+    def _extra_ys(n):
+        return [ry + (rect_h / (n + 1)) * i for i in range(1, n + 1)]
+
+    def _extra_xs(n):
+        return [rx + (rect_w / (n + 1)) * i for i in range(1, n + 1)]
 
     for cxp in col_xs:
-        for cyp in col_ys:
+        is_left = abs(cxp - left_x) < 2
+        is_right = abs(cxp - right_x) < 2
+        n_side = max(reinf_rows, xc_l if is_left else (xc_r if is_right else 0))
+        ys = col_ys_base + _extra_ys(n_side) if n_side > 0 else col_ys_base
+        for cyp in ys:
             svg += (f'<rect x="{cxp - col_px / 2}" y="{cyp - col_px / 2}" '
                     f'width="{col_px}" height="{col_px}" '
                     f'fill="{column_fill}" stroke="{column_fill}" stroke-width="0.5"/>')
+
+    top_y = col_ys_base[0]
+    bot_y = col_ys_base[1]
+    for n_fb, y_pos in ((xc_f, top_y), (xc_bk, bot_y)):
+        if n_fb > 0:
+            for ex in _extra_xs(n_fb):
+                svg += (f'<rect x="{ex - col_px / 2}" y="{y_pos - col_px / 2}" '
+                        f'width="{col_px}" height="{col_px}" '
+                        f'fill="{column_fill}" stroke="{column_fill}" stroke-width="0.5"/>')
 
     arrow_y = ry + rect_h + DIM_OFFSET
     svg += _dim_h(rx, rx + rect_w, arrow_y, f'{width:.2f} м', prefix='t', below=True)
