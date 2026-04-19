@@ -662,6 +662,7 @@ def perform_calculation(dimensions, options):
 
         width_m = float(dimensions.get("width", 0))
         length_m = float(dimensions.get("length", 0))
+        height_m = float(dimensions.get("height", 3.0))
         pergola_type = options.get("pergola_type", "")
         lamella_type = options.get("lamella_type", "")
         lighting_options = options.get("lighting", [])
@@ -880,7 +881,7 @@ def perform_calculation(dimensions, options):
             else:
                 col_w = 0.164
                 beam_h = 0.280
-            open_h = max(0.1, FACADE_PERGOLA_HEIGHT - beam_h)
+            open_h = max(0.1, height_m - beam_h)
             side_labels = {"front": "\u0441\u043f\u0435\u0440\u0435\u0434\u0438",
                            "back": "\u0441\u0437\u0430\u0434\u0438",
                            "left": "\u0441\u043b\u0435\u0432\u0430",

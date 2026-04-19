@@ -170,6 +170,7 @@ def calculate():
         pergola_type = data.get('pergola_type', '')
         width = float(data.get('width', 0))
         length = float(data.get('length', 0))
+        height = float(data.get('height', 3.0))
         lamella_size = data.get('lamella_size', '250')
         lamella_type = data.get('lamella_type', '')
         lighting = data.get('lighting', [])
@@ -182,7 +183,7 @@ def calculate():
         facade_type = data.get('facade_type', '')
         facade_openings = data.get('facade_openings', [])
 
-        dimensions = {"width": width, "length": length}
+        dimensions = {"width": width, "length": length, "height": height}
         options = {
             "pergola_type": pergola_type,
             "lamella_type": lamella_type,

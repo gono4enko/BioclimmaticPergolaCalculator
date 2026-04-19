@@ -5,7 +5,7 @@
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=75">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=101" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=102" as="script">
 {% endblock %}
 
 {% block content %}
@@ -70,15 +70,20 @@
     <div class="step-card" id="step-3" style="display:none;">
         <h3><span class="step-num">3</span>Размеры</h3>
         <div class="row g-3">
-            <div class="col-6 dim-input">
+            <div class="col-4 dim-input">
                 <label for="input-width">Ширина (м)</label>
                 <input type="number" class="form-control" id="input-width" min="1" max="15" step="0.01" placeholder="например, 4.5">
                 <div class="dim-hint" id="width-hint">Макс: 13.5 м</div>
             </div>
-            <div class="col-6 dim-input">
+            <div class="col-4 dim-input">
                 <label for="input-length">Вынос (м)</label>
                 <input type="number" class="form-control" id="input-length" min="1" max="8" step="0.01" placeholder="например, 3.5">
                 <div class="dim-hint" id="length-hint">Макс: 8.0 м</div>
+            </div>
+            <div class="col-4 dim-input">
+                <label for="input-height">Высота (м)</label>
+                <input type="number" class="form-control" id="input-height" min="2.0" max="4.5" step="0.1" placeholder="3.0" value="3.0">
+                <div class="dim-hint">2.0 — 4.5 м</div>
             </div>
         </div>
     </div>
@@ -222,7 +227,7 @@
 
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=101"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=102"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');

@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v101';
+    var SVG_V = 'v102';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedVariant: '',
         width: 0,
         length: 0,
+        height: 3.0,
         whiteLed: true,
         rgbLed: false,
         installation: true,
@@ -270,6 +271,9 @@ document.addEventListener('DOMContentLoaded', function() {
         state.length = parseFloat(this.value) || 0;
         buildFacadeTopView();
         buildFacadeTable();
+    });
+    document.getElementById('input-height').addEventListener('input', function() {
+        state.height = parseFloat(this.value) || 3.0;
     });
 
     var whiteLedEl = document.getElementById('opt-white-led');
@@ -652,6 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
             pergola_type: state.pergolaType,
             width: state.width,
             length: state.length,
+            height: state.height,
             lamella_size: state.lamellaSize,
             lamella_type: state.lamellaType,
             lighting: lighting,
