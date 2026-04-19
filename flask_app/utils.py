@@ -604,6 +604,7 @@ def generate_top_view_svg(width, length, modules=1, is_pir=False, lamella_count=
     svg += (f'<text x="{rx + rect_w / 2}" y="{ry - 14}" text-anchor="middle" '
             f'font-size="13px" font-weight="bold" fill="{text_color}">Вид сверху · S = {area} м²</text>')
 
+    svg += f'<rect x="0.5" y="0.5" width="{svg_w-1}" height="{svg_h-1}" fill="none" stroke="#bcc4d0" stroke-width="0.8"/>'
     svg += '</svg>'
     return svg
 
@@ -766,6 +767,7 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
                     bay_fill = fill_type
                 svg += _draw_facade_fill(bay_fill, _fx0, fill_y0, _fx1 - _fx0, fill_h_px)
 
+    svg += f'<rect x="0.5" y="0.5" width="{svg_w-1}" height="{svg_h-1}" fill="none" stroke="#bcc4d0" stroke-width="0.8"/>'
     svg += '</svg>'
     return svg
 
@@ -929,13 +931,16 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
             coords = ' '.join(f'{x:.1f},{y:.1f}' for x, y in (s(p) for p in [_pbl, _pbr, _ptr, _ptl]))
             fill_front_svg += f'<polygon points="{coords}" fill="#eef2f7" fill-opacity="0.78" stroke="#2a4a7e" stroke-width="1.0" stroke-dasharray="6,3" stroke-linejoin="round"/>'
 
-    def draw_column(cx, cz, y0, y1):
+    SW_SIL = 1.2
+    SW_INT = 0.6
+
+    def draw_column(cx, cz, y0, y1, sw=SW_SIL):
         x0 = cx - COL_W / 2; x1 = cx + COL_W / 2
         z0 = cz - COL_W / 2; z1 = cz + COL_W / 2
         out = ''
-        out += quad([(x0, y0, z1), (x0, y1, z1), (x0, y1, z0), (x0, y0, z0)], col_med)
-        out += quad([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], col_dark)
-        out += quad([(x0, y0, z0), (x0, y1, z0), (x1, y1, z0), (x1, y0, z0)], col_light)
+        out += quad([(x0, y0, z1), (x0, y1, z1), (x0, y1, z0), (x0, y0, z0)], col_med, '#1a3a6e', sw)
+        out += quad([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], col_dark, '#1a3a6e', sw)
+        out += quad([(x0, y0, z0), (x0, y1, z0), (x1, y1, z0), (x1, y0, z0)], col_light, '#1a3a6e', sw)
         return out
 
     back_cols = [(cx, col_zs[-1]) for cx in col_xs]
@@ -954,11 +959,11 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     by0 = column_top
     by1 = height
 
-    def draw_beam(x0, x1, z0, z1, y0, y1, top_c, front_c, side_c):
+    def draw_beam(x0, x1, z0, z1, y0, y1, top_c, front_c, side_c, sw=SW_SIL):
         out = ''
-        out += quad([(x0, y0, z1), (x0, y1, z1), (x1, y1, z1), (x1, y0, z1)], front_c)
-        out += quad([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], side_c)
-        out += quad([(x0, y1, z0), (x0, y1, z1), (x1, y1, z1), (x1, y1, z0)], top_c)
+        out += quad([(x0, y0, z1), (x0, y1, z1), (x1, y1, z1), (x1, y0, z1)], front_c, '#1a3a6e', sw)
+        out += quad([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], side_c, '#1a3a6e', sw)
+        out += quad([(x0, y1, z0), (x0, y1, z1), (x1, y1, z1), (x1, y1, z0)], top_c, '#1a3a6e', sw)
         return out
 
     svg += fill_left_svg
@@ -1089,6 +1094,7 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
             f'font-size="9px" fill="#888" font-style="italic">'
             f'Колонна {int(COL_W*1000)}×{int(COL_W*1000)} мм, лоток {int(BEAM_H*1000)} мм</text>')
 
+    svg += f'<rect x="0.5" y="0.5" width="{svg_w-1}" height="{svg_h-1}" fill="none" stroke="#bcc4d0" stroke-width="0.8"/>'
     svg += '</svg>'
     return svg
 
@@ -1204,20 +1210,22 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
 
     column_top = height - BEAM_H
 
-    def draw_column(cx, cz, y0, y1):
+    SW_SIL = 1.2
+
+    def draw_column(cx, cz, y0, y1, sw=SW_SIL):
         x0 = cx - COL_W / 2; x1 = cx + COL_W / 2
         z0 = cz - COL_W / 2; z1 = cz + COL_W / 2
         out = ''
-        out += quad([(x0, y0, z1), (x0, y1, z1), (x0, y1, z0), (x0, y0, z0)], col_med)
-        out += quad([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], col_dark)
-        out += quad([(x0, y0, z0), (x0, y1, z0), (x1, y1, z0), (x1, y0, z0)], col_light)
+        out += quad([(x0, y0, z1), (x0, y1, z1), (x0, y1, z0), (x0, y0, z0)], col_med, '#1a3a6e', sw)
+        out += quad([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], col_dark, '#1a3a6e', sw)
+        out += quad([(x0, y0, z0), (x0, y1, z0), (x1, y1, z0), (x1, y0, z0)], col_light, '#1a3a6e', sw)
         return out
 
-    def draw_beam(x0, x1, z0, z1, y0, y1, tc, fc, sc):
+    def draw_beam(x0, x1, z0, z1, y0, y1, tc, fc, sc, sw=SW_SIL):
         out = ''
-        out += quad([(x0, y0, z1), (x0, y1, z1), (x1, y1, z1), (x1, y0, z1)], fc)
-        out += quad([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], sc)
-        out += quad([(x0, y1, z0), (x0, y1, z1), (x1, y1, z1), (x1, y1, z0)], tc)
+        out += quad([(x0, y0, z1), (x0, y1, z1), (x1, y1, z1), (x1, y0, z1)], fc, '#1a3a6e', sw)
+        out += quad([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], sc, '#1a3a6e', sw)
+        out += quad([(x0, y1, z0), (x0, y1, z1), (x1, y1, z1), (x1, y1, z0)], tc, '#1a3a6e', sw)
         return out
 
     by0 = column_top; by1 = height
@@ -1368,6 +1376,7 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
             f'font-size="9px" fill="#888" font-style="italic">'
             f'Колонна {int(COL_W*1000)}×{int(COL_W*1000)} мм, лоток {int(BEAM_H*1000)} мм</text>')
 
+    svg += f'<rect x="0.5" y="0.5" width="{svg_w-1}" height="{svg_h-1}" fill="none" stroke="#bcc4d0" stroke-width="0.8"/>'
     svg += '</svg>'
     return svg
 
