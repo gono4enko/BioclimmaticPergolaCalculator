@@ -833,9 +833,9 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
     beam_top = '#b8c8df'
     beam_front = '#7d9bc0'
     beam_side = '#5d7da8'
-    lam_top = '#f0f7ff'
-    lam_front = '#c8dff2'
-    lam_edge = '#1a3a6e'
+    lam_top = '#ffffff'
+    lam_front = '#d6ecf8'
+    lam_edge = '#0d2550'
     ground = '#eef2f7'
     text_color = '#333'
 
