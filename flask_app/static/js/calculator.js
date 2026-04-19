@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v106';
+    var SVG_V = 'v107';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
         facadeType: '',
         facadeOpenings: [],
         facadePerOpening: {},
+        glazingPerOpening: {},
         maxWidth: 13.5,
         maxLength: 8.0,
         result: null,
@@ -138,6 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
         stepsEl.calcBtn.style.display = 'block';
         buildFacadeTopView();
         buildFacadeTable();
+        buildGlazingTable();
         setTimeout(function() {
             stepsEl.step3.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 80);
@@ -266,11 +268,13 @@ document.addEventListener('DOMContentLoaded', function() {
         state.width = parseFloat(this.value) || 0;
         buildFacadeTopView();
         buildFacadeTable();
+        buildGlazingTable();
     });
     document.getElementById('input-length').addEventListener('input', function() {
         state.length = parseFloat(this.value) || 0;
         buildFacadeTopView();
         buildFacadeTable();
+        buildGlazingTable();
     });
     document.getElementById('input-height').addEventListener('input', function() {
         var h = parseFloat(this.value) || 3.0;
@@ -479,9 +483,295 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 buildFacadeTopView();
                 updateFacadeAreaInfo();
+                buildGlazingTable();
                 if (state._lastMainResult) updateSchemeForVariant(state.result || state._lastMainResult);
             });
         });
+    }
+
+    // ============== Glazing (S500) helpers ==============
+    var GLAZING_COLORS_JS = [
+        {v:'ral7016', n:'\u0410\u043d\u0442\u0440\u0430\u0446\u0438\u0442'},
+        {v:'ral8028', n:'\u041a\u043e\u0440\u0438\u0447\u043d\u0435\u0432\u044b\u0439'},
+        {v:'ral9016', n:'\u0411\u0435\u043b\u044b\u0439'},
+        {v:'custom',  n:'\u041e\u043a\u0440\u0430\u0441\u043a\u0430 \u043f\u043e RAL'}
+    ];
+    var GLAZING_GLASS_JS = [
+        {v:'transparent', n:'\u041f\u0440\u043e\u0437\u0440\u0430\u0447\u043d\u043e\u0435'},
+        {v:'tinted',      n:'\u0422\u043e\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u043e\u0435'}
+    ];
+    var GLAZING_DIRS_JS = [
+        {v:'right',  n:'\u0412\u043f\u0440\u0430\u0432\u043e'},
+        {v:'left',   n:'\u0412\u043b\u0435\u0432\u043e'},
+        {v:'center', n:'\u041e\u0442 \u0446\u0435\u043d\u0442\u0440\u0430'}
+    ];
+    var GLAZING_PCS_JS = [2, 3, 4, 5, 6, 8, 10];
+
+    function glazingMinPanels(w, h) {
+        if (!w || !h) return 2;
+        var minByWeight = Math.ceil(w * h * 30 / 88);
+        var minByWidth = 2;
+        if (w > 3.6) minByWidth = 4;
+        if (w > 5.0) minByWidth = 5;
+        if (w > 6.0) minByWidth = 6;
+        if (w > 7.0) minByWidth = 8;
+        if (w > 10.0) minByWidth = 10;
+        return Math.max(minByWidth, minByWeight);
+    }
+
+    function getGlazingForSide(side) {
+        if (!state.glazingPerOpening) return null;
+        var bays = (side === 'front' || side === 'back') ? facadeModules(state.width) : facadeLengthModules(state.length);
+        for (var i = 0; i < bays; i++) {
+            var g = state.glazingPerOpening[side + '_' + i];
+            if (g && g.enabled) return g;
+        }
+        return null;
+    }
+
+    function glazingSpec(g) {
+        if (!g || !g.enabled) return '';
+        return [g.pc || 4, g.direction || 'right', g.color || 'ral7016', g.glass || 'transparent'].join(':');
+    }
+
+    function getBayGlzQs(side, count, xPerBay) {
+        if (!state.glazingPerOpening) return '';
+        var parts = [];
+        var idx = 1;
+        var sections = (xPerBay > 0) ? (xPerBay + 1) : 1;
+        for (var i = 0; i < count; i++) {
+            var g = state.glazingPerOpening[side + '_' + i];
+            var spec = (g && g.enabled) ? glazingSpec(g) : '';
+            for (var j = 0; j < sections; j++) {
+                if (spec) parts.push('glz_' + idx + '=' + encodeURIComponent(spec));
+                idx++;
+            }
+        }
+        return parts.length ? ('&' + parts.join('&')) : '';
+    }
+
+    function computeGlazingOpenings() {
+        var out = [];
+        Object.keys(state.glazingPerOpening || {}).forEach(function(k) {
+            var g = state.glazingPerOpening[k];
+            if (!g || !g.enabled) return;
+            // mutual exclusion: skip if facade is set on the same key
+            if (state.facadePerOpening && state.facadePerOpening[k]) return;
+            var parts = k.split('_');
+            var bay = parseInt(parts.pop());
+            var side = parts.join('_');
+            out.push({
+                side: side, bay: bay,
+                pc: parseInt(g.pc) || 4,
+                direction: g.direction || 'right',
+                color: g.color || 'ral7016',
+                glass: g.glass || 'transparent',
+                count: parseInt(g.count) || 1
+            });
+        });
+        return out;
+    }
+
+    function _glazingDimsForKey(side) {
+        var colW = (state.selectedVariant === 'Light') ? 0.150 : (state.pergolaType === 'B200' ? 0.100 : 0.164);
+        var beamH = (state.selectedVariant === 'Light') ? 0.250 : (state.pergolaType === 'B200' ? 0.200 : 0.280);
+        var ph = state.height || 3.0;
+        var hM = Math.max(0.1, ph - beamH);
+        var n, totalDim;
+        if (side === 'front' || side === 'back') {
+            n = Math.max(1, facadeModules(state.width));
+            totalDim = state.width;
+        } else {
+            n = Math.max(1, facadeLengthModules(state.length));
+            totalDim = state.length;
+        }
+        var fullBay = totalDim / n;
+        var wM = Math.max(0.1, fullBay - 2 * colW);
+        return {wM: wM, hM: hM};
+    }
+
+    function updateGlazingAreaInfo() {
+        var infoEl = document.getElementById('glazing-area-info');
+        if (!infoEl) return;
+        var actives = computeGlazingOpenings();
+        if (actives.length === 0) {
+            infoEl.style.display = 'none'; infoEl.textContent = ''; return;
+        }
+        var totalArea = 0;
+        actives.forEach(function(o) {
+            var d = _glazingDimsForKey(o.side);
+            totalArea += d.wM * d.hM * (o.count || 1);
+        });
+        infoEl.style.display = 'block';
+        infoEl.textContent = '\u041e\u0441\u0442\u0435\u043a\u043b\u0451\u043d\u043d\u044b\u0445 \u043f\u0440\u043e\u0451\u043c\u043e\u0432: ' + actives.length
+            + ' \u2014 \u043f\u043b\u043e\u0449\u0430\u0434\u044c \u2248 ' + totalArea.toFixed(2) + ' \u043c\u00b2';
+    }
+
+    function _drawGlazingMiniSvg(svgEl, w, h, pc, direction, color, glass) {
+        if (!svgEl || !w || !h) { if (svgEl) svgEl.innerHTML = ''; return; }
+        var n = parseInt(pc) || 3;
+        var isCenter = (direction === 'center' || n === 6 || n === 8 || n === 10);
+        var pC = '#3a4048';
+        if (color === 'ral9016') pC = '#d0d0d0';
+        else if (color === 'ral8028') pC = '#5c3d1e';
+        else if (color === 'custom') pC = '#777';
+        var pD = (color === 'ral9016') ? '#909090' : (color === 'ral8028' ? '#3a2410' : '#111');
+        var isTinted = (glass === 'tinted');
+        var isBronze = isTinted && color === 'ral8028';
+        var cG1 = isBronze ? '#b8956a' : (isTinted ? '#8a9ea8' : '#cce0f0');
+        var cG2 = isBronze ? '#9a7548' : (isTinted ? '#6a8088' : '#a8c8e0');
+        var frameW = 200;
+        var aspect = h / w;
+        var frameH = Math.round(frameW * aspect);
+        if (frameH < 50) frameH = 50;
+        if (frameH > 180) frameH = 180;
+        var topPx = 8, botPx = 4, sidePx = 6, midPx = 2.4, centerPx = 4;
+        var fx = 8, fy = 8;
+        var VW = frameW + 16, VH = frameH + 22;
+        svgEl.setAttribute('viewBox', '0 0 ' + VW + ' ' + VH);
+        svgEl.setAttribute('height', VH);
+        svgEl.setAttribute('width', VW);
+        var s = '';
+        s += '<rect x="' + fx + '" y="' + fy + '" width="' + frameW + '" height="' + topPx + '" fill="' + pC + '"/>';
+        s += '<rect x="' + fx + '" y="' + (fy + frameH - botPx) + '" width="' + frameW + '" height="' + botPx + '" fill="' + pC + '"/>';
+        s += '<rect x="' + fx + '" y="' + fy + '" width="' + sidePx + '" height="' + frameH + '" fill="' + pC + '"/>';
+        s += '<rect x="' + (fx + frameW - sidePx) + '" y="' + fy + '" width="' + sidePx + '" height="' + frameH + '" fill="' + pC + '"/>';
+        var iX = fx + sidePx, iY = fy + topPx;
+        var iW = frameW - 2 * sidePx, iH = frameH - topPx - botPx;
+        if (isCenter) {
+            var cx = iX + iW / 2;
+            s += '<rect x="' + (cx - centerPx / 2) + '" y="' + iY + '" width="' + centerPx + '" height="' + iH + '" fill="' + pC + '"/>';
+        }
+        var halfN = isCenter ? n / 2 : n;
+        var panelW = isCenter ? ((iW - centerPx) / 2 - (halfN - 1) * midPx) / halfN
+                              : (iW - (n - 1) * midPx) / n;
+        for (var i = 0; i < n; i++) {
+            var sIdx = isCenter ? (i % (n / 2)) : i;
+            var sOff = (isCenter && i >= n / 2) ? ((iW - centerPx) / 2 + centerPx) : 0;
+            var px = iX + sOff + sIdx * (panelW + midPx);
+            if (sIdx > 0) {
+                s += '<rect x="' + (px - midPx) + '" y="' + iY + '" width="' + midPx + '" height="' + iH + '" fill="' + pC + '"/>';
+            }
+            s += '<rect x="' + px + '" y="' + iY + '" width="' + panelW + '" height="' + iH + '" fill="' + cG1 + '"/>';
+            s += '<rect x="' + (px + panelW * 0.5) + '" y="' + iY + '" width="' + (panelW * 0.5) + '" height="' + iH + '" fill="' + cG2 + '" opacity="0.3"/>';
+        }
+        var dimY = fy + frameH + 8;
+        s += '<line x1="' + fx + '" y1="' + dimY + '" x2="' + (fx + frameW) + '" y2="' + dimY + '" stroke="#8a9bbf" stroke-width="0.6"/>';
+        s += '<text x="' + (fx + frameW / 2) + '" y="' + (dimY + 8) + '" text-anchor="middle" font-size="8" fill="#8a9bbf" font-family="Arial,sans-serif">' + Math.round(w * 1000) + '\u00d7' + Math.round(h * 1000) + ' \u043c\u043c</text>';
+        svgEl.innerHTML = s;
+    }
+
+    function _normalizeGlzCfg(g, w, h) {
+        var minP = glazingMinPanels(w, h);
+        if (!g.pc || g.pc < minP) g.pc = minP;
+        // Allowed values are GLAZING_PCS_JS; bump up if needed
+        if (GLAZING_PCS_JS.indexOf(g.pc) === -1) {
+            for (var k = 0; k < GLAZING_PCS_JS.length; k++) {
+                if (GLAZING_PCS_JS[k] >= g.pc) { g.pc = GLAZING_PCS_JS[k]; break; }
+            }
+        }
+        if ((w >= 6 && g.pc >= 6) || g.pc >= 8) g.direction = 'center';
+        if (g.pc % 2 !== 0 && g.direction === 'center') g.direction = 'right';
+        return g;
+    }
+
+    function buildGlazingTable() {
+        var tableEl = document.getElementById('glazing-opening-table');
+        if (!tableEl) return;
+        var W = state.width, L = state.length;
+        if (W <= 0 || L <= 0) { tableEl.innerHTML = '<div style="color:#999;font-size:0.85rem;padding:8px 4px;">\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0440\u0430\u0437\u043c\u0435\u0440\u044b \u043d\u0430 \u0448\u0430\u0433\u0435 3</div>'; return; }
+        var mods = facadeModules(W);
+        var lMods = facadeLengthModules(L);
+        var openings = [];
+        for (var ai = 0; ai < lMods; ai++) openings.push({side:'left', bay:ai, label:lMods>1?'A'+(ai+1):'A', desc:lMods>1?'\u0421\u043b\u0435\u0432\u0430 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(ai+1):'\u0421\u043b\u0435\u0432\u0430'});
+        for (var bi = 0; bi < mods; bi++)  openings.push({side:'back', bay:bi, label:mods>1?'B'+(bi+1):'B', desc:mods>1?'\u0421\u0437\u0430\u0434\u0438 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(bi+1):'\u0421\u0437\u0430\u0434\u0438'});
+        for (var ci = 0; ci < lMods; ci++) openings.push({side:'right', bay:ci, label:lMods>1?'C'+(ci+1):'C', desc:lMods>1?'\u0421\u043f\u0440\u0430\u0432\u0430 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(ci+1):'\u0421\u043f\u0440\u0430\u0432\u0430'});
+        for (var fi = 0; fi < mods; fi++)  openings.push({side:'front', bay:fi, label:mods>1?'F'+(fi+1):'F', desc:mods>1?'\u0424\u0430\u0441\u0430\u0434 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(fi+1):'\u0424\u0430\u0441\u0430\u0434'});
+
+        var html = '<div class="glazing-rows">';
+        openings.forEach(function(o) {
+            var key = o.side + '_' + o.bay;
+            var dims = _glazingDimsForKey(o.side);
+            var hasFacade = !!(state.facadePerOpening && state.facadePerOpening[key]);
+            var g = state.glazingPerOpening[key] || {enabled:false, pc:0, direction:'right', color:'ral7016', glass:'transparent', count:1};
+            if (g.enabled) g = _normalizeGlzCfg(g, dims.wM, dims.hM);
+            state.glazingPerOpening[key] = g;
+            var minP = glazingMinPanels(dims.wM, dims.hM);
+            var disabledNote = hasFacade ? ' <span style="color:#c0392b;font-size:0.78em;">\u0432 \u044d\u0442\u043e\u043c \u043f\u0440\u043e\u0451\u043c\u0435 \u0443\u0436\u0435 \u0444\u0430\u0441\u0430\u0434</span>' : '';
+            html += '<div class="glazing-row" data-key="' + key + '"' + (hasFacade ? ' style="opacity:0.5;pointer-events:none;"' : '') + '>';
+            html += '<div class="glazing-row-head">';
+            html += '<label class="glazing-toggle"><input type="checkbox" class="glz-en" data-key="' + key + '"' + (g.enabled?' checked':'') + (hasFacade?' disabled':'') + '> <span class="facade-lbl">' + o.label + '</span> <span class="glz-desc">' + o.desc + '</span>' + disabledNote + '</label>';
+            html += '<div class="glz-dims">' + Math.round(dims.wM*1000) + '\u00d7' + Math.round(dims.hM*1000) + ' \u043c\u043c</div>';
+            html += '</div>';
+            if (g.enabled && !hasFacade) {
+                var pcOpts = '';
+                GLAZING_PCS_JS.forEach(function(p) {
+                    var disabled = p < minP ? ' disabled' : '';
+                    var lbl = (p===6?'6 (3+3)':p===8?'8 (4+4)':p===10?'10 (5+5)':p+(p===2||p===3||p===4?' \u043f\u0430\u043d\u0435\u043b\u0438':' \u043f\u0430\u043d\u0435\u043b\u0435\u0439'));
+                    pcOpts += '<option value="' + p + '"' + disabled + (g.pc===p?' selected':'') + '>' + lbl + '</option>';
+                });
+                var dirOpts = '';
+                var allowCenter = (g.pc % 2 === 0 && g.pc >= 4) || g.pc >= 6;
+                var forceCenter = (dims.wM >= 6 && g.pc >= 6) || g.pc >= 8;
+                GLAZING_DIRS_JS.forEach(function(d) {
+                    var dd = (d.v==='center' && !allowCenter) ? ' disabled' : '';
+                    if (forceCenter && d.v !== 'center') dd = ' disabled';
+                    dirOpts += '<option value="' + d.v + '"' + dd + (g.direction===d.v?' selected':'') + '>' + d.n + '</option>';
+                });
+                var colOpts = '';
+                GLAZING_COLORS_JS.forEach(function(c) { colOpts += '<option value="' + c.v + '"' + (g.color===c.v?' selected':'') + '>' + c.n + '</option>'; });
+                var glOpts = '';
+                GLAZING_GLASS_JS.forEach(function(c) { glOpts += '<option value="' + c.v + '"' + (g.glass===c.v?' selected':'') + '>' + c.n + '</option>'; });
+                html += '<div class="glazing-row-body">';
+                html += '<div class="glz-grid">';
+                html += '<div><label>\u0421\u0442\u0432\u043e\u0440\u043e\u043a</label><select class="form-select form-select-sm glz-fld" data-fld="pc" data-key="' + key + '">' + pcOpts + '</select></div>';
+                html += '<div><label>\u041d\u0430\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435</label><select class="form-select form-select-sm glz-fld" data-fld="direction" data-key="' + key + '">' + dirOpts + '</select></div>';
+                html += '<div><label>\u0426\u0432\u0435\u0442</label><select class="form-select form-select-sm glz-fld" data-fld="color" data-key="' + key + '">' + colOpts + '</select></div>';
+                html += '<div><label>\u0421\u0442\u0435\u043a\u043b\u043e</label><select class="form-select form-select-sm glz-fld" data-fld="glass" data-key="' + key + '">' + glOpts + '</select></div>';
+                html += '<div><label>\u041a\u043e\u043b-\u0432\u043e</label><input type="number" min="1" max="20" value="' + (g.count||1) + '" class="form-control form-control-sm glz-fld" data-fld="count" data-key="' + key + '"></div>';
+                html += '</div>';
+                html += '<div class="glz-preview"><svg class="glz-mini-svg" data-key="' + key + '" xmlns="http://www.w3.org/2000/svg"></svg></div>';
+                html += '</div>';
+            }
+            html += '</div>';
+        });
+        html += '</div>';
+        tableEl.innerHTML = html;
+
+        // Wire up
+        tableEl.querySelectorAll('.glz-en').forEach(function(cb) {
+            cb.addEventListener('change', function() {
+                var k = this.dataset.key;
+                state.glazingPerOpening[k] = state.glazingPerOpening[k] || {};
+                state.glazingPerOpening[k].enabled = this.checked;
+                buildGlazingTable();
+                updateGlazingAreaInfo();
+                if (state._lastMainResult) updateSchemeForVariant(state.result || state._lastMainResult);
+            });
+        });
+        tableEl.querySelectorAll('.glz-fld').forEach(function(el) {
+            el.addEventListener('change', function() {
+                var k = this.dataset.key;
+                var fld = this.dataset.fld;
+                var val = this.value;
+                if (fld === 'pc' || fld === 'count') val = parseInt(val) || 1;
+                state.glazingPerOpening[k] = state.glazingPerOpening[k] || {enabled:true};
+                state.glazingPerOpening[k][fld] = val;
+                buildGlazingTable();
+                updateGlazingAreaInfo();
+                if (state._lastMainResult) updateSchemeForVariant(state.result || state._lastMainResult);
+            });
+        });
+        // Render mini previews
+        tableEl.querySelectorAll('.glz-mini-svg').forEach(function(svg) {
+            var k = svg.dataset.key;
+            var g = state.glazingPerOpening[k];
+            if (!g || !g.enabled) return;
+            var sideLocal = k.split('_').slice(0, -1).join('_');
+            var d = _glazingDimsForKey(sideLocal);
+            _drawGlazingMiniSvg(svg, d.wM, d.hM, g.pc, g.direction, g.color, g.glass);
+        });
+        updateGlazingAreaInfo();
     }
 
     function buildFacadeTopView() {
@@ -670,7 +960,8 @@ document.addEventListener('DOMContentLoaded', function() {
             installation: state.installation,
             selected_variant: state.selectedVariant,
             client_name: state.clientName,
-            facade_openings: computeFacadeOpenings()
+            facade_openings: computeFacadeOpenings(),
+            glazing_openings: computeGlazingOpenings()
         };
 
         state._pergolaHeight = state.height || 3.0;
@@ -1211,16 +1502,20 @@ document.addEventListener('DOMContentLoaded', function() {
         var _bayB = getBayFillQs('back', parseInt(m) || 1, _xcB);
         var _bayA = getBayFillQs('left', lm, _xcA);
         var _bayC = getBayFillQs('right', lm, _xcC);
-        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcFront + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + _bayF;
+        var _glzF = getBayGlzQs('front', parseInt(m) || 1, _xcF);
+        var _glzB = getBayGlzQs('back', parseInt(m) || 1, _xcB);
+        var _glzA = getBayGlzQs('left', lm, _xcA);
+        var _glzC = getBayGlzQs('right', lm, _xcC);
+        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcFront + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + _bayF + _glzF;
         var fimg = document.getElementById('kp-front-img');
         if (fimg) fimg.src = '/api/pergola-front.svg?' + fqs + '&_v=' + SVG_V;
-        var bqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcBack + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + _bayB;
+        var bqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcBack + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + _bayB + _glzB;
         var bimg = document.getElementById('kp-back-img');
         if (bimg) bimg.src = '/api/pergola-front.svg?' + bqs + '&_v=' + SVG_V;
-        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcLeft + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _bayA;
+        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcLeft + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _bayA + _glzA;
         var simg = document.getElementById('kp-side-img');
         if (simg) simg.src = '/api/pergola-front.svg?' + sqs + '&_v=' + SVG_V;
-        var rqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcRight + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _bayC;
+        var rqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcRight + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _bayC + _glzC;
         var rimg = document.getElementById('kp-right-img');
         if (rimg) rimg.src = '/api/pergola-front.svg?' + rqs + '&_v=' + SVG_V;
         var lcAttr = block.dataset.lc;
@@ -1433,10 +1728,14 @@ document.addEventListener('DOMContentLoaded', function() {
             var _kpBayB = getBayFillQs('back', schM, xcB);
             var _kpBayA = getBayFillQs('left', schLMods, xcA);
             var _kpBayC = getBayFillQs('right', schLMods, xcC);
-            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + xcFqs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + colMmQs + _kpBayF + '&_v=' + SVG_V;
-            var bqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + xcBqs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + colMmQs + _kpBayB + '&_v=' + SVG_V;
-            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + xcAqs + colMmQs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _kpBayA + '&_v=' + SVG_V;
-            var rqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + xcCqs + colMmQs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _kpBayC + '&_v=' + SVG_V;
+            var _kpGlzF = getBayGlzQs('front', schM, xcF);
+            var _kpGlzB = getBayGlzQs('back', schM, xcB);
+            var _kpGlzA = getBayGlzQs('left', schLMods, xcA);
+            var _kpGlzC = getBayGlzQs('right', schLMods, xcC);
+            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + xcFqs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + colMmQs + _kpBayF + _kpGlzF + '&_v=' + SVG_V;
+            var bqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + xcBqs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + colMmQs + _kpBayB + _kpGlzB + '&_v=' + SVG_V;
+            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + xcAqs + colMmQs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _kpBayA + _kpGlzA + '&_v=' + SVG_V;
+            var rqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + xcCqs + colMmQs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _kpBayC + _kpGlzC + '&_v=' + SVG_V;
             var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + (isPir ? '&pir=1' : '') + xcQs + (_kpFillF ? '&fill_front=' + encodeURIComponent(_kpFillF) : '') + (_kpFillC ? '&fill_right=' + encodeURIComponent(_kpFillC) : '') + (_kpFillA ? '&fill_left=' + encodeURIComponent(_kpFillA) : '') + (_kpFillB ? '&fill_back=' + encodeURIComponent(_kpFillB) : '') + '&_v=' + SVG_V;
             var isoLabel = isPir ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (PIR \u043F\u0430\u043D\u0435\u043B\u0438)' : (isB200 ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u0441\u0442\u0430\u0446\u0438\u043E\u043D\u0430\u0440\u043D\u044B\u0435)' : '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)');
             var isoBlock = (isPir || lamCnt) ? (

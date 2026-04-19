@@ -86,9 +86,16 @@ def pergola_front_svg():
                 break
             fills_per_bay.append(_f)
         fills_per_bay = fills_per_bay if fills_per_bay else None
+        glazings_per_bay = []
+        for _bi in range(1, 20):
+            _g = request.args.get(f'glz_{_bi}', '').strip()
+            glazings_per_bay.append(_g if _g else None)
+        if not any(glazings_per_bay):
+            glazings_per_bay = None
         svg = generate_front_view_svg(width=w, height=h, modules=m, max_overhang=mo, ref=ref,
                                       title=title, extra_columns=xc, col_mm=col_mm, beam_h_mm=beam_h_mm,
-                                      fill_type=fill_type, fills_per_bay=fills_per_bay)
+                                      fill_type=fill_type, fills_per_bay=fills_per_bay,
+                                      glazings_per_bay=glazings_per_bay)
         return Response(svg, mimetype='image/svg+xml',
                         headers={'Cache-Control': 'no-cache, must-revalidate'})
     except Exception:
@@ -190,6 +197,7 @@ def calculate():
 
         facade_type = data.get('facade_type', '')
         facade_openings = data.get('facade_openings', [])
+        glazing_openings = data.get('glazing_openings', [])
 
         dimensions = {"width": width, "length": length, "height": height}
         options = {
@@ -200,7 +208,8 @@ def calculate():
             "installation": installation,
             "selected_variant": selected_variant,
             "facade_type": facade_type,
-            "facade_openings": facade_openings
+            "facade_openings": facade_openings,
+            "glazing_openings": glazing_openings
         }
 
         from ..utils import generate_kp_number, get_pergola_count, get_deadline_str, generate_calc_id, save_calculation

@@ -3,9 +3,9 @@
 {% block title %}Калькулятор стоимости перголы{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=77">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=79">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=106" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=107" as="script">
 {% endblock %}
 
 {% block content %}
@@ -166,6 +166,37 @@
                 <div id="facade-area-info" style="font-size:0.82rem;color:#1a3a6e;background:#f0f4fa;border-radius:6px;padding:0.4rem 0.7rem;display:none;margin-top:0.4rem;"></div>
             </div>
         </details>
+
+        <!-- Панорамное остекление S500 -->
+        <details class="facade-spoiler glazing-spoiler mt-3">
+            <summary class="facade-spoiler-summary">
+                <i class="bi bi-border-outer facade-spoiler-icon"></i>
+                <span class="facade-spoiler-title">Панорамное остекление S500</span>
+                <span class="facade-spoiler-badge">Опция</span>
+                <span class="facade-spoiler-hint">развернуть&nbsp;↓</span>
+                <i class="bi bi-chevron-down facade-spoiler-chevron"></i>
+            </summary>
+            <div class="facade-spoiler-body">
+                <div class="facade-info">
+                    <div class="facade-info-card">
+                        <div class="facade-info-text" style="padding:8px 4px;">
+                            <div class="facade-info-name">S500 — раздвижное безрамное остекление</div>
+                            <p>Лёгкие сдвижные створки от 2 до 10 панелей в проёме. Стекло прозрачное или тонированное, профиль в любой RAL. Идеально подходит для перголы как зимняя версия — превращает навес в тёплую веранду.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="facade-how-to">
+                    <div class="facade-how-to-title"><i class="bi bi-info-circle-fill"></i> Как настроить остекление</div>
+                    <ol class="facade-how-to-steps">
+                        <li>Включите проёмы для остекления и задайте число створок, направление, цвет профиля и тип стекла</li>
+                        <li>Минимальное число створок рассчитывается автоматически по весу и ширине проёма</li>
+                        <li>Один проём не может одновременно содержать фасадное заполнение и остекление</li>
+                    </ol>
+                </div>
+                <div id="glazing-opening-table" style="margin-top:0.6rem;"></div>
+                <div id="glazing-area-info" style="font-size:0.82rem;color:#1a3a6e;background:#f0f4fa;border-radius:6px;padding:0.4rem 0.7rem;display:none;margin-top:0.4rem;"></div>
+            </div>
+        </details>
     </div>
 
     <button class="calc-btn" id="calc-btn" style="display:none;">
@@ -227,7 +258,7 @@
 
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=106"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=107"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');

@@ -185,6 +185,167 @@ FACADE_MAX_PANEL_W = {
 FACADE_EXTRA_COL_PRICE_PER_M = 200.0
 
 
+# ---------- S500 sliding panoramic glazing ----------
+GLAZING_PD = {
+    '3':   {'w': [1.8, 2.4, 3.0, 3.6], 'h': [1.7, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25],
+            'p': [
+                [729, 801, 873, 925],
+                [768, 840, 911, 983],
+                [799, 871, 943, 1015],
+                [831, 903, 975, 1047],
+                [863, 935, 1007, 1079],
+                [895, 967, 1039, 1111],
+                [926, 998, 1070, 1142]]},
+    '4':   {'w': [2.5, 3.0, 3.5, 4.0, 4.5, 5.0], 'h': [1.7, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25],
+            'p': [
+                [934, 1002, 1071, 1139, 1207, 1275],
+                [981, 1049, 1117, 1185, 1253, 1321],
+                [1019, 1087, 1156, 1224, 1292, 1360],
+                [1058, 1126, 1194, 1262, 1330, 1399],
+                [1096, 1165, 1233, 1301, 1369, 1437],
+                [1135, 1203, 1271, 1340, 1408, 1476],
+                [1174, 1242, 1310, 1378, 1446, 1514]]},
+    '5':   {'w': [3.0, 3.5, 4.0, 4.5, 5.0, 6.0], 'h': [1.7, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25],
+            'p': [
+                [1126, 1202, 1278, 1354, 1430, 1581],
+                [1181, 1257, 1332, 1408, 1484, 1635],
+                [1226, 1302, 1378, 1453, 1529, 1681],
+                [1271, 1347, 1423, 1499, 1574, 1726],
+                [1317, 1392, 1467, 1544, 1620, 1771],
+                [1362, 1438, 1513, 1589, 1665, 1816],
+                [1407, 1483, 1559, 1534, 1710, 1832]]},
+    '3+3': {'w': [3.0, 3.6, 4.2, 4.8, 6.0, 7.2], 'h': [1.7, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25],
+            'p': [
+                [950, 1002, 1053, 1105, 1208, 1311],
+                [1001, 1052, 1104, 1155, 1258, 1361],
+                [1043, 1095, 1146, 1198, 1301, 1404],
+                [1086, 1137, 1189, 1240, 1343, 1446],
+                [1128, 1179, 1231, 1282, 1385, 1488],
+                [1170, 1222, 1273, 1325, 1428, 1530],
+                [1212, 1264, 1315, 1367, 1470, 1573]]},
+    '4+4': {'w': [5.0, 6.0, 7.0, 8.0, 9.0, 10.0], 'h': [1.7, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25],
+            'p': [
+                [1837, 2032, 2110, 2247, 2383, 2519],
+                [1927, 2122, 2200, 2336, 2473, 2609],
+                [2002, 2196, 2275, 2411, 2547, 2684],
+                [2076, 2271, 2349, 2486, 2622, 2758],
+                [2151, 2346, 2424, 2560, 2697, 2833],
+                [2226, 2420, 2499, 2635, 2771, 2908],
+                [2301, 2495, 2573, 2710, 2846, 2983]]},
+    '5+5': {'w': [6.0, 7.0, 8.0, 9.0, 10.0, 12.0], 'h': [1.7, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25],
+            'p': [
+                [2224, 2376, 2527, 2679, 2830, 3134],
+                [2330, 2482, 2633, 2785, 2936, 3240],
+                [2419, 2570, 2722, 2873, 3025, 3328],
+                [2507, 2659, 2810, 2962, 3113, 3416],
+                [2595, 2747, 2898, 3050, 3201, 3505],
+                [2684, 2835, 2987, 3138, 3290, 3593],
+                [2772, 2924, 3075, 3227, 3378, 3681]]},
+}
+
+GLAZING_TRANSPARENT_EUR_M2 = 4800
+GLAZING_TINTED_EUR_M2 = 5800
+GLAZING_INSTALL_EUR_M2 = 3500
+GLAZING_MARKUP_PCT = 25
+GLAZING_DELIVERY_PCT = 10
+GLAZING_PAINT_PCT = 10
+GLAZING_PANEL_KG = 30
+GLAZING_MAX_KG = 88
+
+GLAZING_COLOR_NAMES = {
+    'ral7016': '\u0410\u043d\u0442\u0440\u0430\u0446\u0438\u0442 RAL 7016',
+    'ral8028': '\u041a\u043e\u0440\u0438\u0447\u043d\u0435\u0432\u044b\u0439 RAL 8028',
+    'ral9016': '\u0411\u0435\u043b\u044b\u0439 RAL 9016',
+    'custom':  '\u041e\u043a\u0440\u0430\u0441\u043a\u0430 \u043f\u043e RAL',
+}
+GLAZING_GLASS_NAMES = {
+    'transparent': '\u043f\u0440\u043e\u0437\u0440.',
+    'tinted':      '\u0442\u043e\u043d\u0438\u0440.',
+}
+GLAZING_DIR_NAMES = {
+    'right':  '\u0432\u043f\u0440\u0430\u0432\u043e',
+    'left':   '\u0432\u043b\u0435\u0432\u043e',
+    'center': '\u043e\u0442 \u0446\u0435\u043d\u0442\u0440\u0430',
+}
+GLAZING_SIDE_NAMES = {
+    'front': '\u0444\u0430\u0441\u0430\u0434',
+    'back':  '\u0441\u0437\u0430\u0434\u0438',
+    'left':  '\u0441\u043b\u0435\u0432\u0430',
+    'right': '\u0441\u043f\u0440\u0430\u0432\u0430',
+}
+
+
+def _glaze_ci(arr, v):
+    """Return index of value in arr closest to v."""
+    if not arr:
+        return 0
+    best = 0
+    bd = abs(arr[0] - v)
+    for i in range(1, len(arr)):
+        d = abs(arr[i] - v)
+        if d < bd:
+            bd = d
+            best = i
+    return best
+
+
+def glazing_min_panels(w, h):
+    """Min panel count for a sash given opening size."""
+    try:
+        w = float(w); h = float(h)
+    except Exception:
+        return 2
+    if w <= 0 or h <= 0:
+        return 2
+    min_by_weight = math.ceil(w * h * GLAZING_PANEL_KG / GLAZING_MAX_KG)
+    min_by_width = 2
+    if w > 3.6:  min_by_width = 4
+    if w > 5.0:  min_by_width = 5
+    if w > 6.0:  min_by_width = 6
+    if w > 7.0:  min_by_width = 8
+    if w > 10.0: min_by_width = 10
+    return max(min_by_width, int(min_by_weight))
+
+
+def glazing_calc_price(w, h, pc, direction='right', color='ral7016', glass='transparent'):
+    """Return per-opening glazing price in EUR (incl. paint, glass, delivery, install).
+    Mirrors S500 standalone calculator pricing."""
+    try:
+        w = float(w); h = float(h); pc = int(pc)
+    except Exception:
+        return 0.0
+    if w <= 0 or h <= 0 or pc <= 0:
+        return 0.0
+    conf = str(pc); dir_ = direction or 'right'
+    if pc == 2:
+        conf = '3'
+    elif pc == 6:
+        conf = '3+3'; dir_ = 'center'
+    elif pc == 8:
+        conf = '4+4'; dir_ = 'center'
+    elif pc == 10:
+        conf = '5+5'; dir_ = 'center'
+    elif w >= 6.0:
+        conf = conf if pc <= 5 else '3+3'
+        dir_ = 'center'
+    elif dir_ == 'center':
+        conf = conf if pc <= 5 else '3+3'
+    cd = GLAZING_PD.get(conf)
+    if not cd:
+        return 0.0
+    comp = cd['p'][_glaze_ci(cd['h'], h)][_glaze_ci(cd['w'], w)]
+    if color == 'custom':
+        comp *= (1 + GLAZING_PAINT_PCT / 100.0)
+    area = w * h
+    glass_eur = GLAZING_TINTED_EUR_M2 if glass == 'tinted' else GLAZING_TRANSPARENT_EUR_M2
+    glass_part = area * glass_eur * (1 + GLAZING_MARKUP_PCT / 100.0) / 100.0  # convert ₽→€ via /100
+    install_part = area * GLAZING_INSTALL_EUR_M2 * (1 + GLAZING_MARKUP_PCT / 100.0) / 100.0
+    deliv_part = comp * (GLAZING_DELIVERY_PCT / 100.0) * (1 + GLAZING_MARKUP_PCT / 100.0)
+    # All ₽-based components were divided by /100 (the standalone CFG.euroRate).
+    # Comp price is already in EUR (taken straight from PD table).
+    return comp + glass_part + deliv_part + install_part
+
+
 def _facade_extra_cols(full_bay_w, col_w, max_panel_w):
     """Compute number of extra support columns and resulting section width.
     Returns (n_extra, section_width_m).
@@ -1035,6 +1196,112 @@ def perform_calculation(dimensions, options):
             total_price += installation_price
             specification.append({"name": "Установка", "count": "1"})
 
+        glazing_openings = options.get("glazing_openings", []) or []
+        glazing_total_eur = 0.0
+        glazing_total_area = 0.0
+        glazing_normalized = []
+
+        if glazing_openings:
+            sv_g = selected_variant or ""
+            if "Light" in sv_g:
+                col_w_g = FACADE_COL_WIDTHS["Light"]
+                beam_h_g = FACADE_BEAM_HEIGHTS["Light"]
+            elif pergola_type == "B200":
+                col_w_g = FACADE_COL_WIDTHS["B200"]
+                beam_h_g = FACADE_BEAM_HEIGHTS["B200"]
+            else:
+                col_w_g = 0.164
+                beam_h_g = 0.280
+            open_h_g = max(0.1, height_m - beam_h_g)
+
+            side_max_bay_g = {"left": 0, "right": 0}
+            for _op in glazing_openings:
+                if not isinstance(_op, dict):
+                    continue
+                _s = _op.get("side", "")
+                if _s in side_max_bay_g:
+                    side_max_bay_g[_s] = max(side_max_bay_g[_s], int(_op.get("bay", 0)))
+            length_modules_g = max(side_max_bay_g["left"], side_max_bay_g["right"]) + 1
+
+            full_fb_bay_w = width_m / max(1, modules)
+            full_lr_bay_w = length_m / max(1, length_modules_g)
+
+            # Build set of (side,bay) keys already taken by facade openings
+            _facade_keys = set()
+            for _fop in (facade_openings or []):
+                if isinstance(_fop, dict) and _fop.get("side") and _fop.get("type"):
+                    _facade_keys.add((_fop.get("side"), int(_fop.get("bay", 0))))
+
+            _allowed_pcs = (2, 3, 4, 5, 6, 8, 10)
+            for op in glazing_openings:
+                if not isinstance(op, dict):
+                    continue
+                side = op.get("side", "")
+                if side not in ("front", "back", "left", "right"):
+                    continue
+                bay_g = int(op.get("bay", 0))
+                # Backend mutual exclusion: facade wins
+                if (side, bay_g) in _facade_keys:
+                    continue
+                pc_g = int(op.get("pc", 3) or 3)
+                direction_g = op.get("direction") or 'right'
+                color_g = op.get("color") or 'ral7016'
+                glass_g = op.get("glass") or 'transparent'
+                count_g = max(1, int(op.get("count", 1) or 1))
+
+                full_bay_w = full_fb_bay_w if side in ("front", "back") else full_lr_bay_w
+                op_w = max(0.1, full_bay_w - 2 * col_w_g)
+                op_h = open_h_g
+
+                # Server-side normalization (mirror UI rules)
+                _min_pc = glazing_min_panels(op_w, op_h)
+                if pc_g < _min_pc:
+                    pc_g = _min_pc
+                if pc_g not in _allowed_pcs:
+                    pc_g = next((p for p in _allowed_pcs if p >= pc_g), _allowed_pcs[-1])
+                if (op_w >= 6 and pc_g >= 6) or pc_g >= 8:
+                    direction_g = 'center'
+                if pc_g % 2 != 0 and direction_g == 'center':
+                    direction_g = 'right'
+                if op_w < 1.8 or op_h < 1.7:
+                    continue
+
+                price_eur = glazing_calc_price(op_w, op_h, pc_g, direction_g, color_g, glass_g)
+                price_eur = round(price_eur * count_g, 2)
+                area_one = round(op_w * op_h, 2)
+
+                bay_label = f"\u043f\u0440\u043e\u0451\u043c {bay_g + 1}" if (
+                    (side in ('front', 'back') and modules > 1) or
+                    (side in ('left', 'right') and length_modules_g > 1)
+                ) else "\u043f\u0440\u043e\u0451\u043c"
+                pc_label = f"{pc_g} \u0441\u0442\u0432."
+                gloss = (f"\u041e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 S500 "
+                         f"({GLAZING_SIDE_NAMES[side]}, {bay_label}, {pc_label}, "
+                         f"{GLAZING_GLASS_NAMES.get(glass_g, glass_g)}, "
+                         f"{GLAZING_COLOR_NAMES.get(color_g, color_g)}, "
+                         f"{op_w:.2f}\u00d7{op_h:.2f} \u043c"
+                         f"{(', ' + str(count_g) + ' шт.') if count_g > 1 else ''})")
+                items.append({"name": gloss, "price": price_eur})
+                specification.append({
+                    "name": "\u041e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 S500",
+                    "count": (f"{count_g} \u0448\u0442. \u00b7 {pc_g} \u0441\u0442\u0432\u043e\u0440\u043e\u043a"
+                              f" \u00b7 {area_one * count_g:.2f} \u043c\u00b2")
+                })
+                total_price += price_eur
+                glazing_total_eur += price_eur
+                glazing_total_area += area_one * count_g
+                glazing_normalized.append({
+                    "side": side, "bay": bay_g,
+                    "pc": pc_g, "direction": direction_g,
+                    "color": color_g, "glass": glass_g, "count": count_g,
+                    "w": round(op_w, 3), "h": round(op_h, 3),
+                    "area": round(area_one * count_g, 2),
+                    "price_eur": price_eur,
+                })
+
+        glazing_total_eur = round(glazing_total_eur, 2)
+        glazing_total_area = round(glazing_total_area, 2)
+
         total_price = round(total_price, 2)
 
         euro_rate = pricing_settings.get_euro_rate()
@@ -1071,6 +1338,11 @@ def perform_calculation(dimensions, options):
                 "extra_cols_a": extra_cols_a,
                 "extra_cols_c": extra_cols_c,
                 "extra_cols_count": total_extra_cols,
+            },
+            "glazing": {
+                "openings": glazing_normalized,
+                "area": glazing_total_area,
+                "price": glazing_total_eur,
             },
             "lamellas_count": lamellas_count,
             "pergola_type_name": PERGOLA_TYPES.get(pergola_type, pergola_type),

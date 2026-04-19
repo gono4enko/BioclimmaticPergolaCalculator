@@ -660,7 +660,79 @@ def _draw_facade_fill(fill_type, x, y, w, h):
     return out
 
 
-def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди', extra_columns=0, col_mm=164, beam_h_mm=280, fill_type=None, fills_per_bay=None):
+def _draw_glazing_fill(spec, x, y, w, h):
+    """Render an S500 sliding-sash schematic into the elevation opening.
+    spec: 'pc:direction:color:glass' (e.g. '4:right:ral7016:transparent')."""
+    if not spec or w < 4 or h < 4:
+        return ''
+    try:
+        parts = (spec or '').split(':')
+        pc = max(2, min(10, int(parts[0]))) if len(parts) >= 1 else 4
+        direction = parts[1] if len(parts) >= 2 else 'right'
+        color = parts[2] if len(parts) >= 3 else 'ral7016'
+        glass = parts[3] if len(parts) >= 4 else 'transparent'
+    except Exception:
+        return ''
+    is_center = direction == 'center' or pc in (6, 8, 10)
+    if color == 'ral9016':
+        pC, pD = '#d0d0d0', '#909090'
+    elif color == 'ral8028':
+        pC, pD = '#5c3d1e', '#3a2410'
+    elif color == 'custom':
+        pC, pD = '#777', '#111'
+    else:
+        pC, pD = '#3a4048', '#111'
+    is_tinted = (glass == 'tinted')
+    is_bronze = is_tinted and color == 'ral8028'
+    if is_bronze:
+        cG1, cG2 = '#b8956a', '#9a7548'
+    elif is_tinted:
+        cG1, cG2 = '#8a9ea8', '#6a8088'
+    else:
+        cG1, cG2 = '#cce0f0', '#a8c8e0'
+    top_px = max(3, min(10, h * 0.05))
+    bot_px = max(2, min(6, h * 0.025))
+    side_px = max(3, min(10, w * 0.025))
+    mid_px = max(1.2, min(3, w * 0.005))
+    center_px = max(2, min(6, w * 0.01))
+    out = []
+    out.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{top_px:.1f}" fill="{pC}"/>')
+    out.append(f'<rect x="{x:.1f}" y="{y + h - bot_px:.1f}" width="{w:.1f}" height="{bot_px:.1f}" fill="{pC}"/>')
+    out.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{side_px:.1f}" height="{h:.1f}" fill="{pC}"/>')
+    out.append(f'<rect x="{x + w - side_px:.1f}" y="{y:.1f}" width="{side_px:.1f}" height="{h:.1f}" fill="{pC}"/>')
+    inner_x = x + side_px
+    inner_y = y + top_px
+    inner_w = w - 2 * side_px
+    inner_h = h - top_px - bot_px
+    if inner_w < 4 or inner_h < 4:
+        return ''.join(out)
+    if is_center:
+        cx = inner_x + inner_w / 2
+        out.append(f'<rect x="{cx - center_px / 2:.1f}" y="{inner_y:.1f}" width="{center_px:.1f}" height="{inner_h:.1f}" fill="{pC}"/>')
+    half_n = pc / 2 if is_center else pc
+    if is_center:
+        usable = (inner_w - center_px) / 2
+        panel_w = (usable - (half_n - 1) * mid_px) / half_n
+    else:
+        panel_w = (inner_w - (pc - 1) * mid_px) / pc
+    for i in range(pc):
+        if is_center:
+            section_idx = i % (pc // 2)
+            section_off = (inner_w - center_px) / 2 + center_px if i >= pc // 2 else 0
+        else:
+            section_idx = i
+            section_off = 0
+        px = inner_x + section_off + section_idx * (panel_w + mid_px)
+        if section_idx > 0:
+            out.append(f'<rect x="{px - mid_px:.1f}" y="{inner_y:.1f}" width="{mid_px:.1f}" height="{inner_h:.1f}" fill="{pC}"/>')
+        out.append(f'<rect x="{px:.1f}" y="{inner_y:.1f}" width="{panel_w:.1f}" height="{inner_h:.1f}" fill="{cG1}"/>')
+        out.append(f'<rect x="{px + panel_w * 0.5:.1f}" y="{inner_y:.1f}" width="{panel_w * 0.5:.1f}" height="{inner_h:.1f}" fill="{cG2}" opacity="0.3"/>')
+    rail_y = y + h - bot_px
+    out.append(f'<rect x="{x:.1f}" y="{rail_y - 1:.1f}" width="{w:.1f}" height="2" fill="#b8c4cc"/>')
+    return ''.join(out)
+
+
+def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref=None, title='Вид спереди', extra_columns=0, col_mm=164, beam_h_mm=280, fill_type=None, fills_per_bay=None, glazings_per_bay=None):
     """Front/side elevation. width = horizontal dimension (m), height in m.
     Uses shared scale (DIM_TARGET_PX/ref) so views align with top view.
     """
@@ -777,7 +849,7 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
     svg += (f'<text x="{_ldr_elbow_x:.1f}" y="{_ldr_elbow_y - 3:.1f}" '
             f'text-anchor="end" font-size="{small_font}" fill="{DIM_COLOR}">□ {col_mm_label}×{col_mm_label} мм</text>')
 
-    if fills_per_bay or (fill_type and fill_type.strip()):
+    if fills_per_bay or (fill_type and fill_type.strip()) or glazings_per_bay:
         fill_y0 = pergola_top + beam_h_px
         fill_h_px = pergola_bottom - fill_y0
         sorted_xs = sorted(col_xs)
@@ -785,6 +857,12 @@ def generate_front_view_svg(width, height=3.0, modules=1, max_overhang=None, ref
             _fx0 = sorted_xs[_bi] + col_w_px
             _fx1 = sorted_xs[_bi + 1]
             if _fx1 - _fx0 > 2:
+                glz_spec = None
+                if glazings_per_bay and _bi < len(glazings_per_bay):
+                    glz_spec = glazings_per_bay[_bi]
+                if glz_spec:
+                    svg += _draw_glazing_fill(glz_spec, _fx0, fill_y0, _fx1 - _fx0, fill_h_px)
+                    continue
                 if fills_per_bay and _bi < len(fills_per_bay) and fills_per_bay[_bi]:
                     bay_fill = fills_per_bay[_bi]
                 else:
