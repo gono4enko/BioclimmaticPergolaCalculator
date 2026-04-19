@@ -622,6 +622,42 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     function wMinSashes(w) { return (w > 3.6) ? 3 : 2; }
     function isWSeries(s) { s = (s || '').toUpperCase(); return s === 'W500' || s === 'W600' || s === 'W700'; }
+
+    var W_DRIVES_SIMU_JS = [
+        {name: 'SIMU RTS T6 80/12',  torque: 80,  tandem: false},
+        {name: 'SIMU RTS T6 120/12', torque: 120, tandem: false},
+        {name: 'SIMU RTS T6 TANDEM', torque: 240, tandem: true}
+    ];
+    var W_DRIVES_SOMFY_JS = [
+        {name: 'SOMFY Altus 60 RTS 85/17',  torque: 85,  tandem: false},
+        {name: 'SOMFY Altus 60 RTS 120/12', torque: 120, tandem: false},
+        {name: 'SOMFY Altus 60 RTS TANDEM', torque: 240, tandem: true}
+    ];
+    function wRequiredTorqueJs(w, h) {
+        var ww = parseFloat(w), hh = parseFloat(h);
+        if (!isFinite(ww) || !isFinite(hh)) return 0;
+        return Math.round((ww * hh * 7.5 + 4.0) * 10) / 10;
+    }
+    function pickGuillotineDriveJs(w, h, brand, pergolaType) {
+        var defaultBrand = (pergolaType === 'B700NEW') ? 'somfy' : 'simu';
+        var b = (brand || '').toLowerCase();
+        if (b !== 'simu' && b !== 'somfy') b = defaultBrand;
+        var catalog = (b === 'somfy') ? W_DRIVES_SOMFY_JS : W_DRIVES_SIMU_JS;
+        var req = wRequiredTorqueJs(w, h);
+        var forcedTandem = (parseFloat(w) > 3.0);
+        var picked;
+        if (forcedTandem) {
+            picked = catalog[catalog.length - 1];
+        } else {
+            picked = null;
+            for (var i = 0; i < catalog.length; i++) {
+                if (catalog[i].torque >= req) { picked = catalog[i]; break; }
+            }
+            if (!picked) picked = catalog[catalog.length - 1];
+        }
+        var name = picked.name + (picked.tandem && picked.name.indexOf('TANDEM') === -1 ? ' TANDEM' : '');
+        return {name: name, torque: picked.torque, isTandem: picked.tandem, forcedTandem: forcedTandem, required: req, brand: b};
+    }
     // Explicit S100 configurations as the supplier exposes them.
     // Each entry: cfg-key (v), total panels (pc), direction lock (dir),
     // and human label (n). dir=null means user can pick left/right.
@@ -1065,6 +1101,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var plavForced = (dims.wM > 3.0);
                 var plavChecked = g.plavnik ? ' checked' : '';
                 var plavDis = plavForced ? ' disabled' : '';
+                var driveInfo = pickGuillotineDriveJs(dims.wM, dims.hM, g.brand, state.pergolaType);
                 html += '<tr class="glz-cfg-row" data-key="' + key + '"><td colspan="4" style="background:#f6f9fc;padding:0.6rem 0.9rem;">';
                 html += '<div class="glz-grid">';
                 html += '<div><label>\u0421\u0442\u0432\u043e\u0440\u043a\u0438 (\u0430\u0432\u0442\u043e\u043f\u043e\u0434\u0431\u043e\u0440)</label><select class="form-select form-select-sm glz-fld" data-fld="sashes" data-key="' + key + '">' + sashOpts + '</select></div>';
@@ -1073,6 +1110,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<div><label>\u041c\u0430\u0440\u043a\u0430 \u043f\u0440\u0438\u0432\u043e\u0434\u0430</label><select class="form-select form-select-sm glz-fld" data-fld="brand" data-key="' + key + '">' + brOpts + '</select></div>';
                 html += '<div style="display:flex;align-items:end;"><label style="font-size:0.85em;cursor:' + (plavForced ? 'not-allowed' : 'pointer') + ';"><input type="checkbox" class="glz-fld" data-fld="plavnik" data-key="' + key + '"' + plavChecked + plavDis + '> \u041f\u043b\u0430\u0432\u043d\u0438\u043a' + (plavForced ? ' (\u043e\u0431\u044f\u0437.)' : '') + '</label></div>';
                 html += '</div>';
+                var tandemBadge = driveInfo.forcedTandem
+                    ? ' <span style="display:inline-block;background:#e85d2f;color:#fff;font-size:0.72em;font-weight:600;padding:1px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;" title="\u041f\u0440\u043e\u0451\u043c \u0448\u0438\u0440\u0435 3 \u043c \u2014 \u043f\u0440\u0438\u043d\u0443\u0434\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u0442\u0430\u043d\u0434\u0435\u043c">TANDEM</span>'
+                    : '';
+                html += '<div style="margin-top:0.5rem;padding:0.45rem 0.6rem;background:#eef4fb;border-left:3px solid #1a3a6e;border-radius:3px;font-size:0.82em;color:#1a3a6e;">' +
+                    '<strong>\u041f\u0440\u0438\u0432\u043e\u0434 (\u0430\u0432\u0442\u043e\u043f\u043e\u0434\u0431\u043e\u0440):</strong> ' +
+                    driveInfo.name + ', ' + driveInfo.torque + ' \u041d\u043c' + tandemBadge +
+                    ' <span style="color:#5a6a85;font-weight:400;">\u00b7 \u0442\u0440\u0435\u0431\u0443\u0435\u043c\u044b\u0439 \u043c\u043e\u043c\u0435\u043d\u0442 \u2248 ' + driveInfo.required.toFixed(1) + ' \u041d\u043c</span>' +
+                    '</div>';
                 html += '<div style="margin-top:0.4rem;font-size:0.8em;color:#5a6a85;">' + 
                     '\u0413\u0438\u043b\u044c\u043e\u0442\u0438\u043d\u043d\u043e\u0435 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435: \u0441\u0442\u0432\u043e\u0440\u043a\u0438 \u043f\u043e\u0434\u043d\u0438\u043c\u0430\u044e\u0442\u0441\u044f \u0432\u0432\u0435\u0440\u0445 \u044d\u043b\u0435\u043a\u0442\u0440\u043e\u043f\u0440\u0438\u0432\u043e\u0434\u043e\u043c. \u041f\u0440\u0438\u0432\u043e\u0434 \u0438 \u043f\u0443\u043b\u044c\u0442 \u0432\u044b\u0431\u0438\u0440\u0430\u044e\u0442\u0441\u044f \u0430\u0432\u0442\u043e\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0438.</div>';
                 html += '<div class="glz-preview" style="margin-top:0.5rem;"><svg class="glz-mini-svg" data-key="' + key + '" xmlns="http://www.w3.org/2000/svg"></svg></div>';
