@@ -534,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     state.facadePerOpening[key2] = '';
                     if (state.glazingPerOpening[key2]) state.glazingPerOpening[key2].enabled = false;
                     if (!state.zipPerOpening) state.zipPerOpening = {};
-                    var existingZip = state.zipPerOpening[key2] || {fabric: 'veozip', color: 'ral9016', drive: 'manual', count: 1};
+                    var existingZip = state.zipPerOpening[key2] || {fabric: 'veozip', color: _zipDefaultColor(key2), drive: 'manual', count: 1};
                     existingZip.enabled = true;
                     state.zipPerOpening[key2] = existingZip;
                 } else {
@@ -1447,6 +1447,17 @@ document.addEventListener('DOMContentLoaded', function() {
         {v:'soltis', n:'Soltis W96/W88 (+15 \u20ac/\u043c\u00b2)'},
         {v:'copaco',  n:'Copaco Lunar Blackout (+15 \u20ac/\u043c\u00b2)'}
     ];
+    var _ZIP_COLOR_SET = {ral9016:1, ral7024:1, ral9t08:1, ral8028:1, ral_special:1};
+    function _glazColorToZip(gColor) {
+        if (!gColor) return 'ral9016';
+        return _ZIP_COLOR_SET[gColor] ? gColor : 'ral_special';
+    }
+    function _zipDefaultColor(key) {
+        var g = (state.glazingPerOpening || {})[key];
+        if (g && g.color) return _glazColorToZip(g.color);
+        return 'ral9016';
+    }
+
     var ZIP_COLORS_JS = [
         {v:'ral9016',    n:'\u0411\u0435\u043b\u044b\u0439 RAL 9016'},
         {v:'ral7024',    n:'\u0413\u0440\u0430\u0444\u0438\u0442 RAL 7024'},
@@ -1559,7 +1570,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tableEl.querySelectorAll('.zip-toggle-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var k = this.dataset.key;
-                var z = state.zipPerOpening[k] || {fabric:'veozip', color:'ral9016', drive:'manual', count:1};
+                var z = state.zipPerOpening[k] || {fabric:'veozip', color:_zipDefaultColor(k), drive:'manual', count:1};
                 z.enabled = !z.enabled;
                 state.zipPerOpening[k] = z;
                 buildZipTable();
@@ -1572,7 +1583,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sel.addEventListener('change', function() {
                 var k = this.dataset.key;
                 var fld = this.dataset.fld;
-                if (!state.zipPerOpening[k]) state.zipPerOpening[k] = {fabric:'veozip', color:'ral9016', drive:'manual', count:1, enabled:true};
+                if (!state.zipPerOpening[k]) state.zipPerOpening[k] = {fabric:'veozip', color:_zipDefaultColor(k), drive:'manual', count:1, enabled:true};
                 if (fld === 'drive_type') {
                     if (this.value === 'manual') {
                         state.zipPerOpening[k].drive = 'manual';
