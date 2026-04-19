@@ -3,7 +3,7 @@
 {% block title %}Калькулятор стоимости перголы{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=72">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=73">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
 <link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=101" as="script">
 {% endblock %}
@@ -115,8 +115,10 @@
         <!-- Фасадное заполнение -->
         <details class="facade-spoiler mt-4">
             <summary class="facade-spoiler-summary">
+                <i class="bi bi-layout-sidebar-inset facade-spoiler-icon"></i>
                 <span class="facade-spoiler-title">Фасадное заполнение проёма</span>
-                <span class="facade-spoiler-hint">нажмите, чтобы развернуть</span>
+                <span class="facade-spoiler-badge">Опция</span>
+                <span class="facade-spoiler-hint">развернуть&nbsp;↓</span>
                 <i class="bi bi-chevron-down facade-spoiler-chevron"></i>
             </summary>
             <div class="facade-spoiler-body">
