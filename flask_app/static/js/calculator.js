@@ -1317,6 +1317,127 @@ document.addEventListener('DOMContentLoaded', function() {
         renderGlazingPreviewSvgs(node);
     }
 
+    // ===================== Glazing validation & error helpers =====================
+
+    var GLZ_SIDE_RU = {front: '\u0424\u0430\u0441\u0430\u0434', back: '\u0421\u0437\u0430\u0434\u0438', left: '\u0421\u043b\u0435\u0432\u0430', right: '\u0421\u043f\u0440\u0430\u0432\u0430'};
+    var GLZ_FIELD_RU = {series: '\u0421\u0435\u0440\u0438\u044f', color: '\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f', glass: '\u0422\u0438\u043f \u0441\u0442\u0435\u043a\u043b\u0430', pc: '\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u043f\u0430\u043d\u0435\u043b\u0435\u0439/\u0441\u0442\u0432\u043e\u0440\u043e\u043a'};
+
+    function clearGlazingErrors() {
+        var tableEl = document.getElementById('glazing-opening-table');
+        if (!tableEl) return;
+        tableEl.querySelectorAll('.glz-error-row').forEach(function(el) {
+            el.classList.remove('glz-error-row');
+            el.style.outline = '';
+            el.style.background = '';
+        });
+        tableEl.querySelectorAll('.glz-error-msg').forEach(function(el) { el.remove(); });
+    }
+
+    function parseGlazingError(errMsg) {
+        if (!errMsg) return null;
+        var m = errMsg.match(/Glazing opening \(side=(\w+),\s*bay=(\d+)(?:,\s*series=(\w+))?\):\s*(.*)/i);
+        if (!m) return null;
+        var side = m[1], bay = parseInt(m[2]), series = m[3] || '', detail = m[4] || '';
+        var field = null, msgRu;
+        if (/missing 'series'|unknown series/i.test(detail)) {
+            field = 'series';
+            msgRu = '\u041d\u0435 \u0432\u044b\u0431\u0440\u0430\u043d\u0430 \u0438\u043b\u0438 \u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u0430 \u0441\u0435\u0440\u0438\u044f \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u044f';
+        } else if (/color .* is not valid/i.test(detail)) {
+            field = 'color';
+            msgRu = '\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f \u043d\u0435\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c \u0434\u043b\u044f \u0441\u0435\u0440\u0438\u0438 ' + series;
+        } else if (/glass .* is not valid/i.test(detail)) {
+            field = 'glass';
+            msgRu = '\u0422\u0438\u043f \u0441\u0442\u0435\u043a\u043b\u043e\u043f\u0430\u043a\u0435\u0442\u0430 \u043d\u0435\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c \u0434\u043b\u044f \u0441\u0435\u0440\u0438\u0438 ' + series;
+        } else if (/panel count .* is not allowed/i.test(detail)) {
+            field = 'pc';
+            msgRu = '\u041d\u0435\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u043e\u0435 \u043a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u043f\u0430\u043d\u0435\u043b\u0435\u0439/\u0441\u0442\u0432\u043e\u0440\u043e\u043a \u0434\u043b\u044f \u0441\u0435\u0440\u0438\u0438 ' + series;
+        } else if (/panel count .* is below the minimum/i.test(detail)) {
+            field = 'pc';
+            var minM = detail.match(/minimum (\d+)/);
+            msgRu = '\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u043f\u0430\u043d\u0435\u043b\u0435\u0439/\u0441\u0442\u0432\u043e\u0440\u043e\u043a \u043c\u0435\u043d\u044c\u0448\u0435 \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e\u0433\u043e'
+                + (minM ? ' (' + minM[1] + ')' : '') + ' \u0434\u043b\u044f \u0434\u0430\u043d\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u0451\u043c\u0430';
+        } else {
+            msgRu = detail;
+        }
+        return {side: side, bay: bay, series: series, field: field, msgRu: msgRu};
+    }
+
+    function highlightGlazingError(side, bay, field, msgRu) {
+        var sideRu = GLZ_SIDE_RU[side] || side;
+        var tableEl = document.getElementById('glazing-opening-table');
+        var row = tableEl ? tableEl.querySelector('tr[data-key="' + side + '_' + bay + '"]') : null;
+        if (row) {
+            row.style.outline = '2px solid #d32f2f';
+            row.style.background = '#fff5f5';
+            row.classList.add('glz-error-row');
+            var errEl = document.createElement('tr');
+            errEl.className = 'glz-error-msg';
+            var fieldHint = field ? (' \u2014 \u043f\u043e\u043b\u0435: <strong>' + (GLZ_FIELD_RU[field] || field) + '</strong>') : '';
+            errEl.innerHTML = '<td colspan="4" style="background:#fff0f0;color:#c62828;padding:0.35rem 0.9rem;font-size:0.84em;border-left:3px solid #d32f2f;">'
+                + '\u26a0 <strong>\u041e\u0448\u0438\u0431\u043a\u0430 (' + sideRu + ', \u043f\u0440\u043e\u0451\u043c ' + (bay + 1) + '):</strong> '
+                + msgRu + fieldHint + '</td>';
+            var cfgRow = row.nextElementSibling;
+            if (cfgRow) {
+                cfgRow.parentNode.insertBefore(errEl, cfgRow.nextSibling);
+            } else {
+                row.parentNode.insertBefore(errEl, row.nextSibling);
+            }
+            row.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+        } else {
+            alert('\u041e\u0448\u0438\u0431\u043a\u0430 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u044f (' + sideRu + ', \u043f\u0440\u043e\u0451\u043c ' + (bay + 1) + '):\n' + msgRu);
+        }
+    }
+
+    function validateGlazingBeforeSend() {
+        var keys = Object.keys(state.glazingPerOpening || {});
+        var VALID_SERIES = ['S500', 'S100', 'W500', 'W600', 'W700'];
+        for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            var g = state.glazingPerOpening[k];
+            if (!g || !g.enabled) continue;
+            if (state.facadePerOpening && state.facadePerOpening[k]) continue;
+            var parts = k.split('_');
+            var bay = parseInt(parts.pop());
+            var side = parts.join('_');
+            var seriesU = (g.series || '').toUpperCase();
+            if (!seriesU || VALID_SERIES.indexOf(seriesU) === -1) {
+                return {side: side, bay: bay, field: 'series', msgRu: '\u041d\u0435 \u0432\u044b\u0431\u0440\u0430\u043d\u0430 \u0438\u043b\u0438 \u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u0430 \u0441\u0435\u0440\u0438\u044f \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u044f'};
+            }
+            var validColors, validGlass;
+            if (isWSeries(seriesU)) {
+                validColors = W_COLORS_JS.map(function(c) { return c.v; });
+                validGlass  = W_GLASS_JS.map(function(c) { return c.v; });
+            } else if (seriesU === 'S100') {
+                validColors = S100_COLORS_JS.map(function(c) { return c.v; });
+                validGlass  = S100_GLASS_JS.map(function(c) { return c.v; });
+            } else {
+                validColors = GLAZING_COLORS_JS.map(function(c) { return c.v; });
+                validGlass  = GLAZING_GLASS_JS.map(function(c) { return c.v; });
+            }
+            if (g.color && validColors.indexOf(g.color) === -1) {
+                return {side: side, bay: bay, field: 'color', msgRu: '\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f \u00ab' + g.color + '\u00bb \u043d\u0435\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c \u0434\u043b\u044f \u0441\u0435\u0440\u0438\u0438 ' + seriesU};
+            }
+            if (g.glass && validGlass.indexOf(g.glass) === -1) {
+                return {side: side, bay: bay, field: 'glass', msgRu: '\u0422\u0438\u043f \u0441\u0442\u0435\u043a\u043b\u043e\u043f\u0430\u043a\u0435\u0442\u0430 \u00ab' + g.glass + '\u00bb \u043d\u0435\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c \u0434\u043b\u044f \u0441\u0435\u0440\u0438\u0438 ' + seriesU};
+            }
+            if (!isWSeries(seriesU)) {
+                var validPcs = (seriesU === 'S100') ? S100_PCS_JS : GLAZING_PCS_JS;
+                var pc = parseInt(g.pc) || 0;
+                if (pc > 0 && validPcs.indexOf(pc) === -1) {
+                    return {side: side, bay: bay, field: 'pc', msgRu: '\u041d\u0435\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u043e\u0435 \u043a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u043f\u0430\u043d\u0435\u043b\u0435\u0439/\u0441\u0442\u0432\u043e\u0440\u043e\u043a (' + pc + ') \u0434\u043b\u044f \u0441\u0435\u0440\u0438\u0438 ' + seriesU};
+                }
+                if (pc > 0) {
+                    var dims2 = _glazingDimsForKey(side);
+                    var minPc = (seriesU === 'S100') ? s100MinPanels(dims2.wM, dims2.hM) : glazingMinPanels(dims2.wM, dims2.hM);
+                    if (pc < minPc) {
+                        return {side: side, bay: bay, field: 'pc', msgRu: '\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u043f\u0430\u043d\u0435\u043b\u0435\u0439/\u0441\u0442\u0432\u043e\u0440\u043e\u043a \u043c\u0435\u043d\u044c\u0448\u0435 \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e\u0433\u043e (' + minPc + ') \u0434\u043b\u044f \u0434\u0430\u043d\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u0451\u043c\u0430'};
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     // ===================== ZIP awning per-opening editor =====================
     var ZIP_FABRICS_JS = [
         {v:'veozip', n:'Veozip (Screen Veosol)'},
@@ -1635,6 +1756,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (state.width > state.maxWidth) { alert('\u0428\u0438\u0440\u0438\u043D\u0430 \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C (' + state.maxWidth + ' \u043C)'); return; }
         if (state.length > state.maxLength) { alert('\u0412\u044B\u043D\u043E\u0441 \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C (' + state.maxLength + ' \u043C)'); return; }
 
+        clearGlazingErrors();
+        var glzValidErr = validateGlazingBeforeSend();
+        if (glzValidErr) {
+            highlightGlazingError(glzValidErr.side, glzValidErr.bay, glzValidErr.field, glzValidErr.msgRu);
+            return;
+        }
+
         var lighting = [];
         if (state.whiteLed) lighting.push('white_led');
         if (state.rgbLed) lighting.push('rgb_led');
@@ -1670,7 +1798,13 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(function(data) {
             stepsEl.spinner.style.display = 'none';
             if (!data.success) {
-                alert('\u041E\u0448\u0438\u0431\u043A\u0430: ' + (data.error || '\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u0430\u044F \u043E\u0448\u0438\u0431\u043A\u0430'));
+                var glzErr = parseGlazingError(data.error || '');
+                if (glzErr) {
+                    clearGlazingErrors();
+                    highlightGlazingError(glzErr.side, glzErr.bay, glzErr.field, glzErr.msgRu);
+                } else {
+                    alert('\u041E\u0448\u0438\u0431\u043A\u0430: ' + (data.error || '\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u0430\u044F \u043E\u0448\u0438\u0431\u043A\u0430'));
+                }
                 return;
             }
             state.kpNumber = data.kp_number || '';
