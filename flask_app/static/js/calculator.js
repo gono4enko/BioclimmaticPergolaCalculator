@@ -547,10 +547,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // S100 frameless option lists
     var S100_COLORS_JS = [
-        {v:'ral9t08',     n:'\u0422\u0435\u043a\u0441\u0442. \u0433\u0440\u0430\u0444\u0438\u0442 RAL 9T08'},
-        {v:'ral7024',     n:'\u041c\u0430\u0442. \u0433\u0440\u0430\u0444\u0438\u0442 RAL 7024'},
-        {v:'ral8028',     n:'\u041c\u0443\u0430\u0440 \u043a\u043e\u0440\u0438\u0447\u043d. RAL 8028'},
-        {v:'ral9016',     n:'\u041c\u0430\u0442. \u0431\u0435\u043b\u044b\u0439 RAL 9016'},
+        {v:'ral9t08',     n:'Графит текстурный RAL 9T08'},
+        {v:'ral7024',     n:'Графит матовый RAL 7024'},
+        {v:'ral8028',     n:'Коричневый Муар RAL 8028'},
+        {v:'ral9016',     n:'Белый матовый RAL 9016'},
         {v:'ral_special', n:'RAL special (+10%)'}
     ];
     var S100_GLASS_JS = [
@@ -732,11 +732,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (frameH > 180) frameH = 180;
         var topPx, botPx, sidePx, midPx, centerPx;
         if (isS100) {
-            topPx = (n === 3) ? 5 : 4.5;
-            botPx = 2.5;
-            sidePx = 2;  // frameless between panels, but L/R end profiles per spec
-            midPx = 1.2;
-            centerPx = 2.5;
+            topPx = (n === 3) ? 6 : 5.5;
+            botPx = 3;
+            sidePx = 3.5;  // frameless between panels, but L/R end profiles per spec
+            midPx = 1.6;
+            centerPx = 3;
         } else {
             topPx = 8; botPx = 4; sidePx = 6; midPx = 2.4; centerPx = 4;
         }
