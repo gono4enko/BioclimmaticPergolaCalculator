@@ -453,9 +453,13 @@ document.addEventListener('DOMContentLoaded', function() {
             var dimsHtml = '<span style="font-size:0.82em;color:#555;white-space:nowrap;">' + dims.wMm + '\u00d7' + dims.hMm + ' \u043c\u043c</span>';
             var areaVal = (dims.wMm * dims.hMm / 1e6).toFixed(2);
             var areaHtml = '<br><span style="font-size:0.9em;">' + areaVal + ' \u043c\u00b2</span>';
-            html += '<tr data-key="' + key + '"><td><span class="facade-lbl">' + o.label + '</span></td>'
-                + '<td>' + o.desc + '</td>'
-                + '<td><select class="form-select form-select-sm facade-type-sel" data-side="' + o.side + '" data-bay="' + o.bay + '">'
+            var hasGlz = !!(state.glazingPerOpening && state.glazingPerOpening[key] && state.glazingPerOpening[key].enabled);
+            var rowStyle = hasGlz ? ' style="opacity:0.5;"' : '';
+            var noteGlz = hasGlz ? ' <span style="color:#c0392b;font-size:0.78em;">\u0432 \u044d\u0442\u043e\u043c \u043f\u0440\u043e\u0451\u043c\u0435 \u0443\u0436\u0435 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435</span>' : '';
+            var disAttr = hasGlz ? ' disabled' : '';
+            html += '<tr data-key="' + key + '"' + rowStyle + '><td><span class="facade-lbl">' + o.label + '</span></td>'
+                + '<td>' + o.desc + noteGlz + '</td>'
+                + '<td><select class="form-select form-select-sm facade-type-sel" data-side="' + o.side + '" data-bay="' + o.bay + '"' + disAttr + '>'
                 + '<option value="">\u2014 \u0431\u0435\u0437 \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f \u2014</option>';
             TYPES.forEach(function(t) {
                 html += '<option value="' + t.v + '"' + (selType === t.v ? ' selected' : '') + '>' + t.n + '</option>';
@@ -693,17 +697,21 @@ document.addEventListener('DOMContentLoaded', function() {
             var key = o.side + '_' + o.bay;
             var dims = _glazingDimsForKey(o.side);
             var hasFacade = !!(state.facadePerOpening && state.facadePerOpening[key]);
+            var outOfRange = (dims.wM < 1.8 || dims.hM < 1.7 || dims.wM > 12.0 || dims.hM > 3.25);
             var g = state.glazingPerOpening[key] || {enabled:false, pc:0, direction:'right', color:'ral7016', glass:'transparent', count:1};
+            if (outOfRange) g.enabled = false;
             if (g.enabled) g = _normalizeGlzCfg(g, dims.wM, dims.hM);
             state.glazingPerOpening[key] = g;
             var minP = glazingMinPanels(dims.wM, dims.hM);
             var disabledNote = hasFacade ? ' <span style="color:#c0392b;font-size:0.78em;">\u0432 \u044d\u0442\u043e\u043c \u043f\u0440\u043e\u0451\u043c\u0435 \u0443\u0436\u0435 \u0444\u0430\u0441\u0430\u0434</span>' : '';
-            html += '<div class="glazing-row" data-key="' + key + '"' + (hasFacade ? ' style="opacity:0.5;pointer-events:none;"' : '') + '>';
+            var rangeNote = outOfRange ? ' <span style="color:#c0392b;font-size:0.78em;">\u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e \u0434\u043b\u044f \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u044f (\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u043e 1.8\u201312 \u043c \u00d7 1.7\u20133.25 \u043c)</span>' : '';
+            var disabled = hasFacade || outOfRange;
+            html += '<div class="glazing-row" data-key="' + key + '"' + (disabled ? ' style="opacity:0.5;pointer-events:none;"' : '') + '>';
             html += '<div class="glazing-row-head">';
-            html += '<label class="glazing-toggle"><input type="checkbox" class="glz-en" data-key="' + key + '"' + (g.enabled?' checked':'') + (hasFacade?' disabled':'') + '> <span class="facade-lbl">' + o.label + '</span> <span class="glz-desc">' + o.desc + '</span>' + disabledNote + '</label>';
+            html += '<label class="glazing-toggle"><input type="checkbox" class="glz-en" data-key="' + key + '"' + (g.enabled?' checked':'') + (disabled?' disabled':'') + '> <span class="facade-lbl">' + o.label + '</span> <span class="glz-desc">' + o.desc + '</span>' + disabledNote + rangeNote + '</label>';
             html += '<div class="glz-dims">' + Math.round(dims.wM*1000) + '\u00d7' + Math.round(dims.hM*1000) + ' \u043c\u043c</div>';
             html += '</div>';
-            if (g.enabled && !hasFacade) {
+            if (g.enabled && !disabled) {
                 var pcOpts = '';
                 GLAZING_PCS_JS.forEach(function(p) {
                     var disabled = p < minP ? ' disabled' : '';
@@ -745,6 +753,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 state.glazingPerOpening[k] = state.glazingPerOpening[k] || {};
                 state.glazingPerOpening[k].enabled = this.checked;
                 buildGlazingTable();
+                buildFacadeTable();
                 updateGlazingAreaInfo();
                 if (state._lastMainResult) updateSchemeForVariant(state.result || state._lastMainResult);
             });

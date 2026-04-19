@@ -307,7 +307,7 @@ def glazing_min_panels(w, h):
     return max(min_by_width, int(min_by_weight))
 
 
-def glazing_calc_price(w, h, pc, direction='right', color='ral7016', glass='transparent'):
+def glazing_calc_price(w, h, pc, direction='right', color='ral7016', glass='transparent', euro_rate=100.0):
     """Return per-opening glazing price in EUR (incl. paint, glass, delivery, install).
     Mirrors S500 standalone calculator pricing."""
     try:
@@ -338,10 +338,11 @@ def glazing_calc_price(w, h, pc, direction='right', color='ral7016', glass='tran
         comp *= (1 + GLAZING_PAINT_PCT / 100.0)
     area = w * h
     glass_eur = GLAZING_TINTED_EUR_M2 if glass == 'tinted' else GLAZING_TRANSPARENT_EUR_M2
-    glass_part = area * glass_eur * (1 + GLAZING_MARKUP_PCT / 100.0) / 100.0  # convert ₽→€ via /100
-    install_part = area * GLAZING_INSTALL_EUR_M2 * (1 + GLAZING_MARKUP_PCT / 100.0) / 100.0
+    rate = euro_rate if euro_rate and euro_rate > 0 else 100.0
+    glass_part = area * glass_eur * (1 + GLAZING_MARKUP_PCT / 100.0) / rate  # ₽ → €
+    install_part = area * GLAZING_INSTALL_EUR_M2 * (1 + GLAZING_MARKUP_PCT / 100.0) / rate
     deliv_part = comp * (GLAZING_DELIVERY_PCT / 100.0) * (1 + GLAZING_MARKUP_PCT / 100.0)
-    # All ₽-based components were divided by /100 (the standalone CFG.euroRate).
+    # ₽-priced components (glass, install) are converted to € using current pricing_settings rate.
     # Comp price is already in EUR (taken straight from PD table).
     return comp + glass_part + deliv_part + install_part
 
@@ -1263,10 +1264,11 @@ def perform_calculation(dimensions, options):
                     direction_g = 'center'
                 if pc_g % 2 != 0 and direction_g == 'center':
                     direction_g = 'right'
-                if op_w < 1.8 or op_h < 1.7:
+                if op_w < 1.8 or op_h < 1.7 or op_w > 12.0 or op_h > 3.25:
                     continue
 
-                price_eur = glazing_calc_price(op_w, op_h, pc_g, direction_g, color_g, glass_g)
+                _glz_rate = pricing_settings.get_euro_rate() or 100.0
+                price_eur = glazing_calc_price(op_w, op_h, pc_g, direction_g, color_g, glass_g, euro_rate=_glz_rate)
                 price_eur = round(price_eur * count_g, 2)
                 area_one = round(op_w * op_h, 2)
 
@@ -1343,6 +1345,7 @@ def perform_calculation(dimensions, options):
                 "openings": glazing_normalized,
                 "area": glazing_total_area,
                 "price": glazing_total_eur,
+                "count": sum(int(o.get("count", 1) or 1) for o in glazing_normalized),
             },
             "lamellas_count": lamellas_count,
             "pergola_type_name": PERGOLA_TYPES.get(pergola_type, pergola_type),

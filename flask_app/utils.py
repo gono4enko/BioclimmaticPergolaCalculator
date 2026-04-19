@@ -729,6 +729,22 @@ def _draw_glazing_fill(spec, x, y, w, h):
         out.append(f'<rect x="{px + panel_w * 0.5:.1f}" y="{inner_y:.1f}" width="{panel_w * 0.5:.1f}" height="{inner_h:.1f}" fill="{cG2}" opacity="0.3"/>')
     rail_y = y + h - bot_px
     out.append(f'<rect x="{x:.1f}" y="{rail_y - 1:.1f}" width="{w:.1f}" height="2" fill="#b8c4cc"/>')
+    # Sash handles: small vertical bar on each panel near opening edge.
+    handle_w = max(1.2, min(3.5, panel_w * 0.05))
+    handle_h = max(8, min(28, inner_h * 0.16))
+    handle_y = inner_y + inner_h * 0.45
+    for i in range(pc):
+        if is_center:
+            section_idx = i % (pc // 2)
+            section_off = (inner_w - center_px) / 2 + center_px if i >= pc // 2 else 0
+            opens_right = (i >= pc // 2)
+        else:
+            section_idx = i
+            section_off = 0
+            opens_right = (direction == 'right')
+        px = inner_x + section_off + section_idx * (panel_w + mid_px)
+        hx = (px + panel_w - handle_w - 2) if opens_right else (px + 2)
+        out.append(f'<rect x="{hx:.1f}" y="{handle_y:.1f}" width="{handle_w:.1f}" height="{handle_h:.1f}" fill="{pD}" rx="0.6"/>')
     return ''.join(out)
 
 
