@@ -177,6 +177,35 @@ FACADE_BEAM_HEIGHTS = {
 }
 FACADE_PERGOLA_HEIGHT = 3.0
 
+FACADE_MAX_PANEL_W = {
+    "FZ-44": 2.0,
+    "FP-20": 4.0,
+    "FP-PIR": 4.0,
+}
+FACADE_EXTRA_COL_PRICE_PER_M = 200.0
+
+
+def _facade_extra_cols(full_bay_w, col_w, max_panel_w):
+    """Compute number of extra support columns and resulting section width.
+    Returns (n_extra, section_width_m).
+    Formula: section_w = (full_bay_w - (n_extra+2)*col_w) / (n_extra+1)
+    """
+    n_extra = 0
+    while n_extra < 50:
+        n_sections = n_extra + 1
+        n_cols = n_extra + 2
+        usable = full_bay_w - n_cols * col_w
+        if usable <= 0:
+            break
+        section_w = usable / n_sections
+        if section_w <= max_panel_w:
+            break
+        n_extra += 1
+    n_sections = n_extra + 1
+    usable = max(0.01, full_bay_w - (n_extra + 2) * col_w)
+    section_w = max(0.01, usable / n_sections)
+    return n_extra, section_w
+
 _price_cache = {}
 _variant_price_cache = {}
 
@@ -869,6 +898,9 @@ def perform_calculation(dimensions, options):
         facade_openings = options.get("facade_openings", [])
         facade_area = 0.0
         facade_price_eur = 0.0
+        max_extra_front_back = 0
+        max_extra_sides = 0
+        total_extra_cols = 0
 
         if facade_openings:
             sv = selected_variant or ""
@@ -894,7 +926,13 @@ def perform_calculation(dimensions, options):
                 if _s in side_max_bay:
                     side_max_bay[_s] = max(side_max_bay[_s], int(_op.get("bay", 0)))
             length_modules = max(side_max_bay["left"], side_max_bay["right"]) + 1
+
+            full_front_back_bay_w = width_m / max(1, modules)
+            full_side_bay_w = length_m / max(1, length_modules)
+
             type_groups = {}
+            extra_cols_by_key = {}
+
             for opening in facade_openings:
                 if not isinstance(opening, dict):
                     continue
@@ -904,15 +942,33 @@ def perform_calculation(dimensions, options):
                 side = opening.get("side", "")
                 if side not in ("front", "back", "left", "right"):
                     continue
+
+                product_family = "FZ-44" if o_type.startswith("FZ-44") else o_type
+                max_panel_w = FACADE_MAX_PANEL_W.get(product_family, 4.0)
+
+                if side in ("front", "back"):
+                    full_bay_w = full_front_back_bay_w
+                else:
+                    full_bay_w = full_side_bay_w
+
+                n_extra, section_w = _facade_extra_cols(full_bay_w, col_w, max_panel_w)
+                n_sections = n_extra + 1
+                opening_area = section_w * n_sections * open_h
+
+                key = (side, opening.get("bay", 0))
+                extra_cols_by_key[key] = n_extra
+
                 if o_type not in type_groups:
                     type_groups[o_type] = {"area": 0.0, "sides": {}}
-                if side in ("front", "back"):
-                    bay_w = max(0.01, (width_m / max(1, modules)) - col_w)
-                    type_groups[o_type]["area"] += bay_w * open_h
-                else:
-                    side_w = max(0.01, (length_m / max(1, length_modules)) - col_w)
-                    type_groups[o_type]["area"] += side_w * open_h
+                type_groups[o_type]["area"] += opening_area
                 type_groups[o_type]["sides"][side] = type_groups[o_type]["sides"].get(side, 0) + 1
+
+            for (side, _bay), n_extra in extra_cols_by_key.items():
+                if side in ("front", "back"):
+                    max_extra_front_back = max(max_extra_front_back, n_extra)
+                else:
+                    max_extra_sides = max(max_extra_sides, n_extra)
+                total_extra_cols += n_extra
 
             for o_type, grp in type_groups.items():
                 g_area = round(grp["area"], 2)
@@ -936,6 +992,24 @@ def perform_calculation(dimensions, options):
                     "name": facade_name,
                     "count": f"{n_open} \u043f\u0440\u043e\u0451\u043c\u0430, {g_area:.2f} \u043c\u00b2"
                 })
+
+            if total_extra_cols > 0:
+                extra_col_unit = round(FACADE_EXTRA_COL_PRICE_PER_M * height_m, 2)
+                extra_col_total_price = round(extra_col_unit * total_extra_cols, 2)
+                total_price += extra_col_total_price
+                items.append({
+                    "name": (f"\u0414\u043e\u043f. \u043a\u043e\u043b\u043e\u043d\u043d\u0430 \u0434\u043b\u044f "
+                             f"\u0444\u0430\u0441\u0430\u0434\u043d\u044b\u0445 \u043f\u0430\u043d\u0435\u043b\u0435\u0439 "
+                             f"({total_extra_cols} \u0448\u0442., {height_m:.1f}\u00d7200 \u20ac/\u043c)"),
+                    "price": extra_col_total_price
+                })
+                specification.append({
+                    "name": "\u0414\u043e\u043f. \u043a\u043e\u043b\u043e\u043d\u043d\u0430 \u0444\u0430\u0441\u0430\u0434\u043d\u044b\u0445 \u043f\u0430\u043d\u0435\u043b\u0435\u0439",
+                    "count": f"{total_extra_cols} \u0448\u0442."
+                })
+            else:
+                extra_col_total_price = 0
+
             facade_area = round(facade_area, 2)
             facade_price_eur = round(facade_price_eur, 2)
 
@@ -981,7 +1055,15 @@ def perform_calculation(dimensions, options):
             },
             "delivery": {"percentage": delivery_pct, "price": delivery_price},
             "installation": {"selected": installation, "price": installation_price},
-            "facade": {"type": facade_type, "openings": facade_openings, "area": facade_area, "price": facade_price_eur},
+            "facade": {
+                "type": facade_type,
+                "openings": facade_openings,
+                "area": facade_area,
+                "price": facade_price_eur,
+                "extra_cols_front": max_extra_front_back,
+                "extra_cols_side": max_extra_sides,
+                "extra_cols_count": total_extra_cols,
+            },
             "lamellas_count": lamellas_count,
             "pergola_type_name": PERGOLA_TYPES.get(pergola_type, pergola_type),
             "lamella_type_name": LAMELLA_TYPES.get(lamella_type, lamella_type),

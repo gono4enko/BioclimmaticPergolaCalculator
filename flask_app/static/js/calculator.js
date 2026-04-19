@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v103';
+    var SVG_V = 'v104';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -667,6 +667,7 @@ document.addEventListener('DOMContentLoaded', function() {
             facade_openings: computeFacadeOpenings()
         };
 
+        state._pergolaHeight = state.height || 3.0;
         stepsEl.spinner.style.display = 'flex';
 
         fetch('/api/calculate', {
@@ -1195,16 +1196,18 @@ document.addEventListener('DOMContentLoaded', function() {
         var _bayB = getBayFillQs('back', parseInt(m) || 1);
         var _bayA = getBayFillQs('left', lm);
         var _bayC = getBayFillQs('right', lm);
-        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + _bayF;
+        var xcFB = (r && r.facade && r.facade.extra_cols_front) ? ('&xc=' + r.facade.extra_cols_front) : '';
+        var xcS = (r && r.facade && r.facade.extra_cols_side) ? ('&xc=' + r.facade.extra_cols_side) : '';
+        var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcFB + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + _bayF;
         var fimg = document.getElementById('kp-front-img');
         if (fimg) fimg.src = '/api/pergola-front.svg?' + fqs + '&_v=' + SVG_V;
-        var bqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + _bayB;
+        var bqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcFB + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + _bayB;
         var bimg = document.getElementById('kp-back-img');
         if (bimg) bimg.src = '/api/pergola-front.svg?' + bqs + '&_v=' + SVG_V;
-        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _bayA;
+        var sqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcS + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _bayA;
         var simg = document.getElementById('kp-side-img');
         if (simg) simg.src = '/api/pergola-front.svg?' + sqs + '&_v=' + SVG_V;
-        var rqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _bayC;
+        var rqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcS + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _bayC;
         var rimg = document.getElementById('kp-right-img');
         if (rimg) rimg.src = '/api/pergola-front.svg?' + rqs + '&_v=' + SVG_V;
         var lcAttr = block.dataset.lc;
@@ -1389,6 +1392,11 @@ document.addEventListener('DOMContentLoaded', function() {
             var reinf = (mainResult && mainResult.reinforcement) || {kind: null, extra_columns_count: 0};
             var xc = parseInt(reinf.extra_columns_count || 0, 10) || 0;
             var xcQs = xc > 0 ? '&xc=' + xc : '';
+            var facadeRes = (mainResult && mainResult.facade) || {};
+            var xcFacadeFB = parseInt(facadeRes.extra_cols_front || 0, 10) || 0;
+            var xcFacadeS = parseInt(facadeRes.extra_cols_side || 0, 10) || 0;
+            var xcFBqs = xcFacadeFB > 0 ? ('&xc=' + xcFacadeFB) : '';
+            var xcSideQs = Math.max(xc, xcFacadeS) > 0 ? ('&xc=' + Math.max(xc, xcFacadeS)) : '';
             var qs = 'w=' + schW + '&l=' + schL + '&m=' + schM +
                 (lamCnt !== '' ? '&lc=' + lamCnt : '') +
                 (moLocal ? '&mo=' + moLocal : '') +
@@ -1404,10 +1412,10 @@ document.addEventListener('DOMContentLoaded', function() {
             var _kpBayB = getBayFillQs('back', schM);
             var _kpBayA = getBayFillQs('left', schLMods);
             var _kpBayC = getBayFillQs('right', schLMods);
-            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + colMmQs + _kpBayF + '&_v=' + SVG_V;
-            var bqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + colMmQs + _kpBayB + '&_v=' + SVG_V;
-            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + xcQs + colMmQs + _kpBayA + '&_v=' + SVG_V;
-            var rqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + xcQs + colMmQs + _kpBayC + '&_v=' + SVG_V;
+            var fqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + xcFBqs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + colMmQs + _kpBayF + '&_v=' + SVG_V;
+            var bqs = 'w=' + schW + '&h=' + pergolaH + '&m=' + schM + '&ref=' + refDim + xcFBqs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + colMmQs + _kpBayB + '&_v=' + SVG_V;
+            var sqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + xcSideQs + colMmQs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _kpBayA + '&_v=' + SVG_V;
+            var rqs = 'w=' + schL + '&h=' + pergolaH + '&m=' + schLMods + (moLocal ? '&mo=' + moLocal : '') + '&ref=' + refDim + xcSideQs + colMmQs + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _kpBayC + '&_v=' + SVG_V;
             var iqs = 'w=' + schW + '&l=' + schL + '&h=' + pergolaH + '&m=' + schM + (lamCnt !== '' ? '&lc=' + lamCnt : '') + (moLocal ? '&mo=' + moLocal : '') + (isPir ? '&pir=1' : '') + xcQs + (_kpFillF ? '&fill_front=' + encodeURIComponent(_kpFillF) : '') + (_kpFillC ? '&fill_right=' + encodeURIComponent(_kpFillC) : '') + (_kpFillA ? '&fill_left=' + encodeURIComponent(_kpFillA) : '') + (_kpFillB ? '&fill_back=' + encodeURIComponent(_kpFillB) : '') + '&_v=' + SVG_V;
             var isoLabel = isPir ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (PIR \u043F\u0430\u043D\u0435\u043B\u0438)' : (isB200 ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u0441\u0442\u0430\u0446\u0438\u043E\u043D\u0430\u0440\u043D\u044B\u0435)' : '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)');
             var isoBlock = (isPir || lamCnt) ? (
