@@ -457,7 +457,8 @@ document.addEventListener('DOMContentLoaded', function() {
             {v: 'S100',     n: 'S100 \u2014 \u0431\u0435\u0437\u0440\u0430\u043c\u043d\u043e\u0435 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 10\u00a0\u043c\u043c (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'},
             {v: 'W500',     n: 'W500 \u2014 \u0433\u0438\u043b\u044c\u043e\u0442\u0438\u043d\u043d\u043e\u0435, \u0441\u0442\u0435\u043a\u043b\u043e\u043f\u0430\u043a\u0435\u0442 20\u00a0\u043c\u043c (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'},
             {v: 'W600',     n: 'W600 \u2014 \u0433\u0438\u043b\u044c\u043e\u0442\u0438\u043d\u043d\u043e\u0435, \u0441\u0442\u0435\u043a\u043b\u043e\u043f\u0430\u043a\u0435\u0442 28\u00a0\u043c\u043c (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'},
-            {v: 'W700',     n: 'W700 \u2014 \u0433\u0438\u043b\u044c\u043e\u0442\u0438\u043d\u043d\u043e\u0435 \u0441 \u0442\u0435\u0440\u043c\u043e\u0440\u0430\u0437\u0440\u044b\u0432\u043e\u043c, 28\u00a0\u043c\u043c (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'}
+            {v: 'W700',     n: 'W700 \u2014 \u0433\u0438\u043b\u044c\u043e\u0442\u0438\u043d\u043d\u043e\u0435 \u0441 \u0442\u0435\u0440\u043c\u043e\u0440\u0430\u0437\u0440\u044b\u0432\u043e\u043c, 28\u00a0\u043c\u043c (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'},
+            {v: 'ZIP',      n: 'ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u0430 \u2014 \u0432\u0435\u0440\u0442\u0438\u043a\u0430\u043b\u044c\u043d\u0430\u044f (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'}
         ];
         var openings = [];
         for (var ai = 0; ai < lMods; ai++) {
@@ -491,7 +492,8 @@ document.addEventListener('DOMContentLoaded', function() {
             var glzEntry = state.glazingPerOpening && state.glazingPerOpening[key];
             var hasGlz = !!(glzEntry && glzEntry.enabled);
             var glzSeries = hasGlz ? ((glzEntry.series || 'S500').toUpperCase()) : '';
-            var selType = state.facadePerOpening[key] || glzSeries;
+            var zipEnabled = !!(state.zipPerOpening && state.zipPerOpening[key] && state.zipPerOpening[key].enabled && !hasGlz && !state.facadePerOpening[key]);
+            var selType = state.facadePerOpening[key] || glzSeries || (zipEnabled ? 'ZIP' : '');
             var dims = facadeOpeningDims(o);
             var dimsHtml = '<span style="font-size:0.82em;color:#555;white-space:nowrap;">' + dims.wMm + '\u00d7' + dims.hMm + ' \u043c\u043c</span>';
             var areaVal = (dims.wMm * dims.hMm / 1e6).toFixed(2);
@@ -512,9 +514,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 var key2 = this.dataset.side + '_' + this.dataset.bay;
                 var val = this.value;
                 var isGlzVal = (val === 'S500' || val === 'S100' || val === 'W500' || val === 'W600' || val === 'W700');
+                var isZipVal = (val === 'ZIP');
                 if (isGlzVal) {
-                    // Enable glazing for this opening, clear facade
+                    // Enable glazing for this opening, clear facade and ZIP
                     state.facadePerOpening[key2] = '';
+                    if (state.zipPerOpening && state.zipPerOpening[key2]) state.zipPerOpening[key2].enabled = false;
                     var defColor = (val === 'S500') ? 'ral7016' : 'ral9t08';
                     var existing = state.glazingPerOpening[key2];
                     if (!existing || (existing.series || 'S500') !== val) {
@@ -525,13 +529,27 @@ document.addEventListener('DOMContentLoaded', function() {
                         existing.enabled = true;
                         state.glazingPerOpening[key2] = existing;
                     }
+                } else if (isZipVal) {
+                    // Enable ZIP for this opening, clear glazing and facade fill
+                    state.facadePerOpening[key2] = '';
+                    if (state.glazingPerOpening[key2]) state.glazingPerOpening[key2].enabled = false;
+                    if (!state.zipPerOpening) state.zipPerOpening = {};
+                    var existingZip = state.zipPerOpening[key2] || {fabric: 'veozip', color: 'ral9016', drive: 'manual', count: 1};
+                    existingZip.enabled = true;
+                    state.zipPerOpening[key2] = existingZip;
                 } else {
-                    // Regular facade or none — disable glazing for this opening
+                    // Regular facade or none — disable glazing and ZIP for this opening
                     state.facadePerOpening[key2] = val;
                     if (state.glazingPerOpening[key2]) state.glazingPerOpening[key2].enabled = false;
+                    if (state.zipPerOpening && state.zipPerOpening[key2] && !val) {
+                        // "none" deselection: keep ZIP as-is (user can manage in ZIP section)
+                    } else if (state.zipPerOpening && state.zipPerOpening[key2] && val) {
+                        // Switching to a facade fill: disable ZIP
+                        state.zipPerOpening[key2].enabled = false;
+                    }
                 }
                 state.facadeOpenings = computeFacadeOpenings();
-                state.facadeType = isGlzVal ? '' : val;
+                state.facadeType = (isGlzVal || isZipVal) ? '' : val;
                 var tr = this.closest('tr');
                 if (tr) {
                     var areaTd = tr.querySelector('.facade-area');
@@ -1345,6 +1363,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 state.zipPerOpening[k] = z;
                 buildZipTable();
                 updateZipAreaInfo();
+                buildFacadeTable();
             });
         });
         tableEl.querySelectorAll('.zip-fld').forEach(function(sel) {
