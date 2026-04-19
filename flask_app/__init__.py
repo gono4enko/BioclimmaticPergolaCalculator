@@ -234,11 +234,15 @@ def create_app(test_config=None):
 
     @app.after_request
     def set_iframe_headers(response):
+        from flask import request as _req
         response.headers.pop('X-Frame-Options', None)
         csp = response.headers.get('Content-Security-Policy', '').replace('frame-ancestors', '') or "frame-ancestors *"
         if 'frame-src' not in csp:
             csp += "; frame-src 'self' https://rutube.ru https://*.rutube.ru"
         response.headers['Content-Security-Policy'] = csp
+        if _req.path.startswith('/static/') and (_req.path.endswith('.js') or _req.path.endswith('.css')):
+            response.headers['Cache-Control'] = 'no-cache, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
         return response
 
     @app.errorhandler(404)
