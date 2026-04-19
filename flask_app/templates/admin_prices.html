@@ -121,7 +121,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <div class="card">
-    <div class="card-header">Цены остекления (S500 и S100)</div>
+    <div class="card-header">Цены остекления (S500, S100, W500/W600/W700)</div>
     <div class="card-body">
         <div class="sel-row">
             <div class="form-group">
@@ -129,9 +129,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                 <select id="glazSystem">
                     <option value="S500">S500 — раздвижное панорамное</option>
                     <option value="S100">S100 — безрамное сдвижное</option>
+                    <option value="W500">W500 — гильотинное (20 мм)</option>
+                    <option value="W600">W600 — гильотинное (28 мм)</option>
+                    <option value="W700">W700 — гильотинное с терморазрывом</option>
                 </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="glazConfigGroup">
                 <label>Конфигурация (створки)</label>
                 <select id="glazConfig"></select>
             </div>
@@ -561,7 +564,17 @@ var GLAZ_SETTING_LABELS = {
     'S500_PAINT_PCT':          'S500: окраска RAL, %',
     'S100_RAL_SPECIAL_PCT':    'S100: RAL special, %',
     'S100_TINTED_SURCHARGE_EUR_M2': 'S100: доплата за тонировку, ₽/м²',
+    'W_RAL_SPECIAL_PCT':       'W (гильотина): RAL special, %',
+    'W_MULTIFUNCTIONAL_PCT':   'W (гильотина): мультифункц. стекло, %',
+    'W500_PLAVNIK_RATE':       'W500: плавники, €/пог.м',
+    'W600_PLAVNIK_RATE':       'W600: плавники, €/пог.м',
+    'W700_PLAVNIK_RATE':       'W700: плавники, €/пог.м',
 };
+
+function _glazConfigLabel(c) {
+    if (c === 'all') return 'Единая матрица';
+    return c + ' створ.';
+}
 
 function loadGlazingMatrix() {
     var sys = glazSysSel.value;
@@ -579,9 +592,12 @@ function loadGlazingMatrix() {
             var configs = Object.keys(d.configs);
             glazConfSel.innerHTML = '';
             configs.forEach(function(c){
-                var o = document.createElement('option'); o.value = c; o.textContent = c + ' створ.';
+                var o = document.createElement('option'); o.value = c; o.textContent = _glazConfigLabel(c);
                 glazConfSel.appendChild(o);
             });
+            // Hide config selector for W series (single 'all' config)
+            var configGroup = document.getElementById('glazConfigGroup');
+            configGroup.style.display = (configs.length === 1 && configs[0] === 'all') ? 'none' : '';
             if (!glazCurrentConf || !d.configs[glazCurrentConf]) glazCurrentConf = configs[0];
             glazConfSel.value = glazCurrentConf;
             renderGlazMatrix();
@@ -622,7 +638,11 @@ function renderGlazMatrix() {
         html += '</tr>';
     });
     html += '</table></div>';
-    html += '<p style="font-size:12px;color:#888;margin-top:8px">Цена за створку в евро. Любое значение между точками сетки округляется к ближайшей ячейке.</p>';
+    var isW = ['W500','W600','W700'].indexOf(glazSysSel.value) >= 0;
+    var note = isW
+        ? 'Цена за окно в евро. Размер между точками сетки округляется к ближайшему большему значению (ceiling).'
+        : 'Цена за створку в евро. Любое значение между точками сетки округляется к ближайшей ячейке.';
+    html += '<p style="font-size:12px;color:#888;margin-top:8px">' + note + '</p>';
     wrap.innerHTML = html;
 }
 

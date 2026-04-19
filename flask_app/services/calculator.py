@@ -268,6 +268,12 @@ GLAZING_SETTINGS = {
     'S100_RAL_SPECIAL_PCT':      10.0,
     # S100 tinted-glass surcharge defaults to (S500 tinted - S500 transparent).
     'S100_TINTED_SURCHARGE_EUR_M2': 1000.0,
+    # W500/W600/W700 guillotine glazing surcharges.
+    'W_RAL_SPECIAL_PCT':         10.0,
+    'W_MULTIFUNCTIONAL_PCT':     10.0,
+    'W500_PLAVNIK_RATE':         80.0,
+    'W600_PLAVNIK_RATE':        100.0,
+    'W700_PLAVNIK_RATE':        100.0,
 }
 
 def _gs(key):
@@ -458,7 +464,12 @@ S100_TINTED_SURCHARGE_EUR_M2 = GLAZING_SETTINGS['S100_TINTED_SURCHARGE_EUR_M2']
 
 
 def _glazing_pd_for(system):
-    return GLAZING_PD if system == 'S500' else S100_PD if system == 'S100' else None
+    if system == 'S500': return GLAZING_PD
+    if system == 'S100': return S100_PD
+    if system == 'W500': return W500_CONFIGS
+    if system == 'W600': return W600_CONFIGS
+    if system == 'W700': return W700_CONFIGS
+    return None
 
 
 def _ensure_glazing_tables(cur):
@@ -642,6 +653,21 @@ W700_PD = {
                  [2.0, 2.5, 3.0, 3.5, 4.0], 760, 80),
 }
 
+# Config-keyed wrappers so W series can share the same DB/admin infrastructure
+# as S500/S100 (which are config-nested). Each W series has a single matrix
+# stored under the key 'all'. The wrapper dict is mutated in place by
+# _ensure_glazing_loaded() when admin overrides are applied.
+W500_CONFIGS = {'all': W500_PD}
+W600_CONFIGS = {'all': W600_PD}
+W700_CONFIGS = {'all': W700_PD}
+
+# Register W series defaults AFTER the PDs are defined so the deepcopy captures
+# the actual factory values (the _GLAZING_PD_DEFAULTS dict itself was created
+# earlier but can be extended here because it is a mutable dict).
+_GLAZING_PD_DEFAULTS['W500'] = {'all': _copy.deepcopy(W500_PD)}
+_GLAZING_PD_DEFAULTS['W600'] = {'all': _copy.deepcopy(W600_PD)}
+_GLAZING_PD_DEFAULTS['W700'] = {'all': _copy.deepcopy(W700_PD)}
+
 W_SERIES_NAMES = {
     'W500': 'W500 — гильотинное остекление (стеклопакет 20 мм / стекло 10 мм)',
     'W600': 'W600 — гильотинное остекление (стеклопакет 28 мм)',
@@ -674,10 +700,11 @@ W_PLAVNIK_TRIGGER_W = 3.0
 
 
 def _w_pd(series):
+    """Return the live (potentially admin-overridden) matrix for a W series."""
     s = (series or '').upper()
-    if s == 'W500': return W500_PD
-    if s == 'W600': return W600_PD
-    if s == 'W700': return W700_PD
+    if s == 'W500': return W500_CONFIGS.get('all')
+    if s == 'W600': return W600_CONFIGS.get('all')
+    if s == 'W700': return W700_CONFIGS.get('all')
     return None
 
 
@@ -699,6 +726,8 @@ def w_calc_price(series, w, h, color='ral9t08', glass='transparent',
         return 0.0
     if w <= 0 or h <= 0:
         return 0.0
+    # Apply admin overrides on the matrix and surcharges before any lookup.
+    _ensure_glazing_loaded()
     pd = _w_pd(series)
     if not pd:
         return 0.0
@@ -710,14 +739,14 @@ def w_calc_price(series, w, h, color='ral9t08', glass='transparent',
     # available billable bin (customer is never undercharged).
     comp = pd['p'][_glaze_ceil(pd['h'], h_c)][_glaze_ceil(pd['w'], w_c)]
     if color == 'ral_special':
-        comp *= (1 + W_RAL_SPECIAL_PCT / 100.0)
+        comp *= (1 + _gs('W_RAL_SPECIAL_PCT') / 100.0)
     if glass == 'multifunctional':
-        comp *= (1 + W_MULTIFUNCTIONAL_PCT / 100.0)
+        comp *= (1 + _gs('W_MULTIFUNCTIONAL_PCT') / 100.0)
     # Auto-on плавник when wider than trigger
     if plavnik is None:
         plavnik = (w > W_PLAVNIK_TRIGGER_W)
     if plavnik:
-        comp += W_PLAVNIK_RATE.get(s, 0) * w
+        comp += _gs(f'{s}_PLAVNIK_RATE') * w
     return round(comp, 2)
 
 

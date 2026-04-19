@@ -677,9 +677,9 @@ def scheduler_health():
     return jsonify(health), status_code
 
 
-# ---------- Glazing (S500 / S100) price matrix admin ----------
+# ---------- Glazing (S500 / S100 / W500 / W600 / W700) price matrix admin ----------
 
-_GLAZING_SYSTEMS = ('S500', 'S100')
+_GLAZING_SYSTEMS = ('S500', 'S100', 'W500', 'W600', 'W700')
 
 
 def _glazing_pd_snapshot(system):
@@ -794,6 +794,11 @@ _GLAZING_SETTING_KEYS = (
     'S500_PAINT_PCT',
     'S100_RAL_SPECIAL_PCT',
     'S100_TINTED_SURCHARGE_EUR_M2',
+    'W_RAL_SPECIAL_PCT',
+    'W_MULTIFUNCTIONAL_PCT',
+    'W500_PLAVNIK_RATE',
+    'W600_PLAVNIK_RATE',
+    'W700_PLAVNIK_RATE',
 )
 
 
