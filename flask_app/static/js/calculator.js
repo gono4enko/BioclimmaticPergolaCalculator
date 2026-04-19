@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v109';
+    var SVG_V = 'v110';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -2338,6 +2338,8 @@ document.addEventListener('DOMContentLoaded', function() {
             '\u043B\u0435\u043D\u0442\u0430': 'LED-\u043B\u0435\u043D\u0442\u0430 IP65 \u0441 \u0437\u0430\u0449\u0438\u0442\u043E\u0439 \u043E\u0442 \u0432\u043B\u0430\u0433\u0438',
             '\u0414\u043E\u0441\u0442\u0430\u0432\u043A\u0430': '\u0414\u043E\u0441\u0442\u0430\u0432\u043A\u0430 \u0434\u043E \u043E\u0431\u044A\u0435\u043A\u0442\u0430 \u0432 \u043F\u0440\u0435\u0434\u0435\u043B\u0430\u0445 \u0420\u0424',
             '\u041C\u043E\u043D\u0442\u0430\u0436': '\u041F\u0440\u043E\u0444\u0435\u0441\u0441\u0438\u043E\u043D\u0430\u043B\u044C\u043D\u0430\u044F \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430 \u0431\u0440\u0438\u0433\u0430\u0434\u043E\u0439 Decolife',
+            'ZIP100': 'ZIP100 \u2014 \u043a\u043e\u043c\u043f\u0430\u043a\u0442\u043d\u044b\u0439 \u043a\u043e\u0440\u043e\u0431 100\u00d7100 \u043c\u043c, \u043c\u0430\u043a\u0441. ~14 \u043c\u00b2. Zip-\u0437\u0430\u043c\u043e\u043a: \u043f\u043e\u043b\u043e\u0442\u043d\u043e \u0444\u0438\u043a\u0441\u0438\u0440\u0443\u0435\u0442\u0441\u044f \u0432 \u0431\u043e\u043a\u043e\u0432\u044b\u0445 \u043d\u0430\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0449\u0438\u0445 \u2014 \u0437\u0430\u0437\u043e\u0440\u043e\u0432 \u043d\u0435\u0442 \u0434\u0430\u0436\u0435 \u043f\u0440\u0438 \u0432\u0435\u0442\u0440\u0435. \u0422\u043a\u0430\u043d\u044c Veozip / Soltis W96 / Copaco Blackout.',
+            'ZIP130': 'ZIP130 \u2014 \u0443\u0441\u0438\u043b\u0435\u043d\u043d\u044b\u0439 \u043a\u043e\u0440\u043e\u0431 130\u00d7130 \u043c\u043c, \u043c\u0430\u043a\u0441. 25 \u043c\u00b2. \u0414\u043b\u044f \u0448\u0438\u0440\u043e\u043a\u0438\u0445 \u043f\u0440\u043e\u0451\u043c\u043e\u0432, \u0442\u0435\u0440\u0440\u0430\u0441 \u0438 \u043f\u0435\u0440\u0433\u043e\u043b. \u0412\u0430\u043b \u00d878 \u043c\u043c, \u043f\u0440\u043e\u0444\u0438\u043b\u044c 4\u20135 \u043c\u043c. \u042d\u043b\u0435\u043a\u0442\u0440\u043e\u043f\u0440\u0438\u0432\u043e\u0434 Simu RTS \u0438 \u0434\u0430\u0442\u0447\u0438\u043a\u0438 \u0432\u0435\u0442\u0440\u0430/\u0441\u043e\u043b\u043d\u0446\u0430.',
             'ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u0430': '\u0420\u0443\u043b\u043e\u043d\u043d\u0430\u044f \u043c\u0430\u0440\u043a\u0438\u0437\u0430 \u0441 \u0431\u043e\u043a\u043e\u0432\u044b\u043c\u0438 \u043d\u0430\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0449\u0438\u043c\u0438 (zip-\u0441\u0438\u0441\u0442\u0435\u043c\u0430) \u2014 \u0437\u0430\u0449\u0438\u0442\u0430 \u043e\u0442 \u0441\u043e\u043b\u043d\u0446\u0430, \u0432\u0435\u0442\u0440\u0430 \u0438 \u043e\u0441\u0430\u0434\u043a\u043e\u0432',
             '\u0414\u043e\u043f. \u043a\u043e\u043b\u043e\u043d\u043d\u0430 (ZIP)': '\u0414\u043e\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c\u043d\u0430\u044f \u0432\u0435\u0440\u0442\u0438\u043a\u0430\u043b\u044c\u043d\u0430\u044f \u043e\u043f\u043e\u0440\u0430 \u0434\u043b\u044f ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u044b \u0448\u0438\u0440\u043e\u043a\u043e\u0433\u043e \u043f\u0440\u043e\u043b\u0451\u0442\u0430'
         };
@@ -2371,7 +2373,71 @@ document.addEventListener('DOMContentLoaded', function() {
         var zipRes = mainResult && mainResult.zip;
         if (!isAll && zipRes && zipRes.count > 0) {
             html += '<div class="kp-block">';
-            html += '<div class="kp-block-header"><div class="kp-block-icon" style="background:#0ea5e9;">\uD83C\uDF00</div><div class="kp-block-title">ZIP-\u043C\u0430\u0440\u043A\u0438\u0437\u044B (' + zipRes.count + ' \u0448\u0442.)</div></div>';
+            html += '<div class="kp-block-header"><div class="kp-block-icon" style="background:#0ea5e9;">&#x1F4E6;</div>' +
+                    '<div class="kp-block-title">ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u044b (' + zipRes.count + ' \u0448\u0442.) \u2014 \u0432\u0435\u0440\u0442\u0438\u043a\u0430\u043b\u044c\u043d\u044b\u0435 \u0440\u0443\u043b\u043e\u043d\u043d\u044b\u0435 \u0448\u0442\u043e\u0440\u044b</div></div>';
+
+            /* Collect distinct ZIP types and their representative opening */
+            var zipTypeMap = {};
+            var fabricDisplayMap = {veozip:'Veozip (Screen Veosol)', soltis:'Soltis W96/W88', copaco:'Copaco Lunar Blackout'};
+            var colorDisplayMap = {ral9016:'\u0411\u0435\u043b\u044b\u0439 RAL 9016', ral7024:'\u0413\u0440\u0430\u0444\u0438\u0442 RAL 7024', ral9t08:'\u0413\u0440\u0430\u0444\u0438\u0442 \u0442\u0435\u043a\u0441\u0442. RAL 9T08', ral8028:'\u041a\u043e\u0440\u0438\u0447\u043d\u0435\u0432\u044b\u0439 RAL 8028', ral_special:'RAL special'};
+            var driveDisplayMap = {manual:'\u0420\u0443\u0447\u043d\u043e\u0435', simu:'SIMU RTS', somfy:'Somfy RTS', decolife:'Decolife'};
+            (zipRes.openings || []).forEach(function(zo) {
+                var t = (zo.zip_type || 'ZIP100').toUpperCase();
+                if (!zipTypeMap[t]) zipTypeMap[t] = zo;
+            });
+
+            /* Product description cards for each ZIP type */
+            var zipTypeKeys = Object.keys(zipTypeMap);
+            if (zipTypeKeys.length > 0) {
+                html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:1rem;">';
+                zipTypeKeys.forEach(function(t) {
+                    var zo = zipTypeMap[t];
+                    var fabricLabel = fabricDisplayMap[zo.fabric] || zo.fabric;
+                    var colorLabel = colorDisplayMap[zo.color] || zo.color;
+                    var driveLabel = driveDisplayMap[zo.drive] || zo.drive;
+                    var wMm = zo.adj_w ? Math.round(zo.adj_w * 1000) : 0;
+                    var hMm = zo.adj_h ? Math.round(zo.adj_h * 1000) : 0;
+                    var dimLabel = (wMm && hMm) ? (wMm + '\u00d7' + hMm + ' \u043c\u043c') : '';
+                    var isZ100 = (t === 'ZIP100');
+                    var casSize = isZ100 ? '100\u00d7100' : '130\u00d7130';
+                    var maxArea = isZ100 ? '\u224814 \u043c\u00b2' : '\u226425 \u043c\u00b2';
+                    var shaftD  = isZ100 ? 'Ø55 \u043c\u043c' : 'Ø78 \u043c\u043c';
+                    var descText = isZ100
+                        ? 'Zip-\u0441\u0438\u0441\u0442\u0435\u043c\u0430 \u2014 \u043f\u043e\u043b\u043e\u0442\u043d\u043e \u0432\u0445\u043e\u0434\u0438\u0442 \u0432 \u0437\u0438\u043f-\u043a\u0430\u043d\u0430\u043b \u0431\u043e\u043a\u043e\u0432\u044b\u0445 \u043d\u0430\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0449\u0438\u0445: \u0437\u0430\u0437\u043e\u0440\u043e\u0432 \u043d\u0435\u0442 \u0434\u0430\u0436\u0435 \u043f\u0440\u0438 \u0431\u043e\u043a\u043e\u0432\u043e\u043c \u0432\u0435\u0442\u0440\u0435. \u0417\u0430\u0449\u0438\u0442\u0430 \u043e\u0442 \u0441\u043e\u043b\u043d\u0446\u0430, \u043a\u043e\u0441\u043e\u0433\u043e \u0434\u043e\u0436\u0434\u044f \u0438 \u0432\u0435\u0442\u0440\u0430 \u0441 \u0435\u0441\u0442\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0439 \u0432\u0435\u043d\u0442\u0438\u043b\u044f\u0446\u0438\u0435\u0439.'
+                        : 'Zip-\u0441\u0438\u0441\u0442\u0435\u043c\u0430 \u0434\u043b\u044f \u0448\u0438\u0440\u043e\u043a\u0438\u0445 \u043f\u0440\u043e\u0451\u043c\u043e\u0432 \u0438 \u043f\u0435\u0440\u0433\u043e\u043b. \u0423\u0441\u0438\u043b\u0435\u043d\u043d\u044b\u0439 \u043f\u0440\u043e\u0444\u0438\u043b\u044c, \u0432\u0430\u043b Ø78 \u043c\u043c \u2014 \u0443\u0441\u0442\u043e\u0439\u0447\u0438\u0432 \u043a \u0432\u0435\u0442\u0440\u043e\u0432\u044b\u043c \u043d\u0430\u0433\u0440\u0443\u0437\u043a\u0430\u043c. \u0414\u043e\u043f\u0443\u0441\u043a\u0430\u0435\u0442 \u043f\u0440\u043e\u0437\u0440\u0430\u0447\u043d\u0443\u044e ПВХ-\u0432\u0441\u0442\u0430\u0432\u043a\u0443 \u0434\u043e 2,8 \u043c \u0448\u0438\u0440\u0438\u043d\u043e\u0439.';
+                    var wM = zo.adj_w || 2.0;
+                    var hM = zo.adj_h || 2.7;
+                    var detailSrc = '/api/zip-detail.svg?type=' + t + '&w=' + wM.toFixed(2) + '&h=' + hM.toFixed(2) + '&fabric=' + encodeURIComponent(fabricLabel) + '&_v=' + SVG_V;
+                    html += '<div style="border:1px solid #b8d0e8;border-radius:10px;padding:0.8rem;background:linear-gradient(135deg,#f0f6ff,#fbfcfe);">';
+                    html += '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">';
+                    html += '<span style="background:#0ea5e9;color:#fff;border-radius:6px;padding:2px 10px;font-weight:700;font-size:0.9em;">' + t + '</span>';
+                    html += '<span style="font-size:0.85em;color:#0369a1;font-weight:600;">\u0412\u0435\u0440\u0442\u0438\u043a\u0430\u043b\u044c\u043d\u0430\u044f ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u0430</span>';
+                    html += '</div>';
+                    html += '<div style="text-align:center;margin:0.5rem 0;"><img src="' + detailSrc + '" alt="' + t + '" style="max-width:100%;height:auto;border-radius:6px;"></div>';
+                    html += '<div style="font-size:0.82em;color:#444;line-height:1.5;margin-bottom:0.5rem;">' + descText + '</div>';
+                    html += '<table style="width:100%;font-size:0.8em;border-collapse:collapse;">';
+                    var specRows = [
+                        ['\u041a\u043e\u0440\u043e\u0431 (\u043a\u0430\u0441\u0441\u0435\u0442\u0430)', casSize + ' \u043c\u043c'],
+                        ['\u041c\u0430\u043a\u0441. \u043f\u043b\u043e\u0449\u0430\u0434\u044c', maxArea],
+                        ['\u0412\u0430\u043b', shaftD],
+                        ['\u0422\u043a\u0430\u043d\u044c', fabricLabel],
+                        ['\u0426\u0432\u0435\u0442 \u043a\u043e\u0440\u043e\u0431\u0430', colorLabel],
+                        ['\u041f\u0440\u0438\u0432\u043e\u0434', driveLabel],
+                        ['\u0420\u0430\u0437\u043c\u0435\u0440', dimLabel || '\u043f\u043e \u043f\u0440\u043e\u0451\u043c\u0430\u043c']
+                    ];
+                    specRows.forEach(function(r) {
+                        if (!r[1]) return;
+                        html += '<tr style="border-bottom:1px solid #e8eef5;">' +
+                            '<td style="padding:2px 4px;color:#555;">' + r[0] + '</td>' +
+                            '<td style="padding:2px 4px;font-weight:600;color:#1a3a6e;text-align:right;">' + r[1] + '</td>' +
+                            '</tr>';
+                    });
+                    html += '</table></div>';
+                });
+                html += '</div>';
+            }
+
+            /* Pricing table */
             html += '<table class="cost-table"><tbody>';
             (zipRes.openings || []).forEach(function(zo) {
                 var sideMap = {front:'\u0424\u0430\u0441\u0430\u0434', back:'\u0421\u0437\u0430\u0434\u0438', left:'\u0421\u043B\u0435\u0432\u0430', right:'\u0421\u043F\u0440\u0430\u0432\u0430'};
@@ -2380,12 +2446,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 var adjWmm = zo.adj_w ? Math.round(zo.adj_w * 1000) : 0;
                 var adjHmm = zo.adj_h ? Math.round(zo.adj_h * 1000) : 0;
                 var dimLabel = (adjWmm && adjHmm) ? (adjWmm + '\u00d7' + adjHmm + ' \u043c\u043c') : '';
-                var fabricMap = {veozip:'Veozip', soltis:'Soltis W96', copaco:'Copaco Blackout'};
-                var fabricLabel = fabricMap[zo.fabric] || zo.fabric;
-                var colorMap = {ral9016:'\u0411\u0435\u043b\u044b\u0439 RAL 9016', ral7024:'\u0413\u0440\u0430\u0444\u0438\u0442 RAL 7024', ral9t08:'\u0413\u0440\u0430\u0444\u0438\u0442 RAL 9T08', ral8028:'\u041a\u043e\u0440\u0438\u0447\u043d. RAL 8028', ral_special:'RAL special'};
-                var colorLabel = colorMap[zo.color] || zo.color;
-                var driveMap = {manual:'\u0420\u0443\u0447\u043d\u043e\u0435', simu:'SIMU', somfy:'Somfy', decolife:'Decolife'};
-                var driveLabel = driveMap[zo.drive] || zo.drive;
+                var fabricLabel = fabricDisplayMap[zo.fabric] || zo.fabric;
+                var colorLabel = colorDisplayMap[zo.color] || zo.color;
+                var driveLabel = driveDisplayMap[zo.drive] || zo.drive;
                 var priceRub = Math.round((zo.total_eur || 0) * mainResult.euro_rate);
                 var nsec = parseInt(zo.sections || 1, 10) || 1;
                 var secLabel = nsec > 1 ? (' \u00b7 ' + nsec + ' \u0441\u0435\u043a.') : '';
@@ -2502,6 +2565,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">' + isoLabel + '</div>' +
                 '<img id="kp-iso-img" src="/api/pergola-iso.svg?' + iqs + '" alt="\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F" style="max-width:100%;height:auto;"></div>'
             ) : '';
+            /* ZIP awning detail sketches for scheme section */
+            var zipDetailBlock = '';
+            if (!isAll && zipRes && zipRes.count > 0) {
+                var _zipFabMap = {veozip:'Veozip (Screen Veosol)', soltis:'Soltis W96/W88', copaco:'Copaco Lunar Blackout'};
+                var _seenZipTypes = {};
+                (zipRes.openings || []).forEach(function(zo) {
+                    var t = (zo.zip_type || 'ZIP100').toUpperCase();
+                    if (_seenZipTypes[t]) return;
+                    _seenZipTypes[t] = true;
+                    var fab = _zipFabMap[zo.fabric] || zo.fabric;
+                    var wM = zo.adj_w || 2.0;
+                    var hM = zo.adj_h || 2.7;
+                    var dSrc = '/api/zip-detail.svg?type=' + t + '&w=' + wM.toFixed(2) + '&h=' + hM.toFixed(2) + '&fabric=' + encodeURIComponent(fab) + '&_v=' + SVG_V;
+                    zipDetailBlock += '<div style="text-align:center;">' +
+                        '<div style="font-size:0.85rem;color:#0369a1;font-weight:600;margin-bottom:0.4rem;">\u042D\u0441\u043a\u0438\u0437 ' + t + ' (\u0447\u0435\u0440\u0442\u0451\u0436)</div>' +
+                        '<img src="' + dSrc + '" alt="\u0427\u0435\u0440\u0442\u0451\u0436 ' + t + '" style="max-width:100%;height:auto;border:1px solid #d0e4f4;border-radius:6px;"></div>';
+                });
+            }
             html += '<div class="kp-block" id="kp-scheme-block" data-w="' + schW + '" data-l="' + schL + '" data-m="' + schM + '" data-lm="' + schLMods + '" data-pir="' + (isPir ? '1' : '0') + '" data-lc="' + lamCnt + '" data-h="' + pergolaH + '" data-mo="' + (moLocal || '') + '">' +
                 '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83D\uDCD0</div><div class="kp-block-title">\u0421\u0445\u0435\u043C\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B</div></div>' +
                 '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;align-items:start;">' +
@@ -2516,6 +2597,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430 (C)</div>' +
                 '<img id="kp-right-img" src="/api/pergola-front.svg?' + rqs + '" alt="\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430" style="max-width:100%;height:auto;"></div>' +
                 isoBlock +
+                zipDetailBlock +
                 '</div>' +
                 '<div style="margin-top:0.6rem;font-size:0.82rem;color:#666;text-align:center;">\u0412\u044B\u0441\u043E\u0442\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B: ' + pergolaH.toFixed(2) + ' \u043C (\u0441\u0442\u0430\u043D\u0434\u0430\u0440\u0442). ' + (isB200 ? '\u041A\u043E\u043B\u043E\u043D\u043D\u044B 100\u00D7100 \u043C\u043C, \u0431\u0430\u043B\u043A\u0430 200\u00D750 \u043C\u043C, \u043B\u0430\u043C\u0435\u043B\u0438 200\u00D750 \u043C\u043C.' : (isLight ? '\u041A\u043E\u043B\u043E\u043D\u043D\u044B 150\u00D7150 \u043C\u043C, \u0431\u0430\u043B\u043A\u0430 150\u00D7250 \u043C\u043C.' : '\u041A\u043E\u043B\u043E\u043D\u043D\u044B 164\u00D7164 \u043C\u043C, \u0432\u044B\u0441\u043E\u0442\u0430 \u043B\u043E\u0442\u043A\u0430 280 \u043C\u043C, \u0432\u044B\u043B\u0435\u0442 \u043F\u043B\u043E\u0449\u0430\u0434\u043A\u0438 82 \u043C\u043C.')) + '</div>' +
                 '<div id="kp-scheme-warn" style="display:' + (needsExtra ? 'block' : 'none') + ';margin-top:0.6rem;padding:0.6rem 0.8rem;background:#fff8e1;border-left:3px solid #f59e0b;font-size:0.88rem;color:#5d4a00;">' +

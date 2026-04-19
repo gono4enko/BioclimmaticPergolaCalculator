@@ -183,6 +183,24 @@ def pergola_iso_svg():
         return Response('', status=400)
 
 
+@bp.route('/zip-detail.svg', methods=['GET'])
+def zip_detail_svg():
+    from flask import Response
+    from ..utils import generate_zip_detail_svg
+    try:
+        zip_type = request.args.get('type', 'ZIP100').upper()
+        if zip_type not in ('ZIP100', 'ZIP130'):
+            zip_type = 'ZIP100'
+        w_m = float(request.args.get('w', '2.0'))
+        h_m = float(request.args.get('h', '2.7'))
+        fabric = request.args.get('fabric', 'Veozip (Screen Veosol)')
+        svg = generate_zip_detail_svg(zip_type=zip_type, w_m=w_m, h_m=h_m, fabric=fabric)
+        return Response(svg, mimetype='image/svg+xml',
+                        headers={'Cache-Control': 'public, max-age=300'})
+    except Exception:
+        return Response('', status=400)
+
+
 @bp.route('/promotions', methods=['GET'])
 def get_promotions():
     try:
