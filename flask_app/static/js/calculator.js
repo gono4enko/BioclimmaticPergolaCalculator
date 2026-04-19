@@ -558,6 +558,25 @@ document.addEventListener('DOMContentLoaded', function() {
         {v:'tinted_mass', n:'\u0422\u043e\u043d\u0438\u0440. \u0432 \u043c\u0430\u0441\u0441\u0435'}
     ];
     var S100_PCS_JS = [3, 4, 6, 8, 12];
+    // Explicit S100 configurations as the supplier exposes them.
+    // Each entry: cfg-key (v), total panels (pc), direction lock (dir),
+    // and human label (n). dir=null means user can pick left/right.
+    var S100_CFG_JS = [
+        {v:'3',   pc:3,  dir:null,     n:'3'},
+        {v:'4',   pc:4,  dir:null,     n:'4'},
+        {v:'6',   pc:6,  dir:'side',   n:'6'},
+        {v:'3+3', pc:6,  dir:'center', n:'3+3'},
+        {v:'4+4', pc:8,  dir:'center', n:'4+4'},
+        {v:'6+6', pc:12, dir:'center', n:'6+6'}
+    ];
+    function s100CfgKey(g) {
+        var pc = g.pc, dir = g.direction;
+        if (pc === 8)  return '4+4';
+        if (pc === 12) return '6+6';
+        if (pc === 6)  return (dir === 'center') ? '3+3' : '6';
+        if (pc === 4)  return '4';
+        return '3';
+    }
 
     function s100MinPanels(w, h) {
         if (!w || !h) return 3;
@@ -856,22 +875,28 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<td class="facade-area">' + dimsHtml + areaHtml + '</td></tr>';
             {
                 var pcOpts = '';
-                PCS.forEach(function(p) {
-                    var disP = p < minP ? ' disabled' : '';
-                    var autoTag = (p === minP) ? ' (\u0430\u0432\u0442\u043e)' : '';
-                    var lbl;
-                    if (seriesU === 'S100') {
-                        lbl = (p===8?'8 (4+4)':p===12?'12 (6+6)':p+' \u043f\u0430\u043d.');
-                    } else {
-                        lbl = (p===6?'6 (3+3)':p===8?'8 (4+4)':p===10?'10 (5+5)':p+(p===2||p===3||p===4?' \u043f\u0430\u043d\u0435\u043b\u0438':' \u043f\u0430\u043d\u0435\u043b\u0435\u0439'));
-                    }
-                    pcOpts += '<option value="' + p + '"' + disP + (g.pc===p?' selected':'') + '>' + lbl + autoTag + '</option>';
-                });
-                var dirOpts = '';
-                var allowCenter, forceCenter;
                 if (seriesU === 'S100') {
-                    allowCenter = (g.pc === 6) || g.pc === 8 || g.pc === 12;
-                    forceCenter = (g.pc === 8 || g.pc === 12);
+                    var curCfg = s100CfgKey(g);
+                    S100_CFG_JS.forEach(function(c) {
+                        var disP = c.pc < minP ? ' disabled' : '';
+                        var autoTag = (c.pc === minP && c.dir !== 'center') ? ' (\u0430\u0432\u0442\u043e)' : '';
+                        pcOpts += '<option value="' + c.v + '" data-pc="' + c.pc + '" data-dir="' + (c.dir || '') + '"' + disP + (curCfg === c.v ? ' selected' : '') + '>' + c.n + autoTag + '</option>';
+                    });
+                } else {
+                    PCS.forEach(function(p) {
+                        var disP = p < minP ? ' disabled' : '';
+                        var autoTag = (p === minP) ? ' (\u0430\u0432\u0442\u043e)' : '';
+                        var lbl = (p===6?'6 (3+3)':p===8?'8 (4+4)':p===10?'10 (5+5)':p+(p===2||p===3||p===4?' \u043f\u0430\u043d\u0435\u043b\u0438':' \u043f\u0430\u043d\u0435\u043b\u0435\u0439'));
+                        pcOpts += '<option value="' + p + '"' + disP + (g.pc===p?' selected':'') + '>' + lbl + autoTag + '</option>';
+                    });
+                }
+                var dirOpts = '';
+                var allowCenter, forceCenter, denyCenter = false;
+                if (seriesU === 'S100') {
+                    var ck = s100CfgKey(g);
+                    forceCenter = (ck === '3+3' || ck === '4+4' || ck === '6+6');
+                    allowCenter = forceCenter;
+                    denyCenter = (ck === '6');
                 } else {
                     allowCenter = (g.pc % 2 === 0 && g.pc >= 4) || g.pc >= 6;
                     forceCenter = (dims.wM >= 6 && g.pc >= 6) || g.pc >= 8;
@@ -918,9 +943,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 var k = this.dataset.key;
                 var fld = this.dataset.fld;
                 var val = this.value;
-                if (fld === 'pc' || fld === 'count') val = parseInt(val) || 1;
                 state.glazingPerOpening[k] = state.glazingPerOpening[k] || {enabled:true};
-                state.glazingPerOpening[k][fld] = val;
+                var entry = state.glazingPerOpening[k];
+                var seriesL = (entry.series || 'S500').toUpperCase();
+                if (fld === 'pc' && seriesL === 'S100') {
+                    var opt = this.options[this.selectedIndex];
+                    var pcN = parseInt(opt.dataset.pc) || parseInt(val) || 3;
+                    var dirLock = opt.dataset.dir || '';
+                    entry.pc = pcN;
+                    if (dirLock === 'center') entry.direction = 'center';
+                    else if (dirLock === 'side' && entry.direction === 'center') entry.direction = 'right';
+                } else {
+                    if (fld === 'pc' || fld === 'count') val = parseInt(val) || 1;
+                    entry[fld] = val;
+                }
                 buildGlazingTable();
                 updateGlazingAreaInfo();
                 if (state._lastMainResult) updateSchemeForVariant(state.result || state._lastMainResult);
@@ -2127,6 +2163,35 @@ document.addEventListener('DOMContentLoaded', function() {
             if (stepsEl.step4) stepsEl.step4.style.display = 'none';
             var req = d.request || {};
             if (req.pergola_type) state.pergolaType = req.pergola_type;
+            // Rehydrate dimensions and per-opening selections from saved request
+            // so renderResults / updateSchemeForVariant can rebuild scheme URLs
+            // with the right glz_*/fill_* params (S500 + S100 mix).
+            if (req.width)  state.width  = parseFloat(req.width)  || state.width;
+            if (req.length) state.length = parseFloat(req.length) || state.length;
+            if (req.height) state.height = parseFloat(req.height) || state.height;
+            if (req.modules) state.modules = parseInt(req.modules) || state.modules;
+            if (req.lamella_type) state.lamellaType = req.lamella_type;
+            if (req.selected_variant) state.selectedVariant = req.selected_variant;
+            state.facadePerOpening = state.facadePerOpening || {};
+            state.glazingPerOpening = state.glazingPerOpening || {};
+            (req.facade_openings || []).forEach(function(f) {
+                if (f && f.side != null && f.bay != null && f.type) {
+                    state.facadePerOpening[f.side + '_' + f.bay] = f.type;
+                }
+            });
+            (req.glazing_openings || []).forEach(function(g) {
+                if (!g || g.side == null || g.bay == null) return;
+                var seriesU = (g.series || 'S500').toUpperCase();
+                state.glazingPerOpening[g.side + '_' + g.bay] = {
+                    enabled: true,
+                    series: seriesU,
+                    pc: parseInt(g.pc) || (seriesU === 'S100' ? 3 : 4),
+                    direction: g.direction || 'right',
+                    color: g.color || (seriesU === 'S100' ? 'ral9t08' : 'ral7016'),
+                    glass: g.glass || 'transparent',
+                    count: parseInt(g.count) || 1
+                };
+            });
 
             var typeNames = {'B500NEW': 'В500 — поворотные ламели', 'B700NEW': 'В700 — поворотно-сдвижные', 'B600': 'В600 — PIR панели'};
             var pergolaTypeName = '';
