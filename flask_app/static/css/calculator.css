@@ -1048,10 +1048,16 @@
 }
 .facade-info-img {
     width: 100%;
-    height: 110px;
+    height: 160px;
     object-fit: cover;
+    object-position: center;
     display: block;
     background: #eef2f7;
+}
+.facade-info-img.contain {
+    object-fit: contain;
+    padding: 0.5rem;
+    background: #f4f7fb;
 }
 .facade-info-text {
     padding: 0.55rem 0.65rem 0.7rem;
@@ -1122,7 +1128,7 @@
 .facade-info-source a:hover { text-decoration: underline; }
 @media (max-width: 720px) {
     .facade-info { grid-template-columns: 1fr; }
-    .facade-info-img { height: 140px; }
+    .facade-info-img { height: 160px; }
 }
 .facade-spoiler-icon {
     color: rgba(255,255,255,0.85);
