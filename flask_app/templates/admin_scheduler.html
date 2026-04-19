@@ -63,6 +63,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .filter-reset-btn{font-size:12px;padding:4px 10px;border:1px solid #ddd;border-radius:5px;background:#fff;color:#666;cursor:pointer;transition:.2s}
 .filter-reset-btn:hover{background:#f5f5f5;border-color:#aaa}
 .history-count-note{font-size:12px;color:#888;margin-left:auto}
+.history-pagination{display:flex;flex-wrap:wrap;align-items:center;gap:4px;justify-content:center;margin:14px 0 4px;padding:8px 0;border-top:1px solid #f0f0f0}
+.history-pagination .page-btn{min-width:32px;padding:4px 9px;font-size:13px;border:1px solid #ddd;border-radius:5px;background:#fff;color:#1a3a6b;cursor:pointer;font-weight:600;transition:.15s}
+.history-pagination .page-btn:hover:not(:disabled):not(.active){background:#f0f4ff;border-color:#1a3a6b}
+.history-pagination .page-btn.active{background:#1a3a6b;color:#fff;border-color:#1a3a6b;cursor:default}
+.history-pagination .page-btn:disabled{opacity:.4;cursor:not-allowed}
+.history-pagination .page-ellipsis{color:#888;padding:0 4px;font-size:13px}
+.history-pagination .page-jump{display:inline-flex;align-items:center;gap:6px;margin-left:12px;font-size:12px;color:#666}
+.history-pagination .page-jump input{width:60px;padding:4px 6px;border:1px solid #ddd;border-radius:5px;font-size:13px;text-align:center}
 </style>
 </head>
 <body>
@@ -193,10 +201,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 var autoRefreshTimer = null;
 var allHistoryEntries = [];
 var lastHistoryTotal = 0;
-var historyPageSize = 200;
-var historyOffset = 0;
-var historyHasMore = false;
+var historyPageSize = 50;
+var historyPage = 1;
+var historyTotalPages = 1;
 var historyFilteredCount = 0;
+var historyTotalCount = 0;
 
 function loadStatus() {
     var btn = document.getElementById('refreshBtn');
@@ -515,7 +524,7 @@ function updateDownloadLinks() {
     document.getElementById('downloadJsonBtn').href = base + '?format=json' + extra;
 }
 
-function loadHistory(append) {
+function loadHistory(page) {
     var btn = document.getElementById('historyRefreshBtn');
     btn.disabled = true;
     btn.textContent = 'Обновление…';
@@ -524,12 +533,12 @@ function loadHistory(append) {
     var dateFrom = document.getElementById('filterDateFrom').value;
     var dateTo = document.getElementById('filterDateTo').value;
 
-    if (!append) {
-        historyOffset = 0;
-        allHistoryEntries = [];
+    if (typeof page === 'number' && page > 0) {
+        historyPage = page;
     }
+    var offset = (historyPage - 1) * historyPageSize;
 
-    var url = '{{ url_for("admin.scheduler_history") }}?limit=' + historyPageSize + '&offset=' + historyOffset;
+    var url = '{{ url_for("admin.scheduler_history") }}?limit=' + historyPageSize + '&offset=' + offset;
     if (trigger) url += '&trigger=' + encodeURIComponent(trigger);
     if (dateFrom) url += '&date_from=' + encodeURIComponent(dateFrom);
     if (dateTo) url += '&date_to=' + encodeURIComponent(dateTo);
@@ -544,25 +553,16 @@ function loadHistory(append) {
         .then(function(d) {
             btn.disabled = false;
             btn.textContent = 'Обновить';
-            var newEntries = (d && d.entries) || [];
-            if (append) {
-                allHistoryEntries = allHistoryEntries.concat(newEntries);
-            } else {
-                allHistoryEntries = newEntries;
-            }
-            historyOffset = allHistoryEntries.length;
-            historyHasMore = !!(d && d.has_more);
+            allHistoryEntries = (d && d.entries) || [];
             historyFilteredCount = (d && typeof d.filtered_count === 'number')
                 ? d.filtered_count : allHistoryEntries.length;
-            var totalCount = (d && typeof d.total_count === 'number') ? d.total_count : historyFilteredCount;
-            var note = document.getElementById('historyCountNote');
-            if (trigger || dateFrom || dateTo) {
-                note.textContent = 'Показано: ' + allHistoryEntries.length + ' из ' + historyFilteredCount + ' (всего в истории: ' + totalCount + ')';
-            } else if (historyHasMore || allHistoryEntries.length < totalCount) {
-                note.textContent = 'Показано: ' + allHistoryEntries.length + ' из ' + totalCount;
-            } else {
-                note.textContent = '';
+            historyTotalCount = (d && typeof d.total_count === 'number') ? d.total_count : historyFilteredCount;
+            historyTotalPages = Math.max(1, Math.ceil(historyFilteredCount / historyPageSize));
+            if (historyPage > historyTotalPages) {
+                loadHistory(historyTotalPages);
+                return;
             }
+            updateHistoryCountNote(trigger, dateFrom, dateTo, offset);
             updateDownloadLinks();
             renderHistory(allHistoryEntries);
         })
@@ -573,15 +573,31 @@ function loadHistory(append) {
         });
 }
 
-function loadMoreHistory() {
-    if (!historyHasMore) return;
-    var moreBtn = document.getElementById('loadMoreHistoryBtn');
-    if (moreBtn) {
-        if (moreBtn.disabled) return;
-        moreBtn.disabled = true;
-        moreBtn.textContent = 'Загрузка…';
+function updateHistoryCountNote(trigger, dateFrom, dateTo, offset) {
+    var note = document.getElementById('historyCountNote');
+    var shown = allHistoryEntries.length;
+    if (!shown) {
+        note.textContent = (trigger || dateFrom || dateTo)
+            ? '0 из ' + historyFilteredCount + ' (всего: ' + historyTotalCount + ')'
+            : '';
+        return;
     }
-    loadHistory(true);
+    var first = offset + 1;
+    var last = offset + shown;
+    var hasFilters = !!(trigger || dateFrom || dateTo);
+    var base = 'Стр. ' + historyPage + ' из ' + historyTotalPages +
+        ' · записи ' + first + '–' + last + ' из ' + historyFilteredCount;
+    if (hasFilters) {
+        base += ' (всего: ' + historyTotalCount + ')';
+    }
+    note.textContent = base;
+}
+
+function goToHistoryPage(page) {
+    if (page < 1) page = 1;
+    if (page > historyTotalPages) page = historyTotalPages;
+    if (page === historyPage) return;
+    loadHistory(page);
 }
 
 function getFilterParams() {
@@ -616,7 +632,7 @@ function applyHistoryFilters() {
     var dateFrom = document.getElementById('filterDateFrom').value;
     var dateTo = document.getElementById('filterDateTo').value;
     updateUrlFromFilters(trigger, dateFrom, dateTo);
-    loadHistory();
+    loadHistory(1);
 }
 
 function resetHistoryFilters() {
@@ -626,7 +642,7 @@ function resetHistoryFilters() {
     document.getElementById('historyCountNote').textContent = '';
     updateDownloadLinks();
     updateUrlFromFilters('', '', '');
-    loadHistory();
+    loadHistory(1);
 }
 
 function renderHistory(entries) {
@@ -661,18 +677,52 @@ function renderHistory(entries) {
         html += '<tr><td>' + ts + '</td><td><span class="trigger-badge ' + trigger + '">' + label + '</span></td><td>' + removed + '</td><td>' + note + '</td></tr>';
     }
     html += '</tbody></table>';
-    if (historyHasMore) {
-        var remaining = Math.max(0, historyFilteredCount - entries.length);
-        html += '<div style="text-align:center;margin:12px 0">' +
-            '<button class="refresh-btn" id="loadMoreHistoryBtn" onclick="loadMoreHistory()">' +
-            'Загрузить ещё' + (remaining ? ' (' + remaining + ')' : '') +
-            '</button></div>';
-    }
-    html += '<div class="last-updated">Записей: ' + entries.length +
-        (historyFilteredCount && historyFilteredCount !== entries.length
-            ? ' из ' + historyFilteredCount : '') + '</div>';
+    html += renderHistoryPagination();
+    html += '<div class="last-updated">Записей на странице: ' + entries.length +
+        ' · всего по фильтру: ' + historyFilteredCount + '</div>';
 
     document.getElementById('historyContent').innerHTML = html;
+}
+
+function renderHistoryPagination() {
+    if (historyTotalPages <= 1) return '';
+    var cur = historyPage;
+    var total = historyTotalPages;
+    var pages = [];
+    var add = function(p) { if (pages.indexOf(p) === -1 && p >= 1 && p <= total) pages.push(p); };
+    add(1);
+    add(2);
+    add(total - 1);
+    add(total);
+    for (var i = cur - 2; i <= cur + 2; i++) add(i);
+    pages.sort(function(a, b){ return a - b; });
+
+    var html = '<div class="history-pagination">';
+    html += '<button class="page-btn" ' + (cur <= 1 ? 'disabled' : '') +
+        ' onclick="goToHistoryPage(1)" title="Первая страница">«</button>';
+    html += '<button class="page-btn" ' + (cur <= 1 ? 'disabled' : '') +
+        ' onclick="goToHistoryPage(' + (cur - 1) + ')" title="Предыдущая">‹</button>';
+    var prev = 0;
+    for (var i = 0; i < pages.length; i++) {
+        var p = pages[i];
+        if (prev && p - prev > 1) {
+            html += '<span class="page-ellipsis">…</span>';
+        }
+        html += '<button class="page-btn' + (p === cur ? ' active' : '') +
+            '" onclick="goToHistoryPage(' + p + ')">' + p + '</button>';
+        prev = p;
+    }
+    html += '<button class="page-btn" ' + (cur >= total ? 'disabled' : '') +
+        ' onclick="goToHistoryPage(' + (cur + 1) + ')" title="Следующая">›</button>';
+    html += '<button class="page-btn" ' + (cur >= total ? 'disabled' : '') +
+        ' onclick="goToHistoryPage(' + total + ')" title="Последняя страница">»</button>';
+    html += '<span class="page-jump">';
+    html += 'Перейти к: <input type="number" min="1" max="' + total +
+        '" value="' + cur + '" id="historyJumpInput" onkeydown="if(event.key===\'Enter\'){goToHistoryPage(parseInt(this.value,10)||1);}">';
+    html += '<button class="page-btn" onclick="goToHistoryPage(parseInt(document.getElementById(\'historyJumpInput\').value,10)||1)">OK</button>';
+    html += '</span>';
+    html += '</div>';
+    return html;
 }
 
 function clearHistory() {
@@ -692,7 +742,7 @@ function clearHistory() {
             btn.disabled = false;
             btn.textContent = 'Очистить';
             if (d.ok) {
-                loadHistory();
+                loadHistory(1);
             } else {
                 alert('Ошибка: ' + (d.error || 'Не удалось очистить историю'));
             }
