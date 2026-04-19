@@ -5,7 +5,7 @@
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=79">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=111" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=112" as="script">
 {% endblock %}
 
 {% block content %}
@@ -117,7 +117,7 @@
             <label for="opt-installation">Установка (монтаж)</label>
         </div>
 
-        <!-- Заполнение проёмов: фасадные панели + остекление S500 -->
+        <!-- Заполнение проёмов: фасадные панели + остекление S500 / S100 -->
         <details class="facade-spoiler mt-4">
             <summary class="facade-spoiler-summary">
                 <i class="bi bi-layout-sidebar-inset facade-spoiler-icon"></i>
@@ -161,7 +161,7 @@
                     <div class="facade-how-to-title"><i class="bi bi-info-circle-fill"></i> Как заполнить проём</div>
                     <ol class="facade-how-to-steps">
                         <li>На схеме ниже нажмите на нужную <strong>сторону перголы</strong> (A, B, C или F) и выберите <strong>тип фасадной панели</strong> (FZ-44, FP-20 или FP-PIR)</li>
-                        <li>Для <strong>остекления S500</strong> включите нужные проёмы в таблице ниже и задайте число створок, направление, цвет профиля и тип стекла</li>
+                        <li>Для <strong>остекления S500</strong> (панорамное) или <strong>S100</strong> (безрамное 10&nbsp;мм) выберите соответствующий тип в дропдауне «Тип заполнения» — ниже появится конфиг проёма</li>
                         <li>Один проём не может одновременно содержать фасадное заполнение и остекление</li>
                     </ol>
                 </div>
@@ -239,7 +239,7 @@
 
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=111"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=112"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');

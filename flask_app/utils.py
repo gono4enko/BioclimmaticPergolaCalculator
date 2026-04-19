@@ -677,19 +677,94 @@ def _draw_facade_fill(fill_type, x, y, w, h):
     return out
 
 
+def _draw_s100_glazing_fill(pc, direction, color, glass, x, y, w, h):
+    """Frameless S100: thin top + bottom rails (no side frame), thin vertical mullions
+    between glass panels. Center-split for 3+3/4+4/6+6 (pc 6 with center, 8, 12)."""
+    if w < 4 or h < 4:
+        return ''
+    pc = max(3, min(12, int(pc)))
+    is_center = (direction == 'center') or pc in (8, 12) or (pc == 6 and direction == 'center')
+    if color == 'ral9016':
+        pC = '#d8d8d8'
+    elif color == 'ral8028':
+        pC = '#5c3d1e'
+    elif color == 'ral7024':
+        pC = '#3a4148'
+    elif color == 'ral_special':
+        pC = '#7a7a7a'
+    else:  # ral9t08 default — текст. графит
+        pC = '#2e3338'
+    is_tinted = (glass == 'tinted_mass')
+    if is_tinted:
+        cG1, cG2 = '#7d8e96', '#5d7078'
+    else:
+        cG1, cG2 = '#d8e8f0', '#b8d4e6'
+    # Profile heights from spec: top 50mm (3p) / 46mm (4/6p), bottom 20mm
+    top_mm = 50 if pc == 3 else 46
+    bot_mm = 20
+    top_px = max(2.5, min(8, h * (top_mm / 3000.0) * 1.6 + 2.5))
+    bot_px = max(1.8, min(5, h * (bot_mm / 3000.0) * 1.6 + 1.5))
+    mid_px = max(0.6, min(1.6, w * 0.0035))
+    center_px = max(1.2, min(3, w * 0.006))
+    out = []
+    # NO side frames — frameless. Just glass + thin mullions + top/bot rails.
+    inner_x = x
+    inner_y = y + top_px
+    inner_w = w
+    inner_h = h - top_px - bot_px
+    if inner_w < 4 or inner_h < 4:
+        return ''
+    if is_center:
+        cx = inner_x + inner_w / 2
+        out.append(f'<rect x="{cx - center_px / 2:.1f}" y="{inner_y:.1f}" width="{center_px:.1f}" height="{inner_h:.1f}" fill="{pC}"/>')
+    half_n = pc / 2 if is_center else pc
+    if is_center:
+        usable = (inner_w - center_px) / 2
+        panel_w = (usable - (half_n - 1) * mid_px) / half_n
+    else:
+        panel_w = (inner_w - (pc - 1) * mid_px) / pc
+    for i in range(pc):
+        if is_center:
+            section_idx = i % (pc // 2)
+            section_off = (inner_w - center_px) / 2 + center_px if i >= pc // 2 else 0
+        else:
+            section_idx = i
+            section_off = 0
+        px = inner_x + section_off + section_idx * (panel_w + mid_px)
+        if section_idx > 0:
+            out.append(f'<rect x="{px - mid_px:.1f}" y="{inner_y:.1f}" width="{mid_px:.1f}" height="{inner_h:.1f}" fill="{pC}"/>')
+        out.append(f'<rect x="{px:.1f}" y="{inner_y:.1f}" width="{panel_w:.1f}" height="{inner_h:.1f}" fill="{cG1}" opacity="0.92"/>')
+        out.append(f'<rect x="{px + panel_w * 0.55:.1f}" y="{inner_y:.1f}" width="{panel_w * 0.45:.1f}" height="{inner_h:.1f}" fill="{cG2}" opacity="0.35"/>')
+    # Top + bottom thin rails
+    out.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{top_px:.1f}" fill="{pC}"/>')
+    out.append(f'<rect x="{x:.1f}" y="{y + h - bot_px:.1f}" width="{w:.1f}" height="{bot_px:.1f}" fill="{pC}"/>')
+    return ''.join(out)
+
+
 def _draw_glazing_fill(spec, x, y, w, h):
-    """Render an S500 sliding-sash schematic into the elevation opening.
-    spec: 'pc:direction:color:glass' (e.g. '4:right:ral7016:transparent')."""
+    """Render a sliding-sash schematic into the elevation opening.
+    spec: 'pc:direction:color:glass' (S500, default) or 'S100:pc:direction:color:glass'."""
     if not spec or w < 4 or h < 4:
         return ''
     try:
         parts = (spec or '').split(':')
-        pc = max(2, min(10, int(parts[0]))) if len(parts) >= 1 else 4
+        series = 'S500'
+        if parts and parts[0].upper() == 'S100':
+            series = 'S100'
+            parts = parts[1:]
+        if parts and parts[0].upper() == 'S500':
+            parts = parts[1:]
+        if series == 'S100':
+            pc = max(3, min(12, int(parts[0]))) if len(parts) >= 1 else 4
+        else:
+            pc = max(2, min(10, int(parts[0]))) if len(parts) >= 1 else 4
         direction = parts[1] if len(parts) >= 2 else 'right'
-        color = parts[2] if len(parts) >= 3 else 'ral7016'
+        color = parts[2] if len(parts) >= 3 else ('ral9t08' if series == 'S100' else 'ral7016')
         glass = parts[3] if len(parts) >= 4 else 'transparent'
     except Exception:
         return ''
+    if series == 'S100':
+        return _draw_s100_glazing_fill(pc, direction, color, glass, x, y, w, h)
     is_center = direction == 'center' or pc in (6, 8, 10)
     if color == 'ral9016':
         pC, pD = '#d0d0d0', '#909090'
@@ -992,6 +1067,25 @@ def generate_isometric_svg(width, length, height=3.0, lamella_count=None, module
                 _out += line(_lerpS(pts_bot_left, pts_bot_right, _t), _lerpS(pts_top_left, pts_top_right, _t), frame_c, 0.9, 0.95)
             _out += line(pts_top_left, pts_top_right, frame_c, 1.4, 1.0)
             _out += line(pts_bot_left, pts_bot_right, frame_c, 1.4, 1.0)
+        elif ft == 'S100':
+            # Frameless: lighter, more transparent glass; thin top + bottom rails; thin mullions
+            frame_c = '#2e3338'
+            glass_c = '#cfe0ea'
+            _out += quad([pts_bot_left, pts_bot_right, pts_top_right, pts_top_left], glass_c, frame_c, 0.5)
+            def _lerpS(a, b, _t):
+                return (a[0]+_t*(b[0]-a[0]), a[1]+_t*(b[1]-a[1]), a[2]+_t*(b[2]-a[2]))
+            # Subtle slide-stack hint
+            _out += quad([_lerpS(pts_bot_left, pts_bot_right, 0.55),
+                          _lerpS(pts_bot_left, pts_bot_right, 1.0),
+                          _lerpS(pts_top_left, pts_top_right, 1.0),
+                          _lerpS(pts_top_left, pts_top_right, 0.55)], '#e6f0f6', frame_c, 0.3)
+            n_panels = 6
+            for _li in range(1, n_panels):
+                _t = _li / n_panels
+                _out += line(_lerpS(pts_bot_left, pts_bot_right, _t), _lerpS(pts_top_left, pts_top_right, _t), frame_c, 0.5, 0.7)
+            # Heavier top + bottom rails (frameless = no side frame)
+            _out += line(pts_top_left, pts_top_right, frame_c, 1.6, 1.0)
+            _out += line(pts_bot_left, pts_bot_right, frame_c, 1.2, 1.0)
         elif ft.startswith('FZ-44'):
             slat_c = '#415568'
             gap_r = 0.08 if '-100' in ft else (0.30 if '-70' in ft else 0.52)

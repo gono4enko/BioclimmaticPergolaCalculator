@@ -325,11 +325,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function getGlzForSide(side) {
         if (!state.glazingPerOpening) return '';
         var bays = (side === 'front' || side === 'back') ? facadeModules(state.width) : facadeLengthModules(state.length);
+        // Prefer S100 if present (any opening), else S500
+        var has500 = '';
         for (var i = 0; i < bays; i++) {
             var g = state.glazingPerOpening[side + '_' + i];
-            if (g && g.enabled) return 'S500';
+            if (g && g.enabled) {
+                if ((g.series || 'S500') === 'S100') return 'S100';
+                has500 = 'S500';
+            }
         }
-        return '';
+        return has500;
     }
 
     function getBayFillQs(side, count, xPerBay) {
@@ -428,7 +433,8 @@ document.addEventListener('DOMContentLoaded', function() {
             {v: 'FZ-44-50', n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 50%'},
             {v: 'FZ-44-70', n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 70%'},
             {v: 'FZ-44-100',n: 'FZ-44 \u2014 \u0436\u0430\u043b\u044e\u0437\u0438 100%'},
-            {v: 'S500',     n: 'S500 \u2014 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'}
+            {v: 'S500',     n: 'S500 \u2014 \u043f\u0430\u043d\u043e\u0440\u0430\u043c\u043d\u043e\u0435 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'},
+            {v: 'S100',     n: 'S100 \u2014 \u0431\u0435\u0437\u0440\u0430\u043c\u043d\u043e\u0435 \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 10\u00a0\u043c\u043c (\u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u043d\u0438\u0436\u0435)'}
         ];
         var openings = [];
         for (var ai = 0; ai < lMods; ai++) {
@@ -459,8 +465,10 @@ document.addEventListener('DOMContentLoaded', function() {
             + '</tr></thead><tbody>';
         openings.forEach(function(o) {
             var key = o.side + '_' + o.bay;
-            var hasGlz = !!(state.glazingPerOpening && state.glazingPerOpening[key] && state.glazingPerOpening[key].enabled);
-            var selType = state.facadePerOpening[key] || (hasGlz ? 'S500' : '');
+            var glzEntry = state.glazingPerOpening && state.glazingPerOpening[key];
+            var hasGlz = !!(glzEntry && glzEntry.enabled);
+            var glzSeries = hasGlz ? ((glzEntry.series || 'S500').toUpperCase()) : '';
+            var selType = state.facadePerOpening[key] || glzSeries;
             var dims = facadeOpeningDims(o);
             var dimsHtml = '<span style="font-size:0.82em;color:#555;white-space:nowrap;">' + dims.wMm + '\u00d7' + dims.hMm + ' \u043c\u043c</span>';
             var areaVal = (dims.wMm * dims.hMm / 1e6).toFixed(2);
@@ -480,18 +488,26 @@ document.addEventListener('DOMContentLoaded', function() {
             sel.addEventListener('change', function() {
                 var key2 = this.dataset.side + '_' + this.dataset.bay;
                 var val = this.value;
-                if (val === 'S500') {
+                if (val === 'S500' || val === 'S100') {
                     // Enable glazing for this opening, clear facade
                     state.facadePerOpening[key2] = '';
-                    state.glazingPerOpening[key2] = state.glazingPerOpening[key2] || {pc:0, direction:'right', color:'ral7016', glass:'transparent', count:1};
-                    state.glazingPerOpening[key2].enabled = true;
+                    var defColor = (val === 'S100') ? 'ral9t08' : 'ral7016';
+                    var existing = state.glazingPerOpening[key2];
+                    if (!existing || (existing.series || 'S500') !== val) {
+                        // Reset to series defaults when switching/initializing
+                        state.glazingPerOpening[key2] = {series: val, pc: 0, direction: 'right', color: defColor, glass: 'transparent', count: 1, enabled: true};
+                    } else {
+                        existing.series = val;
+                        existing.enabled = true;
+                        state.glazingPerOpening[key2] = existing;
+                    }
                 } else {
                     // Regular facade or none — disable glazing for this opening
                     state.facadePerOpening[key2] = val;
                     if (state.glazingPerOpening[key2]) state.glazingPerOpening[key2].enabled = false;
                 }
                 state.facadeOpenings = computeFacadeOpenings();
-                state.facadeType = (val === 'S500') ? '' : val;
+                state.facadeType = (val === 'S500' || val === 'S100') ? '' : val;
                 var tr = this.closest('tr');
                 if (tr) {
                     var areaTd = tr.querySelector('.facade-area');
@@ -529,6 +545,29 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     var GLAZING_PCS_JS = [2, 3, 4, 5, 6, 8, 10];
 
+    // S100 frameless option lists
+    var S100_COLORS_JS = [
+        {v:'ral9t08',     n:'\u0422\u0435\u043a\u0441\u0442. \u0433\u0440\u0430\u0444\u0438\u0442 RAL 9T08'},
+        {v:'ral7024',     n:'\u041c\u0430\u0442. \u0433\u0440\u0430\u0444\u0438\u0442 RAL 7024'},
+        {v:'ral8028',     n:'\u041c\u0443\u0430\u0440 \u043a\u043e\u0440\u0438\u0447\u043d. RAL 8028'},
+        {v:'ral9016',     n:'\u041c\u0430\u0442. \u0431\u0435\u043b\u044b\u0439 RAL 9016'},
+        {v:'ral_special', n:'RAL special (+10%)'}
+    ];
+    var S100_GLASS_JS = [
+        {v:'transparent', n:'\u041f\u0440\u043e\u0437\u0440\u0430\u0447\u043d\u043e\u0435'},
+        {v:'tinted_mass', n:'\u0422\u043e\u043d\u0438\u0440. \u0432 \u043c\u0430\u0441\u0441\u0435'}
+    ];
+    var S100_PCS_JS = [3, 4, 6, 8, 12];
+
+    function s100MinPanels(w, h) {
+        if (!w || !h) return 3;
+        if (w > 8.0) return 12;
+        if (w > 6.0) return 8;
+        if (w > 4.0) return 6;
+        if (w > 3.6) return 4;
+        return 3;
+    }
+
     function glazingMinPanels(w, h) {
         if (!w || !h) return 2;
         var minByWeight = Math.ceil(w * h * 30 / 88);
@@ -553,6 +592,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function glazingSpec(g) {
         if (!g || !g.enabled) return '';
+        var series = (g.series || 'S500').toUpperCase();
+        if (series === 'S100') {
+            return ['S100', g.pc || 3, g.direction || 'right', g.color || 'ral9t08', g.glass || 'transparent'].join(':');
+        }
         return [g.pc || 4, g.direction || 'right', g.color || 'ral7016', g.glass || 'transparent'].join(':');
     }
 
@@ -582,11 +625,14 @@ document.addEventListener('DOMContentLoaded', function() {
             var parts = k.split('_');
             var bay = parseInt(parts.pop());
             var side = parts.join('_');
+            var seriesU = (g.series || 'S500').toUpperCase();
+            var defColor = (seriesU === 'S100') ? 'ral9t08' : 'ral7016';
             out.push({
+                series: seriesU,
                 side: side, bay: bay,
-                pc: parseInt(g.pc) || 4,
+                pc: parseInt(g.pc) || (seriesU === 'S100' ? 3 : 4),
                 direction: g.direction || 'right',
-                color: g.color || 'ral7016',
+                color: g.color || defColor,
                 glass: g.glass || 'transparent',
                 count: parseInt(g.count) || 1
             });
@@ -629,35 +675,66 @@ document.addEventListener('DOMContentLoaded', function() {
             + ' \u2014 \u043f\u043b\u043e\u0449\u0430\u0434\u044c \u2248 ' + totalArea.toFixed(2) + ' \u043c\u00b2';
     }
 
-    function _drawGlazingMiniSvg(svgEl, w, h, pc, direction, color, glass) {
+    function _drawGlazingMiniSvg(svgEl, w, h, pc, direction, color, glass, series) {
         if (!svgEl || !w || !h) { if (svgEl) svgEl.innerHTML = ''; return; }
+        series = (series || 'S500').toUpperCase();
         var n = parseInt(pc) || 3;
-        var isCenter = (direction === 'center' || n === 6 || n === 8 || n === 10);
-        var pC = '#3a4048';
-        if (color === 'ral9016') pC = '#d0d0d0';
-        else if (color === 'ral8028') pC = '#5c3d1e';
-        else if (color === 'custom') pC = '#777';
-        var pD = (color === 'ral9016') ? '#909090' : (color === 'ral8028' ? '#3a2410' : '#111');
-        var isTinted = (glass === 'tinted');
-        var isBronze = isTinted && color === 'ral8028';
-        var cG1 = isBronze ? '#b8956a' : (isTinted ? '#8a9ea8' : '#cce0f0');
-        var cG2 = isBronze ? '#9a7548' : (isTinted ? '#6a8088' : '#a8c8e0');
+        var isS100 = (series === 'S100');
+        var isCenter;
+        if (isS100) {
+            isCenter = (direction === 'center') || n === 8 || n === 12;
+        } else {
+            isCenter = (direction === 'center' || n === 6 || n === 8 || n === 10);
+        }
+        var pC, isTinted, cG1, cG2;
+        if (isS100) {
+            if (color === 'ral9016') pC = '#d8d8d8';
+            else if (color === 'ral8028') pC = '#5c3d1e';
+            else if (color === 'ral7024') pC = '#3a4148';
+            else if (color === 'ral_special') pC = '#7a7a7a';
+            else pC = '#2e3338';
+            isTinted = (glass === 'tinted_mass');
+            cG1 = isTinted ? '#7d8e96' : '#d8e8f0';
+            cG2 = isTinted ? '#5d7078' : '#b8d4e6';
+        } else {
+            if (color === 'ral9016') pC = '#d0d0d0';
+            else if (color === 'ral8028') pC = '#5c3d1e';
+            else if (color === 'custom') pC = '#777';
+            else pC = '#3a4048';
+            isTinted = (glass === 'tinted');
+            var isBronze = isTinted && color === 'ral8028';
+            cG1 = isBronze ? '#b8956a' : (isTinted ? '#8a9ea8' : '#cce0f0');
+            cG2 = isBronze ? '#9a7548' : (isTinted ? '#6a8088' : '#a8c8e0');
+        }
         var frameW = 200;
         var aspect = h / w;
         var frameH = Math.round(frameW * aspect);
         if (frameH < 50) frameH = 50;
         if (frameH > 180) frameH = 180;
-        var topPx = 8, botPx = 4, sidePx = 6, midPx = 2.4, centerPx = 4;
+        var topPx, botPx, sidePx, midPx, centerPx;
+        if (isS100) {
+            topPx = (n === 3) ? 5 : 4.5;
+            botPx = 2.5;
+            sidePx = 0;  // frameless
+            midPx = 1.2;
+            centerPx = 2.5;
+        } else {
+            topPx = 8; botPx = 4; sidePx = 6; midPx = 2.4; centerPx = 4;
+        }
         var fx = 8, fy = 8;
         var VW = frameW + 16, VH = frameH + 22;
         svgEl.setAttribute('viewBox', '0 0 ' + VW + ' ' + VH);
         svgEl.setAttribute('height', VH);
         svgEl.setAttribute('width', VW);
         var s = '';
+        // Top + bottom rails
         s += '<rect x="' + fx + '" y="' + fy + '" width="' + frameW + '" height="' + topPx + '" fill="' + pC + '"/>';
         s += '<rect x="' + fx + '" y="' + (fy + frameH - botPx) + '" width="' + frameW + '" height="' + botPx + '" fill="' + pC + '"/>';
-        s += '<rect x="' + fx + '" y="' + fy + '" width="' + sidePx + '" height="' + frameH + '" fill="' + pC + '"/>';
-        s += '<rect x="' + (fx + frameW - sidePx) + '" y="' + fy + '" width="' + sidePx + '" height="' + frameH + '" fill="' + pC + '"/>';
+        // Side frames (S500 only — frameless for S100)
+        if (sidePx > 0) {
+            s += '<rect x="' + fx + '" y="' + fy + '" width="' + sidePx + '" height="' + frameH + '" fill="' + pC + '"/>';
+            s += '<rect x="' + (fx + frameW - sidePx) + '" y="' + fy + '" width="' + sidePx + '" height="' + frameH + '" fill="' + pC + '"/>';
+        }
         var iX = fx + sidePx, iY = fy + topPx;
         var iW = frameW - 2 * sidePx, iH = frameH - topPx - botPx;
         if (isCenter) {
@@ -684,9 +761,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function _normalizeGlzCfg(g, w, h) {
+        var series = (g.series || 'S500').toUpperCase();
+        if (series === 'S100') {
+            var minS = s100MinPanels(w, h);
+            if (!g.pc || g.pc < minS) g.pc = minS;
+            if (S100_PCS_JS.indexOf(g.pc) === -1) {
+                for (var ks = 0; ks < S100_PCS_JS.length; ks++) {
+                    if (S100_PCS_JS[ks] >= g.pc) { g.pc = S100_PCS_JS[ks]; break; }
+                }
+            }
+            if (g.pc === 8 || g.pc === 12) g.direction = 'center';
+            if (!g.color || ['ral9t08','ral7024','ral8028','ral9016','ral_special'].indexOf(g.color) === -1) g.color = 'ral9t08';
+            if (g.glass !== 'transparent' && g.glass !== 'tinted_mass') g.glass = 'transparent';
+            return g;
+        }
         var minP = glazingMinPanels(w, h);
         if (!g.pc || g.pc < minP) g.pc = minP;
-        // Allowed values are GLAZING_PCS_JS; bump up if needed
         if (GLAZING_PCS_JS.indexOf(g.pc) === -1) {
             for (var k = 0; k < GLAZING_PCS_JS.length; k++) {
                 if (GLAZING_PCS_JS[k] >= g.pc) { g.pc = GLAZING_PCS_JS[k]; break; }
@@ -726,14 +816,20 @@ document.addEventListener('DOMContentLoaded', function() {
         var html = '<table class="facade-table"><thead><tr>'
             + '<th>\u041f\u0440\u043e\u0451\u043c</th>'
             + '<th>\u0420\u0430\u0441\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435</th>'
-            + '<th>\u041a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044f S500</th>'
+            + '<th>\u041a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044f \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u044f</th>'
             + '<th>\u0420\u0430\u0437\u043c\u0435\u0440 / \u041f\u043b\u043e\u0449\u0430\u0434\u044c</th>'
             + '</tr></thead><tbody>';
         enabledOpenings.forEach(function(o) {
             var key = o.side + '_' + o.bay;
             var dims = _glazingDimsForKey(o.side);
-            var outOfRange = (dims.wM < 1.8 || dims.hM < 1.7 || dims.wM > 12.0 || dims.hM > 3.25);
             var g = state.glazingPerOpening[key];
+            var seriesU = (g.series || 'S500').toUpperCase();
+            var outOfRange;
+            if (seriesU === 'S100') {
+                outOfRange = (dims.wM < 1.8 || dims.hM < 1.5 || dims.wM > 12.0 || dims.hM > 3.0);
+            } else {
+                outOfRange = (dims.wM < 1.8 || dims.hM < 1.7 || dims.wM > 12.0 || dims.hM > 3.25);
+            }
             if (outOfRange) {
                 g.enabled = false;
                 state.glazingPerOpening[key] = g;
@@ -741,45 +837,62 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             g = _normalizeGlzCfg(g, dims.wM, dims.hM);
             state.glazingPerOpening[key] = g;
-            var minP = glazingMinPanels(dims.wM, dims.hM);
             var dimsHtml = '<span style="font-size:0.82em;color:#555;white-space:nowrap;">' + Math.round(dims.wM*1000) + '\u00d7' + Math.round(dims.hM*1000) + ' \u043c\u043c</span>';
             var areaVal = (dims.wM * dims.hM).toFixed(2);
             var areaHtml = '<br><span style="font-size:0.9em;">' + areaVal + ' \u043c\u00b2</span>';
-            var summary = (g.pc || minP) + ' \u0441\u0442\u0432. \u00b7 '
-                + (GLAZING_DIRS_JS.find(function(d){return d.v===g.direction;})||{n:''}).n + ' \u00b7 '
-                + (GLAZING_COLORS_JS.find(function(c){return c.v===g.color;})||{n:''}).n + ' \u00b7 '
-                + (GLAZING_GLASS_JS.find(function(c){return c.v===g.glass;})||{n:''}).n;
+            var COLORS = (seriesU === 'S100') ? S100_COLORS_JS : GLAZING_COLORS_JS;
+            var GLASS  = (seriesU === 'S100') ? S100_GLASS_JS  : GLAZING_GLASS_JS;
+            var PCS    = (seriesU === 'S100') ? S100_PCS_JS    : GLAZING_PCS_JS;
+            var minP   = (seriesU === 'S100') ? s100MinPanels(dims.wM, dims.hM) : glazingMinPanels(dims.wM, dims.hM);
+            var unitWord = (seriesU === 'S100') ? '\u043f\u0430\u043d.' : '\u0441\u0442\u0432.';
+            var summary = seriesU + ' \u00b7 ' + (g.pc || minP) + ' ' + unitWord + ' \u00b7 '
+                + (GLAZING_DIRS_JS.find(function(d){return d.v===g.direction;})||{n:g.direction}).n + ' \u00b7 '
+                + (COLORS.find(function(c){return c.v===g.color;})||{n:g.color}).n + ' \u00b7 '
+                + (GLASS.find(function(c){return c.v===g.glass;})||{n:g.glass}).n;
             html += '<tr data-key="' + key + '">';
             html += '<td><span class="facade-lbl">' + o.label + '</span></td>';
             html += '<td>' + o.desc + '</td>';
-            html += '<td><span style="font-size:0.85em;color:#1a3a6e;">' + summary + '</span></td>';
+            html += '<td><span style="font-size:0.85em;color:#1a3a6e;font-weight:600;">' + summary + '</span></td>';
             html += '<td class="facade-area">' + dimsHtml + areaHtml + '</td></tr>';
             {
                 var pcOpts = '';
-                GLAZING_PCS_JS.forEach(function(p) {
+                PCS.forEach(function(p) {
                     var disP = p < minP ? ' disabled' : '';
                     var autoTag = (p === minP) ? ' (\u0430\u0432\u0442\u043e)' : '';
-                    var lbl = (p===6?'6 (3+3)':p===8?'8 (4+4)':p===10?'10 (5+5)':p+(p===2||p===3||p===4?' \u043f\u0430\u043d\u0435\u043b\u0438':' \u043f\u0430\u043d\u0435\u043b\u0435\u0439'));
+                    var lbl;
+                    if (seriesU === 'S100') {
+                        lbl = (p===8?'8 (4+4)':p===12?'12 (6+6)':p+' \u043f\u0430\u043d.');
+                    } else {
+                        lbl = (p===6?'6 (3+3)':p===8?'8 (4+4)':p===10?'10 (5+5)':p+(p===2||p===3||p===4?' \u043f\u0430\u043d\u0435\u043b\u0438':' \u043f\u0430\u043d\u0435\u043b\u0435\u0439'));
+                    }
                     pcOpts += '<option value="' + p + '"' + disP + (g.pc===p?' selected':'') + '>' + lbl + autoTag + '</option>';
                 });
                 var dirOpts = '';
-                var allowCenter = (g.pc % 2 === 0 && g.pc >= 4) || g.pc >= 6;
-                var forceCenter = (dims.wM >= 6 && g.pc >= 6) || g.pc >= 8;
+                var allowCenter, forceCenter;
+                if (seriesU === 'S100') {
+                    allowCenter = (g.pc === 6) || g.pc === 8 || g.pc === 12;
+                    forceCenter = (g.pc === 8 || g.pc === 12);
+                } else {
+                    allowCenter = (g.pc % 2 === 0 && g.pc >= 4) || g.pc >= 6;
+                    forceCenter = (dims.wM >= 6 && g.pc >= 6) || g.pc >= 8;
+                }
                 GLAZING_DIRS_JS.forEach(function(d) {
                     var dd = (d.v==='center' && !allowCenter) ? ' disabled' : '';
                     if (forceCenter && d.v !== 'center') dd = ' disabled';
                     dirOpts += '<option value="' + d.v + '"' + dd + (g.direction===d.v?' selected':'') + '>' + d.n + '</option>';
                 });
                 var colOpts = '';
-                GLAZING_COLORS_JS.forEach(function(c) { colOpts += '<option value="' + c.v + '"' + (g.color===c.v?' selected':'') + '>' + c.n + '</option>'; });
+                COLORS.forEach(function(c) { colOpts += '<option value="' + c.v + '"' + (g.color===c.v?' selected':'') + '>' + c.n + '</option>'; });
                 var glOpts = '';
-                GLAZING_GLASS_JS.forEach(function(c) { glOpts += '<option value="' + c.v + '"' + (g.glass===c.v?' selected':'') + '>' + c.n + '</option>'; });
+                GLASS.forEach(function(c) { glOpts += '<option value="' + c.v + '"' + (g.glass===c.v?' selected':'') + '>' + c.n + '</option>'; });
+                var glassLabel = (seriesU === 'S100') ? '\u0422\u0438\u043f \u0441\u0442\u0435\u043a\u043b\u0430' : '\u0422\u0438\u043f \u0441\u0442\u0435\u043a\u043b\u043e\u043f\u0430\u043a\u0435\u0442\u0430';
+                var pcLabel = (seriesU === 'S100') ? '\u041f\u0430\u043d\u0435\u043b\u0435\u0439 (\u0430\u0432\u0442\u043e\u043f\u043e\u0434\u0431\u043e\u0440)' : '\u0421\u0442\u0432\u043e\u0440\u043e\u043a (\u0430\u0432\u0442\u043e\u043f\u043e\u0434\u0431\u043e\u0440)';
                 html += '<tr class="glz-cfg-row" data-key="' + key + '"><td colspan="4" style="background:#f6f9fc;padding:0.6rem 0.9rem;">';
                 html += '<div class="glz-grid">';
-                html += '<div><label>\u0421\u0442\u0432\u043e\u0440\u043e\u043a (\u0430\u0432\u0442\u043e\u043f\u043e\u0434\u0431\u043e\u0440)</label><select class="form-select form-select-sm glz-fld" data-fld="pc" data-key="' + key + '">' + pcOpts + '</select></div>';
+                html += '<div><label>' + pcLabel + '</label><select class="form-select form-select-sm glz-fld" data-fld="pc" data-key="' + key + '">' + pcOpts + '</select></div>';
                 html += '<div><label>\u041d\u0430\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435</label><select class="form-select form-select-sm glz-fld" data-fld="direction" data-key="' + key + '">' + dirOpts + '</select></div>';
                 html += '<div><label>\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f</label><select class="form-select form-select-sm glz-fld" data-fld="color" data-key="' + key + '">' + colOpts + '</select></div>';
-                html += '<div><label>\u0422\u0438\u043f \u0441\u0442\u0435\u043a\u043b\u043e\u043f\u0430\u043a\u0435\u0442\u0430</label><select class="form-select form-select-sm glz-fld" data-fld="glass" data-key="' + key + '">' + glOpts + '</select></div>';
+                html += '<div><label>' + glassLabel + '</label><select class="form-select form-select-sm glz-fld" data-fld="glass" data-key="' + key + '">' + glOpts + '</select></div>';
                 html += '</div>';
                 html += '<div class="glz-preview" style="margin-top:0.5rem;"><svg class="glz-mini-svg" data-key="' + key + '" xmlns="http://www.w3.org/2000/svg"></svg></div>';
                 html += '</td></tr>';
@@ -820,7 +933,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!g || !g.enabled) return;
             var sideLocal = k.split('_').slice(0, -1).join('_');
             var d = _glazingDimsForKey(sideLocal);
-            _drawGlazingMiniSvg(svg, d.wM, d.hM, g.pc, g.direction, g.color, g.glass);
+            _drawGlazingMiniSvg(svg, d.wM, d.hM, g.pc, g.direction, g.color, g.glass, g.series);
         });
         updateGlazingAreaInfo();
     }

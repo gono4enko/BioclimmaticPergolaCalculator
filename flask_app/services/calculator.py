@@ -347,6 +347,123 @@ def glazing_calc_price(w, h, pc, direction='right', color='ral7016', glass='tran
     return comp + glass_part + deliv_part + install_part
 
 
+# ---------- S100 frameless sliding glazing ----------
+S100_PD = {
+    '3':   {'w': [1.8, 2.4, 3.0, 3.6], 'h': [1.5, 2.0, 2.5, 3.0],
+            'p': [
+                [740, 847, 953, 1060],
+                [814, 943, 1073, 1202],
+                [888, 1040, 1192, 1344],
+                [962, 1136, 1311, 1485]]},
+    '4':   {'w': [2.0, 2.5, 3.0, 3.5, 4.0], 'h': [1.5, 2.0, 2.5, 3.0],
+            'p': [
+                [887, 981, 1075, 1169, 1263],
+                [972, 1085, 1197, 1310, 1423],
+                [1057, 1188, 1320, 1451, 1583],
+                [1142, 1292, 1442, 1592, 1743]]},
+    '6':   {'w': [3.0, 4.0, 4.5, 5.0, 6.0], 'h': [1.5, 2.0, 2.5, 3.0],
+            'p': [
+                [1427, 1533, 1639, 1745, 1957],
+                [1573, 1698, 1822, 1947, 2196],
+                [1719, 1862, 2006, 2149, 2436],
+                [1864, 2027, 2189, 2351, 2676]]},
+    '3+3': {'w': [3.0, 3.6, 4.2, 4.8, 6.0], 'h': [1.5, 2.0, 2.5, 3.0],
+            'p': [
+                [1272, 1380, 1488, 1596, 1812],
+                [1401, 1532, 1662, 1793, 2053],
+                [1530, 1683, 1836, 1989, 2295],
+                [1660, 1835, 2010, 2189, 2536]]},
+    '4+4': {'w': [4.0, 5.0, 6.0, 7.0, 8.0], 'h': [1.5, 2.0, 2.5, 3.0],
+            'p': [
+                [1740, 1938, 2136, 2334, 2532],
+                [1913, 2148, 2384, 2619, 2855],
+                [2085, 2358, 2631, 2904, 3177],
+                [2258, 2569, 2879, 3189, 3500]]},
+    '6+6': {'w': [7.0, 8.0, 9.0, 10.0, 12.0], 'h': [1.5, 2.0, 2.5, 3.0],
+            'p': [
+                [2803, 3018, 3234, 3449, 3879],
+                [3097, 3352, 3603, 3856, 4361],
+                [3392, 3682, 3972, 4263, 4843],
+                [3686, 4014, 4342, 4669, 5325]]},
+}
+
+S100_RAL_SPECIAL_PCT = 10
+S100_TINTED_SURCHARGE_EUR_M2 = (GLAZING_TINTED_EUR_M2 - GLAZING_TRANSPARENT_EUR_M2)  # 1000 ₽/м²
+S100_PC_ALLOWED = (3, 4, 6, 8, 12)
+S100_MIN_W = 1.8
+S100_MAX_W = 12.0
+S100_MIN_H = 1.5
+S100_MAX_H = 3.0
+
+S100_COLOR_NAMES = {
+    'ral9t08':     '\u0422\u0435\u043a\u0441\u0442. \u0433\u0440\u0430\u0444\u0438\u0442 RAL 9T08',
+    'ral7024':     '\u041c\u0430\u0442. \u0433\u0440\u0430\u0444\u0438\u0442 RAL 7024',
+    'ral8028':     '\u041c\u0443\u0430\u0440 \u043a\u043e\u0440\u0438\u0447\u043d. RAL 8028',
+    'ral9016':     '\u041c\u0430\u0442. \u0431\u0435\u043b\u044b\u0439 RAL 9016',
+    'ral_special': '\u041e\u043a\u0440\u0430\u0441\u043a\u0430 RAL special (+10%)',
+}
+S100_GLASS_NAMES = {
+    'transparent': '\u043f\u0440\u043e\u0437\u0440.',
+    'tinted_mass': '\u0442\u043e\u043d\u0438\u0440. \u0432 \u043c\u0430\u0441\u0441\u0435',
+}
+
+
+def s100_min_panels(w, h):
+    """Min panel count for an S100 sash given opening width."""
+    try:
+        w = float(w); h = float(h)
+    except Exception:
+        return 3
+    if w <= 0 or h <= 0:
+        return 3
+    if w > 8.0:  return 12
+    if w > 6.0:  return 8
+    if w > 4.0:  return 6
+    if w > 3.6:  return 4
+    return 3
+
+
+def _s100_conf(pc, direction, w):
+    """Map (pc, direction) to S100_PD config key."""
+    pc = int(pc)
+    dir_ = direction or 'right'
+    if pc == 3:    return '3', dir_
+    if pc == 4:    return '4', dir_
+    if pc == 6:
+        if dir_ == 'center':
+            return '3+3', 'center'
+        return '6', dir_
+    if pc == 8:    return '4+4', 'center'
+    if pc == 12:   return '6+6', 'center'
+    # Fallback: pick smallest config that fits
+    if pc <= 6:    return '6', dir_
+    if pc <= 8:    return '4+4', 'center'
+    return '6+6', 'center'
+
+
+def s100_calc_price(w, h, pc, direction='right', color='ral9t08', glass='transparent', euro_rate=100.0):
+    """Per-opening S100 price in EUR. Closest-cell lookup of S100_PD,
+    +10% for ral_special, plus tinted glass surcharge per m²."""
+    try:
+        w = float(w); h = float(h); pc = int(pc)
+    except Exception:
+        return 0.0
+    if w <= 0 or h <= 0 or pc <= 0:
+        return 0.0
+    conf, _dir = _s100_conf(pc, direction, w)
+    cd = S100_PD.get(conf)
+    if not cd:
+        return 0.0
+    comp = cd['p'][_glaze_ci(cd['h'], h)][_glaze_ci(cd['w'], w)]
+    if color == 'ral_special':
+        comp *= (1 + S100_RAL_SPECIAL_PCT / 100.0)
+    if glass == 'tinted_mass':
+        rate = euro_rate if euro_rate and euro_rate > 0 else 100.0
+        area = w * h
+        comp += area * S100_TINTED_SURCHARGE_EUR_M2 * (1 + GLAZING_MARKUP_PCT / 100.0) / rate
+    return comp
+
+
 def _facade_extra_cols(full_bay_w, col_w, max_panel_w):
     """Compute number of extra support columns and resulting section width.
     Returns (n_extra, section_width_m).
@@ -1230,7 +1347,8 @@ def perform_calculation(dimensions, options):
                 if isinstance(_fop, dict) and _fop.get("side") and _fop.get("type"):
                     _facade_keys.add((_fop.get("side"), int(_fop.get("bay", 0))))
 
-            _allowed_pcs = (2, 3, 4, 5, 6, 8, 10)
+            _allowed_pcs_s500 = (2, 3, 4, 5, 6, 8, 10)
+            _allowed_pcs_s100 = S100_PC_ALLOWED
             for op in glazing_openings:
                 if not isinstance(op, dict):
                     continue
@@ -1241,22 +1359,84 @@ def perform_calculation(dimensions, options):
                 # Backend mutual exclusion: facade wins
                 if (side, bay_g) in _facade_keys:
                     continue
-                pc_g = int(op.get("pc", 3) or 3)
-                direction_g = op.get("direction") or 'right'
-                color_g = op.get("color") or 'ral7016'
-                glass_g = op.get("glass") or 'transparent'
+                series_g = (op.get("series") or 'S500').upper()
+                if series_g not in ('S500', 'S100'):
+                    series_g = 'S500'
                 count_g = max(1, int(op.get("count", 1) or 1))
 
                 full_bay_w = full_fb_bay_w if side in ("front", "back") else full_lr_bay_w
                 op_w = max(0.1, full_bay_w - 2 * col_w_g)
                 op_h = open_h_g
 
-                # Server-side normalization (mirror UI rules)
+                if series_g == 'S100':
+                    pc_g = int(op.get("pc", 3) or 3)
+                    direction_g = op.get("direction") or 'right'
+                    color_g = op.get("color") or 'ral9t08'
+                    glass_g = op.get("glass") or 'transparent'
+
+                    _min_pc = s100_min_panels(op_w, op_h)
+                    if pc_g < _min_pc:
+                        pc_g = _min_pc
+                    if pc_g not in _allowed_pcs_s100:
+                        pc_g = next((p for p in _allowed_pcs_s100 if p >= pc_g), _allowed_pcs_s100[-1])
+                    if pc_g in (8, 12):
+                        direction_g = 'center'
+                    if pc_g == 6 and direction_g == 'center':
+                        pass  # use 3+3 mapping
+                    if op_w < S100_MIN_W or op_h < S100_MIN_H or op_w > S100_MAX_W or op_h > S100_MAX_H:
+                        continue
+                    if color_g not in S100_COLOR_NAMES:
+                        color_g = 'ral9t08'
+                    if glass_g not in S100_GLASS_NAMES:
+                        glass_g = 'transparent'
+
+                    _glz_rate = pricing_settings.get_euro_rate() or 100.0
+                    price_eur = s100_calc_price(op_w, op_h, pc_g, direction_g, color_g, glass_g, euro_rate=_glz_rate)
+                    price_eur = round(price_eur * count_g, 2)
+                    area_one = round(op_w * op_h, 2)
+
+                    bay_label = f"\u043f\u0440\u043e\u0451\u043c {bay_g + 1}" if (
+                        (side in ('front', 'back') and modules > 1) or
+                        (side in ('left', 'right') and length_modules_g > 1)
+                    ) else "\u043f\u0440\u043e\u0451\u043c"
+                    pc_label = f"{pc_g} \u043f\u0430\u043d."
+                    gloss = (f"\u041e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 S100 "
+                             f"({GLAZING_SIDE_NAMES[side]}, {bay_label}, {pc_label}, "
+                             f"{S100_GLASS_NAMES.get(glass_g, glass_g)}, "
+                             f"{S100_COLOR_NAMES.get(color_g, color_g)}, "
+                             f"{op_w:.2f}\u00d7{op_h:.2f} \u043c"
+                             f"{(', ' + str(count_g) + ' шт.') if count_g > 1 else ''})")
+                    items.append({"name": gloss, "price": price_eur})
+                    specification.append({
+                        "name": "\u041e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 S100",
+                        "count": (f"{count_g} \u0448\u0442. \u00b7 {pc_g} \u043f\u0430\u043d\u0435\u043b\u0435\u0439"
+                                  f" \u00b7 {area_one * count_g:.2f} \u043c\u00b2")
+                    })
+                    total_price += price_eur
+                    glazing_total_eur += price_eur
+                    glazing_total_area += area_one * count_g
+                    glazing_normalized.append({
+                        "series": "S100",
+                        "side": side, "bay": bay_g,
+                        "pc": pc_g, "direction": direction_g,
+                        "color": color_g, "glass": glass_g, "count": count_g,
+                        "w": round(op_w, 3), "h": round(op_h, 3),
+                        "area": round(area_one * count_g, 2),
+                        "price_eur": price_eur,
+                    })
+                    continue
+
+                # ---- S500 branch (original) ----
+                pc_g = int(op.get("pc", 3) or 3)
+                direction_g = op.get("direction") or 'right'
+                color_g = op.get("color") or 'ral7016'
+                glass_g = op.get("glass") or 'transparent'
+
                 _min_pc = glazing_min_panels(op_w, op_h)
                 if pc_g < _min_pc:
                     pc_g = _min_pc
-                if pc_g not in _allowed_pcs:
-                    pc_g = next((p for p in _allowed_pcs if p >= pc_g), _allowed_pcs[-1])
+                if pc_g not in _allowed_pcs_s500:
+                    pc_g = next((p for p in _allowed_pcs_s500 if p >= pc_g), _allowed_pcs_s500[-1])
                 if (op_w >= 6 and pc_g >= 6) or pc_g >= 8:
                     direction_g = 'center'
                 if pc_g % 2 != 0 and direction_g == 'center':
@@ -1290,6 +1470,7 @@ def perform_calculation(dimensions, options):
                 glazing_total_eur += price_eur
                 glazing_total_area += area_one * count_g
                 glazing_normalized.append({
+                    "series": "S500",
                     "side": side, "bay": bay_g,
                     "pc": pc_g, "direction": direction_g,
                     "color": color_g, "glass": glass_g, "count": count_g,
