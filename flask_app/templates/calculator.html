@@ -5,7 +5,7 @@
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=79">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=118" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=119" as="script">
 {% endblock %}
 
 {% block content %}
@@ -151,7 +151,7 @@
                         </div>
                     </div>
                     <div class="facade-info-card">
-                        <img src="{{ url_for('static', filename='images/facade/s500.jpg') }}?v=1" alt="Панорамное остекление S500" class="facade-info-img">
+                        <img src="{{ url_for('static', filename='images/facade/s500.png') }}?v=2" alt="Панорамное остекление S500" class="facade-info-img">
                         <div class="facade-info-text">
                             <div class="facade-info-name">S500 — панорамное остекление</div>
                             <p>Раздвижные створки со стеклопакетом 20&nbsp;мм толщиной — от 2 до 10 панелей в проёме. Стекло прозрачное или тонированное, профиль в любой RAL. Превращает перголу в тёплую веранду.</p>
@@ -269,7 +269,7 @@
 
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=118"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=119"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');
