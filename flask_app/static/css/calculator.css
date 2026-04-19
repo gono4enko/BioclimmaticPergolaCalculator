@@ -50,6 +50,56 @@
     gap: 0.65rem;
     letter-spacing: 0.01em;
 }
+.step-card-priority {
+    border-top: 4px solid #ff9800;
+    box-shadow: 0 4px 24px rgba(255, 152, 0, 0.25), 0 0 0 2px rgba(255, 152, 0, 0.35);
+    background: #fffaf2;
+}
+.step-card-priority h3 {
+    background: linear-gradient(135deg, #c75b00 0%, #ff9800 100%);
+}
+.step-card-priority .step-num {
+    background: rgba(255,255,255,0.32);
+}
+.step-required-badge {
+    margin-left: auto;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: #fff;
+    color: #c75b00;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.step-required-note {
+    background: #fff3e0;
+    border-left: 3px solid #ff9800;
+    color: #6b3a00;
+    font-size: 0.88rem;
+    padding: 0.55rem 0.8rem;
+    border-radius: 4px;
+    margin-bottom: 0.9rem;
+}
+.req-star {
+    color: #d84315;
+    font-weight: 700;
+    margin-left: 0.15rem;
+}
+.dim-required {
+    border: 2px solid #ffb74d;
+    background: #fff;
+    font-weight: 600;
+}
+.dim-required:focus {
+    border-color: #ff9800;
+    box-shadow: 0 0 0 0.2rem rgba(255, 152, 0, 0.25);
+}
+.dim-required.is-filled {
+    border-color: #6db96d;
+    background: #f6fff6;
+}
 .step-card h3 .step-num {
     display: inline-flex;
     align-items: center;

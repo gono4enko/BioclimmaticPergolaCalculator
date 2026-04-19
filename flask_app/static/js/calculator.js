@@ -264,21 +264,30 @@ document.addEventListener('DOMContentLoaded', function() {
         if (lHint) lHint.textContent = '\u041C\u0430\u043A\u0441: ' + state.maxLength + ' \u043C';
     }
 
+    function _markFilled(el, ok) {
+        if (!el) return;
+        if (ok) el.classList.add('is-filled');
+        else el.classList.remove('is-filled');
+    }
     document.getElementById('input-width').addEventListener('input', function() {
         state.width = parseFloat(this.value) || 0;
+        _markFilled(this, state.width > 0);
         buildFacadeTopView();
         buildFacadeTable();
         buildGlazingTable();
     });
     document.getElementById('input-length').addEventListener('input', function() {
         state.length = parseFloat(this.value) || 0;
+        _markFilled(this, state.length > 0);
         buildFacadeTopView();
         buildFacadeTable();
         buildGlazingTable();
     });
     document.getElementById('input-height').addEventListener('input', function() {
-        var h = parseFloat(this.value) || 3.0;
-        state.height = Math.min(3.0, Math.max(2.0, h));
+        var raw = parseFloat(this.value);
+        var h = isNaN(raw) ? 0 : raw;
+        state.height = h > 0 ? Math.min(3.0, Math.max(2.0, h)) : 0;
+        _markFilled(this, state.height >= 2.0);
     });
 
     var whiteLedEl = document.getElementById('opt-white-led');
