@@ -548,16 +548,26 @@ def scheduler_history():
     except (ValueError, TypeError):
         limit = 50
     limit = max(1, min(limit, 500))
+    try:
+        offset = int(request.args.get('offset', 0))
+    except (ValueError, TypeError):
+        offset = 0
+    offset = max(0, offset)
     trigger = request.args.get('trigger', '').strip() or None
     date_from = request.args.get('date_from', '').strip() or None
     date_to = request.args.get('date_to', '').strip() or None
-    entries, total_count = get_cleanup_history(
-        limit=limit, trigger=trigger, date_from=date_from, date_to=date_to, include_total=True
+    entries, total_count, filtered_count = get_cleanup_history(
+        limit=limit, offset=offset, trigger=trigger,
+        date_from=date_from, date_to=date_to, include_total=True,
     )
     return jsonify({
         'ok': True,
         'entries': entries,
         'count': len(entries),
+        'offset': offset,
+        'limit': limit,
+        'filtered_count': filtered_count,
+        'has_more': (offset + len(entries)) < filtered_count,
         'total_count': total_count,
     })
 

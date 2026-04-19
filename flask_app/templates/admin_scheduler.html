@@ -193,6 +193,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 var autoRefreshTimer = null;
 var allHistoryEntries = [];
 var lastHistoryTotal = 0;
+var historyPageSize = 200;
+var historyOffset = 0;
+var historyHasMore = false;
+var historyFilteredCount = 0;
 
 function loadStatus() {
     var btn = document.getElementById('refreshBtn');
@@ -511,7 +515,7 @@ function updateDownloadLinks() {
     document.getElementById('downloadJsonBtn').href = base + '?format=json' + extra;
 }
 
-function loadHistory() {
+function loadHistory(append) {
     var btn = document.getElementById('historyRefreshBtn');
     btn.disabled = true;
     btn.textContent = 'Обновление…';
@@ -520,7 +524,12 @@ function loadHistory() {
     var dateFrom = document.getElementById('filterDateFrom').value;
     var dateTo = document.getElementById('filterDateTo').value;
 
-    var url = '{{ url_for("admin.scheduler_history") }}?limit=200';
+    if (!append) {
+        historyOffset = 0;
+        allHistoryEntries = [];
+    }
+
+    var url = '{{ url_for("admin.scheduler_history") }}?limit=' + historyPageSize + '&offset=' + historyOffset;
     if (trigger) url += '&trigger=' + encodeURIComponent(trigger);
     if (dateFrom) url += '&date_from=' + encodeURIComponent(dateFrom);
     if (dateTo) url += '&date_to=' + encodeURIComponent(dateTo);
@@ -535,10 +544,21 @@ function loadHistory() {
         .then(function(d) {
             btn.disabled = false;
             btn.textContent = 'Обновить';
-            allHistoryEntries = (d && d.entries) || [];
-            var totalCount = (d && typeof d.total_count === 'number') ? d.total_count : allHistoryEntries.length;
+            var newEntries = (d && d.entries) || [];
+            if (append) {
+                allHistoryEntries = allHistoryEntries.concat(newEntries);
+            } else {
+                allHistoryEntries = newEntries;
+            }
+            historyOffset = allHistoryEntries.length;
+            historyHasMore = !!(d && d.has_more);
+            historyFilteredCount = (d && typeof d.filtered_count === 'number')
+                ? d.filtered_count : allHistoryEntries.length;
+            var totalCount = (d && typeof d.total_count === 'number') ? d.total_count : historyFilteredCount;
             var note = document.getElementById('historyCountNote');
             if (trigger || dateFrom || dateTo) {
+                note.textContent = 'Показано: ' + allHistoryEntries.length + ' из ' + historyFilteredCount + ' (всего в истории: ' + totalCount + ')';
+            } else if (historyHasMore || allHistoryEntries.length < totalCount) {
                 note.textContent = 'Показано: ' + allHistoryEntries.length + ' из ' + totalCount;
             } else {
                 note.textContent = '';
@@ -551,6 +571,17 @@ function loadHistory() {
             btn.textContent = 'Обновить';
             document.getElementById('historyContent').innerHTML = '<div class="error-msg">' + (e.message || 'Ошибка соединения') + '</div>';
         });
+}
+
+function loadMoreHistory() {
+    if (!historyHasMore) return;
+    var moreBtn = document.getElementById('loadMoreHistoryBtn');
+    if (moreBtn) {
+        if (moreBtn.disabled) return;
+        moreBtn.disabled = true;
+        moreBtn.textContent = 'Загрузка…';
+    }
+    loadHistory(true);
 }
 
 function getFilterParams() {
@@ -630,7 +661,16 @@ function renderHistory(entries) {
         html += '<tr><td>' + ts + '</td><td><span class="trigger-badge ' + trigger + '">' + label + '</span></td><td>' + removed + '</td><td>' + note + '</td></tr>';
     }
     html += '</tbody></table>';
-    html += '<div class="last-updated">Записей: ' + entries.length + '</div>';
+    if (historyHasMore) {
+        var remaining = Math.max(0, historyFilteredCount - entries.length);
+        html += '<div style="text-align:center;margin:12px 0">' +
+            '<button class="refresh-btn" id="loadMoreHistoryBtn" onclick="loadMoreHistory()">' +
+            'Загрузить ещё' + (remaining ? ' (' + remaining + ')' : '') +
+            '</button></div>';
+    }
+    html += '<div class="last-updated">Записей: ' + entries.length +
+        (historyFilteredCount && historyFilteredCount !== entries.length
+            ? ' из ' + historyFilteredCount : '') + '</div>';
 
     document.getElementById('historyContent').innerHTML = html;
 }

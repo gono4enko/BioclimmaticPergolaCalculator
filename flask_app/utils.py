@@ -90,16 +90,22 @@ def append_cleanup_history(entry, max_entries=None):
                 pass
 
 
-def get_cleanup_history(limit=50, trigger=None, date_from=None, date_to=None, include_total=False):
-    """Return up to `limit` most recent cleanup history entries, newest first.
+def get_cleanup_history(limit=50, trigger=None, date_from=None, date_to=None,
+                        include_total=False, offset=0):
+    """Return up to `limit` cleanup history entries, newest first.
 
     Optional filters:
       trigger   – exact match on entry['trigger'] (e.g. 'manual', 'scheduled', 'startup')
       date_from – inclusive lower bound, 'YYYY-MM-DD' string or datetime.date / datetime.datetime
       date_to   – inclusive upper bound, same format
+      offset    – number of newest (post-filter) entries to skip before slicing,
+                  enabling pagination through older records. Must be >= 0.
 
-    If `include_total` is True, returns a tuple `(entries, total_count)` where
-    `total_count` is the number of entries in storage before any filtering.
+    If `include_total` is True, returns a tuple
+    `(entries, total_count, filtered_count)` where `total_count` is the number
+    of entries in storage before any filtering and `filtered_count` is the
+    number of entries that matched the active filters (before offset/limit
+    were applied).
     """
     history = _load_cleanup_history_raw()
     total_count = len(history)
@@ -138,11 +144,15 @@ def get_cleanup_history(limit=50, trigger=None, date_from=None, date_to=None, in
             filtered.append(e)
         history = filtered
 
-    if limit and limit > 0:
-        history = history[-limit:]
+    filtered_count = len(history)
+
     result = list(reversed(history))
+    if offset and offset > 0:
+        result = result[offset:]
+    if limit and limit > 0:
+        result = result[:limit]
     if include_total:
-        return result, total_count
+        return result, total_count, filtered_count
     return result
 
 
