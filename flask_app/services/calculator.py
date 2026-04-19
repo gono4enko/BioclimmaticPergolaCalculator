@@ -2263,7 +2263,7 @@ def perform_calculation(dimensions, options):
 
             # First pass: determine type for each opening (for global ZIP130 upgrade)
             _zip_types_first = []
-            _zip_bay_w = {}
+            _zip_bay_w = {}    # stores (full_bay_w, section_w, n_extra) per opening key
             for _zop in zip_openings_raw:
                 if not isinstance(_zop, dict):
                     continue
@@ -2274,11 +2274,12 @@ def perform_calculation(dimensions, options):
                 # Skip openings occupied by facade fills
                 if (_zside, _zbay) in _facade_keys_z:
                     continue
-                if _zside in ('front', 'back'):
-                    _zop_w = max(0.1, full_fb_bay_w - 2 * col_w_g)
-                else:
-                    _zop_w = max(0.1, full_lr_bay_w - 2 * col_w_g)
-                _zip_bay_w[(_zside, _zbay)] = _zop_w
+                _full_bay_z = full_fb_bay_w if _zside in ('front', 'back') else full_lr_bay_w
+                # Compute extra columns so each section ≤ ZIP130 max width
+                _n_extra_z, _section_w_z = _facade_extra_cols(
+                    _full_bay_z, col_w_g, _ZIP130_MAX_W)
+                _zop_w = max(0.1, _section_w_z)  # use section width for type determination
+                _zip_bay_w[(_zside, _zbay)] = (_full_bay_z, _section_w_z, _n_extra_z)
                 _has_glz = (_zside, _zbay) in _glaze_keys
                 _zfab = _zop.get('fabric', 'veozip')
                 _zcol = _zop.get('color', 'ral9016')
@@ -2287,11 +2288,17 @@ def perform_calculation(dimensions, options):
                                      fabric=_zfab, color=_zcol, drive=_zdrive,
                                      euro_rate=pricing_settings.get_euro_rate() or 100.0)
                 if 'error' not in _zr:
-                    # Only count openings within ZIP130 size limits
                     if _zr['adj_w'] <= _ZIP130_MAX_W and _zr['adj_h'] <= _ZIP130_MAX_H:
                         _zip_types_first.append(_zr['zip_type'])
 
             _global_type = 'ZIP130' if 'ZIP130' in _zip_types_first else 'ZIP100'
+
+            # Track extra columns needed for ZIP openings
+            extra_cols_z_f = 0
+            extra_cols_z_b = 0
+            extra_cols_z_a = 0
+            extra_cols_z_c = 0
+            total_extra_cols_z = 0
 
             # Second pass: compute final prices with global type override
             for _zop in zip_openings_raw:
@@ -2304,7 +2311,8 @@ def perform_calculation(dimensions, options):
                 # Skip if excluded by facade fill or invalid in first pass
                 if (side_z, bay_z) not in _zip_bay_w:
                     continue
-                op_w_z = _zip_bay_w[(side_z, bay_z)]
+                _full_bay_w_z, section_w_z, n_extra_z = _zip_bay_w[(side_z, bay_z)]
+                n_sections_z = n_extra_z + 1
                 has_glz_z = (side_z, bay_z) in _glaze_keys
                 fabric_z = _zop.get('fabric', 'veozip')
                 if fabric_z not in ZIP_FABRIC_NAMES:
@@ -2317,20 +2325,30 @@ def perform_calculation(dimensions, options):
                     drive_z = 'manual'
                 count_z = max(1, int(_zop.get('count', 1) or 1))
                 _glz_rate_z = pricing_settings.get_euro_rate() or 100.0
-                zr = zip_calc_price(op_w_z, open_h_g, has_glazing=has_glz_z,
+                # Track ZIP extra columns by side
+                if n_extra_z > 0:
+                    if side_z == 'front':
+                        extra_cols_z_f = max(extra_cols_z_f, n_extra_z)
+                    elif side_z == 'back':
+                        extra_cols_z_b = max(extra_cols_z_b, n_extra_z)
+                    elif side_z == 'left':
+                        extra_cols_z_a = max(extra_cols_z_a, n_extra_z)
+                    elif side_z == 'right':
+                        extra_cols_z_c = max(extra_cols_z_c, n_extra_z)
+                    total_extra_cols_z += n_extra_z
+                # Price one section; multiply by n_sections (sections are ≤ ZIP130 max)
+                zr = zip_calc_price(section_w_z, open_h_g, has_glazing=has_glz_z,
                                     fabric=fabric_z, color=color_z, drive=drive_z,
                                     zip_type_override=_global_type,
                                     euro_rate=_glz_rate_z)
                 if 'error' in zr:
                     continue
-                # Hard product-limit validation: ZIP130 max 5×5 m (adjusted dims)
-                if zr['adj_w'] > _ZIP130_MAX_W or zr['adj_h'] > _ZIP130_MAX_H:
-                    continue  # opening exceeds maximum manufacturable size — skip
 
-                price_z = round(zr['total_eur'] * count_z, 2)
+                price_z = round(zr['total_eur'] * count_z * n_sections_z, 2)
                 install_z = 0.0
                 if installation:
-                    install_z = round(zr['area'] * _zip_setting('ZIP_INSTALL_EUR_M2') * count_z, 2)
+                    install_z = round(zr['area'] * _zip_setting('ZIP_INSTALL_EUR_M2')
+                                      * count_z * n_sections_z, 2)
                     price_z += install_z
 
                 bay_label_z = (f"проём {bay_z + 1}" if (
@@ -2338,18 +2356,20 @@ def perform_calculation(dimensions, options):
                     (side_z in ('left', 'right') and length_modules_g > 1)
                 ) else "проём")
                 overlay_tag = ' (накл.)' if has_glz_z else ''
+                sec_tag = f", {n_sections_z} сек." if n_sections_z > 1 else ''
+                total_units_z = count_z * n_sections_z
                 gloss_z = (f"ZIP-маркиза {zr['zip_type']} "
                            f"({GLAZING_SIDE_NAMES[side_z]}, {bay_label_z}{overlay_tag}, "
                            f"{ZIP_FABRIC_NAMES.get(fabric_z, fabric_z)}, "
                            f"{ZIP_COLOR_NAMES.get(color_z, color_z)}, "
                            f"{ZIP_DRIVE_NAMES.get(drive_z, drive_z)}, "
-                           f"{zr['adj_w']:.2f}\u00d7{zr['adj_h']:.2f} м"
-                           f"{(', ' + str(count_z) + ' шт.') if count_z > 1 else ''})")
+                           f"{zr['adj_w']:.2f}\u00d7{zr['adj_h']:.2f} м{sec_tag}"
+                           f"{(', ' + str(total_units_z) + ' шт.') if total_units_z > 1 else ''})")
                 items.append({"name": gloss_z, "price": price_z})
                 specification.append({
                     "name": f"ZIP-маркиза {zr['zip_type']}",
-                    "count": (f"{count_z} шт. · {ZIP_FABRIC_NAMES.get(fabric_z, fabric_z)}"
-                              f" · {zr['adj_w']:.2f}\u00d7{zr['adj_h']:.2f} м")
+                    "count": (f"{total_units_z} шт. · {ZIP_FABRIC_NAMES.get(fabric_z, fabric_z)}"
+                              f" · {zr['adj_w']:.2f}\u00d7{zr['adj_h']:.2f} м{sec_tag}")
                 })
                 total_price += price_z
                 zip_total_eur += price_z
@@ -2361,6 +2381,7 @@ def perform_calculation(dimensions, options):
                     'has_glazing': has_glz_z,
                     'adj_w': zr['adj_w'], 'adj_h': zr['adj_h'],
                     'area': zr['area'],
+                    'sections': n_sections_z,
                     'count': count_z,
                     'base_eur': zr['base_eur'],
                     'fabric_eur': zr['fabric_eur'],
@@ -2369,9 +2390,25 @@ def perform_calculation(dimensions, options):
                     'total_eur': price_z,
                 })
 
+            # Add extra-column cost for ZIP (same rate as facade extra cols)
+            if total_extra_cols_z > 0:
+                _z_extra_col_unit = round(FACADE_EXTRA_COL_PRICE_PER_M * height_m, 2)
+                _z_extra_col_total = round(_z_extra_col_unit * total_extra_cols_z, 2)
+                total_price += _z_extra_col_total
+                zip_total_eur += _z_extra_col_total
+                items.append({
+                    "name": (f"Доп. колонна для ZIP-маркиз "
+                             f"({total_extra_cols_z} шт.)"),
+                    "price": _z_extra_col_total
+                })
+                specification.append({
+                    "name": "Доп. колонна (ZIP)",
+                    "count": f"{total_extra_cols_z} шт."
+                })
+
         # Add remote control pult for electric ZIP openings
         _zip_electric_count = sum(
-            zn['count'] for zn in zip_normalized if zn['drive'] != 'manual'
+            zn['count'] * zn.get('sections', 1) for zn in zip_normalized if zn['drive'] != 'manual'
         )
         _zip_pult_name = None
         _zip_pult_eur = 0.0
@@ -2452,9 +2489,17 @@ def perform_calculation(dimensions, options):
             "zip": {
                 "openings": zip_normalized,
                 "price": zip_total_eur,
-                "count": sum(int(o.get("count", 1) or 1) for o in zip_normalized),
+                "count": sum(
+                    int(o.get("count", 1) or 1) * int(o.get("sections", 1) or 1)
+                    for o in zip_normalized
+                ),
                 "pult_name": _zip_pult_name if _zip_electric_count > 0 else None,
                 "pult_eur": _zip_pult_eur if _zip_electric_count > 0 else 0,
+                "extra_cols_f": extra_cols_z_f,
+                "extra_cols_b": extra_cols_z_b,
+                "extra_cols_a": extra_cols_z_a,
+                "extra_cols_c": extra_cols_z_c,
+                "extra_cols_count": total_extra_cols_z,
             },
             "lamellas_count": lamellas_count,
             "pergola_type_name": PERGOLA_TYPES.get(pergola_type, pergola_type),

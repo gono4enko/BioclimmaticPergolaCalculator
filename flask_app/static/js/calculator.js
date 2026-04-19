@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v107';
+    var SVG_V = 'v108';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -1396,6 +1396,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 buildZipTable();
                 updateZipAreaInfo();
                 buildFacadeTable();
+                if (state._lastMainResult) updateSchemeForVariant(state.result || state._lastMainResult);
             });
         });
         tableEl.querySelectorAll('.zip-fld').forEach(function(sel) {
@@ -2138,10 +2139,11 @@ document.addEventListener('DOMContentLoaded', function() {
         var _fillC = getFillForSide('right');
         var _fillB = getFillForSide('back');
         var _fRes = (r && r.facade) || {};
-        var _xcF = parseInt(_fRes.extra_cols_f || 0, 10) || 0;
-        var _xcB = parseInt(_fRes.extra_cols_b || 0, 10) || 0;
-        var _xcA = parseInt(_fRes.extra_cols_a || 0, 10) || 0;
-        var _xcC = parseInt(_fRes.extra_cols_c || 0, 10) || 0;
+        var _zRes = (r && r.zip) || {};
+        var _xcF = Math.max(parseInt(_fRes.extra_cols_f || 0, 10) || 0, parseInt(_zRes.extra_cols_f || 0, 10) || 0);
+        var _xcB = Math.max(parseInt(_fRes.extra_cols_b || 0, 10) || 0, parseInt(_zRes.extra_cols_b || 0, 10) || 0);
+        var _xcA = Math.max(parseInt(_fRes.extra_cols_a || 0, 10) || 0, parseInt(_zRes.extra_cols_a || 0, 10) || 0);
+        var _xcC = Math.max(parseInt(_fRes.extra_cols_c || 0, 10) || 0, parseInt(_zRes.extra_cols_c || 0, 10) || 0);
         var xcFront = _xcF > 0 ? ('&xc=' + _xcF) : '';
         var xcBack  = _xcB > 0 ? ('&xc=' + _xcB) : '';
         var xcLeft  = _xcA > 0 ? ('&xc=' + _xcA) : '';
@@ -2338,9 +2340,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 var driveMap = {manual:'\u0420\u0443\u0447\u043d\u043e\u0435', simu:'SIMU', somfy:'Somfy', decolife:'Decolife'};
                 var driveLabel = driveMap[zo.drive] || zo.drive;
                 var priceRub = Math.round((zo.total_eur || 0) * mainResult.euro_rate);
-                html += '<tr><td>' + sideLabel + ' \u00b7 \u041f\u0440\u043e\u0451\u043c ' + (zo.bay + 1) + ' \u00b7 ' + typeLabel + ' \u00b7 ' + dimLabel + '<br><span style="font-size:0.8em;color:#555;">' + fabricLabel + ' \u00b7 ' + colorLabel + ' \u00b7 ' + driveLabel + '</span></td>' +
+                var nsec = parseInt(zo.sections || 1, 10) || 1;
+                var secLabel = nsec > 1 ? (' \u00b7 ' + nsec + ' \u0441\u0435\u043a.') : '';
+                html += '<tr><td>' + sideLabel + ' \u00b7 \u041f\u0440\u043e\u0451\u043c ' + (zo.bay + 1) + ' \u00b7 ' + typeLabel + ' \u00b7 ' + dimLabel + secLabel + '<br><span style="font-size:0.8em;color:#555;">' + fabricLabel + ' \u00b7 ' + colorLabel + ' \u00b7 ' + driveLabel + '</span></td>' +
                         '<td style="white-space:nowrap;">' + formatPrice(priceRub) + ' \u20BD</td></tr>';
             });
+            if (zipRes.extra_cols_count > 0) {
+                html += '<tr><td>\u0414\u043e\u043f. \u043a\u043e\u043b\u043e\u043d\u043d\u0430 \u0434\u043b\u044f ZIP-\u043c\u0430\u0440\u043a\u0438\u0437 (' + zipRes.extra_cols_count + ' \u0448\u0442.)</td>' +
+                        '<td style="white-space:nowrap;">\u2014</td></tr>';
+            }
             if (zipRes.pult_name) {
                 var pultRub = Math.round((zipRes.pult_eur || 0) * mainResult.euro_rate);
                 html += '<tr><td>\u041f\u0443\u043b\u044c\u0442 \u0414\u0423 ' + zipRes.pult_name + ' (ZIP)</td>' +

@@ -936,17 +936,20 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                 _fab = _zip_fab_names.get(_zo.get('fabric', ''), _zo.get('fabric', ''))
                 _drv = _zip_drv_names.get(_zo.get('drive', ''), _zo.get('drive', ''))
                 _cnt = int(_zo.get('count', 1) or 1)
-                # total_eur already includes count multiplication from backend
+                _nsec = int(_zo.get('sections', 1) or 1)
+                # total_eur already includes count×sections multiplication from backend
                 _tot_rub = round((_zo.get('total_eur', 0) or 0) * _euro_r_z)
                 _price_s = f"{_tot_rub:,d}".replace(',', ' ') + " ₽"
                 _overlay_note = ' (накл.)' if _zo.get('has_glazing') else ''
+                _sec_note = f' ×{_nsec}сек.' if _nsec > 1 else ''
                 _zip_col_names = {'ral9016': 'Белый RAL 9016', 'ral7024': 'Графит RAL 7024',
                                   'ral9t08': 'Графит RAL 9T08', 'ral8028': 'Коричн. RAL 8028',
                                   'ral_special': 'RAL special'}
                 _col = _zip_col_names.get(_zo.get('color', ''), _zo.get('color', ''))
-                pdf.table_row([str(_zi), _loc + _overlay_note, _typ, _dims,
+                _total_units = _cnt * _nsec
+                pdf.table_row([str(_zi), _loc + _overlay_note + _sec_note, _typ, _dims,
                                _fab + ' / ' + _col,
-                               _drv + (f' ×{_cnt}' if _cnt > 1 else ''), _price_s],
+                               _drv + (f' ×{_total_units}' if _total_units > 1 else ''), _price_s],
                               _zip_ws, aligns=["C", "L", "C", "C", "L", "L", "L"], row_height=6)
             _zip_pult_nm = pergola_data.get('zip_pult_name')
             if _zip_pult_nm:
