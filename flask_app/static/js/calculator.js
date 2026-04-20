@@ -1519,7 +1519,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return html;
     }
     var ZIP_DRIVES_JS = [
-        {v:'manual',   n:'\u0420\u0443\u0447\u043d\u043e\u0435 (50 \u20ac)'},
+        {v:'manual',   n:'\u0420\u0443\u0447\u043d\u043e\u0435'},
         {v:'simu',     n:'\u042d\u043b\u0435\u043a\u0442\u0440\u043e SIMU'},
         {v:'somfy',    n:'\u042d\u043b\u0435\u043a\u0442\u0440\u043e Somfy'},
         {v:'decolife', n:'\u042d\u043b\u0435\u043a\u0442\u0440\u043e Decolife'}
@@ -1602,15 +1602,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<td><button class="zip-toggle-btn" data-key="' + key + '" style="' + toggleBtnStyle + ';border:none;border-radius:5px;padding:3px 10px;font-size:0.83em;cursor:pointer;">' + toggleBtnText + '</button></td>';
             }
             if (enabled) {
+                var openingW = (o.side === 'front' || o.side === 'back') ? (W / mods) : (L / lMods);
+                var isZip130 = (openingW > 4.0 || state.height > 3.5);
+                var curFabric = z.fabric || 'veozip';
+                if (!isZip130 && (curFabric === 'soltis' || curFabric === 'copaco')) {
+                    curFabric = 'veozip';
+                    z.fabric = 'veozip';
+                    if (state.zipPerOpening[key]) state.zipPerOpening[key].fabric = 'veozip';
+                }
                 var fabOpts = '';
-                ZIP_FABRICS_JS.forEach(function(f) { fabOpts += '<option value="' + f.v + '"' + ((z.fabric||'veozip')===f.v?' selected':'') + '>' + f.n + '</option>'; });
+                ZIP_FABRICS_JS.forEach(function(f) {
+                    if (!isZip130 && (f.v === 'soltis' || f.v === 'copaco')) return;
+                    fabOpts += '<option value="' + f.v + '"' + (curFabric===f.v?' selected':'') + '>' + f.n + '</option>';
+                });
                 var curZipColor = z.color || 'ral9016';
                 var matchColor = _zipDefaultColor(key);
                 var hasGlzColor = !!(state.glazingPerOpening[key] && state.glazingPerOpening[key].color);
                 var showMatchBtn = hasGlzColor && (matchColor !== curZipColor);
                 var driveType = (z.drive && z.drive !== 'manual') ? 'electric' : 'manual';
                 var drvTypeSel = '<select class="form-select form-select-sm zip-fld" data-fld="drive_type" data-key="' + key + '">'
-                    + '<option value="manual"' + (driveType==='manual'?' selected':'') + '>\u0420\u0443\u0447\u043d\u043e\u0435 (50 \u20ac)</option>'
+                    + '<option value="manual"' + (driveType==='manual'?' selected':'') + '>\u0420\u0443\u0447\u043d\u043e\u0435</option>'
                     + '<option value="electric"' + (driveType==='electric'?' selected':'') + '>\u042d\u043b\u0435\u043a\u0442\u0440\u043e</option>'
                     + '</select>';
                 var brandSel = '';
