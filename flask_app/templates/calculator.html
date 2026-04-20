@@ -103,10 +103,6 @@
 
     <div class="step-card" id="step-4" style="display:none;">
         <h3>4. Опции</h3>
-        <div class="mb-3">
-            <label for="input-client-name" class="form-label" style="font-weight:500;font-size:0.9rem;">Имя заказчика <span style="color:#999;font-weight:400;">(необязательно)</span></label>
-            <input type="text" class="form-control" id="input-client-name" placeholder="Иван Иванов" maxlength="100" autocomplete="name" style="font-size:1rem;padding:0.5rem 0.8rem;">
-        </div>
         <div class="option-check">
             <input type="checkbox" id="opt-white-led" class="form-check-input" checked>
             <label for="opt-white-led">Светодиодная подсветка (белая)</label>
@@ -242,6 +238,10 @@
         </details>
     </div>
 
+    <div id="client-name-block" style="display:none;margin-bottom:0.75rem;">
+        <label for="input-client-name" style="font-weight:500;font-size:0.9rem;display:block;margin-bottom:0.35rem;">Имя заказчика <span style="color:#999;font-weight:400;">(необязательно)</span></label>
+        <input type="text" class="form-control" id="input-client-name" placeholder="Иван Иванов" maxlength="100" autocomplete="name" style="font-size:1rem;padding:0.5rem 0.8rem;">
+    </div>
     <button class="calc-btn" id="calc-btn" style="display:none;">
         <i class="bi bi-calculator"></i> Рассчитать стоимость
     </button>

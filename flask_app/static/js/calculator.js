@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
         step3: document.getElementById('step-3'),
         step4: document.getElementById('step-4'),
         calcBtn: document.getElementById('calc-btn'),
+        clientNameBlock: document.getElementById('client-name-block'),
         resultsSection: document.getElementById('results-section'),
         spinner: document.getElementById('spinner-overlay')
     };
@@ -42,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
             stepsEl.step3.style.display = 'none';
             stepsEl.step4.style.display = 'none';
             stepsEl.calcBtn.style.display = 'none';
+            if (stepsEl.clientNameBlock) stepsEl.clientNameBlock.style.display = 'none';
             stepsEl.resultsSection.style.display = 'none';
             var _ph = document.getElementById('step2-placeholder');
             if (_ph) _ph.style.display = 'none';
@@ -149,6 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateMaxDimensions();
         stepsEl.step3.style.display = 'block';
         stepsEl.step4.style.display = 'block';
+        if (stepsEl.clientNameBlock) stepsEl.clientNameBlock.style.display = 'block';
         stepsEl.calcBtn.style.display = 'block';
         buildFacadeTopView();
         buildFacadeTable();
