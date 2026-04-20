@@ -1381,12 +1381,52 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                 _zip_col_names = {'ral9016': 'Белый RAL 9016', 'ral7024': 'Графит RAL 7024',
                                   'ral9t08': 'Графит RAL 9T08', 'ral8028': 'Коричн. RAL 8028',
                                   'ral_special': 'RAL special'}
+                _zip_color_hex = {
+                    'ral9016': (228, 228, 225),
+                    'ral7024': (58, 65, 72),
+                    'ral9t08': (77, 77, 77),
+                    'ral8028': (92, 61, 30),
+                }
                 _col = _zip_col_names.get(_zo.get('color', ''), _zo.get('color', ''))
                 _total_units = _cnt * _nsec
-                pdf.table_row([str(_zi), _loc + _overlay_note + _sec_note, _typ, _dims,
-                               _fab + ' / ' + _col,
-                               _drv + (f' ×{_total_units}' if _total_units > 1 else ''), _price_s],
-                              _zip_ws, aligns=["C", "L", "C", "C", "L", "L", "L"], row_height=6)
+                _row_h_z = 6
+                _row_aligns_z = ["C", "L", "C", "C", "L", "L", "L"]
+                pdf.set_font('DejaVu', '', 9)
+                pdf.set_text_color(0, 0, 0)
+                # Draw columns 0-3 using normal cell() calls so FPDF handles
+                # any page break naturally before we touch the swatch cell.
+                for _ci_z, (_wd_z, _txt_z, _al_z) in enumerate(zip(
+                        _zip_ws[:4],
+                        [str(_zi), _loc + _overlay_note + _sec_note, _typ, _dims],
+                        _row_aligns_z[:4])):
+                    pdf.cell(_wd_z, _row_h_z, _txt_z, 1, 0, _al_z)
+                # After the first 4 cells any page break has already occurred.
+                # Read the live position so the swatch cell is placed correctly.
+                _fc_x = pdf.get_x()
+                _fc_y = pdf.get_y()
+                _fc_w = _zip_ws[4]
+                pdf.rect(_fc_x, _fc_y, _fc_w, _row_h_z)
+                _swatch_rgb = _zip_color_hex.get(_zo.get('color', ''))
+                _text_offset = 1.5
+                if _swatch_rgb:
+                    _sw = 3.5
+                    _sw_x = _fc_x + 1.5
+                    _sw_y = _fc_y + (_row_h_z - _sw) / 2
+                    pdf.set_fill_color(*_swatch_rgb)
+                    pdf.set_draw_color(120, 120, 120)
+                    pdf.rect(_sw_x, _sw_y, _sw, _sw, 'FD')
+                    pdf.set_draw_color(0, 0, 0)
+                    _text_offset = 1.5 + _sw + 1.0
+                pdf.set_xy(_fc_x + _text_offset, _fc_y)
+                pdf.cell(_fc_w - _text_offset, _row_h_z, _fab + ' / ' + _col, 0, 0, 'L')
+                # Continue at the cell after the swatch column and draw remaining cells
+                pdf.set_xy(_fc_x + _fc_w, _fc_y)
+                for _wd_z, _txt_z, _al_z in zip(
+                        _zip_ws[5:],
+                        [_drv + (f' ×{_total_units}' if _total_units > 1 else ''), _price_s],
+                        _row_aligns_z[5:]):
+                    pdf.cell(_wd_z, _row_h_z, _txt_z, 1, 0, _al_z)
+                pdf.ln()
             _zip_pult_nm = pergola_data.get('zip_pult_name')
             if _zip_pult_nm:
                 _pult_rub = round((pergola_data.get('zip_pult_eur', 0) or 0) * _euro_r_z)
