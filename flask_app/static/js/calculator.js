@@ -1537,16 +1537,29 @@ document.addEventListener('DOMContentLoaded', function() {
             var z = state.zipPerOpening[key] || {};
             var enabled = !!z.enabled;
             var hasGlz = !!(state.glazingPerOpening[key] && state.glazingPerOpening[key].enabled);
+            var hasFacadePanel = !!(state.facadePerOpening[key]);
+            // Force-disable ZIP if opening has a facade panel
+            if (hasFacadePanel && state.zipPerOpening[key]) {
+                state.zipPerOpening[key].enabled = false;
+                enabled = false;
+            }
             var overlayNotice = '';
             if (hasGlz) {
                 overlayNotice = '<br><span style="font-size:0.75em;color:#b45309;">\u041d\u0430\u043a\u043b\u0430\u0434\u043d\u043e\u0439 \u043c\u043e\u043d\u0442\u0430\u0436: +100 \u043c\u043c \u0448\u0438\u0440\u0438\u043d\u0430, +100/130 \u043c\u043c \u0432\u044b\u0441\u043e\u0442\u0430</span>';
             }
+            var rowStyle = hasFacadePanel ? ' style="opacity:0.45;pointer-events:none;"' : '';
             var toggleBtnStyle = enabled ? 'background:#1a3a6e;color:#fff' : 'background:#e5e9f0;color:#555';
             var toggleBtnText = enabled ? 'ZIP \u2713' : '+ ZIP';
-            html += '<tr data-key="' + key + '">';
+            html += '<tr data-key="' + key + '"' + rowStyle + '>';
             html += '<td><span class="facade-lbl">' + o.label + '</span></td>';
-            html += '<td>' + o.desc + overlayNotice + '</td>';
-            html += '<td><button class="zip-toggle-btn" data-key="' + key + '" style="' + toggleBtnStyle + ';border:none;border-radius:5px;padding:3px 10px;font-size:0.83em;cursor:pointer;">' + toggleBtnText + '</button></td>';
+            html += '<td>' + o.desc + overlayNotice
+                + (hasFacadePanel ? '<br><span style="font-size:0.75em;color:#6b7280;">\u0417\u0430\u043a\u0440\u044b\u0442\u043e \u0444\u0430\u0441\u0430\u0434\u043d\u043e\u0439 \u043f\u0430\u043d\u0435\u043b\u044c\u044e</span>' : '')
+                + '</td>';
+            if (hasFacadePanel) {
+                html += '<td><button disabled style="background:#e5e9f0;color:#aaa;border:none;border-radius:5px;padding:3px 10px;font-size:0.83em;cursor:not-allowed;">\u041d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e</button></td>';
+            } else {
+                html += '<td><button class="zip-toggle-btn" data-key="' + key + '" style="' + toggleBtnStyle + ';border:none;border-radius:5px;padding:3px 10px;font-size:0.83em;cursor:pointer;">' + toggleBtnText + '</button></td>';
+            }
             if (enabled) {
                 var fabOpts = '';
                 ZIP_FABRICS_JS.forEach(function(f) { fabOpts += '<option value="' + f.v + '"' + ((z.fabric||'veozip')===f.v?' selected':'') + '>' + f.n + '</option>'; });
