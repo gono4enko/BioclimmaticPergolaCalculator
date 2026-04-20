@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v111';
+    var SVG_V = 'v112';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -874,7 +874,9 @@ document.addEventListener('DOMContentLoaded', function() {
             var fH = Math.max(60, Math.min(190, Math.round(fW * asp)));
             var fxw = 8, fyw = 8, VWw = fW + 16, VHw = fH + 22;
             svgEl.setAttribute('viewBox', '0 0 ' + VWw + ' ' + VHw);
-            svgEl.setAttribute('width', VWw); svgEl.setAttribute('height', VHw);
+            svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            svgEl.setAttribute('width', '100%');
+            svgEl.removeAttribute('height');
             var topPxw = 9, botPxw = 5, sidePxw = 4, midPxw = 3;
             var iXw = fxw + sidePxw, iYw = fyw + topPxw;
             var iWw = fW - 2 * sidePxw, iHw = fH - topPxw - botPxw;
@@ -945,8 +947,9 @@ document.addEventListener('DOMContentLoaded', function() {
         var fx = 8, fy = 8;
         var VW = frameW + 16, VH = frameH + 22;
         svgEl.setAttribute('viewBox', '0 0 ' + VW + ' ' + VH);
-        svgEl.setAttribute('height', VH);
-        svgEl.setAttribute('width', VW);
+        svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        svgEl.setAttribute('width', '100%');
+        svgEl.removeAttribute('height');
         var s = '';
         // Top + bottom rails
         s += '<rect x="' + fx + '" y="' + fy + '" width="' + frameW + '" height="' + topPx + '" fill="' + pC + '"/>';

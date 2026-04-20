@@ -1177,15 +1177,29 @@
 .glz-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .glz-grid label { display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 3px; white-space: normal; line-height: 1.3; }
 .glz-grid .form-select-sm { min-width: 0; width: 100%; }
-.glz-preview { display: flex; align-items: center; justify-content: center; }
-.glz-mini-svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+/* SVG preview container — block layout, full width */
+.glz-preview { display: block; width: 100%; margin-top: 0.5rem; }
+.glz-preview svg.glz-mini-svg {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    margin: 0 auto;
+}
 /* glz-table: glazing configuration table classes */
-#glazing-opening-table { overflow-x: auto; }
+#glazing-opening-table { overflow-x: hidden; width: 100%; }
 .glz-table { width: 100%; min-width: 0; }
 .glz-table thead th { white-space: nowrap; }
 .glz-table td { vertical-align: middle; }
-.glz-table .glz-cfg-row td { padding: 0.5rem 0.75rem; vertical-align: top; overflow-wrap: anywhere; }
-.glz-table tbody tr td:nth-child(3) { overflow-wrap: anywhere; }
+.glz-table .glz-cfg-row td {
+    padding: 0.6rem 0.9rem;
+    vertical-align: top;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+/* Drive info block inside config row — ensure text wraps */
+.glz-table .glz-cfg-row td > div { overflow-wrap: break-word; word-break: break-word; }
+.glz-table tbody tr td:nth-child(3) { overflow-wrap: break-word; word-break: break-word; }
 @media (max-width: 720px) {
     .glazing-row-body { grid-template-columns: 1fr; }
     .glz-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
@@ -1322,15 +1336,17 @@
   .facade-table:not(.zip-table) thead th:last-child { display: none; }
   .facade-table:not(.zip-table) .facade-area { display: none; }
   .facade-table:not(.zip-table) .form-select-sm { font-size: 0.79rem; min-width: 0; }
-  /* Glazing table extra: hide Расположение column, compact grid */
-  .glz-table .glz-th-loc { display: none; }
-  .glz-table .glz-td-loc { display: none; }
-  .glz-table .glz-th-area { display: none; }
+  /* Glazing table: hide Расположение + Размер columns, compact layout */
+  .glz-table .glz-th-loc,
+  .glz-table .glz-td-loc,
+  .glz-table .glz-th-area,
   .glz-table .glz-td-area { display: none; }
   .glz-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
   .glz-table { font-size: 0.82rem; }
   .glz-table .glz-cfg-row td { padding: 0.4rem 0.5rem; }
-  .glz-mini-svg { max-width: 100%; }
+  /* SVG preview: constrained full-width on mobile */
+  .glz-preview svg.glz-mini-svg { max-width: 100%; }
+  .glz-preview { width: 100%; overflow: hidden; }
 
   /* ZIP table: collapse to card rows on mobile */
   .facade-table.zip-table { display: block; border: none; }

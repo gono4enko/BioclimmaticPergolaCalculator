@@ -3,9 +3,9 @@
 {% block title %}Калькулятор стоимости перголы{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=83">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=84">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=140" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=141" as="script">
 {% endblock %}
 
 {% block content %}
@@ -296,7 +296,7 @@
     </div>
 </div>
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=140"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=141"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');
