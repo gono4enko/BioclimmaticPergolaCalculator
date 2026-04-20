@@ -214,3 +214,114 @@ class TestZipAwningE2E:
 
             finally:
                 browser.close()
+
+    def test_zip_multiple_openings_results_count(self):
+        """Enable ZIP on left + right + front openings; results block must show count ≥ 3."""
+        with sync_playwright() as pw:
+            browser, page = _open_page(pw)
+            try:
+                # Navigate and configure B500NEW 4×3 m
+                page.goto(BASE_URL + "/", wait_until="networkidle")
+                page.locator('[data-type="B500NEW"]').click()
+                page.locator('#variant-options [data-variant="auto"]').click()
+                page.locator('#input-width').fill("4")
+                page.locator('#input-length').fill("3")
+                page.locator('#input-length').press("Tab")
+
+                expect(page.locator('#step-4')).to_be_visible(timeout=5000)
+
+                # Open the facade/ZIP spoiler
+                page.locator('details.facade-spoiler > summary').click()
+
+                zip_table = page.locator('#zip-opening-table')
+                expect(zip_table).to_be_visible(timeout=5000)
+
+                # Enable ZIP on front opening
+                toggle_front = page.locator('.zip-toggle-btn[data-key="front_0"]')
+                expect(toggle_front).to_be_visible(timeout=3000)
+                toggle_front.click()
+
+                # Enable ZIP on left opening
+                toggle_left = page.locator('.zip-toggle-btn[data-key="left_0"]')
+                expect(toggle_left).to_be_visible(timeout=3000)
+                toggle_left.click()
+
+                # Enable ZIP on right opening
+                toggle_right = page.locator('.zip-toggle-btn[data-key="right_0"]')
+                expect(toggle_right).to_be_visible(timeout=3000)
+                toggle_right.click()
+
+                # Verify all three toggles show "ZIP ✓"
+                assert "ZIP" in toggle_front.inner_text(), (
+                    f"front_0 toggle should show ZIP enabled, got: {toggle_front.inner_text()!r}"
+                )
+                assert "ZIP" in toggle_left.inner_text(), (
+                    f"left_0 toggle should show ZIP enabled, got: {toggle_left.inner_text()!r}"
+                )
+                assert "ZIP" in toggle_right.inner_text(), (
+                    f"right_0 toggle should show ZIP enabled, got: {toggle_right.inner_text()!r}"
+                )
+
+                # Calculate
+                calc_btn = page.locator('#calc-btn')
+                expect(calc_btn).to_be_visible(timeout=3000)
+                calc_btn.click()
+
+                results = page.locator('#results-section')
+                expect(results).to_be_visible(timeout=15000)
+                results_text = results.inner_text()
+
+                # Verify the ZIP count in the results header is ≥ 3
+                zip_count_match = re.search(r'ZIP-маркиз[ыа]\s*\(\s*(\d+)\s*шт\.', results_text)
+                assert zip_count_match is not None, (
+                    f"Expected 'ZIP-маркизы (N шт.)' pattern in results, got:\n{results_text[:800]}"
+                )
+                zip_count = int(zip_count_match.group(1))
+                assert zip_count >= 3, (
+                    f"Expected ≥3 ZIP units in results block (3 openings enabled), got count={zip_count}"
+                )
+
+            finally:
+                browser.close()
+
+    def test_zip_overlay_notice_when_glazing_active(self):
+        """Enable S500 glazing on front opening, then enable ZIP; overlay notice must appear."""
+        with sync_playwright() as pw:
+            browser, page = _open_page(pw)
+            try:
+                # Navigate and configure B500NEW 4×3 m
+                page.goto(BASE_URL + "/", wait_until="networkidle")
+                page.locator('[data-type="B500NEW"]').click()
+                page.locator('#variant-options [data-variant="auto"]').click()
+                page.locator('#input-width').fill("4")
+                page.locator('#input-length').fill("3")
+                page.locator('#input-length').press("Tab")
+
+                expect(page.locator('#step-4')).to_be_visible(timeout=5000)
+
+                # Open the facade/ZIP spoiler
+                page.locator('details.facade-spoiler > summary').click()
+
+                # Select S500 glazing on the front opening via the facade type selector
+                facade_sel = page.locator(
+                    'select.facade-type-sel[data-side="front"][data-bay="0"]'
+                )
+                expect(facade_sel).to_be_visible(timeout=5000)
+                facade_sel.select_option("S500")
+
+                # Now enable ZIP on the same front opening from the ZIP table
+                zip_table = page.locator('#zip-opening-table')
+                expect(zip_table).to_be_visible(timeout=5000)
+
+                toggle_front = page.locator('.zip-toggle-btn[data-key="front_0"]')
+                expect(toggle_front).to_be_visible(timeout=3000)
+                toggle_front.click()
+
+                # The ZIP table row for front_0 should now display the overlay notice
+                # "Накладной монтаж" because glazing is active on the same opening
+                front_row = page.locator('#zip-opening-table tr[data-key="front_0"]')
+                expect(front_row).to_be_visible(timeout=3000)
+                expect(front_row).to_contain_text("Накладной монтаж", timeout=3000)
+
+            finally:
+                browser.close()
