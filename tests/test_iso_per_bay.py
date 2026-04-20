@@ -186,3 +186,44 @@ def test_right_wall_per_bay_guillotine_and_zip(client):
         f'ZIP glass fill ({ZIP_GLASS}) not found in SVG — '
         'bay 2 ZIP was not rendered on the right wall'
     )
+
+
+# ---------------------------------------------------------------------------
+# Test 5: Mid-rail count for 2-sash vs 3-sash W500 guillotine
+# ---------------------------------------------------------------------------
+
+def test_w500_mid_rail_count_by_sash_number(client):
+    """A 3-sash W500 guillotine must produce 2 horizontal mid-rails (stroke-width="1.4")
+    while a 2-sash W500 must produce exactly 1.  The heavy top/bottom rails use
+    different stroke-widths (1.8 and 1.6) and must not be counted here."""
+    MID_RAIL_MARKER = 'stroke-width="1.4"'
+
+    svg_3sash = _svg(client, {
+        'w': '4',
+        'l': '3',
+        'h': '3',
+        'm': '1',
+        'fill_front_1': 'W500:3',
+    })
+
+    svg_2sash = _svg(client, {
+        'w': '4',
+        'l': '3',
+        'h': '3',
+        'm': '1',
+        'fill_front_1': 'W500:2',
+    })
+
+    count_3 = svg_3sash.count(MID_RAIL_MARKER)
+    count_2 = svg_2sash.count(MID_RAIL_MARKER)
+
+    assert count_3 == 2, (
+        f'Expected 2 mid-rails (stroke-width="1.4") for W500:3, found {count_3}'
+    )
+    assert count_2 == 1, (
+        f'Expected 1 mid-rail (stroke-width="1.4") for W500:2, found {count_2}'
+    )
+    assert count_3 == count_2 + 1, (
+        f'3-sash guillotine should have exactly one more mid-rail than 2-sash '
+        f'(got {count_3} vs {count_2})'
+    )
