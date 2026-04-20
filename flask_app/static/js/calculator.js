@@ -546,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     state.facadePerOpening[key2] = '';
                     if (state.glazingPerOpening[key2]) state.glazingPerOpening[key2].enabled = false;
                     if (!state.zipPerOpening) state.zipPerOpening = {};
-                    var existingZip = state.zipPerOpening[key2] || {fabric: 'veozip', color: _zipDefaultColor(key2), drive: 'manual', count: 1};
+                    var existingZip = state.zipPerOpening[key2] || {fabric: 'veozip', color: _zipDefaultColor(key2), drive: 'simu', count: 1};
                     existingZip.enabled = true;
                     state.zipPerOpening[key2] = existingZip;
                 } else {
@@ -1496,7 +1496,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 side: side, bay: bay,
                 fabric: z.fabric || 'veozip',
                 color: z.color || 'ral9016',
-                drive: z.drive || 'manual',
+                drive: z.drive || 'simu',
                 count: parseInt(z.count) || 1
             });
         });
@@ -1525,7 +1525,7 @@ document.addEventListener('DOMContentLoaded', function() {
         for (var ci = 0; ci < lMods; ci++) openings.push({side:'right', bay:ci, label:lMods>1?'C'+(ci+1):'C', desc:lMods>1?'\u0421\u043f\u0440\u0430\u0432\u0430 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(ci+1):'\u0421\u043f\u0440\u0430\u0432\u0430'});
         for (var fi = 0; fi < mods; fi++)  openings.push({side:'front', bay:fi, label:mods>1?'F'+(fi+1):'F', desc:mods>1?'\u0424\u0430\u0441\u0430\u0434 \u00b7 \u041f\u0440\u043e\u0451\u043c '+(fi+1):'\u0424\u0430\u0441\u0430\u0434'});
 
-        var html = '<table class="facade-table"><thead><tr>'
+        var html = '<table class="facade-table zip-table"><thead><tr>'
             + '<th>\u041f\u0440\u043e\u0451\u043c</th>'
             + '<th>\u0420\u0430\u0441\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435</th>'
             + '<th>ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u0430</th>'
@@ -1576,12 +1576,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     var brOpts = '';
                     var curBrand = (z.drive && z.drive !== 'manual') ? z.drive : 'simu';
                     ZIP_BRANDS.forEach(function(b) { brOpts += '<option value="' + b.v + '"' + (curBrand===b.v?' selected':'') + '>' + b.n + '</option>'; });
-                    brandSel = '<div><label>\u0411\u0440\u0435\u043d\u0434</label><select class="form-select form-select-sm zip-fld" data-fld="drive" data-key="' + key + '">' + brOpts + '</select></div>';
+                    brandSel = '<div class="zip-param-field"><label>\u0411\u0440\u0435\u043d\u0434</label><select class="form-select form-select-sm zip-fld" data-fld="drive" data-key="' + key + '">' + brOpts + '</select></div>';
                 }
-                html += '<td><div class="glz-grid">'
-                    + '<div><label>\u0422\u043a\u0430\u043d\u044c</label><select class="form-select form-select-sm zip-fld" data-fld="fabric" data-key="' + key + '">' + fabOpts + '</select></div>'
-                    + '<div><label>\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f</label><select class="form-select form-select-sm zip-fld" data-fld="color" data-key="' + key + '">' + colOpts + '</select></div>'
-                    + '<div><label>\u041f\u0440\u0438\u0432\u043e\u0434</label>' + drvTypeSel + '</div>'
+                html += '<td><div class="zip-params-card">'
+                    + '<div class="zip-param-field"><label>\u0422\u043a\u0430\u043d\u044c</label><select class="form-select form-select-sm zip-fld" data-fld="fabric" data-key="' + key + '">' + fabOpts + '</select></div>'
+                    + '<div class="zip-param-field"><label>\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f</label><select class="form-select form-select-sm zip-fld" data-fld="color" data-key="' + key + '">' + colOpts + '</select></div>'
+                    + '<div class="zip-param-field"><label>\u041f\u0440\u0438\u0432\u043e\u0434</label>' + drvTypeSel + '</div>'
                     + brandSel
                     + '</div></td>';
             } else {
@@ -1595,7 +1595,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tableEl.querySelectorAll('.zip-toggle-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var k = this.dataset.key;
-                var z = state.zipPerOpening[k] || {fabric:'veozip', color:_zipDefaultColor(k), drive:'manual', count:1};
+                var z = state.zipPerOpening[k] || {fabric:'veozip', color:_zipDefaultColor(k), drive:'simu', count:1};
                 z.enabled = !z.enabled;
                 state.zipPerOpening[k] = z;
                 buildZipTable();
@@ -1608,7 +1608,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sel.addEventListener('change', function() {
                 var k = this.dataset.key;
                 var fld = this.dataset.fld;
-                if (!state.zipPerOpening[k]) state.zipPerOpening[k] = {fabric:'veozip', color:_zipDefaultColor(k), drive:'manual', count:1, enabled:true};
+                if (!state.zipPerOpening[k]) state.zipPerOpening[k] = {fabric:'veozip', color:_zipDefaultColor(k), drive:'simu', count:1, enabled:true};
                 if (fld === 'drive_type') {
                     if (this.value === 'manual') {
                         state.zipPerOpening[k].drive = 'manual';
@@ -3031,7 +3031,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     enabled: true,
                     fabric: z.fabric || 'veozip',
                     color: z.color || 'ral9016',
-                    drive: z.drive || 'manual',
+                    drive: z.drive || 'simu',
                     count: parseInt(z.count) || 1
                 };
             });
