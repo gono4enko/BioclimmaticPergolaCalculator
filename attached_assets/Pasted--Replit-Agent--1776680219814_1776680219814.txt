@@ -1,0 +1,483 @@
+# Промпт для Replit Agent — Маркетинговые улучшения калькулятора пергол
+
+---
+
+## КОНТЕКСТ ПРОЕКТА
+
+Это Flask-приложение — калькулятор биоклиматических пергол. Стек: Flask + Jinja2 + ReportLab (PDF) + vanilla JS/CSS. Приложение развёрнуто на Replit.
+
+**Файлы, которые НЕЛЬЗЯ трогать:**
+- `calculator.py` — логика расчёта цен
+- `app.py` — роуты Flask
+- `static/data/*.json` — прайс-файлы
+- `kp_content.py` — логика контента КП
+
+**Файлы для изменения:**
+- `templates/calculator.html` (или аналогичный шаблон) — основной UI калькулятора
+- `pdf_generator.py` — генератор PDF-КП
+- `static/css/` — стили
+- `static/js/` — клиентский JS
+
+---
+
+## ЗАДАНИЕ: 8 УЛУЧШЕНИЙ
+
+Реализуй все 8 пунктов последовательно. После каждого пункта убедись, что приложение запускается без ошибок.
+
+---
+
+### 1. ПЕРЕПИСАТЬ ТЕКСТЫ КАРТОЧЕК ТИПОВ ПЕРГОЛ
+
+В шаблоне найди блок выбора типа перголы (шаг 1). Замени тексты внутри карточек на следующие. Структура каждой карточки: заголовок + описание + строка значков-выгод.
+
+**B500:**
+- Заголовок: `В500 — поворотные ламели`
+- Описание: `Управляйте светом и воздухом одним касанием. Аэродинамические ламели поворачиваются под любым углом — от полного открытия до герметичной крыши в дождь.`
+- Значки (добавить новым `<div class="model-badges">` после описания):
+  ```html
+  <div class="model-badges">
+    <span class="badge badge-sun">☀ Защита от солнца</span>
+    <span class="badge badge-rain">🌧 Герметично в дождь</span>
+    <span class="badge badge-air">↕ Регулировка воздуха</span>
+  </div>
+  ```
+
+**B700:**
+- Заголовок: `В700 — поворотно-сдвижные`
+- Описание: `Открывайте небо на 80–85% — больше, чем у любой другой перголы. Ламели сдвигаются и убираются в сторону: ясный день — полное открытие, дождь — закрыто за секунды.`
+- Значки:
+  ```html
+  <div class="model-badges">
+    <span class="badge badge-open">↔ Открытие до 85%</span>
+    <span class="badge badge-sun">☀ Слежение за солнцем</span>
+    <span class="badge badge-premium">★ Премиум</span>
+  </div>
+  ```
+
+**B600:**
+- Заголовок: `В600 — PIR сэндвич-панели`
+- Описание: `Терраса круглый год — даже зимой. Крыша из экологичных PIR-панелей удерживает тепло и не пропускает влагу. Идеально для отапливаемых веранд.`
+- Значки:
+  ```html
+  <div class="model-badges">
+    <span class="badge badge-winter">❄ Круглогодично</span>
+    <span class="badge badge-rain">🌧 Полная защита</span>
+    <span class="badge badge-insulation">🔥 Теплоизоляция</span>
+  </div>
+  ```
+
+**B200:**
+- Заголовок: `В200 MAF AERO FLAT`
+- Описание: `Архитектурная красота без компромиссов. Фиксированные ламели 200×50 мм создают эффектную тень. Вынос до 12,1 м — для больших террас и коммерческих объектов.`
+- Значки:
+  ```html
+  <div class="model-badges">
+    <span class="badge badge-style">★ Дизайн-акцент</span>
+    <span class="badge badge-sun">☀ Затенение</span>
+    <span class="badge badge-size">↔ Вынос до 12 м</span>
+  </div>
+  ```
+
+Добавить в CSS стили для бейджей:
+```css
+.model-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+.badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.badge-sun    { background: #fff8e6; color: #7a4e00; }
+.badge-rain   { background: #e8f4fd; color: #1a5276; }
+.badge-air    { background: #eaf4fb; color: #154360; }
+.badge-open   { background: #f0eafd; color: #4a235a; }
+.badge-winter { background: #e8f8f5; color: #0e6655; }
+.badge-insulation { background: #fdecea; color: #78281f; }
+.badge-premium { background: #fef9e7; color: #7d6608; }
+.badge-style  { background: #fdf2e9; color: #784212; }
+.badge-size   { background: #f2f3f4; color: #2c3e50; }
+```
+
+---
+
+### 2. ЗАГОЛОВОК И СТРОКА ДОВЕРИЯ
+
+В шаблоне найди главный заголовок страницы. Замени:
+
+**Было:**
+```html
+<h1>Калькулятор биоклиматических пергол</h1>
+<p>Рассчитайте стоимость перголы за несколько шагов</p>
+```
+
+**Стало:**
+```html
+<h1>Рассчитайте стоимость перголы под ваш проект</h1>
+<p class="calc-subtitle">Введите размеры — получите точный расчёт и готовое КП за 3 минуты</p>
+<div class="trust-line">
+  <span>🏗 Конструкции Decolife</span>
+  <span>·</span>
+  <span>🔩 Алюминий, адаптировано под климат России</span>
+  <span>·</span>
+  <span>📍 Монтаж под ключ в Ростове и области</span>
+</div>
+```
+
+CSS для trust-line:
+```css
+.trust-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: #6b7a99;
+  margin-top: 8px;
+  align-items: center;
+}
+.trust-line span { line-height: 1.4; }
+```
+
+---
+
+### 3. PLACEHOLDER ДЛЯ ШАГА 2 (МОДИФИКАЦИЯ) ДО ВЫБОРА ТИПА
+
+Найди блок шага 2 «Модификация» в шаблоне. Добавь внутрь него элемент-заглушку, который показывается когда тип перголы ещё не выбран, и скрывается после выбора:
+
+```html
+<div id="step2-placeholder" class="step-placeholder">
+  <p>👆 Сначала выберите тип перголы выше — здесь появятся варианты конфигурации</p>
+</div>
+```
+
+CSS:
+```css
+.step-placeholder {
+  padding: 16px;
+  background: #f8f9fa;
+  border: 1px dashed #dde3f0;
+  border-radius: 8px;
+  color: #6b7a99;
+  font-size: 14px;
+  text-align: center;
+}
+```
+
+В JS — найди место где происходит выбор типа перголы (обработчик клика по карточке). Добавь туда:
+```javascript
+// Скрыть placeholder шага 2 после выбора типа
+const placeholder = document.getElementById('step2-placeholder');
+if (placeholder) placeholder.style.display = 'none';
+```
+
+---
+
+### 4. ДИНАМИЧЕСКИЙ СЧЁТЧИК СУММЫ (STICKY-БАР)
+
+Это главное конверсионное улучшение. Добавить sticky-панель внизу экрана, которая показывает текущую сумму расчёта и обновляется в реальном времени.
+
+**HTML** — добавить в конец `<body>` (перед `</body>`):
+```html
+<div id="price-bar" class="price-bar price-bar--hidden">
+  <div class="price-bar__inner">
+    <div class="price-bar__label">Предварительная стоимость</div>
+    <div class="price-bar__price" id="price-bar-value">—</div>
+    <div class="price-bar__hint">Точный расчёт — после нажатия кнопки</div>
+  </div>
+</div>
+```
+
+**CSS:**
+```css
+.price-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #1a2744;
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  transform: translateY(0);
+  transition: transform 0.3s ease;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+}
+.price-bar--hidden {
+  transform: translateY(100%);
+}
+.price-bar__inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.price-bar__label {
+  font-size: 13px;
+  opacity: 0.7;
+}
+.price-bar__price {
+  font-size: 20px;
+  font-weight: 600;
+  color: #e8622a;
+}
+.price-bar__hint {
+  font-size: 11px;
+  opacity: 0.5;
+}
+@media (max-width: 480px) {
+  .price-bar { padding: 10px 16px; }
+  .price-bar__price { font-size: 18px; }
+}
+```
+
+**JS** — добавить функцию обновления счётчика. Функция должна:
+1. Читать текущие значения формы: выбранный тип перголы, ширину, вынос
+2. Вычислять приблизительную сумму через существующий API-эндпоинт `/calculate` (если он есть) или из формы
+3. Отображать результат в `#price-bar-value` в формате `от X ₽`
+4. Показывать/скрывать бар в зависимости от того, заполнены ли обязательные поля (тип + ширина + вынос)
+
+```javascript
+function updatePriceBar() {
+  const priceBar = document.getElementById('price-bar');
+  const priceBarValue = document.getElementById('price-bar-value');
+  if (!priceBar || !priceBarValue) return;
+
+  // Получить значения полей
+  const pergolaType = document.querySelector('[name="pergola_type"]:checked, .pergola-type-card.selected');
+  const width = parseFloat(document.querySelector('[name="width"]')?.value || 0);
+  const depth = parseFloat(document.querySelector('[name="depth"]')?.value || 0);
+
+  // Показывать бар только если выбран тип и введены размеры
+  const hasType = !!pergolaType;
+  const hasDims = width > 0 && depth > 0;
+
+  if (!hasType || !hasDims) {
+    priceBar.classList.add('price-bar--hidden');
+    return;
+  }
+
+  priceBar.classList.remove('price-bar--hidden');
+
+  // Отправить запрос на предварительный расчёт
+  const formData = new FormData(document.querySelector('form') || document.getElementById('calculator-form'));
+  
+  fetch('/calculate', {
+    method: 'POST',
+    body: formData
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data && (data.total || data.price || data.total_price)) {
+      const price = data.total || data.price || data.total_price;
+      priceBarValue.textContent = 'от ' + Math.round(price).toLocaleString('ru-RU') + ' ₽';
+    }
+  })
+  .catch(() => {
+    // При ошибке скрыть бар чтобы не вводить в заблуждение
+    priceBar.classList.add('price-bar--hidden');
+  });
+}
+
+// Навесить обработчики на все поля формы
+document.addEventListener('DOMContentLoaded', function() {
+  const fields = document.querySelectorAll('input, select, [data-pergola-type]');
+  fields.forEach(f => {
+    f.addEventListener('change', updatePriceBar);
+    f.addEventListener('input', updatePriceBar);
+  });
+  // Также обновлять при клике на карточки типов пергол
+  document.querySelectorAll('.pergola-type-card, [data-model]').forEach(card => {
+    card.addEventListener('click', () => setTimeout(updatePriceBar, 100));
+  });
+});
+```
+
+**ВАЖНО:** Если у роута `/calculate` нет JSON-ответа (только генерирует HTML), добавить в `app.py` новый роут `/calculate_preview` который принимает POST с параметрами `pergola_type`, `width`, `depth` и возвращает JSON `{"total": число}`. Используй существующую логику из `calculator.py`, только верни базовую цену без опций.
+
+---
+
+### 5. ФИЛЬТРАЦИЯ ОПЦИЙ ЗАПОЛНЕНИЯ ПРОЁМОВ ПО МОДЕЛИ ПЕРГОЛЫ
+
+В блоке «Заполнение проёмов» карточки типов заполнений должны скрываться в зависимости от выбранной модели перголы.
+
+**Правила совместимости:**
+- `B500` — скрыть: FP-PIR
+- `B700` — скрыть: FP-PIR  
+- `B200` — скрыть: FP-PIR, W500, W600, W700, S500, S100
+- `B600` — показать всё (FP-PIR доступна только здесь)
+
+**Реализация:** добавить в HTML data-атрибуты на карточки заполнений:
+```html
+<!-- FP-PIR -->
+<div class="facade-card" data-fill-type="fp-pir" data-compatible-models="b600">
+  ...
+</div>
+
+<!-- W500/W600/W700 -->
+<div class="facade-card" data-fill-type="w500" data-compatible-models="b500,b700,b600">
+  ...
+</div>
+
+<!-- FZ-44, FP-20, S500, S100, ZIP — совместимы со всеми -->
+<div class="facade-card" data-fill-type="fz44" data-compatible-models="b500,b700,b600,b200">
+  ...
+</div>
+```
+
+JS-функция фильтрации (добавить к существующему обработчику выбора типа перголы):
+```javascript
+function filterFacadeOptions(selectedModel) {
+  const modelKey = (selectedModel || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  
+  document.querySelectorAll('[data-compatible-models]').forEach(card => {
+    const compatible = card.dataset.compatibleModels.split(',');
+    const isCompatible = compatible.some(m => modelKey.includes(m.replace(/[^a-z0-9]/g, '')));
+    
+    card.style.display = isCompatible ? '' : 'none';
+    
+    // Если карточка была выбрана и теперь скрыта — снять выбор
+    if (!isCompatible && card.classList.contains('selected')) {
+      card.classList.remove('selected');
+    }
+  });
+}
+```
+
+Вызывать `filterFacadeOptions(selectedModelCode)` при каждом выборе типа перголы.
+
+---
+
+### 6. УПРОЩЕНИЕ ИНСТРУКЦИИ К ЗАПОЛНЕНИЮ ПРОЁМОВ
+
+Найди блок «Как заполнить проём» с нумерованным списком из 4 пунктов. Замени весь блок на упрощённую версию:
+
+**Было:** сложная техническая инструкция с терминами SIMU/SOMFY/TANDEM/плавник
+
+**Стало:**
+```html
+<div class="fill-hint">
+  <div class="fill-hint__step">
+    <span class="fill-hint__num">1</span>
+    <span>Нажмите на нужную сторону перголы на схеме (A, B, C или F)</span>
+  </div>
+  <div class="fill-hint__step">
+    <span class="fill-hint__num">2</span>
+    <span>Выберите тип заполнения из списка — панель, остекление или маркиза</span>
+  </div>
+  <div class="fill-hint__step">
+    <span class="fill-hint__num">3</span>
+    <span>Укажите параметры проёма — размеры подберёт менеджер на замере</span>
+  </div>
+</div>
+```
+
+CSS:
+```css
+.fill-hint { margin-bottom: 16px; }
+.fill-hint__step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #3d3d3d;
+}
+.fill-hint__num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1a2744;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+```
+
+---
+
+### 7. СРОК ДЕЙСТВИЯ В PDF-КП
+
+В `pdf_generator.py` найди функцию генерации PDF. Добавить в шапку или подвал документа строку с датой окончания действия расчёта.
+
+**Добавить в начало файла (если не импортировано):**
+```python
+from datetime import datetime, timedelta
+```
+
+**Найти место где формируется контент первой страницы или подвала PDF. Добавить:**
+```python
+valid_until = (datetime.today() + timedelta(days=14)).strftime("%d.%m.%Y")
+validity_text = f"Расчёт действителен до {valid_until} · Цены фиксированы при подтверждении заказа до указанной даты"
+```
+
+Вывести `validity_text` в PDF:
+- Если используется ReportLab: добавить `Paragraph(validity_text, style_small_italic)` в нижнюю часть первой страницы или в колонтитул
+- Цвет текста: `#6b7a99` (серый), размер шрифта: 9–10pt, курсив
+
+---
+
+### 8. БЛОК «СЛЕДУЮЩИЕ ШАГИ» В PDF-КП
+
+В `pdf_generator.py` найди место где заканчивается основное содержимое КП (после таблицы с итоговой суммой). Добавить новый раздел перед контактами:
+
+```python
+next_steps_title = "Как оформить заказ"
+next_steps = [
+    ("1. Подтвердите расчёт", "Напишите или позвоните нам — менеджер уточнит детали и ответит на вопросы."),
+    ("2. Бесплатный замер", "Выезд специалиста в течение 2 рабочих дней. Уточним размеры и условия монтажа."),
+    ("3. Договор и производство", "Фиксируем цену в договоре. Срок изготовления — от 3 недель."),
+    ("4. Монтаж и сдача", "Установка под ключ, настройка автоматики, инструктаж, гарантия на работы.")
+]
+```
+
+Если в КП есть итоговая сумма `total_price`, добавить также строку стоимости владения:
+```python
+if total_price > 0:
+    daily_cost = round(total_price / 3650)  # 10 лет = 3650 дней
+    cost_per_day_text = (
+        f"Стоимость владения: {total_price:,.0f} ₽ на 10 лет = "
+        f"~{daily_cost:,} ₽ в день — надёжная инвестиция в комфорт вашей террасы."
+    ).replace(",", " ")
+```
+
+Оформить блок «Следующие шаги» в PDF как нумерованный список с заголовком секции, используя существующие стили для заголовков и параграфов в документе.
+
+---
+
+## ПРОВЕРКА ПОСЛЕ ВЫПОЛНЕНИЯ
+
+После реализации всех 8 пунктов выполни следующие проверки:
+
+1. **Запуск:** приложение запускается без ошибок (`flask run` или аналог)
+2. **Карточки:** тексты и бейджи отображаются на всех 4 карточках типов пергол
+3. **Заголовок:** новый заголовок и строка доверия видны на странице
+4. **Placeholder:** при загрузке страницы шаг 2 показывает подсказку
+5. **Price-bar:** при выборе типа + вводе размеров снизу появляется тёмная полоска с суммой
+6. **Фильтрация:** при выборе B200 карточки W500/W600/W700 и FP-PIR скрываются
+7. **PDF:** в сгенерированном КП есть строка «Расчёт действителен до [дата]» и раздел «Как оформить заказ»
+8. **Консоль браузера:** нет JavaScript-ошибок
+
+---
+
+## ВАЖНЫЕ ОГРАНИЧЕНИЯ
+
+- НЕ изменять логику ценообразования в `calculator.py`
+- НЕ изменять роуты в `app.py` (кроме добавления нового `/calculate_preview`)
+- НЕ изменять файлы `static/data/*.json`
+- НЕ изменять логику `kp_content.py`
+- Все новые стили добавлять в существующий CSS-файл, не создавать новый
+- Весь новый JS добавлять в существующий JS-файл или в конец `<body>` шаблона через `<script>` тег
+- Сохранять существующую функциональность — ничего не ломать
