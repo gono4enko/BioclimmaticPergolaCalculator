@@ -2831,7 +2831,7 @@ document.addEventListener('DOMContentLoaded', function() {
         html += '<div style="text-align:center;font-size:0.72rem;color:#999;padding:0.8rem 2rem 0.4rem;border-top:1px solid #e8edf5;margin-top:0.5rem;">' +
             '<a href="https://pergolamarket.ru/soglasie-na-obrabotku-pd" target="_blank" style="color:#aaa;text-decoration:underline;">\u041F\u043E\u043B\u0438\u0442\u0438\u043A\u0430 \u043A\u043E\u043D\u0444\u0438\u0434\u0435\u043D\u0446\u0438\u0430\u043B\u044C\u043D\u043E\u0441\u0442\u0438</a>' +
             '&nbsp;&nbsp;\u2022&nbsp;&nbsp;' +
-            '<a href="https://pergolamarket.ru/oferta" target="_blank" style="color:#aaa;text-decoration:underline;">\u041E\u0444\u0435\u0440\u0442\u0430</a>' +
+            '<a href="https://pergolamarket.ru/soglasie-na-obrabotku-pd" target="_blank" style="color:#aaa;text-decoration:underline;">\u041E\u0444\u0435\u0440\u0442\u0430</a>' +
             '</div>';
 
         html += '</div>';

@@ -73,7 +73,7 @@ class PDF(FPDF):
         self.cell(0, 4, 'ИП Гоноченко А.В. ОГРНИП 321619600249231 | Тел.: +7-906-429-74-20 | Сайт: pergolamarket.ru', 0, 1, 'C')
         self.set_font('DejaVu', '', 6)
         self.set_text_color(150, 150, 150)
-        self.cell(0, 4, 'Политика конфиденциальности: pergolamarket.ru/soglasie-na-obrabotku-pd  |  Оферта: pergolamarket.ru/oferta', 0, 0, 'C')
+        self.cell(0, 4, 'Политика конфиденциальности: pergolamarket.ru/soglasie-na-obrabotku-pd  |  Оферта: pergolamarket.ru/soglasie-na-obrabotku-pd', 0, 0, 'C')
         self.set_text_color(0, 0, 0)
     
     def chapter_title(self, title):
