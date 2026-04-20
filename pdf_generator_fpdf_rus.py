@@ -412,6 +412,189 @@ def _get_gallery_images(max_images=6, model_key='b500'):
     return result
 
 
+# ── Color / glass name tables for glazing preview block ──────────────────────
+_GLZ_W_COLORS = {
+    'ral9016': 'Белый RAL 9016', 'ral8028': 'Коричн. RAL 8028',
+    'ral7024': 'Графит RAL 7024', 'ral_special': 'RAL special',
+    'ral9t08': 'Антрацит RAL 9T08',
+}
+_GLZ_W_GLASS = {'transparent': 'Прозрачное', 'multifunctional': 'Мультифункц.'}
+_GLZ_S500_COLORS = {
+    'ral7016': 'Антрацит RAL 7016', 'ral9016': 'Белый RAL 9016',
+    'ral8028': 'Коричн. RAL 8028', 'custom': 'RAL special',
+}
+_GLZ_S500_GLASS = {'transparent': 'Закалённое', 'tinted': 'Тонированное'}
+_GLZ_S100_COLORS = {
+    'ral9t08': 'Антрацит RAL 9T08', 'ral7024': 'Графит RAL 7024',
+    'ral8028': 'Коричн. RAL 8028', 'ral9016': 'Белый RAL 9016',
+    'ral_special': 'RAL special',
+}
+_GLZ_S100_GLASS = {'transparent': 'Прозрачное', 'tinted_mass': 'Тонированное (масса)'}
+_GLZ_DIRS = {'right': '→ вправо', 'left': '← влево', 'center': '← → центр'}
+_GLZ_SIDE_LABELS = {
+    'front': ('F', 'Фасад'), 'back': ('B', 'Сзади'),
+    'left': ('A', 'Слева'), 'right': ('C', 'Справа'),
+}
+
+
+def _glz_mini_svg_str(w, h, pc, direction, color, glass, series, sashes):
+    """
+    Generate a mini SVG string for a glazed opening — Python port of
+    the JS _drawGlazingMiniSvg function in calculator.js.
+    """
+    series = (series or 'S500').upper()
+    is_w = series in ('W500', 'W600', 'W700')
+
+    if is_w:
+        sN = int(sashes) if sashes in (2, 3) else 2
+        pCw = ({'ral9016': '#d8d8d8', 'ral8028': '#5c3d1e',
+                'ral7024': '#3a4148', 'ral_special': '#7a7a7a'}.get(color, '#2e3338'))
+        is_multi = (glass == 'multifunctional')
+        cG1w = '#a8c0d0' if is_multi else '#cce0f0'
+        cG2w = '#7d97a8' if is_multi else '#a8c8e0'
+        fW = 200
+        asp = h / w if w > 0 else 1
+        fH = max(60, min(190, round(fW * asp)))
+        fxw, fyw = 8, 8
+        VWw, VHw = fW + 16, fH + 22
+        topPxw, botPxw, sidePxw, midPxw = 9, 5, 4, 3
+        iXw = fxw + sidePxw
+        iYw = fyw + topPxw
+        iWw = fW - 2 * sidePxw
+        iHw = fH - topPxw - botPxw
+        sashHpx = (iHw - (sN - 1) * midPxw) / sN
+        sw = ''
+        for iw in range(sN):
+            syw = iYw + iw * (sashHpx + midPxw)
+            sw += (f'<rect x="{iXw}" y="{syw:.2f}" width="{iWw}"'
+                   f' height="{sashHpx:.2f}" fill="{cG1w}"/>')
+            sw += (f'<rect x="{iXw + iWw * 0.55:.2f}" y="{syw:.2f}"'
+                   f' width="{iWw * 0.4:.2f}" height="{sashHpx:.2f}"'
+                   f' fill="{cG2w}" opacity="0.35"/>')
+            if iw < sN - 1:
+                sw += (f'<rect x="{iXw}" y="{syw + sashHpx:.2f}"'
+                       f' width="{iWw}" height="{midPxw}" fill="{pCw}"/>')
+        sw += f'<rect x="{fxw}" y="{fyw}" width="{sidePxw}" height="{fH}" fill="{pCw}"/>'
+        sw += (f'<rect x="{fxw + fW - sidePxw}" y="{fyw}" width="{sidePxw}"'
+               f' height="{fH}" fill="{pCw}"/>')
+        sw += f'<rect x="{fxw}" y="{fyw}" width="{fW}" height="{topPxw}" fill="{pCw}"/>'
+        sw += (f'<rect x="{fxw}" y="{fyw + fH - botPxw}" width="{fW}"'
+               f' height="{botPxw}" fill="{pCw}"/>')
+        sw += (f'<circle cx="{fxw + fW * 0.5:.2f}" cy="{fyw + topPxw * 0.5:.2f}"'
+               f' r="2.5" fill="#dfe7ef" stroke="#1a3a6e" stroke-width="0.6"/>')
+        sw += (f'<text x="{fxw + fW * 0.5:.2f}" y="{fyw + fH - botPxw * 0.25:.2f}"'
+               f' text-anchor="middle" font-size="6" fill="#dfe7ef"'
+               f' font-family="Arial,sans-serif">{series}</text>')
+        dimYw = fyw + fH + 8
+        sw += (f'<line x1="{fxw}" y1="{dimYw}" x2="{fxw + fW}" y2="{dimYw}"'
+               f' stroke="#8a9bbf" stroke-width="0.6"/>')
+        sw += (f'<text x="{fxw + fW / 2:.2f}" y="{dimYw + 8}"'
+               f' text-anchor="middle" font-size="8" fill="#8a9bbf"'
+               f' font-family="Arial,sans-serif">'
+               f'{round(w * 1000)}\u00d7{round(h * 1000)} \u043c\u043c</text>')
+        return (f'<svg xmlns="http://www.w3.org/2000/svg"'
+                f' viewBox="0 0 {VWw} {VHw}" width="{VWw}" height="{VHw}">{sw}</svg>')
+
+    # S-series (S500 / S100)
+    n = int(pc) if pc else 3
+    is_s100 = (series == 'S100')
+    if is_s100:
+        is_center = (direction == 'center') or n in (8, 12)
+        pC = ({'ral9016': '#d8d8d8', 'ral8028': '#5c3d1e',
+               'ral7024': '#3a4148', 'ral_special': '#7a7a7a'}.get(color, '#2e3338'))
+        is_tinted = (glass == 'tinted_mass')
+        cG1 = '#7d8e96' if is_tinted else '#d8e8f0'
+        cG2 = '#5d7078' if is_tinted else '#b8d4e6'
+        topPx, botPx = (6 if n == 3 else 5.5), 3
+        sidePx, midPx, centerPx = 3.5, 1.6, 3
+    else:
+        is_center = (direction in ('center',)) or n in (6, 8, 10)
+        pC = ({'ral9016': '#d0d0d0', 'ral8028': '#5c3d1e',
+               'custom': '#777'}.get(color, '#3a4048'))
+        is_tinted = (glass == 'tinted')
+        is_bronze = is_tinted and color == 'ral8028'
+        cG1 = '#b8956a' if is_bronze else ('#8a9ea8' if is_tinted else '#cce0f0')
+        cG2 = '#9a7548' if is_bronze else ('#6a8088' if is_tinted else '#a8c8e0')
+        topPx, botPx = 8, 4
+        sidePx, midPx, centerPx = 6, 2.4, 4
+
+    frameW = 200
+    aspect = h / w if w > 0 else 1
+    frameH = round(frameW * aspect)
+    frameH = max(50, min(180, frameH))
+    fx, fy = 8, 8
+    VW, VH = frameW + 16, frameH + 22
+
+    s = ''
+    s += f'<rect x="{fx}" y="{fy}" width="{frameW}" height="{topPx}" fill="{pC}"/>'
+    s += (f'<rect x="{fx}" y="{fy + frameH - botPx:.2f}" width="{frameW}"'
+          f' height="{botPx}" fill="{pC}"/>')
+    s += f'<rect x="{fx}" y="{fy}" width="{sidePx}" height="{frameH}" fill="{pC}"/>'
+    s += (f'<rect x="{fx + frameW - sidePx:.2f}" y="{fy}" width="{sidePx}"'
+          f' height="{frameH}" fill="{pC}"/>')
+    iX = fx + sidePx
+    iY = fy + topPx
+    iW = frameW - 2 * sidePx
+    iH = frameH - topPx - botPx
+    if is_center:
+        cx = iX + iW / 2
+        s += (f'<rect x="{cx - centerPx / 2:.2f}" y="{iY:.2f}"'
+              f' width="{centerPx}" height="{iH:.2f}" fill="{pC}"/>')
+    halfN = n // 2 if is_center else n
+    if is_center:
+        panelW = ((iW - centerPx) / 2 - (halfN - 1) * midPx) / halfN
+    else:
+        panelW = (iW - (n - 1) * midPx) / n
+    for i in range(n):
+        sIdx = (i % (n // 2)) if is_center else i
+        sOff = ((iW - centerPx) / 2 + centerPx) if (is_center and i >= n // 2) else 0
+        px = iX + sOff + sIdx * (panelW + midPx)
+        if sIdx > 0:
+            s += (f'<rect x="{px - midPx:.2f}" y="{iY:.2f}" width="{midPx}"'
+                  f' height="{iH:.2f}" fill="{pC}"/>')
+        s += (f'<rect x="{px:.2f}" y="{iY:.2f}" width="{panelW:.2f}"'
+              f' height="{iH:.2f}" fill="{cG1}"/>')
+        s += (f'<rect x="{px + panelW * 0.5:.2f}" y="{iY:.2f}"'
+              f' width="{panelW * 0.5:.2f}" height="{iH:.2f}"'
+              f' fill="{cG2}" opacity="0.3"/>')
+    dimY = fy + frameH + 8
+    s += (f'<line x1="{fx}" y1="{dimY}" x2="{fx + frameW}" y2="{dimY}"'
+          f' stroke="#8a9bbf" stroke-width="0.6"/>')
+    s += (f'<text x="{fx + frameW / 2:.2f}" y="{dimY + 8}"'
+          f' text-anchor="middle" font-size="8" fill="#8a9bbf"'
+          f' font-family="Arial,sans-serif">'
+          f'{round(w * 1000)}\u00d7{round(h * 1000)} \u043c\u043c</text>')
+    return (f'<svg xmlns="http://www.w3.org/2000/svg"'
+            f' viewBox="0 0 {VW} {VH}" width="{VW}" height="{VH}">{s}</svg>')
+
+
+def _glz_svg_to_png(svg_str):
+    """Convert a glazing mini-SVG string to a temp PNG file path."""
+    import tempfile
+    try:
+        import cairosvg
+        tmp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+        cairosvg.svg2png(bytestring=svg_str.encode('utf-8'), write_to=tmp.name,
+                         output_width=432, output_height=360)
+        return tmp.name
+    except ImportError:
+        pass
+    except Exception:
+        pass
+    # Fallback: draw a simple placeholder rectangle via PIL
+    try:
+        from PIL import Image, ImageDraw
+        img = Image.new('RGB', (432, 360), '#f8fafd')
+        draw = ImageDraw.Draw(img)
+        draw.rectangle([20, 20, 412, 340], outline='#c8d4e8', width=2)
+        draw.rectangle([40, 40, 392, 320], fill='#dce8f4', outline='#8aaad0', width=1)
+        tmp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+        img.save(tmp.name, 'PNG')
+        return tmp.name
+    except Exception:
+        return None
+
+
 def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
     """
     Генерирует коммерческое предложение в формате PDF на основе 
@@ -913,6 +1096,170 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             try:
                 import logging as _lg
                 _lg.getLogger(__name__).warning("Schema page render failed: %s", _e)
+            except Exception:
+                pass
+
+        # ===== GLAZING PREVIEW SECTION =====
+        try:
+            _glz_preview_ops = pergola_data.get('glazing_openings') or []
+            if _glz_preview_ops:
+                import math as _math_glz
+                _mo_glz = pergola_data.get('max_overhang')
+                _mods_glz = max(1, int(modules or 1))
+                if not _mo_glz or float(length) <= float(_mo_glz) + 0.001:
+                    _lmods_glz = 1
+                else:
+                    _lmods_glz = max(2, _math_glz.ceil(float(length) / float(_mo_glz)))
+
+                pdf.add_page()
+                pdf.set_font('DejaVu', 'B', 12)
+                pdf.cell(0, 8, "\u041e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 \u043f\u043e \u043f\u0440\u043e\u0451\u043c\u0430\u043c:", 0, 1, "L")
+                pdf.ln(2)
+
+                _card_w = 82.0
+                _card_gap = 6.0
+                _img_w = 68.0
+                _card_h = 62.0
+                _left_margin = 20.0
+                _col = 0
+                _row_start_y = pdf.get_y()
+                _last_card_bottom = _row_start_y + _card_h
+
+                _glz_pngs = []
+                for _gop in _glz_preview_ops:
+                    _gw = float(_gop.get('w', 0) or 0)
+                    _gh = float(_gop.get('h', 0) or 0)
+                    if _gw <= 0 or _gh <= 0:
+                        _glz_pngs.append((None, _gop))
+                        continue
+                    _gseries = (_gop.get('series') or 'S500').upper()
+                    _gpc = int(_gop.get('pc', 3) or 3)
+                    _gdir = _gop.get('direction') or 'right'
+                    _gcolor = _gop.get('color') or 'ral7016'
+                    _gglass = _gop.get('glass') or 'transparent'
+                    _gsashes = int(_gop.get('sashes', 2) or 2)
+                    _svg_str = _glz_mini_svg_str(_gw, _gh, _gpc, _gdir, _gcolor, _gglass,
+                                                 _gseries, _gsashes)
+                    _png_path = _glz_svg_to_png(_svg_str)
+                    _glz_pngs.append((_png_path, _gop))
+
+                for _pi, (_png_path, _gop) in enumerate(_glz_pngs):
+                    _side = _gop.get('side', 'front')
+                    _bay = int(_gop.get('bay', 0) or 0)
+                    _side_prefix, _side_name = _GLZ_SIDE_LABELS.get(_side, ('?', _side))
+                    _side_bays = _mods_glz if _side in ('front', 'back') else _lmods_glz
+                    if _side_bays > 1:
+                        _label = f'{_side_prefix}{_bay + 1}'
+                        _desc = f'{_side_name} \u00b7 \u041f\u0440\u043e\u0451\u043c {_bay + 1}'
+                    else:
+                        _label = _side_prefix
+                        _desc = _side_name
+
+                    _gseries = (_gop.get('series') or 'S500').upper()
+                    if _gseries in ('W500', 'W600', 'W700'):
+                        _cname = _GLZ_W_COLORS.get(_gop.get('color', ''), _gop.get('color', ''))
+                        _gname = _GLZ_W_GLASS.get(_gop.get('glass', ''), _gop.get('glass', ''))
+                        _sashes_c = int(_gop.get('sashes', 2) or 2)
+                        _plavnik = ' \u00b7 +\u043f\u043b\u0430\u0432\u043d\u0438\u043a' if _gop.get('plavnik') else ''
+                        _summary = f'{_gseries} \u00b7 {_sashes_c} \u0441\u0442\u0432. \u00b7 {_cname} \u00b7 {_gname}{_plavnik}'
+                    elif _gseries == 'S100':
+                        _cname = _GLZ_S100_COLORS.get(_gop.get('color', ''), _gop.get('color', ''))
+                        _gname = _GLZ_S100_GLASS.get(_gop.get('glass', ''), _gop.get('glass', ''))
+                        _dname = _GLZ_DIRS.get(_gop.get('direction', 'right'), _gop.get('direction', 'right'))
+                        _pc_c = int(_gop.get('pc', 3) or 3)
+                        _summary = f'{_gseries} \u00b7 {_pc_c} \u043f\u0430\u043d. \u00b7 {_dname} \u00b7 {_cname} \u00b7 {_gname}'
+                    else:
+                        _cname = _GLZ_S500_COLORS.get(_gop.get('color', ''), _gop.get('color', ''))
+                        _gname = _GLZ_S500_GLASS.get(_gop.get('glass', ''), _gop.get('glass', ''))
+                        _dname = _GLZ_DIRS.get(_gop.get('direction', 'right'), _gop.get('direction', 'right'))
+                        _pc_c = int(_gop.get('pc', 3) or 3)
+                        _summary = f'{_gseries} \u00b7 {_pc_c} \u0441\u0442\u0432. \u00b7 {_dname} \u00b7 {_cname} \u00b7 {_gname}'
+
+                    _gw = float(_gop.get('w', 0) or 0)
+                    _gh = float(_gop.get('h', 0) or 0)
+                    _dims_str = (f'{round(_gw * 1000)}\u00d7{round(_gh * 1000)} '
+                                 f'\u043c\u043c \u00b7 {_gw * _gh:.2f} \u043c\u00b2')
+
+                    _card_x = _left_margin + _col * (_card_w + _card_gap)
+                    _card_y = _row_start_y
+
+                    # Card border
+                    pdf.set_draw_color(200, 210, 230)
+                    pdf.rect(_card_x, _card_y, _card_w, _card_h)
+                    pdf.set_draw_color(0, 0, 0)
+
+                    # Label badge
+                    pdf.set_fill_color(26, 58, 110)
+                    pdf.set_text_color(255, 255, 255)
+                    pdf.set_font('DejaVu', 'B', 8)
+                    pdf.set_xy(_card_x + 3, _card_y + 3)
+                    _badge_w = max(10, len(_label) * 4.5)
+                    pdf.cell(_badge_w, 5, _label, 0, 0, 'C', fill=True)
+
+                    # Description text
+                    pdf.set_text_color(26, 58, 110)
+                    pdf.set_font('DejaVu', 'B', 7)
+                    pdf.set_xy(_card_x + 4 + _badge_w, _card_y + 3.5)
+                    pdf.cell(_card_w - 6 - _badge_w, 4, _desc, 0, 0, 'L')
+
+                    # SVG PNG image
+                    if _png_path and os.path.exists(_png_path):
+                        try:
+                            with Image.open(_png_path) as _gi:
+                                _gi_w_px, _gi_h_px = _gi.size
+                            _gi_aspect = _gi_h_px / _gi_w_px if _gi_w_px > 0 else 1
+                            _img_w_actual = _img_w
+                            _gi_pdf_h = _img_w_actual * _gi_aspect
+                            if _gi_pdf_h > 40:
+                                _gi_pdf_h = 40
+                                _img_w_actual = _gi_pdf_h / _gi_aspect
+                            _img_x = _card_x + (_card_w - _img_w_actual) / 2
+                            pdf.image(_png_path, x=_img_x, y=_card_y + 9, w=_img_w_actual)
+                        except Exception:
+                            pass
+
+                    # Summary line
+                    pdf.set_text_color(26, 58, 110)
+                    pdf.set_font('DejaVu', 'B', 6)
+                    pdf.set_xy(_card_x + 2, _card_y + 50)
+                    pdf.cell(_card_w - 4, 5, _summary, 0, 0, 'C')
+
+                    # Dimensions line
+                    pdf.set_text_color(100, 100, 100)
+                    pdf.set_font('DejaVu', '', 6)
+                    pdf.set_xy(_card_x + 2, _card_y + 56)
+                    pdf.cell(_card_w - 4, 4, _dims_str, 0, 0, 'C')
+
+                    pdf.set_text_color(0, 0, 0)
+
+                    _last_card_bottom = _card_y + _card_h
+
+                    _col += 1
+                    if _col >= 2:
+                        _col = 0
+                        _row_start_y += _card_h + 4
+                        if _row_start_y + _card_h > 265:
+                            pdf.add_page()
+                            pdf.set_font('DejaVu', 'B', 12)
+                            pdf.cell(0, 8, "\u041e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 "
+                                     "\u043f\u043e \u043f\u0440\u043e\u0451\u043c\u0430\u043c "
+                                     "(\u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0435\u043d\u0438\u0435):",
+                                     0, 1, "L")
+                            pdf.ln(2)
+                            _row_start_y = pdf.get_y()
+
+                for _png_path, _ in _glz_pngs:
+                    try:
+                        if _png_path:
+                            os.unlink(_png_path)
+                    except Exception:
+                        pass
+
+                pdf.set_y(_last_card_bottom + 5)
+        except Exception as _glz_err:
+            try:
+                import logging as _lg
+                _lg.getLogger(__name__).warning("Glazing preview render failed: %s", _glz_err)
             except Exception:
                 pass
 
