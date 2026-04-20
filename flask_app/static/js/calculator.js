@@ -1457,15 +1457,31 @@ document.addEventListener('DOMContentLoaded', function() {
         {v:'copaco',  n:'Copaco Lunar Blackout (+15 \u20ac/\u043c\u00b2)'}
     ];
     var _ZIP_COLOR_SET = {ral9016:1, ral7024:1, ral9t08:1, ral8028:1, ral_special:1};
+    var _ZIP_NEAREST_MAP = {
+        ral7016: 'ral7024',
+        ral9005: 'ral7024',
+        ral7021: 'ral7024',
+        ral8017: 'ral8028',
+        ral8019: 'ral8028'
+    };
     function _glazColorToZip(gColor) {
         if (!gColor) return 'ral9016';
-        return _ZIP_COLOR_SET[gColor] ? gColor : 'ral_special';
+        if (_ZIP_COLOR_SET[gColor]) return gColor;
+        return _ZIP_NEAREST_MAP[gColor] || 'ral_special';
     }
     function _zipDefaultColor(key) {
         var g = (state.glazingPerOpening || {})[key];
         if (g && g.color) return _glazColorToZip(g.color);
         return 'ral9016';
     }
+
+    var ZIP_COLOR_HEX = {
+        ral9016: '#e4e4e1',
+        ral7024: '#3a4148',
+        ral9t08: '#4d4d4d',
+        ral8028: '#5c3d1e',
+        ral_special: '#888888'
+    };
 
     var ZIP_COLORS_JS = [
         {v:'ral9016',    n:'\u0411\u0435\u043b\u044b\u0439 RAL 9016'},
@@ -1474,6 +1490,31 @@ document.addEventListener('DOMContentLoaded', function() {
         {v:'ral8028',    n:'\u041a\u043e\u0440\u0438\u0447\u043d\u0435\u0432\u044b\u0439 RAL 8028'},
         {v:'ral_special',n:'RAL special (+10%)'}
     ];
+
+    function _zipColorPickerHtml(curColor, key) {
+        var html = '<div class="zip-color-picker" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;">';
+        ZIP_COLORS_JS.forEach(function(c) {
+            var hex = ZIP_COLOR_HEX[c.v] || '#888';
+            var isSelected = (curColor === c.v);
+            var borderCol = (c.v === 'ral9016') ? '#bbb' : hex;
+            var ring = isSelected
+                ? 'box-shadow:0 0 0 2px #1a3a6e,0 0 0 4px white;outline:none;'
+                : '';
+            var textColor = (c.v === 'ral9016' || c.v === 'ral_special') ? '#333' : '#fff';
+            var isSpecial = (c.v === 'ral_special');
+            var swatchStyle = isSpecial
+                ? 'background:linear-gradient(135deg,#bbb 50%,#888 50%);'
+                : 'background:' + hex + ';';
+            html += '<button type="button" class="zip-cp-opt" data-key="' + key + '" data-color="' + c.v + '"'
+                + ' title="' + c.n + '"'
+                + ' style="display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid ' + borderCol + ';border-radius:6px;padding:3px 4px;cursor:pointer;background:#fff;' + ring + '">'
+                + '<span style="display:block;width:22px;height:22px;border-radius:50%;' + swatchStyle + 'border:1px solid rgba(0,0,0,0.15);"></span>'
+                + '<span style="font-size:0.62em;color:#555;line-height:1.1;max-width:36px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + c.n.replace(' RAL','').replace('(+10%)','') + '</span>'
+                + '</button>';
+        });
+        html += '</div>';
+        return html;
+    }
     var ZIP_DRIVES_JS = [
         {v:'manual',   n:'\u0420\u0443\u0447\u043d\u043e\u0435 (50 \u20ac)'},
         {v:'simu',     n:'\u042d\u043b\u0435\u043a\u0442\u0440\u043e SIMU'},
@@ -1560,8 +1601,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (enabled) {
                 var fabOpts = '';
                 ZIP_FABRICS_JS.forEach(function(f) { fabOpts += '<option value="' + f.v + '"' + ((z.fabric||'veozip')===f.v?' selected':'') + '>' + f.n + '</option>'; });
-                var colOpts = '';
-                ZIP_COLORS_JS.forEach(function(c) { colOpts += '<option value="' + c.v + '"' + ((z.color||'ral9016')===c.v?' selected':'') + '>' + c.n + '</option>'; });
+                var curZipColor = z.color || 'ral9016';
+                var matchColor = _zipDefaultColor(key);
+                var hasGlzColor = !!(state.glazingPerOpening[key] && state.glazingPerOpening[key].color);
+                var showMatchBtn = hasGlzColor && (matchColor !== curZipColor);
                 var driveType = (z.drive && z.drive !== 'manual') ? 'electric' : 'manual';
                 var drvTypeSel = '<select class="form-select form-select-sm zip-fld" data-fld="drive_type" data-key="' + key + '">'
                     + '<option value="manual"' + (driveType==='manual'?' selected':'') + '>\u0420\u0443\u0447\u043d\u043e\u0435 (50 \u20ac)</option>'
@@ -1577,7 +1620,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 html += '<td><div class="zip-params-card">'
                     + '<div class="zip-param-field"><label>\u0422\u043a\u0430\u043d\u044c</label><select class="form-select form-select-sm zip-fld" data-fld="fabric" data-key="' + key + '">' + fabOpts + '</select></div>'
-                    + '<div class="zip-param-field"><label>\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f</label><select class="form-select form-select-sm zip-fld" data-fld="color" data-key="' + key + '">' + colOpts + '</select></div>'
+                    + '<div class="zip-param-field"><label style="display:flex;align-items:center;gap:6px;">\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f' + (showMatchBtn ? '<button type="button" class="zip-match-btn" data-key="' + key + '" data-match="' + matchColor + '" title="\u041F\u043e\u0434\u043e\u0431\u0440\u0430\u0442\u044c \u043F\u043e\u0434 \u043F\u0435\u0440\u0433\u043e\u043b\u0443" style="font-size:0.72em;border:1px solid #1a3a6e;border-radius:5px;background:#f0f4fa;color:#1a3a6e;padding:1px 6px;cursor:pointer;white-space:nowrap;">\u2248 \u043f\u0435\u0440\u0433\u043e\u043b\u0430</button>' : '') + '</label>' + _zipColorPickerHtml(curZipColor, key) + '</div>'
                     + '<div class="zip-param-field"><label>\u041f\u0440\u0438\u0432\u043e\u0434</label>' + drvTypeSel + '</div>'
                     + brandSel
                     + '</div></td>';
@@ -1619,6 +1662,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     state.zipPerOpening[k][fld] = this.value;
                     updateZipAreaInfo();
                 }
+            });
+        });
+        tableEl.querySelectorAll('.zip-cp-opt').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var k = this.dataset.key;
+                var newColor = this.dataset.color;
+                if (!state.zipPerOpening[k]) state.zipPerOpening[k] = {fabric:'veozip', color:_zipDefaultColor(k), drive:'simu', count:1, enabled:true};
+                state.zipPerOpening[k].color = newColor;
+                buildZipTable();
+                updateZipAreaInfo();
+            });
+        });
+        tableEl.querySelectorAll('.zip-match-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var k = this.dataset.key;
+                var matchC = this.dataset.match;
+                if (!state.zipPerOpening[k]) state.zipPerOpening[k] = {fabric:'veozip', color:_zipDefaultColor(k), drive:'simu', count:1, enabled:true};
+                state.zipPerOpening[k].color = matchC;
+                buildZipTable();
             });
         });
         updateZipAreaInfo();
