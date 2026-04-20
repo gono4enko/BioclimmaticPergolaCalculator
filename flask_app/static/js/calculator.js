@@ -43,9 +43,21 @@ document.addEventListener('DOMContentLoaded', function() {
             stepsEl.step4.style.display = 'none';
             stepsEl.calcBtn.style.display = 'none';
             stepsEl.resultsSection.style.display = 'none';
+            var _ph = document.getElementById('step2-placeholder');
+            if (_ph) _ph.style.display = 'none';
+            filterFacadeInfoCards(el.dataset.type);
             loadVariantOptions(state.pergolaType);
         });
     });
+
+    function filterFacadeInfoCards(modelType) {
+        var key = (modelType || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        document.querySelectorAll('#facade-info-grid .facade-info-card[data-compat]').forEach(function(card) {
+            var compat = card.dataset.compat.split(',');
+            var ok = compat.some(function(m) { return key.indexOf(m.trim().replace(/[^a-z0-9]/g, '')) !== -1; });
+            card.style.display = ok ? '' : 'none';
+        });
+    }
 
     var PERGOLA_VIDEOS = {
         'B500NEW': [
@@ -1834,6 +1846,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 state.allResults = null;
                 renderResults(data.result);
             }
+            updatePriceBar();
             try { if (typeof ym === 'function') ym(YM_ID, 'reachGoal', 'calc_success', { calculator_type: CALC_TYPE }); } catch(e) {}
             setTimeout(function() {
                 stepsEl.resultsSection.scrollIntoView({behavior: 'smooth', block: 'start'});
@@ -3118,6 +3131,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(function() {});
+
+    function updatePriceBar() {
+        var bar = document.getElementById('price-bar');
+        var val = document.getElementById('price-bar-value');
+        if (!bar || !val) return;
+        var res = state.result || (state.allResults && state.allResults[0]);
+        if (!res || !res.totals || !res.totals.cash) {
+            bar.classList.add('price-bar--hidden');
+            return;
+        }
+        val.textContent = '\u043E\u0442 ' + Math.round(res.totals.cash).toLocaleString('ru-RU') + ' \u20BD';
+        bar.classList.remove('price-bar--hidden');
+    }
 });
 
 var YM_ID     = 65714473;

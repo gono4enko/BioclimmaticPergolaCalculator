@@ -1182,3 +1182,104 @@
     .glazing-row-body { grid-template-columns: 1fr; }
     .glz-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* === Marketing improvements === */
+.trust-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.75);
+  margin-top: 8px;
+  align-items: center;
+}
+.trust-line span { line-height: 1.4; }
+
+.model-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+.badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.badge-sun      { background: #fff8e6; color: #7a4e00; }
+.badge-rain     { background: #e8f4fd; color: #1a5276; }
+.badge-air      { background: #eaf4fb; color: #154360; }
+.badge-open     { background: #f0eafd; color: #4a235a; }
+.badge-winter   { background: #e8f8f5; color: #0e6655; }
+.badge-insulation { background: #fdecea; color: #78281f; }
+.badge-premium  { background: #fef9e7; color: #7d6608; }
+.badge-style    { background: #fdf2e9; color: #784212; }
+.badge-size     { background: #f2f3f4; color: #2c3e50; }
+
+.step-placeholder {
+  padding: 16px;
+  background: #f8f9fa;
+  border: 1px dashed #dde3f0;
+  border-radius: 8px;
+  color: #6b7a99;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.fill-hint { margin-bottom: 16px; }
+.fill-hint__step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #3d3d3d;
+}
+.fill-hint__num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1a2744;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.price-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #1a2744;
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  transform: translateY(0);
+  transition: transform 0.3s ease;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+}
+.price-bar--hidden { transform: translateY(100%); }
+.price-bar__inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.price-bar__label { font-size: 13px; opacity: 0.7; }
+.price-bar__price { font-size: 20px; font-weight: 600; color: #e8622a; }
+.price-bar__hint  { font-size: 11px; opacity: 0.5; }
+@media (max-width: 480px) {
+  .price-bar { padding: 10px 16px; }
+  .price-bar__price { font-size: 18px; }
+}

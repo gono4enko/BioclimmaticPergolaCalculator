@@ -1909,6 +1909,21 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             pdf.cell(0, 5, ci, 0, 1, "L")
 
         pdf.ln(6)
+        pdf.chapter_title("Как оформить заказ:")
+        pdf.set_font('DejaVu', '', 9)
+        order_steps = [
+            ("1.", "Позвоните или напишите нам для подтверждения расчёта: +7-906-429-74-20"),
+            ("2.", "Согласуйте итоговую конфигурацию и подпишите договор"),
+            ("3.", "Внесите предоплату 80% — запускаем производство (срок 6 недель)"),
+            ("4.", "После монтажа и приёмки оплатите оставшиеся 20%"),
+        ]
+        for num, text in order_steps:
+            pdf.set_font('DejaVu', 'B', 9)
+            pdf.cell(8, 5.5, num, 0, 0, "L")
+            pdf.set_font('DejaVu', '', 9)
+            pdf.multi_cell(0, 5.5, text, 0, "L")
+
+        pdf.ln(6)
         pdf.chapter_title("Примечания:")
         pdf.set_font('DejaVu', '', 9)
         deadline_note = f"2. Срок действия: до {deadline_str}." if deadline_str else "2. Срок действия: 14 дней."
