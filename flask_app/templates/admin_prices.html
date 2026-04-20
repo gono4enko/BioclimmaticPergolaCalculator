@@ -818,6 +818,7 @@ loadGlazingSettings();
 
 // ===== ZIP admin =====
 var _zipData = null;
+var _zipFullData = null;
 var _zipEditMode = false;
 var _zipPendingEdits = {};
 
@@ -833,11 +834,12 @@ function loadZipMatrix() {
     var zt = document.getElementById('zipType').value;
     document.getElementById('zipWrap').innerHTML = '<p style="color:#888">Загрузка...</p>';
     document.getElementById('zipControls').style.display = 'none';
-    _zipData = null; _zipEditMode = false; _zipPendingEdits = {};
+    _zipData = null; _zipFullData = null; _zipEditMode = false; _zipPendingEdits = {};
     fetch('/admin/zip-prices?zip_type=' + encodeURIComponent(zt))
         .then(function(r){return r.json();})
         .then(function(d){
             if (!d.ok) { document.getElementById('zipWrap').innerHTML = '<p style="color:red">' + (d.error||'Ошибка') + '</p>'; return; }
+            _zipFullData = d;
             _zipData = d.data;
             renderZipMatrix(false);
             document.getElementById('zipControls').style.display = 'flex';
@@ -845,10 +847,34 @@ function loadZipMatrix() {
         .catch(function(e){ document.getElementById('zipWrap').innerHTML = '<p style="color:red">'+e.message+'</p>'; });
 }
 
+function _zipOverrideKey(zt, w, h) {
+    return zt + '|' + w.toFixed(4) + '|' + h.toFixed(4);
+}
+
+function _buildZipOverrideSet() {
+    var set = {};
+    if (!_zipFullData || !_zipFullData.overrides) return set;
+    _zipFullData.overrides.forEach(function(o){
+        set[_zipOverrideKey(_zipFullData.zip_type, o.w, o.h)] = true;
+    });
+    return set;
+}
+
+function _zipFactoryValue(zt, w, h) {
+    if (!_zipFullData || !_zipFullData.factory) return null;
+    var fc = _zipFullData.factory;
+    var wi = -1, hi = -1;
+    for (var i = 0; i < fc.w.length; i++) { if (Math.abs(fc.w[i] - w) < 0.001) { wi = i; break; } }
+    for (var j = 0; j < fc.h.length; j++) { if (Math.abs(fc.h[j] - h) < 0.001) { hi = j; break; } }
+    if (wi < 0 || hi < 0) return null;
+    return fc.p[hi][wi];
+}
+
 function renderZipMatrix(editable) {
     if (!_zipData) return;
     var d = _zipData;
     var zt = document.getElementById('zipType').value;
+    var overrideSet = _buildZipOverrideSet();
     var html = '<div class="price-table-wrap"><table class="price-table"><thead><tr><th class="depth-header">H\\W (м)</th>';
     d.w.forEach(function(w){ html += '<th>' + w.toFixed(2) + '</th>'; });
     html += '</tr></thead><tbody>';
@@ -856,17 +882,56 @@ function renderZipMatrix(editable) {
         html += '<tr><td class="depth-cell">' + h.toFixed(2) + ' м</td>';
         d.w.forEach(function(w, wi) {
             var price = d.p[hi][wi];
-            var key = zt + '_' + w + '_' + h;
+            var okey = _zipOverrideKey(zt, w, h);
+            var isOverridden = !!overrideSet[okey];
             if (editable) {
-                html += '<td><input type="number" min="0" step="1" value="' + Math.round(price) + '" data-zt="' + zt + '" data-w="' + w + '" data-h="' + h + '" class="zip-cell-input" onchange="markZipEdit(this)"></td>';
+                var cls = isOverridden ? ' class="cell-overridden"' : '';
+                html += '<td' + cls + '><input type="number" min="0" step="1" value="' + Math.round(price) + '" data-zt="' + zt + '" data-w="' + w + '" data-h="' + h + '" class="zip-cell-input" onchange="markZipEdit(this)"></td>';
             } else {
-                html += '<td>' + Math.round(price) + '</td>';
+                if (isOverridden) {
+                    var factoryVal = _zipFactoryValue(zt, w, h);
+                    var tooltip = factoryVal !== null ? 'Заводское значение: ' + Math.round(factoryVal) + ' €' : 'Изменено администратором';
+                    var resetBtn = '<button class="cell-reset-btn" title="Сбросить к заводскому"' +
+                        ' data-zt="' + zt + '" data-w="' + w + '" data-h="' + h + '">↺</button>';
+                    html += '<td class="cell-overridden" title="' + tooltip + '">' + Math.round(price) + resetBtn + '</td>';
+                } else {
+                    html += '<td>' + Math.round(price) + '</td>';
+                }
             }
         });
         html += '</tr>';
     });
     html += '</tbody></table></div>';
+    var overrideCount = _zipFullData && _zipFullData.overrides ? _zipFullData.overrides.length : 0;
+    var overrideBadge = overrideCount > 0
+        ? '<span style="color:#dc7800;font-weight:600;margin-left:8px">⚠ ' + overrideCount + ' ячеек изменено (выделены жёлтым)</span>'
+        : '<span style="color:#28a745;margin-left:8px">✓ Все цены заводские</span>';
+    html += '<p style="font-size:12px;color:#888;margin-top:8px">Цена за изделие в евро.' + overrideBadge + '</p>';
     document.getElementById('zipWrap').innerHTML = html;
+    document.getElementById('zipWrap').querySelectorAll('.cell-reset-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            resetZipCell(btn.dataset.zt, parseFloat(btn.dataset.w), parseFloat(btn.dataset.h));
+        });
+    });
+}
+
+function resetZipCell(zt, w, h) {
+    if (!confirm('Сбросить эту ячейку к заводскому значению?')) return;
+    fetch('/admin/zip-reset-cell', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({zip_type: zt, w: w, h: h})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.ok) {
+            document.getElementById('zipStatus').textContent = 'Ячейка сброшена к заводскому значению';
+            loadZipMatrix();
+        } else {
+            document.getElementById('zipStatus').textContent = d.error || 'Ошибка сброса';
+        }
+    })
+    .catch(function(e){ document.getElementById('zipStatus').textContent = e.message; });
 }
 
 function toggleZipEdit() {

@@ -936,6 +936,22 @@ _ZIP_SETTING_KEYS = (
 )
 
 
+def _zip_factory_snapshot(zip_type):
+    """Return factory-default (no admin overrides) price grid for zip_type."""
+    from ..services import calculator as _calc
+    if zip_type == 'ZIP100':
+        w_axis, h_axis, p_grid = _calc.ZIP100_W, _calc.ZIP100_H, _calc.ZIP100_P
+    elif zip_type == 'ZIP130':
+        w_axis, h_axis, p_grid = _calc.ZIP130_W, _calc.ZIP130_H, _calc.ZIP130_P
+    else:
+        return None
+    return {
+        'w': list(w_axis),
+        'h': list(h_axis),
+        'p': [[float(v) for v in row] for row in p_grid],
+    }
+
+
 @bp.route('/zip-prices', methods=['GET'])
 @admin_required
 def zip_prices_get():
@@ -947,7 +963,27 @@ def zip_prices_get():
     data = _calc._zip_snapshot(zip_type)
     if data is None:
         return jsonify({'error': 'Матрица не найдена'}), 404
-    return jsonify({'ok': True, 'zip_type': zip_type, 'data': data})
+    factory = _zip_factory_snapshot(zip_type)
+    overrides = []
+    try:
+        import psycopg2
+        db_url = os.environ.get('DATABASE_URL', '')
+        if db_url:
+            with psycopg2.connect(db_url) as conn:
+                with conn.cursor() as cur:
+                    _calc._ensure_zip_tables(cur)
+                    cur.execute(
+                        "SELECT w_dec, h_dec FROM zip_price_overrides WHERE zip_type=%s",
+                        (zip_type,)
+                    )
+                    for w, h in cur.fetchall():
+                        overrides.append({'w': float(w), 'h': float(h)})
+    except Exception as exc:
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "zip_prices_get: failed to fetch overrides for %s: %s", zip_type, exc
+        )
+    return jsonify({'ok': True, 'zip_type': zip_type, 'data': data, 'factory': factory, 'overrides': overrides})
 
 
 @bp.route('/zip-save-cell', methods=['POST'])
@@ -1008,6 +1044,37 @@ def zip_reset():
                 from ..services import calculator as _calc
                 _calc._ensure_zip_tables(cur)
                 cur.execute("DELETE FROM zip_price_overrides WHERE zip_type=%s", (zip_type,))
+                deleted = cur.rowcount
+            conn.commit()
+        from ..services import calculator as _calc
+        _calc.clear_zip_cache()
+        return jsonify({'ok': True, 'deleted': deleted})
+    except Exception as exc:
+        return jsonify({'error': f'Ошибка сброса: {exc}'}), 500
+
+
+@bp.route('/zip-reset-cell', methods=['POST'])
+@admin_required
+def zip_reset_cell():
+    body = request.get_json(silent=True) or {}
+    zip_type = (body.get('zip_type') or '').upper()
+    try:
+        w = float(body.get('w'))
+        h = float(body.get('h'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Некорректные числовые поля'}), 400
+    if zip_type not in _ZIP_TYPES:
+        return jsonify({'error': 'Неизвестный тип ZIP'}), 400
+    try:
+        import psycopg2
+        with psycopg2.connect(os.environ.get('DATABASE_URL', '')) as conn:
+            with conn.cursor() as cur:
+                from ..services import calculator as _calc
+                _calc._ensure_zip_tables(cur)
+                cur.execute(
+                    "DELETE FROM zip_price_overrides WHERE zip_type=%s AND w_dec=%s AND h_dec=%s",
+                    (zip_type, w, h)
+                )
                 deleted = cur.rowcount
             conn.commit()
         from ..services import calculator as _calc
