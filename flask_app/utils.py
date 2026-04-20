@@ -2043,7 +2043,7 @@ def generate_zip_detail_svg(zip_type='ZIP100', w_m=2.0, h_m=2.7, fabric='Veozip 
     title_text = f'{zip_type} — Вертикальная ZIP-маркиза'
     svg += (f'<text x="{vw/2:.1f}" y="28" text-anchor="middle" font-size="14px" '
             f'font-weight="bold" fill="{ann}">{title_text}</text>')
-    cas_size_label = '90×100' if cassette_mm == 100 else '130×130'
+    cas_size_label = '90×100' if cassette_mm == 100 else '100×130'
     svg += (f'<text x="{vw/2:.1f}" y="45" text-anchor="middle" font-size="11px" '
             f'fill="#555">Короб {cas_size_label} мм · max {max_area} · {w_m:.2f}×{h_m:.2f} м</text>')
 
