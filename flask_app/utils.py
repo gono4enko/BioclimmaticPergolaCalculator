@@ -1583,6 +1583,10 @@ def generate_pir_iso_svg(width, length, height=3.0, modules=1, max_overhang=None
         x1, y1 = s(p1); x2, y2 = s(p2)
         return f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{stroke}" stroke-width="{sw}"/>'
 
+    def line(p1, p2, stroke='#1a3a6e', sw=0.6, opacity=1.0):
+        x1, y1 = s(p1); x2, y2 = s(p2)
+        return f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{stroke}" stroke-width="{sw}" opacity="{opacity}"/>'
+
     col_dark = '#143055'; col_med = '#2a4a7e'; col_light = '#3d6396'
     beam_top = '#b8c8df'; beam_front = '#7d9bc0'; beam_side = '#5d7da8'
     pir_top = '#c8d8eb'; pir_front = '#8fafc8'; pir_joint = '#6a87a8'
