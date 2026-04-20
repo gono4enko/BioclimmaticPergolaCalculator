@@ -66,11 +66,15 @@ class PDF(FPDF):
     
     def footer(self):
         """Создает нижний колонтитул на каждой странице"""
-        # Позиция на 1.5 см от нижнего края
-        self.set_y(-15)
+        # Позиция на 2 см от нижнего края (увеличено для третьей строки)
+        self.set_y(-18)
         self.set_font('DejaVu', '', 7)
         self.cell(0, 4, 'Компания «Комфортный дом» | Комплексные решения для обустройства террас, веранд и беседок.', 0, 1, 'C')
-        self.cell(0, 4, 'ИП Гоноченко А.В. ОГРНИП 321619600249231 | Тел.: +7-906-429-74-20 | Сайт: pergolamarket.ru', 0, 0, 'C')
+        self.cell(0, 4, 'ИП Гоноченко А.В. ОГРНИП 321619600249231 | Тел.: +7-906-429-74-20 | Сайт: pergolamarket.ru', 0, 1, 'C')
+        self.set_font('DejaVu', '', 6)
+        self.set_text_color(150, 150, 150)
+        self.cell(0, 4, 'Политика конфиденциальности: pergolamarket.ru/soglasie-na-obrabotku-pd  |  Оферта: pergolamarket.ru/oferta', 0, 0, 'C')
+        self.set_text_color(0, 0, 0)
     
     def chapter_title(self, title):
         """Добавляет заголовок раздела"""
