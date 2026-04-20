@@ -417,6 +417,7 @@ def _build_pergola_data(result):
         'extra_cols_c': facade_block.get('extra_cols_c', 0) or 0,
         'lamellas_count': result.get('lamellas_count') or result.get('lamella_count'),
         'euro_rate': 1,
+        'glz_euro_rate': euro_rate,
         'items': rub_items,
         'specification': result.get('specification', []),
         'base_price': totals.get('cash', 0),

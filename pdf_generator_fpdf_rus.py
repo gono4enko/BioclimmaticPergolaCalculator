@@ -1121,26 +1121,30 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     _card_w = 57.0
                     _card_gap = 4.5
                     _img_w = 46.0
-                    _card_h = 55.0
+                    _card_h = 63.0
                     _img_max_h = 33.0
                     _summary_y_off = 43.0
                     _dims_y_off = 48.5
+                    _price_y_off = 53.5
                     _font_badge = 7
                     _font_desc = 6
                     _font_summary = 5
                     _font_dims = 5
+                    _font_price = 6
                 else:
                     _card_w = 82.0
                     _card_gap = 6.0
                     _img_w = 68.0
-                    _card_h = 62.0
+                    _card_h = 70.0
                     _img_max_h = 40.0
                     _summary_y_off = 50.0
                     _dims_y_off = 56.0
+                    _price_y_off = 62.0
                     _font_badge = 8
                     _font_desc = 7
                     _font_summary = 6
                     _font_dims = 6
+                    _font_price = 7
                 _left_margin = 20.0
                 _col = 0
                 _row_start_y = pdf.get_y()
@@ -1250,6 +1254,22 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     pdf.set_font('DejaVu', '', _font_dims)
                     pdf.set_xy(_card_x + 2, _card_y + _dims_y_off)
                     pdf.cell(_card_w - 4, 4, _dims_str, 0, 0, 'C')
+
+                    # Price line (W-series only)
+                    if _gseries in ('W500', 'W600', 'W700'):
+                        _glz_rate = pergola_data.get('glz_euro_rate', 110) or 110
+                        _glz_price_rub = round((_gop.get('price_eur', 0) or 0) * _glz_rate)
+                        _drv_price_rub = round((_gop.get('drive_price_eur', 0) or 0) * _glz_rate)
+                        _total_price_rub = _glz_price_rub + _drv_price_rub
+                        if _total_price_rub > 0:
+                            _price_str = f"{_total_price_rub:,d}".replace(',', '\u00a0') + "\u00a0\u20bd"
+                            pdf.set_fill_color(235, 245, 255)
+                            pdf.rect(_card_x + 2, _card_y + _price_y_off, _card_w - 4, 6, 'F')
+                            pdf.set_text_color(26, 58, 110)
+                            pdf.set_font('DejaVu', 'B', _font_price)
+                            pdf.set_xy(_card_x + 2, _card_y + _price_y_off)
+                            pdf.cell(_card_w - 4, 6,
+                                     f"\u0426\u0435\u043d\u0430: {_price_str}", 0, 0, 'C')
 
                     pdf.set_text_color(0, 0, 0)
 
