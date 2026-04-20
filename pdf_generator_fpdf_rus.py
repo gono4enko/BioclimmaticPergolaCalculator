@@ -1427,13 +1427,7 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                         _row_aligns_z[5:]):
                     pdf.cell(_wd_z, _row_h_z, _txt_z, 1, 0, _al_z)
                 pdf.ln()
-            _zip_pult_nm = pergola_data.get('zip_pult_name')
-            if _zip_pult_nm:
-                _pult_rub = round((pergola_data.get('zip_pult_eur', 0) or 0) * _euro_r_z)
-                _pult_str = f"{_pult_rub:,d}".replace(',', ' ') + " ₽"
-                pdf.table_row(['', f'Пульт ДУ {_zip_pult_nm} (Электро)', '', '', '', '', _pult_str],
-                              _zip_ws, aligns=["C", "L", "C", "C", "L", "L", "L"], row_height=6)
-            _zip_tot_rub = round((pergola_data.get('zip_price_eur', 0) or 0) * _euro_r_z)
+            _zip_tot_rub = round(((pergola_data.get('zip_price_eur', 0) or 0) - (pergola_data.get('zip_pult_eur', 0) or 0)) * _euro_r_z)
             pdf.set_font('DejaVu', 'B', 9)
             pdf.cell(sum(_zip_ws[:6]), 6, "ИТОГО ZIP-маркизы:", 1, 0, "L")
             pdf.cell(_zip_ws[6], 6, f"{_zip_tot_rub:,d}".replace(',', ' ') + " ₽", 1, 1, "L")

@@ -2698,12 +2698,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<tr><td>\u0414\u043e\u043f. \u043a\u043e\u043b\u043e\u043d\u043d\u0430 \u0434\u043b\u044f ZIP-\u043c\u0430\u0440\u043a\u0438\u0437 (' + zipRes.extra_cols_count + ' \u0448\u0442.)</td>' +
                         '<td style="white-space:nowrap;">\u2014</td></tr>';
             }
-            if (zipRes.pult_name) {
-                var pultRub = Math.round((zipRes.pult_eur || 0) * mainResult.euro_rate);
-                html += '<tr><td>\u041f\u0443\u043b\u044c\u0442 \u0414\u0423 ' + zipRes.pult_name + ' (ZIP)</td>' +
-                        '<td style="white-space:nowrap;">' + formatPrice(pultRub) + ' \u20BD</td></tr>';
-            }
-            var zipTotalRub = Math.round((zipRes.price || 0) * mainResult.euro_rate);
+            var zipTotalRub = Math.round(((zipRes.price || 0) - (zipRes.pult_eur || 0)) * mainResult.euro_rate);
             html += '<tr style="font-weight:700;border-top:2px solid #e5e9f0;">' +
                     '<td>ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u044b: \u0438\u0442\u043e\u0433\u043e</td>' +
                     '<td style="white-space:nowrap;">' + formatPrice(zipTotalRub) + ' \u20BD</td></tr>';
