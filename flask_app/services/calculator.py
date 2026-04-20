@@ -1749,6 +1749,7 @@ def perform_calculation(dimensions, options):
                 continue
             w_window_count += max(1, int(_gop.get("count", 1) or 1))
 
+        _total_simu_channels = 0  # unified channel accumulator for single combined remote
         devices_count = 0
         if pergola_type in ["B500NEW", "B700NEW"]:
             drive_name, drive_price, is_tandem = get_drive_price(pergola_type, width_m, length_m, modules)
@@ -1770,13 +1771,7 @@ def perform_calculation(dimensions, options):
             devices_count += led_controllers
             devices_count += w_window_count
 
-            remote_name, remote_price = get_remote_control(devices_count)
-            items.append({
-                "name": f"Пульт ДУ {remote_name} ({devices_count} {_get_plural_form(devices_count, 'канал', 'канала', 'каналов')})",
-                "price": remote_price
-            })
-            total_price += remote_price
-            specification.append({"name": f"Пульт ДУ {remote_name}", "count": "1 шт."})
+            _total_simu_channels += devices_count  # accumulate for combined remote
 
         has_lighting = "white_led" in lighting_options or "rgb_led" in lighting_options
         if has_lighting:
@@ -1806,16 +1801,7 @@ def perform_calculation(dimensions, options):
 
             if pergola_type in ["B600", "B200"]:
                 lighting_devices = controllers_count + w_window_count
-                remote_name, remote_price = get_remote_control(lighting_devices)
-                items.append({
-                    "name": f"Пульт ДУ {remote_name} для освещения ({lighting_devices} {_get_plural_form(lighting_devices, 'канал', 'канала', 'каналов')})",
-                    "price": remote_price
-                })
-                total_price += remote_price
-                specification.append({
-                    "name": f"Пульт ДУ {remote_name} для освещения",
-                    "count": f"1 шт. ({lighting_devices} {_get_plural_form(lighting_devices, 'канал', 'канала', 'каналов')})"
-                })
+                _total_simu_channels += lighting_devices  # accumulate for combined remote
 
         facade_type = options.get("facade_type", "")
         facade_openings = options.get("facade_openings", [])
@@ -2255,20 +2241,11 @@ def perform_calculation(dimensions, options):
         glazing_total_eur = round(glazing_total_eur, 2)
         glazing_total_area = round(glazing_total_area, 2)
 
-        # B600/B200 with W-windows but no lighting → still need a remote
+        # B600/B200 with W-windows but no lighting → add W-window channels to combined remote
         if (pergola_type in ["B600", "B200"]
                 and not has_lighting
                 and w_window_count > 0):
-            _w_remote_name, _w_remote_price = get_remote_control(w_window_count)
-            items.append({
-                "name": f"Пульт ДУ {_w_remote_name} ({w_window_count} {_get_plural_form(w_window_count, 'канал', 'канала', 'каналов')})",
-                "price": _w_remote_price
-            })
-            total_price += _w_remote_price
-            specification.append({
-                "name": f"Пульт ДУ {_w_remote_name}",
-                "count": f"1 шт. ({w_window_count} {_get_plural_form(w_window_count, 'канал', 'канала', 'каналов')})"
-            })
+            _total_simu_channels += w_window_count
 
         # ---- ZIP awning loop ----
         zip_openings_raw = options.get("zip_openings", []) or []
@@ -2433,33 +2410,33 @@ def perform_calculation(dimensions, options):
                     "count": f"{total_extra_cols_z} шт."
                 })
 
-        # Add remote control pult for electric ZIP openings
+        # Count electric ZIP channels
         _zip_electric_count = sum(
             zn['count'] * zn.get('sections', 1) for zn in zip_normalized if zn['drive'] != 'manual'
         )
         _zip_pult_name = None
         _zip_pult_eur = 0.0
-        if _zip_electric_count > 0:
-            _zip_pult_name, _zip_pult_eur = get_remote_control(_zip_electric_count)
-            _pult_channels_label = _get_plural_form(
-                _zip_electric_count, 'канал', 'канала', 'каналов'
-            )
-            # Apply assembly surcharge to pult (spec: 8% on base+fabric+color+drive+pult)
-            _zip_assembly_pct = _zip_setting('ZIP_ASSEMBLY_PCT') / 100.0
-            _zip_pult_assembly = round(_zip_pult_eur * _zip_assembly_pct, 2)
-            _zip_pult_total = round(_zip_pult_eur + _zip_pult_assembly, 2)
-            _zip_pult_eur = _zip_pult_total  # expose assembled total
-            items.append({
-                "name": (f"Пульт ДУ {_zip_pult_name} для ZIP-маркиз "
-                         f"({_zip_electric_count} {_pult_channels_label})"),
-                "price": _zip_pult_eur
-            })
-            specification.append({
-                "name": f"Пульт ДУ {_zip_pult_name} (ZIP)",
-                "count": "1 шт."
-            })
-            total_price += _zip_pult_eur
-            zip_total_eur += _zip_pult_eur
+
+        # ---- Combined single remote for all electric devices ----
+        _total_simu_channels += _zip_electric_count
+        if _total_simu_channels > 0:
+            _zip_assembly_pct = _zip_setting('ZIP_ASSEMBLY_PCT') / 100.0 if _zip_electric_count > 0 else 0.0
+            _combined_remote_name, _combined_remote_base = get_remote_control(_total_simu_channels)
+            _combined_remote_assembly = round(_combined_remote_base * _zip_assembly_pct, 2)
+            _combined_remote_total = round(_combined_remote_base + _combined_remote_assembly, 2)
+
+            # Build a descriptive label based on what's included
+            _channels_label = _get_plural_form(_total_simu_channels, 'канал', 'канала', 'каналов')
+            _combined_remote_desc = f"Пульт ДУ {_combined_remote_name} ({_total_simu_channels} {_channels_label})"
+
+            _zip_pult_name = _combined_remote_name
+            _zip_pult_eur = _combined_remote_total
+
+            items.append({"name": _combined_remote_desc, "price": _combined_remote_total})
+            specification.append({"name": f"Пульт ДУ {_combined_remote_name}", "count": "1 шт."})
+            total_price += _combined_remote_total
+            if _zip_electric_count > 0:
+                zip_total_eur += _combined_remote_total
 
         zip_total_eur = round(zip_total_eur, 2)
 
