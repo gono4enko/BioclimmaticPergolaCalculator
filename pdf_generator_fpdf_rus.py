@@ -1269,6 +1269,50 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             pdf.add_page()
             pdf.set_font('DejaVu', 'B', 14)
             pdf.cell(0, 8, "ZIP-маркизы:", 0, 1, "L")
+            pdf.ln(2)
+
+            # Product photos for each ZIP type used in this order
+            _zip_types_used = list(dict.fromkeys(_zo.get('zip_type', 'ZIP100') for _zo in _zip_ops_pdf))
+            _facade_img_dir = os.path.join(base_img_dir, 'facade')
+            _zip_img_map = {
+                'ZIP100': os.path.join(_facade_img_dir, 'zip100.png'),
+                'ZIP130': os.path.join(_facade_img_dir, 'zip130.png'),
+            }
+            _zip_imgs_to_show = [
+                (t, _zip_img_map[t]) for t in _zip_types_used
+                if t in _zip_img_map and os.path.exists(_zip_img_map[t])
+            ]
+            if _zip_imgs_to_show:
+                _n_imgs = len(_zip_imgs_to_show)
+                _img_block_w = 85.0
+                _img_h_max = 55.0
+                _total_block = _n_imgs * _img_block_w
+                _start_x_zip = (210 - _total_block) / 2
+                _cur_y_zip = pdf.get_y()
+                _max_img_bottom = _cur_y_zip
+                for _iti, (_itype, _ipath) in enumerate(_zip_imgs_to_show):
+                    try:
+                        _compressed_z = _compress_image_for_pdf(_ipath, max_width=500, quality=72)
+                        with Image.open(_compressed_z) as _ii:
+                            _iw, _ih = _ii.size
+                        _disp_w = _img_block_w - 10
+                        _disp_h = _disp_w * _ih / _iw
+                        if _disp_h > _img_h_max:
+                            _disp_h = _img_h_max
+                            _disp_w = _disp_h * _iw / _ih
+                        _ix = _start_x_zip + _iti * _img_block_w + (_img_block_w - _disp_w) / 2
+                        pdf.image(_compressed_z, x=_ix, y=_cur_y_zip, w=_disp_w, h=_disp_h)
+                        _cap_y = _cur_y_zip + _disp_h + 1
+                        pdf.set_xy(_start_x_zip + _iti * _img_block_w, _cap_y)
+                        pdf.set_font('DejaVu', 'B', 10)
+                        pdf.set_text_color(26, 58, 110)
+                        pdf.cell(_img_block_w, 5, _itype, 0, 0, 'C')
+                        pdf.set_text_color(0, 0, 0)
+                        _max_img_bottom = max(_max_img_bottom, _cap_y + 5)
+                    except Exception:
+                        pass
+                pdf.set_y(_max_img_bottom + 4)
+
             _zip_side_names = {'front': 'Фасад', 'back': 'Сзади', 'left': 'Слева', 'right': 'Справа'}
             _zip_fab_names = {'veozip': 'Veozip', 'soltis': 'Soltis W96', 'copaco': 'Copaco Blackout'}
             _zip_drv_names = {'manual': 'Ручное', 'simu': 'SIMU', 'somfy': 'Somfy', 'decolife': 'Decolife'}
