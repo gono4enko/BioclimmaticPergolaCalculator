@@ -1116,10 +1116,31 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                 pdf.cell(0, 8, "\u041e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u0435 \u043f\u043e \u043f\u0440\u043e\u0451\u043c\u0430\u043c:", 0, 1, "L")
                 pdf.ln(2)
 
-                _card_w = 82.0
-                _card_gap = 6.0
-                _img_w = 68.0
-                _card_h = 62.0
+                _n_cols = 3 if len(_glz_preview_ops) >= 3 else 2
+                if _n_cols == 3:
+                    _card_w = 57.0
+                    _card_gap = 4.5
+                    _img_w = 46.0
+                    _card_h = 55.0
+                    _img_max_h = 33.0
+                    _summary_y_off = 43.0
+                    _dims_y_off = 48.5
+                    _font_badge = 7
+                    _font_desc = 6
+                    _font_summary = 5
+                    _font_dims = 5
+                else:
+                    _card_w = 82.0
+                    _card_gap = 6.0
+                    _img_w = 68.0
+                    _card_h = 62.0
+                    _img_max_h = 40.0
+                    _summary_y_off = 50.0
+                    _dims_y_off = 56.0
+                    _font_badge = 8
+                    _font_desc = 7
+                    _font_summary = 6
+                    _font_dims = 6
                 _left_margin = 20.0
                 _col = 0
                 _row_start_y = pdf.get_y()
@@ -1191,14 +1212,14 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     # Label badge
                     pdf.set_fill_color(26, 58, 110)
                     pdf.set_text_color(255, 255, 255)
-                    pdf.set_font('DejaVu', 'B', 8)
+                    pdf.set_font('DejaVu', 'B', _font_badge)
                     pdf.set_xy(_card_x + 3, _card_y + 3)
                     _badge_w = max(10, len(_label) * 4.5)
                     pdf.cell(_badge_w, 5, _label, 0, 0, 'C', fill=True)
 
                     # Description text
                     pdf.set_text_color(26, 58, 110)
-                    pdf.set_font('DejaVu', 'B', 7)
+                    pdf.set_font('DejaVu', 'B', _font_desc)
                     pdf.set_xy(_card_x + 4 + _badge_w, _card_y + 3.5)
                     pdf.cell(_card_w - 6 - _badge_w, 4, _desc, 0, 0, 'L')
 
@@ -1210,8 +1231,8 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                             _gi_aspect = _gi_h_px / _gi_w_px if _gi_w_px > 0 else 1
                             _img_w_actual = _img_w
                             _gi_pdf_h = _img_w_actual * _gi_aspect
-                            if _gi_pdf_h > 40:
-                                _gi_pdf_h = 40
+                            if _gi_pdf_h > _img_max_h:
+                                _gi_pdf_h = _img_max_h
                                 _img_w_actual = _gi_pdf_h / _gi_aspect
                             _img_x = _card_x + (_card_w - _img_w_actual) / 2
                             pdf.image(_png_path, x=_img_x, y=_card_y + 9, w=_img_w_actual)
@@ -1220,14 +1241,14 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
 
                     # Summary line
                     pdf.set_text_color(26, 58, 110)
-                    pdf.set_font('DejaVu', 'B', 6)
-                    pdf.set_xy(_card_x + 2, _card_y + 50)
+                    pdf.set_font('DejaVu', 'B', _font_summary)
+                    pdf.set_xy(_card_x + 2, _card_y + _summary_y_off)
                     pdf.cell(_card_w - 4, 5, _summary, 0, 0, 'C')
 
                     # Dimensions line
                     pdf.set_text_color(100, 100, 100)
-                    pdf.set_font('DejaVu', '', 6)
-                    pdf.set_xy(_card_x + 2, _card_y + 56)
+                    pdf.set_font('DejaVu', '', _font_dims)
+                    pdf.set_xy(_card_x + 2, _card_y + _dims_y_off)
                     pdf.cell(_card_w - 4, 4, _dims_str, 0, 0, 'C')
 
                     pdf.set_text_color(0, 0, 0)
@@ -1235,7 +1256,7 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     _last_card_bottom = _card_y + _card_h
 
                     _col += 1
-                    if _col >= 2:
+                    if _col >= _n_cols:
                         _col = 0
                         _row_start_y += _card_h + 4
                         if _row_start_y + _card_h > 265:
