@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var SVG_V = 'v110';
+    var SVG_V = 'v111';
     var state = {
         pergolaType: '',
         lamellaSize: '',
@@ -1045,11 +1045,11 @@ document.addEventListener('DOMContentLoaded', function() {
             updateGlazingAreaInfo();
             return;
         }
-        var html = '<table class="facade-table"><thead><tr>'
+        var html = '<table class="facade-table glz-table"><thead><tr>'
             + '<th>\u041f\u0440\u043e\u0451\u043c</th>'
-            + '<th>\u0420\u0430\u0441\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435</th>'
-            + '<th>\u041a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044f \u043e\u0441\u0442\u0435\u043a\u043b\u0435\u043d\u0438\u044f</th>'
-            + '<th>\u0420\u0430\u0437\u043c\u0435\u0440 / \u041f\u043b\u043e\u0449\u0430\u0434\u044c</th>'
+            + '<th class="glz-th-loc">\u0420\u0430\u0441\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435</th>'
+            + '<th>\u041a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044f</th>'
+            + '<th class="glz-th-area">\u0420\u0430\u0437\u043c\u0435\u0440</th>'
             + '</tr></thead><tbody>';
         enabledOpenings.forEach(function(o) {
             var key = o.side + '_' + o.bay;
@@ -1080,8 +1080,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 COLORS = W_COLORS_JS; GLASS = W_GLASS_JS;
                 summary = seriesU + ' \u00b7 ' + (g.sashes || 2) + ' \u0441\u0442\u0432\u043e\u0440\u043e\u043a \u00b7 '
                     + (COLORS.find(function(c){return c.v===g.color;})||{n:g.color}).n + ' \u00b7 '
-                    + (GLASS.find(function(c){return c.v===g.glass;})||{n:g.glass}).n
-                    + (g.plavnik ? ' \u00b7 +\u043f\u043b\u0430\u0432\u043d\u0438\u043a' : '');
+                    + (GLASS.find(function(c){return c.v===g.glass;})||{n:g.glass}).n;
             } else {
                 COLORS = (seriesU === 'S100') ? S100_COLORS_JS : GLAZING_COLORS_JS;
                 GLASS  = (seriesU === 'S100') ? S100_GLASS_JS  : GLAZING_GLASS_JS;
@@ -1095,9 +1094,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             html += '<tr data-key="' + key + '">';
             html += '<td><span class="facade-lbl">' + o.label + '</span></td>';
-            html += '<td>' + o.desc + '</td>';
+            html += '<td class="glz-td-loc">' + o.desc + '</td>';
             html += '<td><span style="font-size:0.85em;color:#1a3a6e;font-weight:600;">' + summary + '</span></td>';
-            html += '<td class="facade-area">' + dimsHtml + areaHtml + '</td></tr>';
+            html += '<td class="facade-area glz-td-area">' + dimsHtml + areaHtml + '</td></tr>';
             if (isWSeries(seriesU)) {
                 var minSash = wMinSashes(dims.wM);
                 var sashOpts = '';
@@ -1113,9 +1112,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 var brOpts = '<option value=""' + (!g.brand?' selected':'') + '>\u0410\u0432\u0442\u043e (\u043f\u043e \u043f\u0435\u0440\u0433\u043e\u043b\u0435)</option>'
                            + '<option value="simu"' + (g.brand==='simu'?' selected':'') + '>SIMU</option>'
                            + '<option value="somfy"' + (g.brand==='somfy'?' selected':'') + '>SOMFY</option>';
-                var plavForced = (dims.wM > 3.0);
-                var plavChecked = g.plavnik ? ' checked' : '';
-                var plavDis = plavForced ? ' disabled' : '';
                 var driveInfo = pickGuillotineDriveJs(dims.wM, dims.hM, g.brand, state.pergolaType);
                 html += '<tr class="glz-cfg-row" data-key="' + key + '"><td colspan="4" style="background:#f6f9fc;padding:0.6rem 0.9rem;">';
                 html += '<div class="glz-grid">';
@@ -1123,7 +1119,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<div><label>\u0426\u0432\u0435\u0442 \u043f\u0440\u043e\u0444\u0438\u043b\u044f</label><select class="form-select form-select-sm glz-fld" data-fld="color" data-key="' + key + '">' + wColOpts + '</select></div>';
                 html += '<div><label>\u0421\u0442\u0435\u043a\u043b\u043e\u043f\u0430\u043a\u0435\u0442</label><select class="form-select form-select-sm glz-fld" data-fld="glass" data-key="' + key + '">' + wGlOpts + '</select></div>';
                 html += '<div><label>\u041c\u0430\u0440\u043a\u0430 \u043f\u0440\u0438\u0432\u043e\u0434\u0430</label><select class="form-select form-select-sm glz-fld" data-fld="brand" data-key="' + key + '">' + brOpts + '</select></div>';
-                html += '<div style="display:flex;align-items:end;"><label style="font-size:0.85em;cursor:' + (plavForced ? 'not-allowed' : 'pointer') + ';"><input type="checkbox" class="glz-fld" data-fld="plavnik" data-key="' + key + '"' + plavChecked + plavDis + '> \u041f\u043b\u0430\u0432\u043d\u0438\u043a' + (plavForced ? ' (\u043e\u0431\u044f\u0437.)' : '') + '</label></div>';
                 html += '</div>';
                 var tandemBadge = driveInfo.forcedTandem
                     ? ' <span style="display:inline-block;background:#e85d2f;color:#fff;font-size:0.72em;font-weight:600;padding:1px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;" title="\u041f\u0440\u043e\u0451\u043c \u0448\u0438\u0440\u0435 3 \u043c \u2014 \u043f\u0440\u0438\u043d\u0443\u0434\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u0442\u0430\u043d\u0434\u0435\u043c">TANDEM</span>'
@@ -1276,8 +1271,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var Cw = W_COLORS_JS, Gw = W_GLASS_JS;
                 summary = seriesU + ' \u00b7 ' + (g.sashes || 2) + ' \u0441\u0442\u0432\u043e\u0440\u043e\u043a \u00b7 ' +
                     ((Cw.find(function(c){return c.v===g.color;}) || {n:g.color}).n) + ' \u00b7 ' +
-                    ((Gw.find(function(c){return c.v===g.glass;}) || {n:g.glass}).n) +
-                    (g.plavnik ? ' \u00b7 +\u043f\u043b\u0430\u0432\u043d\u0438\u043a' : '');
+                    ((Gw.find(function(c){return c.v===g.glass;}) || {n:g.glass}).n);
             } else {
                 var Cs = (seriesU === 'S100') ? S100_COLORS_JS : GLAZING_COLORS_JS;
                 var Gs = (seriesU === 'S100') ? S100_GLASS_JS  : GLAZING_GLASS_JS;

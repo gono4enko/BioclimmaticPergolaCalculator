@@ -1174,13 +1174,21 @@
 .glazing-toggle .glz-desc { color: #555; font-weight: 500; font-size: 0.82rem; }
 .glz-dims { color: #556; font-size: 0.78rem; white-space: nowrap; }
 .glazing-row-body { margin-top: 8px; display: grid; grid-template-columns: 1fr 220px; gap: 10px; align-items: center; }
-.glz-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
-.glz-grid label { display: block; font-size: 0.72rem; color: #6b7280; margin-bottom: 2px; }
+.glz-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.glz-grid label { display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 3px; white-space: normal; line-height: 1.3; }
+.glz-grid .form-select-sm { min-width: 0; width: 100%; }
 .glz-preview { display: flex; align-items: center; justify-content: center; }
-.glz-mini-svg { max-width: 220px; height: auto; }
+.glz-mini-svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+/* glz-table: glazing configuration table classes */
+#glazing-opening-table { overflow-x: auto; }
+.glz-table { width: 100%; min-width: 0; }
+.glz-table thead th { white-space: nowrap; }
+.glz-table td { vertical-align: middle; }
+.glz-table .glz-cfg-row td { padding: 0.5rem 0.75rem; vertical-align: top; overflow-wrap: anywhere; }
+.glz-table tbody tr td:nth-child(3) { overflow-wrap: anywhere; }
 @media (max-width: 720px) {
     .glazing-row-body { grid-template-columns: 1fr; }
-    .glz-grid { grid-template-columns: repeat(2, 1fr); }
+    .glz-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
 }
 
 /* === Marketing improvements === */
@@ -1314,6 +1322,15 @@
   .facade-table:not(.zip-table) thead th:last-child { display: none; }
   .facade-table:not(.zip-table) .facade-area { display: none; }
   .facade-table:not(.zip-table) .form-select-sm { font-size: 0.79rem; min-width: 0; }
+  /* Glazing table extra: hide Расположение column, compact grid */
+  .glz-table .glz-th-loc { display: none; }
+  .glz-table .glz-td-loc { display: none; }
+  .glz-table .glz-th-area { display: none; }
+  .glz-table .glz-td-area { display: none; }
+  .glz-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .glz-table { font-size: 0.82rem; }
+  .glz-table .glz-cfg-row td { padding: 0.4rem 0.5rem; }
+  .glz-mini-svg { max-width: 100%; }
 
   /* ZIP table: collapse to card rows on mobile */
   .facade-table.zip-table { display: block; border: none; }
@@ -1357,4 +1374,5 @@
 
 @media (max-width: 420px) {
   .zip-params-card { grid-template-columns: 1fr; }
+  .glz-grid { grid-template-columns: 1fr; }
 }
