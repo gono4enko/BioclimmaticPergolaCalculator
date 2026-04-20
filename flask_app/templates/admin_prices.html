@@ -56,6 +56,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .health-overdue{color:#721c24;font-weight:600}
 .health-link{margin-left:auto;font-size:13px;color:#1a3a6b;text-decoration:none;font-weight:600}
 .health-link:hover{text-decoration:underline}
+.cell-overridden{background:#fff3cd !important;position:relative}
+.cell-overridden:hover{background:#ffe9a0 !important}
+.cell-reset-btn{display:inline-block;margin-left:4px;cursor:pointer;color:#dc7800;font-size:11px;vertical-align:middle;border:none;background:none;padding:0;line-height:1;opacity:.75}
+.cell-reset-btn:hover{opacity:1;color:#b35900}
 </style>
 </head>
 <body>
@@ -614,6 +618,30 @@ document.addEventListener('DOMContentLoaded', function(){
     });
 });
 
+function _glazOverrideKey(conf, w, h) {
+    return conf + '|' + w.toFixed(4) + '|' + h.toFixed(4);
+}
+
+function _buildGlazOverrideSet() {
+    var set = {};
+    if (!glazData || !glazData.overrides) return set;
+    glazData.overrides.forEach(function(o){
+        set[_glazOverrideKey(o.config, o.w, o.h)] = true;
+    });
+    return set;
+}
+
+function _glazFactoryValue(conf, w, h) {
+    if (!glazData || !glazData.factory) return null;
+    var fc = glazData.factory[conf];
+    if (!fc) return null;
+    var wi = -1, hi = -1;
+    for (var i = 0; i < fc.w.length; i++) { if (Math.abs(fc.w[i] - w) < 0.001) { wi = i; break; } }
+    for (var j = 0; j < fc.h.length; j++) { if (Math.abs(fc.h[j] - h) < 0.001) { hi = j; break; } }
+    if (wi < 0 || hi < 0) return null;
+    return fc.p[hi][wi];
+}
+
 function renderGlazMatrix() {
     var wrap = document.getElementById('glazWrap');
     if (!glazData) { wrap.innerHTML = ''; return; }
@@ -621,6 +649,8 @@ function renderGlazMatrix() {
     glazCurrentConf = conf;
     var cd = glazData.configs[conf];
     if (!cd) { wrap.innerHTML = '<p style="color:#888">Нет данных</p>'; return; }
+    var overrideSet = _buildGlazOverrideSet();
+    var sys = glazSysSel.value;
     var html = '<div class="price-table-wrap"><table class="price-table">';
     html += '<tr><th class="depth-header">H ↓ \\ W →</th>';
     cd.w.forEach(function(w){ html += '<th>' + w.toFixed(2) + ' м</th>'; });
@@ -629,21 +659,60 @@ function renderGlazMatrix() {
         html += '<tr><td class="depth-cell">' + h.toFixed(2) + ' м</td>';
         cd.w.forEach(function(w, wi){
             var v = cd.p[hi][wi];
+            var okey = _glazOverrideKey(conf, w, h);
+            var isOverridden = !!overrideSet[okey];
             if (glazEditMode) {
-                html += '<td><input type="number" step="1" data-w="' + w + '" data-h="' + h + '" data-orig="' + v + '" value="' + v + '"></td>';
+                var cls = isOverridden ? ' class="cell-overridden"' : '';
+                html += '<td' + cls + '><input type="number" step="1" data-w="' + w + '" data-h="' + h + '" data-orig="' + v + '" value="' + v + '"></td>';
             } else {
-                html += '<td>' + formatNum(v) + '</td>';
+                if (isOverridden) {
+                    var factoryVal = _glazFactoryValue(conf, w, h);
+                    var tooltip = factoryVal !== null ? 'Заводское значение: ' + formatNum(factoryVal) + ' €' : 'Изменено администратором';
+                    var resetBtn = '<button class="cell-reset-btn" title="Сбросить к заводскому"' +
+                        ' data-sys="' + sys + '" data-conf="' + conf + '" data-w="' + w + '" data-h="' + h + '">↺</button>';
+                    html += '<td class="cell-overridden" title="' + tooltip + '">' + formatNum(v) + resetBtn + '</td>';
+                } else {
+                    html += '<td>' + formatNum(v) + '</td>';
+                }
             }
         });
         html += '</tr>';
     });
     html += '</table></div>';
-    var isW = ['W500','W600','W700'].indexOf(glazSysSel.value) >= 0;
+    var overrideCount = glazData.overrides ? glazData.overrides.filter(function(o){ return o.config === conf; }).length : 0;
+    var overrideBadge = overrideCount > 0
+        ? '<span style="color:#dc7800;font-weight:600;margin-left:8px">⚠ ' + overrideCount + ' ячеек изменено (выделены жёлтым)</span>'
+        : '<span style="color:#28a745;margin-left:8px">✓ Все цены заводские</span>';
+    var isW = ['W500','W600','W700'].indexOf(sys) >= 0;
     var note = isW
         ? 'Цена за окно в евро. Размер между точками сетки округляется к ближайшему большему значению (ceiling).'
         : 'Цена за створку в евро. Любое значение между точками сетки округляется к ближайшей ячейке.';
-    html += '<p style="font-size:12px;color:#888;margin-top:8px">' + note + '</p>';
+    html += '<p style="font-size:12px;color:#888;margin-top:8px">' + note + overrideBadge + '</p>';
     wrap.innerHTML = html;
+    wrap.querySelectorAll('.cell-reset-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            resetGlazCell(btn.dataset.sys, btn.dataset.conf, parseFloat(btn.dataset.w), parseFloat(btn.dataset.h));
+        });
+    });
+}
+
+function resetGlazCell(sys, conf, w, h) {
+    if (!confirm('Сбросить эту ячейку к заводскому значению?')) return;
+    fetch('/admin/glazing-reset-cell', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({system: sys, config: conf, w: w, h: h})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.ok) {
+            document.getElementById('glazStatus').textContent = 'Ячейка сброшена к заводскому значению';
+            loadGlazingMatrix();
+        } else {
+            document.getElementById('glazStatus').textContent = d.error || 'Ошибка сброса';
+        }
+    })
+    .catch(function(e){ document.getElementById('glazStatus').textContent = e.message; });
 }
 
 function toggleGlazEdit() {

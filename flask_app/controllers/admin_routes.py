@@ -699,6 +699,22 @@ def _glazing_pd_snapshot(system):
     return out
 
 
+def _glazing_factory_snapshot(system):
+    """Return factory-default (no admin overrides) values for `system`."""
+    from ..services import calculator as _calc
+    src = _calc._GLAZING_PD_DEFAULTS.get(system)
+    if src is None:
+        return None
+    out = {}
+    for conf, cd in src.items():
+        out[conf] = {
+            'w': [float(x) for x in cd['w']],
+            'h': [float(x) for x in cd['h']],
+            'p': [[float(v) for v in row] for row in cd['p']],
+        }
+    return out
+
+
 @bp.route('/glazing-prices', methods=['GET'])
 @admin_required
 def glazing_prices_get():
@@ -708,7 +724,28 @@ def glazing_prices_get():
     data = _glazing_pd_snapshot(system)
     if data is None:
         return jsonify({'error': 'Матрица не найдена'}), 404
-    return jsonify({'ok': True, 'system': system, 'configs': data})
+    factory = _glazing_factory_snapshot(system)
+    overrides = []
+    try:
+        import psycopg2
+        db_url = os.environ.get('DATABASE_URL', '')
+        if db_url:
+            with psycopg2.connect(db_url) as conn:
+                with conn.cursor() as cur:
+                    from ..services import calculator as _calc
+                    _calc._ensure_glazing_tables(cur)
+                    cur.execute(
+                        "SELECT config, w_dec, h_dec FROM glazing_price_overrides WHERE system=%s",
+                        (system,)
+                    )
+                    for conf, w, h in cur.fetchall():
+                        overrides.append({'config': conf, 'w': float(w), 'h': float(h)})
+    except Exception as exc:
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "glazing_prices_get: failed to fetch overrides for %s: %s", system, exc
+        )
+    return jsonify({'ok': True, 'system': system, 'configs': data, 'factory': factory, 'overrides': overrides})
 
 
 @bp.route('/glazing-save-cell', methods=['POST'])
@@ -753,6 +790,38 @@ def glazing_save_cell():
         return jsonify({'ok': True, 'w': w_snap, 'h': h_snap, 'price': price})
     except Exception as exc:
         return jsonify({'error': f'Ошибка сохранения: {exc}'}), 500
+
+
+@bp.route('/glazing-reset-cell', methods=['POST'])
+@admin_required
+def glazing_reset_cell():
+    body = request.get_json(silent=True) or {}
+    system = (body.get('system') or '').upper()
+    config = (body.get('config') or '').strip()
+    try:
+        w = float(body.get('w'))
+        h = float(body.get('h'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Некорректные числовые поля'}), 400
+    if system not in _GLAZING_SYSTEMS or not config:
+        return jsonify({'error': 'Недостаточно данных'}), 400
+    try:
+        import psycopg2
+        with psycopg2.connect(os.environ.get('DATABASE_URL', '')) as conn:
+            with conn.cursor() as cur:
+                from ..services import calculator as _calc
+                _calc._ensure_glazing_tables(cur)
+                cur.execute(
+                    "DELETE FROM glazing_price_overrides WHERE system=%s AND config=%s AND w_dec=%s AND h_dec=%s",
+                    (system, config, w, h)
+                )
+                deleted = cur.rowcount
+            conn.commit()
+        from ..services import calculator as _calc
+        _calc.clear_glazing_cache()
+        return jsonify({'ok': True, 'deleted': deleted})
+    except Exception as exc:
+        return jsonify({'error': f'Ошибка сброса ячейки: {exc}'}), 500
 
 
 @bp.route('/glazing-reset', methods=['POST'])
