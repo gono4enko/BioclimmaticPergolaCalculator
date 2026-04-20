@@ -325,3 +325,99 @@ class TestZipAwningE2E:
 
             finally:
                 browser.close()
+
+    def test_zip_match_pergola_button_appears_and_updates_color(self):
+        """Match button appears when glazing color differs from ZIP color; clicking it syncs the colors.
+
+        Flow:
+        1. Configure B500NEW 4×3 m with S500 glazing on front opening.
+           S500 defaults to color ral7016, which maps to ZIP color ral7024.
+        2. Enable ZIP on front_0 — ZIP color defaults to ral9016.
+        3. Because ral7024 (desired) != ral9016 (current) the '≈ pergola' match
+           button must appear.
+        4. The button's data-match attribute must equal 'ral7024'.
+        5. After clicking the button the ZIP color becomes ral7024 and the button
+           disappears (colors now match so showMatchBtn becomes false).
+        """
+        with sync_playwright() as pw:
+            browser, page = _open_page(pw)
+            try:
+                # Navigate and configure B500NEW 4×3 m
+                page.goto(BASE_URL + "/", wait_until="networkidle")
+                page.locator('[data-type="B500NEW"]').click()
+                page.locator('#variant-options [data-variant="auto"]').click()
+                page.locator('#input-width').fill("4")
+                page.locator('#input-length').fill("3")
+                page.locator('#input-length').press("Tab")
+
+                expect(page.locator('#step-4')).to_be_visible(timeout=5000)
+
+                # Open the facade/ZIP spoiler
+                page.locator('details.facade-spoiler > summary').click()
+
+                # Enable ZIP on front_0 FIRST so it gets the default color ral9016.
+                # The match button only appears when the current ZIP color differs
+                # from the glazing-mapped color; if ZIP is enabled after glazing is
+                # set, it already inherits the mapped color and no button appears.
+                zip_table = page.locator('#zip-opening-table')
+                expect(zip_table).to_be_visible(timeout=5000)
+
+                toggle_front = page.locator('.zip-toggle-btn[data-key="front_0"]')
+                expect(toggle_front).to_be_visible(timeout=3000)
+                toggle_front.click()
+
+                # NOW select S500 glazing on front_0 (defaults to ral7016 color).
+                # Selecting glazing also disables the ZIP on this opening (the UI
+                # does not allow facade/glazing and ZIP at the same position by
+                # default).  The ZIP state record is preserved (color = ral9016).
+                facade_sel = page.locator(
+                    'select.facade-type-sel[data-side="front"][data-bay="0"]'
+                )
+                expect(facade_sel).to_be_visible(timeout=5000)
+                facade_sel.select_option("S500")
+
+                # Re-enable ZIP on front_0.  Now buildZipTable renders the params
+                # card with: curZipColor=ral9016 (saved), matchColor=ral7024
+                # (ral7016→ral7024 via _ZIP_NEAREST_MAP), hasGlzColor=true
+                # → showMatchBtn = true → "≈ pergola" button is rendered.
+                toggle_front2 = page.locator('.zip-toggle-btn[data-key="front_0"]')
+                expect(toggle_front2).to_be_visible(timeout=3000)
+                toggle_front2.click()
+
+                # Assert the match button is visible
+                # ral7016 (glazing) → ral7024 (nearest ZIP) ≠ ral9016 (current ZIP)
+                match_btn = page.locator('.zip-match-btn[data-key="front_0"]')
+                expect(match_btn).to_be_visible(timeout=5000)
+
+                # Button label must contain the "≈ pergola" text
+                btn_text = match_btn.inner_text()
+                assert "≈" in btn_text or "\u2248" in btn_text, (
+                    f"Expected '≈' in match button label, got: {btn_text!r}"
+                )
+
+                # data-match must be ral7024 (the nearest ZIP color for ral7016)
+                data_match = match_btn.get_attribute("data-match")
+                assert data_match == "ral7024", (
+                    f"Expected data-match='ral7024', got: {data_match!r}"
+                )
+
+                # Click the match button — ZIP color updates to ral7024
+                match_btn.click()
+
+                # After clicking, the button must disappear because the ZIP color
+                # now matches the glazing-derived color (ral7024 == ral7024)
+                expect(match_btn).not_to_be_visible(timeout=5000)
+
+                # The ral7024 color swatch in the ZIP color picker must be selected.
+                # Selected swatches get: box-shadow:0 0 0 2px #1a3a6e,0 0 0 4px white
+                swatch_ral7024 = page.locator(
+                    'button.zip-cp-opt[data-key="front_0"][data-color="ral7024"]'
+                )
+                expect(swatch_ral7024).to_be_visible(timeout=3000)
+                swatch_style = swatch_ral7024.get_attribute("style") or ""
+                assert "box-shadow" in swatch_style, (
+                    f"Expected ral7024 swatch to appear selected (box-shadow ring), got style: {swatch_style!r}"
+                )
+
+            finally:
+                browser.close()
