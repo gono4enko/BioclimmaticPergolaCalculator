@@ -1602,17 +1602,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<td><button class="zip-toggle-btn" data-key="' + key + '" style="' + toggleBtnStyle + ';border:none;border-radius:5px;padding:3px 10px;font-size:0.83em;cursor:pointer;">' + toggleBtnText + '</button></td>';
             }
             if (enabled) {
-                var openingW = (o.side === 'front' || o.side === 'back') ? (W / mods) : (L / lMods);
-                var isZip130 = (openingW > 4.0 || state.height > 3.5);
                 var curFabric = z.fabric || 'veozip';
-                if (!isZip130 && (curFabric === 'soltis' || curFabric === 'copaco')) {
-                    curFabric = 'veozip';
-                    z.fabric = 'veozip';
-                    if (state.zipPerOpening[key]) state.zipPerOpening[key].fabric = 'veozip';
-                }
                 var fabOpts = '';
                 ZIP_FABRICS_JS.forEach(function(f) {
-                    if (!isZip130 && (f.v === 'soltis' || f.v === 'copaco')) return;
                     fabOpts += '<option value="' + f.v + '"' + (curFabric===f.v?' selected':'') + '>' + f.n + '</option>';
                 });
                 var curZipColor = z.color || 'ral9016';
@@ -2585,7 +2577,7 @@ document.addEventListener('DOMContentLoaded', function() {
             '\u043B\u0435\u043D\u0442\u0430': 'LED-\u043B\u0435\u043D\u0442\u0430 IP65 \u0441 \u0437\u0430\u0449\u0438\u0442\u043E\u0439 \u043E\u0442 \u0432\u043B\u0430\u0433\u0438',
             '\u0414\u043E\u0441\u0442\u0430\u0432\u043A\u0430': '\u0414\u043E\u0441\u0442\u0430\u0432\u043A\u0430 \u0434\u043E \u043E\u0431\u044A\u0435\u043A\u0442\u0430 \u0432 \u043F\u0440\u0435\u0434\u0435\u043B\u0430\u0445 \u0420\u0424',
             '\u041C\u043E\u043D\u0442\u0430\u0436': '\u041F\u0440\u043E\u0444\u0435\u0441\u0441\u0438\u043E\u043D\u0430\u043B\u044C\u043D\u0430\u044F \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430 \u0431\u0440\u0438\u0433\u0430\u0434\u043E\u0439 Decolife',
-            'ZIP100': 'ZIP100 \u2014 \u043a\u043e\u043c\u043f\u0430\u043a\u0442\u043d\u044b\u0439 \u043a\u043e\u0440\u043e\u0431 100\u00d7100 \u043c\u043c, \u043c\u0430\u043a\u0441. ~14 \u043c\u00b2. Zip-\u0437\u0430\u043c\u043e\u043a: \u043f\u043e\u043b\u043e\u0442\u043d\u043e \u0444\u0438\u043a\u0441\u0438\u0440\u0443\u0435\u0442\u0441\u044f \u0432 \u0431\u043e\u043a\u043e\u0432\u044b\u0445 \u043d\u0430\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0449\u0438\u0445 \u2014 \u0437\u0430\u0437\u043e\u0440\u043e\u0432 \u043d\u0435\u0442 \u0434\u0430\u0436\u0435 \u043f\u0440\u0438 \u0432\u0435\u0442\u0440\u0435. \u0422\u043a\u0430\u043d\u044c Veozip / Soltis W96 / Copaco Blackout.',
+            'ZIP100': 'ZIP100 \u2014 \u043a\u043e\u043c\u043f\u0430\u043a\u0442\u043d\u044b\u0439 \u043a\u043e\u0440\u043e\u0431 90\u00d7100 \u043c\u043c, \u043c\u0430\u043a\u0441. ~14 \u043c\u00b2. Zip-\u0437\u0430\u043c\u043e\u043a: \u043f\u043e\u043b\u043e\u0442\u043d\u043e \u0444\u0438\u043a\u0441\u0438\u0440\u0443\u0435\u0442\u0441\u044f \u0432 \u0431\u043e\u043a\u043e\u0432\u044b\u0445 \u043d\u0430\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0449\u0438\u0445 \u2014 \u0437\u0430\u0437\u043e\u0440\u043e\u0432 \u043d\u0435\u0442 \u0434\u0430\u0436\u0435 \u043f\u0440\u0438 \u0432\u0435\u0442\u0440\u0435. \u0422\u043a\u0430\u043d\u044c Veozip / Soltis W96 / Copaco Blackout.',
             'ZIP130': 'ZIP130 \u2014 \u0443\u0441\u0438\u043b\u0435\u043d\u043d\u044b\u0439 \u043a\u043e\u0440\u043e\u0431 130\u00d7130 \u043c\u043c, \u043c\u0430\u043a\u0441. 25 \u043c\u00b2. \u0414\u043b\u044f \u0448\u0438\u0440\u043e\u043a\u0438\u0445 \u043f\u0440\u043e\u0451\u043c\u043e\u0432, \u0442\u0435\u0440\u0440\u0430\u0441 \u0438 \u043f\u0435\u0440\u0433\u043e\u043b. \u0412\u0430\u043b \u00d878 \u043c\u043c, \u043f\u0440\u043e\u0444\u0438\u043b\u044c 4\u20135 \u043c\u043c. \u042d\u043b\u0435\u043a\u0442\u0440\u043e\u043f\u0440\u0438\u0432\u043e\u0434 Simu RTS \u0438 \u0434\u0430\u0442\u0447\u0438\u043a\u0438 \u0432\u0435\u0442\u0440\u0430/\u0441\u043e\u043b\u043d\u0446\u0430.',
             'ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u0430': '\u0420\u0443\u043b\u043e\u043d\u043d\u0430\u044f \u043c\u0430\u0440\u043a\u0438\u0437\u0430 \u0441 \u0431\u043e\u043a\u043e\u0432\u044b\u043c\u0438 \u043d\u0430\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0449\u0438\u043c\u0438 (zip-\u0441\u0438\u0441\u0442\u0435\u043c\u0430) \u2014 \u0437\u0430\u0449\u0438\u0442\u0430 \u043e\u0442 \u0441\u043e\u043b\u043d\u0446\u0430, \u0432\u0435\u0442\u0440\u0430 \u0438 \u043e\u0441\u0430\u0434\u043a\u043e\u0432',
             '\u0414\u043e\u043f. \u043a\u043e\u043b\u043e\u043d\u043d\u0430 (ZIP)': '\u0414\u043e\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c\u043d\u0430\u044f \u0432\u0435\u0440\u0442\u0438\u043a\u0430\u043b\u044c\u043d\u0430\u044f \u043e\u043f\u043e\u0440\u0430 \u0434\u043b\u044f ZIP-\u043c\u0430\u0440\u043a\u0438\u0437\u044b \u0448\u0438\u0440\u043e\u043a\u043e\u0433\u043e \u043f\u0440\u043e\u043b\u0451\u0442\u0430'
@@ -2646,7 +2638,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     var hMm = zo.adj_h ? Math.round(zo.adj_h * 1000) : 0;
                     var dimLabel = (wMm && hMm) ? (wMm + '\u00d7' + hMm + ' \u043c\u043c') : '';
                     var isZ100 = (t === 'ZIP100');
-                    var casSize = isZ100 ? '100\u00d7100' : '130\u00d7130';
+                    var casSize = isZ100 ? '90\u00d7100' : '130\u00d7130';
                     var maxArea = isZ100 ? '\u224814 \u043c\u00b2' : '\u226425 \u043c\u00b2';
                     var shaftD  = isZ100 ? 'Ø55 \u043c\u043c' : 'Ø78 \u043c\u043c';
                     var descText = isZ100

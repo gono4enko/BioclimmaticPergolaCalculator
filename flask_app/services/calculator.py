@@ -2301,6 +2301,9 @@ def perform_calculation(dimensions, options):
                 if 'error' not in _zr:
                     if _zr['adj_w'] <= _ZIP130_MAX_W and _zr['adj_h'] <= _ZIP130_MAX_H:
                         _zip_types_first.append(_zr['zip_type'])
+                # Soltis/Copaco fabrics require ZIP130 regardless of dimensions
+                if _zfab in ('soltis', 'copaco'):
+                    _zip_types_first.append('ZIP130')
 
             _global_type = 'ZIP130' if 'ZIP130' in _zip_types_first else 'ZIP100'
 

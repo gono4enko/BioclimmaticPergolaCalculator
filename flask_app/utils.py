@@ -2043,8 +2043,9 @@ def generate_zip_detail_svg(zip_type='ZIP100', w_m=2.0, h_m=2.7, fabric='Veozip 
     title_text = f'{zip_type} — Вертикальная ZIP-маркиза'
     svg += (f'<text x="{vw/2:.1f}" y="28" text-anchor="middle" font-size="14px" '
             f'font-weight="bold" fill="{ann}">{title_text}</text>')
+    cas_size_label = '90×100' if cassette_mm == 100 else '130×130'
     svg += (f'<text x="{vw/2:.1f}" y="45" text-anchor="middle" font-size="11px" '
-            f'fill="#555">Короб {cassette_mm}×{cassette_mm} мм · max {max_area} · {w_m:.2f}×{h_m:.2f} м</text>')
+            f'fill="#555">Короб {cas_size_label} мм · max {max_area} · {w_m:.2f}×{h_m:.2f} м</text>')
 
     svg += (f'<rect x="{drw_x0}" y="{drw_y0}" width="{drw_w}" height="{cas_h:.1f}" '
             f'fill="{dark}" rx="2" opacity="0.93"/>')
@@ -2087,7 +2088,7 @@ def generate_zip_detail_svg(zip_type='ZIP100', w_m=2.0, h_m=2.7, fabric='Veozip 
     fab_mid_y  = fy + fh * 0.55
     bot_mid_y  = fy + fh + bot_h / 2
 
-    svg += ann_line('Кассета (короб)', f'{cassette_mm}×{cassette_mm} мм · Ø{78 if cassette_mm==130 else 55} мм вал',
+    svg += ann_line('Кассета (короб)', f'{cas_size_label} мм · Ø{78 if cassette_mm==130 else 55} мм вал',
                     int(cas_y_mid), drw_x0 + drw_w * 0.4, cas_y_mid)
     svg += ann_line('Боковые направляющие', 'ZIP-канал (zip-замок)', int(rail_mid_y), drw_x0 + rail_w / 2, rail_mid_y)
     svg += ann_line('Полотно', fabric, int(fab_mid_y), fx + fw * 0.35, fab_mid_y)
