@@ -2195,94 +2195,181 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    document.getElementById('calc-btn').addEventListener('click', function() {
-        snapshotActivePergola();
-        if (state.activePergolaIdx !== 0) {
-            state.activePergolaIdx = 0;
-            loadPergolaToActive(0);
-            renderPergolaTabs();
-        }
-        if (!state.pergolaType) { alert('\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0438\u043F \u043F\u0435\u0440\u0433\u043E\u043B\u044B'); return; }
-        if (!state.selectedVariant) { alert('\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043C\u043E\u0434\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u044E'); return; }
-        if (state.width <= 0 || state.length <= 0) { alert('\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0440\u0430\u0437\u043C\u0435\u0440\u044B \u043F\u0435\u0440\u0433\u043E\u043B\u044B'); return; }
-        if (state.width > state.maxWidth) { alert('\u0428\u0438\u0440\u0438\u043D\u0430 \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C (' + state.maxWidth + ' \u043C)'); return; }
-        if (state.length > state.maxLength) { alert('\u0412\u044B\u043D\u043E\u0441 \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C (' + state.maxLength + ' \u043C)'); return; }
-
-        clearGlazingErrors();
-        var glzValidErr = validateGlazingBeforeSend();
-        if (glzValidErr) {
-            highlightGlazingError(glzValidErr.side, glzValidErr.bay, glzValidErr.field, glzValidErr.msgRu);
-            return;
-        }
-
+    function _buildBodyFromCurrentState() {
         var lighting = [];
         if (state.whiteLed) lighting.push('white_led');
         if (state.rgbLed) lighting.push('rgb_led');
-
-        var nameInput = document.getElementById('input-client-name');
-        state.clientName = nameInput ? nameInput.value.trim() : '';
-
-        var body = {
+        var variant = state.selectedVariant;
+        var lamellaType = state.lamellaType;
+        var lamellaSize = state.lamellaSize;
+        if (state.pergolaType === 'B600') {
+            if (!variant) variant = 'auto';
+            if (!lamellaType) lamellaType = 'B600-PIR';
+        }
+        return {
             pergola_type: state.pergolaType,
             width: state.width,
             length: state.length,
-            height: state.height,
-            lamella_size: state.lamellaSize,
-            lamella_type: state.lamellaType,
+            height: state.height || 3.0,
+            lamella_size: lamellaSize,
+            lamella_type: lamellaType,
             lighting: lighting,
             installation: state.installation,
-            selected_variant: state.selectedVariant,
+            selected_variant: variant,
             client_name: state.clientName,
             facade_openings: computeFacadeOpenings(),
             glazing_openings: computeGlazingOpenings(),
             zip_openings: computeZipOpenings()
         };
+    }
+
+    function _validateBody(body, label) {
+        if (!body.pergola_type) { alert(label + ': \u043D\u0435 \u0432\u044B\u0431\u0440\u0430\u043D \u0442\u0438\u043F \u043F\u0435\u0440\u0433\u043E\u043B\u044B'); return false; }
+        if (!body.selected_variant) { alert(label + ': \u043D\u0435 \u0432\u044B\u0431\u0440\u0430\u043D\u0430 \u043C\u043E\u0434\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u044F'); return false; }
+        if (body.width <= 0 || body.length <= 0) { alert(label + ': \u0443\u043A\u0430\u0436\u0438\u0442\u0435 \u0440\u0430\u0437\u043C\u0435\u0440\u044B'); return false; }
+        if (body.width > state.maxWidth) { alert(label + ': \u0448\u0438\u0440\u0438\u043D\u0430 \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C (' + state.maxWidth + ' \u043C)'); return false; }
+        if (body.length > state.maxLength) { alert(label + ': \u0432\u044B\u043D\u043E\u0441 \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C (' + state.maxLength + ' \u043C)'); return false; }
+        return true;
+    }
+
+    document.getElementById('calc-btn').addEventListener('click', function() {
+        snapshotActivePergola();
+        var nameInput = document.getElementById('input-client-name');
+        state.clientName = nameInput ? nameInput.value.trim() : '';
+
+        clearGlazingErrors();
+
+        // Build payload(s). Multi-pergola path: temporarily swap each pergola
+        // into state to reuse the existing computeFacade/Glazing/Zip helpers.
+        var bodies = [];
+        if (state.pergolas.length > 1) {
+            for (var i = 0; i < state.pergolas.length; i++) {
+                if (i !== state.activePergolaIdx) {
+                    state.activePergolaIdx = i;
+                    loadPergolaToActive(i);
+                }
+                var glzErr_i = validateGlazingBeforeSend();
+                if (glzErr_i) {
+                    renderPergolaTabs();
+                    alert('\u041F\u0435\u0440\u0433\u043E\u043B\u0430\u00A0' + (i + 1) + ': ' + (glzErr_i.msgRu || '\u043E\u0448\u0438\u0431\u043A\u0430 \u043E\u0441\u0442\u0435\u043A\u043B\u0435\u043D\u0438\u044F'));
+                    highlightGlazingError(glzErr_i.side, glzErr_i.bay, glzErr_i.field, glzErr_i.msgRu);
+                    return;
+                }
+                var b_i = _buildBodyFromCurrentState();
+                if (!_validateBody(b_i, '\u041F\u0435\u0440\u0433\u043E\u043B\u0430\u00A0' + (i + 1))) {
+                    renderPergolaTabs();
+                    return;
+                }
+                bodies.push(b_i);
+            }
+            // Restore view to Pergola 1
+            state.activePergolaIdx = 0;
+            loadPergolaToActive(0);
+            renderPergolaTabs();
+        } else {
+            // Single-pergola path
+            var glzValidErr = validateGlazingBeforeSend();
+            if (glzValidErr) {
+                highlightGlazingError(glzValidErr.side, glzValidErr.bay, glzValidErr.field, glzValidErr.msgRu);
+                return;
+            }
+            var b0 = _buildBodyFromCurrentState();
+            if (!_validateBody(b0, '\u041F\u0435\u0440\u0433\u043E\u043B\u0430')) return;
+            bodies.push(b0);
+        }
 
         state._pergolaHeight = state.height || 3.0;
         stepsEl.spinner.style.display = 'flex';
 
-        fetch('/api/calculate', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(body)
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
+        Promise.all(bodies.map(function(body, idx) {
+            return fetch('/api/calculate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            }).then(function(r) { return r.json(); })
+              .then(function(d) { return {idx: idx, data: d}; });
+        })).then(function(allResults) {
             stepsEl.spinner.style.display = 'none';
-            if (!data.success) {
-                var glzErr = parseGlazingError(data.error || '');
-                if (glzErr) {
-                    clearGlazingErrors();
-                    highlightGlazingError(glzErr.side, glzErr.bay, glzErr.field, glzErr.msgRu);
-                } else {
-                    alert('\u041E\u0448\u0438\u0431\u043A\u0430: ' + (data.error || '\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u0430\u044F \u043E\u0448\u0438\u0431\u043A\u0430'));
+            allResults.sort(function(a, b) { return a.idx - b.idx; });
+            for (var k = 0; k < allResults.length; k++) {
+                var dk = allResults[k].data;
+                if (!dk.success) {
+                    var glzErr2 = parseGlazingError(dk.error || '');
+                    if (glzErr2 && allResults[k].idx === 0) {
+                        clearGlazingErrors();
+                        highlightGlazingError(glzErr2.side, glzErr2.bay, glzErr2.field, glzErr2.msgRu);
+                    } else {
+                        alert('\u041F\u0435\u0440\u0433\u043E\u043B\u0430\u00A0' + (allResults[k].idx + 1) + ': ' + (dk.error || '\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u0430\u044F \u043E\u0448\u0438\u0431\u043A\u0430'));
+                    }
+                    return;
                 }
-                return;
             }
-            state.kpNumber = data.kp_number || '';
-            state.pergolaCount = data.pergola_count || 0;
-            state.deadline = data.deadline || '';
-            state.calcId = data.calc_id || '';
-            if (data.mode === 'all') {
-                state.allResults = data.results;
-                state.result = data.results[0];
-                renderAllResults(data.results);
+            state.allPergolaResults = allResults.map(function(x) { return x.data; });
+            var firstData = allResults[0].data;
+            state.kpNumber = firstData.kp_number || '';
+            state.pergolaCount = firstData.pergola_count || 0;
+            state.deadline = firstData.deadline || '';
+            state.calcId = firstData.calc_id || '';
+            if (firstData.mode === 'all') {
+                state.allResults = firstData.results;
+                state.result = firstData.results[0];
+                renderAllResults(firstData.results);
             } else {
-                state.result = data.result;
+                state.result = firstData.result;
                 state.allResults = null;
-                renderResults(data.result);
+                renderResults(firstData.result);
             }
+            renderMultiPergolaSummary();
             updatePriceBar();
             try { if (typeof ym === 'function') ym(YM_ID, 'reachGoal', 'calc_success', { calculator_type: CALC_TYPE }); } catch(e) {}
             setTimeout(function() {
                 stepsEl.resultsSection.scrollIntoView({behavior: 'smooth', block: 'start'});
             }, 200);
-        })
-        .catch(function(err) {
+        }).catch(function(err) {
             stepsEl.spinner.style.display = 'none';
             alert('\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F: ' + err.message);
         });
     });
+
+    function renderMultiPergolaSummary() {
+        var existing = document.getElementById('multi-pergola-summary-block');
+        if (existing) existing.remove();
+        if (!state.allPergolaResults || state.allPergolaResults.length < 2) return;
+        var sec = stepsEl.resultsSection;
+        var grand = {cash: 0, non_cash: 0, with_vat: 0};
+        var rows = '';
+        state.allPergolaResults.forEach(function(d, i) {
+            var r = (d.mode === 'all') ? d.results[0] : d.result;
+            grand.cash    += r.totals.cash;
+            grand.non_cash+= r.totals.non_cash;
+            grand.with_vat+= r.totals.with_vat;
+            rows += '<div class="mp-pergola-row">' +
+                '<div class="mp-pergola-label">\u041F\u0435\u0440\u0433\u043E\u043B\u0430\u00A0' + (i + 1) + ': <strong>' + r.pergola_type_name + '</strong> \u00B7 ' +
+                    r.dimensions.width.toFixed(2) + '\u00D7' + r.dimensions.length.toFixed(2) + '\u00A0\u043C</div>' +
+                '<div class="mp-pergola-prices">' +
+                    '<span>\u041D\u0430\u043B\u0438\u0447\u043D\u044B\u0435: <strong>' + formatPrice(r.totals.cash) + '\u00A0\u20BD</strong></span>' +
+                    '<span>\u0411\u0435\u0437\u043D\u0430\u043B: <strong>' + formatPrice(r.totals.non_cash) + '\u00A0\u20BD</strong></span>' +
+                    '<span>\u0441 \u041D\u0414\u0421: <strong>' + formatPrice(r.totals.with_vat) + '\u00A0\u20BD</strong></span>' +
+                '</div></div>';
+        });
+        var html = '<div class="multi-pergola-summary">' +
+            '<div class="mp-summary-title">\u0421\u0432\u043E\u0434\u043A\u0430 \u043F\u043E \u043F\u0435\u0440\u0433\u043E\u043B\u0430\u043C (' + state.allPergolaResults.length + '\u00A0\u0448\u0442.)</div>' +
+            rows +
+            '<div class="mp-grand-total">' +
+                '<div class="mp-grand-title">\u0418\u0422\u041E\u0413\u041E \u043F\u043E \u0432\u0441\u0435\u043C \u043F\u0435\u0440\u0433\u043E\u043B\u0430\u043C</div>' +
+                '<div class="mp-grand-rows">' +
+                    '<div>\u041D\u0430\u043B\u0438\u0447\u043D\u044B\u0435: <strong>' + formatPrice(grand.cash) + '\u00A0\u20BD</strong></div>' +
+                    '<div>\u0411\u0435\u0437\u043D\u0430\u043B\u0438\u0447\u043D\u044B\u0439 \u0440\u0430\u0441\u0447\u0451\u0442: <strong>' + formatPrice(grand.non_cash) + '\u00A0\u20BD</strong></div>' +
+                    '<div>\u0411\u0435\u0437\u043D\u0430\u043B. \u0441 \u041D\u0414\u0421\u00A022%: <strong>' + formatPrice(grand.with_vat) + '\u00A0\u20BD</strong></div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="mp-pdf-notice">\u041F\u043E\u0434\u0440\u043E\u0431\u043D\u044B\u0439 \u041A\u041F \u0438 PDF \u043D\u0438\u0436\u0435 \u043F\u043E\u043A\u0430 \u043F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u044E\u0442 \u0442\u043E\u043B\u044C\u043A\u043E \u041F\u0435\u0440\u0433\u043E\u043B\u0443\u00A01. \u041C\u043D\u043E\u0433\u043E\u0440\u0430\u0437\u0434\u0435\u043B\u044C\u043D\u044B\u0439 PDF \u2014 \u0432 \u0431\u043B\u0438\u0436\u0430\u0439\u0448\u0435\u043C \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438.</div>' +
+        '</div>';
+        var wrap = document.createElement('div');
+        wrap.id = 'multi-pergola-summary-block';
+        wrap.innerHTML = html;
+        sec.insertBefore(wrap, sec.firstChild);
+    }
 
     function formatPrice(n) {
         return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
