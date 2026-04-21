@@ -2919,7 +2919,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function buildMarketingKP(resultOrResults, decoData, idSuffix) {
+    function buildMarketingKP(resultOrResults, decoData, idSuffix, opts) {
+        opts = opts || {};
         var isAll = Array.isArray(resultOrResults);
         var mainResult = isAll ? resultOrResults[0] : resultOrResults;
         var sfx = idSuffix ? '-' + idSuffix : '';
@@ -2965,36 +2966,41 @@ document.addEventListener('DOMContentLoaded', function() {
             '<strong>\u0423\u0441\u043B\u043E\u0432\u0438\u044F:</strong> 80% \u043F\u043E\u0441\u043B\u0435 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F \u0437\u0430\u043A\u0430\u0437\u0430 \u2014 \u043C\u044B \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0435\u043C \u043F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0441\u0442\u0432\u043E; 20% \u043F\u043E\u0441\u043B\u0435 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u044F \u043C\u043E\u043D\u0442\u0430\u0436\u0430 \u0438 \u0432\u0430\u0448\u0435\u0439 \u043F\u0440\u0438\u0451\u043C\u043A\u0438' +
             '</div></div>';
 
-        /* Block 3: Model info with product photo from Decolife */
-        html += '<div class="kp-block">' +
-            '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\u2139</div><div class="kp-block-title">\u041E \u043C\u043E\u0434\u0435\u043B\u0438 ' + escHtml(dd.model || pType) + '</div></div>' +
-            '<div class="kp-model-photo"><img src="' + (decoKey ? '/static/decolife/' + decoKey + '/images/product.jpg' : '/static/images/' + modelImg) + '" alt="' + escHtml(dd.model || pType) + '" onerror="this.src=\'/static/images/' + modelImg + '\';this.onerror=function(){this.parentElement.style.display=\'none\';}" style="width:100%;max-height:400px;object-fit:contain;border-radius:8px;margin-bottom:0.8rem;background:#f5f7fb;"></div>';
-        if (dd.description) {
-            html += '<p>' + escHtml(dd.description) + '</p>';
-        }
-        if (dd.production) {
-            html += '<p style="margin-top:0.5rem;font-size:0.85rem;color:#555;"><em>' + escHtml(dd.production) + '</em></p>';
-        }
-        html += '</div>';
-
-        /* Block 4: Key features */
-        if (dd.features && dd.features.length) {
+        /* Blocks 3, 4, 5: Model info / Key features / Advantages.
+           Skipped for additional pergolas with the same model as Pergola 1
+           to avoid duplicating identical marketing copy. */
+        if (!opts.omitModelInfo) {
+            /* Block 3: Model info with product photo from Decolife */
             html += '<div class="kp-block">' +
-                '<div class="kp-block-header"><div class="kp-block-icon" style="background:#2e7d32;">\u2605</div><div class="kp-block-title">\u041A\u043B\u044E\u0447\u0435\u0432\u044B\u0435 \u043E\u0441\u043E\u0431\u0435\u043D\u043D\u043E\u0441\u0442\u0438</div></div>' +
-                '<div class="kp-features-grid">';
-            dd.features.forEach(function(f) {
-                html += '<div class="kp-feature-item"><span class="kp-feature-check">\u2713</span><div><strong>' + escHtml(f.title) + '</strong><br>' + escHtml(f.text) + '</div></div>';
-            });
-            html += '</div></div>';
-        }
+                '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\u2139</div><div class="kp-block-title">\u041E \u043C\u043E\u0434\u0435\u043B\u0438 ' + escHtml(dd.model || pType) + '</div></div>' +
+                '<div class="kp-model-photo"><img src="' + (decoKey ? '/static/decolife/' + decoKey + '/images/product.jpg' : '/static/images/' + modelImg) + '" alt="' + escHtml(dd.model || pType) + '" onerror="this.src=\'/static/images/' + modelImg + '\';this.onerror=function(){this.parentElement.style.display=\'none\';}" style="width:100%;max-height:400px;object-fit:contain;border-radius:8px;margin-bottom:0.8rem;background:#f5f7fb;"></div>';
+            if (dd.description) {
+                html += '<p>' + escHtml(dd.description) + '</p>';
+            }
+            if (dd.production) {
+                html += '<p style="margin-top:0.5rem;font-size:0.85rem;color:#555;"><em>' + escHtml(dd.production) + '</em></p>';
+            }
+            html += '</div>';
 
-        /* Block 5: Advantages */
-        if (dd.advantages && dd.advantages.length) {
-            html += '<div class="kp-block">' +
-                '<div class="kp-block-header"><div class="kp-block-icon" style="background:#f59e0b;">\u2B50</div><div class="kp-block-title">\u041F\u0440\u0435\u0438\u043C\u0443\u0449\u0435\u0441\u0442\u0432\u0430</div></div>' +
-                '<ul>';
-            dd.advantages.forEach(function(a) { html += '<li>' + escHtml(a) + '</li>'; });
-            html += '</ul></div>';
+            /* Block 4: Key features */
+            if (dd.features && dd.features.length) {
+                html += '<div class="kp-block">' +
+                    '<div class="kp-block-header"><div class="kp-block-icon" style="background:#2e7d32;">\u2605</div><div class="kp-block-title">\u041A\u043B\u044E\u0447\u0435\u0432\u044B\u0435 \u043E\u0441\u043E\u0431\u0435\u043D\u043D\u043E\u0441\u0442\u0438</div></div>' +
+                    '<div class="kp-features-grid">';
+                dd.features.forEach(function(f) {
+                    html += '<div class="kp-feature-item"><span class="kp-feature-check">\u2713</span><div><strong>' + escHtml(f.title) + '</strong><br>' + escHtml(f.text) + '</div></div>';
+                });
+                html += '</div></div>';
+            }
+
+            /* Block 5: Advantages */
+            if (dd.advantages && dd.advantages.length) {
+                html += '<div class="kp-block">' +
+                    '<div class="kp-block-header"><div class="kp-block-icon" style="background:#f59e0b;">\u2B50</div><div class="kp-block-title">\u041F\u0440\u0435\u0438\u043C\u0443\u0449\u0435\u0441\u0442\u0432\u0430</div></div>' +
+                    '<ul>';
+                dd.advantages.forEach(function(a) { html += '<li>' + escHtml(a) + '</li>'; });
+                html += '</ul></div>';
+            }
         }
 
         /* Block 7: Specification with micro-explanations */
@@ -3160,8 +3166,9 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</tbody></table></div></div>';
         }
 
-        /* Block 8: Technical specifications (from variant specs) */
-        if (state._variantSpecHtml) {
+        /* Block 8: Technical specifications (from variant specs).
+           Skipped for additional pergolas where the variant matches Pergola 1. */
+        if (!opts.omitTechSpecs && state._variantSpecHtml) {
             html += '<div class="kp-block">' + state._variantSpecHtml + '</div>';
         }
 
@@ -3277,6 +3284,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 '</div>';
         }
 
+        /* Trailing shared blocks (Guarantees, Work stages + Upsell, Videos, Gallery, CTA,
+           policy footer). For multi-pergola offers these are emitted only ONCE at the bottom
+           after the last pergola section — see renderAdditionalPergolaKPs / _buildKpSharedFooter. */
+        if (!opts.omitTrailing) {
+            html += _buildKpSharedFooter(state.pergolaType, pergolaCount);
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    /* Builds the shared footer blocks (Guarantees + Company, Work stages + Upsell,
+       Videos, Realised projects gallery, CTA, policy links). Used both inline by
+       buildMarketingKP for single-pergola offers AND standalone after the last
+       pergola section in multi-pergola offers. */
+    function _buildKpSharedFooter(pergolaType, pergolaCount) {
+        var html = '';
         /* Block 9: Guarantees + Company info with dynamic counter (merged) */
         html += '<div class="kp-block">' +
             '<div class="kp-block-header"><div class="kp-block-icon" style="background:#2e7d32;">\u2714</div><div class="kp-block-title">\u0413\u0430\u0440\u0430\u043D\u0442\u0438\u0438 \u0438 \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u044F</div></div>' +
@@ -3357,7 +3381,6 @@ document.addEventListener('DOMContentLoaded', function() {
             '<a href="https://pergolamarket.ru/soglasie-na-obrabotku-pd" target="_blank" style="color:#aaa;text-decoration:underline;">\u041E\u0444\u0435\u0440\u0442\u0430</a>' +
             '</div>';
 
-        html += '</div>';
         return html;
     }
 
@@ -3371,19 +3394,25 @@ document.addEventListener('DOMContentLoaded', function() {
            promise is cached/shared with renderAdditionalPergolaKPs. Same-model
            additional pergolas (e.g. B500NEW + B500NEW) then await the same
            in-flight fetch instead of re-issuing /decolife-data. */
+        /* In multi-pergola mode, Pergola 1 must NOT render the trailing shared
+           blocks (Guarantees, Stages, Videos, Gallery, CTA) — they will be
+           appended once at the bottom of the entire offer by
+           renderAdditionalPergolaKPs. */
+        var isMulti = !!(state.allPergolaResults && state.allPergolaResults.length > 1);
+        var p1Opts = isMulti ? { omitTrailing: true } : {};
         _fetchKpDataForType(state.pergolaType).then(function(kpData) {
             var decoData = kpData.deco || {};
             state._lastDecoData = decoData;
             var kpContainer = document.getElementById('marketing-kp-container');
             if (kpContainer) {
-                kpContainer.innerHTML = buildMarketingKP(resultOrResults, decoData);
+                kpContainer.innerHTML = buildMarketingKP(resultOrResults, decoData, null, p1Opts);
                 initLazyIframes();
                 _applySchemeAfterKp(resultOrResults);
             }
         }).catch(function() {
             var kpContainer = document.getElementById('marketing-kp-container');
             if (kpContainer) {
-                kpContainer.innerHTML = buildMarketingKP(resultOrResults, {});
+                kpContainer.innerHTML = buildMarketingKP(resultOrResults, {}, null, p1Opts);
                 initLazyIframes();
                 _applySchemeAfterKp(resultOrResults);
             }
@@ -3534,13 +3563,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 cont.innerHTML = '<div style="text-align:center;padding:1.5rem;color:#888;">\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043C\u2026</div>';
                 sec.appendChild(cont);
 
+                /* Dedup logic: skip "О модели / Ключевые особенности / Преимущества"
+                   when this pergola has the same model as Pergola 1; additionally skip
+                   the technical-specs block when the variant + lamella size also match.
+                   Always omit the trailing shared blocks — they are appended once
+                   below for the whole offer. */
+                var p0 = (state.pergolas && state.pergolas[0]) || {};
+                var r0 = _resultFromCalcData(state.allPergolaResults[0]);
+                var sameModel = !!(p0.model && p.model && p0.model === p.model);
+                var sameVariant = sameModel && r0
+                    && (r0.selected_variant === r.selected_variant)
+                    && ((r0.lamella_size || p0.lamellaSize || '') === (r.lamella_size || p.lamellaSize || ''));
+                var addOpts = {
+                    omitTrailing: true,
+                    omitModelInfo: sameModel,
+                    omitTechSpecs: sameVariant
+                };
+
                 _fetchKpDataForType(p.model || '').then(function(kpData) {
                     withPergolaStateSwap(idx, function() {
                         state.variantsData = kpData.variants;
                         state._variantSpecHtml = _buildVariantSpecHtmlForResult(r, kpData.variants, p.lamellaSize);
                         var spec = _findSpecForVariant(kpData.variants, r.selected_variant, r.lamella_size || p.lamellaSize);
                         state._maxOverhang = spec && spec.max_overhang ? spec.max_overhang : null;
-                        cont.innerHTML = buildMarketingKP(r, kpData.deco, sfx);
+                        cont.innerHTML = buildMarketingKP(r, kpData.deco, sfx, addOpts);
                         initLazyIframes();
                         /* Run scheme update synchronously inside the state swap so
                            getFillForSide / getBay*Qs read THIS pergola's openings,
@@ -3549,6 +3595,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 });
             })(i);
+        }
+
+        /* Single shared footer (Guarantees, Stages, Videos, Gallery, CTA, policy)
+           appended once at the very bottom of the multi-pergola offer. Uses
+           Pergola 1's model for the video selection. */
+        if (!document.getElementById('mp-shared-footer')) {
+            var p1Model = (state.pergolas && state.pergolas[0] && state.pergolas[0].model) || state.pergolaType;
+            var pergolaCountFooter = (window.PERGOLA_INSTALLED_COUNT_2026 || 0);
+            var footerWrap = document.createElement('div');
+            footerWrap.id = 'mp-shared-footer';
+            footerWrap.className = 'marketing-kp';
+            footerWrap.innerHTML = _buildKpSharedFooter(p1Model, pergolaCountFooter);
+            sec.appendChild(footerWrap);
+            initLazyIframes();
         }
 
         if (!document.getElementById('mp-bottom-actions')) {
