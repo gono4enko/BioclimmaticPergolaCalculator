@@ -3639,7 +3639,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function exportPdf() {
         if (!state.result) return;
         var btns = _allPdfBtns();
-        btns.forEach(function(b){ b.disabled = true; b.textContent = '\u0413\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F PDF...'; });
+        btns.forEach(function(b){ b.disabled = true; b.textContent = '\u0421\u043E\u0437\u0434\u0430\u0451\u043C PDF\u2026'; });
         var resetBtns = function() {
             btns.forEach(function(b){ b.disabled = false; b.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF'; });
         };
