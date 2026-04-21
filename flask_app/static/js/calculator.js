@@ -3367,26 +3367,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadDecoDataAndRender(resultOrResults) {
-        fetch('/api/decolife-data/' + state.pergolaType)
-            .then(function(r) { return r.json(); })
-            .then(function(resp) {
-                var decoData = (resp.success && resp.data) ? resp.data : {};
-                state._lastDecoData = decoData;
-                var kpContainer = document.getElementById('marketing-kp-container');
-                if (kpContainer) {
-                    kpContainer.innerHTML = buildMarketingKP(resultOrResults, decoData);
-                    initLazyIframes();
-                    _applySchemeAfterKp(resultOrResults);
-                }
-            })
-            .catch(function() {
-                var kpContainer = document.getElementById('marketing-kp-container');
-                if (kpContainer) {
-                    kpContainer.innerHTML = buildMarketingKP(resultOrResults, {});
-                    initLazyIframes();
-                    _applySchemeAfterKp(resultOrResults);
-                }
-            });
+        /* Route through _fetchKpDataForType so the per-model {variants, deco}
+           promise is cached/shared with renderAdditionalPergolaKPs. Same-model
+           additional pergolas (e.g. B500NEW + B500NEW) then await the same
+           in-flight fetch instead of re-issuing /decolife-data. */
+        _fetchKpDataForType(state.pergolaType).then(function(kpData) {
+            var decoData = kpData.deco || {};
+            state._lastDecoData = decoData;
+            var kpContainer = document.getElementById('marketing-kp-container');
+            if (kpContainer) {
+                kpContainer.innerHTML = buildMarketingKP(resultOrResults, decoData);
+                initLazyIframes();
+                _applySchemeAfterKp(resultOrResults);
+            }
+        }).catch(function() {
+            var kpContainer = document.getElementById('marketing-kp-container');
+            if (kpContainer) {
+                kpContainer.innerHTML = buildMarketingKP(resultOrResults, {});
+                initLazyIframes();
+                _applySchemeAfterKp(resultOrResults);
+            }
+        });
     }
 
     function _fetchKpDataForType(pergolaType) {
@@ -3501,18 +3502,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (topRow) topRow.style.display = 'none';
         }
 
-        /* Pre-populate _kpDataCache for pergola 1's model so subsequent pergolas
-           with the same model don't re-fetch /variant-options or /decolife-data. */
-        var firstP0 = (state.pergolas && state.pergolas[0]) || {};
-        var firstModel = firstP0.model || state.pergolaType;
-        if (firstModel && state.variantsData && (!state._kpDataCache || !state._kpDataCache[firstModel])) {
-            if (!state._kpDataCache) state._kpDataCache = {};
-            state._kpDataCache[firstModel] = Promise.resolve({
-                variants: state.variantsData,
-                deco: state._lastDecoData || {}
-            });
-        }
-
         if (!document.getElementById('mp-pergola-heading-0')) {
             var firstP = (state.pergolas && state.pergolas[0]) || {};
             var firstR = _resultFromCalcData(state.allPergolaResults[0]);
@@ -3583,11 +3572,23 @@ document.addEventListener('DOMContentLoaded', function() {
         return '\u043C\u043E\u0434\u0443\u043B\u0435\u0439';
     }
 
+    function _allPdfBtns() {
+        var arr = [];
+        var a = document.getElementById('pdf-btn'); if (a) arr.push(a);
+        var b = document.getElementById('pdf-btn-bottom'); if (b) arr.push(b);
+        return arr;
+    }
+
     function exportPdf() {
         if (!state.result) return;
-        var btn = document.getElementById('pdf-btn');
-        btn.disabled = true;
-        btn.textContent = '\u0413\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F PDF...';
+        var btns = _allPdfBtns();
+        btns.forEach(function(b){ b.disabled = true; b.textContent = '\u0413\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F PDF...'; });
+        var resetBtns = function() {
+            btns.forEach(function(b){ b.disabled = false; b.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF'; });
+        };
+        /* Compatibility shim so the rest of the function (which references btn) works. */
+        var btn = { set disabled(v){ btns.forEach(function(b){ b.disabled = v; }); }, set textContent(v){ btns.forEach(function(b){ b.textContent = v; }); }, set innerHTML(v){ btns.forEach(function(b){ b.innerHTML = v; }); } };
+        void btn;
 
         var pdfBody = {};
         if (state.allPergolaResults && state.allPergolaResults.length > 1) {
@@ -3625,25 +3626,32 @@ document.addEventListener('DOMContentLoaded', function() {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF';
+            resetBtns();
         })
         .catch(function(err) {
             alert('\u041E\u0448\u0438\u0431\u043A\u0430: ' + err.message);
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF';
+            resetBtns();
         });
+    }
+
+    function _allShareBtns() {
+        var arr = [];
+        var a = document.getElementById('share-btn'); if (a) arr.push(a);
+        var b = document.getElementById('share-btn-bottom'); if (b) arr.push(b);
+        return arr;
     }
 
     function shareKp() {
         if (!state.calcId) { alert('Сначала выполните расчёт'); return; }
         var url = window.location.origin + '/kp/' + state.calcId;
+        var setCopied = function() {
+            _allShareBtns().forEach(function(b){ b.innerHTML = '<i class="bi bi-check-lg"></i> Скопировано!'; });
+            setTimeout(function() {
+                _allShareBtns().forEach(function(b){ b.innerHTML = '<i class="bi bi-share"></i> Поделиться'; });
+            }, 2000);
+        };
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).then(function() {
-                var btn = document.getElementById('share-btn');
-                btn.innerHTML = '<i class="bi bi-check-lg"></i> Скопировано!';
-                setTimeout(function() { btn.innerHTML = '<i class="bi bi-share"></i> Поделиться'; }, 2000);
-            });
+            navigator.clipboard.writeText(url).then(setCopied);
         } else {
             var ta = document.createElement('textarea');
             ta.value = url;
@@ -3651,9 +3659,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            var btn = document.getElementById('share-btn');
-            btn.innerHTML = '<i class="bi bi-check-lg"></i> Скопировано!';
-            setTimeout(function() { btn.innerHTML = '<i class="bi bi-share"></i> Поделиться'; }, 2000);
+            setCopied();
         }
     }
 
