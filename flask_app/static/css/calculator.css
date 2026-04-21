@@ -225,7 +225,7 @@
 .variant-tech-specs { font-size: 0.82rem; color: #444; line-height: 1.7; }
 .variant-tech-specs strong { color: #222; }
 
-.dim-input label { font-weight: 500; margin-bottom: 4px; display: block; font-size: 0.9rem; }
+.dim-input label { font-weight: 500; margin-bottom: 4px; display: block; font-size: 0.9rem; white-space: nowrap; min-height: 1.3em; }
 .dim-input .form-control { font-size: 1.1rem; padding: 0.6rem; }
 .dim-hint { font-size: 0.78rem; color: #888; margin-top: 2px; }
 
