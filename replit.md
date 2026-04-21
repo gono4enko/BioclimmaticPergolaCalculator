@@ -32,6 +32,11 @@ The application is built on a Flask backend (`flask_app/`) served by Gunicorn on
     -   Interactive forms with client-side JavaScript for calculations.
     -   SVG diagrams for top-view schematics in PDFs.
     -   Yandex Metrika integration for analytics.
+-   **Multi-Pergola КП (composite offers):**
+    -   Step 3 supports adding multiple pergolas (≥2) into a single commercial offer with per-pergola model/dimensions/openings/options/installation/LED state preserved via tabs in Step 4.
+    -   `/api/calculate` is invoked in parallel (Promise.all) per pergola; results page shows a summary block with per-pergola rows + Grand Total (cash / non-cash / VAT).
+    -   `/api/export-pdf` accepts `mode: 'multi_pergola'` with `pergolas: [...]` and produces a single PDF: a summary cover page (composition table + grand totals) followed by a full commercial offer per pergola, concatenated via PyPDF2 (`PdfMerger`). КП number appears only on the summary cover.
+    -   Single-pergola flow and the existing variant-comparison `mode: 'all'` are unchanged.
 -   **Glazing System (W-Series):**
     -   Models: W500 (20mm double glazing), W600 (28mm), W700 (thermal break, 28mm).
     -   Configuration options: sash count, profile color, glass type, "fin" option.

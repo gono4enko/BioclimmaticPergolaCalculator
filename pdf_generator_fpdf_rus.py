@@ -2079,3 +2079,152 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         except Exception as e2:
             print(f"Ошибка при создании упрощенного PDF: {str(e2)}")
             return None
+
+def _generate_multi_summary_cover(pergolas_data_list, user_data=None):
+    """Generates a single-page cover summarizing N pergolas with grand totals."""
+    pdf = PDF()
+    pdf.add_page()
+
+    pdf.set_fill_color(26, 58, 110)
+    pdf.rect(0, 0, 210, 55, 'F')
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font('DejaVu', 'B', 20)
+    pdf.set_y(15)
+    pdf.cell(0, 10, "КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ", 0, 1, "C")
+    pdf.set_font('DejaVu', '', 12)
+    n = len(pergolas_data_list)
+    pdf.cell(0, 8, f"Комплекс из {n} перголы", 0, 1, "C")
+
+    kp_number = pergolas_data_list[0].get('kp_number', '') if pergolas_data_list else ''
+    if kp_number:
+        pdf.set_font('DejaVu', '', 9)
+        pdf.cell(0, 6, f"КП № {kp_number}", 0, 1, "C")
+
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_y(70)
+
+    if user_data and user_data.get('name'):
+        pdf.set_font('DejaVu', '', 11)
+        pdf.cell(0, 7, f"Для: {user_data['name']}", 0, 1, "L")
+        pdf.ln(3)
+
+    pdf.set_font('DejaVu', 'B', 13)
+    pdf.cell(0, 8, "Состав предложения:", 0, 1, "L")
+    pdf.ln(2)
+
+    pdf.set_fill_color(230, 235, 245)
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_font('DejaVu', 'B', 9)
+    pdf.cell(10, 8, "№", 1, 0, "C", fill=True)
+    pdf.cell(58, 8, "Модель", 1, 0, "C", fill=True)
+    pdf.cell(32, 8, "Размер, м", 1, 0, "C", fill=True)
+    pdf.cell(30, 8, "Наличные, ₽", 1, 0, "C", fill=True)
+    pdf.cell(30, 8, "Безнал, ₽", 1, 0, "C", fill=True)
+    pdf.cell(30, 8, "с НДС, ₽", 1, 1, "C", fill=True)
+
+    grand_cash = grand_nc = grand_vat = 0
+    pdf.set_font('DejaVu', '', 9)
+    for i, p in enumerate(pergolas_data_list):
+        cash = int(p.get('cash_total', 0) or p.get('total_cost', 0) or 0)
+        nc = int(p.get('noncash_total', 0) or p.get('non_cash_total', 0) or 0)
+        vat = int(p.get('vat_total', 0) or 0)
+        grand_cash += cash
+        grand_nc += nc
+        grand_vat += vat
+
+        ptype = str(p.get('pergola_type', ''))
+        variant = str(p.get('variant_label', '') or p.get('selected_variant', ''))
+        if variant and variant.lower() not in ('auto', 'all'):
+            model_str = f"{ptype} {variant}"
+        else:
+            model_str = ptype
+        if len(model_str) > 30:
+            model_str = model_str[:29] + '…'
+
+        try:
+            w_str = f"{float(p.get('width', 0)):.2f}".rstrip('0').rstrip('.')
+            l_str = f"{float(p.get('length', 0)):.2f}".rstrip('0').rstrip('.')
+        except (TypeError, ValueError):
+            w_str = str(p.get('width', ''))
+            l_str = str(p.get('length', ''))
+        size_str = f"{w_str}×{l_str}"
+
+        pdf.cell(10, 7, str(i + 1), 1, 0, "C")
+        pdf.cell(58, 7, model_str, 1, 0, "L")
+        pdf.cell(32, 7, size_str, 1, 0, "C")
+        pdf.cell(30, 7, f"{cash:,}".replace(',', ' '), 1, 0, "R")
+        pdf.cell(30, 7, f"{nc:,}".replace(',', ' '), 1, 0, "R")
+        pdf.cell(30, 7, f"{vat:,}".replace(',', ' '), 1, 1, "R")
+
+    pdf.set_fill_color(26, 58, 110)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font('DejaVu', 'B', 10)
+    pdf.cell(100, 9, "ИТОГО ПО ВСЕМ ПЕРГОЛАМ", 1, 0, "R", fill=True)
+    pdf.cell(30, 9, f"{int(grand_cash):,}".replace(',', ' '), 1, 0, "R", fill=True)
+    pdf.cell(30, 9, f"{int(grand_nc):,}".replace(',', ' '), 1, 0, "R", fill=True)
+    pdf.cell(30, 9, f"{int(grand_vat):,}".replace(',', ' '), 1, 1, "R", fill=True)
+
+    pdf.set_text_color(0, 0, 0)
+    pdf.ln(8)
+
+    pdf.set_font('DejaVu', '', 10)
+    pdf.multi_cell(0, 6, "Подробное описание, спецификация и стоимость каждой перголы — на следующих страницах.")
+
+    pdf.ln(8)
+    pdf.set_font('DejaVu', '', 9)
+    pdf.set_text_color(100, 100, 100)
+    current_date = datetime.now().strftime("%d.%m.%Y")
+    pdf.cell(0, 5, f"Дата расчёта: {current_date}", 0, 1, "C")
+    pdf.set_text_color(0, 0, 0)
+
+    out = pdf.output(dest='S')
+    if isinstance(out, str):
+        out = out.encode('latin-1')
+    return bytes(out)
+
+
+def generate_multi_pergola_offer(pergolas_data_list, user_data=None):
+    """Generates a single PDF combining N pergolas: a summary cover + each
+    pergola's full commercial offer concatenated together."""
+    if not pergolas_data_list:
+        return None
+
+    if len(pergolas_data_list) == 1:
+        return generate_commercial_offer(pergolas_data_list[0], user_data=user_data)
+
+    try:
+        summary_bytes = _generate_multi_summary_cover(pergolas_data_list, user_data)
+    except Exception as e:
+        print(f"Ошибка генерации сводной обложки: {e}")
+        summary_bytes = None
+
+    individual = []
+    n = len(pergolas_data_list)
+    for i, p in enumerate(pergolas_data_list):
+        p_copy = dict(p)
+        if i > 0:
+            p_copy['kp_number'] = ''
+        try:
+            b = generate_commercial_offer(p_copy, user_data=user_data)
+            if b:
+                individual.append(b)
+        except Exception as e:
+            print(f"Ошибка генерации PDF для перголы {i+1}: {e}")
+
+    if not individual:
+        return summary_bytes
+
+    try:
+        from PyPDF2 import PdfMerger
+        merger = PdfMerger()
+        if summary_bytes:
+            merger.append(io.BytesIO(summary_bytes))
+        for b in individual:
+            merger.append(io.BytesIO(b))
+        out = io.BytesIO()
+        merger.write(out)
+        merger.close()
+        return out.getvalue()
+    except Exception as e:
+        print(f"Ошибка объединения PDF: {e}")
+        return individual[0] if individual else summary_bytes

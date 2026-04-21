@@ -5,7 +5,7 @@
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=86">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=146" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=147" as="script">
 {% endblock %}
 
 {% block content %}
@@ -111,7 +111,7 @@
             <span class="btn-add-pergola-plus">+</span>&nbsp;Добавить перголу
         </button>
         <div class="multi-pergola-notice mt-2" id="multi-pergola-notice" style="display:none;">
-            <strong>Внимание:</strong> расчёт по всем перголам выполняется параллельно — на странице будет показана сводка с итогом по каждой и общим Grand Total. Подробный КП и PDF пока показывают только <strong>Перголу&nbsp;1</strong>; многораздельный PDF добавим в следующем обновлении.
+            <strong>Внимание:</strong> расчёт по всем перголам выполняется параллельно. На странице — сводка с итогом по каждой и общим Grand Total. PDF включает сводную обложку и полное КП по каждой перголе единым документом.
         </div>
     </div>
 
@@ -316,7 +316,7 @@
 
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=146"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=147"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');

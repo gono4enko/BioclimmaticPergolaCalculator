@@ -3402,7 +3402,12 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.textContent = '\u0413\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F PDF...';
 
         var pdfBody = {};
-        if (state.allResults) {
+        if (state.allPergolaResults && state.allPergolaResults.length > 1) {
+            var perg = state.allPergolaResults.map(function(d) {
+                return (d.mode === 'all') ? d.results[0] : d.result;
+            });
+            pdfBody = {pergolas: perg, mode: 'multi_pergola', client_name: state.clientName, kp_number: state.kpNumber, deadline: state.deadline, calc_id: state.calcId};
+        } else if (state.allResults) {
             pdfBody = {results: state.allResults, mode: 'all', client_name: state.clientName, kp_number: state.kpNumber, deadline: state.deadline, calc_id: state.calcId};
         } else {
             pdfBody = {result: state.result, mode: 'single', client_name: state.clientName, kp_number: state.kpNumber, deadline: state.deadline, calc_id: state.calcId};

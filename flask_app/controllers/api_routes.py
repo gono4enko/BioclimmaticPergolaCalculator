@@ -467,7 +467,26 @@ def export_pdf():
         deadline_from_web = data.get('deadline', '')
         calc_id_from_web = data.get('calc_id', '')
 
-        if mode == 'all':
+        if mode == 'multi_pergola':
+            from pdf_generator_fpdf_rus import generate_multi_pergola_offer
+            pergolas_results = data.get('pergolas', [])
+            if not pergolas_results:
+                return jsonify({'success': False, 'error': 'Нет данных для PDF'}), 400
+            pergolas_pdf_data = []
+            for idx, presult in enumerate(pergolas_results):
+                pdata = _build_pergola_data(presult)
+                ptype_p = presult.get('options', {}).get('pergola_type', 'B500')
+                pdata['decolife'] = _load_decolife(ptype_p)
+                if idx == 0:
+                    pdata['kp_number'] = kp_number_from_web or generate_kp_number(ptype_p)
+                    pdata['deadline'] = deadline_from_web
+                    pdata['calc_id'] = calc_id_from_web
+                pergolas_pdf_data.append(pdata)
+            pdf_bytes = generate_multi_pergola_offer(pergolas_pdf_data, user_data=user_data)
+            first = pergolas_results[0]
+            options = first.get('options', {})
+            dimensions = first.get('dimensions', {})
+        elif mode == 'all':
             results_list = data.get('results', [])
             if not results_list:
                 return jsonify({'success': False, 'error': 'Нет данных для PDF'}), 400
