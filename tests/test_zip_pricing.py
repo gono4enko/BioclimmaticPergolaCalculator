@@ -2,6 +2,8 @@
 import os
 import sys
 
+import pytest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask_app.services import calculator as c
@@ -348,3 +350,143 @@ def test_zip130_costs_more_than_zip100_for_same_opening():
     assert r130['base_eur'] >= r100['base_eur'], (
         f"ZIP130 base price ({r130['base_eur']}) should be >= ZIP100 ({r100['base_eur']})"
     )
+
+
+# ---------------------------------------------------------------------------
+# DB override integration tests for ZIP_SETTINGS
+# ---------------------------------------------------------------------------
+
+class _FakeCursor:
+    def __init__(self, settings_rows, override_rows):
+        self._settings_rows = settings_rows
+        self._override_rows = override_rows
+        self._last_query = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def execute(self, query, *args, **kwargs):
+        self._last_query = query
+
+    def fetchall(self):
+        q = (self._last_query or '').lower()
+        if 'from zip_price_overrides' in q:
+            return list(self._override_rows)
+        if 'from zip_settings' in q:
+            return list(self._settings_rows)
+        return []
+
+
+class _FakeConn:
+    def __init__(self, settings_rows, override_rows):
+        self._settings_rows = settings_rows
+        self._override_rows = override_rows
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def cursor(self):
+        return _FakeCursor(self._settings_rows, self._override_rows)
+
+    def commit(self):
+        pass
+
+
+class _FakePsycopg2:
+    def __init__(self, settings_rows, override_rows):
+        self._settings_rows = settings_rows
+        self._override_rows = override_rows
+
+    def connect(self, dsn):
+        return _FakeConn(self._settings_rows, self._override_rows)
+
+
+@pytest.fixture
+def restore_zip_state():
+    """Ensure ZIP_SETTINGS, overrides, and cache flag are restored after a test."""
+    saved_settings = dict(c.ZIP_SETTINGS)
+    saved_overrides = dict(c._ZIP_PRICE_OVERRIDES)
+    saved_loaded = c._ZIP_LOADED
+    saved_db_url = os.environ.get('DATABASE_URL')
+    saved_psycopg2 = sys.modules.get('psycopg2')
+    try:
+        yield
+    finally:
+        c.ZIP_SETTINGS.clear()
+        c.ZIP_SETTINGS.update(saved_settings)
+        c._ZIP_PRICE_OVERRIDES.clear()
+        c._ZIP_PRICE_OVERRIDES.update(saved_overrides)
+        c._ZIP_LOADED = saved_loaded
+        if saved_db_url is None:
+            os.environ.pop('DATABASE_URL', None)
+        else:
+            os.environ['DATABASE_URL'] = saved_db_url
+        if saved_psycopg2 is None:
+            sys.modules.pop('psycopg2', None)
+        else:
+            sys.modules['psycopg2'] = saved_psycopg2
+        c.clear_zip_cache()
+
+
+def _install_fake_db(monkeypatch, settings_rows, override_rows=()):
+    monkeypatch.setenv('DATABASE_URL', 'postgresql://fake/db')
+    fake = _FakePsycopg2(settings_rows, override_rows)
+    monkeypatch.setitem(sys.modules, 'psycopg2', fake)
+    c.clear_zip_cache()
+
+
+def test_zip_setting_reflects_db_override_assembly_pct(monkeypatch, restore_zip_state):
+    """_zip_setting() must return the DB row value, not the hardcoded default, after cache reload."""
+    default_assembly = c._ZIP_SETTINGS_DEFAULTS['ZIP_ASSEMBLY_PCT']
+    db_value = default_assembly + 17.5
+    assert db_value != default_assembly
+
+    _install_fake_db(monkeypatch, settings_rows=[('ZIP_ASSEMBLY_PCT', db_value)])
+
+    assert c._zip_setting('ZIP_ASSEMBLY_PCT') == db_value, (
+        f"DB-injected ZIP_ASSEMBLY_PCT ({db_value}) should override default ({default_assembly})"
+    )
+
+
+def test_zip_setting_reflects_db_overrides_for_all_known_keys(monkeypatch, restore_zip_state):
+    """All keys in ZIP_SETTINGS must be overridable from the zip_settings DB table."""
+    overrides = {
+        'ZIP_ASSEMBLY_PCT': 12.34,
+        'ZIP_INSTALL_EUR_M2': 42.5,
+        'ZIP_COLOR_SPECIAL_PCT': 33.0,
+        'ZIP_FABRIC_SOLTIS_EUR_M2': 99.99,
+        'ZIP_FABRIC_COPACO_EUR_M2': 77.7,
+    }
+    for k, v in overrides.items():
+        assert c._ZIP_SETTINGS_DEFAULTS[k] != v, f"chosen override for {k} matches default"
+
+    _install_fake_db(monkeypatch, settings_rows=list(overrides.items()))
+
+    for k, v in overrides.items():
+        assert c._zip_setting(k) == v, (
+            f"_zip_setting({k!r}) should return DB value {v}, got {c._zip_setting(k)}"
+        )
+
+
+def test_zip_setting_unknown_db_key_is_ignored(monkeypatch, restore_zip_state):
+    """Unknown keys in zip_settings DB rows must not be added to ZIP_SETTINGS."""
+    _install_fake_db(monkeypatch, settings_rows=[('NOT_A_REAL_ZIP_KEY', 1234.0)])
+    c._ensure_zip_loaded()
+    assert 'NOT_A_REAL_ZIP_KEY' not in c.ZIP_SETTINGS
+
+
+def test_zip_setting_reverts_to_default_after_cache_clear_without_db(monkeypatch, restore_zip_state):
+    """After clearing the cache and removing DATABASE_URL, _zip_setting() returns the default."""
+    default_install = c._ZIP_SETTINGS_DEFAULTS['ZIP_INSTALL_EUR_M2']
+    _install_fake_db(monkeypatch, settings_rows=[('ZIP_INSTALL_EUR_M2', default_install + 50.0)])
+    assert c._zip_setting('ZIP_INSTALL_EUR_M2') == default_install + 50.0
+
+    monkeypatch.delenv('DATABASE_URL', raising=False)
+    c.clear_zip_cache()
+    assert c._zip_setting('ZIP_INSTALL_EUR_M2') == default_install
