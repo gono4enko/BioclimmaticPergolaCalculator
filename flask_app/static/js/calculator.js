@@ -1796,11 +1796,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ===================== ZIP awning per-opening editor =====================
-    var ZIP_FABRICS_JS = [
-        {v:'veozip', n:'Veozip (Screen Veosol)'},
-        {v:'soltis', n:'Soltis W96/W88 (+15 \u20ac/\u043c\u00b2)'},
-        {v:'copaco',  n:'Copaco Lunar Blackout (+15 \u20ac/\u043c\u00b2)'}
-    ];
+    if (!window.ZIP_FABRICS_DATA || !window.ZIP_FABRICS_DATA.length) {
+        throw new Error('ZIP_FABRICS_DATA is missing: calculator template must inject window.ZIP_FABRICS_DATA from the backend.');
+    }
+    var ZIP_FABRICS_JS = window.ZIP_FABRICS_DATA.map(function(f) { return {v: f.v, n: f.n}; });
     if (!window.ZIP_COLORS_DATA || !window.ZIP_COLORS_DATA.length) {
         throw new Error('ZIP_COLORS_DATA is missing: calculator template must inject window.ZIP_COLORS_DATA from the backend.');
     }
@@ -1857,12 +1856,10 @@ document.addEventListener('DOMContentLoaded', function() {
         html += '</div>';
         return html;
     }
-    var ZIP_DRIVES_JS = [
-        {v:'manual',   n:'\u0420\u0443\u0447\u043d\u043e\u0435'},
-        {v:'simu',     n:'\u042d\u043b\u0435\u043a\u0442\u0440\u043e SIMU'},
-        {v:'somfy',    n:'\u042d\u043b\u0435\u043a\u0442\u0440\u043e Somfy'},
-        {v:'decolife', n:'\u042d\u043b\u0435\u043a\u0442\u0440\u043e Decolife'}
-    ];
+    if (!window.ZIP_DRIVES_DATA || !window.ZIP_DRIVES_DATA.length) {
+        throw new Error('ZIP_DRIVES_DATA is missing: calculator template must inject window.ZIP_DRIVES_DATA from the backend.');
+    }
+    var ZIP_DRIVES_JS = window.ZIP_DRIVES_DATA.map(function(d) { return {v: d.v, n: d.n}; });
 
     function computeZipOpenings() {
         var out = [];

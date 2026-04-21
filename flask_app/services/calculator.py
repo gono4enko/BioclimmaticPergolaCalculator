@@ -863,6 +863,31 @@ ZIP_DRIVE_NAMES = {
     'somfy':   'Электропривод Somfy',
     'decolife':'Электропривод Decolife',
 }
+
+def get_zip_fabrics_for_js():
+    """Return ZIP fabric definitions for the calculator frontend.
+
+    Labels include the per-m² surcharge from ``ZIP_FABRIC_SURCHARGE`` so that
+    adding a new fabric in ``ZIP_FABRIC_NAMES``/``ZIP_FABRIC_SURCHARGE`` is
+    automatically reflected in the UI dropdown.
+    """
+    result = []
+    for code, name in ZIP_FABRIC_NAMES.items():
+        surcharge = ZIP_FABRIC_SURCHARGE.get(code, 0.0) or 0.0
+        if surcharge > 0:
+            label = '{0} (+{1:g} \u20ac/\u043c\u00b2)'.format(name, surcharge)
+        else:
+            label = name
+        result.append({'v': code, 'n': label})
+    return result
+
+def get_zip_drives_for_js():
+    """Return ZIP drive definitions for the calculator frontend.
+
+    The Python ``ZIP_DRIVE_NAMES`` mapping is the single source of truth, so
+    adding a new drive there automatically appears in the UI dropdown.
+    """
+    return [{'v': code, 'n': name} for code, name in ZIP_DRIVE_NAMES.items()]
 ZIP_ASSEMBLY_PCT = 8.0
 ZIP_INSTALL_EUR_M2 = 20.0
 ZIP_COLOR_SPECIAL_PCT = 10.0

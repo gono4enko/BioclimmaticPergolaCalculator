@@ -5,7 +5,7 @@
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=91">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=153" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=154" as="script">
 {% endblock %}
 
 {% block content %}
@@ -317,7 +317,9 @@
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
 <script>window.ZIP_COLORS_DATA = {{ (zip_colors|default([]))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=153"></script>
+<script>window.ZIP_FABRICS_DATA = {{ (zip_fabrics|default([]))|tojson }};</script>
+<script>window.ZIP_DRIVES_DATA = {{ (zip_drives|default([]))|tojson }};</script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=154"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');
