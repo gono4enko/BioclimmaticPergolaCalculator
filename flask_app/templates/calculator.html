@@ -300,13 +300,6 @@
 {% endblock %}
 
 {% block scripts %}
-<div id="price-bar" class="price-bar price-bar--hidden">
-    <div class="price-bar__inner">
-        <div class="price-bar__label">Предварительная стоимость</div>
-        <div class="price-bar__price" id="price-bar-value">—</div>
-        <div class="price-bar__hint">Точный расчёт — после нажатия кнопки</div>
-    </div>
-</div>
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
 <script src="{{ url_for('static', filename='js/calculator.js') }}?v=141"></script>
 <script>
