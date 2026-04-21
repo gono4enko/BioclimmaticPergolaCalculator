@@ -151,6 +151,69 @@ def test_soltis_surcharge_scales_with_area():
     )
 
 
+def test_copaco_costs_more_than_veozip():
+    """Copaco fabric adds 15 EUR/m² over veozip (base fabric)."""
+    w, h = 2.0, 2.5
+    result_veozip = c.zip_calc_price(w, h, fabric='veozip')
+    result_copaco = c.zip_calc_price(w, h, fabric='copaco')
+
+    assert result_veozip['fabric_eur'] == 0.0, "veozip should have no fabric surcharge"
+    assert result_copaco['fabric_eur'] > 0.0, "copaco should have a positive fabric surcharge"
+
+    area = result_copaco['area']
+    expected_surcharge = round(area * 15.0, 2)
+    assert result_copaco['fabric_eur'] == expected_surcharge, (
+        f"Expected Copaco surcharge {expected_surcharge} EUR, got {result_copaco['fabric_eur']}"
+    )
+
+
+def test_copaco_total_is_higher_than_veozip_by_surcharge_plus_assembly():
+    """The total price difference between Copaco and Veozip equals fabric_eur * (1 + assembly%)."""
+    w, h = 3.0, 2.0
+    result_veozip = c.zip_calc_price(w, h, fabric='veozip')
+    result_copaco = c.zip_calc_price(w, h, fabric='copaco')
+
+    fabric_diff = result_copaco['fabric_eur'] - result_veozip['fabric_eur']
+    assembly_pct = c._zip_setting('ZIP_ASSEMBLY_PCT') / 100.0
+    expected_total_diff = round(fabric_diff * (1 + assembly_pct), 2)
+    actual_total_diff = round(result_copaco['total_eur'] - result_veozip['total_eur'], 2)
+
+    assert actual_total_diff == expected_total_diff, (
+        f"Total diff {actual_total_diff} EUR doesn't match expected {expected_total_diff} EUR"
+    )
+
+
+def test_copaco_surcharge_scales_with_area():
+    """Copaco surcharge is proportional to awning area (15 EUR/m²)."""
+    surcharge_per_m2 = 15.0
+
+    r1 = c.zip_calc_price(2.0, 2.0, fabric='copaco')
+    r2 = c.zip_calc_price(3.0, 2.0, fabric='copaco')
+
+    diff_area = r2['area'] - r1['area']
+    diff_fabric_eur = round(r2['fabric_eur'] - r1['fabric_eur'], 2)
+
+    assert diff_fabric_eur == round(diff_area * surcharge_per_m2, 2), (
+        f"Fabric surcharge scaling mismatch: area diff={diff_area}, fabric diff={diff_fabric_eur}"
+    )
+
+
+def test_copaco_and_soltis_have_same_fabric_eur_for_same_opening():
+    """Copaco and Soltis carry the same 15 EUR/m² surcharge — fabric_eur must match for identical openings."""
+    for w, h in [(2.0, 2.5), (3.0, 2.0), (4.0, 3.5), (4.5, 4.0)]:
+        result_soltis = c.zip_calc_price(w, h, fabric='soltis')
+        result_copaco = c.zip_calc_price(w, h, fabric='copaco')
+
+        assert result_copaco['fabric_eur'] == result_soltis['fabric_eur'], (
+            f"Copaco and Soltis fabric_eur mismatch for {w}x{h}: "
+            f"soltis={result_soltis['fabric_eur']}, copaco={result_copaco['fabric_eur']}"
+        )
+        assert result_copaco['total_eur'] == result_soltis['total_eur'], (
+            f"Copaco and Soltis total_eur mismatch for {w}x{h}: "
+            f"soltis={result_soltis['total_eur']}, copaco={result_copaco['total_eur']}"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Drive premium tests
 # ---------------------------------------------------------------------------
