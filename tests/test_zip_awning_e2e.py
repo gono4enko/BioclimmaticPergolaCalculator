@@ -54,7 +54,7 @@ class TestZipAwningE2E:
     """Playwright browser tests for the ZIP awning UI flow."""
 
     def test_zip_awning_full_flow_b500new_soltis_somfy(self):
-        """Full UI flow: B500NEW → 4×3 m → front ZIP Soltis/Somfy → verify КП block."""
+        """Full UI flow: B500NEW → 4.5×3 m → front ZIP Soltis/Somfy → verify КП block."""
         with sync_playwright() as pw:
             browser, page = _open_page(pw)
             try:
@@ -65,8 +65,9 @@ class TestZipAwningE2E:
                 # Step 2 — Choose "Автовыбор" variant
                 page.locator('#variant-options [data-variant="auto"]').click()
 
-                # Step 3 — Enter dimensions 4 × 3 m
-                page.locator('#input-width').fill("4")
+                # Step 3 — Enter dimensions 4.5 × 3 m (front opening must exceed 4.0 m
+                # to enable ZIP-130 mode where Soltis fabric is offered).
+                page.locator('#input-width').fill("4.5")
                 page.locator('#input-length').fill("3")
                 page.locator('#input-length').press("Tab")  # trigger blur/change
 
@@ -152,7 +153,8 @@ class TestZipAwningE2E:
                 page.goto(BASE_URL + "/", wait_until="networkidle")
                 page.locator('[data-type="B500NEW"]').click()
                 page.locator('#variant-options [data-variant="auto"]').click()
-                page.locator('#input-width').fill("4")
+                # Front opening must exceed 4.0 m so Soltis (ZIP-130) is offered.
+                page.locator('#input-width').fill("4.5")
                 page.locator('#input-length').fill("3")
                 page.locator('#input-length').press("Tab")
 
