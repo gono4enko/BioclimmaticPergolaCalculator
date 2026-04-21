@@ -3371,6 +3371,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(function(r) { return r.json(); })
             .then(function(resp) {
                 var decoData = (resp.success && resp.data) ? resp.data : {};
+                state._lastDecoData = decoData;
                 var kpContainer = document.getElementById('marketing-kp-container');
                 if (kpContainer) {
                     kpContainer.innerHTML = buildMarketingKP(resultOrResults, decoData);
@@ -3492,6 +3493,26 @@ document.addEventListener('DOMContentLoaded', function() {
         var anchor = document.getElementById('marketing-kp-container');
         if (!anchor) return;
 
+        /* Multi-pergola: hide the top per-section PDF/share row from renderResults
+           so we have a single shared action row at the bottom only. */
+        var topPdf = document.getElementById('pdf-btn');
+        if (topPdf) {
+            var topRow = topPdf.closest ? topPdf.closest('.kp-actions-row') : topPdf.parentNode;
+            if (topRow) topRow.style.display = 'none';
+        }
+
+        /* Pre-populate _kpDataCache for pergola 1's model so subsequent pergolas
+           with the same model don't re-fetch /variant-options or /decolife-data. */
+        var firstP0 = (state.pergolas && state.pergolas[0]) || {};
+        var firstModel = firstP0.model || state.pergolaType;
+        if (firstModel && state.variantsData && (!state._kpDataCache || !state._kpDataCache[firstModel])) {
+            if (!state._kpDataCache) state._kpDataCache = {};
+            state._kpDataCache[firstModel] = Promise.resolve({
+                variants: state.variantsData,
+                deco: state._lastDecoData || {}
+            });
+        }
+
         if (!document.getElementById('mp-pergola-heading-0')) {
             var firstP = (state.pergolas && state.pergolas[0]) || {};
             var firstR = _resultFromCalcData(state.allPergolaResults[0]);
@@ -3532,7 +3553,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         state._maxOverhang = spec && spec.max_overhang ? spec.max_overhang : null;
                         cont.innerHTML = buildMarketingKP(r, kpData.deco, sfx);
                         initLazyIframes();
-                        setTimeout(function(){ updateSchemeForVariant(r, sfx); }, 50);
+                        /* Run scheme update synchronously inside the state swap so
+                           getFillForSide / getBay*Qs read THIS pergola's openings,
+                           not the active editor's. */
+                        updateSchemeForVariant(r, sfx);
                     });
                 });
             })(i);
