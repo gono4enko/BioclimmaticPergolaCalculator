@@ -1,0 +1,211 @@
+📤 Промпт для агента эталонного проекта (Decolife)
+Привет! Мне нужно выгрузить из этого проекта самодостаточный пакет для переноса в другой Flask-калькулятор тентовых пергол. Не переписывай существующий код — нужно только скопировать и причесать уже работающие модули.
+
+Задача в одной строке
+Подготовить ZIP-архив pergola_kit.zip с прайс-данными (CSV) и Python-кодом расчёта заполнений + генерации SVG-эскизов, без зависимостей от Flask, БД и админки.
+
+1. Структура архива
+pergola_kit/
+├── __init__.py                    ← публичный API (см. §6)
+├── README.md                      ← краткая инструкция по использованию
+│
+├── data/                          ← все CSV-матрицы цен в EUR
+│   ├── zip100.csv
+│   ├── zip130.csv
+│   ├── s100.csv
+│   ├── s500.csv
+│   ├── w500.csv
+│   ├── w600.csv
+│   ├── w700.csv
+│   ├── facade.csv
+│   ├── motors.csv                 ← цены приводов (Somfy, SIMU) по габариту
+│   ├── fabrics.csv                ← цены тканей ZIP по артикулам
+│   └── glass.csv                  ← цены стекла (clear/tinted/triplex и т.д.)
+│
+├── pricing/
+│   ├── __init__.py
+│   ├── zip.py                     ← zip_calc_price(...)
+│   ├── glazing.py                 ← glazing_calc_price (S500), s100_calc_price
+│   ├── windows.py                 ← w_calc_price(series, w, h, ...)
+│   ├── facade.py                  ← facade_calc_price(...) + FACADE_MAX_PANEL_W
+│   └── motors.py                  ← _zip_motor_eur(brand, w, h)
+│
+├── geometry/
+│   ├── __init__.py
+│   ├── limits.py                  ← MODEL_LIMITS (max ширина/вынос/высота, шаг ламели)
+│   └── modules.py                 ← разбиение по модулям + расчёт доп. стоек
+│
+└── drawings/
+    ├── __init__.py
+    ├── top.py                     ← generate_top_view_svg(...)
+    ├── elevation.py               ← generate_front_view_svg + generate_side_view_svg
+    ├── iso.py                     ← generate_isometric_svg + generate_pir_iso_svg
+    └── details.py                 ← generate_zip_detail_svg
+
+2. Формат CSV-файлов цен
+Все CSV — UTF-8, разделитель запятая, первая колонка = высота (м), первая строка = ширина (м), ячейки = цена в EUR (целое число).
+
+Пример zip100.csv:
+
+height\width,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0
+2.0,180,220,260,310,360,410,460,510,560,610,660
+2.5,210,260,310,370,430,490,550,610,670,730,790
+3.0,240,300,360,430,500,570,640,710,780,850,920
+3.5,270,340,410,490,570,650,730,810,890,970,1050
+
+Важно: если в исходных матрицах есть «дублирующиеся» колонки на границах модулей (как в основной таблице перголы) — здесь их быть не должно. Заполнения считаются на каждый пролёт отдельно.
+
+3. Что должны вернуть функции расчёта (контракты)
+# pricing/zip.py
+def zip_calc_price(
+    series: str,          # "ZIP100" | "ZIP130"
+    width: float,         # м, габарит проёма
+    height: float,        # м
+    fabric: str,          # артикул ткани
+    color: str,           # RAL короба
+    drive: str,           # "somfy" | "simu" | "manual"
+    has_glazing: bool = False
+) -> dict:
+    return {
+        "base_eur": 410.0,         # из матрицы CSV
+        "motor_eur": 180.0,        # из motors.csv
+        "fabric_eur": 45.0,        # из fabrics.csv
+        "glazing_supplement_eur": 0.0,
+        "color_supplement_eur": 0.0,
+        "total_eur": 635.0,
+        "lookup": {"w": 4.0, "h": 2.5}   # к какой ячейке матрицы округлили
+    }
+
+Аналогичные dict-возвраты для всех остальных функций (glazing_calc_price, s100_calc_price, w_calc_price, facade_calc_price).
+
+Принцип лукапа в матрице: округление ВВЕРХ к ближайшей стандартной ширине и высоте (ceil). Если запрошенный габарит больше максимума матрицы — вернуть None + причину в error.
+
+4. SVG-генераторы (без Flask, без cairosvg)
+Каждая функция возвращает строку <svg ...>...</svg>. Никаких файлов на диск не пишет.
+
+Сигнатуры точно в таком виде (важно для совместимости):
+
+def generate_top_view_svg(
+    width: float, length: float,
+    modules: int = 1,
+    lamella_count: int = None,
+    extra_columns: int = 0,
+    xc_left: int = 0, xc_right: int = 0,
+    xc_front: int = 0, xc_back: int = 0,
+) -> str: ...
+def generate_front_view_svg(
+    width: float, height: float = 3.0,
+    modules: int = 1,
+    extra_columns: int = 0,
+    col_mm: int = 164, beam_h_mm: int = 280,
+    fill_type: str = None,                # "zip100" | "s500" | "w600" | "facade" | None
+    fills_per_bay: list = None,           # [{"type": "zip100", "h": 2.5}, ...] на каждый пролёт
+) -> str: ...
+def generate_side_view_svg(
+    length: float, height: float = 3.0,
+    fill_type: str = None,
+    fills_per_bay: list = None,
+) -> str: ...
+def generate_isometric_svg(
+    width: float, length: float, height: float = 3.0,
+    lamella_count: int = None,
+    modules: int = 1,
+    lamella_open_deg: int = 55,
+    extra_columns: int = 0,
+    fill_front: str = None, fill_right: str = None,
+    fill_left: str = None, fill_back: str = None,
+    fills_front_per_bay: list = None,
+    fills_back_per_bay: list = None,
+    fills_left_per_bay: list = None,
+    fills_right_per_bay: list = None,
+) -> str: ...
+
+Стиль чертежей — как в существующих generate_top_view_svg / generate_front_view_svg / generate_isometric_svg:
+
+Все размеры в мм, на SVG переводятся через scale = px_per_mm
+Размерные линии с засечками и стрелками
+Подписи габаритов в мм и в скобках в м
+Сетка осей колонн с подписями
+Легенда снизу (типы заполнений с цветом)
+Никаких внешних шрифтов — только generic font-family: sans-serif
+5. Геометрия и лимиты моделей
+Файл geometry/limits.py:
+
+MODEL_LIMITS = {
+    "BasicNew": {
+        "max_width_per_module": 6.5,
+        "max_depth": 5.0,
+        "max_height": 4.5,
+        "lamella_pitch_mm": 250,
+        "column_mm": 164,
+        "beam_h_mm": 280,
+    },
+    "ProjectLight": {...},
+    "SoloFly": {...},
+    # все модели, которые есть в эталонном калькуляторе
+}
+
+Файл geometry/modules.py:
+
+def calculate_modules(width: float, model: str) -> dict:
+    """Возвращает {modules: int, extra_columns: int, intermediate_columns: list}"""
+def calculate_lamella_count(length: float, model: str) -> int:
+    """floor(length_mm / lamella_pitch_mm)"""
+def needs_extra_column_for_fill(bay_width: float, fill_type: str) -> bool:
+    """True если пролёт > FACADE_MAX_PANEL_W и тип = facade/окна"""
+
+6. Публичный фасад pergola_kit/__init__.py
+from pergola_kit.pricing.zip import zip_calc_price
+from pergola_kit.pricing.glazing import glazing_calc_price, s100_calc_price
+from pergola_kit.pricing.windows import w_calc_price
+from pergola_kit.pricing.facade import facade_calc_price
+from pergola_kit.geometry.modules import calculate_modules, calculate_lamella_count
+from pergola_kit.drawings.top import generate_top_view_svg
+from pergola_kit.drawings.elevation import generate_front_view_svg, generate_side_view_svg
+from pergola_kit.drawings.iso import generate_isometric_svg
+def calculate_openings(payload: dict) -> dict:
+    """
+    payload = {
+      "model": "BasicNew",
+      "width": 6.0, "length": 4.0, "height": 3.0,
+      "openings": {
+        "front": [{"type": "zip100", "fabric": "screen-3000", "color": "ral7016", "drive": "somfy"}],
+        "right": [{"type": "s500", "glass": "tinted", "color": "ral9016"}],
+        "left":  [{"type": "facade"}],
+        "back":  [{"type": "w600", "h": 1.2, "color": "ral7016", "glass": "clear"}]
+      }
+    }
+    return {
+      "total_eur": 4250.0,
+      "breakdown": [
+        {"side": "front", "bay": 1, "type": "zip100", "size": "3.0x2.5", "price_eur": 635.0},
+        ...
+      ],
+      "extra_columns_required": 1,
+      "errors": []
+    }
+    """
+
+7. Что НЕ включать в архив
+❌ Зависимости от Flask (from flask import ...)
+❌ Прямые обращения к os.environ['DATABASE_URL'], psycopg2, SQLAlchemy
+❌ Логику админки, авторизации, сессий
+❌ Per-cell overrides из БД (если есть — заменить на пустой {} по умолчанию, оставив сигнатуру с возможностью передать словарь снаружи)
+❌ Логику курса EUR→RUB и налогов — это будет на стороне принимающего проекта
+❌ PDF-генерацию (FPDF, cairosvg) — у меня свои PDF-генераторы
+
+8. Минимальный README.md в архиве
+Должен содержать:
+
+Версии Python и обязательные зависимости (только stdlib? или нужно что-то ещё?)
+Пример calculate_openings(payload) с реальными данными — вход и выход
+Пример вызова каждого SVG-генератора с реалистичными параметрами
+Список всех моделей перголы из MODEL_LIMITS с их максимумами
+Список всех типов заполнений и какие параметры обязательны для каждого
+Перечень всех CSV-файлов с диапазонами ширин/высот в каждом
+9. Как отдать результат
+Сложи всё в один ZIP-архив pergola_kit.zip и положи в корень проекта или в attached_assets/. Я заберу его оттуда.
+
+Ничего не пропускай: если в эталоне есть 12 моделей перголы — нужны лимиты всех 12. Если есть 7 серий заполнений — нужны все 7 CSV. Это разовый перенос, второй раз я просить не буду.
+
+Передай этот промпт агенту того проекта. Когда получишь pergola_kit.zip, кинь его сюда — и я сразу подключу к этому калькулятору, сделаю секцию «Заполнение проёмов» в интерфейсе и подмешаю эскизы в PDF.

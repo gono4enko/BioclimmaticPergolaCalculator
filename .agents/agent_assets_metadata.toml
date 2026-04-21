@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "MW51TBEQ1HHU0fwt5G90O"
+uri = "file://attached_assets/pergola_kit.zip"
+type = "unspecified"
+title = "pergola_kit.zip — самодостаточный модуль (28 КБ)"
