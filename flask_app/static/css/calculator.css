@@ -1308,7 +1308,9 @@
 
 /* Mobile: shrink model dropdown font on additional pergola cards so the
    full model name (e.g. "B500 NEW (поворотные ламели)") is readable
-   instead of being truncated. */
+   instead of being truncated. Also shrink dimension labels so "Ширина (м) *"
+   fits the col-4 column without the required-star wrapping to a new line
+   (which was misaligning the three dimension inputs). */
 @media (max-width: 600px) {
   .pergola-card .pergola-model-select {
     font-size: 0.85rem;
@@ -1317,6 +1319,19 @@
     padding-right: 1.8rem;
   }
   .pergola-card .pergola-card-title { font-size: 0.95rem; }
+
+  .dim-input label {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 1.3em;
+  }
+  .dim-input .form-control { font-size: 1rem; padding: 0.5rem; }
+  .dim-hint { font-size: 0.7rem; }
+  /* Keep the Bootstrap row gutter tight on phones so columns have more
+     usable width for the input + label. */
+  .pergola-card .row.g-3 { --bs-gutter-x: 0.6rem; }
 }
 
 /* === ZIP params card layout === */
