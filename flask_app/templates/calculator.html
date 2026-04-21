@@ -3,9 +3,9 @@
 {% block title %}Калькулятор стоимости перголы{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=84">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v=85">
 <link rel="preload" href="{{ url_for('static', filename='images/hero_pergola.jpg') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=141" as="script">
+<link rel="preload" href="{{ url_for('static', filename='js/calculator.js') }}?v=145" as="script">
 {% endblock %}
 
 {% block content %}
@@ -117,6 +117,7 @@
 
     <div class="step-card" id="step-4" style="display:none;">
         <h3>4. Опции</h3>
+        <div id="pergola-tabs" class="pergola-tabs" style="display:none;"></div>
         <div class="option-check">
             <input type="checkbox" id="opt-white-led" class="form-check-input" checked>
             <label for="opt-white-led">Светодиодная подсветка (белая)</label>
@@ -315,7 +316,7 @@
 
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=144"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=145"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');

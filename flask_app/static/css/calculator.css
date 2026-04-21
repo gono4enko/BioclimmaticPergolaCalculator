@@ -1457,3 +1457,39 @@
     background: #fef2f2;
     border-radius: 6px;
 }
+
+/* Phase 2: Pergola tabs in Step 4 */
+.pergola-tabs {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    background: #f0f4f8;
+    border-radius: 8px;
+}
+.pergola-tabs-label {
+    font-size: 13px;
+    color: #4a5563;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+.pergola-tabs-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.pergola-tab {
+    background: #fff;
+    border: 2px solid #d0d7de;
+    color: #1e3a5f;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.pergola-tab:hover { border-color: #1e3a5f; }
+.pergola-tab.active {
+    background: #1e3a5f;
+    color: #fff;
+    border-color: #1e3a5f;
+}

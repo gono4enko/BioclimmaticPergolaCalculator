@@ -22,7 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
         allResults: null,
         variantsData: null,
         clientName: '',
-        pergolas: []
+        pergolas: [],
+        activePergolaIdx: 0
     };
 
     var stepsEl = {
@@ -42,19 +43,122 @@ document.addEventListener('DOMContentLoaded', function() {
         {value: 'B600', label: 'B600 (PIR-панель)'}
     ];
 
+    function _emptyPergolaSlot() {
+        return {
+            model: '', variant: '', lamellaSize: '', lamellaType: '',
+            width: 0, length: 0, height: 3.0,
+            facadePerOpening: {}, glazingPerOpening: {}, zipPerOpening: {},
+            whiteLed: true, rgbLed: false, installation: true
+        };
+    }
+
     function syncPergolaZero() {
         if (!state.pergolas) state.pergolas = [];
-        state.pergolas[0] = {
-            model: state.pergolaType || '',
-            variant: state.selectedVariant || '',
-            lamellaSize: state.lamellaSize || '',
-            lamellaType: state.lamellaType || '',
-            width: state.width || 0,
-            length: state.length || 0,
-            height: state.height || 3.0
-        };
+        if (!state.pergolas[0]) state.pergolas[0] = _emptyPergolaSlot();
+        var p = state.pergolas[0];
+        p.model = state.pergolaType || '';
+        p.variant = state.selectedVariant || '';
+        p.lamellaSize = state.lamellaSize || '';
+        p.lamellaType = state.lamellaType || '';
+        p.width = state.width || 0;
+        p.length = state.length || 0;
+        p.height = state.height || 3.0;
         var lbl = document.getElementById('pergola-0-model-label');
         if (lbl) lbl.textContent = state.pergolaType ? '· ' + state.pergolaType : '';
+    }
+
+    function snapshotActivePergola() {
+        if (!state.pergolas) state.pergolas = [];
+        var idx = state.activePergolaIdx || 0;
+        if (!state.pergolas[idx]) state.pergolas[idx] = _emptyPergolaSlot();
+        var p = state.pergolas[idx];
+        p.model = state.pergolaType || p.model || '';
+        p.variant = state.selectedVariant || p.variant || '';
+        p.lamellaSize = state.lamellaSize || p.lamellaSize || '';
+        p.lamellaType = state.lamellaType || p.lamellaType || '';
+        p.width = state.width || 0;
+        p.length = state.length || 0;
+        p.height = state.height || 3.0;
+        p.facadePerOpening = JSON.parse(JSON.stringify(state.facadePerOpening || {}));
+        p.glazingPerOpening = JSON.parse(JSON.stringify(state.glazingPerOpening || {}));
+        p.zipPerOpening = JSON.parse(JSON.stringify(state.zipPerOpening || {}));
+        p.whiteLed = !!state.whiteLed;
+        p.rgbLed = !!state.rgbLed;
+        p.installation = !!state.installation;
+    }
+
+    function loadPergolaToActive(idx) {
+        if (!state.pergolas[idx]) state.pergolas[idx] = _emptyPergolaSlot();
+        var p = state.pergolas[idx];
+        state.pergolaType = p.model || '';
+        state.selectedVariant = p.variant || '';
+        state.lamellaSize = p.lamellaSize || '';
+        state.lamellaType = p.lamellaType || '';
+        state.width = p.width || 0;
+        state.length = p.length || 0;
+        state.height = p.height || 3.0;
+        state.facadePerOpening = JSON.parse(JSON.stringify(p.facadePerOpening || {}));
+        state.glazingPerOpening = JSON.parse(JSON.stringify(p.glazingPerOpening || {}));
+        state.zipPerOpening = JSON.parse(JSON.stringify(p.zipPerOpening || {}));
+        state.whiteLed = p.whiteLed !== false;
+        state.rgbLed = !!p.rgbLed;
+        state.installation = p.installation !== false;
+        var w = document.getElementById('opt-white-led');
+        var r = document.getElementById('opt-rgb-led');
+        var i = document.getElementById('opt-installation');
+        if (w) w.checked = state.whiteLed;
+        if (r) r.checked = state.rgbLed;
+        if (i) i.checked = state.installation;
+        if (typeof buildFacadeTopView === 'function') buildFacadeTopView();
+        if (typeof buildFacadeTable === 'function') buildFacadeTable();
+        if (typeof buildGlazingTable === 'function') buildGlazingTable();
+        if (typeof buildZipTable === 'function') buildZipTable();
+        var lp = document.getElementById('led-preview');
+        var rp = document.getElementById('rgb-preview');
+        if (lp) lp.style.display = state.whiteLed ? 'block' : 'none';
+        if (rp) rp.style.display = state.rgbLed ? 'block' : 'none';
+    }
+
+    function swapToPergola(newIdx) {
+        if (newIdx === state.activePergolaIdx) return;
+        if (!state.pergolas[newIdx]) return;
+        snapshotActivePergola();
+        state.activePergolaIdx = newIdx;
+        loadPergolaToActive(newIdx);
+        renderPergolaTabs();
+    }
+
+    function ensureActiveZeroBeforeStep1or2or3() {
+        if (state.activePergolaIdx !== 0) {
+            swapToPergola(0);
+        }
+    }
+
+    function renderPergolaTabs() {
+        var container = document.getElementById('pergola-tabs');
+        if (!container) return;
+        if (!state.pergolas || state.pergolas.length <= 1) {
+            container.style.display = 'none';
+            container.innerHTML = '';
+            return;
+        }
+        container.style.display = '';
+        var html = '<div class="pergola-tabs-label">Конфигурация для:</div><div class="pergola-tabs-list">';
+        for (var i = 0; i < state.pergolas.length; i++) {
+            var p = state.pergolas[i];
+            var isActive = (i === state.activePergolaIdx);
+            var modelTxt = p.model ? ' (' + p.model + ')' : '';
+            html += '<button type="button" class="pergola-tab' + (isActive ? ' active' : '') + '" data-idx="' + i + '">' +
+                'Пергола\u00A0' + (i + 1) + modelTxt + '</button>';
+        }
+        html += '</div>';
+        container.innerHTML = html;
+        container.querySelectorAll('.pergola-tab').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var idx = parseInt(btn.dataset.idx, 10);
+                swapToPergola(idx);
+            });
+        });
     }
 
     function getMixError(pergolas) {
@@ -176,14 +280,38 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             state.pergolas[idx].model = newModel;
             inheritVariantForExtra(idx);
+            if (state.activePergolaIdx === idx) {
+                state.pergolaType = newModel;
+                state.selectedVariant = state.pergolas[idx].variant || '';
+                state.lamellaSize = state.pergolas[idx].lamellaSize || '';
+                state.lamellaType = state.pergolas[idx].lamellaType || '';
+            }
             showErr(null);
             updateInheritedLabel(card, idx);
+            renderPergolaTabs();
         });
-        w.addEventListener('input', function() { state.pergolas[idx].width = parseFloat(w.value) || 0; });
-        l.addEventListener('input', function() { state.pergolas[idx].length = parseFloat(l.value) || 0; });
-        h.addEventListener('input', function() { state.pergolas[idx].height = parseFloat(h.value) || 3.0; });
+        function _propDim(field, val) {
+            state.pergolas[idx][field] = val;
+            if (state.activePergolaIdx === idx) {
+                state[field] = val;
+                if (typeof buildFacadeTopView === 'function') buildFacadeTopView();
+                if (typeof buildFacadeTable === 'function') buildFacadeTable();
+                if (typeof buildGlazingTable === 'function') buildGlazingTable();
+                if (typeof buildZipTable === 'function') buildZipTable();
+            }
+        }
+        w.addEventListener('input', function() { _propDim('width', parseFloat(w.value) || 0); });
+        l.addEventListener('input', function() { _propDim('length', parseFloat(l.value) || 0); });
+        h.addEventListener('input', function() { _propDim('height', parseFloat(h.value) || 3.0); });
         del.addEventListener('click', function() {
+            var wasActive = (state.activePergolaIdx === idx);
             state.pergolas.splice(idx, 1);
+            if (wasActive || state.activePergolaIdx >= state.pergolas.length) {
+                state.activePergolaIdx = 0;
+                loadPergolaToActive(0);
+            } else if (state.activePergolaIdx > idx) {
+                state.activePergolaIdx -= 1;
+            }
             rerenderExtras();
         });
     }
@@ -202,6 +330,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (notice) notice.style.display = state.pergolas.length > 1 ? '' : 'none';
         var addBtn = document.getElementById('btn-add-pergola');
         if (addBtn) addBtn.textContent = state.pergolas.length > 1 ? '+ Добавить ещё одну перголу' : '+ Добавить перголу';
+        renderPergolaTabs();
     }
 
     var _addBtn = document.getElementById('btn-add-pergola');
@@ -234,6 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.querySelectorAll('.type-option').forEach(function(el) {
         el.addEventListener('click', function() {
+            ensureActiveZeroBeforeStep1or2or3();
             document.querySelectorAll('.type-option').forEach(function(o) { o.classList.remove('selected'); });
             el.classList.add('selected');
             state.pergolaType = el.dataset.type;
@@ -316,6 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function selectVariant(container, clickedDiv, variant, lamellaSize, pergolaType) {
+        ensureActiveZeroBeforeStep1or2or3();
         container.querySelectorAll('.variant-option').forEach(function(o) { o.classList.remove('selected'); });
         clickedDiv.classList.add('selected');
         state.selectedVariant = variant;
@@ -485,26 +616,39 @@ document.addEventListener('DOMContentLoaded', function() {
         else el.classList.remove('is-filled');
     }
     document.getElementById('input-width').addEventListener('input', function() {
-        state.width = parseFloat(this.value) || 0;
-        _markFilled(this, state.width > 0);
-        buildFacadeTopView();
-        buildFacadeTable();
-        buildGlazingTable();
-        buildZipTable();
+        var v = parseFloat(this.value) || 0;
+        if (!state.pergolas[0]) state.pergolas[0] = _emptyPergolaSlot();
+        state.pergolas[0].width = v;
+        if (state.activePergolaIdx === 0) {
+            state.width = v;
+            buildFacadeTopView();
+            buildFacadeTable();
+            buildGlazingTable();
+            buildZipTable();
+        }
+        _markFilled(this, v > 0);
     });
     document.getElementById('input-length').addEventListener('input', function() {
-        state.length = parseFloat(this.value) || 0;
-        _markFilled(this, state.length > 0);
-        buildFacadeTopView();
-        buildFacadeTable();
-        buildGlazingTable();
-        buildZipTable();
+        var v = parseFloat(this.value) || 0;
+        if (!state.pergolas[0]) state.pergolas[0] = _emptyPergolaSlot();
+        state.pergolas[0].length = v;
+        if (state.activePergolaIdx === 0) {
+            state.length = v;
+            buildFacadeTopView();
+            buildFacadeTable();
+            buildGlazingTable();
+            buildZipTable();
+        }
+        _markFilled(this, v > 0);
     });
     document.getElementById('input-height').addEventListener('input', function() {
         var raw = parseFloat(this.value);
         var h = isNaN(raw) ? 0 : raw;
-        state.height = h > 0 ? Math.min(3.0, Math.max(2.0, h)) : 0;
-        _markFilled(this, state.height >= 2.0);
+        var clamped = h > 0 ? Math.min(3.0, Math.max(2.0, h)) : 0;
+        if (!state.pergolas[0]) state.pergolas[0] = _emptyPergolaSlot();
+        state.pergolas[0].height = clamped;
+        if (state.activePergolaIdx === 0) state.height = clamped;
+        _markFilled(this, clamped >= 2.0);
     });
 
     var whiteLedEl = document.getElementById('opt-white-led');
@@ -2052,6 +2196,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.getElementById('calc-btn').addEventListener('click', function() {
+        snapshotActivePergola();
+        if (state.activePergolaIdx !== 0) {
+            state.activePergolaIdx = 0;
+            loadPergolaToActive(0);
+            renderPergolaTabs();
+        }
         if (!state.pergolaType) { alert('\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0438\u043F \u043F\u0435\u0440\u0433\u043E\u043B\u044B'); return; }
         if (!state.selectedVariant) { alert('\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043C\u043E\u0434\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u044E'); return; }
         if (state.width <= 0 || state.length <= 0) { alert('\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0440\u0430\u0437\u043C\u0435\u0440\u044B \u043F\u0435\u0440\u0433\u043E\u043B\u044B'); return; }
