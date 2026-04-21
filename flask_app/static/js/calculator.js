@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             var newIdx = state.pergolas.length;
             state.pergolas.push({
-                model: 'B600',
+                model: state.pergolas[0].model || 'B600',
                 variant: '',
                 lamellaSize: '',
                 lamellaType: '',
