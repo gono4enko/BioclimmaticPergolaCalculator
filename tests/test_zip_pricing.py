@@ -8,6 +8,99 @@ from flask_app.services import calculator as c
 
 
 # ---------------------------------------------------------------------------
+# Default constant snapshot tests
+# ---------------------------------------------------------------------------
+
+def test_zip_settings_defaults_fabric_soltis():
+    """ZIP_SETTINGS default for Soltis fabric surcharge must be 15 EUR/m²."""
+    assert c._ZIP_SETTINGS_DEFAULTS['ZIP_FABRIC_SOLTIS_EUR_M2'] == 15.0, (
+        "Default Soltis fabric surcharge changed from expected 15 EUR/m²"
+    )
+
+
+def test_zip_settings_defaults_fabric_copaco():
+    """ZIP_SETTINGS default for Copaco fabric surcharge must be 15 EUR/m²."""
+    assert c._ZIP_SETTINGS_DEFAULTS['ZIP_FABRIC_COPACO_EUR_M2'] == 15.0, (
+        "Default Copaco fabric surcharge changed from expected 15 EUR/m²"
+    )
+
+
+def test_zip_fabric_surcharge_veozip_is_zero():
+    """ZIP_FABRIC_SURCHARGE: veozip (base fabric) must have no surcharge."""
+    assert c.ZIP_FABRIC_SURCHARGE['veozip'] == 0.0, (
+        "veozip surcharge changed from expected 0.0 EUR/m²"
+    )
+
+
+def test_zip_fabric_surcharge_soltis_is_15():
+    """ZIP_FABRIC_SURCHARGE: soltis constant must be 15 EUR/m²."""
+    assert c.ZIP_FABRIC_SURCHARGE['soltis'] == 15.0, (
+        "soltis surcharge constant changed from expected 15 EUR/m²"
+    )
+
+
+def test_zip_fabric_surcharge_copaco_is_15():
+    """ZIP_FABRIC_SURCHARGE: copaco constant must be 15 EUR/m²."""
+    assert c.ZIP_FABRIC_SURCHARGE['copaco'] == 15.0, (
+        "copaco surcharge constant changed from expected 15 EUR/m²"
+    )
+
+
+def test_zip_motor_eur_simu_is_175():
+    """SIMU drive motor default must be 175 EUR."""
+    assert c._zip_motor_eur('simu', 2.0, 2.5) == 175.0, (
+        "SIMU motor price changed from expected 175 EUR"
+    )
+
+
+def test_zip_motor_eur_somfy_small_is_180():
+    """Somfy small drive motor default must be 180 EUR (w<=3.5, h<=4.0)."""
+    assert c._zip_motor_eur('somfy', 3.5, 4.0) == 180.0, (
+        "Somfy small motor price changed from expected 180 EUR"
+    )
+
+
+def test_zip_motor_eur_somfy_large_is_230():
+    """Somfy large drive motor default must be 230 EUR (h>4.0)."""
+    assert c._zip_motor_eur('somfy', 3.5, 4.5) == 230.0, (
+        "Somfy large motor price changed from expected 230 EUR"
+    )
+
+
+def test_zip_motor_eur_decolife_is_130():
+    """Decolife drive motor default must be 130 EUR."""
+    assert c._zip_motor_eur('decolife', 2.0, 2.5) == 130.0, (
+        "Decolife motor price changed from expected 130 EUR"
+    )
+
+
+def test_zip_motor_eur_manual_is_50():
+    """Manual drive motor default must be 50 EUR."""
+    assert c._zip_motor_eur('manual', 2.0, 2.5) == 50.0, (
+        "Manual motor price changed from expected 50 EUR"
+    )
+
+
+def test_zip_settings_reload_resets_to_defaults():
+    """Clearing the ZIP cache and reloading must restore all default constant values."""
+    original_soltis = c._ZIP_SETTINGS_DEFAULTS['ZIP_FABRIC_SOLTIS_EUR_M2']
+    original_copaco = c._ZIP_SETTINGS_DEFAULTS['ZIP_FABRIC_COPACO_EUR_M2']
+
+    c.ZIP_SETTINGS['ZIP_FABRIC_SOLTIS_EUR_M2'] = 999.0
+    c.ZIP_SETTINGS['ZIP_FABRIC_COPACO_EUR_M2'] = 999.0
+
+    c.clear_zip_cache()
+    c._ensure_zip_loaded()
+
+    assert c.ZIP_SETTINGS['ZIP_FABRIC_SOLTIS_EUR_M2'] == original_soltis, (
+        f"After reload, Soltis surcharge should reset to {original_soltis} EUR/m²"
+    )
+    assert c.ZIP_SETTINGS['ZIP_FABRIC_COPACO_EUR_M2'] == original_copaco, (
+        f"After reload, Copaco surcharge should reset to {original_copaco} EUR/m²"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Fabric surcharge tests
 # ---------------------------------------------------------------------------
 
