@@ -316,6 +316,7 @@
 
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
+<script>window.ZIP_COLORS_DATA = {{ (zip_colors|default([]))|tojson }};</script>
 <script src="{{ url_for('static', filename='js/calculator.js') }}?v=152"></script>
 <script>
 (function() {

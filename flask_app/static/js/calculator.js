@@ -1801,7 +1801,20 @@ document.addEventListener('DOMContentLoaded', function() {
         {v:'soltis', n:'Soltis W96/W88 (+15 \u20ac/\u043c\u00b2)'},
         {v:'copaco',  n:'Copaco Lunar Blackout (+15 \u20ac/\u043c\u00b2)'}
     ];
-    var _ZIP_COLOR_SET = {ral9016:1, ral7024:1, ral9t08:1, ral8028:1, ral_special:1};
+    if (!window.ZIP_COLORS_DATA || !window.ZIP_COLORS_DATA.length) {
+        throw new Error('ZIP_COLORS_DATA is missing: calculator template must inject window.ZIP_COLORS_DATA from the backend.');
+    }
+    var ZIP_COLORS_JS = window.ZIP_COLORS_DATA.map(function(c) { return {v: c.v, n: c.n}; });
+    var ZIP_COLOR_HEX = (function() {
+        var m = {};
+        window.ZIP_COLORS_DATA.forEach(function(c) { m[c.v] = c.hex || '#888888'; });
+        return m;
+    })();
+    var _ZIP_COLOR_SET = (function() {
+        var s = {};
+        ZIP_COLORS_JS.forEach(function(c) { s[c.v] = 1; });
+        return s;
+    })();
     var _ZIP_NEAREST_MAP = {
         ral7016: 'ral7024',
         ral9005: 'ral7024',
@@ -1819,22 +1832,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (g && g.color) return _glazColorToZip(g.color);
         return 'ral9016';
     }
-
-    var ZIP_COLOR_HEX = {
-        ral9016: '#e4e4e1',
-        ral7024: '#3a4148',
-        ral9t08: '#4d4d4d',
-        ral8028: '#5c3d1e',
-        ral_special: '#888888'
-    };
-
-    var ZIP_COLORS_JS = [
-        {v:'ral9016',    n:'\u0411\u0435\u043b\u044b\u0439 RAL 9016'},
-        {v:'ral7024',    n:'\u0413\u0440\u0430\u0444\u0438\u0442 RAL 7024'},
-        {v:'ral9t08',    n:'\u0413\u0440\u0430\u0444\u0438\u0442 \u0442\u0435\u043a\u0441\u0442. RAL 9T08'},
-        {v:'ral8028',    n:'\u041a\u043e\u0440\u0438\u0447\u043d\u0435\u0432\u044b\u0439 RAL 8028'},
-        {v:'ral_special',n:'RAL special (+10%)'}
-    ];
 
     function _zipColorPickerHtml(curColor, key) {
         var html = '<div class="zip-color-picker" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;">';

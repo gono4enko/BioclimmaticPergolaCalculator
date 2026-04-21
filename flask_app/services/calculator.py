@@ -841,6 +841,22 @@ ZIP_COLOR_HEX = {
     'ral9t08': (77, 77, 77),
     'ral8028': (92, 61, 30),
 }
+
+def get_zip_colors_for_js():
+    """Return ZIP color definitions for the calculator frontend.
+
+    The frontend renders dropdowns and swatches from this list, so the Python
+    constants above remain the single source of truth for ZIP colors.
+    """
+    result = []
+    for code, name in ZIP_COLOR_NAMES_SHORT.items():
+        rgb = ZIP_COLOR_HEX.get(code)
+        if rgb:
+            hex_str = '#{0:02x}{1:02x}{2:02x}'.format(*rgb)
+        else:
+            hex_str = '#888888'
+        result.append({'v': code, 'n': name, 'hex': hex_str})
+    return result
 ZIP_DRIVE_NAMES = {
     'manual':  'Ручное управление',
     'simu':    'Электропривод SIMU',

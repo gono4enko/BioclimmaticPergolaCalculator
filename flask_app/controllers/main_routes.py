@@ -6,6 +6,7 @@ import datetime
 from flask import Blueprint, render_template, current_app, redirect, url_for, request, jsonify
 from ..models.pergola_model import Pergola, db
 from ..services.cache_service import preload_images, clear_image_cache
+from ..services.calculator import get_zip_colors_for_js
 
 bp = Blueprint('main', __name__)
 
@@ -16,12 +17,14 @@ def index():
 @bp.route('/calculator')
 def calculator():
     current_year = datetime.datetime.now().year
-    return render_template('calculator.html', now={'year': current_year})
+    return render_template('calculator.html', now={'year': current_year},
+                           zip_colors=get_zip_colors_for_js())
 
 @bp.route('/kp/<calc_id>')
 def view_kp(calc_id):
     current_year = datetime.datetime.now().year
-    return render_template('calculator.html', now={'year': current_year}, calc_id=calc_id)
+    return render_template('calculator.html', now={'year': current_year}, calc_id=calc_id,
+                           zip_colors=get_zip_colors_for_js())
 
 @bp.route('/clear-cache', methods=['POST'])
 def clear_cache():
