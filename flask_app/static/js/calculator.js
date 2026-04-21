@@ -3586,9 +3586,6 @@ document.addEventListener('DOMContentLoaded', function() {
         var resetBtns = function() {
             btns.forEach(function(b){ b.disabled = false; b.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF'; });
         };
-        /* Compatibility shim so the rest of the function (which references btn) works. */
-        var btn = { set disabled(v){ btns.forEach(function(b){ b.disabled = v; }); }, set textContent(v){ btns.forEach(function(b){ b.textContent = v; }); }, set innerHTML(v){ btns.forEach(function(b){ b.innerHTML = v; }); } };
-        void btn;
 
         var pdfBody = {};
         if (state.allPergolaResults && state.allPergolaResults.length > 1) {
