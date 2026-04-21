@@ -81,13 +81,40 @@ def test_zip_motor_eur_manual_is_50():
     )
 
 
+def test_zip_settings_defaults_assembly_pct():
+    """ZIP_SETTINGS default for assembly percentage must be 8%."""
+    assert c._ZIP_SETTINGS_DEFAULTS['ZIP_ASSEMBLY_PCT'] == 8.0, (
+        "Default ZIP assembly percentage changed from expected 8%"
+    )
+
+
+def test_zip_settings_defaults_install_eur_m2():
+    """ZIP_SETTINGS default for install rate must be 20 EUR/m²."""
+    assert c._ZIP_SETTINGS_DEFAULTS['ZIP_INSTALL_EUR_M2'] == 20.0, (
+        "Default ZIP install rate changed from expected 20 EUR/m²"
+    )
+
+
+def test_zip_settings_defaults_color_special_pct():
+    """ZIP_SETTINGS default for special color surcharge must be 10%."""
+    assert c._ZIP_SETTINGS_DEFAULTS['ZIP_COLOR_SPECIAL_PCT'] == 10.0, (
+        "Default ZIP special color percentage changed from expected 10%"
+    )
+
+
 def test_zip_settings_reload_resets_to_defaults():
     """Clearing the ZIP cache and reloading must restore all default constant values."""
     original_soltis = c._ZIP_SETTINGS_DEFAULTS['ZIP_FABRIC_SOLTIS_EUR_M2']
     original_copaco = c._ZIP_SETTINGS_DEFAULTS['ZIP_FABRIC_COPACO_EUR_M2']
+    original_assembly = c._ZIP_SETTINGS_DEFAULTS['ZIP_ASSEMBLY_PCT']
+    original_install = c._ZIP_SETTINGS_DEFAULTS['ZIP_INSTALL_EUR_M2']
+    original_color_special = c._ZIP_SETTINGS_DEFAULTS['ZIP_COLOR_SPECIAL_PCT']
 
     c.ZIP_SETTINGS['ZIP_FABRIC_SOLTIS_EUR_M2'] = 999.0
     c.ZIP_SETTINGS['ZIP_FABRIC_COPACO_EUR_M2'] = 999.0
+    c.ZIP_SETTINGS['ZIP_ASSEMBLY_PCT'] = 999.0
+    c.ZIP_SETTINGS['ZIP_INSTALL_EUR_M2'] = 999.0
+    c.ZIP_SETTINGS['ZIP_COLOR_SPECIAL_PCT'] = 999.0
 
     c.clear_zip_cache()
     c._ensure_zip_loaded()
@@ -97,6 +124,15 @@ def test_zip_settings_reload_resets_to_defaults():
     )
     assert c.ZIP_SETTINGS['ZIP_FABRIC_COPACO_EUR_M2'] == original_copaco, (
         f"After reload, Copaco surcharge should reset to {original_copaco} EUR/m²"
+    )
+    assert c.ZIP_SETTINGS['ZIP_ASSEMBLY_PCT'] == original_assembly, (
+        f"After reload, assembly percentage should reset to {original_assembly}%"
+    )
+    assert c.ZIP_SETTINGS['ZIP_INSTALL_EUR_M2'] == original_install, (
+        f"After reload, install rate should reset to {original_install} EUR/m²"
+    )
+    assert c.ZIP_SETTINGS['ZIP_COLOR_SPECIAL_PCT'] == original_color_special, (
+        f"After reload, special color percentage should reset to {original_color_special}%"
     )
 
 
