@@ -105,7 +105,7 @@ def _make_glazing_opening(side="front", bay=0, series="S500"):
     }
 
 
-def _make_pergola_data(glazing_openings):
+def _make_pergola_data(glazing_openings, max_overhang=None):
     return {
         "pergola_type": "B500NEW",
         "lamella_type": "B500-25NEW",
@@ -114,7 +114,7 @@ def _make_pergola_data(glazing_openings):
         "length": 3.0,
         "height": 3.0,
         "modules": 2,
-        "max_overhang": None,
+        "max_overhang": max_overhang,
         "facade_openings": [],
         "glazing_openings": glazing_openings,
         "extra_cols_f": 0,
@@ -218,9 +218,11 @@ class TestLayoutGeometry:
 class TestThreeColumnGlazingLayout:
     """Tests that generate actual PDFs and inspect their text content."""
 
-    def _generate(self, openings):
+    def _generate(self, openings, max_overhang=None):
         from pdf_generator_fpdf_rus import generate_commercial_offer
-        pdf_bytes = generate_commercial_offer(_make_pergola_data(openings))
+        pdf_bytes = generate_commercial_offer(
+            _make_pergola_data(openings, max_overhang=max_overhang)
+        )
         assert pdf_bytes is not None, "generate_commercial_offer() returned None"
         assert pdf_bytes[:4] == _PDF_MAGIC, (
             f"Output does not start with %PDF: {pdf_bytes[:10]!r}"
@@ -341,6 +343,135 @@ class TestThreeColumnGlazingLayout:
             assert label in text, (
                 f"Expected label {label!r} not found in 6-opening PDF text"
             )
+
+    def test_all_four_sides_labels_and_descriptions(self):
+        """One opening per side: F, B, A, C labels + Russian side names appear.
+
+        Verifies that the per-card label/description pair correctly reflects
+        the opening's `side` attribute for every supported side.
+        """
+        openings = [
+            _make_glazing_opening("front", 0),
+            _make_glazing_opening("back", 0),
+            _make_glazing_opening("left", 0),
+            _make_glazing_opening("right", 0),
+        ]
+        pdf_bytes = self._generate(openings)
+        text = _extract_pdf_text(pdf_bytes)
+
+        # Single-bay sides => bare prefix label, no number
+        for label in ("F", "B", "A", "C"):
+            assert label in text, (
+                f"Expected single-bay card label {label!r} not found in PDF text"
+            )
+
+        # Russian side-name descriptions from _GLZ_SIDE_LABELS
+        for desc in ("\u0424\u0430\u0441\u0430\u0434", "\u0421\u0437\u0430\u0434\u0438",
+                     "\u0421\u043b\u0435\u0432\u0430", "\u0421\u043f\u0440\u0430\u0432\u0430"):
+            assert desc in text, (
+                f"Expected side-name description {desc!r} not found in PDF text"
+            )
+
+    def test_only_front_openings_have_no_other_side_labels(self):
+        """3 front openings: B/A/C-prefixed numbered labels must not appear.
+
+        Negative check: a card mislabelled with the wrong side prefix would
+        leak the wrong side name into the customer proposal.  Extract glazing
+        section text and assert only the expected F1/F2/F3 labels are present.
+        """
+        openings = [
+            _make_glazing_opening("front", 0),
+            _make_glazing_opening("front", 1),
+            _make_glazing_opening("front", 2),
+        ]
+        pdf_bytes = self._generate(openings)
+        text = _extract_pdf_text(pdf_bytes)
+
+        for label in ("F1", "F2", "F3"):
+            assert label in text, (
+                f"Expected front card label {label!r} not found in front-only PDF"
+            )
+
+        # No other-side numbered labels should leak in
+        for forbidden in ("B1", "B2", "B3", "A1", "A2", "C1", "C2"):
+            assert forbidden not in text, (
+                f"Unexpected label {forbidden!r} found in front-only PDF; "
+                "card label may not match opening side"
+            )
+
+        # No other-side Russian descriptions either
+        for forbidden_desc in ("\u0421\u0437\u0430\u0434\u0438",
+                               "\u0421\u043b\u0435\u0432\u0430",
+                               "\u0421\u043f\u0440\u0430\u0432\u0430"):
+            assert forbidden_desc not in text, (
+                f"Unexpected side description {forbidden_desc!r} in front-only PDF"
+            )
+
+    def test_label_order_matches_opening_order(self):
+        """Extracted card labels appear in the same order as openings.
+
+        The 3-col grid lays out cards left-to-right, top-to-bottom in the
+        order they're given.  PyPDF2 extracts text top-down/left-right, so
+        the relative order of label substrings in the extracted text must
+        match the order the openings were declared.
+        """
+        openings = [
+            _make_glazing_opening("front", 0),
+            _make_glazing_opening("front", 1),
+            _make_glazing_opening("back", 0),
+            _make_glazing_opening("back", 1),
+        ]
+        pdf_bytes = self._generate(openings)
+        text = _extract_pdf_text(pdf_bytes)
+
+        positions = {lbl: text.find(lbl) for lbl in ("F1", "F2", "B1", "B2")}
+        for lbl, pos in positions.items():
+            assert pos >= 0, f"Label {lbl!r} not found in extracted PDF text"
+
+        assert positions["F1"] < positions["F2"] < positions["B1"] < positions["B2"], (
+            f"Card labels appear in unexpected order: {positions!r}; "
+            "labels may not correspond to their cards' positions"
+        )
+
+    def test_single_side_only_uses_that_side_prefix(self):
+        """Per side: only that side's numbered labels appear in the PDF.
+
+        Generates 3 openings all on one side and verifies that numbered
+        labels for the other three sides are absent.  Numbered labels
+        (e.g. "B1", "A2") are unique to glazing card badges and don't
+        collide with surrounding proposal text.
+        """
+        all_prefixes = {
+            "front": "F",
+            "back": "B",
+            "left": "A",
+            "right": "C",
+        }
+        for side, expected_prefix in all_prefixes.items():
+            openings = [_make_glazing_opening(side, b) for b in (0, 1, 2)]
+            # length=3, max_overhang=1 -> _lmods_glz = max(2, ceil(3/1)) = 3
+            # so left/right sides get 3 bays just like front/back's modules=2+
+            pdf_bytes = self._generate(openings, max_overhang=1.0)
+            text = _extract_pdf_text(pdf_bytes)
+
+            # Expected numbered labels for this side appear
+            for bay_idx in (1, 2, 3):
+                lbl = f"{expected_prefix}{bay_idx}"
+                assert lbl in text, (
+                    f"For side={side!r}: expected label {lbl!r} not found"
+                )
+
+            # Other sides' numbered labels must not appear
+            for other_side, other_prefix in all_prefixes.items():
+                if other_side == side:
+                    continue
+                for bay_idx in (1, 2, 3):
+                    forbidden = f"{other_prefix}{bay_idx}"
+                    assert forbidden not in text, (
+                        f"For side={side!r}: unexpected label {forbidden!r} "
+                        f"from side {other_side!r} appeared in PDF; "
+                        "card label may not match opening side"
+                    )
 
     def test_3_openings_larger_than_no_glazing(self):
         """PDF with 3 glazing openings is larger than one with no glazing."""
