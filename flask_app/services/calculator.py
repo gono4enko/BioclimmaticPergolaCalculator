@@ -828,6 +828,19 @@ ZIP_COLOR_NAMES = {
     'ral8028':    'Коричневый Муар RAL 8028',
     'ral_special':'RAL special (+10%)',
 }
+ZIP_COLOR_NAMES_SHORT = {
+    'ral9016':    'Белый RAL 9016',
+    'ral7024':    'Графит RAL 7024',
+    'ral9t08':    'Графит RAL 9T08',
+    'ral8028':    'Коричн. RAL 8028',
+    'ral_special':'RAL special',
+}
+ZIP_COLOR_HEX = {
+    'ral9016': (228, 228, 225),
+    'ral7024': (58, 65, 72),
+    'ral9t08': (77, 77, 77),
+    'ral8028': (92, 61, 30),
+}
 ZIP_DRIVE_NAMES = {
     'manual':  'Ручное управление',
     'simu':    'Электропривод SIMU',

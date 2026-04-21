@@ -10,6 +10,11 @@ from datetime import datetime
 from fpdf import FPDF
 from PIL import Image
 
+from flask_app.services.calculator import (
+    ZIP_COLOR_NAMES_SHORT,
+    ZIP_COLOR_HEX,
+)
+
 # Создаем директорию для сохранения сгенерированных PDF
 os.makedirs("generated_pdf", exist_ok=True)
 
@@ -1378,15 +1383,8 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                 _price_s = f"{_tot_rub:,d}".replace(',', ' ') + " ₽"
                 _overlay_note = ' (накл.)' if _zo.get('has_glazing') else ''
                 _sec_note = f' ×{_nsec}сек.' if _nsec > 1 else ''
-                _zip_col_names = {'ral9016': 'Белый RAL 9016', 'ral7024': 'Графит RAL 7024',
-                                  'ral9t08': 'Графит RAL 9T08', 'ral8028': 'Коричн. RAL 8028',
-                                  'ral_special': 'RAL special'}
-                _zip_color_hex = {
-                    'ral9016': (228, 228, 225),
-                    'ral7024': (58, 65, 72),
-                    'ral9t08': (77, 77, 77),
-                    'ral8028': (92, 61, 30),
-                }
+                _zip_col_names = ZIP_COLOR_NAMES_SHORT
+                _zip_color_hex = ZIP_COLOR_HEX
                 _col = _zip_col_names.get(_zo.get('color', ''), _zo.get('color', ''))
                 _total_units = _cnt * _nsec
                 _row_h_z = 6
