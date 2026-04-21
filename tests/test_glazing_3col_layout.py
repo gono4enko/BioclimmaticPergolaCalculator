@@ -473,6 +473,64 @@ class TestThreeColumnGlazingLayout:
                         "card label may not match opening side"
                     )
 
+    def test_mixed_series_3col_row_renders_each_branch(self):
+        """A 3-col row containing one S100, one S500, and one W500 opening
+        produces a valid PDF and each series-specific summary branch fires.
+
+        Card summary text in pdf_generator_fpdf_rus.py (~line 1183) is built
+        from three separate dictionaries depending on series — a regression
+        in any branch would only surface when that series is mixed in.
+        """
+        openings = [
+            _make_glazing_opening("front", 0, series="S100"),
+            _make_glazing_opening("front", 1, series="S500"),
+            _make_glazing_opening("back", 0, series="W500"),
+        ]
+        # Use colors valid for each series so the human-readable name appears
+        # in the extracted text rather than a raw RAL key.
+        openings[0]["color"] = "ral9t08"   # valid S100 color
+        openings[0]["glass"] = "transparent"
+        openings[1]["color"] = "ral7016"   # valid S500 color
+        openings[1]["glass"] = "transparent"
+        openings[2]["color"] = "ral9016"   # valid W500 color
+        openings[2]["glass"] = "transparent"
+
+        pdf_bytes = self._generate(openings)
+        text = _extract_pdf_text(pdf_bytes)
+
+        # Each series tag must appear (one card per series in the row)
+        for series in ("S100", "S500", "W500"):
+            assert series in text, (
+                f"Expected series tag {series!r} not found in mixed-series PDF.\n"
+                f"Extracted text snippet: {text[:1200]!r}"
+            )
+
+        # S100 summary uses 'пан.' (panels) — unique to the S100 branch.
+        assert "\u043f\u0430\u043d." in text, (
+            "Expected S100 'пан.' (panels) marker not found; S100 summary "
+            "branch may not have rendered."
+        )
+        # 'ств.' (sashes) is shared by S500 and W-series, so we additionally
+        # check the *glass-name* mapping, which differs between branches:
+        #   W-series 'transparent' -> 'Прозрачное'
+        #   S500     'transparent' -> 'Закалённое'
+        # Both must be present to prove both branches executed.
+        assert "\u0417\u0430\u043a\u0430\u043b\u0451\u043d\u043d\u043e\u0435" in text, (
+            "Expected S500 glass name 'Закалённое' not found; "
+            "S500 summary branch may not have rendered."
+        )
+        assert "\u041f\u0440\u043e\u0437\u0440\u0430\u0447\u043d\u043e\u0435" in text, (
+            "Expected W500 glass name 'Прозрачное' not found; "
+            "W500 summary branch may not have rendered."
+        )
+
+        # All three card labels must appear (front has 2 bays => F1/F2;
+        # back also has 2 bays under modules=2 => B1).
+        for label in ("F1", "F2", "B1"):
+            assert label in text, (
+                f"Expected card label {label!r} not found in mixed-series PDF"
+            )
+
     def test_3_openings_larger_than_no_glazing(self):
         """PDF with 3 glazing openings is larger than one with no glazing."""
         from pdf_generator_fpdf_rus import generate_commercial_offer
