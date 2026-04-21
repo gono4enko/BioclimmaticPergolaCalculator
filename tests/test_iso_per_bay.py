@@ -189,13 +189,19 @@ def test_right_wall_per_bay_guillotine_and_zip(client):
 
 
 # ---------------------------------------------------------------------------
-# Test 5: Mid-rail count for 2-sash vs 3-sash W500 guillotine
+# Test 5: Mid-rail count for 2-sash vs 3-sash guillotine (W500/W600/W700)
 # ---------------------------------------------------------------------------
 
-def test_w500_mid_rail_count_by_sash_number(client):
-    """A 3-sash W500 guillotine must produce 2 horizontal mid-rails (stroke-width="1.4")
-    while a 2-sash W500 must produce exactly 1.  The heavy top/bottom rails use
-    different stroke-widths (1.8 and 1.6) and must not be counted here."""
+@pytest.mark.parametrize('model', ['W500', 'W600', 'W700'])
+def test_guillotine_mid_rail_count_by_sash_number(client, model):
+    """A 3-sash guillotine must produce 2 horizontal mid-rails (stroke-width="1.4")
+    while a 2-sash variant must produce exactly 1.  The heavy top/bottom rails use
+    different stroke-widths (1.8 and 1.6) and must not be counted here.
+
+    W500, W600 and W700 share the same sash-count code path in
+    flask_app/utils.py (lines 1219–1237), so all three are covered here to
+    catch regressions in any of them.
+    """
     MID_RAIL_MARKER = 'stroke-width="1.4"'
 
     svg_3sash = _svg(client, {
@@ -203,7 +209,7 @@ def test_w500_mid_rail_count_by_sash_number(client):
         'l': '3',
         'h': '3',
         'm': '1',
-        'fill_front_1': 'W500:3',
+        'fill_front_1': f'{model}:3',
     })
 
     svg_2sash = _svg(client, {
@@ -211,19 +217,19 @@ def test_w500_mid_rail_count_by_sash_number(client):
         'l': '3',
         'h': '3',
         'm': '1',
-        'fill_front_1': 'W500:2',
+        'fill_front_1': f'{model}:2',
     })
 
     count_3 = svg_3sash.count(MID_RAIL_MARKER)
     count_2 = svg_2sash.count(MID_RAIL_MARKER)
 
     assert count_3 == 2, (
-        f'Expected 2 mid-rails (stroke-width="1.4") for W500:3, found {count_3}'
+        f'Expected 2 mid-rails (stroke-width="1.4") for {model}:3, found {count_3}'
     )
     assert count_2 == 1, (
-        f'Expected 1 mid-rail (stroke-width="1.4") for W500:2, found {count_2}'
+        f'Expected 1 mid-rail (stroke-width="1.4") for {model}:2, found {count_2}'
     )
     assert count_3 == count_2 + 1, (
-        f'3-sash guillotine should have exactly one more mid-rail than 2-sash '
-        f'(got {count_3} vs {count_2})'
+        f'3-sash {model} guillotine should have exactly one more mid-rail than '
+        f'2-sash (got {count_3} vs {count_2})'
     )
