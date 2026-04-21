@@ -1306,6 +1306,19 @@
   .price-bar__price { font-size: 18px; }
 }
 
+/* Mobile: shrink model dropdown font on additional pergola cards so the
+   full model name (e.g. "B500 NEW (поворотные ламели)") is readable
+   instead of being truncated. */
+@media (max-width: 600px) {
+  .pergola-card .pergola-model-select {
+    font-size: 0.85rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+    padding-right: 1.8rem;
+  }
+  .pergola-card .pergola-card-title { font-size: 0.95rem; }
+}
+
 /* === ZIP params card layout === */
 .zip-params-card {
   display: grid;
