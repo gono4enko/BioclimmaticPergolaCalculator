@@ -63,3 +63,6 @@ externalPort = 3002
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 30000
+
+[agent]
+integrations = ["github:1.0.0"]
