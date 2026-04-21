@@ -490,3 +490,71 @@ def test_zip_setting_reverts_to_default_after_cache_clear_without_db(monkeypatch
     monkeypatch.delenv('DATABASE_URL', raising=False)
     c.clear_zip_cache()
     assert c._zip_setting('ZIP_INSTALL_EUR_M2') == default_install
+
+
+# ---------------------------------------------------------------------------
+# DB override integration tests for zip_price_overrides (per-cell price)
+# ---------------------------------------------------------------------------
+
+def test_zip_cell_price_override_changes_base_eur(monkeypatch, restore_zip_state):
+    """A zip_price_overrides DB row must replace the CSV base price for that exact cell
+    and change the resulting base_eur returned by zip_calc_price()."""
+    # Opening that snaps to ZIP100 cell (w=2.00, h=2.5) without glazing overlay.
+    op_w, op_h = 2.0, 2.5
+
+    # First, capture CSV default base price with no DB override.
+    _install_fake_db(monkeypatch, settings_rows=[], override_rows=[])
+    default_result = c.zip_calc_price(op_w, op_h, fabric='veozip', drive='manual')
+    csv_base = default_result['base_eur']
+    assert default_result['zip_type'] == 'ZIP100'
+
+    # Now inject a DB override for that exact cell (ZIP100, 2.00, 2.5).
+    override_price = csv_base + 321.0
+    assert override_price != csv_base
+
+    # Re-install the fake DB with the override row and clear cache so it reloads.
+    _install_fake_db(
+        monkeypatch,
+        settings_rows=[],
+        override_rows=[('ZIP100', 2.00, 2.5, override_price)],
+    )
+
+    overridden = c.zip_calc_price(op_w, op_h, fabric='veozip', drive='manual')
+    assert overridden['zip_type'] == 'ZIP100'
+    assert overridden['base_eur'] == round(override_price, 2), (
+        f"Expected DB-overridden base_eur={override_price}, "
+        f"got {overridden['base_eur']} (csv default was {csv_base})"
+    )
+    assert overridden['base_eur'] != csv_base, (
+        "DB override must differ from the CSV default; otherwise the test is inert."
+    )
+
+    # Sanity: total_eur must also shift by the override delta plus assembly%.
+    assembly_pct = c._zip_setting('ZIP_ASSEMBLY_PCT') / 100.0
+    expected_total_diff = round((override_price - csv_base) * (1 + assembly_pct), 2)
+    actual_total_diff = round(overridden['total_eur'] - default_result['total_eur'], 2)
+    assert actual_total_diff == expected_total_diff, (
+        f"total_eur delta {actual_total_diff} should equal base delta*(1+assembly%) "
+        f"= {expected_total_diff}"
+    )
+
+
+def test_zip_cell_price_override_only_affects_matching_cell(monkeypatch, restore_zip_state):
+    """A DB override for one (zip_type, w_dec, h_dec) must NOT affect a different cell."""
+    # Inject override for ZIP100 at (2.00, 2.5) only.
+    _install_fake_db(
+        monkeypatch,
+        settings_rows=[],
+        override_rows=[('ZIP100', 2.00, 2.5, 9999.0)],
+    )
+    # The overridden cell is affected.
+    hit = c.zip_calc_price(2.0, 2.5, fabric='veozip', drive='manual')
+    assert hit['zip_type'] == 'ZIP100'
+    assert hit['base_eur'] == 9999.0
+
+    # A different cell (different h) must keep its CSV base price.
+    miss = c.zip_calc_price(2.0, 1.5, fabric='veozip', drive='manual')
+    assert miss['zip_type'] == 'ZIP100'
+    assert miss['base_eur'] != 9999.0, (
+        "Override for (ZIP100, 2.00, 2.5) must not leak into (ZIP100, 2.00, 1.5)"
+    )
