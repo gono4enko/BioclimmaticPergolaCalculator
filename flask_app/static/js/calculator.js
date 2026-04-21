@@ -2320,6 +2320,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderResults(firstData.result);
             }
             renderMultiPergolaSummary();
+            renderAdditionalPergolaKPs();
             updatePriceBar();
             try { if (typeof ym === 'function') ym(YM_ID, 'reachGoal', 'calc_success', { calculator_type: CALC_TYPE }); } catch(e) {}
             setTimeout(function() {
@@ -2363,7 +2364,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     '<div>\u0411\u0435\u0437\u043D\u0430\u043B. \u0441 \u041D\u0414\u0421\u00A022%: <strong>' + formatPrice(grand.with_vat) + '\u00A0\u20BD</strong></div>' +
                 '</div>' +
             '</div>' +
-            '<div class="mp-pdf-notice">\u041F\u043E\u0434\u0440\u043E\u0431\u043D\u044B\u0439 \u041A\u041F \u0438 PDF \u043D\u0438\u0436\u0435 \u043F\u043E\u043A\u0430 \u043F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u044E\u0442 \u0442\u043E\u043B\u044C\u043A\u043E \u041F\u0435\u0440\u0433\u043E\u043B\u0443\u00A01. \u041C\u043D\u043E\u0433\u043E\u0440\u0430\u0437\u0434\u0435\u043B\u044C\u043D\u044B\u0439 PDF \u2014 \u0432 \u0431\u043B\u0438\u0436\u0430\u0439\u0448\u0435\u043C \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438.</div>' +
         '</div>';
         var wrap = document.createElement('div');
         wrap.id = 'multi-pergola-summary-block';
@@ -2835,11 +2835,12 @@ document.addEventListener('DOMContentLoaded', function() {
         return spec && spec.max_overhang ? spec.max_overhang : null;
     }
 
-    function updateSchemeForVariant(r) {
-        var block = document.getElementById('kp-scheme-block');
+    function updateSchemeForVariant(r, idSuffix) {
+        var sfx = idSuffix ? '-' + idSuffix : '';
+        var block = document.getElementById('kp-scheme-block' + sfx);
         if (!block) return;
         var mo = findMoForResult(r);
-        state._maxOverhang = mo;
+        if (!idSuffix) state._maxOverhang = mo;
         var w = block.dataset.w, l = block.dataset.l, m = block.dataset.m;
         var pir = block.dataset.pir === '1';
         var lc = block.dataset.lc;
@@ -2849,7 +2850,7 @@ document.addEventListener('DOMContentLoaded', function() {
             (lc ? '&lc=' + lc : '') +
             (mo ? '&mo=' + mo : '') +
             (pir ? '&pir=1' : '') + '&ref=' + refDim;
-        var img = document.getElementById('kp-scheme-img');
+        var img = document.getElementById('kp-scheme-img' + sfx);
         if (img) img.src = '/api/pergola-scheme.svg?' + qs + '&_v=' + SVG_V;
         var lm = parseInt(block.dataset.lm) || 1;
         var moAttr = block.dataset.mo || '';
@@ -2880,20 +2881,20 @@ document.addEventListener('DOMContentLoaded', function() {
         var _zipA = getBayZipQs('left', lm, _xcA);
         var _zipC = getBayZipQs('right', lm, _xcC);
         var fqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcFront + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438') + _bayF + _glzF + _zipF;
-        var fimg = document.getElementById('kp-front-img');
+        var fimg = document.getElementById('kp-front-img' + sfx);
         if (fimg) fimg.src = '/api/pergola-front.svg?' + fqs + '&_v=' + SVG_V;
         var bqs = 'w=' + w + '&h=' + pergolaH + '&m=' + m + '&ref=' + refDim + xcBack + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438') + _bayB + _glzB + _zipB;
-        var bimg = document.getElementById('kp-back-img');
+        var bimg = document.getElementById('kp-back-img' + sfx);
         if (bimg) bimg.src = '/api/pergola-front.svg?' + bqs + '&_v=' + SVG_V;
         var sqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcLeft + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430') + _bayA + _glzA + _zipA;
-        var simg = document.getElementById('kp-side-img');
+        var simg = document.getElementById('kp-side-img' + sfx);
         if (simg) simg.src = '/api/pergola-front.svg?' + sqs + '&_v=' + SVG_V;
         var rqs = 'w=' + l + '&h=' + pergolaH + '&m=' + lm + (moAttr ? '&mo=' + moAttr : '') + '&ref=' + refDim + xcRight + '&title=' + encodeURIComponent('\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430') + _bayC + _glzC + _zipC;
-        var rimg = document.getElementById('kp-right-img');
+        var rimg = document.getElementById('kp-right-img' + sfx);
         if (rimg) rimg.src = '/api/pergola-front.svg?' + rqs + '&_v=' + SVG_V;
         var lcAttr = block.dataset.lc;
         var pirAttr = block.dataset.pir === '1';
-        var isoimg = document.getElementById('kp-iso-img');
+        var isoimg = document.getElementById('kp-iso-img' + sfx);
         if (isoimg && (pirAttr || lcAttr)) {
             var _isoF = _fillF || getGlzForSide('front');
             var _isoA = _fillA || getGlzForSide('left');
@@ -2907,7 +2908,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var iqs = 'w=' + w + '&l=' + l + '&h=' + pergolaH + '&m=' + m + (lcAttr ? '&lc=' + lcAttr : '') + (mo ? '&mo=' + mo : '') + (pirAttr ? '&pir=1' : '') + (_isoXc > 0 ? '&xc=' + _isoXc : '') + (_isoF ? '&fill_front=' + encodeURIComponent(_isoF) : '') + (_isoC ? '&fill_right=' + encodeURIComponent(_isoC) : '') + (_isoA ? '&fill_left=' + encodeURIComponent(_isoA) : '') + (_isoB ? '&fill_back=' + encodeURIComponent(_isoB) : '') + _isoBayF + _isoBayB + _isoBayA + _isoBayC + '&_v=' + SVG_V;
             isoimg.src = '/api/pergola-iso.svg?' + iqs;
         }
-        var warn = document.getElementById('kp-scheme-warn');
+        var warn = document.getElementById('kp-scheme-warn' + sfx);
         if (warn) {
             var lf = parseFloat(l);
             var needs = mo && lf > mo + 0.001;
@@ -2918,10 +2919,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function buildMarketingKP(resultOrResults, decoData) {
+    function buildMarketingKP(resultOrResults, decoData, idSuffix) {
         var isAll = Array.isArray(resultOrResults);
         var mainResult = isAll ? resultOrResults[0] : resultOrResults;
-        state._lastMainResult = mainResult;
+        var sfx = idSuffix ? '-' + idSuffix : '';
+        if (!idSuffix) state._lastMainResult = mainResult;
         var dims = mainResult.dimensions;
         var totals = mainResult.totals;
         var pType = mainResult.pergola_type_name || state.pergolaType;
@@ -3232,7 +3234,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var isoLabel = isPir ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (PIR \u043F\u0430\u043D\u0435\u043B\u0438)' : (isB200 ? '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u0441\u0442\u0430\u0446\u0438\u043E\u043D\u0430\u0440\u043D\u044B\u0435)' : '\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F (\u043B\u0430\u043C\u0435\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B)');
             var isoBlock = (isPir || lamCnt) ? (
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">' + isoLabel + '</div>' +
-                '<img id="kp-iso-img" src="/api/pergola-iso.svg?' + iqs + '" alt="\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F" style="max-width:100%;height:auto;"></div>'
+                '<img id="kp-iso-img' + sfx + '" src="/api/pergola-iso.svg?' + iqs + '" alt="\u0418\u0437\u043E\u043C\u0435\u0442\u0440\u0438\u044F" style="max-width:100%;height:auto;"></div>'
             ) : '';
             /* ZIP awning detail sketches for scheme section */
             var zipDetailBlock = '';
@@ -3252,24 +3254,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         '<img src="' + dSrc + '" alt="\u0427\u0435\u0440\u0442\u0451\u0436 ' + t + '" style="max-width:100%;height:auto;border:1px solid #d0e4f4;border-radius:6px;"></div>';
                 });
             }
-            html += '<div class="kp-block" id="kp-scheme-block" data-w="' + schW + '" data-l="' + schL + '" data-m="' + schM + '" data-lm="' + schLMods + '" data-pir="' + (isPir ? '1' : '0') + '" data-lc="' + lamCnt + '" data-h="' + pergolaH + '" data-mo="' + (moLocal || '') + '">' +
+            html += '<div class="kp-block" id="kp-scheme-block' + sfx + '" data-w="' + schW + '" data-l="' + schL + '" data-m="' + schM + '" data-lm="' + schLMods + '" data-pir="' + (isPir ? '1' : '0') + '" data-lc="' + lamCnt + '" data-h="' + pergolaH + '" data-mo="' + (moLocal || '') + '">' +
                 '<div class="kp-block-header"><div class="kp-block-icon" style="background:#1a3a6e;">\uD83D\uDCD0</div><div class="kp-block-title">\u0421\u0445\u0435\u043C\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B</div></div>' +
                 '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;align-items:start;">' +
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443</div>' +
-                '<img id="kp-scheme-img" src="/api/pergola-scheme.svg?' + qs + '&_v=' + SVG_V + '" alt="\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443" style="max-width:100%;height:auto;"></div>' +
+                '<img id="kp-scheme-img' + sfx + '" src="/api/pergola-scheme.svg?' + qs + '&_v=' + SVG_V + '" alt="\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443" style="max-width:100%;height:auto;"></div>' +
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438 (F)</div>' +
-                '<img id="kp-front-img" src="/api/pergola-front.svg?' + fqs + '" alt="\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438" style="max-width:100%;height:auto;"></div>' +
+                '<img id="kp-front-img' + sfx + '" src="/api/pergola-front.svg?' + fqs + '" alt="\u0412\u0438\u0434 \u0441\u043f\u0435\u0440\u0435\u0434\u0438" style="max-width:100%;height:auto;"></div>' +
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438 (B)</div>' +
-                '<img id="kp-back-img" src="/api/pergola-front.svg?' + bqs + '" alt="\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438" style="max-width:100%;height:auto;"></div>' +
+                '<img id="kp-back-img' + sfx + '" src="/api/pergola-front.svg?' + bqs + '" alt="\u0412\u0438\u0434 \u0441\u0437\u0430\u0434\u0438" style="max-width:100%;height:auto;"></div>' +
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430 (A)</div>' +
-                '<img id="kp-side-img" src="/api/pergola-front.svg?' + sqs + '" alt="\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430" style="max-width:100%;height:auto;"></div>' +
+                '<img id="kp-side-img' + sfx + '" src="/api/pergola-front.svg?' + sqs + '" alt="\u0412\u0438\u0434 \u0441\u043b\u0435\u0432\u0430" style="max-width:100%;height:auto;"></div>' +
                 '<div style="text-align:center;"><div style="font-size:0.85rem;color:#1a3a6e;font-weight:600;margin-bottom:0.4rem;">\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430 (C)</div>' +
-                '<img id="kp-right-img" src="/api/pergola-front.svg?' + rqs + '" alt="\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430" style="max-width:100%;height:auto;"></div>' +
+                '<img id="kp-right-img' + sfx + '" src="/api/pergola-front.svg?' + rqs + '" alt="\u0412\u0438\u0434 \u0441\u043f\u0440\u0430\u0432\u0430" style="max-width:100%;height:auto;"></div>' +
                 isoBlock +
                 zipDetailBlock +
                 '</div>' +
                 '<div style="margin-top:0.6rem;font-size:0.82rem;color:#666;text-align:center;">\u0412\u044B\u0441\u043E\u0442\u0430 \u043F\u0435\u0440\u0433\u043E\u043B\u044B: ' + pergolaH.toFixed(2) + ' \u043C (\u0441\u0442\u0430\u043D\u0434\u0430\u0440\u0442). ' + (isB200 ? '\u041A\u043E\u043B\u043E\u043D\u043D\u044B 100\u00D7100 \u043C\u043C, \u0431\u0430\u043B\u043A\u0430 200\u00D750 \u043C\u043C, \u043B\u0430\u043C\u0435\u043B\u0438 200\u00D750 \u043C\u043C.' : (isLight ? '\u041A\u043E\u043B\u043E\u043D\u043D\u044B 150\u00D7150 \u043C\u043C, \u0431\u0430\u043B\u043A\u0430 150\u00D7250 \u043C\u043C.' : '\u041A\u043E\u043B\u043E\u043D\u043D\u044B 164\u00D7164 \u043C\u043C, \u0432\u044B\u0441\u043E\u0442\u0430 \u043B\u043E\u0442\u043A\u0430 280 \u043C\u043C, \u0432\u044B\u043B\u0435\u0442 \u043F\u043B\u043E\u0449\u0430\u0434\u043A\u0438 82 \u043C\u043C.')) + '</div>' +
-                '<div id="kp-scheme-warn" style="display:' + (needsExtra ? 'block' : 'none') + ';margin-top:0.6rem;padding:0.6rem 0.8rem;background:#fff8e1;border-left:3px solid #f59e0b;font-size:0.88rem;color:#5d4a00;">' +
+                '<div id="kp-scheme-warn' + sfx + '" style="display:' + (needsExtra ? 'block' : 'none') + ';margin-top:0.6rem;padding:0.6rem 0.8rem;background:#fff8e1;border-left:3px solid #f59e0b;font-size:0.88rem;color:#5d4a00;">' +
                 (needsExtra ? '\u26A0\uFE0F \u0412\u044B\u043D\u043E\u0441 ' + schL + ' \u043C \u043F\u0440\u0435\u0432\u044B\u0448\u0430\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C \u0431\u0435\u0437 \u0434\u043E\u043F. \u043E\u043F\u043E\u0440 (' + state._maxOverhang + ' \u043C). \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u044B \u043F\u0440\u043E\u043C\u0435\u0436\u0443\u0442\u043E\u0447\u043D\u044B\u0435 \u043A\u043E\u043B\u043E\u043D\u043D\u044B \u043F\u043E \u0446\u0435\u043D\u0442\u0440\u0443.' : '') +
                 '</div>' +
                 '</div>';
@@ -3384,6 +3386,168 @@ document.addEventListener('DOMContentLoaded', function() {
                     _applySchemeAfterKp(resultOrResults);
                 }
             });
+    }
+
+    function _fetchKpDataForType(pergolaType) {
+        if (!state._kpDataCache) state._kpDataCache = {};
+        if (state._kpDataCache[pergolaType]) return state._kpDataCache[pergolaType];
+        var p = Promise.all([
+            fetch('/api/variant-options/' + pergolaType).then(function(r){return r.json();}).catch(function(){return {success:false};}),
+            fetch('/api/decolife-data/' + pergolaType).then(function(r){return r.json();}).catch(function(){return {success:false};})
+        ]).then(function(arr) {
+            return {
+                variants: (arr[0] && arr[0].success && arr[0].variants) ? arr[0].variants : [],
+                deco: (arr[1] && arr[1].success && arr[1].data) ? arr[1].data : {}
+            };
+        });
+        state._kpDataCache[pergolaType] = p;
+        return p;
+    }
+
+    function _findSpecForVariant(variantsData, variant, lamellaSize) {
+        if (!variantsData || !variant) return null;
+        var spec = null;
+        variantsData.forEach(function(v) {
+            if (v.variant === variant && (!lamellaSize || v.lamella_size === lamellaSize)) spec = v;
+        });
+        if (!spec) variantsData.forEach(function(v) { if (v.variant === variant) spec = v; });
+        return spec;
+    }
+
+    function _buildVariantSpecHtmlForResult(result, variantsData, lamellaSize) {
+        var matchedSpec = _findSpecForVariant(variantsData, result && result.selected_variant, result && (result.lamella_size || lamellaSize));
+        if (!matchedSpec) return '';
+        var dims = result.dimensions;
+        var html = '<div class="variant-tech-block">' +
+            '<div class="variant-tech-title">\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0445\u0430\u0440\u0430\u043A\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043A\u0438 (' + matchedSpec.label + ')</div>';
+        var sImgs = matchedSpec.images || {};
+        if (sImgs.skl || sImgs.lamella || sImgs.beam) {
+            html += '<div class="tech-photos-row">';
+            if (sImgs.skl) html += '<div class="tech-photo-item"><img src="' + sImgs.skl + '" class="tech-photo" alt="\u0421\u041A\u041B"><div class="tech-photo-caption">\u0421\u0438\u0441\u0442\u0435\u043C\u0430 \u043A\u0440\u0435\u043F\u043B\u0435\u043D\u0438\u044F</div></div>';
+            if (sImgs.lamella) html += '<div class="tech-photo-item"><img src="' + sImgs.lamella + '" class="tech-photo" alt="\u041B\u0430\u043C\u0435\u043B\u044C"><div class="tech-photo-caption">\u041B\u0430\u043C\u0435\u043B\u044C ' + matchedSpec.lamella + '</div></div>';
+            if (sImgs.beam) html += '<div class="tech-photo-item"><img src="' + sImgs.beam + '" class="tech-photo" alt="\u0411\u0430\u043B\u043A\u0430"><div class="tech-photo-caption">\u0411\u0430\u043B\u043A\u0430 ' + matchedSpec.beam + '</div></div>';
+            html += '</div>';
+        }
+        html += '<div class="variant-tech-specs">';
+        var techItems = [
+            {icon: SPEC_ICONS.lamella, label: '\u041B\u0430\u043C\u0435\u043B\u044C', val: matchedSpec.lamella},
+            {icon: SPEC_ICONS.column, label: '\u041A\u043E\u043B\u043E\u043D\u043D\u0430', val: matchedSpec.column},
+            {icon: SPEC_ICONS.beam, label: '\u0411\u0430\u043B\u043A\u0430', val: matchedSpec.beam},
+            {icon: SPEC_ICONS.beam_double, label: '\u0411\u0430\u043B\u043A\u0430 \u0434\u0432\u0443\u0445\u0441\u0442.', val: matchedSpec.beam_double},
+            {icon: SPEC_ICONS.max_overhang, label: '\u041C\u0430\u043A\u0441. \u0432\u044B\u043B\u0435\u0442', val: matchedSpec.max_overhang ? matchedSpec.max_overhang + ' \u043C' : ''},
+            {icon: '', label: '\u041C\u0430\u043A\u0441. \u0448\u0438\u0440\u0438\u043D\u0430 \u043C\u043E\u0434\u0443\u043B\u044F', val: matchedSpec.max_module_width ? matchedSpec.max_module_width + ' \u043C' : ''},
+            {icon: '', label: '\u0412\u0435\u0441 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438', val: matchedSpec.weight},
+            {icon: '', label: '\u0412\u0435\u0441 \u043C\u043E\u0434\u0435\u043B\u0438', val: calcTotalWeight(matchedSpec.weight, dims.width, dims.length)},
+            {icon: '', label: '\u0421\u043D\u0435\u0433./\u0432\u0435\u0442\u0440. \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430', val: matchedSpec.snow_wind_load},
+            {icon: '', label: '\u0413\u0435\u0440\u043C\u0435\u0442\u0438\u0447\u043D\u043E\u0441\u0442\u044C', val: matchedSpec.hermiticity},
+            {icon: '', label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043D\u0430\u0433\u0440\u0435\u0432\u0430', val: matchedSpec.heat_protection},
+            {icon: '', label: '\u0412\u0440\u0430\u0449\u0435\u043D\u0438\u0435 \u043B\u0430\u043C\u0435\u043B\u0435\u0439', val: (matchedSpec.rotation_type || '') + (matchedSpec.rotation_angle ? ' ' + matchedSpec.rotation_angle : '')},
+            {icon: '', label: '\u041E\u0442\u043A\u0440\u044B\u0432\u0430\u043D\u0438\u0435 (90\u00B0)', val: matchedSpec.opening_percent && matchedSpec.opening_percent !== '\u2014' ? matchedSpec.opening_percent : ''},
+            {icon: '', label: '\u041F\u0430\u0440\u043A\u043E\u0432\u043E\u0447\u043D\u0430\u044F \u0437\u043E\u043D\u0430', val: matchedSpec.parking_zone && matchedSpec.parking_zone !== '\u2014' ? matchedSpec.parking_zone : ''},
+            {icon: '', label: '\u041C\u0430\u043A\u0441. \u0440\u0430\u0437\u043C\u0435\u0440 \u043D\u0430 4 \u043E\u043F\u043E\u0440\u0430\u0445', val: matchedSpec.max_structure_size ? matchedSpec.max_structure_size + ' \u043C' : ''},
+            {icon: '', label: '\u0416\u0451\u0441\u0442\u043A\u043E\u0441\u0442\u044C \u043E\u0431\u0432\u044F\u0437\u043A\u0438', val: matchedSpec.frame_rigidity}
+        ];
+        techItems.forEach(function(ti) {
+            if (ti.val) {
+                html += '<div class="tech-spec-row">';
+                if (ti.icon) html += '<img src="' + ti.icon + '" alt="' + ti.label + '" class="tech-spec-icon">';
+                html += '<span>' + ti.label + ': <strong>' + ti.val + '</strong></span></div>';
+            }
+        });
+        html += '</div></div>';
+        return html;
+    }
+
+    function withPergolaStateSwap(idx, fn) {
+        var p = state.pergolas && state.pergolas[idx];
+        if (!p) return fn();
+        var keys = ['pergolaType','lamellaSize','selectedVariant','lamellaType','width','length','height','_pergolaHeight','facadePerOpening','glazingPerOpening','zipPerOpening','variantsData','_variantSpecHtml','_maxOverhang','_lastMainResult'];
+        var saved = {};
+        keys.forEach(function(k){ saved[k] = state[k]; });
+        try {
+            state.pergolaType = p.model || '';
+            state.lamellaSize = p.lamellaSize || '';
+            state.selectedVariant = p.variant || '';
+            state.lamellaType = p.lamellaType || '';
+            state.width = p.width || 0;
+            state.length = p.length || 0;
+            state.height = p.height || 3.0;
+            state._pergolaHeight = p.height || 3.0;
+            state.facadePerOpening = p.facadePerOpening || {};
+            state.glazingPerOpening = p.glazingPerOpening || {};
+            state.zipPerOpening = p.zipPerOpening || {};
+            return fn();
+        } finally {
+            keys.forEach(function(k){ state[k] = saved[k]; });
+        }
+    }
+
+    function _resultFromCalcData(d) {
+        return (d && d.mode === 'all') ? d.results[0] : (d && d.result);
+    }
+
+    function renderAdditionalPergolaKPs() {
+        if (!state.allPergolaResults || state.allPergolaResults.length < 2) return;
+        var sec = stepsEl.resultsSection;
+        var anchor = document.getElementById('marketing-kp-container');
+        if (!anchor) return;
+
+        if (!document.getElementById('mp-pergola-heading-0')) {
+            var firstP = (state.pergolas && state.pergolas[0]) || {};
+            var firstR = _resultFromCalcData(state.allPergolaResults[0]);
+            if (firstR) {
+                var h0 = document.createElement('div');
+                h0.id = 'mp-pergola-heading-0';
+                h0.className = 'mp-pergola-heading';
+                h0.innerHTML = '<h3>\u041F\u0435\u0440\u0433\u043E\u043B\u0430\u00A01 \u2014 ' + escHtml(firstR.pergola_type_name || firstP.model || '') + ' \u00B7 ' + firstR.dimensions.width.toFixed(2) + '\u00D7' + firstR.dimensions.length.toFixed(2) + '\u00A0\u043C</h3>';
+                anchor.parentNode.insertBefore(h0, anchor);
+            }
+        }
+
+        for (var i = 1; i < state.allPergolaResults.length; i++) {
+            (function(idx) {
+                if (document.getElementById('marketing-kp-container-' + idx)) return;
+                var sfx = String(idx);
+                var p = (state.pergolas && state.pergolas[idx]) || {};
+                var r = _resultFromCalcData(state.allPergolaResults[idx]);
+                if (!r) return;
+
+                var heading = document.createElement('div');
+                heading.id = 'mp-pergola-heading-' + idx;
+                heading.className = 'mp-pergola-heading';
+                heading.innerHTML = '<h3>\u041F\u0435\u0440\u0433\u043E\u043B\u0430\u00A0' + (idx + 1) + ' \u2014 ' + escHtml(r.pergola_type_name || p.model || '') + ' \u00B7 ' + r.dimensions.width.toFixed(2) + '\u00D7' + r.dimensions.length.toFixed(2) + '\u00A0\u043C</h3>';
+                sec.appendChild(heading);
+
+                var cont = document.createElement('div');
+                cont.id = 'marketing-kp-container-' + sfx;
+                cont.className = 'marketing-kp-container';
+                cont.innerHTML = '<div style="text-align:center;padding:1.5rem;color:#888;">\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043C\u2026</div>';
+                sec.appendChild(cont);
+
+                _fetchKpDataForType(p.model || '').then(function(kpData) {
+                    withPergolaStateSwap(idx, function() {
+                        state.variantsData = kpData.variants;
+                        state._variantSpecHtml = _buildVariantSpecHtmlForResult(r, kpData.variants, p.lamellaSize);
+                        var spec = _findSpecForVariant(kpData.variants, r.selected_variant, r.lamella_size || p.lamellaSize);
+                        state._maxOverhang = spec && spec.max_overhang ? spec.max_overhang : null;
+                        cont.innerHTML = buildMarketingKP(r, kpData.deco, sfx);
+                        initLazyIframes();
+                        setTimeout(function(){ updateSchemeForVariant(r, sfx); }, 50);
+                    });
+                });
+            })(i);
+        }
+
+        if (!document.getElementById('mp-bottom-actions')) {
+            var bottom = document.createElement('div');
+            bottom.id = 'mp-bottom-actions';
+            bottom.className = 'kp-actions-row';
+            bottom.innerHTML = '<button class="pdf-btn" id="pdf-btn-bottom"><i class="bi bi-file-earmark-pdf"></i> \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u041A\u041F \u0432 PDF</button>' +
+                '<button class="share-btn" id="share-btn-bottom" title="\u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F"><i class="bi bi-share"></i> \u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F</button>';
+            sec.appendChild(bottom);
+            document.getElementById('pdf-btn-bottom').addEventListener('click', exportPdf);
+            document.getElementById('share-btn-bottom').addEventListener('click', shareKp);
+        }
     }
 
     function pluralModule(n) {
