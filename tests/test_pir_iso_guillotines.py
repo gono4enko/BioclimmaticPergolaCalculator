@@ -31,6 +31,10 @@ W600_GLASS = '#aac7d8'
 W700_GLASS = '#9bbacd'
 # Dark frame colour shared by all W-series guillotines (heavy top/bottom rails)
 W_FRAME = '#1f2a35'
+# S100 frameless glass panel
+S100_GLASS = '#cfe0ea'
+# ZIP roller awning fabric
+ZIP_FABRIC = '#c8d8e8'
 
 
 # ---------------------------------------------------------------------------
@@ -129,4 +133,60 @@ def test_pir_left_wall_guillotine_and_panel(client):
     assert W_FRAME in svg, (
         f'W-series frame colour ({W_FRAME}) not found in PIR SVG — '
         'guillotine structural rails are missing on the left wall'
+    )
+
+
+# ---------------------------------------------------------------------------
+# Test 3 (PIR): Front wall – S100 on bay 1, ZIP on bay 2
+# ---------------------------------------------------------------------------
+
+def test_pir_front_wall_s100_and_zip(client):
+    """B600/PIR: both the S100 frameless glass colour and the ZIP fabric colour
+    must appear in the SVG when assigned to different bays on the front wall."""
+    svg = _svg(client, {
+        'w': '6',
+        'l': '4',
+        'h': '3',
+        'm': '2',
+        'pir': '1',
+        'fill_front_1': 'S100',
+        'fill_front_2': 'ZIP',
+    })
+
+    assert S100_GLASS in svg, (
+        f'S100 frameless glass fill ({S100_GLASS}) not found in PIR SVG — '
+        'bay 1 (S100 panel) was not rendered on the front wall'
+    )
+    assert ZIP_FABRIC in svg, (
+        f'ZIP fabric fill ({ZIP_FABRIC}) not found in PIR SVG — '
+        'bay 2 (ZIP awning) was not rendered on the front wall'
+    )
+
+
+# ---------------------------------------------------------------------------
+# Test 4 (PIR): Left wall – ZIP on bay 1, S100 on bay 2
+# ---------------------------------------------------------------------------
+
+def test_pir_left_wall_zip_and_s100(client):
+    """B600/PIR: both the ZIP fabric colour and the S100 frameless glass colour
+    must appear in the SVG when assigned to different bays on the left side wall.
+    xc=1 adds a mid-span column, splitting the depth into 2 left-wall bays."""
+    svg = _svg(client, {
+        'w': '6',
+        'l': '6',
+        'h': '3',
+        'm': '2',
+        'xc': '1',
+        'pir': '1',
+        'fill_left_1': 'ZIP',
+        'fill_left_2': 'S100',
+    })
+
+    assert ZIP_FABRIC in svg, (
+        f'ZIP fabric fill ({ZIP_FABRIC}) not found in PIR SVG — '
+        'bay 1 (ZIP awning) was not rendered on the left wall'
+    )
+    assert S100_GLASS in svg, (
+        f'S100 frameless glass fill ({S100_GLASS}) not found in PIR SVG — '
+        'bay 2 (S100 panel) was not rendered on the left wall'
     )
