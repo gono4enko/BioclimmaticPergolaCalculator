@@ -81,23 +81,37 @@
 
     <div class="step-card step-card-priority" id="step-3" style="display:none;">
         <h3><span class="step-num">3</span>Размеры <span class="step-required-badge">Обязательно</span></h3>
-        <div class="step-required-note">Заполните размеры перголы — без них расчёт невозможен.</div>
-        <div class="row g-3">
-            <div class="col-4 dim-input">
-                <label for="input-width">Ширина (м) <span class="req-star">*</span></label>
-                <input type="number" class="form-control form-control-lg dim-required" id="input-width" min="1" max="15" step="0.01">
-                <div class="dim-hint" id="width-hint">Макс: 13.5 м</div>
+        <div class="step-required-note">Заполните размеры перголы — без них расчёт невозможен. Если объект составной — добавьте дополнительные перголы кнопкой ниже.</div>
+        <div class="pergola-card" data-pergola-idx="0">
+            <div class="pergola-card-header">
+                <span class="pergola-num-badge">1</span>
+                <span class="pergola-card-title">Пергола&nbsp;1</span>
+                <span class="pergola-card-model" id="pergola-0-model-label"></span>
             </div>
-            <div class="col-4 dim-input">
-                <label for="input-length">Вынос (м) <span class="req-star">*</span></label>
-                <input type="number" class="form-control form-control-lg dim-required" id="input-length" min="1" max="8" step="0.01">
-                <div class="dim-hint" id="length-hint">Макс: 8.0 м</div>
+            <div class="row g-3">
+                <div class="col-4 dim-input">
+                    <label for="input-width">Ширина (м) <span class="req-star">*</span></label>
+                    <input type="number" class="form-control form-control-lg dim-required" id="input-width" min="1" max="15" step="0.01">
+                    <div class="dim-hint" id="width-hint">Макс: 13.5 м</div>
+                </div>
+                <div class="col-4 dim-input">
+                    <label for="input-length">Вынос (м) <span class="req-star">*</span></label>
+                    <input type="number" class="form-control form-control-lg dim-required" id="input-length" min="1" max="8" step="0.01">
+                    <div class="dim-hint" id="length-hint">Макс: 8.0 м</div>
+                </div>
+                <div class="col-4 dim-input">
+                    <label for="input-height">Высота (м) <span class="req-star">*</span></label>
+                    <input type="number" class="form-control form-control-lg dim-required is-filled" id="input-height" min="2.0" max="3.0" step="0.1" value="3.0">
+                    <div class="dim-hint">2.0 — 3.0 м</div>
+                </div>
             </div>
-            <div class="col-4 dim-input">
-                <label for="input-height">Высота (м) <span class="req-star">*</span></label>
-                <input type="number" class="form-control form-control-lg dim-required is-filled" id="input-height" min="2.0" max="3.0" step="0.1" value="3.0">
-                <div class="dim-hint">2.0 — 3.0 м</div>
-            </div>
+        </div>
+        <div id="extra-pergolas-list"></div>
+        <button type="button" class="btn btn-add-pergola mt-3" id="btn-add-pergola">
+            <span class="btn-add-pergola-plus">+</span>&nbsp;Добавить перголу
+        </button>
+        <div class="multi-pergola-notice mt-2" id="multi-pergola-notice" style="display:none;">
+            <strong>Внимание:</strong> расчёт стоимости и КП пока учитывают только <strong>Перголу&nbsp;1</strong>. Поддержка нескольких перголы в КП и PDF будет добавлена в ближайшем обновлении (Фазы 2–4).
         </div>
     </div>
 
@@ -301,7 +315,7 @@
 
 {% block scripts %}
 <script>window.__CALC_ID__ = {{ (calc_id|default(''))|tojson }};</script>
-<script src="{{ url_for('static', filename='js/calculator.js') }}?v=141"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v=142"></script>
 <script>
 (function() {
     var bg = document.getElementById('hero-bg');

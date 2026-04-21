@@ -21,7 +21,8 @@ document.addEventListener('DOMContentLoaded', function() {
         result: null,
         allResults: null,
         variantsData: null,
-        clientName: ''
+        clientName: '',
+        pergolas: []
     };
 
     var stepsEl = {
@@ -35,11 +36,168 @@ document.addEventListener('DOMContentLoaded', function() {
         spinner: document.getElementById('spinner-overlay')
     };
 
+    var MULTI_MODEL_OPTIONS = [
+        {value: 'B500NEW', label: 'B500 NEW (поворотные ламели)'},
+        {value: 'B700NEW', label: 'B700 NEW (поворот + сдвиг)'},
+        {value: 'B600', label: 'B600 (PIR-панель)'},
+        {value: 'B200', label: 'B200 MAF AERO FLAT'}
+    ];
+
+    function syncPergolaZero() {
+        if (!state.pergolas) state.pergolas = [];
+        state.pergolas[0] = {
+            model: state.pergolaType || '',
+            variant: state.selectedVariant || '',
+            lamellaSize: state.lamellaSize || '',
+            lamellaType: state.lamellaType || '',
+            width: state.width || 0,
+            length: state.length || 0,
+            height: state.height || 3.0
+        };
+        var lbl = document.getElementById('pergola-0-model-label');
+        if (lbl) lbl.textContent = state.pergolaType ? '· ' + state.pergolaType : '';
+    }
+
+    function getMixError(models, variants) {
+        var hasB500 = models.indexOf('B500NEW') !== -1;
+        var hasB700 = models.indexOf('B700NEW') !== -1;
+        if (hasB500 && hasB700) return 'B500 и B700 нельзя смешивать в одном объекте';
+        var lights = variants.filter(function(v) { return (v || '').toLowerCase().indexOf('light') !== -1; });
+        if (lights.length > 1) return 'Конфигурацию Light нельзя смешивать (только одна Light на объект)';
+        return null;
+    }
+
+    function checkMixForCard(idx, newModel) {
+        var models = [], variants = [];
+        for (var i = 0; i < state.pergolas.length; i++) {
+            if (i === idx) {
+                if (newModel !== undefined) models.push(newModel);
+                else models.push(state.pergolas[i].model || '');
+            } else {
+                models.push(state.pergolas[i].model || '');
+            }
+            variants.push(state.pergolas[i].variant || '');
+        }
+        return getMixError(models, variants);
+    }
+
+    function renderExtraPergolaCard(idx) {
+        var p = state.pergolas[idx];
+        var card = document.createElement('div');
+        card.className = 'pergola-card';
+        card.dataset.pergolaIdx = String(idx);
+        var optsHtml = MULTI_MODEL_OPTIONS.map(function(o) {
+            return '<option value="' + o.value + '"' + (o.value === p.model ? ' selected' : '') + '>' + o.label + '</option>';
+        }).join('');
+        card.innerHTML =
+            '<div class="pergola-card-header">' +
+                '<span class="pergola-num-badge">' + (idx + 1) + '</span>' +
+                '<span class="pergola-card-title">Пергола\u00A0' + (idx + 1) + '</span>' +
+                '<button type="button" class="btn btn-outline-danger btn-sm pergola-del-btn" title="Удалить">×</button>' +
+            '</div>' +
+            '<div class="row g-3">' +
+                '<div class="col-12 dim-input">' +
+                    '<label>Модель *</label>' +
+                    '<select class="form-select form-select-lg pergola-model-select">' + optsHtml + '</select>' +
+                '</div>' +
+            '</div>' +
+            '<div class="row g-3 mt-1">' +
+                '<div class="col-4 dim-input"><label>Ширина (м) *</label>' +
+                    '<input type="number" class="form-control form-control-lg pergola-w" min="1" max="15" step="0.01" value="' + (p.width || '') + '"></div>' +
+                '<div class="col-4 dim-input"><label>Вынос (м) *</label>' +
+                    '<input type="number" class="form-control form-control-lg pergola-l" min="1" max="8" step="0.01" value="' + (p.length || '') + '"></div>' +
+                '<div class="col-4 dim-input"><label>Высота (м) *</label>' +
+                    '<input type="number" class="form-control form-control-lg pergola-h" min="2.0" max="3.0" step="0.1" value="' + (p.height || 3.0) + '"></div>' +
+            '</div>' +
+            '<div class="pergola-mix-error" style="display:none;"></div>';
+        return card;
+    }
+
+    function attachExtraHandlers(card, idx) {
+        var sel = card.querySelector('.pergola-model-select');
+        var w = card.querySelector('.pergola-w');
+        var l = card.querySelector('.pergola-l');
+        var h = card.querySelector('.pergola-h');
+        var del = card.querySelector('.pergola-del-btn');
+        var errEl = card.querySelector('.pergola-mix-error');
+
+        function showErr(msg) {
+            if (msg) { errEl.textContent = msg; errEl.style.display = ''; }
+            else { errEl.style.display = 'none'; }
+        }
+
+        sel.addEventListener('change', function() {
+            var newModel = sel.value;
+            var err = checkMixForCard(idx, newModel);
+            if (err) {
+                showErr(err);
+                sel.value = state.pergolas[idx].model;
+                return;
+            }
+            state.pergolas[idx].model = newModel;
+            showErr(null);
+        });
+        w.addEventListener('input', function() { state.pergolas[idx].width = parseFloat(w.value) || 0; });
+        l.addEventListener('input', function() { state.pergolas[idx].length = parseFloat(l.value) || 0; });
+        h.addEventListener('input', function() { state.pergolas[idx].height = parseFloat(h.value) || 3.0; });
+        del.addEventListener('click', function() {
+            state.pergolas.splice(idx, 1);
+            rerenderExtras();
+        });
+    }
+
+    function rerenderExtras() {
+        var container = document.getElementById('extra-pergolas-list');
+        if (!container) return;
+        container.innerHTML = '';
+        for (var i = 1; i < state.pergolas.length; i++) {
+            var card = renderExtraPergolaCard(i);
+            container.appendChild(card);
+            attachExtraHandlers(card, i);
+        }
+        var notice = document.getElementById('multi-pergola-notice');
+        if (notice) notice.style.display = state.pergolas.length > 1 ? '' : 'none';
+        var addBtn = document.getElementById('btn-add-pergola');
+        if (addBtn) addBtn.textContent = state.pergolas.length > 1 ? '+ Добавить ещё одну перголу' : '+ Добавить перголу';
+    }
+
+    var _addBtn = document.getElementById('btn-add-pergola');
+    if (_addBtn) {
+        _addBtn.addEventListener('click', function() {
+            syncPergolaZero();
+            if (!state.pergolas[0] || !state.pergolas[0].model) {
+                alert('Сначала выберите модель и заполните размеры Перголы 1.');
+                return;
+            }
+            var defaultModel = 'B600';
+            var existingModels = state.pergolas.map(function(p) { return p.model; });
+            if (existingModels.indexOf('B500NEW') !== -1) defaultModel = 'B600';
+            else if (existingModels.indexOf('B700NEW') !== -1) defaultModel = 'B600';
+            else defaultModel = state.pergolas[0].model;
+            state.pergolas.push({
+                model: defaultModel,
+                variant: '',
+                lamellaSize: '',
+                lamellaType: '',
+                width: 0,
+                length: 0,
+                height: 3.0
+            });
+            rerenderExtras();
+        });
+    }
+
+    ['input-width', 'input-length', 'input-height'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', syncPergolaZero);
+    });
+
     document.querySelectorAll('.type-option').forEach(function(el) {
         el.addEventListener('click', function() {
             document.querySelectorAll('.type-option').forEach(function(o) { o.classList.remove('selected'); });
             el.classList.add('selected');
             state.pergolaType = el.dataset.type;
+            syncPergolaZero();
             stepsEl.step3.style.display = 'none';
             stepsEl.step4.style.display = 'none';
             stepsEl.calcBtn.style.display = 'none';
