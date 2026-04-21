@@ -39,8 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var MULTI_MODEL_OPTIONS = [
         {value: 'B500NEW', label: 'B500 NEW (поворотные ламели)'},
         {value: 'B700NEW', label: 'B700 NEW (поворот + сдвиг)'},
-        {value: 'B600', label: 'B600 (PIR-панель)'},
-        {value: 'B200', label: 'B200 MAF AERO FLAT'}
+        {value: 'B600', label: 'B600 (PIR-панель)'}
     ];
 
     function syncPergolaZero() {
@@ -58,27 +57,67 @@ document.addEventListener('DOMContentLoaded', function() {
         if (lbl) lbl.textContent = state.pergolaType ? '· ' + state.pergolaType : '';
     }
 
-    function getMixError(models, variants) {
-        var hasB500 = models.indexOf('B500NEW') !== -1;
-        var hasB700 = models.indexOf('B700NEW') !== -1;
-        if (hasB500 && hasB700) return 'B500 и B700 нельзя смешивать в одном объекте';
-        var lights = variants.filter(function(v) { return (v || '').toLowerCase().indexOf('light') !== -1; });
-        if (lights.length > 1) return 'Конфигурацию Light нельзя смешивать (только одна Light на объект)';
+    function getMixError(pergolas) {
+        var nonB600 = pergolas.filter(function(p) { return p.model && p.model !== 'B600'; });
+        if (nonB600.length === 0) return null;
+        var firstModel = nonB600[0].model;
+        var firstVariant = nonB600[0].variant || '';
+        for (var i = 1; i < nonB600.length; i++) {
+            if (nonB600[i].model !== firstModel) {
+                return firstModel + ' и ' + nonB600[i].model + ' нельзя смешивать. Эти модели можно сочетать только с B600.';
+            }
+            if ((nonB600[i].variant || '') !== firstVariant) {
+                return 'Все ' + firstModel + ' в одном КП должны иметь одинаковую модификацию (' + (firstVariant || '—') + ').';
+            }
+        }
         return null;
     }
 
     function checkMixForCard(idx, newModel) {
-        var models = [], variants = [];
-        for (var i = 0; i < state.pergolas.length; i++) {
-            if (i === idx) {
-                if (newModel !== undefined) models.push(newModel);
-                else models.push(state.pergolas[i].model || '');
-            } else {
-                models.push(state.pergolas[i].model || '');
+        var snapshot = state.pergolas.map(function(p, i) {
+            if (i === idx && newModel !== undefined) {
+                var inheritedVar = '';
+                if (newModel !== 'B600') {
+                    for (var j = 0; j < state.pergolas.length; j++) {
+                        if (j !== i && state.pergolas[j].model === newModel) {
+                            inheritedVar = state.pergolas[j].variant || '';
+                            break;
+                        }
+                    }
+                }
+                return {model: newModel, variant: inheritedVar};
             }
-            variants.push(state.pergolas[i].variant || '');
+            return {model: p.model || '', variant: p.variant || ''};
+        });
+        return getMixError(snapshot);
+    }
+
+    function inheritVariantForExtra(idx) {
+        var p = state.pergolas[idx];
+        if (!p || p.model === 'B600' || !p.model) {
+            p.variant = ''; p.lamellaSize = ''; p.lamellaType = '';
+            return;
         }
-        return getMixError(models, variants);
+        for (var j = 0; j < state.pergolas.length; j++) {
+            if (j !== idx && state.pergolas[j].model === p.model) {
+                p.variant = state.pergolas[j].variant || '';
+                p.lamellaSize = state.pergolas[j].lamellaSize || '';
+                p.lamellaType = state.pergolas[j].lamellaType || '';
+                return;
+            }
+        }
+    }
+
+    function updateInheritedLabel(card, idx) {
+        var p = state.pergolas[idx];
+        var lbl = card.querySelector('.pergola-inherited-info');
+        if (!lbl) return;
+        if (p.model && p.model !== 'B600' && p.variant) {
+            lbl.textContent = 'Модификация: ' + p.variant + ' (взята из Перголы\u00A01)';
+            lbl.style.display = '';
+        } else {
+            lbl.style.display = 'none';
+        }
     }
 
     function renderExtraPergolaCard(idx) {
@@ -99,6 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<div class="col-12 dim-input">' +
                     '<label>Модель *</label>' +
                     '<select class="form-select form-select-lg pergola-model-select">' + optsHtml + '</select>' +
+                    '<div class="pergola-inherited-info" style="display:none; color:#6b7280; font-size:12px; margin-top:4px;"></div>' +
                 '</div>' +
             '</div>' +
             '<div class="row g-3 mt-1">' +
@@ -135,7 +175,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             state.pergolas[idx].model = newModel;
+            inheritVariantForExtra(idx);
             showErr(null);
+            updateInheritedLabel(card, idx);
         });
         w.addEventListener('input', function() { state.pergolas[idx].width = parseFloat(w.value) || 0; });
         l.addEventListener('input', function() { state.pergolas[idx].length = parseFloat(l.value) || 0; });
@@ -154,6 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var card = renderExtraPergolaCard(i);
             container.appendChild(card);
             attachExtraHandlers(card, i);
+            updateInheritedLabel(card, i);
         }
         var notice = document.getElementById('multi-pergola-notice');
         if (notice) notice.style.display = state.pergolas.length > 1 ? '' : 'none';
@@ -169,13 +212,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Сначала выберите модель и заполните размеры Перголы 1.');
                 return;
             }
-            var defaultModel = 'B600';
-            var existingModels = state.pergolas.map(function(p) { return p.model; });
-            if (existingModels.indexOf('B500NEW') !== -1) defaultModel = 'B600';
-            else if (existingModels.indexOf('B700NEW') !== -1) defaultModel = 'B600';
-            else defaultModel = state.pergolas[0].model;
+            var newIdx = state.pergolas.length;
             state.pergolas.push({
-                model: defaultModel,
+                model: 'B600',
                 variant: '',
                 lamellaSize: '',
                 lamellaType: '',
@@ -183,6 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 length: 0,
                 height: 3.0
             });
+            inheritVariantForExtra(newIdx);
             rerenderExtras();
         });
     }
