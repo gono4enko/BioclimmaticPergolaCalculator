@@ -15,11 +15,30 @@ from flask_app.services.calculator import (
     ZIP_COLOR_HEX,
 )
 
-# Создаем директорию для сохранения сгенерированных PDF
-os.makedirs("generated_pdf", exist_ok=True)
+# --------------------------------------------------------------------------
+# Разрешение путей к ресурсам
+# Используем __file__ чтобы пути работали независимо от рабочей директории
+# (gunicorn может запускаться из любого места)
+# --------------------------------------------------------------------------
+_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
+_FONTS_DIR  = os.path.join(_MODULE_DIR, "fonts")
+_FONT_REGULAR = os.path.join(_FONTS_DIR, "DejaVuSans.ttf")
+_FONT_BOLD    = os.path.join(_FONTS_DIR, "DejaVuSans-Bold.ttf")
+_FONT_COND    = os.path.join(_FONTS_DIR, "DejaVuSansCondensed.ttf")
 
-# Создаем директорию для обработанных изображений
-os.makedirs("processed_images", exist_ok=True)
+def _get_generated_pdf_dir():
+    d = os.path.join(_MODULE_DIR, "generated_pdf")
+    os.makedirs(d, exist_ok=True)
+    return d
+
+def _get_processed_images_dir():
+    d = os.path.join(_MODULE_DIR, "processed_images")
+    os.makedirs(d, exist_ok=True)
+    return d
+
+# Создаем директории при импорте
+_get_generated_pdf_dir()
+_get_processed_images_dir()
 
 class PDF(FPDF):
     """
@@ -38,18 +57,14 @@ class PDF(FPDF):
         self.set_margins(20, 20, 20)
         self.set_auto_page_break(True, margin=20)
         
-        # Добавляем шрифт с поддержкой кириллицы
-        # Проверяем наличие файла шрифта
-        # В Replit используем копирование вместо символьных ссылок
-        # и добавляем отладочную информацию
-        print("Проверка наличия шрифтов:")
-        print(f"DejaVuSans.ttf: {os.path.exists('fonts/DejaVuSans.ttf')}")
-        print(f"DejaVuSans-Bold.ttf: {os.path.exists('fonts/DejaVuSans-Bold.ttf')}")
-        print(f"DejaVuSansCondensed.ttf: {os.path.exists('fonts/DejaVuSansCondensed.ttf')}")
-        
-        # Добавляем шрифты с поддержкой кириллицы
-        self.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
-        self.add_font('DejaVu', 'B', 'fonts/DejaVuSans-Bold.ttf', uni=True)
+        # Шрифты — абсолютный путь от расположения модуля (не от CWD)
+        # Это гарантирует работу при любом рабочем каталоге gunicorn/uvicorn
+        print(f"Fonts dir: {_FONTS_DIR}")
+        print(f"DejaVuSans.ttf: {os.path.exists(_FONT_REGULAR)}")
+        print(f"DejaVuSans-Bold.ttf: {os.path.exists(_FONT_BOLD)}")
+
+        self.add_font('DejaVu', '', _FONT_REGULAR, uni=True)
+        self.add_font('DejaVu', 'B', _FONT_BOLD, uni=True)
         
         # Устанавливаем шрифт по умолчанию
         self.set_font('DejaVu', '', 12)
@@ -137,6 +152,28 @@ class PDF(FPDF):
         self.set_text_color(0, 0, 0)
         lh = row_height
 
+        # Минимальная ширина ячейки для multi_cell (защита от
+        # "Not enough horizontal space to render a single character" на fpdf2).
+        # 12 мм гарантированно вмещает любой символ DejaVu при размере ≤ 12pt.
+        _MIN_CELL_W = 12.0
+
+        def _count_lines(w, h, text):
+            """Считает количество строк для multi_cell не рендеря их.
+            Совместимо с fpdf 1.7.2 (split_only=True) и fpdf2 (тот же API).
+            При ошибке возвращает приближённое значение.
+            """
+            safe_w = max(w, _MIN_CELL_W)
+            try:
+                result = self.multi_cell(safe_w, h, text, 0, 'L', split_only=True)
+                if isinstance(result, (list, tuple)):
+                    return len(result)
+                return 1
+            except Exception:
+                # Аварийный fallback: оцениваем через ширину строки
+                avg_char = max(self.get_string_width('А'), 1.5)
+                chars_per_line = max(int(safe_w / avg_char), 1)
+                return max(1, -(-len(text) // chars_per_line))  # ceiling division
+
         needs_wrap = False
         for i in range(len(data)):
             text = str(data[i])
@@ -159,8 +196,8 @@ class PDF(FPDF):
             text = str(data[i])
             tw = self.get_string_width(text)
             if tw > widths[i] - 4:
-                lines = self.multi_cell(widths[i] - 2, lh, text, 0, 'L', split_only=True)
-                cell_h = len(lines) * lh
+                n_lines = _count_lines(widths[i] - 2, lh, text)
+                cell_h = n_lines * lh
                 if cell_h > max_h:
                     max_h = cell_h
 
@@ -170,8 +207,9 @@ class PDF(FPDF):
             cx = x_start + sum(widths[:i])
             self.rect(cx, y_start, widths[i], max_h)
             if tw > widths[i] - 4:
+                safe_w = max(widths[i] - 2, _MIN_CELL_W)
                 self.set_xy(cx + 1, y_start)
-                self.multi_cell(widths[i] - 2, lh, text, 0, aligns[i])
+                self.multi_cell(safe_w, lh, text, 0, aligns[i])
             else:
                 self.set_xy(cx, y_start + (max_h - lh) / 2)
                 self.cell(widths[i], lh, text, 0, 0, aligns[i])
@@ -614,11 +652,12 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         bytes: Байты PDF-документа (или None при ошибке)
     """
     try:
-        for f in os.listdir("processed_images"):
+        _proc_dir = _get_processed_images_dir()
+        for f in os.listdir(_proc_dir):
             if f.startswith("proc_"):
                 try:
-                    os.remove(os.path.join("processed_images", f))
-                except:
+                    os.remove(os.path.join(_proc_dir, f))
+                except Exception:
                     pass
         
         now = datetime.now()
