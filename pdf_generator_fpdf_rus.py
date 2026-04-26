@@ -7,24 +7,33 @@ import os
 import io
 import re
 from datetime import datetime
-from fpdf import FPDF
 from PIL import Image
+
+# --------------------------------------------------------------------------
+# Разрешение путей к ресурсам
+# _FONTS_DIR ДОЛЖЕН быть вычислен ДО импорта fpdf, чтобы os.environ и
+# fpdf.set_global вступали в силу при загрузке модуля.
+# --------------------------------------------------------------------------
+_MODULE_DIR   = os.path.dirname(os.path.abspath(__file__))
+_FONTS_DIR    = os.path.join(_MODULE_DIR, "fonts")
+_FONT_REGULAR = os.path.join(_FONTS_DIR, "DejaVuSans.ttf")
+_FONT_BOLD    = os.path.join(_FONTS_DIR, "DejaVuSans-Bold.ttf")
+_FONT_COND    = os.path.join(_FONTS_DIR, "DejaVuSansCondensed.ttf")
+
+# Для fpdf 1.7.2: FPDF_FONT_DIR определяется при импорте из os.environ.
+# Устанавливаем переменную ДО импорта — это её первый шанс подхватить значение.
+os.environ["FPDF_FONT_DIR"] = _FONTS_DIR
+
+from fpdf import FPDF
+import fpdf as _fpdf_module
+
+# Второй гарантированный способ — set_global после импорта (для fpdf 1.7.2)
+_fpdf_module.set_global("FPDF_FONT_DIR", _FONTS_DIR)
 
 from flask_app.services.calculator import (
     ZIP_COLOR_NAMES_SHORT,
     ZIP_COLOR_HEX,
 )
-
-# --------------------------------------------------------------------------
-# Разрешение путей к ресурсам
-# Используем __file__ чтобы пути работали независимо от рабочей директории
-# (gunicorn может запускаться из любого места)
-# --------------------------------------------------------------------------
-_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
-_FONTS_DIR  = os.path.join(_MODULE_DIR, "fonts")
-_FONT_REGULAR = os.path.join(_FONTS_DIR, "DejaVuSans.ttf")
-_FONT_BOLD    = os.path.join(_FONTS_DIR, "DejaVuSans-Bold.ttf")
-_FONT_COND    = os.path.join(_FONTS_DIR, "DejaVuSansCondensed.ttf")
 
 def _get_generated_pdf_dir():
     d = os.path.join(_MODULE_DIR, "generated_pdf")
@@ -1860,9 +1869,10 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                 "Водоотвод внутри колонн — без внешних труб, эстетично",
                 "До 15 м в ширину без центральных опор (модуль Standard)",
             ]
+            _bullet_w = pdf.w - pdf.l_margin - pdf.r_margin - 5
             for feat in b600_features:
                 pdf.cell(5, 5, "\u2022", 0, 0, "L")
-                pdf.multi_cell(0, 5, f" {feat}")
+                pdf.multi_cell(_bullet_w, 5, f" {feat}")
                 pdf.ln(1)
 
             cover_photo = os.path.join(base_img_dir, 'b600_sandwich.jpg')
@@ -1919,12 +1929,13 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
                     if text:
                         pdf.multi_cell(0, 5, text)
                         pdf.ln(2)
+                _li_w = pdf.w - pdf.l_margin - pdf.r_margin - 5
                 for lst in soup.find_all(['ul', 'ol']):
                     for li in lst.find_all('li'):
                         text = li.get_text().strip()[:200]
                         if text:
                             pdf.cell(5, 5, "\u2022", 0, 0, "L")
-                            pdf.multi_cell(0, 5, text)
+                            pdf.multi_cell(_li_w, 5, text)
             except Exception:
                 pass
 
