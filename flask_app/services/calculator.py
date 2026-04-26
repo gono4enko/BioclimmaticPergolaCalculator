@@ -1215,14 +1215,117 @@ def _load_variant_prices_from_db(pergola_type, lamella_size):
         return None
 
 
+def _load_variant_prices_from_csv(pergola_type, lamella_size):
+    """Собирает вариантные цены из data/price_tables/Прайс_<TYPE>-<SIZE>_<VARIANT>.csv.
+
+    Возвращает {variant: {modules: {db_width: {db_length: price}}}}, как и DB-loader.
+    Семантика DB.width = вылет (rows в CSV), DB.length = ширина перголы (columns).
+    """
+    import glob
+    pattern = f"data/price_tables/Прайс_{pergola_type}-{lamella_size}_*.csv"
+    files = glob.glob(pattern)
+    if not files:
+        return None
+
+    variants = {}
+    for fpath in files:
+        # Извлечь имя варианта из суффикса
+        base = os.path.basename(fpath)
+        prefix = f"Прайс_{pergola_type}-{lamella_size}_"
+        if not base.startswith(prefix) or not base.endswith(".csv"):
+            continue
+        variant = base[len(prefix):-4]
+        if not variant:
+            continue
+
+        try:
+            with open(fpath, 'r', encoding='utf-8') as f:
+                first_line = f.readline().strip()
+                delimiter = ';' if ';' in first_line else ','
+                f.seek(0)
+                reader = csv.reader(f, delimiter=delimiter)
+                first_row = next(reader)
+                modules_row = first_row if "модуль" in ' '.join(first_row).lower() else None
+                header = next(reader) if modules_row else first_row
+
+                # Колонки = db_length (ширина перголы)
+                col_lengths = []
+                col_modules = []
+                for i, val in enumerate(header[1:], 1):
+                    if not val.strip():
+                        col_lengths.append(None)
+                        col_modules.append(None)
+                        continue
+                    try:
+                        l = float(val.replace(',', '.').strip())
+                    except ValueError:
+                        col_lengths.append(None)
+                        col_modules.append(None)
+                        continue
+                    col_lengths.append(l)
+                    mod = 1
+                    if modules_row and i < len(modules_row):
+                        mi = modules_row[i]
+                        if "1 модуль" in mi:
+                            mod = 1
+                        elif "2 модул" in mi:
+                            mod = 2
+                        elif "3 модул" in mi:
+                            mod = 3
+                        elif "4 модул" in mi:
+                            mod = 4
+                    col_modules.append(mod)
+
+                variants.setdefault(variant, {})
+
+                # Строки данных: первая ячейка = db_width (вылет)
+                for row in reader:
+                    if not row or not row[0].strip():
+                        continue
+                    try:
+                        w = float(row[0].strip().replace(',', '.'))
+                    except ValueError:
+                        continue
+                    for i, cell in enumerate(row[1:]):
+                        if i >= len(col_lengths):
+                            break
+                        l = col_lengths[i]
+                        mod = col_modules[i]
+                        if l is None or mod is None or not cell.strip():
+                            continue
+                        try:
+                            price = float(cell.replace(' ', '').replace(',', '.'))
+                        except ValueError:
+                            continue
+                        variants[variant].setdefault(mod, {})
+                        variants[variant][mod].setdefault(w, {})
+                        variants[variant][mod][w][l] = price
+        except Exception as e:
+            logger.warning(f"Ошибка чтения вариантного CSV {fpath}: {e}")
+            continue
+
+    if not variants:
+        return None
+    return variants
+
+
 def load_variant_prices(pergola_type, lamella_size):
     cache_key = (pergola_type, lamella_size, 'variants')
     if cache_key in _variant_price_cache:
         return _variant_price_cache[cache_key]
+
+    # CSV в приоритете — для портируемости при переносе на новый сервер
+    variants = _load_variant_prices_from_csv(pergola_type, lamella_size)
+    if variants:
+        _variant_price_cache[cache_key] = variants
+        logger.info(f"Вариантные цены {pergola_type}/{lamella_size} из CSV: {list(variants.keys())}")
+        return variants
+
+    # Резерв — БД
     variants = _load_variant_prices_from_db(pergola_type, lamella_size)
     if variants:
         _variant_price_cache[cache_key] = variants
-        logger.info(f"Вариантные цены {pergola_type}/{lamella_size}: {list(variants.keys())}")
+        logger.info(f"Вариантные цены {pergola_type}/{lamella_size} из БД: {list(variants.keys())}")
     return variants
 
 
@@ -1312,20 +1415,22 @@ def get_best_variant_price(pergola_type, lamella_size, width_m, length_m, reques
 
 
 def _load_prices_from_csv(pergola_type, lamella_size):
-    file_mapping = {
+    # Поиск по новому единому шаблону Прайс_<TYPE>-<SIZE>.csv (приоритет),
+    # затем — старые файлы для обратной совместимости.
+    candidates = [
+        f"data/price_tables/Прайс_{pergola_type}-{lamella_size}.csv",
+    ]
+    legacy = {
         ("B500NEW", "200"): ["data/price_tables/Прайс_В500-20.csv", "attached_assets/Price_B500-20.csv", "attached_assets/Прайс_В500-20.csv"],
         ("B500NEW", "250"): ["data/price_tables/Прайс_В500-25.csv", "attached_assets/Price_B500-25.csv", "attached_assets/Прайс_В500-25.csv"],
         ("B700NEW", "200"): ["data/price_tables/Прайс_B700-20.csv", "attached_assets/Price_B700-20.csv", "attached_assets/Прайс_B700-20.csv"],
         ("B700NEW", "250"): ["data/price_tables/Прайс_B700-25.csv", "attached_assets/Price_B700-25.csv", "attached_assets/Прайс_B700-25.csv"],
         ("B600", "PIR"): ["data/price_tables/Прайс_В600_PIR.csv", "attached_assets/Price_B600_PIR.csv", "attached_assets/Прайс_В600_PIR.csv"]
     }
-
-    cache_key = (pergola_type, lamella_size)
-    if cache_key not in file_mapping:
-        return None
+    candidates.extend(legacy.get((pergola_type, lamella_size), []))
 
     file_path = None
-    for path in file_mapping[cache_key]:
+    for path in candidates:
         if os.path.exists(path):
             file_path = path
             break
@@ -1383,18 +1488,21 @@ def load_price_data(pergola_type, lamella_size):
     if cache_key in _price_cache:
         return _price_cache[cache_key]
 
-    prices = _load_prices_from_db(pergola_type, lamella_size)
-    if prices:
-        _price_cache[cache_key] = prices
-        logger.info(f"Цены {pergola_type}/{lamella_size}: {len(prices)} строк из PostgreSQL")
-        return prices
-
+    # CSV в приоритете — для портируемости при переносе на новый сервер.
     prices = _load_prices_from_csv(pergola_type, lamella_size)
     if prices:
         _price_cache[cache_key] = prices
+        logger.info(f"Цены {pergola_type}/{lamella_size}: {len(prices)} строк из CSV")
         return prices
 
-    logger.error(f"Цены для {pergola_type}/{lamella_size} не найдены ни в БД, ни в CSV")
+    # Резерв — БД
+    prices = _load_prices_from_db(pergola_type, lamella_size)
+    if prices:
+        _price_cache[cache_key] = prices
+        logger.info(f"Цены {pergola_type}/{lamella_size}: {len(prices)} строк из PostgreSQL (CSV отсутствует)")
+        return prices
+
+    logger.error(f"Цены для {pergola_type}/{lamella_size} не найдены ни в CSV, ни в БД")
     return {}
 
 
@@ -1429,19 +1537,20 @@ def _get_modules_info_from_db(pergola_type, lamella_size):
 
 
 def _get_modules_info_from_csv(pergola_type, lamella_size):
-    file_mapping = {
+    candidates = [
+        f"data/price_tables/Прайс_{pergola_type}-{lamella_size}.csv",
+    ]
+    legacy = {
         ("B500NEW", "200"): ["data/price_tables/Прайс_В500-20.csv", "attached_assets/Price_B500-20.csv"],
         ("B500NEW", "250"): ["data/price_tables/Прайс_В500-25.csv", "attached_assets/Price_B500-25.csv"],
         ("B700NEW", "200"): ["data/price_tables/Прайс_B700-20.csv", "attached_assets/Price_B700-20.csv"],
         ("B700NEW", "250"): ["data/price_tables/Прайс_B700-25.csv", "attached_assets/Price_B700-25.csv"],
         ("B600", "PIR"): ["data/price_tables/Прайс_В600_PIR.csv", "attached_assets/Price_B600_PIR.csv"]
     }
-    key = (pergola_type, lamella_size)
-    if key not in file_mapping:
-        return None
+    candidates.extend(legacy.get((pergola_type, lamella_size), []))
 
     file_path = None
-    for path in file_mapping[key]:
+    for path in candidates:
         if os.path.exists(path):
             file_path = path
             break
