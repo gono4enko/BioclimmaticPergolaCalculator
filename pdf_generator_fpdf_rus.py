@@ -6,6 +6,7 @@
 import os
 import io
 import re
+import traceback
 from datetime import datetime
 from PIL import Image
 
@@ -72,11 +73,13 @@ class PDF(FPDF):
         self.set_auto_page_break(True, margin=20)
         
         # Шрифты — абсолютный путь от расположения модуля (не от CWD).
-        # fpdf 1.7.2: add_font(family, style, ABSOLUTE_PATH, uni=True)
-        print(f"[PDF.__init__] add_font regular: {_FONT_REGULAR}")
-        print(f"[PDF.__init__] regular exists:   {os.path.exists(_FONT_REGULAR)}")
-        print(f"[PDF.__init__] add_font bold:    {_FONT_BOLD}")
-        print(f"[PDF.__init__] bold exists:      {os.path.exists(_FONT_BOLD)}")
+        # fpdf 1.7.2: add_font(family, style, ABSOLUTE_PATH, uni=True).
+        # Подробные debug-принты выведены при импорте модуля (см. верх файла).
+        # Здесь шумим только в случае реальной проблемы с файлами.
+        if not os.path.exists(_FONT_REGULAR) or not os.path.exists(_FONT_BOLD):
+            print(f"[PDF.__init__] !!! FONT FILES MISSING !!!")
+            print(f"[PDF.__init__]   regular: {_FONT_REGULAR} — exists={os.path.exists(_FONT_REGULAR)}")
+            print(f"[PDF.__init__]   bold:    {_FONT_BOLD} — exists={os.path.exists(_FONT_BOLD)}")
 
         self.add_font('DejaVu', '', _FONT_REGULAR, uni=True)
         self.add_font('DejaVu', 'B', _FONT_BOLD, uni=True)
@@ -2095,11 +2098,12 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
         pdf_bytes = pdf.output(dest='S')
         if isinstance(pdf_bytes, str):
             pdf_bytes = pdf_bytes.encode('latin-1')
-        print(f"PDF успешно создан в памяти ({len(pdf_bytes)} байт)")
         return pdf_bytes
         
     except Exception as e:
-        print(f"Ошибка при создании PDF: {str(e)}")
+        # Полный traceback в логах для диагностики на проде
+        print(f"[PDF] Ошибка при создании основного PDF: {e}")
+        print(f"[PDF] Traceback:\n{traceback.format_exc()}")
         
         try:
             from fpdf import FPDF
@@ -2123,18 +2127,39 @@ def generate_commercial_offer(pergola_data, user_data=None, all_variants=None):
             simple_pdf.cell(0, 10, f"{p_length} m", 0, 1)
             simple_pdf.ln(5)
             simple_pdf.set_font('Arial', 'B', 14)
-            price_str = f"{int(p_cost):,d}".replace(',', ' ')
+            try:
+                price_str = f"{int(p_cost):,d}".replace(',', ' ')
+            except Exception:
+                price_str = str(p_cost)
             simple_pdf.cell(0, 10, f"Total: {price_str} RUB", 1, 1, 'C', fill=True)
             
             fallback_bytes = simple_pdf.output(dest='S')
             if isinstance(fallback_bytes, str):
                 fallback_bytes = fallback_bytes.encode('latin-1')
-            print(f"Упрощенный PDF создан в памяти ({len(fallback_bytes)} байт)")
+            print(f"[PDF] Fallback (simple Arial) создан: {len(fallback_bytes)} байт")
             return fallback_bytes
             
         except Exception as e2:
-            print(f"Ошибка при создании упрощенного PDF: {str(e2)}")
-            return None
+            print(f"[PDF] Ошибка fallback PDF: {e2}")
+            print(f"[PDF] Traceback:\n{traceback.format_exc()}")
+            
+            # Последний рубеж: минимальный валидный PDF, чтобы клиент не получил пустой/битый файл
+            try:
+                from fpdf import FPDF
+                emergency = FPDF()
+                emergency.add_page()
+                emergency.set_font('Arial', 'B', 14)
+                emergency.cell(0, 10, "PDF generation error", 0, 1, 'C')
+                emergency.set_font('Arial', '', 11)
+                emergency.cell(0, 8, "Please contact support: zakaz@infopergola.ru", 0, 1, 'C')
+                emergency_bytes = emergency.output(dest='S')
+                if isinstance(emergency_bytes, str):
+                    emergency_bytes = emergency_bytes.encode('latin-1')
+                print(f"[PDF] Emergency PDF создан: {len(emergency_bytes)} байт")
+                return emergency_bytes
+            except Exception as e3:
+                print(f"[PDF] КРИТИЧНО: даже emergency PDF не создался: {e3}")
+                return None
 
 def _generate_multi_summary_cover(pergolas_data_list, user_data=None):
     """Generates a single-page cover summarizing N pergolas with grand totals."""

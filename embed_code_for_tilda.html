@@ -1,23 +1,20 @@
 <!-- Код для встраивания калькулятора пергол на сайт Tilda -->
-<!-- Версия 3.0 - Адаптивный дизайн для мобильных устройств, улучшенная прокрутка и автоматическая высота -->
-<!-- ПРЯМАЯ ССЫЛКА НА ПРИЛОЖЕНИЕ: https://bioclimmatic-pergola-calculator-gono4enko.replit.app/ -->
-
-<!-- Чтобы перейти напрямую к калькулятору, используйте ссылку: -->
-<!-- <a href="https://bioclimmatic-pergola-calculator-gono4enko.replit.app/" target="_blank">Открыть калькулятор в новом окне</a> -->
+<!-- Версия 4.0 — исправлена проблема "съезжает вниз" при первой загрузке -->
+<!-- ПРЯМАЯ ССЫЛКА: https://bioclimmatic-pergola-calculator-gono4enko.replit.app/ -->
 
 <!-- Внешний контейнер для задания размеров и позиционирования -->
 <div class="pergola-calculator-wrapper">
   <!-- Кнопка для прямого доступа к калькулятору (опционально) -->
-  <a href="https://bioclimmatic-pergola-calculator-gono4enko.replit.app/" 
-     target="_blank" 
+  <a href="https://bioclimmatic-pergola-calculator-gono4enko.replit.app/"
+     target="_blank"
      class="direct-link-button">
     Открыть калькулятор в новом окне
   </a>
-  
+
   <!-- iframe с калькулятором -->
-  <iframe 
-    id="pergola-calculator" 
-    src="https://bioclimmatic-pergola-calculator-gono4enko.replit.app/" 
+  <iframe
+    id="pergola-calculator"
+    src="https://bioclimmatic-pergola-calculator-gono4enko.replit.app/"
     scrolling="no"
     title="Калькулятор стоимости пергол"
     allow="clipboard-read; clipboard-write"
@@ -29,71 +26,76 @@
   /* Контейнер для калькулятора */
   .pergola-calculator-wrapper {
     width: 100%;
-    max-width: 1200px; /* Максимальная ширина на широких экранах */
+    max-width: 1200px;
     margin: 0 auto;
-    overflow: hidden;
+    /* overflow: visible — не отрезаем контент при росте iframe */
+    overflow: visible;
     box-sizing: border-box;
     padding: 0;
+    /* Высота контейнера определяется содержимым (iframe) */
+    height: auto;
   }
-  
+
   /* Стили для iframe */
   #pergola-calculator {
     width: 100%;
-    min-height: 800px; /* Начальная минимальная высота */
-    height: auto; /* Позволяет контенту определять высоту */
-    max-height: none; /* Убираем ограничение по максимальной высоте */
+    /* Меньшая стартовая высота — чтобы калькулятор не "съезжал вниз".
+       Реальная высота прилетит сразу после load через postMessage. */
+    min-height: 600px;
+    height: 600px;
     border: none;
     margin: 0;
     padding: 0;
+    /* vertical-align:top убирает baseline-зазор у inline-элементов */
     display: block;
-    transition: height 0.3s ease; /* Плавное изменение высоты */
-    overflow: hidden; /* Скрываем внутреннюю полосу прокрутки */
+    vertical-align: top;
+    transition: height 0.25s ease;
+    overflow: hidden;
   }
-  
+
   /* Стили для мобильных устройств */
   @media (max-width: 768px) {
     .pergola-calculator-wrapper {
       width: 100%;
-      padding: 0 5px; /* Добавляем небольшие отступы */
+      padding: 0 5px;
     }
-    
     #pergola-calculator {
-      min-height: 1000px; /* Увеличенная начальная высота для мобильных */
-      width: calc(100% - 10px); /* Растягиваем на всю ширину экрана минус отступы */
-      max-width: none; /* Отключаем ограничение ширины */
-      margin-left: 5px; /* Добавляем отступ слева */
-      margin-right: 5px; /* Добавляем отступ справа */
-      border-radius: 8px; /* Скругляем углы для эстетики */
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Добавляем легкую тень */
+      /* На мобильных стартуем с 700px — обычно одного экрана достаточно
+         до прихода точной высоты от калькулятора */
+      min-height: 700px;
+      height: 700px;
+      width: calc(100% - 10px);
+      max-width: none;
+      margin-left: 5px;
+      margin-right: 5px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
   }
-  
+
   /* Специальные стили для iPhone и других устройств с высоким DPI */
-  @media screen and (-webkit-min-device-pixel-ratio: 2), 
+  @media screen and (-webkit-min-device-pixel-ratio: 2),
          screen and (min-resolution: 192dpi) {
     #pergola-calculator {
-      width: calc(100% - 10px); /* Используем ширину с отступами */
+      width: calc(100% - 10px);
       max-width: none;
-      margin-left: 5px; /* Отступ слева */
-      margin-right: 5px; /* Отступ справа */
-      border-radius: 8px; /* Скругленные углы для лучшего вида */
+      margin-left: 5px;
+      margin-right: 5px;
+      border-radius: 8px;
     }
-    
-    /* На очень узких экранах добавляем больше отступов */
     @media (max-width: 375px) {
       #pergola-calculator {
-        width: calc(100% - 16px); /* Еще больше отступов для iPhone */
-        margin-left: 8px; 
+        width: calc(100% - 16px);
+        margin-left: 8px;
         margin-right: 8px;
       }
-      
       .pergola-calculator-wrapper {
-        padding: 0 8px; /* Увеличиваем отступы контейнера */
+        padding: 0 8px;
       }
     }
   }
-  
-  /* Стили для кнопки прямого доступа */
+
+  /* Кнопка прямого доступа */
   .direct-link-button {
     display: inline-block;
     background-color: #0066cc;
@@ -107,14 +109,11 @@
     transition: all 0.3s ease;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   }
-  
   .direct-link-button:hover {
     background-color: #0055aa;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     transform: translateY(-2px);
   }
-  
-  /* Адаптивные стили для кнопки на мобильных устройствах */
   @media (max-width: 768px) {
     .direct-link-button {
       display: block;
@@ -127,201 +126,141 @@
   }
 </style>
 
-<!-- JavaScript для автоматической подстройки высоты iframe -->
+<!-- JavaScript для авто-подстройки высоты iframe -->
 <script>
-  // Хранилище для последней полученной высоты
-  let lastReceivedHeight = 0;
-  let heightUpdateTime = 0;
-  let iframeScrollTimeout = null;
-  
-  // Функция для плавного изменения высоты iframe
+(function() {
+  var IFRAME_ORIGIN = "https://bioclimmatic-pergola-calculator-gono4enko.replit.app";
+  var lastReceivedHeight = 0;
+  var heightUpdateTime = 0;
+  var iframeScrollTimeout = null;
+
+  // Применяем новую высоту к iframe (плавно)
   function smoothlySetIframeHeight(newHeight, iframe) {
-    // Если новая высота отличается существенно, применяем ее
-    if (Math.abs(newHeight - lastReceivedHeight) > 20) {
-      console.log("Применяем новую высоту:", newHeight);
-      
-      // Добавляем отступ для предотвращения скролла
-      // На ПК добавляем больше пространства для корректного отображения всего контента
-      const isDesktop = window.innerWidth > 768;
-      const heightPadding = isDesktop ? 100 : 50; // Больше отступа для десктопа
-      const heightWithPadding = newHeight + heightPadding;
-      
-      // Применяем высоту с плавной анимацией
-      iframe.style.height = heightWithPadding + "px";
-      
-      // Убеждаемся, что iframe не имеет ограничений по максимальной высоте
-      iframe.style.maxHeight = "none";
-      
-      // Сохраняем последнюю высоту
-      lastReceivedHeight = newHeight;
+    if (!iframe || !newHeight || newHeight < 100) return;
+    // Минимальный буфер — 20px на всех устройствах (раньше было 100px десктоп — давало
+    // большой пустой блок ниже контента и эффект "съезжания")
+    var heightPadding = 20;
+    var heightWithPadding = newHeight + heightPadding;
+    // Применяем только если разница значимая (>10px)
+    if (Math.abs(heightWithPadding - lastReceivedHeight) < 10) return;
+    iframe.style.height = heightWithPadding + "px";
+    iframe.style.minHeight = heightWithPadding + "px";
+    iframe.style.maxHeight = "none";
+    lastReceivedHeight = heightWithPadding;
+  }
+
+  // Запрос высоты у калькулятора внутри iframe
+  function requestHeight(iframe) {
+    if (!iframe || !iframe.contentWindow) return;
+    try {
+      iframe.contentWindow.postMessage({
+        type: "REQUEST_HEIGHT",
+        timestamp: Date.now()
+      }, IFRAME_ORIGIN);
+    } catch (e) {
+      // contentWindow может быть недоступен сразу — это нормально
     }
   }
-  
-  // Получаем сообщения от iframe
+
+  // Слушаем сообщения от калькулятора (он шлёт свою реальную высоту)
   window.addEventListener("message", function(event) {
-    // Проверяем, что сообщение от нашего калькулятора
-    if (event.origin.startsWith("https://bioclimmatic-pergola-calculator-gono4enko.replit.app")) {
-      const iframe = document.getElementById("pergola-calculator");
-      
-      // Обработка структурированного сообщения (объект)
-      if (typeof event.data === 'object' && event.data !== null && 'height' in event.data) {
-        // Получаем информацию из сообщения
-        const receivedHeight = event.data.height;
-        const needsScroll = event.data.needsScroll;
-        const timestamp = event.data.timestamp || Date.now();
-        
-        // Предотвращаем обработку устаревших сообщений
-        if (timestamp < heightUpdateTime) {
-          console.log("Игнорируем устаревшее сообщение о высоте");
-          return;
-        }
-        
-        // Обновляем время последнего обновления
-        heightUpdateTime = timestamp;
-        
-        // Применяем новую высоту
-        smoothlySetIframeHeight(receivedHeight, iframe);
-        
-        console.log("Получены данные о высоте:", event.data);
-      } 
-      // Для совместимости со старым кодом, который отправляет просто число
-      else if (typeof event.data === 'number') {
-        const receivedHeight = event.data;
-        smoothlySetIframeHeight(receivedHeight, iframe);
-        console.log("Получено числовое значение высоты:", receivedHeight);
-      }
+    if (!event.origin || event.origin.indexOf(IFRAME_ORIGIN) !== 0) return;
+    var iframe = document.getElementById("pergola-calculator");
+    if (!iframe) return;
+
+    var receivedHeight = null;
+    var ts = Date.now();
+    if (typeof event.data === 'object' && event.data !== null && 'height' in event.data) {
+      receivedHeight = event.data.height;
+      ts = event.data.timestamp || ts;
+    } else if (typeof event.data === 'number') {
+      receivedHeight = event.data;
     }
+    if (!receivedHeight) return;
+    // Отсекаем устаревшие сообщения
+    if (ts < heightUpdateTime) return;
+    heightUpdateTime = ts;
+    smoothlySetIframeHeight(receivedHeight, iframe);
   });
-  
-  // Функция для обработки изменения размера окна
+
+  // Адаптация при ресайзе окна
   function adjustIframeOnResize() {
-    // Получаем текущую ширину окна
-    const windowWidth = window.innerWidth;
-    const iframe = document.getElementById("pergola-calculator");
-    
-    // Устанавливаем начальную высоту в зависимости от ширины устройства
-    if (windowWidth <= 768) {
-      iframe.style.minHeight = "1000px"; // Больше высоты для мобильных
-    } else {
-      iframe.style.minHeight = "1200px"; // Увеличенная высота для десктопов
-      iframe.style.maxHeight = "none"; // Убираем ограничение по максимальной высоте
-    }
-    
-    // Адаптируем размеры и отступы в зависимости от размера экрана
-    if (windowWidth > 768) {
-      // Десктоп: стандартные настройки
+    var iframe = document.getElementById("pergola-calculator");
+    if (!iframe) return;
+    var w = window.innerWidth;
+    if (w > 768) {
       iframe.style.marginLeft = "0";
       iframe.style.marginRight = "0";
       iframe.style.width = "100%";
       iframe.style.borderRadius = "0";
       iframe.style.boxShadow = "none";
-    } 
-    else if (windowWidth <= 375) {
-      // iPhone или маленькие мобильные: максимальные отступы
+    } else if (w <= 375) {
       iframe.style.width = "calc(100% - 16px)";
       iframe.style.marginLeft = "8px";
       iframe.style.marginRight = "8px";
       iframe.style.borderRadius = "8px";
       iframe.style.boxShadow = "0 1px 3px rgba(0,0,0,0.05)";
-    }
-    else {
-      // Средние мобильные устройства
+    } else {
       iframe.style.width = "calc(100% - 10px)";
       iframe.style.marginLeft = "5px";
       iframe.style.marginRight = "5px";
       iframe.style.borderRadius = "8px";
       iframe.style.boxShadow = "0 1px 3px rgba(0,0,0,0.05)";
     }
-    
-    // Запрашиваем текущую высоту у iframe
-    try {
-      // Отправляем сообщение iframe с запросом высоты
-      iframe.contentWindow.postMessage({
-        type: "REQUEST_HEIGHT",
-        timestamp: Date.now()
-      }, "https://bioclimmatic-pergola-calculator-gono4enko.replit.app");
-      console.log("Отправлен запрос высоты");
-    } catch (e) {
-      console.log("Не удалось отправить запрос высоты:", e);
-    }
+    requestHeight(iframe);
   }
-  
-  // Функция для периодической проверки размеров iframe
-  function setupHeightMonitoring() {
-    // Каждые 2 секунды проверяем, нужно ли обновить высоту
-    const monitorInterval = setInterval(function() {
-      try {
-        const iframe = document.getElementById("pergola-calculator");
-        
-        // Если iframe загружен, запрашиваем текущую высоту
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage({
-            type: "REQUEST_HEIGHT",
-            timestamp: Date.now()
-          }, "https://bioclimmatic-pergola-calculator-gono4enko.replit.app");
-        }
-      } catch (e) {
-        console.log("Ошибка мониторинга высоты:", e);
-      }
-    }, 2000);
-    
-    return monitorInterval;
-  }
-  
-  // Функция для установки обработчиков событий прокрутки
+
+  // Прокрутка родителя — пробрасываем в iframe
   function setupScrollHandlers() {
-    // При прокрутке отправляем сообщение iframe
     window.addEventListener("scroll", function() {
-      // Используем throttling для уменьшения числа событий
       if (iframeScrollTimeout) return;
-      
       iframeScrollTimeout = setTimeout(function() {
         try {
-          const iframe = document.getElementById("pergola-calculator");
-          const scrollPosition = window.scrollY;
-          
-          // Отправляем информацию о прокрутке родительского окна
-          iframe.contentWindow.postMessage({
-            type: "PARENT_SCROLL",
-            scrollY: scrollPosition,
-            timestamp: Date.now()
-          }, "https://bioclimmatic-pergola-calculator-gono4enko.replit.app");
-          
-          iframeScrollTimeout = null;
-        } catch (e) {
-          console.log("Ошибка отправки события прокрутки:", e);
-          iframeScrollTimeout = null;
-        }
+          var iframe = document.getElementById("pergola-calculator");
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage({
+              type: "PARENT_SCROLL",
+              scrollY: window.scrollY,
+              timestamp: Date.now()
+            }, IFRAME_ORIGIN);
+          }
+        } catch (e) {}
+        iframeScrollTimeout = null;
       }, 100);
     });
   }
-  
-  // Запускаем все обработчики при загрузке страницы
-  window.addEventListener("load", function() {
-    // Настраиваем iframe под размер устройства
+
+  // Запускаемся
+  function init() {
+    var iframe = document.getElementById("pergola-calculator");
+    if (!iframe) return;
     adjustIframeOnResize();
-    
-    // Запускаем мониторинг высоты
-    const heightMonitor = setupHeightMonitoring();
-    
-    // Настраиваем обработчики прокрутки
     setupScrollHandlers();
-    
-    // Настраиваем обработчик изменения размера окна
-    window.addEventListener("resize", function() {
-      // Используем debouncing для предотвращения слишком частых вызовов
-      clearTimeout(window.resizeTimeout);
-      window.resizeTimeout = setTimeout(adjustIframeOnResize, 200);
+
+    // Сразу при загрузке iframe — запросить актуальную высоту,
+    // дальше отдельный таймер на 500ms/1.5s/3s для надёжности
+    iframe.addEventListener("load", function() {
+      requestHeight(iframe);
+      setTimeout(function(){ requestHeight(iframe); }, 500);
+      setTimeout(function(){ requestHeight(iframe); }, 1500);
+      setTimeout(function(){ requestHeight(iframe); }, 3000);
     });
-  });
-  
-  // Устанавливаем начальную высоту и убеждаемся, что нет ограничений по максимальной высоте
-  const iframe = document.getElementById("pergola-calculator");
-  iframe.style.height = (window.innerWidth <= 768) ? "1000px" : "1200px"; // Увеличенная высота для ПК
-  iframe.style.maxHeight = "none"; // Убираем ограничение по максимальной высоте
-  
-  // Для десктопной версии убеждаемся, что контейнер достаточно большой
-  if (window.innerWidth > 768) {
-    iframe.style.minHeight = "1200px"; // Увеличенная минимальная высота для ПК
+
+    // Долгосрочный мониторинг каждые 2 секунды (на случай динамических изменений UI)
+    setInterval(function() { requestHeight(iframe); }, 2000);
+
+    // Reaction на изменения размера окна
+    var resizeTimer = null;
+    window.addEventListener("resize", function() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(adjustIframeOnResize, 200);
+    });
   }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
 </script>

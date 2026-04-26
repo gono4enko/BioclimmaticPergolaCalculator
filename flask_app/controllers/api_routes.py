@@ -548,11 +548,14 @@ def export_pdf():
 _lead_rate = {}
 _lead_rate_lock = threading.Lock()
 
-TG_BOT_TOKEN = os.environ.get('TG_BOT_TOKEN', '8658950389:AAGmL1Ii4BFzce0EpYuhQHEY0V-hCBSkGgE')
-TG_CHAT_ID   = os.environ.get('TG_CHAT_ID',   '-5258227787')
+TG_BOT_TOKEN = os.environ.get('TG_BOT_TOKEN', '')
+TG_CHAT_ID   = os.environ.get('TG_CHAT_ID', '')
 
 
 def _send_telegram_lead(text):
+    if not TG_BOT_TOKEN or not TG_CHAT_ID:
+        # Telegram-уведомления опциональны — без токена просто пропускаем
+        return
     try:
         import urllib.request as ur
         payload = json.dumps({'chat_id': TG_CHAT_ID, 'text': text}).encode()
