@@ -1,0 +1,23 @@
+name: Deploy to Beget
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.BEGET_HOST }}
+          username: ${{ secrets.BEGET_USER }}
+          key: ${{ secrets.BEGET_SSH_KEY }}
+          script: |
+            cd /var/www/bioclim-calculator
+            git pull origin main
+            source venv/bin/activate
+            pip install -r requirements.txt --prefer-binary --quiet
+            pm2 restart bioclim-calculator
+            echo "Деплой завершён!"
