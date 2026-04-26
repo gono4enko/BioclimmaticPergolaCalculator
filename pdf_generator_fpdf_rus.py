@@ -30,6 +30,11 @@ import fpdf as _fpdf_module
 # Второй гарантированный способ — set_global после импорта (для fpdf 1.7.2)
 _fpdf_module.set_global("FPDF_FONT_DIR", _FONTS_DIR)
 
+# ── Debug: выводится при запуске gunicorn (один раз при загрузке модуля) ──
+print(f"[pdf_generator] FONTS_DIR: {_FONTS_DIR}")
+print(f"[pdf_generator] Файл существует: {os.path.exists(_FONT_REGULAR)}")
+print(f"[pdf_generator] __file__: {os.path.abspath(__file__)}")
+
 from flask_app.services.calculator import (
     ZIP_COLOR_NAMES_SHORT,
     ZIP_COLOR_HEX,
@@ -66,11 +71,12 @@ class PDF(FPDF):
         self.set_margins(20, 20, 20)
         self.set_auto_page_break(True, margin=20)
         
-        # Шрифты — абсолютный путь от расположения модуля (не от CWD)
-        # Это гарантирует работу при любом рабочем каталоге gunicorn/uvicorn
-        print(f"Fonts dir: {_FONTS_DIR}")
-        print(f"DejaVuSans.ttf: {os.path.exists(_FONT_REGULAR)}")
-        print(f"DejaVuSans-Bold.ttf: {os.path.exists(_FONT_BOLD)}")
+        # Шрифты — абсолютный путь от расположения модуля (не от CWD).
+        # fpdf 1.7.2: add_font(family, style, ABSOLUTE_PATH, uni=True)
+        print(f"[PDF.__init__] add_font regular: {_FONT_REGULAR}")
+        print(f"[PDF.__init__] regular exists:   {os.path.exists(_FONT_REGULAR)}")
+        print(f"[PDF.__init__] add_font bold:    {_FONT_BOLD}")
+        print(f"[PDF.__init__] bold exists:      {os.path.exists(_FONT_BOLD)}")
 
         self.add_font('DejaVu', '', _FONT_REGULAR, uni=True)
         self.add_font('DejaVu', 'B', _FONT_BOLD, uni=True)
