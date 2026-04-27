@@ -235,6 +235,11 @@ def create_app(test_config=None):
     @app.after_request
     def set_iframe_headers(response):
         from flask import request as _req
+        # /api/health-probe сам управляет своими заголовками (CORS, Cache-Control,
+        # Content-Length, X-Probe-Size). Не трогаем его, чтобы не было дублирующих
+        # или лишних заголовков, которые могут сбить DPI-мониторинг по точному размеру.
+        if _req.path == '/api/health-probe':
+            return response
         response.headers.pop('X-Frame-Options', None)
         csp = response.headers.get('Content-Security-Policy', '').replace('frame-ancestors', '') or "frame-ancestors *"
         if 'frame-src' not in csp:
