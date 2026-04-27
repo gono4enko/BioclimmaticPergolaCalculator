@@ -1,0 +1,50 @@
+Задача: добавить endpoint /api/health-probe для системы мониторинга 
+доступности приложения через белые списки операторов России.
+
+КОНТЕКСТ:
+Это приложение калькулятора, размещённое на сервере pergolarussia.ru. 
+Внешняя система мониторинга на pergolamarket.ru будет периодически 
+делать GET-запросы к этому endpoint, чтобы проверить, что канал между 
+клиентом и сервером не заблокирован DPI российских операторов 
+(белые списки часто обрезают ответ на ~16 КБ).
+
+ТРЕБОВАНИЯ К ENDPOINT:
+
+1. Путь: GET /api/health-probe
+2. Поддержка OPTIONS для CORS preflight
+3. Возвращает ровно 32768 байт полезной нагрузки (символ 'X' × 32768)
+4. Content-Type: text/plain; charset=utf-8
+5. Заголовок Content-Length: 32768
+6. Заголовок X-Probe-Size: 32768
+7. CORS-заголовки:
+   - Access-Control-Allow-Origin: проверять origin против whitelist:
+     * https://pergolamarket.ru
+     * https://www.pergolamarket.ru
+     * https://pergolarussia.ru
+     * https://www.pergolarussia.ru
+     * https://monitor.pergolarussia.ru
+     * https://tilda.cc
+     Если origin не в whitelist — ставить '*' (для гибкости)
+   - Access-Control-Allow-Methods: GET, OPTIONS
+   - Access-Control-Allow-Headers: Content-Type
+   - Access-Control-Max-Age: 3600
+8. Заголовки кеширования:
+   - Cache-Control: no-store, no-cache, must-revalidate
+
+ВАЖНО:
+- Endpoint должен быть лёгким, без обращений к БД или тяжёлых операций
+- Не должен ломать существующий функционал
+- Логирование запросов к нему — не нужно (или вынести в отдельный лог)
+
+ТЕСТ ПОСЛЕ ДЕПЛОЯ:
+Команда: curl -s https://<домен_приложения>/api/health-probe -o /dev/null -w 'Размер: %{size_download} байт\nКод: %{http_code}\n'
+Ожидаемый результат: Размер 32768 байт, код 200
+
+ШАГИ:
+1. Найди главный Flask-файл приложения (где создаётся app = Flask(...))
+2. Добавь endpoint /api/health-probe согласно требованиям выше
+3. Убедись что нужные импорты на месте (make_response, request из flask)
+4. Сделай коммит с сообщением: "feat: add /api/health-probe endpoint for monitoring"
+5. Запушь в main → автодеплой на сервер
+
+После завершения — подтверди что endpoint работает (curl-команда выше).

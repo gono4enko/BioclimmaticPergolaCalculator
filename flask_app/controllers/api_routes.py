@@ -7,7 +7,7 @@ import datetime
 import threading
 import time
 from io import BytesIO
-from flask import Blueprint, jsonify, request, current_app, send_file
+from flask import Blueprint, jsonify, request, current_app, send_file, make_response
 from ..services.calculator import (
     perform_calculation,
     perform_all_variants_calculation,
@@ -19,6 +19,51 @@ from ..services.calculator import (
 )
 
 bp = Blueprint('api', __name__)
+
+
+# === Health-probe для системы мониторинга доступности через РФ-операторов ===
+# Внешний монитор (например, monitor.pergolarussia.ru) делает GET-запросы и
+# проверяет, что белые списки DPI не обрезают ответ на ~16 КБ. Возвращаем
+# ровно 32768 байт payload без обращений к БД.
+_HEALTH_PROBE_PAYLOAD = b'X' * 32768
+_HEALTH_PROBE_ALLOWED_ORIGINS = {
+    'https://pergolamarket.ru',
+    'https://www.pergolamarket.ru',
+    'https://pergolarussia.ru',
+    'https://www.pergolarussia.ru',
+    'https://monitor.pergolarussia.ru',
+    'https://tilda.cc',
+}
+
+
+def _health_probe_cors_headers():
+    origin = request.headers.get('Origin', '')
+    allow_origin = origin if origin in _HEALTH_PROBE_ALLOWED_ORIGINS else '*'
+    return {
+        'Access-Control-Allow-Origin': allow_origin,
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Max-Age': '3600',
+    }
+
+
+@bp.route('/health-probe', methods=['GET', 'OPTIONS'])
+def health_probe():
+    cors = _health_probe_cors_headers()
+    if request.method == 'OPTIONS':
+        resp = make_response('', 204)
+        for k, v in cors.items():
+            resp.headers[k] = v
+        return resp
+
+    resp = make_response(_HEALTH_PROBE_PAYLOAD, 200)
+    resp.headers['Content-Type'] = 'text/plain; charset=utf-8'
+    resp.headers['Content-Length'] = str(len(_HEALTH_PROBE_PAYLOAD))
+    resp.headers['X-Probe-Size'] = str(len(_HEALTH_PROBE_PAYLOAD))
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    for k, v in cors.items():
+        resp.headers[k] = v
+    return resp
 
 
 @bp.route('/pergola-scheme.svg', methods=['GET'])
