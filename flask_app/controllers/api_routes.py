@@ -601,9 +601,10 @@ RECIPIENT_EMAIL = os.environ.get('RECIPIENT_EMAIL', '')
 def _send_email_lead(subject, text):
     """Отправка заявки на email через Gmail SMTP.
     Если GMAIL_USER/GMAIL_PASSWORD/RECIPIENT_EMAIL не заданы — молча пропускаем
-    (заявка всё равно сохраняется в БД)."""
+    (заявка всё равно сохраняется в БД).
+    flush=True у print() — чтобы логи из daemon-thread не буферизовались gunicorn'ом."""
     if not GMAIL_USER or not GMAIL_PASSWORD or not RECIPIENT_EMAIL:
-        print("[email] Не отправлено: не заданы GMAIL_USER / GMAIL_PASSWORD / RECIPIENT_EMAIL")
+        print("[email] Не отправлено: не заданы GMAIL_USER / GMAIL_PASSWORD / RECIPIENT_EMAIL", flush=True)
         return
     try:
         import smtplib
@@ -611,7 +612,7 @@ def _send_email_lead(subject, text):
         from email.mime.multipart import MIMEMultipart
         from email.utils import formataddr
 
-        print(f"[email] Отправка от {GMAIL_USER} → {RECIPIENT_EMAIL}")
+        print(f"[email] Отправка от {GMAIL_USER} → {RECIPIENT_EMAIL}", flush=True)
 
         msg = MIMEMultipart()
         msg['From'] = formataddr(('Калькулятор пергол', GMAIL_USER))
@@ -626,14 +627,14 @@ def _send_email_lead(subject, text):
             server.login(GMAIL_USER, GMAIL_PASSWORD)
             server.sendmail(GMAIL_USER, [RECIPIENT_EMAIL], msg.as_string())
 
-        print(f"[email] ✅ Заявка отправлена на {RECIPIENT_EMAIL}")
+        print(f"[email] ✅ Заявка отправлена на {RECIPIENT_EMAIL}", flush=True)
     except smtplib.SMTPAuthenticationError as e:
-        print(f"[email] ❌ Ошибка авторизации Gmail: {e}")
-        print("[email] Проверьте GMAIL_USER и GMAIL_PASSWORD (нужен пароль приложения, 16 символов без пробелов)")
+        print(f"[email] ❌ Ошибка авторизации Gmail: {e}", flush=True)
+        print("[email] Проверьте GMAIL_USER и GMAIL_PASSWORD (нужен пароль приложения, 16 символов без пробелов)", flush=True)
     except Exception as e:
         import traceback
-        print(f"[email] ❌ Ошибка отправки: {e}")
-        print(traceback.format_exc())
+        print(f"[email] ❌ Ошибка отправки: {e}", flush=True)
+        print(traceback.format_exc(), flush=True)
 
 
 def _save_lead_db(phone, city, calc_text, channel, ip):
