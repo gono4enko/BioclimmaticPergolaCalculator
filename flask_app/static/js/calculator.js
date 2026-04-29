@@ -2317,6 +2317,7 @@ document.addEventListener('DOMContentLoaded', function() {
             renderAdditionalPergolaKPs();
             updatePriceBar();
             try { if (typeof ym === 'function') ym(YM_ID, 'reachGoal', 'calc_success', { calculator_type: CALC_TYPE }); } catch(e) {}
+            try { if (typeof ym === 'function') ym(YM_ID_NEW, 'reachGoal', 'calculation_done'); } catch(e) { console.error(e); }
             setTimeout(function() {
                 stepsEl.resultsSection.scrollIntoView({behavior: 'smooth', block: 'start'});
             }, 200);
@@ -3905,6 +3906,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 var YM_ID     = 65714473;
+var YM_ID_NEW = 108980560;
 var CALC_TYPE = 'bioclimatic';
 var CALC_NAME = '\u0411\u0438\u043E\u043A\u043B\u0438\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u043F\u0435\u0440\u0433\u043E\u043B\u0430';
 
@@ -3952,6 +3954,9 @@ window.submitLead = function() {
     try {
         if (typeof ym === 'function') ym(YM_ID, 'reachGoal', 'calculator_lead', { channel: 'callback', calculator_type: CALC_TYPE });
     } catch(e) {}
+    try {
+        if (typeof ym === 'function') ym(YM_ID_NEW, 'reachGoal', 'contact_clicked');
+    } catch(e) { console.error(e); }
 };
 
 function showOk(phone) {
@@ -3977,6 +3982,9 @@ document.addEventListener('click', function(e) {
     try {
         if (typeof ym === 'function') ym(YM_ID, 'reachGoal', 'calculator_lead', { channel: ch, calculator_type: CALC_TYPE });
     } catch(e) {}
+    try {
+        if (typeof ym === 'function') ym(YM_ID_NEW, 'reachGoal', 'contact_clicked');
+    } catch(e) { console.error(e); }
 
     var city = window._userCity || '\u041D\u0435 \u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0451\u043D';
     var calcText = window._calcText || '';
