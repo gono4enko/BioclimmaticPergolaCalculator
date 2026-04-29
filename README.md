@@ -45,6 +45,16 @@ nano .env
 - `SECRET_KEY` — длинная случайная строка для Flask sessions
 - `ADMIN_PASSWORD` — пароль админ-панели `/admin`
 - `ANTHROPIC_API_KEY` — для AI-функций (опционально)
+- `GMAIL_USER`, `GMAIL_PASSWORD`, `RECIPIENT_EMAIL` — Gmail SMTP для приёма
+  заявок «Жду звонка» / Telegram / Max. `GMAIL_PASSWORD` — это пароль приложения
+  Google (16 символов), создаётся в https://myaccount.google.com/apppasswords
+  (требуется 2FA на аккаунте). Без них заявки сохраняются только в БД, email не уйдёт.
+
+> 📌 **Загрузка `.env`**: приложение автоматически подгружает `.env` через `python-dotenv`
+> при старте (см. `flask_app/__init__.py`). Реальные переменные окружения имеют приоритет
+> над `.env`, поэтому Replit Secrets ничего не перезатирают. Убедитесь, что `python-dotenv`
+> установлен на сервере (`pip install python-dotenv` или `pip install -r requirements.txt`),
+> иначе при старте появится предупреждение `[startup] WARNING: python-dotenv не установлен`.
 
 ### 4. Запуск через gunicorn
 

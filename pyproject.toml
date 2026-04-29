@@ -27,6 +27,7 @@ flask-compress = "^1.23"
 anthropic = "^0.94.1"
 qrcode = "^8.2"
 apscheduler = "^3.11.2"
+python-dotenv = "1.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4.0"

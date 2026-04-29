@@ -2,6 +2,29 @@
 Инициализация Flask-приложения и его зависимостей.
 """
 import os
+
+# Загрузка переменных окружения из .env файла (для production VPS-сервера).
+# В Replit переменные приходят через встроенные Secrets — load_dotenv() ничего
+# не сделает (если .env нет — просто молча пропустит). По умолчанию реальные env-vars
+# имеют приоритет над .env (override=False), так что Replit Secrets не перезатираются.
+# ВАЖНО: load_dotenv() должен вызываться ДО любых импортов модулей, читающих os.environ
+# на module-level (например, flask_app/controllers/api_routes.py читает GMAIL_USER и др.
+# при импорте — он импортируется внутри create_app(), так что вызов здесь срабатывает вовремя).
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv не установлен. На Replit это нормально (Secrets подгружаются платформой),
+    # но на VPS без dotenv .env файл загружен НЕ БУДЕТ — выводим предупреждение, чтобы
+    # ops-инженер сразу заметил проблему. На Replit (REPL_ID задан) предупреждение скрываем.
+    if not os.environ.get('REPL_ID'):
+        import sys
+        print(
+            "[startup] WARNING: python-dotenv не установлен. Если на этом сервере используется "
+            ".env файл — переменные из него НЕ будут загружены. Установите: pip install python-dotenv",
+            file=sys.stderr, flush=True
+        )
+
 import hashlib
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
