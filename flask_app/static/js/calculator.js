@@ -2370,6 +2370,47 @@ document.addEventListener('DOMContentLoaded', function() {
         return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     }
 
+    // Полный текст расчёта для письма менеджеру (модель, размеры, все опции с ценами, итого)
+    function buildLeadCalcText(result) {
+        if (!result) return '';
+        var dims     = result.dimensions || {};
+        var totals   = result.totals || {};
+        var euroRate = result.euro_rate || 1;
+        var variant  = result.variant_label || result.selected_variant || '';
+
+        var lines = [];
+        lines.push('[Калькулятор: Биоклиматическая пергола]');
+        if (result.pergola_type_name) lines.push('Модель: ' + result.pergola_type_name);
+        if (variant)                  lines.push('Конструкция: ' + variant);
+        if (dims.width && dims.length) {
+            lines.push('Размеры: ' + dims.width.toFixed(2) + ' м × ' + dims.length.toFixed(2) + ' м');
+        }
+        if (dims.modules) lines.push('Модулей: ' + dims.modules);
+        if (state && state.lamellaSize) lines.push('Размер ламели: ' + state.lamellaSize);
+
+        if (Array.isArray(result.items) && result.items.length) {
+            lines.push('');
+            lines.push('Состав и стоимость опций:');
+            var optionsTotalEur = 0;
+            result.items.forEach(function(item) {
+                var priceRub = Math.round((item.price || 0) * euroRate);
+                optionsTotalEur += (item.price || 0);
+                lines.push('  • ' + item.name + ': ' + formatPrice(priceRub) + ' ₽');
+            });
+            if (optionsTotalEur > 0) {
+                lines.push('  Сумма опций: ' + formatPrice(optionsTotalEur * euroRate) + ' ₽ (' + formatPrice(optionsTotalEur) + ' €)');
+            }
+        }
+
+        lines.push('');
+        lines.push('Итого:');
+        if (totals.cash)     lines.push('  • Наличный расчёт: ' + formatPrice(totals.cash) + ' ₽');
+        if (totals.non_cash) lines.push('  • Безналичный: ' + formatPrice(totals.non_cash) + ' ₽');
+        if (totals.with_vat) lines.push('  • Безналичный с НДС 22%: ' + formatPrice(totals.with_vat) + ' ₽');
+
+        return lines.join('\n');
+    }
+
     var SPEC_ICONS = {
         lamella: '/static/images/specs/lamella.svg',
         column: '/static/images/specs/column.svg',
@@ -2627,6 +2668,21 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('pdf-btn').addEventListener('click', exportPdf);
         document.getElementById('share-btn').addEventListener('click', shareKp);
 
+        // Пересборка текста для письма с подробностями по выбранному варианту + сводкой
+        function rebuildLeadTextForCompare(activeResult) {
+            var detailedText = buildLeadCalcText(activeResult);
+            var summaryLines = ['', 'Сравнение ' + results.length + ' вариантов (нал / безнал / с НДС, ₽):'];
+            results.forEach(function(r) {
+                var lbl = (r && (r.variant_label || r.selected_variant)) || '';
+                var t = (r && r.totals) || {};
+                summaryLines.push('  • ' + lbl + ': ' +
+                    formatPrice(t.cash || 0) + ' / ' +
+                    formatPrice(t.non_cash || 0) + ' / ' +
+                    formatPrice(t.with_vat || 0));
+            });
+            window._calcText = detailedText + '\n' + summaryLines.join('\n');
+        }
+
         var rows = sec.querySelectorAll('.compare-row-clickable');
         rows.forEach(function(row) {
             row.addEventListener('click', function() {
@@ -2638,24 +2694,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 var container = document.getElementById('variant-detail-container');
                 container.innerHTML = buildVariantDetail(r);
                 updateSchemeForVariant(r);
+                rebuildLeadTextForCompare(r);
                 setTimeout(function() {
                     container.scrollIntoView({behavior: 'smooth', block: 'start'});
                 }, 100);
             });
         });
 
-        var bestResult = results[0];
-        window._calcText = [
-            '\uD83C\uDFD7 \u041F\u0435\u0440\u0433\u043E\u043B\u0430: ' + bestResult.pergola_type_name,
-            '\uD83D\uDCD0 \u0420\u0430\u0437\u043C\u0435\u0440: ' + dims.width.toFixed(2) + ' \u00D7 ' + dims.length.toFixed(2) + ' \u043C',
-            '',
-            '\u0421\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u0435 ' + results.length + ' \u0432\u0430\u0440\u0438\u0430\u043D\u0442\u043E\u0432:',
-        ];
-        results.forEach(function(r) {
-            var lbl = r.variant_label || r.selected_variant || '';
-            window._calcText.push(lbl + ': ' + formatPrice(r.totals.cash) + ' / ' + formatPrice(r.totals.non_cash) + ' / ' + formatPrice(r.totals.with_vat) + ' \u20BD');
-        });
-        window._calcText = window._calcText.filter(Boolean).join('\n');
+        // Изначально — подробности по выбранному (state.result) или первому варианту
+        rebuildLeadTextForCompare(state.result || results[0]);
 
         var lf = document.getElementById('leadForm');
         var ls = document.getElementById('leadSuccess');
@@ -2777,22 +2824,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('pdf-btn').addEventListener('click', exportPdf);
         document.getElementById('share-btn').addEventListener('click', shareKp);
 
-        var lightingList = [];
-        if (result.items) {
-            result.items.forEach(function(item) {
-                if (/\u043F\u043E\u0434\u0441\u0432\u0435\u0442\u043A\u0430|LED|RGB/i.test(item.name)) lightingList.push(item.name);
-            });
-        }
-        window._calcText = [
-            '\uD83C\uDFD7 \u041F\u0435\u0440\u0433\u043E\u043B\u0430: ' + result.pergola_type_name,
-            '\uD83D\uDCD0 \u0420\u0430\u0437\u043C\u0435\u0440: ' + dims.width.toFixed(2) + ' \u00D7 ' + dims.length.toFixed(2) + ' \u043C',
-            '\uD83D\uDD32 \u041C\u043E\u0434\u0443\u043B\u0435\u0439: ' + dims.modules,
-            lightingList.length ? '\uD83D\uDCA1 \u041F\u043E\u0434\u0441\u0432\u0435\u0442\u043A\u0430: ' + lightingList.join(', ') : '',
-            '',
-            '\uD83D\uDCB5 \u041D\u0430\u043B\u0438\u0447\u043D\u044B\u0439 \u0440\u0430\u0441\u0447\u0451\u0442: ' + formatPrice(totals.cash) + ' \u20BD',
-            '\uD83C\uDFE6 \u0411\u0435\u0437\u043D\u0430\u043B\u0438\u0447\u043D\u044B\u0439: ' + formatPrice(totals.non_cash) + ' \u20BD',
-            '\uD83D\uDCCB \u0421 \u041D\u0414\u0421 22%: ' + formatPrice(totals.with_vat) + ' \u20BD',
-        ].filter(Boolean).join('\n');
+        window._calcText = buildLeadCalcText(result);
 
         var lf = document.getElementById('leadForm');
         var ls = document.getElementById('leadSuccess');

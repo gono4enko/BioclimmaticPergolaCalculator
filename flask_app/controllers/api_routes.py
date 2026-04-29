@@ -598,6 +598,13 @@ GMAIL_PASSWORD  = os.environ.get('GMAIL_PASSWORD', '')
 RECIPIENT_EMAIL = os.environ.get('RECIPIENT_EMAIL', '')
 
 
+def _strip_crlf(s):
+    """Защита от header-injection: вырезаем \\r и \\n из значений, идущих в MIME-заголовки."""
+    if s is None:
+        return ''
+    return str(s).replace('\r', ' ').replace('\n', ' ').strip()
+
+
 def _send_email_lead(subject, text):
     """Отправка заявки на email через Gmail SMTP.
     Если GMAIL_USER/GMAIL_PASSWORD/RECIPIENT_EMAIL не заданы — молча пропускаем
@@ -617,7 +624,7 @@ def _send_email_lead(subject, text):
         msg = MIMEMultipart()
         msg['From'] = formataddr(('Калькулятор пергол', GMAIL_USER))
         msg['To'] = RECIPIENT_EMAIL
-        msg['Subject'] = subject
+        msg['Subject'] = _strip_crlf(subject)[:200]
         msg.attach(MIMEText(text, 'plain', 'utf-8'))
 
         with smtplib.SMTP('smtp.gmail.com', 587, timeout=15) as server:
