@@ -1,0 +1,103 @@
+Задача: убедиться что Flask приложение корректно загружает переменные окружения из .env файла при запуске на production сервере.
+
+КОНТЕКСТ:
+Приложение работает в двух средах:
+1. Replit — использует встроенные Secrets (автоматически загружаются)
+2. Production сервер — использует .env файл (требует явной загрузки)
+
+ПРОБЛЕМА:
+На production сервере приложение не видит переменные из .env файла. В логах ошибка:
+"[email] Не отправлено: не заданы GMAIL_USER / GMAIL_PASSWORD / RECIPIENT_EMAIL"
+
+ТРЕБОВАНИЯ:
+
+1. ПРОВЕРЬ наличие python-dotenv:
+   - Добавь в requirements.txt если отсутствует: python-dotenv
+   
+2. НАЙДИ главный файл приложения (app.py, main.py, flask_app.py или wsgi.py):
+   - Это файл который создаёт Flask app
+   - Ищи строку типа: app = Flask(__name__) или def create_app()
+
+3. ДОБАВЬ загрузку .env В САМОЕ НАЧАЛО главного файла (после импортов):
+```python
+from dotenv import load_dotenv
+import os
+
+# Загружаем .env файл (если существует)
+# В Replit это не сработает, но Secrets перекроют
+load_dotenv()
+
+# Теперь переменные доступны через os.getenv()
+GMAIL_USER = os.getenv('GMAIL_USER')
+GMAIL_PASSWORD = os.getenv('GMAIL_PASSWORD')
+RECIPIENT_EMAIL = os.getenv('RECIPIENT_EMAIL')
+YM_ID = os.getenv('YM_ID', '108980560')  # default если не задан
+```
+
+4. ПРОВЕРЬ что все места где используются переменные читают через os.getenv():
+```python
+# ПРАВИЛЬНО:
+gmail_user = os.getenv('GMAIL_USER')
+
+# НЕПРАВИЛЬНО (только для Replit):
+gmail_user = os.environ['GMAIL_USER']  # выдаст KeyError если нет
+```
+
+5. ДОБАВЬ .env в .gitignore (если ещё нет):
+Environment variables
+.env
+.env.local
+.env.production
+*.env
+
+6. ЛОГИРОВАНИЕ при старте:
+Добавь в начало главного файла после load_dotenv():
+```python
+# Логирование загрузки переменных окружения
+print("=" * 50)
+print("🔍 [ENV] Проверка переменных окружения:")
+print("=" * 50)
+
+env_vars = ['GMAIL_USER', 'GMAIL_PASSWORD', 'RECIPIENT_EMAIL', 'YM_ID']
+for var in env_vars:
+    value = os.getenv(var)
+    if value:
+        # Скрываем пароль в логах
+        if 'PASSWORD' in var:
+            print(f"✅ [env] {var}: ***скрыт***")
+        else:
+            print(f"✅ [env] {var}: {value}")
+    else:
+        print(f"❌ [env] {var}: НЕ НАЙДЕН")
+
+print("=" * 50)
+```
+
+7. ПРОВЕРЬ start.sh (если существует):
+Если в проекте есть start.sh, убедись что он НЕ перезаписывает переменные из .env. 
+Удали дублирующиеся export строки для GMAIL_USER, GMAIL_PASSWORD, RECIPIENT_EMAIL.
+Оставь только database и secret key если они там есть.
+
+ВАЖНО:
+- НЕ создавай .env файл в Replit (он попадёт в git)
+- НЕ коммить .env файл (добавь в .gitignore)
+- load_dotenv() должна быть ПЕРВОЙ строкой после импортов
+- В Replit Secrets перекрывают .env автоматически — приложение будет работать
+
+ТЕСТИРОВАНИЕ В REPLIT:
+После изменений:
+1. Запусти приложение в Replit
+2. Проверь логи — должны быть ✅ зелёные галочки для всех переменных
+3. Протестируй отправку email через форму обратного звонка
+4. Убедись что Replit Secrets работают (не требуется .env файл)
+
+ФИНАЛЬНЫЙ КОММИТ:
+"fix: add dotenv support for production deployment"
+
+ПОСЛЕ ВЫПОЛНЕНИЯ:
+Сообщи:
+1. В какой файл добавлена load_dotenv()? (полный путь)
+2. Добавлен ли python-dotenv в requirements.txt?
+3. Добавлен ли .env в .gitignore?
+4. Есть ли логирование переменных при старте?
+5. Работает ли приложение в Replit после изменений?

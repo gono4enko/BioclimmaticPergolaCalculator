@@ -25,6 +25,23 @@ except ImportError:
             file=sys.stderr, flush=True
         )
 
+# Диагностическое логирование переменных окружения при каждом старте.
+# Позволяет сразу увидеть в логах gunicorn какие переменные найдены, а каких нет.
+print("=" * 50, flush=True)
+print("[ENV] Проверка переменных окружения:", flush=True)
+print("=" * 50, flush=True)
+for _var in ['GMAIL_USER', 'GMAIL_PASSWORD', 'RECIPIENT_EMAIL',
+             'SECRET_KEY', 'ADMIN_PASSWORD', 'DATABASE_URL']:
+    _val = os.environ.get(_var)
+    if _val:
+        if 'PASSWORD' in _var or 'KEY' in _var or 'URL' in _var:
+            print(f"  [OK] {_var}: ***скрыт***", flush=True)
+        else:
+            print(f"  [OK] {_var}: {_val}", flush=True)
+    else:
+        print(f"  [!!] {_var}: НЕ НАЙДЕН", flush=True)
+print("=" * 50, flush=True)
+
 import hashlib
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
