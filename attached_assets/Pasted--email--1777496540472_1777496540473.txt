@@ -1,0 +1,93 @@
+Задача: диагностировать и исправить отправку email при нажатии кнопки "Жду звонка" в форме обратного звонка.
+
+ПРОБЛЕМА:
+После смены пароля приложения Google форма "Перезвонить" → кнопка "Жду звонка" перестала отправлять email с номером телефона клиента.
+
+ДОПОЛНИТЕЛЬНЫЙ КОНТЕКСТ:
+Выяснилось что в некоторых формах использовался FormSubmit (внешний сервис), который работал нестабильно. Основная реализация была через прямую отправку с Gmail.com через SMTP, но что-то сломалось после смены пароля приложения Google.
+
+ОПИСАНИЕ ФОРМЫ:
+- Секция "Обсудить расчёт с менеджером"
+- Поле ввода: +7 (___) ___-__-__
+- Кнопка: "Жду звонка" (оранжевая)
+- При клике должен отправляться email на адрес менеджера
+
+ДИАГНОСТИКА:
+
+1. Найди обработчик кнопки "Жду звонка" (JavaScript onclick или Flask route)
+
+2. Определи ТЕКУЩИЙ метод отправки:
+   - Используется ли FormSubmit? (action="https://formsubmit.co/...")
+   - Используется ли Flask backend для отправки через Gmail SMTP?
+   - Есть ли Ajax-запрос на /api/callback или похожий endpoint?
+
+3. Проверь код отправки email в Flask:
+   - Найди Flask route (например @app.route('/api/callback'))
+   - Проверь используется ли smtplib для отправки
+   - Найди какие environment variables используются
+
+4. Проверь переменные окружения:
+   - GMAIL_USER или EMAIL_USER? (email отправителя)
+   - GMAIL_PASSWORD или EMAIL_PASSWORD? (пароль приложения)
+   - RECIPIENT_EMAIL или TO_EMAIL? (получатель)
+
+ИСПРАВЛЕНИЕ:
+
+Если обнаружен FormSubmit — ЗАМЕНИТЬ на Gmail SMTP:
+- Убрать FormSubmit action
+- Реализовать Flask endpoint для отправки через Gmail
+- Использовать smtplib с правильными credentials
+
+Если используется Gmail SMTP — ОБНОВИТЬ credentials:
+```python
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+GMAIL_USER = os.getenv('GMAIL_USER')  # например: info@pergolamarket.ru
+GMAIL_PASSWORD = os.getenv('GMAIL_PASSWORD')  # НОВЫЙ пароль приложения
+RECIPIENT = os.getenv('RECIPIENT_EMAIL')  # кому отправлять
+
+# SMTP настройки
+smtp_server = "smtp.gmail.com"
+smtp_port = 587
+```
+
+ТРЕБУЕМЫЕ ПЕРЕМЕННЫЕ В REPLIT SECRETS:
+- GMAIL_USER = адрес Gmail отправителя
+- GMAIL_PASSWORD = пароль приложения Google (16 символов без пробелов)
+- RECIPIENT_EMAIL = адрес получателя (менеджер)
+
+ЛОГИРОВАНИЕ:
+
+Добавь детальное логирование:
+```python
+try:
+    print(f"📧 Attempting to send email from {GMAIL_USER} to {RECIPIENT}")
+    # код отправки
+    print(f"✅ Email sent successfully!")
+except smtplib.SMTPAuthenticationError as e:
+    print(f"❌ Authentication failed: {str(e)}")
+    print("Check GMAIL_USER and GMAIL_PASSWORD in Secrets")
+except Exception as e:
+    print(f"❌ Email sending failed: {str(e)}")
+```
+
+ТЕСТИРОВАНИЕ:
+
+После исправления:
+1. Заполни форму с номером телефона
+2. Нажми "Жду звонка"
+3. Проверь логи в Console/Terminal
+4. Проверь что email пришёл на адрес менеджера
+5. Проверь что в письме есть номер телефона клиента и детали расчёта
+
+ФИНАЛЬНЫЙ КОММИТ:
+"fix: replace FormSubmit with Gmail SMTP for callback form"
+
+ПОСЛЕ ВЫПОЛНЕНИЯ:
+Сообщи:
+1. Какой метод использовался ДО (FormSubmit или Gmail)?
+2. Какие переменные нужно добавить/обновить в Replit Secrets?
+3. Какой адрес получателя используется?
+4. Готов ли код к тестированию?
