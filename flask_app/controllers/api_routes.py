@@ -593,25 +593,47 @@ def export_pdf():
 _lead_rate = {}
 _lead_rate_lock = threading.Lock()
 
-TG_BOT_TOKEN = os.environ.get('TG_BOT_TOKEN', '')
-TG_CHAT_ID   = os.environ.get('TG_CHAT_ID', '')
+GMAIL_USER      = os.environ.get('GMAIL_USER', '')
+GMAIL_PASSWORD  = os.environ.get('GMAIL_PASSWORD', '')
+RECIPIENT_EMAIL = os.environ.get('RECIPIENT_EMAIL', '')
 
 
-def _send_telegram_lead(text):
-    if not TG_BOT_TOKEN or not TG_CHAT_ID:
-        # Telegram-уведомления опциональны — без токена просто пропускаем
+def _send_email_lead(subject, text):
+    """Отправка заявки на email через Gmail SMTP.
+    Если GMAIL_USER/GMAIL_PASSWORD/RECIPIENT_EMAIL не заданы — молча пропускаем
+    (заявка всё равно сохраняется в БД)."""
+    if not GMAIL_USER or not GMAIL_PASSWORD or not RECIPIENT_EMAIL:
+        print("[email] Не отправлено: не заданы GMAIL_USER / GMAIL_PASSWORD / RECIPIENT_EMAIL")
         return
     try:
-        import urllib.request as ur
-        payload = json.dumps({'chat_id': TG_CHAT_ID, 'text': text}).encode()
-        req = ur.Request(
-            f'https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage',
-            data=payload,
-            headers={'Content-Type': 'application/json'}
-        )
-        ur.urlopen(req, timeout=8)
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        from email.utils import formataddr
+
+        print(f"[email] Отправка от {GMAIL_USER} → {RECIPIENT_EMAIL}")
+
+        msg = MIMEMultipart()
+        msg['From'] = formataddr(('Калькулятор пергол', GMAIL_USER))
+        msg['To'] = RECIPIENT_EMAIL
+        msg['Subject'] = subject
+        msg.attach(MIMEText(text, 'plain', 'utf-8'))
+
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=15) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(GMAIL_USER, GMAIL_PASSWORD)
+            server.sendmail(GMAIL_USER, [RECIPIENT_EMAIL], msg.as_string())
+
+        print(f"[email] ✅ Заявка отправлена на {RECIPIENT_EMAIL}")
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"[email] ❌ Ошибка авторизации Gmail: {e}")
+        print("[email] Проверьте GMAIL_USER и GMAIL_PASSWORD (нужен пароль приложения, 16 символов без пробелов)")
     except Exception as e:
-        pass
+        import traceback
+        print(f"[email] ❌ Ошибка отправки: {e}")
+        print(traceback.format_exc())
 
 
 def _save_lead_db(phone, city, calc_text, channel, ip):
@@ -653,7 +675,8 @@ def submit_lead():
     channel   = str(data.get('channel', 'callback'))[:20]
 
     channel_label = {'telegram': 'Telegram', 'max': 'Max', 'callback': '📞 Звонок'}.get(channel, channel)
-    tg_text = (
+    subject = f"Заявка с калькулятора — {channel_label} — {phone}"
+    body = (
         f"🏗 Заявка — Биоклиматическая пергола\n"
         f"Канал: {channel_label}\n"
         f"Телефон: {phone}\n"
@@ -661,7 +684,7 @@ def submit_lead():
         f"{calc_text}"
     )
 
-    threading.Thread(target=_send_telegram_lead, args=(tg_text,), daemon=True).start()
+    threading.Thread(target=_send_email_lead, args=(subject, body), daemon=True).start()
     threading.Thread(target=_save_lead_db, args=(phone, city, calc_text, channel, ip), daemon=True).start()
 
     return jsonify({'success': True})
