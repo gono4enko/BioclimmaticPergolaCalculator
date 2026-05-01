@@ -733,7 +733,16 @@ def submit_lead():
             'productType': 'Биоклиматическая пергола',
             'name': '',
             'source': 'calculator_bioclim',
-            'comment': calc_text[:500] if calc_text else '',
+            'amount': crm_data.get('totalPriceCash', 0) or 0,
+            'comment': (
+                f"📞 Канал: Звонок\n"
+                f"📱 Телефон: {phone}\n"
+                f"🏙 Город: {city}\n\n"
+                f"{calc_text}\n\n"
+                f"Итого:\n"
+                f"- Наличный расчёт: {format(int(crm_data.get('totalPriceCash') or 0), ',').replace(',', ' ')} ₽\n"
+                f"- Безналичный: {format(int(crm_data.get('totalPriceNonCash') or 0), ',').replace(',', ' ')} ₽"
+            ),
             'calculatorData': {
                 'pergolaType':  crm_data.get('pergolaType', ''),
                 'variant':      crm_data.get('variant', ''),
