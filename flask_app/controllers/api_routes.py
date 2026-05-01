@@ -735,13 +735,14 @@ def submit_lead():
             'source': 'calculator_bioclim',
             'amount': crm_data.get('totalPriceCash', 0) or 0,
             'comment': (
-                f"📞 Канал: Звонок\n"
+                f"📟 Источник: Калькулятор биоклиматических пергол\n"
                 f"📱 Телефон: {phone}\n"
                 f"🏙 Город: {city}\n\n"
                 f"{calc_text}\n\n"
                 f"Итого:\n"
-                f"- Наличный расчёт: {format(int(crm_data.get('totalPriceCash') or 0), ',').replace(',', ' ')} ₽\n"
-                f"- Безналичный: {format(int(crm_data.get('totalPriceNonCash') or 0), ',').replace(',', ' ')} ₽"
+                f"• Наличный расчёт: {format(int(crm_data.get('totalPriceCash') or 0), ',').replace(',', ' ')} ₽\n"
+                f"• Безналичный: {format(int(crm_data.get('totalPriceNonCash') or 0), ',').replace(',', ' ')} ₽\n"
+                f"• Безналичный с НДС: {format(int(crm_data.get('totalPriceWithVat') or 0), ',').replace(',', ' ')} ₽"
             ),
             'calculatorData': {
                 'pergolaType':  crm_data.get('pergolaType', ''),
@@ -753,6 +754,7 @@ def submit_lead():
                 'options':      crm_data.get('options', []),
                 'totalPriceCash':    crm_data.get('totalPriceCash'),
                 'totalPriceNonCash': crm_data.get('totalPriceNonCash'),
+                'totalPriceWithVat': crm_data.get('totalPriceWithVat'),
                 'city':         city,
             }
         }

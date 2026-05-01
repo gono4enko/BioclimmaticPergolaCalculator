@@ -2432,8 +2432,9 @@ document.addEventListener('DOMContentLoaded', function() {
             modules:            dims.modules || null,
             lamellaSize:        (state && state.lamellaSize) || '',
             options:            options,
-            totalPriceCash:     totals.cash     || null,
-            totalPriceNonCash:  totals.non_cash || null,
+            totalPriceCash:     totals.cash      || null,
+            totalPriceNonCash:  totals.non_cash  || null,
+            totalPriceWithVat:  totals.with_vat  || null,
         };
     }
 
