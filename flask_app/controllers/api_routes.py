@@ -758,6 +758,7 @@ def submit_lead():
                 'city':         city,
             }
         }
+        print(f"[crm] amount to send: {crm_data.get('totalPriceCash', 'NOT FOUND')}", flush=True)
         threading.Thread(target=_send_crm_webhook, args=(crm_payload,), daemon=True).start()
 
     return jsonify({'success': True})
