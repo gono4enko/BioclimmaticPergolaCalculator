@@ -2411,6 +2411,32 @@ document.addEventListener('DOMContentLoaded', function() {
         return lines.join('\n');
     }
 
+    // Структурированные данные расчёта для Twenty CRM webhook.
+    // Используется в window._crmData — читается из window.submitLead() вне DOMContentLoaded.
+    function buildCrmData(result) {
+        if (!result) return {};
+        var dims     = result.dimensions || {};
+        var totals   = result.totals || {};
+        var variant  = result.variant_label || result.selected_variant || '';
+        var options  = [];
+        if (Array.isArray(result.items)) {
+            result.items.forEach(function(item) {
+                if (item && item.name) options.push(item.name);
+            });
+        }
+        return {
+            pergolaType:        result.pergola_type_name || '',
+            variant:            variant,
+            width:              dims.width  || null,
+            depth:              dims.length || null,
+            modules:            dims.modules || null,
+            lamellaSize:        (state && state.lamellaSize) || '',
+            options:            options,
+            totalPriceCash:     totals.cash     || null,
+            totalPriceNonCash:  totals.non_cash || null,
+        };
+    }
+
     var SPEC_ICONS = {
         lamella: '/static/images/specs/lamella.svg',
         column: '/static/images/specs/column.svg',
@@ -2681,6 +2707,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     formatPrice(t.with_vat || 0));
             });
             window._calcText = detailedText + '\n' + summaryLines.join('\n');
+            window._crmData  = buildCrmData(activeResult);
         }
 
         var rows = sec.querySelectorAll('.compare-row-clickable');
@@ -2825,6 +2852,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('share-btn').addEventListener('click', shareKp);
 
         window._calcText = buildLeadCalcText(result);
+        window._crmData  = buildCrmData(result);
 
         var lf = document.getElementById('leadForm');
         var ls = document.getElementById('leadSuccess');
@@ -3943,6 +3971,7 @@ var CALC_TYPE = 'bioclimatic';
 var CALC_NAME = '\u0411\u0438\u043E\u043A\u043B\u0438\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u043F\u0435\u0440\u0433\u043E\u043B\u0430';
 
 window._calcText = '';
+window._crmData  = null;
 window._userCity = '\u041D\u0435 \u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0451\u043D';
 
 (function() {
@@ -3970,6 +3999,9 @@ window.submitLead = function() {
     btn.textContent = '\u041E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u0435\u043C\u2026';
     btn.disabled = true;
 
+    var crmData = window._crmData || {};
+    console.log('[CRM] Отправка заявки в CRM:', {phone: phone, crm_data: crmData});
+
     fetch('/api/submit-lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3977,9 +4009,12 @@ window.submitLead = function() {
             phone: phone,
             city: window._userCity || '\u041D\u0435 \u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0451\u043D',
             calc_text: window._calcText || '',
-            channel: 'callback'
+            channel: 'callback',
+            crm_data: crmData
         })
-    }).catch(function() {});
+    }).catch(function(err) {
+        console.warn('[CRM] Ошибка запроса submit-lead:', err);
+    });
 
     showOk(phone);
 

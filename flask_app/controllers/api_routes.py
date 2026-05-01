@@ -597,12 +597,42 @@ GMAIL_USER      = os.environ.get('GMAIL_USER', '')
 GMAIL_PASSWORD  = os.environ.get('GMAIL_PASSWORD', '')
 RECIPIENT_EMAIL = os.environ.get('RECIPIENT_EMAIL', '')
 
+# Twenty CRM / собственный webhook (POST при каждой заявке через кнопку "Жду звонка")
+CRM_WEBHOOK_URL = os.environ.get(
+    'CRM_WEBHOOK_URL',
+    'https://erp.pergolarussia.ru/api/webhooks/calculator-lead'
+)
+
 
 def _strip_crlf(s):
     """Защита от header-injection: вырезаем \\r и \\n из значений, идущих в MIME-заголовки."""
     if s is None:
         return ''
     return str(s).replace('\r', ' ').replace('\n', ' ').strip()
+
+
+def _send_crm_webhook(payload: dict):
+    """Отправка заявки в Twenty CRM / собственный webhook.
+    Запускается в daemon-треде — ошибка не блокирует основной ответ клиенту.
+    Если CRM_WEBHOOK_URL не задан (пустая строка) — пропускаем тихо.
+    flush=True у print() чтобы логи из daemon-thread не буферизовались gunicorn'ом."""
+    if not CRM_WEBHOOK_URL:
+        return
+    try:
+        import json as _json
+        import urllib.request as _urllib
+        raw = _json.dumps(payload, ensure_ascii=False).encode('utf-8')
+        req = _urllib.Request(
+            CRM_WEBHOOK_URL,
+            data=raw,
+            headers={'Content-Type': 'application/json; charset=utf-8'},
+            method='POST'
+        )
+        with _urllib.urlopen(req, timeout=10) as resp:
+            print(f"[crm] ✅ Заявка отправлена в CRM: HTTP {resp.status}", flush=True)
+    except Exception as e:
+        # Ошибка CRM некритична — email и БД уже сохранили заявку
+        print(f"[crm] ⚠️ Ошибка webhook CRM (некритично): {e}", flush=True)
 
 
 def _send_email_lead(subject, text):
@@ -681,6 +711,7 @@ def submit_lead():
     city      = str(data.get('city', 'Не определён'))[:100]
     calc_text = str(data.get('calc_text', ''))[:4000]
     channel   = str(data.get('channel', 'callback'))[:20]
+    crm_data  = data.get('crm_data') if isinstance(data.get('crm_data'), dict) else {}
 
     channel_label = {'telegram': 'Telegram', 'max': 'Max', 'callback': '📞 Звонок'}.get(channel, channel)
     subject = f"Заявка с калькулятора — {channel_label} — {phone}"
@@ -694,5 +725,28 @@ def submit_lead():
 
     threading.Thread(target=_send_email_lead, args=(subject, body), daemon=True).start()
     threading.Thread(target=_save_lead_db, args=(phone, city, calc_text, channel, ip), daemon=True).start()
+
+    # Отправка в CRM только для кнопки "Жду звонка" (реальный телефон)
+    if channel == 'callback' and phone:
+        crm_payload = {
+            'phone': phone,
+            'productType': 'Биоклиматическая пергола',
+            'name': '',
+            'source': 'calculator_bioclim',
+            'comment': calc_text[:500] if calc_text else '',
+            'calculatorData': {
+                'pergolaType':  crm_data.get('pergolaType', ''),
+                'variant':      crm_data.get('variant', ''),
+                'width':        crm_data.get('width'),
+                'depth':        crm_data.get('depth'),
+                'modules':      crm_data.get('modules'),
+                'lamellaSize':  crm_data.get('lamellaSize', ''),
+                'options':      crm_data.get('options', []),
+                'totalPriceCash':    crm_data.get('totalPriceCash'),
+                'totalPriceNonCash': crm_data.get('totalPriceNonCash'),
+                'city':         city,
+            }
+        }
+        threading.Thread(target=_send_crm_webhook, args=(crm_payload,), daemon=True).start()
 
     return jsonify({'success': True})
