@@ -711,7 +711,9 @@ def submit_lead():
     city      = str(data.get('city', 'Не определён'))[:100]
     calc_text = str(data.get('calc_text', ''))[:4000]
     channel   = str(data.get('channel', 'callback'))[:20]
-    crm_data  = data.get('crm_data') if isinstance(data.get('crm_data'), dict) else {}
+    crm_data = data.get('calculatorData') or data.get('crm_data') or {}
+    if not isinstance(crm_data, dict):
+        crm_data = {}
 
     channel_label = {'telegram': 'Telegram', 'max': 'Max', 'callback': '📞 Звонок'}.get(channel, channel)
     subject = f"Заявка с калькулятора — {channel_label} — {phone}"
